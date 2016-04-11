@@ -21,8 +21,8 @@ clean:
 
 .PHONY: test
 test: $(app_debug)
+	-@if [ -d $(testsdir)/latest_debug ]; then echo 'Deleting prior test files.';  rm $(testsdir)/latest_debug/*; fi
 	@if [ ! -d $(testsdir)/latest_debug ]; then mkdir $(testsdir)/latest_debug; fi
-	-@rm $(testsdir)/latest_debug/*
 	cd $(testsdir) && ./tests.sh $(app_debug) latest_debug
 	@if diff -q $(testsdir)/latest_debug $(testsdir)/gold ; \
 	then echo '---> $(app) command line tests passed.'; exit 0; \
