@@ -1,0 +1,15 @@
+F1	F2	F3	F4
+1000	1000.0		3 empty
+1000	1000.0	 	3 1-space
+1000	1000.001	  	3 2-spaces
+1000	1001	abc	3 no space
+1000	999.999	 abc	3 space prefix
+1000	999	abc 	3 space suffix 
+1000	999.9999	 a 	3 space prefix&suffix 
+999.999	1000	x	x
+999.999	1000.999	x	x
+1000	1001.1	x	x
+-999.99	-1000	x	x
+-999.98	-1000	x	x
+-999.99	1000	x	x
+999.99	-1000	x	x

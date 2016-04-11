@@ -1,0 +1,283 @@
+Basic tests set 1
+-----------------
+
+====[number-lines input1.txt]====
+1	The first line - Is it a header?
+2	abc	def	ghi
+3	some random text
+4	Japanese: 私はガラスを食べられます。それは私を傷つけません。
+5	
+6	Previous line blank
+7		
+8	Previous line a single tab
+
+====[number-lines --start-number 10 input1.txt]====
+10	The first line - Is it a header?
+11	abc	def	ghi
+12	some random text
+13	Japanese: 私はガラスを食べられます。それは私を傷つけません。
+14	
+15	Previous line blank
+16		
+17	Previous line a single tab
+
+====[number-lines -n 10 input1.txt]====
+10	The first line - Is it a header?
+11	abc	def	ghi
+12	some random text
+13	Japanese: 私はガラスを食べられます。それは私を傷つけません。
+14	
+15	Previous line blank
+16		
+17	Previous line a single tab
+
+====[number-lines -n -10 input1.txt]====
+-10	The first line - Is it a header?
+-9	abc	def	ghi
+-8	some random text
+-7	Japanese: 私はガラスを食べられます。それは私を傷つけません。
+-6	
+-5	Previous line blank
+-4		
+-3	Previous line a single tab
+
+====[number-lines --header input1.txt]====
+line	The first line - Is it a header?
+1	abc	def	ghi
+2	some random text
+3	Japanese: 私はガラスを食べられます。それは私を傷つけません。
+4	
+5	Previous line blank
+6		
+7	Previous line a single tab
+
+====[number-lines --header-string LINENUM input1.txt]====
+LINENUM	The first line - Is it a header?
+1	abc	def	ghi
+2	some random text
+3	Japanese: 私はガラスを食べられます。それは私を傷つけません。
+4	
+5	Previous line blank
+6		
+7	Previous line a single tab
+
+====[number-lines -s LineNum_àßß input1.txt]====
+LineNum_àßß	The first line - Is it a header?
+1	abc	def	ghi
+2	some random text
+3	Japanese: 私はガラスを食べられます。それは私を傷つけません。
+4	
+5	Previous line blank
+6		
+7	Previous line a single tab
+
+====[number-lines --header -s line_num input1.txt]====
+line_num	The first line - Is it a header?
+1	abc	def	ghi
+2	some random text
+3	Japanese: 私はガラスを食べられます。それは私を傷つけません。
+4	
+5	Previous line blank
+6		
+7	Previous line a single tab
+
+====[number-lines --delimiter : input1.txt]====
+1:The first line - Is it a header?
+2:abc	def	ghi
+3:some random text
+4:Japanese: 私はガラスを食べられます。それは私を傷つけません。
+5:
+6:Previous line blank
+7:	
+8:Previous line a single tab
+
+====[number-lines -d _ input1.txt]====
+1_The first line - Is it a header?
+2_abc	def	ghi
+3_some random text
+4_Japanese: 私はガラスを食べられます。それは私を傷つけません。
+5_
+6_Previous line blank
+7_	
+8_Previous line a single tab
+
+====[number-lines --header -d ^ input1.txt]====
+line^The first line - Is it a header?
+1^abc	def	ghi
+2^some random text
+3^Japanese: 私はガラスを食べられます。それは私を傷つけません。
+4^
+5^Previous line blank
+6^	
+7^Previous line a single tab
+
+====Multi-file Tests===
+
+====[number-lines input1.txt input2.txt empty-file.txt one-line-file.txt]====
+1	The first line - Is it a header?
+2	abc	def	ghi
+3	some random text
+4	Japanese: 私はガラスを食べられます。それは私を傷つけません。
+5	
+6	Previous line blank
+7		
+8	Previous line a single tab
+9	The first line
+10	The second line
+11	The third line
+12	The one line
+
+====[number-lines input1.txt one-line-file.txt input2.txt empty-file.txt]====
+1	The first line - Is it a header?
+2	abc	def	ghi
+3	some random text
+4	Japanese: 私はガラスを食べられます。それは私を傷つけません。
+5	
+6	Previous line blank
+7		
+8	Previous line a single tab
+9	The one line
+10	The first line
+11	The second line
+12	The third line
+
+====[number-lines empty-file.txt input1.txt one-line-file.txt input2.txt input1.txt]====
+1	The first line - Is it a header?
+2	abc	def	ghi
+3	some random text
+4	Japanese: 私はガラスを食べられます。それは私を傷つけません。
+5	
+6	Previous line blank
+7		
+8	Previous line a single tab
+9	The one line
+10	The first line
+11	The second line
+12	The third line
+13	The first line - Is it a header?
+14	abc	def	ghi
+15	some random text
+16	Japanese: 私はガラスを食べられます。それは私を傷つけません。
+17	
+18	Previous line blank
+19		
+20	Previous line a single tab
+
+====[number-lines --header input1.txt input2.txt empty-file.txt one-line-file.txt]====
+line	The first line - Is it a header?
+1	abc	def	ghi
+2	some random text
+3	Japanese: 私はガラスを食べられます。それは私を傷つけません。
+4	
+5	Previous line blank
+6		
+7	Previous line a single tab
+8	The second line
+9	The third line
+
+====[number-lines --header -n 10 input1.txt one-line-file.txt input2.txt empty-file.txt]====
+line	The first line - Is it a header?
+10	abc	def	ghi
+11	some random text
+12	Japanese: 私はガラスを食べられます。それは私を傷つけません。
+13	
+14	Previous line blank
+15		
+16	Previous line a single tab
+17	The second line
+18	The third line
+
+====[number-lines --header -s LINENUM empty-file.txt input1.txt one-line-file.txt input2.txt input1.txt]====
+LINENUM	The first line - Is it a header?
+1	abc	def	ghi
+2	some random text
+3	Japanese: 私はガラスを食べられます。それは私を傷つけません。
+4	
+5	Previous line blank
+6		
+7	Previous line a single tab
+8	The second line
+9	The third line
+10	abc	def	ghi
+11	some random text
+12	Japanese: 私はガラスを食べられます。それは私を傷つけません。
+13	
+14	Previous line blank
+15		
+16	Previous line a single tab
+
+====Tests using Standard Input===
+
+====[cat input1.txt | number-lines]====
+1	The first line - Is it a header?
+2	abc	def	ghi
+3	some random text
+4	Japanese: 私はガラスを食べられます。それは私を傷つけません。
+5	
+6	Previous line blank
+7		
+8	Previous line a single tab
+
+====[cat input1.txt input2.txt | number-lines --header]====
+line	The first line - Is it a header?
+1	abc	def	ghi
+2	some random text
+3	Japanese: 私はガラスを食べられます。それは私を傷つけません。
+4	
+5	Previous line blank
+6		
+7	Previous line a single tab
+8	The first line
+9	The second line
+10	The third line
+
+====[cat input1.txt | number-lines -- input2.txt -]====
+1	The first line
+2	The second line
+3	The third line
+4	The first line - Is it a header?
+5	abc	def	ghi
+6	some random text
+7	Japanese: 私はガラスを食べられます。それは私を傷つけません。
+8	
+9	Previous line blank
+10		
+11	Previous line a single tab
+
+====[cat input1.txt | number-lines --header -- input2.txt -]====
+line	The first line
+1	The second line
+2	The third line
+3	abc	def	ghi
+4	some random text
+5	Japanese: 私はガラスを食べられます。それは私を傷つけません。
+6	
+7	Previous line blank
+8		
+9	Previous line a single tab
+
+====[cat input1.txt | number-lines -- input2.txt - one-line-file.txt]====
+1	The first line
+2	The second line
+3	The third line
+4	The first line - Is it a header?
+5	abc	def	ghi
+6	some random text
+7	Japanese: 私はガラスを食べられます。それは私を傷つけません。
+8	
+9	Previous line blank
+10		
+11	Previous line a single tab
+12	The one line
+
+====[cat input1.txt | number-lines --header -- input2.txt - one-line-file.txt]====
+line	The first line
+1	The second line
+2	The third line
+3	abc	def	ghi
+4	some random text
+5	Japanese: 私はガラスを食べられます。それは私を傷つけません。
+6	
+7	Previous line blank
+8		
+9	Previous line a single tab

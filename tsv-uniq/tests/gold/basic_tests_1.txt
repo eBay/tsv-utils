@@ -1,0 +1,547 @@
+Basic tests set 1
+-----------------
+====Whole line as key===
+
+====[tsv-uniq input1.tsv]====
+f1	f2	f3	f4	f5
+1	ggg	UUU	101	15
+2	bbb	ZZZ	21	28
+3	ggg	CCC	5734	52
+4	ddd	ZZZ	65	602
+5	ßßß	SSS	 7	771
+6	sss	sss	17	15
+7	ssssss	sss	18	16
+8	àbc	P	1209	1234
+9	ÀBC		1367	1331
+10			e-e	1602
+11	0	X	1721	1703
+12	 	 	sp-sp	2020
+13	0.0	Z	1931	1956
+8	ÀBC	p	1209	1234
+14	 	 	sp-sp	2022
+17	0	Z	5734	602
+
+====[tsv-uniq --header input1.tsv]====
+f1	f2	f3	f4	f5
+1	ggg	UUU	101	15
+2	bbb	ZZZ	21	28
+3	ggg	CCC	5734	52
+4	ddd	ZZZ	65	602
+5	ßßß	SSS	 7	771
+6	sss	sss	17	15
+7	ssssss	sss	18	16
+8	àbc	P	1209	1234
+9	ÀBC		1367	1331
+10			e-e	1602
+11	0	X	1721	1703
+12	 	 	sp-sp	2020
+13	0.0	Z	1931	1956
+8	ÀBC	p	1209	1234
+14	 	 	sp-sp	2022
+17	0	Z	5734	602
+
+====[tsv-uniq -f 0 input1.tsv]====
+f1	f2	f3	f4	f5
+1	ggg	UUU	101	15
+2	bbb	ZZZ	21	28
+3	ggg	CCC	5734	52
+4	ddd	ZZZ	65	602
+5	ßßß	SSS	 7	771
+6	sss	sss	17	15
+7	ssssss	sss	18	16
+8	àbc	P	1209	1234
+9	ÀBC		1367	1331
+10			e-e	1602
+11	0	X	1721	1703
+12	 	 	sp-sp	2020
+13	0.0	Z	1931	1956
+8	ÀBC	p	1209	1234
+14	 	 	sp-sp	2022
+17	0	Z	5734	602
+
+====[tsv-uniq --header -f 0 input1.tsv]====
+f1	f2	f3	f4	f5
+1	ggg	UUU	101	15
+2	bbb	ZZZ	21	28
+3	ggg	CCC	5734	52
+4	ddd	ZZZ	65	602
+5	ßßß	SSS	 7	771
+6	sss	sss	17	15
+7	ssssss	sss	18	16
+8	àbc	P	1209	1234
+9	ÀBC		1367	1331
+10			e-e	1602
+11	0	X	1721	1703
+12	 	 	sp-sp	2020
+13	0.0	Z	1931	1956
+8	ÀBC	p	1209	1234
+14	 	 	sp-sp	2022
+17	0	Z	5734	602
+
+====[tsv-uniq --header -f 1,2,3,4,5 input1.tsv]====
+f1	f2	f3	f4	f5
+1	ggg	UUU	101	15
+2	bbb	ZZZ	21	28
+3	ggg	CCC	5734	52
+4	ddd	ZZZ	65	602
+5	ßßß	SSS	 7	771
+6	sss	sss	17	15
+7	ssssss	sss	18	16
+8	àbc	P	1209	1234
+9	ÀBC		1367	1331
+10			e-e	1602
+11	0	X	1721	1703
+12	 	 	sp-sp	2020
+13	0.0	Z	1931	1956
+8	ÀBC	p	1209	1234
+14	 	 	sp-sp	2022
+17	0	Z	5734	602
+
+====[tsv-uniq --header --ignore-case input1.tsv]====
+f1	f2	f3	f4	f5
+1	ggg	UUU	101	15
+2	bbb	ZZZ	21	28
+3	ggg	CCC	5734	52
+4	ddd	ZZZ	65	602
+5	ßßß	SSS	 7	771
+6	sss	sss	17	15
+7	ssssss	sss	18	16
+8	àbc	P	1209	1234
+9	ÀBC		1367	1331
+10			e-e	1602
+11	0	X	1721	1703
+12	 	 	sp-sp	2020
+13	0.0	Z	1931	1956
+14	 	 	sp-sp	2022
+17	0	Z	5734	602
+
+====[tsv-uniq --ignore-case --equiv input1.tsv]====
+f1	f2	f3	f4	f5	1
+1	ggg	UUU	101	15	2
+2	bbb	ZZZ	21	28	3
+3	ggg	CCC	5734	52	4
+4	ddd	ZZZ	65	602	5
+5	ßßß	SSS	 7	771	6
+6	sss	sss	17	15	7
+7	ssssss	sss	18	16	8
+8	àbc	P	1209	1234	9
+9	ÀBC		1367	1331	10
+10			e-e	1602	11
+11	0	X	1721	1703	12
+9	ÀBC		1367	1331	10
+12	 	 	sp-sp	2020	13
+13	0.0	Z	1931	1956	14
+8	ÀBC	p	1209	1234	9
+14	 	 	sp-sp	2022	15
+3	ggg	CCC	5734	52	4
+9	ÀBC		1367	1331	10
+17	0	Z	5734	602	16
+
+====[tsv-uniq --header --equiv --ignore-case input1.tsv]====
+f1	f2	f3	f4	f5	equiv_id
+1	ggg	UUU	101	15	1
+2	bbb	ZZZ	21	28	2
+3	ggg	CCC	5734	52	3
+4	ddd	ZZZ	65	602	4
+5	ßßß	SSS	 7	771	5
+6	sss	sss	17	15	6
+7	ssssss	sss	18	16	7
+8	àbc	P	1209	1234	8
+9	ÀBC		1367	1331	9
+10			e-e	1602	10
+11	0	X	1721	1703	11
+9	ÀBC		1367	1331	9
+12	 	 	sp-sp	2020	12
+13	0.0	Z	1931	1956	13
+8	ÀBC	p	1209	1234	8
+14	 	 	sp-sp	2022	14
+3	ggg	CCC	5734	52	3
+9	ÀBC		1367	1331	9
+17	0	Z	5734	602	15
+
+====[tsv-uniq --header --equiv --equiv-header id --ignore-case input1.tsv]====
+f1	f2	f3	f4	f5	id
+1	ggg	UUU	101	15	1
+2	bbb	ZZZ	21	28	2
+3	ggg	CCC	5734	52	3
+4	ddd	ZZZ	65	602	4
+5	ßßß	SSS	 7	771	5
+6	sss	sss	17	15	6
+7	ssssss	sss	18	16	7
+8	àbc	P	1209	1234	8
+9	ÀBC		1367	1331	9
+10			e-e	1602	10
+11	0	X	1721	1703	11
+9	ÀBC		1367	1331	9
+12	 	 	sp-sp	2020	12
+13	0.0	Z	1931	1956	13
+8	ÀBC	p	1209	1234	8
+14	 	 	sp-sp	2022	14
+3	ggg	CCC	5734	52	3
+9	ÀBC		1367	1331	9
+17	0	Z	5734	602	15
+
+====Individual keys===
+
+====[tsv-uniq input1.tsv --fields 1]====
+f1	f2	f3	f4	f5
+1	ggg	UUU	101	15
+2	bbb	ZZZ	21	28
+3	ggg	CCC	5734	52
+4	ddd	ZZZ	65	602
+5	ßßß	SSS	 7	771
+6	sss	sss	17	15
+7	ssssss	sss	18	16
+8	àbc	P	1209	1234
+9	ÀBC		1367	1331
+10			e-e	1602
+11	0	X	1721	1703
+12	 	 	sp-sp	2020
+13	0.0	Z	1931	1956
+14	 	 	sp-sp	2022
+17	0	Z	5734	602
+
+====[tsv-uniq input1.tsv --header -f 2]====
+f1	f2	f3	f4	f5
+1	ggg	UUU	101	15
+2	bbb	ZZZ	21	28
+4	ddd	ZZZ	65	602
+5	ßßß	SSS	 7	771
+6	sss	sss	17	15
+7	ssssss	sss	18	16
+8	àbc	P	1209	1234
+9	ÀBC		1367	1331
+10			e-e	1602
+11	0	X	1721	1703
+12	 	 	sp-sp	2020
+13	0.0	Z	1931	1956
+
+====[tsv-uniq input1.tsv --header -f 3,4]====
+f1	f2	f3	f4	f5
+1	ggg	UUU	101	15
+2	bbb	ZZZ	21	28
+3	ggg	CCC	5734	52
+4	ddd	ZZZ	65	602
+5	ßßß	SSS	 7	771
+6	sss	sss	17	15
+7	ssssss	sss	18	16
+8	àbc	P	1209	1234
+9	ÀBC		1367	1331
+10			e-e	1602
+11	0	X	1721	1703
+12	 	 	sp-sp	2020
+13	0.0	Z	1931	1956
+8	ÀBC	p	1209	1234
+17	0	Z	5734	602
+
+====[tsv-uniq input1.tsv --header -f 4,3]====
+f1	f2	f3	f4	f5
+1	ggg	UUU	101	15
+2	bbb	ZZZ	21	28
+3	ggg	CCC	5734	52
+4	ddd	ZZZ	65	602
+5	ßßß	SSS	 7	771
+6	sss	sss	17	15
+7	ssssss	sss	18	16
+8	àbc	P	1209	1234
+9	ÀBC		1367	1331
+10			e-e	1602
+11	0	X	1721	1703
+12	 	 	sp-sp	2020
+13	0.0	Z	1931	1956
+8	ÀBC	p	1209	1234
+17	0	Z	5734	602
+
+====[tsv-uniq input1.tsv --header -f 3,4 --ignore-case]====
+f1	f2	f3	f4	f5
+1	ggg	UUU	101	15
+2	bbb	ZZZ	21	28
+3	ggg	CCC	5734	52
+4	ddd	ZZZ	65	602
+5	ßßß	SSS	 7	771
+6	sss	sss	17	15
+7	ssssss	sss	18	16
+8	àbc	P	1209	1234
+9	ÀBC		1367	1331
+10			e-e	1602
+11	0	X	1721	1703
+12	 	 	sp-sp	2020
+13	0.0	Z	1931	1956
+17	0	Z	5734	602
+
+====[tsv-uniq input1.tsv --header -f 5]====
+f1	f2	f3	f4	f5
+1	ggg	UUU	101	15
+2	bbb	ZZZ	21	28
+3	ggg	CCC	5734	52
+4	ddd	ZZZ	65	602
+5	ßßß	SSS	 7	771
+7	ssssss	sss	18	16
+8	àbc	P	1209	1234
+9	ÀBC		1367	1331
+10			e-e	1602
+11	0	X	1721	1703
+12	 	 	sp-sp	2020
+13	0.0	Z	1931	1956
+14	 	 	sp-sp	2022
+
+====[tsv-uniq input1.tsv --header -f 3,4 --equiv --ignore-case]====
+f1	f2	f3	f4	f5	equiv_id
+1	ggg	UUU	101	15	1
+2	bbb	ZZZ	21	28	2
+3	ggg	CCC	5734	52	3
+4	ddd	ZZZ	65	602	4
+5	ßßß	SSS	 7	771	5
+6	sss	sss	17	15	6
+7	ssssss	sss	18	16	7
+8	àbc	P	1209	1234	8
+9	ÀBC		1367	1331	9
+10			e-e	1602	10
+11	0	X	1721	1703	11
+9	ÀBC		1367	1331	9
+12	 	 	sp-sp	2020	12
+13	0.0	Z	1931	1956	13
+8	ÀBC	p	1209	1234	8
+14	 	 	sp-sp	2022	12
+3	ggg	CCC	5734	52	3
+9	ÀBC		1367	1331	9
+17	0	Z	5734	602	14
+
+====[tsv-uniq input1.tsv --header -f 3,4 --equiv --equiv-start 10 --ignore-case]====
+f1	f2	f3	f4	f5	equiv_id
+1	ggg	UUU	101	15	10
+2	bbb	ZZZ	21	28	11
+3	ggg	CCC	5734	52	12
+4	ddd	ZZZ	65	602	13
+5	ßßß	SSS	 7	771	14
+6	sss	sss	17	15	15
+7	ssssss	sss	18	16	16
+8	àbc	P	1209	1234	17
+9	ÀBC		1367	1331	18
+10			e-e	1602	19
+11	0	X	1721	1703	20
+9	ÀBC		1367	1331	18
+12	 	 	sp-sp	2020	21
+13	0.0	Z	1931	1956	22
+8	ÀBC	p	1209	1234	17
+14	 	 	sp-sp	2022	21
+3	ggg	CCC	5734	52	12
+9	ÀBC		1367	1331	18
+17	0	Z	5734	602	23
+
+====[tsv-uniq input1.tsv --header -f 3,4 --equiv --equiv-start 10 --equiv-header id --ignore-case]====
+f1	f2	f3	f4	f5	id
+1	ggg	UUU	101	15	10
+2	bbb	ZZZ	21	28	11
+3	ggg	CCC	5734	52	12
+4	ddd	ZZZ	65	602	13
+5	ßßß	SSS	 7	771	14
+6	sss	sss	17	15	15
+7	ssssss	sss	18	16	16
+8	àbc	P	1209	1234	17
+9	ÀBC		1367	1331	18
+10			e-e	1602	19
+11	0	X	1721	1703	20
+9	ÀBC		1367	1331	18
+12	 	 	sp-sp	2020	21
+13	0.0	Z	1931	1956	22
+8	ÀBC	p	1209	1234	17
+14	 	 	sp-sp	2022	21
+3	ggg	CCC	5734	52	12
+9	ÀBC		1367	1331	18
+17	0	Z	5734	602	23
+
+====Alternate delimiter tests===
+
+====[tsv-uniq input_delim_underscore.tsv --delimiter _ --fields 1]====
+f1_f2_f3_f4_f5
+1_ggg_UUU_101_15
+2_bbb_ZZZ_21_28
+3_ggg_CCC_5734_52
+4_ddd_ZZZ_65_602
+5_ßßß_SSS_ 7_771
+6_sss_sss_17_15
+7_ssssss_sss_18_16
+8_àbc_P_1209_1234
+9_ÀBC__1367_1331
+10___e-e_1602
+11_0_X_1721_1703
+12_ _ _sp-sp_2020
+13_0.0_Z_1931_1956
+14_ _ _sp-sp_2022
+17_0_Z_5734_602
+
+====[tsv-uniq input_delim_underscore.tsv --delimiter _ --header -f 2]====
+f1_f2_f3_f4_f5
+1_ggg_UUU_101_15
+2_bbb_ZZZ_21_28
+4_ddd_ZZZ_65_602
+5_ßßß_SSS_ 7_771
+6_sss_sss_17_15
+7_ssssss_sss_18_16
+8_àbc_P_1209_1234
+9_ÀBC__1367_1331
+10___e-e_1602
+11_0_X_1721_1703
+12_ _ _sp-sp_2020
+13_0.0_Z_1931_1956
+
+====[tsv-uniq input_delim_underscore.tsv -d _ --header -f 3,4]====
+f1_f2_f3_f4_f5
+1_ggg_UUU_101_15
+2_bbb_ZZZ_21_28
+3_ggg_CCC_5734_52
+4_ddd_ZZZ_65_602
+5_ßßß_SSS_ 7_771
+6_sss_sss_17_15
+7_ssssss_sss_18_16
+8_àbc_P_1209_1234
+9_ÀBC__1367_1331
+10___e-e_1602
+11_0_X_1721_1703
+12_ _ _sp-sp_2020
+13_0.0_Z_1931_1956
+8_ÀBC_p_1209_1234
+17_0_Z_5734_602
+
+====[tsv-uniq input_delim_underscore.tsv -d _ --header -f 3,4 --equiv --ignore-case]====
+f1_f2_f3_f4_f5_equiv_id
+1_ggg_UUU_101_15_1
+2_bbb_ZZZ_21_28_2
+3_ggg_CCC_5734_52_3
+4_ddd_ZZZ_65_602_4
+5_ßßß_SSS_ 7_771_5
+6_sss_sss_17_15_6
+7_ssssss_sss_18_16_7
+8_àbc_P_1209_1234_8
+9_ÀBC__1367_1331_9
+10___e-e_1602_10
+11_0_X_1721_1703_11
+9_ÀBC__1367_1331_9
+12_ _ _sp-sp_2020_12
+13_0.0_Z_1931_1956_13
+8_ÀBC_p_1209_1234_8
+14_ _ _sp-sp_2022_12
+3_ggg_CCC_5734_52_3
+9_ÀBC__1367_1331_9
+17_0_Z_5734_602_14
+
+====[tsv-uniq input_delim_underscore.tsv -d _ --header -f 3,4 --equiv --equiv-start 10 --equiv-header id --ignore-case]====
+f1_f2_f3_f4_f5_id
+1_ggg_UUU_101_15_10
+2_bbb_ZZZ_21_28_11
+3_ggg_CCC_5734_52_12
+4_ddd_ZZZ_65_602_13
+5_ßßß_SSS_ 7_771_14
+6_sss_sss_17_15_15
+7_ssssss_sss_18_16_16
+8_àbc_P_1209_1234_17
+9_ÀBC__1367_1331_18
+10___e-e_1602_19
+11_0_X_1721_1703_20
+9_ÀBC__1367_1331_18
+12_ _ _sp-sp_2020_21
+13_0.0_Z_1931_1956_22
+8_ÀBC_p_1209_1234_17
+14_ _ _sp-sp_2022_21
+3_ggg_CCC_5734_52_12
+9_ÀBC__1367_1331_18
+17_0_Z_5734_602_23
+
+====Multi-file and standard input tests===
+
+====[tsv-uniq input1.tsv input2.tsv]====
+f1	f2	f3	f4	f5
+1	ggg	UUU	101	15
+2	bbb	ZZZ	21	28
+3	ggg	CCC	5734	52
+4	ddd	ZZZ	65	602
+5	ßßß	SSS	 7	771
+6	sss	sss	17	15
+7	ssssss	sss	18	16
+8	àbc	P	1209	1234
+9	ÀBC		1367	1331
+10			e-e	1602
+11	0	X	1721	1703
+12	 	 	sp-sp	2020
+13	0.0	Z	1931	1956
+8	ÀBC	p	1209	1234
+14	 	 	sp-sp	2022
+17	0	Z	5734	602
+5	ßßß	SSSa	 7	771
+17	8	str	9997	8886
+5	ßßßz	SSS	 7	771
+16	pqr	uvw	9998	8887
+5	ßßß	SSS	 76	771
+15	7	xyz	9999	8888
+
+====[tsv-uniq --header -f 3,4 input1.tsv input2.tsv]====
+f1	f2	f3	f4	f5
+1	ggg	UUU	101	15
+2	bbb	ZZZ	21	28
+3	ggg	CCC	5734	52
+4	ddd	ZZZ	65	602
+5	ßßß	SSS	 7	771
+6	sss	sss	17	15
+7	ssssss	sss	18	16
+8	àbc	P	1209	1234
+9	ÀBC		1367	1331
+10			e-e	1602
+11	0	X	1721	1703
+12	 	 	sp-sp	2020
+13	0.0	Z	1931	1956
+8	ÀBC	p	1209	1234
+17	0	Z	5734	602
+5	ßßß	SSSa	 7	771
+17	8	str	9997	8886
+16	pqr	uvw	9998	8887
+5	ßßß	SSS	 76	771
+15	7	xyz	9999	8888
+
+====[cat input1.tsv input2.tsv | tsv-uniq]====
+f1	f2	f3	f4	f5
+1	ggg	UUU	101	15
+2	bbb	ZZZ	21	28
+3	ggg	CCC	5734	52
+4	ddd	ZZZ	65	602
+5	ßßß	SSS	 7	771
+6	sss	sss	17	15
+7	ssssss	sss	18	16
+8	àbc	P	1209	1234
+9	ÀBC		1367	1331
+10			e-e	1602
+11	0	X	1721	1703
+12	 	 	sp-sp	2020
+13	0.0	Z	1931	1956
+8	ÀBC	p	1209	1234
+14	 	 	sp-sp	2022
+17	0	Z	5734	602
+5	ßßß	SSSa	 7	771
+17	8	str	9997	8886
+5	ßßßz	SSS	 7	771
+16	pqr	uvw	9998	8887
+5	ßßß	SSS	 76	771
+15	7	xyz	9999	8888
+
+====[cat input1.tsv | tsv-uniq --header -f 3,4 -- - input2.tsv]====
+f1	f2	f3	f4	f5
+1	ggg	UUU	101	15
+2	bbb	ZZZ	21	28
+3	ggg	CCC	5734	52
+4	ddd	ZZZ	65	602
+5	ßßß	SSS	 7	771
+6	sss	sss	17	15
+7	ssssss	sss	18	16
+8	àbc	P	1209	1234
+9	ÀBC		1367	1331
+10			e-e	1602
+11	0	X	1721	1703
+12	 	 	sp-sp	2020
+13	0.0	Z	1931	1956
+8	ÀBC	p	1209	1234
+17	0	Z	5734	602
+5	ßßß	SSSa	 7	771
+17	8	str	9997	8886
+16	pqr	uvw	9998	8887
+5	ßßß	SSS	 76	771
+15	7	xyz	9999	8888

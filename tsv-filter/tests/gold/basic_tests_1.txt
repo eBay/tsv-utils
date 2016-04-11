@@ -1,0 +1,1139 @@
+Basic tests set 1
+-----------------
+
+====Numeric tests===
+
+====[tsv-filter --header --eq 2:1 input1.tsv]====
+F1	F2	F3	F4
+1	1.0	a	A
+
+====[tsv-filter --header --eq 2:1. input1.tsv]====
+F1	F2	F3	F4
+1	1.0	a	A
+
+====[tsv-filter --header --eq 2:1.0 input1.tsv]====
+F1	F2	F3	F4
+1	1.0	a	A
+
+====[tsv-filter --header --eq 2:2 input1.tsv]====
+F1	F2	F3	F4
+2	2.	b	B
+
+====[tsv-filter --header --eq 2:-100 input1.tsv]====
+F1	F2	F3	F4
+-0.0	-100.0	àßc	ÀSSC
+
+====[tsv-filter --header --eq 1:0 --eq 2:100 input1.tsv]====
+F1	F2	F3	F4
+0.	100.	àbc	ÀBC
+0.0	100.0	àßc	ÀssC
+
+====[tsv-filter --header --eq 1:0 --ne 2:100 input1.tsv]====
+F1	F2	F3	F4
+0	0.0	z	AzB
+-0.0	-100.0	àßc	ÀSSC
+
+====[tsv-filter --header --le 2:101 input1.tsv]====
+F1	F2	F3	F4
+1	1.0	a	A
+2	2.	b	B
+10	10.1	abc	ABC
+100	100	abc	AbC
+0	0.0	z	AzB
+-1	-0.1	abc def	abc def
+-2	-2.0	ß	ss
+0.	100.	àbc	ÀBC
+0.0	100.0	àßc	ÀssC
+-0.0	-100.0	àßc	ÀSSC
+100	100		AbC
+100	100	abc	
+100	101		
+
+====[tsv-filter --header --lt 2:101 input1.tsv]====
+F1	F2	F3	F4
+1	1.0	a	A
+2	2.	b	B
+10	10.1	abc	ABC
+100	100	abc	AbC
+0	0.0	z	AzB
+-1	-0.1	abc def	abc def
+-2	-2.0	ß	ss
+0.	100.	àbc	ÀBC
+0.0	100.0	àßc	ÀssC
+-0.0	-100.0	àßc	ÀSSC
+100	100		AbC
+100	100	abc	
+
+====[tsv-filter --header --ge 2:101 input1.tsv]====
+F1	F2	F3	F4
+100	101		
+100	102	abc	AbC
+100	103	abc	AbC
+
+====[tsv-filter --header --gt 2:101 input1.tsv]====
+F1	F2	F3	F4
+100	102	abc	AbC
+100	103	abc	AbC
+
+====[tsv-filter --header --ne 2:101 input1.tsv]====
+F1	F2	F3	F4
+1	1.0	a	A
+2	2.	b	B
+10	10.1	abc	ABC
+100	100	abc	AbC
+0	0.0	z	AzB
+-1	-0.1	abc def	abc def
+-2	-2.0	ß	ss
+0.	100.	àbc	ÀBC
+0.0	100.0	àßc	ÀssC
+-0.0	-100.0	àßc	ÀSSC
+100	100		AbC
+100	100	abc	
+100	102	abc	AbC
+100	103	abc	AbC
+
+====Empty and blank field tests===
+
+====[tsv-filter --header --empty 3 input1.tsv]====
+F1	F2	F3	F4
+100	100		AbC
+100	101		
+
+====[tsv-filter --header --eq 1:100 --empty 3 input1.tsv]====
+F1	F2	F3	F4
+100	100		AbC
+100	101		
+
+====[tsv-filter --header --eq 1:100 --empty 4 input1.tsv]====
+F1	F2	F3	F4
+100	100	abc	
+100	101		
+
+====[tsv-filter --header --eq 1:100 --not-empty 3 input1.tsv]====
+F1	F2	F3	F4
+100	100	abc	AbC
+100	100	abc	
+100	102	abc	AbC
+100	103	abc	AbC
+
+====[tsv-filter --header --eq 1:100 --not-empty 4 input1.tsv]====
+F1	F2	F3	F4
+100	100	abc	AbC
+100	100		AbC
+100	102	abc	AbC
+100	103	abc	AbC
+
+====[tsv-filter --header --empty 3 input2.tsv]====
+F1	F2	F3	F4
+1000	1000.0		3 empty
+
+====[tsv-filter --header --not-empty 3 input2.tsv]====
+F1	F2	F3	F4
+1000	1000.0	 	3 1-space
+1000	1000.001	  	3 2-spaces
+1000	1001	abc	3 no space
+1000	999.999	 abc	3 space prefix
+1000	999	abc 	3 space suffix 
+1000	999.9999	 a 	3 space prefix&suffix 
+999.999	1000	x	x
+999.999	1000.999	x	x
+1000	1001.1	x	x
+-999.99	-1000	x	x
+-999.98	-1000	x	x
+-999.99	1000	x	x
+999.99	-1000	x	x
+
+====[tsv-filter --header --blank 3 input2.tsv]====
+F1	F2	F3	F4
+1000	1000.0		3 empty
+1000	1000.0	 	3 1-space
+1000	1000.001	  	3 2-spaces
+
+====[tsv-filter --header --not-blank 3 input2.tsv]====
+F1	F2	F3	F4
+1000	1001	abc	3 no space
+1000	999.999	 abc	3 space prefix
+1000	999	abc 	3 space suffix 
+1000	999.9999	 a 	3 space prefix&suffix 
+999.999	1000	x	x
+999.999	1000.999	x	x
+1000	1001.1	x	x
+-999.99	-1000	x	x
+-999.98	-1000	x	x
+-999.99	1000	x	x
+999.99	-1000	x	x
+
+====[tsv-filter --not-blank 1 input_onefield.txt]====
+no header
+no real fields, just some text
+abc def
+abc def
+abc def ghi
+previous line empty
+previous line empty, 2-back 1 space, 3-back 2 spaces
+previous line empty, 2-back 1 space, 3-back 2 spaces
+last line
+
+====[tsv-filter --not-empty 1 input_onefield.txt]====
+no header
+no real fields, just some text
+abc def
+abc def
+abc def ghi
+previous line empty
+  
+ 
+previous line empty, 2-back 1 space, 3-back 2 spaces
+  
+ 
+previous line empty, 2-back 1 space, 3-back 2 spaces
+last line
+
+====[tsv-filter --blank 1 input_onefield.txt]====
+
+  
+ 
+
+  
+ 
+
+
+
+====[tsv-filter --empty 1 input_onefield.txt]====
+
+
+
+
+
+====String tests===
+
+====[tsv-filter --header --str-eq 3:a input1.tsv]====
+F1	F2	F3	F4
+1	1.0	a	A
+
+====[tsv-filter --header --str-eq 3:b input1.tsv]====
+F1	F2	F3	F4
+2	2.	b	B
+
+====[tsv-filter --header --str-eq 3:abc input1.tsv]====
+F1	F2	F3	F4
+10	10.1	abc	ABC
+100	100	abc	AbC
+100	100	abc	
+100	102	abc	AbC
+100	103	abc	AbC
+
+====[tsv-filter --header --str-eq 4:ABC input1.tsv]====
+F1	F2	F3	F4
+10	10.1	abc	ABC
+
+====[tsv-filter --header --str-eq 3:ß input1.tsv]====
+F1	F2	F3	F4
+-2	-2.0	ß	ss
+
+====[tsv-filter --header --str-eq 3:àßc input1.tsv]====
+F1	F2	F3	F4
+0.0	100.0	àßc	ÀssC
+-0.0	-100.0	àßc	ÀSSC
+
+====[tsv-filter --header --str-ne 3:b input1.tsv]====
+F1	F2	F3	F4
+1	1.0	a	A
+10	10.1	abc	ABC
+100	100	abc	AbC
+0	0.0	z	AzB
+-1	-0.1	abc def	abc def
+-2	-2.0	ß	ss
+0.	100.	àbc	ÀBC
+0.0	100.0	àßc	ÀssC
+-0.0	-100.0	àßc	ÀSSC
+100	100		AbC
+100	100	abc	
+100	101		
+100	102	abc	AbC
+100	103	abc	AbC
+
+====[tsv-filter --header --str-le 3:b input1.tsv]====
+F1	F2	F3	F4
+1	1.0	a	A
+2	2.	b	B
+10	10.1	abc	ABC
+100	100	abc	AbC
+-1	-0.1	abc def	abc def
+100	100		AbC
+100	100	abc	
+100	101		
+100	102	abc	AbC
+100	103	abc	AbC
+
+====[tsv-filter --header --str-lt 3:b input1.tsv]====
+F1	F2	F3	F4
+1	1.0	a	A
+10	10.1	abc	ABC
+100	100	abc	AbC
+-1	-0.1	abc def	abc def
+100	100		AbC
+100	100	abc	
+100	101		
+100	102	abc	AbC
+100	103	abc	AbC
+
+====[tsv-filter --header --str-ge 3:b input1.tsv]====
+F1	F2	F3	F4
+2	2.	b	B
+0	0.0	z	AzB
+-2	-2.0	ß	ss
+0.	100.	àbc	ÀBC
+0.0	100.0	àßc	ÀssC
+-0.0	-100.0	àßc	ÀSSC
+
+====[tsv-filter --header --str-gt 3:b input1.tsv]====
+F1	F2	F3	F4
+0	0.0	z	AzB
+-2	-2.0	ß	ss
+0.	100.	àbc	ÀBC
+0.0	100.0	àßc	ÀssC
+-0.0	-100.0	àßc	ÀSSC
+
+====[tsv-filter --header --str-in-fld 3:b input1.tsv]====
+F1	F2	F3	F4
+2	2.	b	B
+10	10.1	abc	ABC
+100	100	abc	AbC
+-1	-0.1	abc def	abc def
+0.	100.	àbc	ÀBC
+100	100	abc	
+100	102	abc	AbC
+100	103	abc	AbC
+
+====[tsv-filter --header --str-in-fld 3:b --str-in-fld 4:b input1.tsv]====
+F1	F2	F3	F4
+100	100	abc	AbC
+-1	-0.1	abc def	abc def
+100	102	abc	AbC
+100	103	abc	AbC
+
+====[tsv-filter --header --istr-eq 4:ABC input1.tsv]====
+F1	F2	F3	F4
+10	10.1	abc	ABC
+100	100	abc	AbC
+100	100		AbC
+100	102	abc	AbC
+100	103	abc	AbC
+
+====[tsv-filter --header --istr-eq 4:aBc input1.tsv]====
+F1	F2	F3	F4
+10	10.1	abc	ABC
+100	100	abc	AbC
+100	100		AbC
+100	102	abc	AbC
+100	103	abc	AbC
+
+====[tsv-filter --header --istr-eq 4:ÀSSC input1.tsv]====
+F1	F2	F3	F4
+0.0	100.0	àßc	ÀssC
+-0.0	-100.0	àßc	ÀSSC
+
+====[tsv-filter --header --istr-eq 4:àssc input1.tsv]====
+F1	F2	F3	F4
+0.0	100.0	àßc	ÀssC
+-0.0	-100.0	àßc	ÀSSC
+
+====[tsv-filter --header --istr-eq 3:ß input1.tsv]====
+F1	F2	F3	F4
+-2	-2.0	ß	ss
+
+====[tsv-filter --header --istr-eq 3:ẞ input1.tsv]====
+F1	F2	F3	F4
+-2	-2.0	ß	ss
+
+====[tsv-filter --header --istr-eq 3:ÀßC input1.tsv]====
+F1	F2	F3	F4
+0.0	100.0	àßc	ÀssC
+-0.0	-100.0	àßc	ÀSSC
+
+====[tsv-filter --header --istr-ne 4:ABC input1.tsv]====
+F1	F2	F3	F4
+1	1.0	a	A
+2	2.	b	B
+0	0.0	z	AzB
+-1	-0.1	abc def	abc def
+-2	-2.0	ß	ss
+0.	100.	àbc	ÀBC
+0.0	100.0	àßc	ÀssC
+-0.0	-100.0	àßc	ÀSSC
+100	100	abc	
+100	101		
+
+====[tsv-filter --header --istr-ne 4:ÀSSC input1.tsv]====
+F1	F2	F3	F4
+1	1.0	a	A
+2	2.	b	B
+10	10.1	abc	ABC
+100	100	abc	AbC
+0	0.0	z	AzB
+-1	-0.1	abc def	abc def
+-2	-2.0	ß	ss
+0.	100.	àbc	ÀBC
+100	100		AbC
+100	100	abc	
+100	101		
+100	102	abc	AbC
+100	103	abc	AbC
+
+====[tsv-filter --header --istr-in-fld 3:b input1.tsv]====
+F1	F2	F3	F4
+2	2.	b	B
+10	10.1	abc	ABC
+100	100	abc	AbC
+-1	-0.1	abc def	abc def
+0.	100.	àbc	ÀBC
+100	100	abc	
+100	102	abc	AbC
+100	103	abc	AbC
+
+====[tsv-filter --header --istr-in-fld 3:B input1.tsv]====
+F1	F2	F3	F4
+2	2.	b	B
+10	10.1	abc	ABC
+100	100	abc	AbC
+-1	-0.1	abc def	abc def
+0.	100.	àbc	ÀBC
+100	100	abc	
+100	102	abc	AbC
+100	103	abc	AbC
+
+====[tsv-filter --header --istr-in-fld 4:Sc input1.tsv]====
+F1	F2	F3	F4
+0.0	100.0	àßc	ÀssC
+-0.0	-100.0	àßc	ÀSSC
+
+====[tsv-filter --header --istr-in-fld 4:àsSC input1.tsv]====
+F1	F2	F3	F4
+0.0	100.0	àßc	ÀssC
+-0.0	-100.0	àßc	ÀSSC
+
+====[tsv-filter --header --istr-in-fld 3:ẞ input1.tsv]====
+F1	F2	F3	F4
+-2	-2.0	ß	ss
+0.0	100.0	àßc	ÀssC
+-0.0	-100.0	àßc	ÀSSC
+
+====[tsv-filter --header --istr-not-in-fld 3:B input1.tsv]====
+F1	F2	F3	F4
+1	1.0	a	A
+0	0.0	z	AzB
+-2	-2.0	ß	ss
+0.0	100.0	àßc	ÀssC
+-0.0	-100.0	àßc	ÀSSC
+100	100		AbC
+100	101		
+
+====[tsv-filter --header --istr-not-in-fld 4:Sc input1.tsv]====
+F1	F2	F3	F4
+1	1.0	a	A
+2	2.	b	B
+10	10.1	abc	ABC
+100	100	abc	AbC
+0	0.0	z	AzB
+-1	-0.1	abc def	abc def
+-2	-2.0	ß	ss
+0.	100.	àbc	ÀBC
+100	100		AbC
+100	100	abc	
+100	101		
+100	102	abc	AbC
+100	103	abc	AbC
+
+====[tsv-filter --header --istr-not-in-fld 4:àsSC input1.tsv]====
+F1	F2	F3	F4
+1	1.0	a	A
+2	2.	b	B
+10	10.1	abc	ABC
+100	100	abc	AbC
+0	0.0	z	AzB
+-1	-0.1	abc def	abc def
+-2	-2.0	ß	ss
+0.	100.	àbc	ÀBC
+100	100		AbC
+100	100	abc	
+100	101		
+100	102	abc	AbC
+100	103	abc	AbC
+
+====[tsv-filter --header --str-in-fld '3: ' input1.tsv]====
+F1	F2	F3	F4
+-1	-0.1	abc def	abc def
+
+====[tsv-filter --header --str-in-fld '4:abc def' input1.tsv]====
+F1	F2	F3	F4
+-1	-0.1	abc def	abc def
+
+====[tsv-filter --header --str-in-fld 3:ß input1.tsv]====
+F1	F2	F3	F4
+-2	-2.0	ß	ss
+0.0	100.0	àßc	ÀssC
+-0.0	-100.0	àßc	ÀSSC
+
+====[tsv-filter --header --str-not-in-fld 3:b input1.tsv]====
+F1	F2	F3	F4
+1	1.0	a	A
+0	0.0	z	AzB
+-2	-2.0	ß	ss
+0.0	100.0	àßc	ÀssC
+-0.0	-100.0	àßc	ÀSSC
+100	100		AbC
+100	101		
+
+====[tsv-filter --header --str-not-in-fld 3:b --str-not-in-fld 4:b input1.tsv]====
+F1	F2	F3	F4
+1	1.0	a	A
+0	0.0	z	AzB
+-2	-2.0	ß	ss
+0.0	100.0	àßc	ÀssC
+-0.0	-100.0	àßc	ÀSSC
+100	101		
+
+====[tsv-filter --header --str-not-in-fld '3: ' input1.tsv]====
+F1	F2	F3	F4
+1	1.0	a	A
+2	2.	b	B
+10	10.1	abc	ABC
+100	100	abc	AbC
+0	0.0	z	AzB
+-2	-2.0	ß	ss
+0.	100.	àbc	ÀBC
+0.0	100.0	àßc	ÀssC
+-0.0	-100.0	àßc	ÀSSC
+100	100		AbC
+100	100	abc	
+100	101		
+100	102	abc	AbC
+100	103	abc	AbC
+
+====[tsv-filter --header --str-not-in-fld '4:abc def' input1.tsv]====
+F1	F2	F3	F4
+1	1.0	a	A
+2	2.	b	B
+10	10.1	abc	ABC
+100	100	abc	AbC
+0	0.0	z	AzB
+-2	-2.0	ß	ss
+0.	100.	àbc	ÀBC
+0.0	100.0	àßc	ÀssC
+-0.0	-100.0	àßc	ÀSSC
+100	100		AbC
+100	100	abc	
+100	101		
+100	102	abc	AbC
+100	103	abc	AbC
+
+====[tsv-filter --header --str-not-in-fld 3:ß input1.tsv]====
+F1	F2	F3	F4
+1	1.0	a	A
+2	2.	b	B
+10	10.1	abc	ABC
+100	100	abc	AbC
+0	0.0	z	AzB
+-1	-0.1	abc def	abc def
+0.	100.	àbc	ÀBC
+100	100		AbC
+100	100	abc	
+100	101		
+100	102	abc	AbC
+100	103	abc	AbC
+
+====Regular expressions===
+
+====[tsv-filter --header --regex 4:Às*C input1.tsv]====
+F1	F2	F3	F4
+0.0	100.0	àßc	ÀssC
+
+====[tsv-filter --header --regex 4:^A[b|B]C$ input1.tsv]====
+F1	F2	F3	F4
+10	10.1	abc	ABC
+100	100	abc	AbC
+100	100		AbC
+100	102	abc	AbC
+100	103	abc	AbC
+
+====[tsv-filter --header --iregex 4:abc input1.tsv]====
+F1	F2	F3	F4
+10	10.1	abc	ABC
+100	100	abc	AbC
+-1	-0.1	abc def	abc def
+100	100		AbC
+100	102	abc	AbC
+100	103	abc	AbC
+
+====[tsv-filter --header --iregex 3:ß input1.tsv]====
+F1	F2	F3	F4
+-2	-2.0	ß	ss
+0.0	100.0	àßc	ÀssC
+-0.0	-100.0	àßc	ÀSSC
+
+====[tsv-filter --header --regex 3:ß input1.tsv]====
+F1	F2	F3	F4
+-2	-2.0	ß	ss
+0.0	100.0	àßc	ÀssC
+-0.0	-100.0	àßc	ÀSSC
+
+====[tsv-filter --header --iregex 4:ß input1.tsv]====
+F1	F2	F3	F4
+
+====[tsv-filter --header --regex 1:^\-[0-9]+ input1.tsv]====
+F1	F2	F3	F4
+-1	-0.1	abc def	abc def
+-2	-2.0	ß	ss
+-0.0	-100.0	àßc	ÀSSC
+
+====[tsv-filter --header --not-iregex 4:abc input1.tsv]====
+F1	F2	F3	F4
+1	1.0	a	A
+2	2.	b	B
+0	0.0	z	AzB
+-2	-2.0	ß	ss
+0.	100.	àbc	ÀBC
+0.0	100.0	àßc	ÀssC
+-0.0	-100.0	àßc	ÀSSC
+100	100	abc	
+100	101		
+
+====[tsv-filter --header --not-regex 4:z|d input1.tsv]====
+F1	F2	F3	F4
+1	1.0	a	A
+2	2.	b	B
+10	10.1	abc	ABC
+100	100	abc	AbC
+-2	-2.0	ß	ss
+0.	100.	àbc	ÀBC
+0.0	100.0	àßc	ÀssC
+-0.0	-100.0	àßc	ÀSSC
+100	100		AbC
+100	100	abc	
+100	101		
+100	102	abc	AbC
+100	103	abc	AbC
+
+====Field vs Field===
+
+====[tsv-filter --header --ff-eq 1:2 input1.tsv]====
+F1	F2	F3	F4
+1	1.0	a	A
+2	2.	b	B
+100	100	abc	AbC
+0	0.0	z	AzB
+-2	-2.0	ß	ss
+100	100		AbC
+100	100	abc	
+
+====[tsv-filter --header --ff-ne 1:2 input1.tsv]====
+F1	F2	F3	F4
+10	10.1	abc	ABC
+-1	-0.1	abc def	abc def
+0.	100.	àbc	ÀBC
+0.0	100.0	àßc	ÀssC
+-0.0	-100.0	àßc	ÀSSC
+100	101		
+100	102	abc	AbC
+100	103	abc	AbC
+
+====[tsv-filter --header --ff-le 1:2 input1.tsv]====
+F1	F2	F3	F4
+1	1.0	a	A
+2	2.	b	B
+10	10.1	abc	ABC
+100	100	abc	AbC
+0	0.0	z	AzB
+-1	-0.1	abc def	abc def
+-2	-2.0	ß	ss
+0.	100.	àbc	ÀBC
+0.0	100.0	àßc	ÀssC
+100	100		AbC
+100	100	abc	
+100	101		
+100	102	abc	AbC
+100	103	abc	AbC
+
+====[tsv-filter --header --ff-lt 1:2 input1.tsv]====
+F1	F2	F3	F4
+10	10.1	abc	ABC
+-1	-0.1	abc def	abc def
+0.	100.	àbc	ÀBC
+0.0	100.0	àßc	ÀssC
+100	101		
+100	102	abc	AbC
+100	103	abc	AbC
+
+====[tsv-filter --header --ff-ge 1:2 input1.tsv]====
+F1	F2	F3	F4
+1	1.0	a	A
+2	2.	b	B
+100	100	abc	AbC
+0	0.0	z	AzB
+-2	-2.0	ß	ss
+-0.0	-100.0	àßc	ÀSSC
+100	100		AbC
+100	100	abc	
+
+====[tsv-filter --header --ff-gt 1:2 input1.tsv]====
+F1	F2	F3	F4
+-0.0	-100.0	àßc	ÀSSC
+
+====[tsv-filter --header --ff-str-eq 3:4 input1.tsv]====
+F1	F2	F3	F4
+-1	-0.1	abc def	abc def
+100	101		
+
+====[tsv-filter --header --ff-str-ne 3:4 input1.tsv]====
+F1	F2	F3	F4
+1	1.0	a	A
+2	2.	b	B
+10	10.1	abc	ABC
+100	100	abc	AbC
+0	0.0	z	AzB
+-2	-2.0	ß	ss
+0.	100.	àbc	ÀBC
+0.0	100.0	àßc	ÀssC
+-0.0	-100.0	àßc	ÀSSC
+100	100		AbC
+100	100	abc	
+100	102	abc	AbC
+100	103	abc	AbC
+
+====[tsv-filter --header --ff-istr-eq 3:4 input1.tsv]====
+F1	F2	F3	F4
+1	1.0	a	A
+2	2.	b	B
+10	10.1	abc	ABC
+100	100	abc	AbC
+-1	-0.1	abc def	abc def
+0.	100.	àbc	ÀBC
+100	101		
+100	102	abc	AbC
+100	103	abc	AbC
+
+====[tsv-filter --header --ff-istr-ne 3:4 input1.tsv]====
+F1	F2	F3	F4
+0	0.0	z	AzB
+-2	-2.0	ß	ss
+0.0	100.0	àßc	ÀssC
+-0.0	-100.0	àßc	ÀSSC
+100	100		AbC
+100	100	abc	
+
+====[tsv-filter --header --ff-absdiff-le 1:2:0.01 input2.tsv]====
+F1	F2	F3	F4
+1000	1000.0		3 empty
+1000	1000.0	 	3 1-space
+1000	1000.001	  	3 2-spaces
+1000	999.999	 abc	3 space prefix
+1000	999.9999	 a 	3 space prefix&suffix 
+999.999	1000	x	x
+-999.99	-1000	x	x
+
+====[tsv-filter --header --ff-absdiff-le 2:1:0.01 input2.tsv]====
+F1	F2	F3	F4
+1000	1000.0		3 empty
+1000	1000.0	 	3 1-space
+1000	1000.001	  	3 2-spaces
+1000	999.999	 abc	3 space prefix
+1000	999.9999	 a 	3 space prefix&suffix 
+999.999	1000	x	x
+-999.99	-1000	x	x
+
+====[tsv-filter --header --ff-absdiff-le 1:2:0.02 input2.tsv]====
+F1	F2	F3	F4
+1000	1000.0		3 empty
+1000	1000.0	 	3 1-space
+1000	1000.001	  	3 2-spaces
+1000	999.999	 abc	3 space prefix
+1000	999.9999	 a 	3 space prefix&suffix 
+999.999	1000	x	x
+-999.99	-1000	x	x
+-999.98	-1000	x	x
+
+====[tsv-filter --header --ff-absdiff-gt 1:2:0.01 input2.tsv]====
+F1	F2	F3	F4
+1000	1001	abc	3 no space
+1000	999	abc 	3 space suffix 
+999.999	1000.999	x	x
+1000	1001.1	x	x
+-999.98	-1000	x	x
+-999.99	1000	x	x
+999.99	-1000	x	x
+
+====[tsv-filter --header --ff-absdiff-gt 1:2:0.02 input2.tsv]====
+F1	F2	F3	F4
+1000	1001	abc	3 no space
+1000	999	abc 	3 space suffix 
+999.999	1000.999	x	x
+1000	1001.1	x	x
+-999.99	1000	x	x
+999.99	-1000	x	x
+
+====[tsv-filter --header --ff-reldiff-le 1:2:1e-5 input2.tsv]====
+F1	F2	F3	F4
+1000	1000.0		3 empty
+1000	1000.0	 	3 1-space
+1000	1000.001	  	3 2-spaces
+1000	999.999	 abc	3 space prefix
+1000	999.9999	 a 	3 space prefix&suffix 
+999.999	1000	x	x
+
+====[tsv-filter --header --ff-reldiff-le 1:2:1e-6 input2.tsv]====
+F1	F2	F3	F4
+1000	1000.0		3 empty
+1000	1000.0	 	3 1-space
+1000	1000.001	  	3 2-spaces
+1000	999.9999	 a 	3 space prefix&suffix 
+
+====[tsv-filter --header --ff-reldiff-le 1:2:1e-7 input2.tsv]====
+F1	F2	F3	F4
+1000	1000.0		3 empty
+1000	1000.0	 	3 1-space
+
+====[tsv-filter --header --ff-reldiff-gt 1:2:1e-5 input2.tsv]====
+F1	F2	F3	F4
+1000	1000.001	  	3 2-spaces
+1000	1001	abc	3 no space
+1000	999.999	 abc	3 space prefix
+1000	999	abc 	3 space suffix 
+1000	999.9999	 a 	3 space prefix&suffix 
+999.999	1000	x	x
+999.999	1000.999	x	x
+1000	1001.1	x	x
+-999.99	-1000	x	x
+-999.98	-1000	x	x
+-999.99	1000	x	x
+999.99	-1000	x	x
+
+====[tsv-filter --header --ff-reldiff-gt 1:2:1e-6 input2.tsv]====
+F1	F2	F3	F4
+1000	1000.001	  	3 2-spaces
+1000	1001	abc	3 no space
+1000	999.999	 abc	3 space prefix
+1000	999	abc 	3 space suffix 
+1000	999.9999	 a 	3 space prefix&suffix 
+999.999	1000	x	x
+999.999	1000.999	x	x
+1000	1001.1	x	x
+-999.99	-1000	x	x
+-999.98	-1000	x	x
+-999.99	1000	x	x
+999.99	-1000	x	x
+
+====[tsv-filter --header --ff-reldiff-gt 1:2:1e-7 input2.tsv]====
+F1	F2	F3	F4
+1000	1000.001	  	3 2-spaces
+1000	1001	abc	3 no space
+1000	999.999	 abc	3 space prefix
+1000	999	abc 	3 space suffix 
+1000	999.9999	 a 	3 space prefix&suffix 
+999.999	1000	x	x
+999.999	1000.999	x	x
+1000	1001.1	x	x
+-999.99	-1000	x	x
+-999.98	-1000	x	x
+-999.99	1000	x	x
+999.99	-1000	x	x
+
+====No header===
+
+====[tsv-filter --str-in-fld 2:2 input1.tsv]====
+F1	F2	F3	F4
+2	2.	b	B
+-2	-2.0	ß	ss
+100	102	abc	AbC
+
+====[tsv-filter --str-eq 3:a input1.tsv]====
+1	1.0	a	A
+
+====OR clause tests===
+
+====[tsv-filter --header --or --eq 1:0 --eq 2:101 --str-in-fld 4:def input1.tsv]====
+F1	F2	F3	F4
+0	0.0	z	AzB
+-1	-0.1	abc def	abc def
+0.	100.	àbc	ÀBC
+0.0	100.0	àßc	ÀssC
+-0.0	-100.0	àßc	ÀSSC
+100	101		
+
+====[tsv-filter --header --or --le 1:-0.5 --ge 2:101.5 input1.tsv]====
+F1	F2	F3	F4
+-1	-0.1	abc def	abc def
+-2	-2.0	ß	ss
+100	102	abc	AbC
+100	103	abc	AbC
+
+====Invert tests===
+
+====[tsv-filter --header --invert --ff-ne 1:2 input1.tsv]====
+F1	F2	F3	F4
+1	1.0	a	A
+2	2.	b	B
+100	100	abc	AbC
+0	0.0	z	AzB
+-2	-2.0	ß	ss
+100	100		AbC
+100	100	abc	
+
+====[tsv-filter --header --invert --eq 1:0 --eq 2:100 input1.tsv]====
+F1	F2	F3	F4
+1	1.0	a	A
+2	2.	b	B
+10	10.1	abc	ABC
+100	100	abc	AbC
+0	0.0	z	AzB
+-1	-0.1	abc def	abc def
+-2	-2.0	ß	ss
+-0.0	-100.0	àßc	ÀSSC
+100	100		AbC
+100	100	abc	
+100	101		
+100	102	abc	AbC
+100	103	abc	AbC
+
+====[tsv-filter --header --invert --or --eq 1:0 --eq 2:101 --str-in-fld 4:def input1.tsv]====
+F1	F2	F3	F4
+1	1.0	a	A
+2	2.	b	B
+10	10.1	abc	ABC
+100	100	abc	AbC
+-2	-2.0	ß	ss
+100	100		AbC
+100	100	abc	
+100	102	abc	AbC
+100	103	abc	AbC
+
+====[tsv-filter --header --invert --or --le 1:-0.5 --ge 2:101.5 input1.tsv]====
+F1	F2	F3	F4
+1	1.0	a	A
+2	2.	b	B
+10	10.1	abc	ABC
+100	100	abc	AbC
+0	0.0	z	AzB
+0.	100.	àbc	ÀBC
+0.0	100.0	àßc	ÀssC
+-0.0	-100.0	àßc	ÀSSC
+100	100		AbC
+100	100	abc	
+100	101		
+
+====Alternate delimiter===
+
+====[tsv-filter --header --delimiter | --eq 2:1 input2_pipe-sep.tsv]====
+F1|F2|F3|F4
+1|1.0|a|A
+
+====[tsv-filter --header --delimiter | --eq 2:-100 input2_pipe-sep.tsv]====
+F1|F2|F3|F4
+-0.0|-100.0|àßc|ÀSSC
+
+====[tsv-filter --header --delimiter | --eq 1:0 --eq 2:100 input2_pipe-sep.tsv]====
+F1|F2|F3|F4
+0.|100.|àbc|ÀBC
+0.0|100.0|àßc|ÀssC
+
+====[tsv-filter --header --delimiter | --empty 3 input2_pipe-sep.tsv]====
+F1|F2|F3|F4
+100|100||AbC
+100|101||
+
+====[tsv-filter --header --delimiter | --eq 1:100 --empty 3 input2_pipe-sep.tsv]====
+F1|F2|F3|F4
+100|100||AbC
+100|101||
+
+====[tsv-filter --header --delimiter | --eq 1:100 --empty 4 input2_pipe-sep.tsv]====
+F1|F2|F3|F4
+100|100|abc|
+100|101||
+
+====[tsv-filter --header --delimiter | --eq 1:100 --not-empty 4 input2_pipe-sep.tsv]====
+F1|F2|F3|F4
+100|100|abc|AbC
+100|100||AbC
+100|102|abc|AbC
+100|103|abc|AbC
+
+====[tsv-filter --header --delimiter | --gt 2:101 input2_pipe-sep.tsv]====
+F1|F2|F3|F4
+100|102|abc|AbC
+100|103|abc|AbC
+
+====[tsv-filter --header --delimiter | --ne 2:101 input2_pipe-sep.tsv]====
+F1|F2|F3|F4
+1|1.0|a|A
+2|2.|b|B
+10|10.1|abc|ABC
+100|100|abc|AbC
+0|0.0|z|AzB
+-1|-0.1|abc def|abc def
+-2|-2.0|ß|ss
+0.|100.|àbc|ÀBC
+0.0|100.0|àßc|ÀssC
+-0.0|-100.0|àßc|ÀSSC
+100|100||AbC
+100|100|abc|
+100|102|abc|AbC
+100|103|abc|AbC
+
+====[tsv-filter --header --delimiter | --str-eq 3:a input2_pipe-sep.tsv]====
+F1|F2|F3|F4
+1|1.0|a|A
+
+====[tsv-filter --header --delimiter | --str-eq 3:ß input2_pipe-sep.tsv]====
+F1|F2|F3|F4
+-2|-2.0|ß|ss
+
+====[tsv-filter --header --delimiter | --str-eq 3:àßc input2_pipe-sep.tsv]====
+F1|F2|F3|F4
+0.0|100.0|àßc|ÀssC
+-0.0|-100.0|àßc|ÀSSC
+
+====[tsv-filter --header --delimiter | --str-ne 3:b input2_pipe-sep.tsv]====
+F1|F2|F3|F4
+1|1.0|a|A
+10|10.1|abc|ABC
+100|100|abc|AbC
+0|0.0|z|AzB
+-1|-0.1|abc def|abc def
+-2|-2.0|ß|ss
+0.|100.|àbc|ÀBC
+0.0|100.0|àßc|ÀssC
+-0.0|-100.0|àßc|ÀSSC
+100|100||AbC
+100|100|abc|
+100|101||
+100|102|abc|AbC
+100|103|abc|AbC
+
+====[tsv-filter --header --delimiter | --str-lt 3:b input2_pipe-sep.tsv]====
+F1|F2|F3|F4
+1|1.0|a|A
+10|10.1|abc|ABC
+100|100|abc|AbC
+-1|-0.1|abc def|abc def
+100|100||AbC
+100|100|abc|
+100|101||
+100|102|abc|AbC
+100|103|abc|AbC
+
+====[tsv-filter --header --delimiter | --str-in-fld 3:b input2_pipe-sep.tsv]====
+F1|F2|F3|F4
+2|2.|b|B
+10|10.1|abc|ABC
+100|100|abc|AbC
+-1|-0.1|abc def|abc def
+0.|100.|àbc|ÀBC
+100|100|abc|
+100|102|abc|AbC
+100|103|abc|AbC
+
+====[tsv-filter --header --delimiter | --str-in-fld '3: ' input2_pipe-sep.tsv]====
+F1|F2|F3|F4
+-1|-0.1|abc def|abc def
+
+====[tsv-filter --header --delimiter | --str-in-fld '4:abc def' input2_pipe-sep.tsv]====
+F1|F2|F3|F4
+-1|-0.1|abc def|abc def
+
+====[tsv-filter --header --delimiter | --str-not-in-fld '3: ' input2_pipe-sep.tsv]====
+F1|F2|F3|F4
+1|1.0|a|A
+2|2.|b|B
+10|10.1|abc|ABC
+100|100|abc|AbC
+0|0.0|z|AzB
+-2|-2.0|ß|ss
+0.|100.|àbc|ÀBC
+0.0|100.0|àßc|ÀssC
+-0.0|-100.0|àßc|ÀSSC
+100|100||AbC
+100|100|abc|
+100|101||
+100|102|abc|AbC
+100|103|abc|AbC
+
+====[tsv-filter --header --delimiter | --ff-eq 1:2 input2_pipe-sep.tsv]====
+F1|F2|F3|F4
+1|1.0|a|A
+2|2.|b|B
+100|100|abc|AbC
+0|0.0|z|AzB
+-2|-2.0|ß|ss
+100|100||AbC
+100|100|abc|
+
+====[tsv-filter --header --delimiter | --ff-ne 1:2 input2_pipe-sep.tsv]====
+F1|F2|F3|F4
+10|10.1|abc|ABC
+-1|-0.1|abc def|abc def
+0.|100.|àbc|ÀBC
+0.0|100.0|àßc|ÀssC
+-0.0|-100.0|àßc|ÀSSC
+100|101||
+100|102|abc|AbC
+100|103|abc|AbC
+
+====[tsv-filter --header --delimiter | --ff-le 1:2 input2_pipe-sep.tsv]====
+F1|F2|F3|F4
+1|1.0|a|A
+2|2.|b|B
+10|10.1|abc|ABC
+100|100|abc|AbC
+0|0.0|z|AzB
+-1|-0.1|abc def|abc def
+-2|-2.0|ß|ss
+0.|100.|àbc|ÀBC
+0.0|100.0|àßc|ÀssC
+100|100||AbC
+100|100|abc|
+100|101||
+100|102|abc|AbC
+100|103|abc|AbC
+
+====[tsv-filter --header --delimiter | --ff-str-eq 3:4 input2_pipe-sep.tsv]====
+F1|F2|F3|F4
+-1|-0.1|abc def|abc def
+100|101||
+
+====[tsv-filter --header --delimiter | --ff-str-ne 3:4 input2_pipe-sep.tsv]====
+F1|F2|F3|F4
+1|1.0|a|A
+2|2.|b|B
+10|10.1|abc|ABC
+100|100|abc|AbC
+0|0.0|z|AzB
+-2|-2.0|ß|ss
+0.|100.|àbc|ÀBC
+0.0|100.0|àßc|ÀssC
+-0.0|-100.0|àßc|ÀSSC
+100|100||AbC
+100|100|abc|
+100|102|abc|AbC
+100|103|abc|AbC
+
+====Multi-file & stdin Tests===
+
+====[tsv-filter --header --ge 2:23 input_3x2.tsv input_emptyfile.tsv input_3x1.tsv input_3x0.tsv input_3x3.tsv]====
+f1	f2	f3
+3x2-r1	2001	3001
+3x2-r2	2002	3002
+3x1-r1	201	301
+3x3-r3	23	33
+
+====[cat input_3x2.tsv | tsv-filter --header --ge 2:23]====
+f1	f2	f3
+3x2-r1	2001	3001
+3x2-r2	2002	3002
+
+====[cat input_3x2.tsv | tsv-filter --header --ge 2:23 -- input_3x3.tsv - input_3x1.tsv]====
+f1	f2	f3
+3x3-r3	23	33
+3x2-r1	2001	3001
+3x2-r2	2002	3002
+3x1-r1	201	301

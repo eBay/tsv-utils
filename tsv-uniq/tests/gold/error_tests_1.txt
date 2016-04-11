@@ -1,0 +1,23 @@
+Error test set 1
+----------------
+
+====[tsv-uniq -f 1,0 input1.tsv]====
+Error processing command line arguments: Whole line as key (--f|field 0) cannot be combined with multiple fields.
+
+====[tsv-uniq -f 1,g input1.tsv]====
+Error processing command line arguments: Unexpected end of input when converting from type string to type ulong
+
+====[tsv-uniq -d abc -f 2 input1.tsv]====
+Error processing command line arguments: Unexpected 'b' when converting from type string to type char
+
+====[tsv-uniq -d ß -f 1 input1.tsv]====
+Error processing command line arguments: Invalid UTF-8 sequence (at index 1)
+
+====[tsv-uniq -f 2 --equiv-start 10 input1.tsv]====
+Error processing command line arguments: --equiv-start requires --e|equiv
+
+====[tsv-uniq -f 2 --equiv-header abc input1.tsv]====
+Error processing command line arguments: --equiv-header requires --e|equiv
+
+====[tsv-uniq -f 2,30 input1.tsv]====
+Error: Not enough fields in line. File: input1.tsv, Line: 1

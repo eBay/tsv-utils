@@ -1,0 +1,17 @@
+no header
+no real fields, just some text
+abc def
+abc def
+abc def ghi
+
+previous line empty
+  
+ 
+
+previous line empty, 2-back 1 space, 3-back 2 spaces
+  
+ 
+
+previous line empty, 2-back 1 space, 3-back 2 spaces
+
+last line

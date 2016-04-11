@@ -1,0 +1,31 @@
+Error test set 1
+----------------
+
+====[tsv-select input1.tsv]====
+Error processing command line arguments: Required option --f|fields was not supplied.
+
+====[tsv-select input1.tsv --rest last]====
+Error processing command line arguments: Required option --f|fields was not supplied.
+
+====[tsv-select input1.tsv --fields last]====
+Error processing command line arguments: Unexpected 'a' when converting from type string to type ulong
+
+====[tsv-select -f 0 input1.tsv]====
+Error processing command line arguments: Zero is not a valid field number (--f|fields).
+
+====[tsv-select input1.tsv -f 2 --rest elsewhere]====
+Error processing command line arguments: RestOptionVal does not have a member named 'elsewhere'
+
+====[tsv-select -f 1 nosuchfile.tsv]====
+Error: Cannot open file `nosuchfile.tsv' in mode `rb' (No such file or directory)
+
+====[tsv-select -f 1,4 input_3plus_fields.tsv]====
+Error: Not enough fields in line. File: input_3plus_fields.tsv,  Line: 3
+1	101
+2	5734
+
+====[tsv-select -d ß -f 1 input1.tsv]====
+Error processing command line arguments: Invalid UTF-8 sequence (at index 1)
+
+====[tsv-select -f 1 --nosuchparam input1.tsv]====
+Error processing command line arguments: Unrecognized option --nosuchparam
