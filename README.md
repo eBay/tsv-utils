@@ -31,6 +31,7 @@ A short description of each tool follows. There is more detailed reference info 
 * [tsv-select](#tsv-select)
 * [number-lines](#number-lines)
 * [Useful bash aliases](#useful-bash-aliases)
+* [Other toolkits](#other-toolkits)
 
 ### tsv-filter
 
@@ -94,6 +95,15 @@ If you using a bash shell, add the definitions below to `.bashrc` or another ini
 tsv-header () { head -n 1 $* | tr $'\t' '\n' | nl ; }
 tsv-sort () { sort -t $'\t' $* ; }
 ```
+
+### Other toolkits
+
+There are a number of toolkits with similar functionality. Here are a few:
+
+* [csvkit](https://github.com/wireservice/csvkit) - CSV tools, written in Python.
+* [csvtk](https://github.com/shenwei356/csvtk) - CSV tools, written in Go.
+* [Miller](https://github.com/johnkerl/miller) - CVS and tabular JSON tools, written in C.
+* [xsv](https://github.com/BurntSushi/xsv) - CSV tools, written in Rust.
 
 ## The code
 
