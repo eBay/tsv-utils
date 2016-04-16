@@ -65,6 +65,8 @@ Similar in spirit to the Unix `uniq` tool, `tsv-uniq` filters a dataset so there
 $ tsv-uniq -f 2,3 data.tsv
 ```
 
+`tsv-uniq` operates on the entire line when no fields are specified. This is a useful alternative to the traditional `sort -u` or `sort | uniq` paradigms for identifying unique lines in unsorted files, as it is often quite a bit faster.
+
 As with `tsv-join`, this uses an in-memory lookup table to record unique entries. This ultimately limits the data sizes that can be processed. The author has found that datasets with up to about 10 million unique entries work fine, but performance degrades after that.
 
 ### tsv-select
@@ -102,7 +104,8 @@ There are a number of toolkits with similar functionality. Here are a few:
 
 * [csvkit](https://github.com/wireservice/csvkit) - CSV tools, written in Python.
 * [csvtk](https://github.com/shenwei356/csvtk) - CSV tools, written in Go.
-* [Miller](https://github.com/johnkerl/miller) - CVS and tabular JSON tools, written in C.
+* [miller](https://github.com/johnkerl/miller) - CSV and JSON tools, written in C.
+* [tsvutils](https://github.com/brendano/tsvutils) - TSV tools, especially rich in format converters. Written in Python.
 * [xsv](https://github.com/BurntSushi/xsv) - CSV tools, written in Rust.
 
 ## The code
@@ -234,7 +237,7 @@ Tool                    | version        | time (seconds)
 tsv-filter (D)          | ldc 1.0        |   34.2
 mawk  (M. Brennan Awk)  | 1.3.3 Nov 1996 |   72.9
 gawk (GNU awk)          | 3.1.8          |  215.4
-perl                    | 5.14.2         | 1255.2
+tsv-filter (Perl)       | 5.14.2         | 1255.2
 
 ## Tool reference
 
@@ -286,7 +289,7 @@ Most tools handle the first line of files as a header when given the `--header` 
 
 #### Multiple files and standard input
 
-Tools can read from any number of files and from standard input. As per typical Unix behavior, a single dash represents standard input as part of a list of files. Terminate argument non-file arguments with a double dash (--) when using a single dash in this fashion. Example:
+Tools can read from any number of files and from standard input. As per typical Unix behavior, a single dash represents standard input when included in a list of files. Terminate non-file arguments with a double dash (--) when using a single dash in this fashion. Example:
 ```
 $ head -n 1000 file-c.tsv | tsv-filter --eq 2:1000 -- file-a.tsv file-b.tsv - > out.tsv
 ```
