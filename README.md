@@ -36,7 +36,7 @@ $ dub fetch tsv-utils-dlang
 $ dub run tsv-utils-dlang
 ```
 
-The `dub run` commands compiles all the tools. Use a command like `dub run -- --compiler=ldc2` to use a different compiler. The executables are written to a the DUB package repository. For example: `~/.dub/packages/tsv-utils-dlang-1.0.1/bin`. Add the executables to the PATH. As an alternative, you can clone the repository and run as follows:
+The `dub run` commands compiles all the tools. Use a command like `dub run tsv-utils-dlang -- --compiler=ldc2` to use a different compiler. The executables are written to a the DUB package repository. For example: `~/.dub/packages/tsv-utils-dlang-1.0.1/bin`. Add the executables to the PATH. As an alternative, you can clone the repository and run as follows:
 ```
 $ git clone https://github.com/eBay/tsv-utils-dlang.git
 $ dub add-local tsv-utils-dlang
