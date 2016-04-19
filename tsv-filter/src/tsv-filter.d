@@ -225,8 +225,8 @@ bool strNotInFld(const char[][] fields, size_t index, string val) { return !fiel
  */
 bool istrEQ(const char[][] fields, size_t index, dstring val) { return fields[index].asLowerCase.equal(val); }
 bool istrNE(const char[][] fields, size_t index, dstring val) { return !fields[index].asLowerCase.equal(val); }
-bool istrInFld(const char[][] fields, size_t index, dstring val) { return fields[index].toLower.canFind(val); }
-bool istrNotInFld(const char[][] fields, size_t index, dstring val) { return !fields[index].toLower.canFind(val); }
+bool istrInFld(const char[][] fields, size_t index, dstring val) { return fields[index].asLowerCase.canFind(val); }
+bool istrNotInFld(const char[][] fields, size_t index, dstring val) { return !fields[index].asLowerCase.canFind(val); }
 
 /* Note: Case-sensitivity is built into the regex value, so these regex predicates are
  * used for both case-sensitive and case-insensitive regex operators.
