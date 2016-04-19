@@ -32,11 +32,18 @@ The make setup was developed for Unix systems. If it doesn't work on your platfo
 
 If you are already a D user you likely use DUB, the D package manager. You can install and build using DUB as follows:
 ```
-$ dub fetch --local tsv-utils-dlang
+$ dub fetch tsv-utils-dlang
 $ dub run tsv-utils-dlang
 ```
 
-The `dub run` commands compiles all the tools. Use a command like `dub run -- compiler=ldc2` to use a different compiler. The executables are written to `tsv-utils-dlang/bin`. Add the executables to the PATH. It's not necessary to use the `--local` switch on the `dub fetch` command, this just makes it easier to access the binaries after the build is complete. See the [Building and makefile](#building-and-makefile) section for more information.
+The `dub run` commands compiles all the tools. Use a command like `dub run -- compiler=ldc2` to use a different compiler. The executables are written to a the DUB package repository. For example: `~/.dub/packages/tsv-utils-dlang-1.0.1/bin`. Add the executables to the PATH. As an alternative, you can clone the repository and run as follows:
+```
+$ git clone https://github.com/eBay/tsv-utils-dlang.git
+$ dub add-local tsv-utils-dlang
+$ dub run
+```
+
+See the [Building and makefile](#building-and-makefile) section for more information.
 
 ## The tools
 
