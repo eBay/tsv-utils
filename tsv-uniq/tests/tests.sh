@@ -79,7 +79,11 @@ echo "Error test set 1" > ${error_tests_1}
 echo "----------------" >> ${error_tests_1}
 
 runtest ${prog} "-f 1,0 input1.tsv" ${error_tests_1}
-runtest ${prog} "-f 1,g input1.tsv" ${error_tests_1}
+
+# Disable this test until Phobos 2.071 is available on all compilers
+# 2.071 changed the error message in a minor way.
+#runtest ${prog} "-f 1,g input1.tsv" ${error_tests_1}
+
 runtest ${prog} "-d abc -f 2 input1.tsv" ${error_tests_1}
 runtest ${prog} "-d ß -f 1 input1.tsv" ${error_tests_1}
 runtest ${prog} "-f 2 --equiv-start 10 input1.tsv" ${error_tests_1}

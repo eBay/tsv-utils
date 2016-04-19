@@ -7,9 +7,6 @@ Error processing command line arguments: Required option --f|fields was not supp
 ====[tsv-select input1.tsv --rest last]====
 Error processing command line arguments: Required option --f|fields was not supplied.
 
-====[tsv-select input1.tsv --fields last]====
-Error processing command line arguments: Unexpected 'a' when converting from type string to type ulong
-
 ====[tsv-select -f 0 input1.tsv]====
 Error processing command line arguments: Zero is not a valid field number (--f|fields).
 

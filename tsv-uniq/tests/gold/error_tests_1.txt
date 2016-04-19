@@ -4,9 +4,6 @@ Error test set 1
 ====[tsv-uniq -f 1,0 input1.tsv]====
 Error processing command line arguments: Whole line as key (--f|field 0) cannot be combined with multiple fields.
 
-====[tsv-uniq -f 1,g input1.tsv]====
-Error processing command line arguments: Unexpected end of input when converting from type string to type ulong
-
 ====[tsv-uniq -d abc -f 2 input1.tsv]====
 Error processing command line arguments: Unexpected 'b' when converting from type string to type char
 

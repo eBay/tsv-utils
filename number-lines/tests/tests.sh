@@ -72,7 +72,11 @@ echo "Error test set 1" > ${error_tests_1}
 echo "----------------" >> ${error_tests_1}
 
 runtest ${prog} "nosuchfile.txt" ${error_tests_1}
-runtest ${prog} "-n notanumber input1.txt" ${error_tests_1}
+
+# Disable this test until Phobos 2.071 is available on all compilers
+# 2.071 changed the error message in a minor way.
+#runtest ${prog} "-n notanumber input1.txt" ${error_tests_1}
+
 runtest ${prog} "-d ß input1.txt" ${error_tests_1}
 runtest ${prog} "--nosuchparam input1.txt" ${error_tests_1}
 

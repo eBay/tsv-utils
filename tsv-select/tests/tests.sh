@@ -119,7 +119,11 @@ echo "----------------" >> ${error_tests_1}
 
 runtest ${prog} "input1.tsv" ${error_tests_1}
 runtest ${prog} "input1.tsv --rest last" ${error_tests_1}
-runtest ${prog} "input1.tsv --fields last" ${error_tests_1}
+
+# Disable this test until Phobos 2.071 is available on all compilers
+# 2.071 changed the error message in a minor way.
+#runtest ${prog} "input1.tsv --fields last" ${error_tests_1}
+
 runtest ${prog} "-f 0 input1.tsv" ${error_tests_1}
 runtest ${prog} "input1.tsv -f 2 --rest elsewhere" ${error_tests_1}
 runtest ${prog} "-f 1 nosuchfile.tsv" ${error_tests_1}

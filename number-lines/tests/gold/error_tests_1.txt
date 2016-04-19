@@ -4,9 +4,6 @@ Error test set 1
 ====[number-lines nosuchfile.txt]====
 Error: Cannot open file `nosuchfile.txt' in mode `rb' (No such file or directory)
 
-====[number-lines -n notanumber input1.txt]====
-Error processing command line arguments: Unexpected 'o' when converting from type string to type long
-
 ====[number-lines -d ß input1.txt]====
 Error processing command line arguments: Invalid UTF-8 sequence (at index 1)
 
