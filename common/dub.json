@@ -1,0 +1,9 @@
+{
+    "name": "common",
+    "description": "Routines used by applications in the tsv-utils-dlang package.",
+    "homepage": "https://github.com/eBay/tsv-utils-dlang",
+    "authors": ["Jon Degenhardt"],
+    "copyright": "Copyright (c) 2015-2016, eBay Software Foundation",
+    "license": "BSL-1.0",
+    "targetType": "sourceLibrary"
+}

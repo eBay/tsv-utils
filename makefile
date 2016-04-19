@@ -1,12 +1,19 @@
-subdirs = common number-lines tsv-select tsv-filter tsv-join tsv-uniq
+appdirs = number-lines tsv-select tsv-filter tsv-join tsv-uniq
+subdirs = common $(appdirs)
 
 release: make_subdirs
 debug: make_subdirs
 clean: make_subdirs
 test: make_subdirs
+test-release: make_subdirs
+test-nobuild: make_appdirs
 
 .PHONY: make_subdirs $(subdirs)
 make_subdirs: $(subdirs)
+
+.PHONY: make_appdirs $(appdirs)
+make_appdirs: $(appdirs)
+
 $(subdirs):
 	@echo ''
 	@echo 'make -C $@ $(MAKEFLAGS) $(MAKECMDGOALS)'

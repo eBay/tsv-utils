@@ -29,3 +29,25 @@ test: $(app_debug)
 	else echo '---> $(app) command line tests failed.'; \
 	exit 1; \
 	fi
+
+.PHONY: test-release
+test-release: $(app_release)
+	-@if [ -d $(testsdir)/latest_release ]; then echo 'Deleting prior test files.';  rm $(testsdir)/latest_release/*; fi
+	@if [ ! -d $(testsdir)/latest_release ]; then mkdir $(testsdir)/latest_release; fi
+	cd $(testsdir) && ./tests.sh $(app_release) latest_release
+	@if diff -q $(testsdir)/latest_release $(testsdir)/gold ; \
+	then echo '---> $(app) command line tests passed.'; exit 0; \
+	else echo '---> $(app) command line tests failed.'; \
+	exit 1; \
+	fi
+
+.PHONY: test-nobuild
+test-nobuild:
+	-@if [ -d $(testsdir)/latest_release ]; then echo 'Deleting prior test files.';  rm $(testsdir)/latest_release/*; fi
+	@if [ ! -d $(testsdir)/latest_release ]; then mkdir $(testsdir)/latest_release; fi
+	cd $(testsdir) && ./tests.sh $(app_release) latest_release
+	@if diff -q $(testsdir)/latest_release $(testsdir)/gold ; \
+	then echo '---> $(app) command line tests passed.'; exit 0; \
+	else echo '---> $(app) command line tests failed.'; \
+	exit 1; \
+	fi

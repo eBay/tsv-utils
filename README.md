@@ -17,7 +17,26 @@ Information on the D programming language is available at: http://dlang.org/.
 
 Download a D compiler (http://dlang.org/download.html). These tools have been tested with the DMD and LDC compilers, on Mac OSX and Linux. Use DMD version 2.068 or later, LDC version 0.17.0 or later.
 
-Clone this repository, select a compiler, and run `make` from the top level directory of the repo. The compiler defaults to 'dmd', this can be changed using the make command line (e.g. `make DCOMPILER=ldc2`), or by editing the `makedefs.mk` file and setting the `DCOMPILER` variable. Executable programs will be written to a `bin` directory within the main directory. Place the binaries in the PATH. The make setup was developed for Unix systems. If it doesn't work on your platform, the build commands are simple and be run easily from a command line. See the BUILD_COMMANDS.md file.
+Clone this repository, select a compiler, and run `make` from the top level directory of the repo. Example:
+```
+$ git clone https://github.com/eBay/tsv-utils-dlang.git
+$ cd tsv-utils-dlang
+$ make
+```
+
+Executables are written to `tsv-utils-dlang/bin`, place this directory or the executables in the PATH. The compiler defaults to 'dmd', this can be changed on the make command line (e.g. `make DCOMPILER=ldc2`), or by editing the `makedefs.mk` file and setting the `DCOMPILER` variable. The LDC compiler is a common choice as it typically generates faster code than the DMD compiler.
+
+The make setup was developed for Unix systems. If it doesn't work on your platform, the build commands are simple and be run easily from a command line. See the BUILD_COMMANDS.md file.
+
+### Installing using DUB
+
+If you are already a D user you likely use DUB, the D package manager. You can install and build using DUB as follows:
+```
+$ dub fetch --local tsv-utils-dlang
+$ dub run tsv-utils-dlang
+```
+
+The `dub run` commands compiles all the tools. Use a command like `dub run -- compiler=ldc2` to use a different compiler. The executables are written to `tsv-utils-dlang/bin`. Add the executables to the PATH. It's not necessary to use the `--local` switch on the `dub fetch` command, this just makes it easier to access the binaries after the build is complete. See the [Building and makefile](#building-and-makefile) section for more information.
 
 ## The tools
 
@@ -152,14 +171,28 @@ A useful aspect of D is that is additional optimization can be made as the need 
 
 ### Building and makefile
 
-The make setup is very simplistic. It works reasonably in this case because the tools are small and have a very simple code structure, but it is not a setup that will scale to more complex programs. `make` can be run from the top level directory or from the individual tool directories. There are four commands:
+#### Make setup
+
+The makefile setup is very simplistic. It works reasonably in this case because the tools are small and have a very simple code structure, but it is not a setup that will scale to more complex programs. `make` can be run from the top level directory or from the individual tool directories. Available commands:
 
 * `make release` (default) - This builds the tools in release mode. Executables go in the bin directory.
 * `make debug` - Makes debug versions of the tools (with a `.dbg` extension).
-* `make test` - Makes debug versions of the tools and runs all unit tests.
 * `make clean` - Deletes executables and intermediate files.
+* `make test` - Makes debug versions of the tools and runs all tests.
+* `make test-release` - Makes release versions of the tools and runs all tests.
+* `make test-nobuild` - Runs tests against the current app builds. This is useful when using DUB to build.
 
 Builds can be customized by changing the settings in `makedefs.mk`. The most basic customization is the compiler choice, this controlled by the `DCOMPILER` variable.
+
+#### DUB package setup
+
+A parallel build setup was created using DUB packages. This was done to better align with the D ecosystem. However, at present DUB does not have first class support for multiple executables, and this setup pushes the boundaries of what works smoothly. That said, the setup appears to work well. One specific functionality not supported are the test capabilities. However, after building with DUB tests can be run using the makefile setup. Here's an example:
+```
+$ cd tsv-utils-dlang
+$ dub run
+$ dub test tsv-utils-dlang:common
+$ make test-nobuild
+```
 
 ### Unit tests
 
