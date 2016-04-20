@@ -26,7 +26,7 @@ $ make
 
 Executables are written to `tsv-utils-dlang/bin`, place this directory or the executables in the PATH. The compiler defaults to DMD, this can be changed on the make command line (e.g. `make DCOMPILER=ldc2`). The LDC compiler is a common choice as it generates fast code.
 
-The make setup was developed for Unix. If it doesn't work on your system, the build commands can be run manually. See the BUILD_COMMANDS.md file.
+The make setup was developed for Unix. See [BUILD_COMMANDS.md](BUILD_COMMANDS.md) if `make` is not available on your system.
 
 ### Installing using DUB
 
@@ -36,7 +36,7 @@ $ dub fetch tsv-utils-dlang
 $ dub run tsv-utils-dlang
 ```
 
-The `dub run` commands compiles all the tools. Use a command like `dub run tsv-utils-dlang -- --compiler=ldc2` to use a different compiler. The executables are written to a DUB package repository directory. For example: `~/.dub/packages/tsv-utils-dlang-1.0.2/bin`. Add the executables to the PATH. As an alternative, you can clone the repository and run as follows:
+The `dub run` commands compiles all the tools. Use a command like `dub run tsv-utils-dlang -- --compiler=ldc2` to use a different compiler. The executables are written to a DUB package repository directory. For example: `~/.dub/packages/tsv-utils-dlang-1.0.2/bin`. Add the executables to the PATH. As an alternative, clone the repository and run as follows:
 ```
 $ git clone https://github.com/eBay/tsv-utils-dlang.git
 $ dub add-local tsv-utils-dlang
