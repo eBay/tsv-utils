@@ -17,16 +17,16 @@ Information on the D programming language is available at: http://dlang.org/.
 
 Download a D compiler (http://dlang.org/download.html). These tools have been tested with the DMD and LDC compilers, on Mac OSX and Linux. Use DMD version 2.068 or later, LDC version 0.17.0 or later.
 
-Clone this repository, select a compiler, and run `make` from the top level directory of the repo. Example:
+Clone this repository, select a compiler, and run `make` from the top level directory:
 ```
 $ git clone https://github.com/eBay/tsv-utils-dlang.git
 $ cd tsv-utils-dlang
 $ make
 ```
 
-Executables are written to `tsv-utils-dlang/bin`, place this directory or the executables in the PATH. The compiler defaults to 'dmd', this can be changed on the make command line (e.g. `make DCOMPILER=ldc2`), or by editing the `makedefs.mk` file and setting the `DCOMPILER` variable. The LDC compiler is a common choice as it typically generates faster code than the DMD compiler.
+Executables are written to `tsv-utils-dlang/bin`, place this directory or the executables in the PATH. The compiler defaults to DMD, this can be changed on the make command line (e.g. `make DCOMPILER=ldc2`). The LDC compiler is a common choice as it generates fast code.
 
-The make setup was developed for Unix systems. If it doesn't work on your platform, the build commands are simple and be run easily from a command line. See the BUILD_COMMANDS.md file.
+The make setup was developed for Unix. If it doesn't work on your system, the build commands can be run manually. See the BUILD_COMMANDS.md file.
 
 ### Installing using DUB
 
