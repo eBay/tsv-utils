@@ -24,9 +24,7 @@ $ cd tsv-utils-dlang
 $ make
 ```
 
-Executables are written to `tsv-utils-dlang/bin`, place this directory or the executables in the PATH. The compiler defaults to DMD, this can be changed on the make command line (e.g. `make DCOMPILER=ldc2`). The LDC compiler is a common choice as it generates fast code.
-
-The make setup was developed for Unix. See [BUILD_COMMANDS.md](BUILD_COMMANDS.md) if `make` is not available on your system.
+Executables are written to `tsv-utils-dlang/bin`, place this directory or the executables in the PATH. The compiler defaults to DMD, this can be changed on the make command line (e.g. `make DCOMPILER=ldc2`). The LDC compiler is a common choice as it generates fast code. See [BUILD_COMMANDS.md](BUILD_COMMANDS.md) for alternate build steps if `make` is not available on your system.
 
 ### Installing using DUB
 
