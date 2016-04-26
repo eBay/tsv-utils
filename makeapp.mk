@@ -20,7 +20,10 @@ clean:
 	-rm $(objdir)/*.o
 
 .PHONY: test
-test: $(app_debug)
+test: test-debug test-release
+
+.PHONY: test-debug
+test-debug: $(app_debug)
 	-@if [ -d $(testsdir)/latest_debug ]; then echo 'Deleting prior test files.';  rm $(testsdir)/latest_debug/*; fi
 	@if [ ! -d $(testsdir)/latest_debug ]; then mkdir $(testsdir)/latest_debug; fi
 	cd $(testsdir) && ./tests.sh $(app_debug) latest_debug
@@ -51,3 +54,4 @@ test-nobuild:
 	else echo '---> $(app) command line tests failed.'; \
 	exit 1; \
 	fi
+

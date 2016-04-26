@@ -1,0 +1,18 @@
+Error test set 1
+----------------
+
+====[csv2tsv nosuchfile.txt]====
+Error: Cannot open file `nosuchfile.txt' in mode `rb' (No such file or directory)
+
+
+====[csv2tsv --nosuchparam input1.txt]====
+Error processing command line arguments: Unrecognized option --nosuchparam
+
+====[csv2tsv -q x -c x input2.csv]====
+Error processing command line arguments: CSV quote and CSV field delimiter characters must be different (--q|quote, --c|csv-delim).
+
+====[csv2tsv -q x -t x input2.csv]====
+Error processing command line arguments: CSV quote and TSV field delimiter characters must be different (--q|quote, --t|tsv-delim).
+
+====[csv2tsv -t x -r wxyz input2.csv]====
+Error processing command line arguments: Replacement character cannot contain newlines or TSV field delimiters (--r|replacement).

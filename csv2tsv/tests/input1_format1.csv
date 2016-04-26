@@ -1,0 +1,33 @@
+"Previous line
+specifies next",Legend,A - Char,_ - Space
+T - Tab,N - Newline,Q - Quote,C - Comma
+AAA,AAA_AAA,_A_,AAA
+abc,abc def, a ,abc
+ATAT,T,TT,AAA
+a b , ,  ,abc
+T,T,T,T
+ , , , 
+,,,
+AAA,AAA,AAA,AAA
+abc,abc,abc,abc
+ANA,AANNAA,AA_AANAA_AA,AAA
+"a
+b","ab
+
+cd","ab cd
+ef gh",abc
+Q,QQ,AQA,AQAAQA
+"""","""""","a""b","a""bc""d"
+QQQ,AQQA,QAQAQ,QQAQQAQQ
+"""""""","a""""b","""a""a""","""""a""""a"""""
+C,CC,ACA,ACAACA
+",",",,","a,b","a,bc,d"
+CCC,ACCA,CACAC,CCACCACC
+",,,","a,,b",",a,a,",",,a,,a,,"
+QCQ,QNQ,CNQACAQ,_Q_NCCQCQ
+"""a""","""
+""",",
+""a,b,""","""
+ ,,"","""
+A,AA,AAA,AAAA
+a,ab,abc,abcd

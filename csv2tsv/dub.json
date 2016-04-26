@@ -1,0 +1,27 @@
+{
+    "name": "csv2tsv",
+    "description": "Convert comma-separated values data to tab-separated values format (CSV to TSV).",
+    "homepage": "https://github.com/eBay/tsv-utils-dlang",
+    "authors": ["Jon Degenhardt"],
+    "copyright": "Copyright (c) 2015-2016, eBay Software Foundation",
+    "license": "BSL-1.0",
+    "targetType": "executable",
+    "configurations": [
+        {
+            "name" : "executable",
+            "targetName": "csv2tsv",
+            "targetPath": "../bin/",
+            "mainSourceFile": "src/csv2tsv.d",
+            "dependencies": { }
+        },
+        {
+            "name" : "unittest",
+            "targetType" : "library"
+        }
+    ],
+    "buildTypes": {
+        "debug": { "buildOptions": ["debugMode", "optimize"] },
+        "release": { "buildOptions": ["releaseMode", "optimize", "inline"], "dflags": ["-boundscheck=off"] },
+        "unittest" : { "buildOptions": ["unittests"] }
+    }
+}

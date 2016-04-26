@@ -6,8 +6,10 @@
     "copyright": "Copyright (c) 2015-2016, eBay Software Foundation",
     "license": "BSL-1.0",
     "targetType": "executable",
+    "#": "NOTE: Add new apps to dub_build.d also.",
     "dependencies": {
         "tsv-utils-dlang:common": "*",
+        "tsv-utils-dlang:csv2tsv": "*",
         "tsv-utils-dlang:number-lines": "*",
         "tsv-utils-dlang:tsv-select": "*",
         "tsv-utils-dlang:tsv-filter": "*",
@@ -16,6 +18,7 @@
     },
     "subPackages": [
         "./common/",
+        "./csv2tsv/",
         "./number-lines/",
         "./tsv-select/",
         "./tsv-filter/",

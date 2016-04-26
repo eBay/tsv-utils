@@ -53,6 +53,7 @@ A short description of each tool follows. There is more detailed reference info 
 * [tsv-join](#tsv-join)
 * [tsv-uniq](#tsv-uniq)
 * [tsv-select](#tsv-select)
+* [csv2tsv](#csv2tsv)
 * [number-lines](#number-lines)
 * [Useful bash aliases](#useful-bash-aliases)
 * [Other toolkits](#other-toolkits)
@@ -101,6 +102,15 @@ $ tsv-select -f 4,2,9 file1.tsv file2.tsv
 ```
 
 Reordering fields is a useful enhancement over `cut`. However, much of the motivation for writing it was to explore the D programming language and provide a comparison point against other common approaches to this task. Code for `tsv-select` is bit more liberal with comments pointing out D programming constructs than code for the other tools.
+
+### csv2tsv
+
+Sometimes you have a CSV file. This program does what you'd expect: converts CSV data to TSV. Example:
+```
+$ csv2tsv data.csv > data.tsv
+```
+
+See the description in the reference section for details.
 
 ### number-lines
 
@@ -201,7 +211,7 @@ $ make test-nobuild
 
 ### Unit tests
 
-D has an excellent facility for adding unit tests right with the code. The `common` utility functions in this package take advantage of built-in unit tests. However, the command line executables do not, and instead use more traditional invocation of the command line executables and diffs the output against a "gold" result set. The built-in unit tests are much nicer, and also the advantage of being naturally cross-platform. The command line executable tests assume a Unix shell.
+D has an excellent facility for adding unit tests right with the code. The `common` utility functions in this package take advantage of built-in unit tests. However, most of the command line executables do not, and instead use more traditional invocation of the command line executables and diffs the output against a "gold" result set. The exception is `csv2tsv`, which uses both built-in unit tests and test against the executables. The built-in unit tests are much nicer, and also the advantage of being naturally cross-platform. The command line executable tests assume a Unix shell.
 
 Tests for the command line executables are in the `tests` directory of each tool. Overall the tests cover a fair number of cases and are quite useful checks when modifying the code. They may also be helpful as an examples of command line tool invocations. See the `tests.sh` file in each `test` directory, and the `test` makefile target in `makeapp.mk`.
 
@@ -286,6 +296,7 @@ This section provides more detailed documentation about the different tools as w
 * [tsv-join](#tsv-join-program)
 * [tsv-uniq](#tsv-uniq-program)
 * [tsv-select](#tsv-select-program)
+* [csv2tsv](#csv2tsv-program)
 * [number-lines](#number-lines-program)
 
 ### Common options and behavior
@@ -557,6 +568,35 @@ $ tsv-select -f 1 --rest first data.tsv
 $ # Move fields 7 and 3 to the start of the line
 $ tsv-select -f 7,3 --rest last data.tsv
 ```
+
+### csv2tsv program
+
+**Synopsis:** csv2tsv [options] [file...]
+
+csv2tsv converts CSV (comma-separated) text to TSV (tab-separated) format. Records are read from files or standard input, converted records are written to standard output.
+
+Both formats represent tabular data, each record on its own line, fields separated by a delimiter character. The key difference is that CSV uses escape sequences to represent newlines and field separators in the data, whereas TSV disallows these characters in the data. The most common field delimiters are comma for CSV and tab for TSV, but any character can be used.
+
+Conversion to TSV is done by removing CSV escape syntax, changing field delimiters, and replacing newlines and field delimiters in the data. By default, newlines and field delimiters in the data are replaced by spaces. Most details are customizable.
+
+There is no single spec for CSV, any number of variants can be found. The escape syntax is common enough: fields containing newlines or field delimiters are placed in double quotes. Inside a quoted field, a double quote is represented by a pair of double quotes. As with field separators, the quoting character is customizable.
+
+Behaviors of this program that often vary between CSV implementations:
+* Newlines are supported in quoted fields.
+* Double quotes are permitted in a non-quoted field. However, a field starting with a quote must follow quoting rules.
+* Each record can have a different numbers of fields.
+
+This program does not validate CSV correctness, but will terminate with an error upon reaching an inconsistent state. Improperly terminated quoted fields are the primary cause.
+
+UTF-8 input is assumed. Convert other encodings prior to invoking this tool.
+
+**Options:**
+* `--header` - Treat the first line of each file as a header. Only the header of the first file is output.
+* `--q|quote CHR` - Quoting character in CSV data. Default: double-quote (")
+* `--c|csv-delim CHR` - Field delimiter in CSV data. Default: comma (,).
+* `--t|tsv-delim CHR` - Field delimiter in TSV data. Default: TAB
+* `--r|replacement STR` - Replacement for newline and TSV field delimiters found in CVS input. Default: Space.
+* `--h|help` - Print help.
 
 ### number-lines program
 
