@@ -13,8 +13,6 @@ Information on the D programming language is available at: http://dlang.org/.
 * [Performance](#performance)
 * [Tool reference](#tool-reference)
 
-See the [Building and makefile](#building-and-makefile) section for more information.
-
 ## The tools
 
 These tools were developed for working with reasonably large data files. Perhaps larger than ideal for direct use in an application like R, but not so big as to necessitate moving to Hadoop or similar distributed compute environments. They work like traditional Unix command line utilities such as `cut`, `sort`, `grep`, etc., and are intended to complement these tools. Each tool is a standalone executable. They follow common Unix conventions for pipeline programs. Data is read from files or standard input, results are written to standard output. Documentation is available for each tool by invoking it with the `--help` option. If reading the code, look for the `helpText` variable near the top of the file.
@@ -142,6 +140,8 @@ $ git clone https://github.com/eBay/tsv-utils-dlang.git
 $ dub add-local tsv-utils-dlang
 $ dub run
 ```
+
+See the [Building and makefile](#building-and-makefile) section for more information.
 
 ## The code
 
