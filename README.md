@@ -7,47 +7,19 @@ The tools have been made available in the hope they will benefit others needing 
 Information on the D programming language is available at: http://dlang.org/.
 
 **Contents:**
-* [Installation](#installation)
 * [The tools](#the-tools)
+* [Installation](#installation)
 * [The code](#the-code)
 * [Performance](#performance)
 * [Tool reference](#tool-reference)
-
-## Installation
-
-Download a D compiler (http://dlang.org/download.html). These tools have been tested with the DMD and LDC compilers, on Mac OSX and Linux. Use DMD version 2.068 or later, LDC version 0.17.0 or later.
-
-Clone this repository, select a compiler, and run `make` from the top level directory:
-```
-$ git clone https://github.com/eBay/tsv-utils-dlang.git
-$ cd tsv-utils-dlang
-$ make
-```
-
-Executables are written to `tsv-utils-dlang/bin`, place this directory or the executables in the PATH. The compiler defaults to DMD, this can be changed on the make command line (e.g. `make DCOMPILER=ldc2`). LDC is a common choice as it generates fast code. See [BUILD_COMMANDS](BUILD_COMMANDS.md) for alternate build steps if `make` is not available on your system.
-
-### Installing using DUB
-
-If you are already a D user you likely use DUB, the D package manager. You can install and build using DUB as follows:
-```
-$ dub fetch tsv-utils-dlang
-$ dub run tsv-utils-dlang
-```
-
-The `dub run` commands compiles all the tools. Use a command like `dub run tsv-utils-dlang -- --compiler=ldc2` to use a different compiler. The executables are written to a DUB package repository directory. For example: `~/.dub/packages/tsv-utils-dlang-1.0.2/bin`. Add the executables to the PATH. As an alternative, clone the repository and run as follows:
-```
-$ git clone https://github.com/eBay/tsv-utils-dlang.git
-$ dub add-local tsv-utils-dlang
-$ dub run
-```
 
 See the [Building and makefile](#building-and-makefile) section for more information.
 
 ## The tools
 
-These tools were developed for working with reasonably large data files. Perhaps larger than ideal for direct use in an application like R, but not so big as to necessitate moving to Hadoop or similar distributed compute environments. They work like traditional Unix command line utilities such as `cut`, `sort`, `grep`, etc., and are intended to complement these tools. They follow common Unix conventions for pipeline programs. Data is read from files or standard input, results are written to standard output. Documentation is available for each tool by invoking it with the `--help` option. If reading the code, look for the `helpText` variable near the top of the file.
+These tools were developed for working with reasonably large data files. Perhaps larger than ideal for direct use in an application like R, but not so big as to necessitate moving to Hadoop or similar distributed compute environments. They work like traditional Unix command line utilities such as `cut`, `sort`, `grep`, etc., and are intended to complement these tools. Each tool is a standalone executable. They follow common Unix conventions for pipeline programs. Data is read from files or standard input, results are written to standard output. Documentation is available for each tool by invoking it with the `--help` option. If reading the code, look for the `helpText` variable near the top of the file.
 
-A short description of each tool follows. There is more detailed reference info later in this file.
+A short description of each tool follows. There is more detail in the [tool reference](#tool-reference) section later in this file.
 
 * [tsv-filter](#tsv-filter)
 * [tsv-join](#tsv-join)
@@ -105,12 +77,12 @@ Reordering fields is a useful enhancement over `cut`. However, much of the motiv
 
 ### csv2tsv
 
-Sometimes you have a CSV file. This program does what you'd expect: converts CSV data to TSV. Example:
+Sometimes you have a CSV file. This program does what you expect: convert CSV data to TSV. Example:
 ```
 $ csv2tsv data.csv > data.tsv
 ```
 
-See the description in the reference section for details.
+See the [csv2tsv reference](#csv2tsv-program) section for details.
 
 ### number-lines
 
@@ -138,9 +110,38 @@ There are a number of toolkits with similar functionality. Here are a few:
 
 * [csvkit](https://github.com/wireservice/csvkit) - CSV tools, written in Python.
 * [csvtk](https://github.com/shenwei356/csvtk) - CSV tools, written in Go.
+* [dplyr](https://github.com/hadley/dplyr) - Tools for tabular data in R storage formats. Written in R and C++.
 * [miller](https://github.com/johnkerl/miller) - CSV and JSON tools, written in C.
 * [tsvutils](https://github.com/brendano/tsvutils) - TSV tools, especially rich in format converters. Written in Python.
 * [xsv](https://github.com/BurntSushi/xsv) - CSV tools, written in Rust.
+
+## Installation
+
+Download a D compiler (http://dlang.org/download.html). These tools have been tested with the DMD and LDC compilers, on Mac OSX and Linux. Use DMD version 2.068 or later, LDC version 0.17.0 or later.
+
+Clone this repository, select a compiler, and run `make` from the top level directory:
+```
+$ git clone https://github.com/eBay/tsv-utils-dlang.git
+$ cd tsv-utils-dlang
+$ make
+```
+
+Executables are written to `tsv-utils-dlang/bin`, place this directory or the executables in the PATH. The compiler defaults to DMD, this can be changed on the make command line (e.g. `make DCOMPILER=ldc2`). LDC is a common choice as it generates fast code. See [BUILD_COMMANDS](BUILD_COMMANDS.md) for alternate build steps if `make` is not available on your system.
+
+### Installing using DUB
+
+If you are already a D user you likely use DUB, the D package manager. You can install and build using DUB as follows:
+```
+$ dub fetch tsv-utils-dlang
+$ dub run tsv-utils-dlang
+```
+
+The `dub run` commands compiles all the tools. Use a command like `dub run tsv-utils-dlang -- --compiler=ldc2` to use a different compiler. The executables are written to a DUB package repository directory. For example: `~/.dub/packages/tsv-utils-dlang-1.0.2/bin`. Add the executables to the PATH. As an alternative, clone the repository and run as follows:
+```
+$ git clone https://github.com/eBay/tsv-utils-dlang.git
+$ dub add-local tsv-utils-dlang
+$ dub run
+```
 
 ## The code
 
@@ -595,7 +596,7 @@ UTF-8 input is assumed. Convert other encodings prior to invoking this tool.
 * `--q|quote CHR` - Quoting character in CSV data. Default: double-quote (")
 * `--c|csv-delim CHR` - Field delimiter in CSV data. Default: comma (,).
 * `--t|tsv-delim CHR` - Field delimiter in TSV data. Default: TAB
-* `--r|replacement STR` - Replacement for newline and TSV field delimiters found in CVS input. Default: Space.
+* `--r|replacement STR` - Replacement for newline and TSV field delimiters found in CSV input. Default: Space.
 * `--h|help` - Print help.
 
 ### number-lines program

@@ -72,7 +72,7 @@ struct Csv2tsvOptions {
                 "q|quote",       "CHR  Quoting character in CSV data. Default: double-quote (\")", &csvQuoteChar,
                 "c|csv-delim",   "CHR  Field delimiter in CSV data. Default: comma (,).", &csvDelimChar,
                 "t|tsv-delim",   "CHR  Field delimiter in TSV data. Default: TAB", &tsvDelimChar,
-                "r|replacement", "STR  Replacement for newline and TSV field delimiters found in CVS input. Default: Space.", &tsvDelimReplacement,
+                "r|replacement", "STR  Replacement for newline and TSV field delimiters found in CSV input. Default: Space.", &tsvDelimReplacement,
                 );
 
             if (r.helpWanted) {
@@ -185,7 +185,7 @@ void csv2tsvFiles(in Csv2tsvOptions cmdopt, in string[] inputFiles) {
 Read CSV from an input source, convert to TSV and write to an output source.
 
 Params:
-   InputRange          =  A ubyte input range to read CVS text from. A ubyte range
+   InputRange          =  A ubyte input range to read CSV text from. A ubyte range
                           matches byChunk. It also avoids conversion to dchar by front().
    OutputRange         =  An output range to write TSV text to.
    filename            =  Name of file to use when reporting errors. A descriptive name can
@@ -553,7 +553,7 @@ unittest {
                format("Unittest failure. tsv != tsvResultA.data. Test: %d\ncsv: |%s|\ntsv: |%s|\nres: |%s|\n",
                       i + 1, csva, tsv, tsvResultA.data));
 
-        /* CSV Set B vs TSV expected. Different CVS delimiters, same TSV results as CSV Set A.*/
+        /* CSV Set B vs TSV expected. Different CSV delimiters, same TSV results as CSV Set A.*/
         auto tsvResultB = appender!(char[])();
         csv2tsv(csvInputB, tsvResultB, "csvInputB_defaultTSV", i, '#', '^');
         assert(tsv == tsvResultB.data,
