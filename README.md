@@ -138,6 +138,7 @@ The `dub run` commands compiles all the tools. Use a command like `dub run tsv-u
 ```
 $ git clone https://github.com/eBay/tsv-utils-dlang.git
 $ dub add-local tsv-utils-dlang
+$ cd tsv-utils-dlang
 $ dub run
 ```
 
