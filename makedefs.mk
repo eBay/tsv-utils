@@ -19,5 +19,5 @@ bindir = bin
 testsdir = tests
 
 debug_flags = -od$(objdir) $(DFLAGS)
-release_flags = -release -O -inline -boundscheck=off -od$(objdir) $(DFLAGS)
+release_flags = -release -O -boundscheck=off -od$(objdir) $(DFLAGS)
 unittest_flags = $(DFLAGS) -unittest -main -run
