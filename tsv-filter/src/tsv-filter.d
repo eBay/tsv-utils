@@ -72,9 +72,9 @@ Tests available include:
 
 Details:
   * The run is aborted if there are not enough fields in an input line.
-  * Numeric tests will fail and abort the run if a field cannot be interpreted as
-    a number. This includes fields with no text. For fields with no text evaluation
-    can be short-circuited using --not-empty. e.g. '--not-empty 3 --eq 3:100'.
+  * Numeric tests will fail and abort the run if a field cannot be interpreted as a
+    number. This includes fields with no text. Handle such cases by piping one run
+    tsv-filter to another, the first invocation filtering out non-numeric entries.
   * Regular expression syntax is defined by the D programming language. They follow
     common conventions (perl, python, etc.). Most common forms work as expected.
 
