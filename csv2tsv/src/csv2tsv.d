@@ -41,6 +41,9 @@ Behaviors of this program that often vary between CSV implementations:
   * Double quotes are permitted in a non-quoted field. However, a field starting
     with a quote must follow quoting rules.
   * Each record can have a different numbers of fields.
+  * The three common forms of newlines are supported: CR, CRLF, LF.
+  * A newline will be added if the file does not end with one.
+  * No whitespace trimming is done.
 
 This program does not validate CSV correctness, but will terminate with an error
 upon reaching an inconsistent state. Improperly terminated quoted fields are the
