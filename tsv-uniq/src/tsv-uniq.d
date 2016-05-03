@@ -184,9 +184,9 @@ void tsvUniq(in TsvUniqOptions cmdopt, in string[] inputFiles) {
             }
             else {
                 /* Regular line (not header). Start by finding the key. */
-                string key;
+                typeof(line) key;
                 if (cmdopt.keyIsFullLine) {
-                    key = line.to!string;
+                    key = line;
                 }
                 else {
                     /* Copy the key fields to a new buffer. */
@@ -203,7 +203,8 @@ void tsvUniq(in TsvUniqOptions cmdopt, in string[] inputFiles) {
                             format("Not enough fields in line. File: %s, Line: %s",
                                    (filename == "-") ? "Standard Input" : filename, lineNum));
                     }
-                    key = keyFieldsReordering.outputFields.join(cmdopt.delim).to!string;
+
+                    key = keyFieldsReordering.outputFields.join(cmdopt.delim);
                 }
 
                 if (cmdopt.ignoreCase) {
@@ -216,7 +217,7 @@ void tsvUniq(in TsvUniqOptions cmdopt, in string[] inputFiles) {
                 if (priorEquivID is null) {
                     isUniq = true;
                     currEquivID = nextEquivID;
-                    equivHash[key] = nextEquivID;
+                    equivHash[key.to!string] = nextEquivID;
                     nextEquivID++;
                 }
                 else {

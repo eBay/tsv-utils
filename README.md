@@ -126,7 +126,7 @@ $ make
 
 Executables are written to `tsv-utils-dlang/bin`, place this directory or the executables in the PATH. The compiler defaults to DMD, this can be changed on the make command line (e.g. `make DCOMPILER=ldc2`). LDC is a common choice as it generates fast code. See [BUILD_COMMANDS](BUILD_COMMANDS.md) for alternate build steps if `make` is not available on your system.
 
-### Installing using DUB
+### Install using DUB
 
 If you are already a D user you likely use DUB, the D package manager. You can install and build using DUB as follows:
 ```
@@ -289,17 +289,35 @@ mawk  (M. Brennan Awk)  | 1.3.3 Nov 1996 |   72.9
 gawk (GNU awk)          | 3.1.8          |  215.4
 tsv-filter (Perl)       | 5.14.2         | 1255.2
 
+### Relative performance of the tools
+
+Runs against a 4.5 million line, 279 MB file were used to get a relative comparision of the tools. The original file was a CSV file, allowing inclusion of `csv2tsv`. The TSV file generated was used in the other runs. Running time of routines filtering data is dependent on the amount output, so a different output sizes were used. `tsv-join` depends on the size of the filter file, a file the same size as the output was used in these tests.
+
+| Tool         | Records output | Time (seconds) |
+|--------------+----------------+----------------|
+| tsv-filter   |         513788 |           0.76 |
+| number-lines |        4465613 |           1.21 |
+| tsv-filter   |        4125057 |           1.25 |
+| tsv-uniq     |          65537 |           1.56 |
+| tsv-join     |          65537 |           1.61 |
+| tsv-select   |        4465613 |           1.81 |
+| tsv-uniq     |        4465613 |           4.34 |
+| csv2tsv      |        4465613 |           6.49 |
+| tsv-join     |        4465613 |           7.51 |
+
+Performance is relatively similar, though `csv2tsv` is a bit slower than the other tools.
+
 ## Tool reference
 
 This section provides more detailed documentation about the different tools as well as examples. Material for the individual tools is also available via the `--help` option.
 
 * [Common options and behavior](#common-options-and-behavior)
-* [tsv-filter](#tsv-filter-program)
-* [tsv-join](#tsv-join-program)
-* [tsv-uniq](#tsv-uniq-program)
-* [tsv-select](#tsv-select-program)
-* [csv2tsv](#csv2tsv-program)
-* [number-lines](#number-lines-program)
+* [tsv-filter reference](#tsv-filter-reference)
+* [tsv-join reference](#tsv-join-reference)
+* [tsv-uniq reference](#tsv-uniq-reference)
+* [tsv-select reference](#tsv-select-reference)
+* [csv2tsv reference](#csv2tsv-reference)
+* [number-lines reference](#number-lines-reference)
 
 ### Common options and behavior
 
@@ -347,7 +365,7 @@ $ head -n 1000 file-c.tsv | tsv-filter --eq 2:1000 -- file-a.tsv file-b.tsv - > 
 
 The above passes `file-a.tsv`, `file-b.tsv`, and the first 1000 lines of `file-c.tsv` to `tsv-filter` and write the results to `out.tsv`.
 
-### tsv-filter program
+### tsv-filter reference
 
 **Synopsis:** tsv-filter [options] [file...]
 
@@ -451,7 +469,7 @@ $ # Field 2 containing at least one cyrillic character.
 $ tsv-filter --regex '2:\p{Cyrillic}' data.tsv
 ```
 
-### tsv-join program
+### tsv-join reference
 
 **Synopsis:** tsv-join --filter-file file [options] file [file...]
 
@@ -507,7 +525,7 @@ Managing headers: Often it's useful to join a field from one data file to anther
 $ tsv-join -f run1.tsv --header --key-fields 1 --append-fields 2 --prefix run1_ run2.tsv
 ```
 
-### tsv-uniq program
+### tsv-uniq reference
 
 tsv-uniq identifies equivalent lines in tab-separated value files. Input is read line by line, recording a key based on one or more of the fields. Two lines are equivalent if they have the same key. When operating in 'uniq' mode, the first time a key is seen the line is written to standard output, but subsequent lines are discarded. This is similar to the Unix 'uniq' program, but based on individual fields and without requiring sorted data.
 
@@ -547,7 +565,7 @@ $ # Generate uniq IDs, but account for headers
 $ tsv-uniq -f 1,2 --equiv --header data.tsv
 ```
 
-### tsv-select program
+### tsv-select reference
 
 **Synopsis:** tsv-select -f n[,n...] [options] [file...]
 
@@ -571,7 +589,7 @@ $ # Move fields 7 and 3 to the start of the line
 $ tsv-select -f 7,3 --rest last data.tsv
 ```
 
-### csv2tsv program
+### csv2tsv reference
 
 **Synopsis:** csv2tsv [options] [file...]
 
@@ -603,7 +621,7 @@ UTF-8 input is assumed. Convert other encodings prior to invoking this tool.
 * `--r|replacement STR` - Replacement for newline and TSV field delimiters found in CSV input. Default: Space.
 * `--h|help` - Print help.
 
-### number-lines program
+### number-lines reference
 
 **Synopsis:** number-lines [options] [file...]
 
