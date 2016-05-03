@@ -213,7 +213,7 @@ $ make test-nobuild
 
 ### Unit tests
 
-D has an excellent facility for adding unit tests right with the code. The `common` utility functions in this package take advantage of built-in unit tests. However, most of the command line executables do not, and instead use more traditional invocation of the command line executables and diffs the output against a "gold" result set. The exception is `csv2tsv`, which uses both built-in unit tests and test against the executables. The built-in unit tests are much nicer, and also the advantage of being naturally cross-platform. The command line executable tests assume a Unix shell.
+D has an excellent facility for adding unit tests right with the code. The `common` utility functions in this package take advantage of built-in unit tests. However, most of the command line executables do not, and instead use more traditional invocation of the command line executables and diffs the output against a "gold" result set. The exception is `csv2tsv`, which uses both built-in unit tests and tests against the executable. The built-in unit tests are much nicer, and also the advantage of being naturally cross-platform. The command line executable tests assume a Unix shell.
 
 Tests for the command line executables are in the `tests` directory of each tool. Overall the tests cover a fair number of cases and are quite useful checks when modifying the code. They may also be helpful as an examples of command line tool invocations. See the `tests.sh` file in each `test` directory, and the `test` makefile target in `makeapp.mk`.
 
@@ -291,11 +291,13 @@ Each line in the file has statistics for an ngram in a single year. The above co
 
 ### Relative performance of the tools
 
-Runs against a 4.5 million line, 279 MB file were used to get a relative comparision of the tools. The original file was a CSV file, allowing inclusion of `csv2tsv`. The TSV file generated was used in the other runs. Running time of routines filtering data is dependent on the amount output, so a different output sizes were used. `tsv-join` depends on the size of the filter file, a file the same size as the output was used in these tests.
+Runs against a 4.5 million line, 279 MB file were used to get a relative comparision of the tools. The original file was a CSV file, allowing inclusion of `csv2tsv`. The TSV file generated was used in the other runs. Running time of routines filtering data is dependent on the amount output, so a different output sizes were used. `tsv-join` depends on the size of the filter file, a file the same size as the output was used in these tests. Performance of these tools also depends on the options selected, so actuals will vary.
 
+**Macbook Pro (2.8 GHz Intel I7, 16GB ram, flash storage); File: 4.46M lines, 8 fields, 279MB**:
 | Tool         | Records output | Time (seconds) |
 | ------------ | -------------: |--------------: |
 | tsv-filter   |         513788 |           0.76 |
+| cut (GNU)    |        4465613 |           1.16 |
 | number-lines |        4465613 |           1.21 |
 | tsv-filter   |        4125057 |           1.25 |
 | tsv-uniq     |          65537 |           1.56 |
@@ -305,7 +307,7 @@ Runs against a 4.5 million line, 279 MB file were used to get a relative compari
 | csv2tsv      |        4465613 |           6.49 |
 | tsv-join     |        4465613 |           7.51 |
 
-Performace of `tsv-filter` looks especially good, even when outputing a lorge number of records. `tsv-join` and `tsv-uniq` are fast, but start to show the effects of holding on to large amounts of memory when output size grows. `csv2tsv` is a bit slower than the other tools for reasons that are not clear. It has a relatively different structure than the other tools.
+Performace of `tsv-filter` looks especially good, even when outputing a lorge number of records. It's not far off the GNU `cut`. `tsv-join` and `tsv-uniq` are fast, but show an impact when larger hash tables are needed (4.5M entries cases in the slower cases). `csv2tsv` is a bit slower than the other tools for reasons that are not clear. It has a relatively different structure than the other tools.
 
 ## Tool reference
 
