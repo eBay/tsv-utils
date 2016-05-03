@@ -293,17 +293,17 @@ tsv-filter (Perl)       | 5.14.2         | 1255.2
 
 Runs against a 4.5 million line, 279 MB file were used to get a relative comparision of the tools. The original file was a CSV file, allowing inclusion of `csv2tsv`. The TSV file generated was used in the other runs. Running time of routines filtering data is dependent on the amount output, so a different output sizes were used. `tsv-join` depends on the size of the filter file, a file the same size as the output was used in these tests.
 
-| Tool         | Records output | Time (seconds) |
-|--------------+----------------+----------------|
-| tsv-filter   |         513788 |           0.76 |
-| number-lines |        4465613 |           1.21 |
-| tsv-filter   |        4125057 |           1.25 |
-| tsv-uniq     |          65537 |           1.56 |
-| tsv-join     |          65537 |           1.61 |
-| tsv-select   |        4465613 |           1.81 |
-| tsv-uniq     |        4465613 |           4.34 |
-| csv2tsv      |        4465613 |           6.49 |
-| tsv-join     |        4465613 |           7.51 |
+Tool         | Records output | Time (seconds) 
+-------------|----------------|----------------
+tsv-filter   |  513788        | 0.76 
+number-lines | 4465613        | 1.21 
+tsv-filter   | 4125057        | 1.25 
+tsv-uniq     |   65537        | 1.56 
+tsv-join     |   65537        | 1.61 
+tsv-select   | 4465613        | 1.81 
+tsv-uniq     | 4465613        | 4.34 
+csv2tsv      | 4465613        | 6.49 
+tsv-join     | 4465613        | 7.51 
 
 Performance is relatively similar, though `csv2tsv` is a bit slower than the other tools.
 
