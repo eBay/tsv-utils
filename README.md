@@ -308,7 +308,7 @@ Runs against a 4.5 million line, 279 MB file were used to get a relative compari
 | csv2tsv      |        4465613 |           6.49 |
 | tsv-join     |        4465613 |           7.51 |
 
-Performace of `tsv-filter` looks especially good, even when outputing a lorge number of records. It's not far off the GNU `cut`. `tsv-join` and `tsv-uniq` are fast, but show an impact when larger hash tables are needed (4.5M entries cases in the slower cases). `csv2tsv` is a bit slower than the other tools for reasons that are not clear. It has a relatively different structure than the other tools.
+Performace of `tsv-filter` looks especially good, even when outputing a large number of records. It's not far off the GNU `cut`. `tsv-join` and `tsv-uniq` are fast, but show an impact when larger hash tables are needed (4.5M entries cases in the slower cases). `csv2tsv` is a bit slower than the other tools for reasons that are not clear. It has a relatively different structure than the other tools.
 
 ## Tool reference
 
