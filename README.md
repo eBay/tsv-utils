@@ -235,27 +235,27 @@ Perhaps the most surprising result is the poor performance of the utilities ship
 
 **Macbook Pro (2.8 GHz Intel I7, 16GB ram, flash storage); File: 78M lines, 11 fields, 2.5GB**:
 
-Tool                   | version        | time (seconds)
------------------------|----------------|---------------
-cut (GNU)              | 8.25           |  17.4
-tsv-select (D)         | ldc 1.0        |  31.4
-mawk (M. Brennan Awk)  | 1.3.4 20150503 |  51.1
-cut (Mac built-in)     |                |  81.8
-gawk (GNU awk)         | 4.1.3          |  97.4
-python                 | 2.7.10         | 144.1
-perl                   | 5.22.1         | 231.3
-awk (Mac built-in)     | 20070501       | 247.3
+| Tool                   | version        | time (seconds) |
+| ---------------------- |--------------- | -------------: |
+| cut (GNU)              | 8.25           |           17.4 |
+| tsv-select (D)         | ldc 1.0        |           31.4 |
+| mawk (M. Brennan Awk)  | 1.3.4 20150503 |           51.1 |
+| cut (Mac built-in)     |                |           81.8 |
+| gawk (GNU awk)         | 4.1.3          |           97.4 |
+| python                 | 2.7.10         |          144.1 |
+| perl                   | 5.22.1         |          231.3 |
+| awk (Mac built-in)     | 20070501       |          247.3 |
 
 **Linux server (Ubuntu, Intel Xeon, 6 cores); File: 78M lines, 11 fields, 2.5GB**:
 
-Tool                   | version        | time (seconds)
------------------------|----------------|---------------
-cut (GNU)              | 8.25           |  19.8
-tsv-select (D)         | ldc 1.0        |  29.7
-mawk (M. Brennan Awk)  | 1.3.3 Nov 1996 |  51.3
-gawk (GNU awk)         | 3.1.8          | 128.1
-python                 | 2.7.3          | 179.4
-perl                   | 5.14.2         | 665.0
+| Tool                   | version        | time (seconds) |
+| ---------------------- | -------------- | -------------: |
+| cut (GNU)              | 8.25           |           19.8 |
+| tsv-select (D)         | ldc 1.0        |           29.7 |
+| mawk (M. Brennan Awk)  | 1.3.3 Nov 1996 |           51.3 |
+| gawk (GNU awk)         | 3.1.8          |          128.1 |
+| python                 | 2.7.3          |          179.4 |
+| perl                   | 5.14.2         |          665.0 |
 
 GNU `cut` is best viewed as baseline for a well optimized program, rather than a C/C++ vs D comparison point. D's performance for this tool seems quite reasonable. The D version also handily beat the version of `cut` shipped with the Mac, also a C program, but clearly not as well optimized. 
 
@@ -272,40 +272,40 @@ Each line in the file has statistics for an ngram in a single year. The above co
 
 **Macbook Pro (2.8 GHz Intel I7, 16GB ram, flash storage); File: 256M lines, 4 fields, 4GB**:
 
-Tool                   | version        | time (seconds)
------------------------|----------------|---------------
-tsv-filter (D)         | ldc 1.0        |   33.5
-mawk (M. Brennan Awk)  | 1.3.4 20150503 |   52.0
-gawk (GNU awk)         | 4.1.3          |  103.4
-awk (Mac built-in)     | 20070501       |  314.2
-tsv-filter (Perl)      |                | 1075.6
+| Tool                   | version        | time (seconds) |
+| ---------------------- | -------------- | -------------: |
+| tsv-filter (D)         | ldc 1.0        |           33.5 |
+| mawk (M. Brennan Awk)  | 1.3.4 20150503 |           52.0 |
+| gawk (GNU awk)         | 4.1.3          |          103.4 |
+| awk (Mac built-in)     | 20070501       |          314.2 |
+| tsv-filter (Perl)      |                |         1075.6 |
 
 **Linux server (Ubuntu, Intel Xeon, 6 cores); File: 256M lines, 4 fields, 4GB**:
 
-Tool                    | version        | time (seconds)
-------------------------|----------------|---------------
-tsv-filter (D)          | ldc 1.0        |   34.2
-mawk  (M. Brennan Awk)  | 1.3.3 Nov 1996 |   72.9
-gawk (GNU awk)          | 3.1.8          |  215.4
-tsv-filter (Perl)       | 5.14.2         | 1255.2
+| Tool                    | version        | time (seconds) |
+| ----------------------- | -------------- | -------------: |
+| tsv-filter (D)          | ldc 1.0        |           34.2 |
+| mawk  (M. Brennan Awk)  | 1.3.3 Nov 1996 |           72.9 |
+| gawk (GNU awk)          | 3.1.8          |          215.4 |
+| tsv-filter (Perl)       | 5.14.2         |         1255.2 |
 
 ### Relative performance of the tools
 
 Runs against a 4.5 million line, 279 MB file were used to get a relative comparision of the tools. The original file was a CSV file, allowing inclusion of `csv2tsv`. The TSV file generated was used in the other runs. Running time of routines filtering data is dependent on the amount output, so a different output sizes were used. `tsv-join` depends on the size of the filter file, a file the same size as the output was used in these tests.
 
-Tool         | Records output | Time (seconds) 
--------------|----------------|----------------
-tsv-filter   |  513788        | 0.76 
-number-lines | 4465613        | 1.21 
-tsv-filter   | 4125057        | 1.25 
-tsv-uniq     |   65537        | 1.56 
-tsv-join     |   65537        | 1.61 
-tsv-select   | 4465613        | 1.81 
-tsv-uniq     | 4465613        | 4.34 
-csv2tsv      | 4465613        | 6.49 
-tsv-join     | 4465613        | 7.51 
+| Tool         | Records output | Time (seconds) |
+| ------------ | -------------: |--------------: |
+| tsv-filter   |         513788 |           0.76 |
+| number-lines |        4465613 |           1.21 |
+| tsv-filter   |        4125057 |           1.25 |
+| tsv-uniq     |          65537 |           1.56 |
+| tsv-join     |          65537 |           1.61 |
+| tsv-select   |        4465613 |           1.81 |
+| tsv-uniq     |        4465613 |           4.34 |
+| csv2tsv      |        4465613 |           6.49 |
+| tsv-join     |        4465613 |           7.51 |
 
-Performance is relatively similar, though `csv2tsv` is a bit slower than the other tools.
+Performace of `tsv-filter` looks especially good, even when outputing a lorge number of records. `tsv-join` and `tsv-uniq` are fast, but start to show the effects of holding on to large amounts of memory when output size grows. `csv2tsv` is a bit slower than the other tools for reasons that are not clear. It has a relatively different structure than the other tools.
 
 ## Tool reference
 
