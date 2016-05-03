@@ -294,6 +294,7 @@ Each line in the file has statistics for an ngram in a single year. The above co
 Runs against a 4.5 million line, 279 MB file were used to get a relative comparision of the tools. The original file was a CSV file, allowing inclusion of `csv2tsv`. The TSV file generated was used in the other runs. Running time of routines filtering data is dependent on the amount output, so a different output sizes were used. `tsv-join` depends on the size of the filter file, a file the same size as the output was used in these tests. Performance of these tools also depends on the options selected, so actuals will vary.
 
 **Macbook Pro (2.8 GHz Intel I7, 16GB ram, flash storage); File: 4.46M lines, 8 fields, 279MB**:
+
 | Tool         | Records output | Time (seconds) |
 | ------------ | -------------: |--------------: |
 | tsv-filter   |         513788 |           0.76 |
