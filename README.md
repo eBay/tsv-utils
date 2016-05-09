@@ -80,7 +80,7 @@ Sometimes you have a CSV file. This program does what you expect: convert CSV da
 $ csv2tsv data.csv > data.tsv
 ```
 
-See the [csv2tsv reference](#csv2tsv-program) section for details.
+CSV files come in different formats. See the [csv2tsv reference](#csv2tsv-program) for details of how this tool operates and the format variations handled.
 
 ### number-lines
 

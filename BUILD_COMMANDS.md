@@ -1,6 +1,6 @@
 # Build commands
 
-Using the make system is preferred if make runs on your system. Simply running `make` from the top-level will build the release executables. However, if `make` isn't available, the individual build commands are easy enough to run manually. The commands below are the same issued by the make system. Replace ${DCOMPILER} with the compiler being used, e.g. `dmd` or `ldc2`.
+Using the make system is preferred if make runs on your system. Simply running `make` from the top-level will build the release executables. However, if `make` isn't available, the individual build commands are easy enough to run manually. The commands below are the same issued by the make system. Replace ${DCOMPILER} with the compiler being used, e.g. `dmd` or `ldc2`. If using `dmd`, performance can be improved further by adding the `-inline` switch to the compiler line. 
 
 ## number-lines
 

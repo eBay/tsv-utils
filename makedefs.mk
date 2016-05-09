@@ -18,6 +18,11 @@ objdir = obj
 bindir = bin
 testsdir = tests
 
+release_flags_base = -release -O -boundscheck=off
+ifeq ($(DCOMPILER),dmd)
+	release_flags_base = -release -O -boundscheck=off -inline
+endif
+
 debug_flags = -od$(objdir) $(DFLAGS)
-release_flags = -release -O -boundscheck=off -od$(objdir) $(DFLAGS)
+release_flags = $(release_flags_base) -od$(objdir) $(DFLAGS)
 unittest_flags = $(DFLAGS) -unittest -main -run
