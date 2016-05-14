@@ -37,7 +37,7 @@ $ tsv-filter --ge 3:100 --le 3:200 --str-eq 4:red file.tsv
 
 This outputs lines where field 3 satisfies (100 <= fieldval <= 200) and field 4 matches 'red'.
 
-`tsv-filter` is the most widely applicable of the tools, as dataset pruning is a common task. Because it's stream oriented, it can handle arbitrarily large files. It is also be convenient for quickly answering simple questions about a dataset. For example, to count the number of records with a non-zero value in field 3, use the command:
+`tsv-filter` is the most widely applicable of the tools, as dataset pruning is a common task. Because it's stream oriented, it can handle arbitrarily large files. It is also convenient for quickly answering simple questions about a dataset. For example, to count the number of records with a non-zero value in field 3, use the command:
 ```
 $ tsv-filter --ne 3:0 file.tsv | wc -l
 ```
@@ -349,7 +349,7 @@ Field indices are one-upped integers, following Unix conventions. Some tools use
 
 These tools assume data is utf-8 encoded.
 
-#### File format and alternate delimiters (-d, --delimiter)
+#### File format and alternate delimiters (--delimiter)
 
 Any character can be used as a delimiter, TAB is the default. However, there is no escaping for including the delimiter character or newlines within a field. This differs from CSV file format which provides an escaping mechanism. In practice the lack of an escaping mechanism is not a meaningful limitation for data oriented files.
 
@@ -487,7 +487,7 @@ tsv-join matches input lines against lines from a 'filter' file. The match is ba
 * `--p|prefix STR` - String to use as a prefix for --append-fields when writing a header line.
 * `--w|write-all STR` - Output all data records. STR is the --append-fields value when writing unmatched records. This is an outer join.
 * `--e|exclude` - Exclude matching records. This is an anti-join.
-* `-d|delimiter CHR` - Field delimiter. Default: TAB. (Single byte UTF-8 characters only.)
+* `--delimiter CHR` - Field delimiter. Default: TAB. (Single byte UTF-8 characters only.)
 * `--z|allow-duplicate-keys` - Allow duplicate keys with different append values (last entry wins). Default behavior is that this is an error.
 * `--h|help` - Print help.
 * `--h|help-brief` - Print brief help.

@@ -100,7 +100,7 @@ struct TsvJoinOptions {
                 "p|prefix",        "STR       String to use as a prefix for --append-fields when writing a header line.", &appendHeaderPrefix,
                 "w|write-all",     "STR       Output all data records. STR is the --append-fields value when writing unmatched records.", &writeAllHandler,
                 "e|exclude",       "          Exclude matching records.", &exclude,
-                "d|delimiter",     "CHR       Field delimiter. Default: TAB. (Single byte UTF-8 characters only.)", &delim,
+                "delimiter",       "CHR       Field delimiter. Default: TAB. (Single byte UTF-8 characters only.)", &delim,
                 "z|allow-duplicate-keys",
                                    "          Allow duplicate keys with different append values (last entry wins).", &allowDupliateKeys, 
                 );
