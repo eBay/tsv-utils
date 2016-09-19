@@ -9,7 +9,7 @@ License: Boost Licence 1.0 (http://boost.org/LICENSE_1_0.txt)
 */
 module tsv_summarize;
 
-import std.algorithm : all, any, each, findSplit, map, joiner, splitter;
+import std.algorithm : all, any, canFind, each, find, findSplit, map, joiner, splitter;
 import std.array : join;
 import std.conv;
 import std.format;
@@ -136,15 +136,15 @@ struct TsvSummarizeOptions {
                 "last",             "FLD[:STR]  Last value of file (numeric fields only).", &operatorOptionHandler!LastOperator,
                 "min",              "FLD[:STR]  Min value (numeric fields only).", &operatorOptionHandler!MinOperator,
                 "max",              "FLD[:STR]  Max value (numeric fields only).", &operatorOptionHandler!MaxOperator,
+                "range",            "FLD[:STR]  First value listed (numeric fields only).", &operatorOptionHandler!RangeOperator,
                 "sum",              "FLD[:STR]  Sum of the values (numeric fields only).", &operatorOptionHandler!SumOperator,
                 "mean",             "FLD[:STR]  Mean (average) of the values (numeric fields only).", &operatorOptionHandler!MeanOperator,
+                "median",           "FLD[:STR]  First value listed (numeric fields only).", &operatorOptionHandler!MedianOperator,
+                "mad",              "FLD[:STR]  First value listed (numeric fields only).", &operatorOptionHandler!MadOperator,
+                "list",             "FLD[:STR]  All the values, separated by --list-delimiter.", &operatorOptionHandler!ListOperator,
 /*
-                "range",            "FLD[:STR]  First value listed (numeric fields only).", &operatorOptionHandler!FirstOperator,
-                "median",           "FLD[:STR]  First value listed (numeric fields only).", &operatorOptionHandler!FirstOperator,
                 "std",              "FLD[:STR]  First value listed (numeric fields only).", &operatorOptionHandler!FirstOperator,
                 "var",              "FLD[:STR]  First value listed (numeric fields only).", &operatorOptionHandler!FirstOperator,
-                "mad",              "FLD[:STR]  First value listed (numeric fields only).", &operatorOptionHandler!FirstOperator,
-                "list",             "FLD[:STR]  First value listed (numeric fields only).", &operatorOptionHandler!FirstOperator,
                 "list-asc",         "FLD[:STR]  First value listed (numeric fields only).", &operatorOptionHandler!FirstOperator,
                 "list-dsc",         "FLD[:STR]  First value listed (numeric fields only).", &operatorOptionHandler!FirstOperator,
 */
@@ -171,7 +171,11 @@ struct TsvSummarizeOptions {
         }
         return tuple(true, 0);
     }
-
+    /* operationOptionHandler functions are callbacks that process command line options
+     * specifying summarization operations. eg. '--max 5', '--last 3:LastEntry'. Handlers
+     * check syntactic correctness and instantiate Operator objects that do the work. This
+     * is also where 1-upped field numbers are converted to 0-based indices.
+     */
     private void operatorOptionHandler(OperatorClass : SingleFieldOperator)(string option, string optionVal)
     {
         auto valSplit = findSplit(optionVal, ":");
@@ -252,7 +256,7 @@ struct TsvSummarizeOptions {
  */
 void tsvSummarize(TsvSummarizeOptions cmdopt, in string[] inputFiles)
 {
-    /* Summarizer to use depends on number of key-fields entered. */
+    /* Pick the Summarizer based on the number of key-fields entered. */
     auto summarizer =
         (cmdopt.keyFields.length == 0)
         ? new NoKeySummarizer!(typeof(stdout.lockingTextWriter()))(cmdopt.fieldDelimiter)
@@ -262,7 +266,8 @@ void tsvSummarize(TsvSummarizeOptions cmdopt, in string[] inputFiles)
         
         : new MultiKeySummarizer!(typeof(stdout.lockingTextWriter()))(cmdopt.keyFields, cmdopt.fieldDelimiter);
 
-    cmdopt.operators.each!(op => summarizer.addOperator(op));
+    /* Add the operators to the Summarizer. */
+    summarizer.setOperators(inputRangeObject(cmdopt.operators[]));
 
     /* Process each input file, one line at a time. */
     auto lineFields = new char[][](cmdopt.endFieldIndex);
@@ -272,7 +277,10 @@ void tsvSummarize(TsvSummarizeOptions cmdopt, in string[] inputFiles)
         auto inputStream = (filename == "-") ? stdin : filename.File();
         foreach (lineNum, line; inputStream.byLine.enumerate(1))
         {
-            /* Copy the needed number of fields to the fields array. */
+            /* Copy the needed number of fields to the fields array.
+             * Note: The number is zero if no operator needs fields. Notably, the count
+             * operator. Used by itself, it counts the number input lines (ala 'wc -l').
+             */
             if (cmdopt.endFieldIndex > 0)
             {
                 size_t fieldIndex = 0;
@@ -336,6 +344,8 @@ void tsvSummarize(TsvSummarizeOptions cmdopt, in string[] inputFiles)
         }
     }
 
+    debug writeln("[tsvSummarize] After reading all data.");
+
     /* Whew! We're done. Run the calculations and print. */
     auto stdoutWriter = stdout.lockingTextWriter;
     
@@ -343,7 +353,311 @@ void tsvSummarize(TsvSummarizeOptions cmdopt, in string[] inputFiles)
         summarizer.writeSummaryHeader(stdoutWriter);
     summarizer.writeSummaryBody(stdoutWriter);
 }
+
+/* A Summarizer maintains the state of the summarization and performs basic processing.
+ * Handling of files and input lines is left to the caller.
+ * API:
+ * - addOperator - Called after initializing the object for each operator to be processed.
+ * - processHeaderLine - Called to process the header line of each file. Returns true if
+ *   it was the first header line processed (used when reading multiple files).
+ * - processNextLine - Called to process non-header lines.
+ * - writeSummaryHeader - Called to write the header line.
+ * - writeSummaryBody - Called to write the result lines.
+ */
+interface Summarizer(OutputRange)
+{
+    void setOperators(InputRange!Operator op);
+    bool processHeaderLine(const char[][] lineFields);
+    void processNextLine(const char[][] lineFields);
+    void writeSummaryHeader(ref OutputRange outputStream);
+    void writeSummaryBody(ref OutputRange outputStream);
+}
+
+/* SummarizerBase performs work shared by all sumarizers, most everything except for
+ * handling of unique keys. The base class handles creation, allocates storage for 
+ * Operators and SharedFieldValues, and similar. Derived classes deal primarily with
+ * unique keys and the associated Calculators and UniqueKeyValuesLists.
+ */
+class SummarizerBase(OutputRange) : Summarizer!OutputRange
+{
+    private char _fieldDelimiter;
+    private bool _hasProcessedFirstHeaderLine = false;
+    private SharedFieldValues _sharedFieldValues = null;  // Null if no shared field value lists.
+    protected DList!Operator _operators;
+    protected size_t _numOperators = 0;
+
+    this(const char fieldDelimiter)
+    {
+        _fieldDelimiter = fieldDelimiter;
+    }
+
+    char fieldDelimiter() const @property
+    {
+        return _fieldDelimiter;
+    }
+
+    /* Sets the Operators used by the Summarizer. Called after construction. */
+    void setOperators(InputRange!Operator operators)
+    {
+        debug writefln("[%s]", __FUNCTION__);
+        
+        foreach (op; operators)
+        {
+            _operators.insertBack(op);
+            _numOperators++;
+            auto numericFieldsToSave = op.numericFieldsToSave();
+            auto textFieldsToSave = op.textFieldsToSave();
+
+            debug writefln("  [%s] numericFieldsToSave.length: %d, textFieldsToSave.length: %d",
+                           op.to!string, numericFieldsToSave.length, textFieldsToSave.length);
+
+
+
+            if (numericFieldsToSave.length > 0 || textFieldsToSave.length > 0)
+            {
+                if (_sharedFieldValues is null)
+                {
+                    _sharedFieldValues = new SharedFieldValues();
+                }
+                numericFieldsToSave.each!(x => _sharedFieldValues.addNumericIndex(x));
+                textFieldsToSave.each!(x => _sharedFieldValues.addTextIndex(x));
+            }
+        }
+    }
+
+    bool processHeaderLine(const char[][] lineFields)
+    {
+        if (!_hasProcessedFirstHeaderLine)
+        {
+            _operators.each!(x => x.processHeaderLine(lineFields));
+            _hasProcessedFirstHeaderLine = true;
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    protected final UniqueKeyValuesLists makeUniqueKeyValuesLists()
+    {
+        return (_sharedFieldValues is null)
+            ? null
+            : _sharedFieldValues.makeUniqueKeyValuesLists;
+    }
+
+    abstract void processNextLine(const char[][] lineFields);
+    abstract void writeSummaryHeader(ref OutputRange outputStream);
+    abstract void writeSummaryBody(ref OutputRange outputStream);
+}
+
+/* The NoKeySummarizer is used when summarizing values across the entire input.
+ */
+class NoKeySummarizer(OutputRange) : SummarizerBase!OutputRange
+{
+    private Calculator[] _calculators;
+    private UniqueKeyValuesLists _valueLists;
+
+    this(const char fieldDelimiter)
+    {
+        super(fieldDelimiter);
+    }
+
+    /* Only one Calculator per Operation, so create them as Operators are added. */
+    override void setOperators(InputRange!Operator operators)
+    {
+        super.setOperators(operators);
+        foreach (op; operators)
+        {
+            _calculators ~= op.makeCalculator;
+        }
+        _valueLists = super.makeUniqueKeyValuesLists();
+    }
+
+    override void processNextLine(const char[][] lineFields)
+    {
+        _calculators.each!(x => x.processNextLine(lineFields));
+        if (_valueLists !is null)
+        {
+            _valueLists.processNextLine(lineFields);
+        }
+    }
+
+    override void writeSummaryHeader(ref OutputRange outputStream)
+    {
+        put(outputStream, _operators[].map!(op => op.header).join(fieldDelimiter));
+        put(outputStream, '\n');
+    }
     
+    override void writeSummaryBody(ref OutputRange outputStream)
+    {
+        put(outputStream,
+            _calculators[]
+            .map!(x => x.calculate(_valueLists))
+            .join(fieldDelimiter));
+        put(outputStream, '\n');
+    }
+}
+/* KeySummarizerBase does work shared by the single key and multi-key summarizers. The
+ * primary difference between those two is the formation of the key. The primary reason
+ * for separating those into two separate classes is to simplify (speed-up) handling of
+ * single field keys, which are the most common use case.
+ */
+class KeySummarizerBase(OutputRange) : SummarizerBase!OutputRange
+{
+    protected struct UniqueKeyData
+    {
+        Calculator[] calculators;
+        UniqueKeyValuesLists valuesLists;
+    }
+    
+    private DList!string _uniqueKeys;
+    private UniqueKeyData[string] _uniqueKeyData;
+
+    this(const char fieldDelimiter)
+    {
+        super(fieldDelimiter);
+    }
+
+    protected void processNextLineWithKey(T : const char[])(T key, const char[][] lineFields)
+    {
+        debug writefln("[%s]: %s", __FUNCTION__, lineFields.to!string);
+        
+        auto dataPtr = (key in _uniqueKeyData);
+        auto data = (dataPtr is null) ? addUniqueKey(key.to!string) : *dataPtr;
+        
+        data.calculators.each!(x => x.processNextLine(lineFields));
+        if (data.valuesLists !is null)
+        {
+            data.valuesLists.processNextLine(lineFields);
+        }
+    }
+    
+    protected UniqueKeyData addUniqueKey(string key)
+    {
+        assert(key !in _uniqueKeyData);
+
+        _uniqueKeys.insertBack(key);
+        
+        auto calculators = new Calculator[_numOperators];
+        size_t i = 0;
+        foreach (op; _operators)
+        {
+            calculators[i] = op.makeCalculator;
+            i++;
+        }
+        
+        return _uniqueKeyData[key] = UniqueKeyData(calculators, super.makeUniqueKeyValuesLists());
+    }
+    
+    override void writeSummaryHeader(ref OutputRange outputStream)
+    {
+        put(outputStream, keyFieldHeader());
+        put(outputStream, fieldDelimiter);
+        put(outputStream, _operators[].map!(op => op.header).join(fieldDelimiter));
+        put(outputStream, '\n');
+    }
+    
+    override void writeSummaryBody(ref OutputRange outputStream)
+    {
+        foreach(key; _uniqueKeys)
+        {
+            auto data = _uniqueKeyData[key];
+            put(outputStream, key);
+            put(outputStream, fieldDelimiter);
+            put(outputStream,
+                data.calculators[]
+                .map!(x => x.calculate(data.valuesLists))
+                .join(fieldDelimiter));
+            put(outputStream, '\n');
+        }
+    }
+    
+    abstract string keyFieldHeader() const @property;
+}
+
+/* This Summarizer is for the case where the unique key is based on exactly one field.
+ */
+class OneKeySummarizer(OutputRange) : KeySummarizerBase!OutputRange
+{
+    private size_t _keyFieldIndex = 0;
+    private string _keyFieldHeader;
+    private DList!string _uniqueKeys;
+
+    this(size_t keyFieldIndex, char fieldDelimiter)
+    {
+        super(fieldDelimiter);
+        _keyFieldIndex = keyFieldIndex;
+        _keyFieldHeader = "field" ~ (keyFieldIndex + 1).to!string;
+    }
+
+    override string keyFieldHeader() const @property
+    {
+        return _keyFieldHeader;
+    }
+
+    override bool processHeaderLine(const char[][] lineFields)
+    {
+        assert(_keyFieldIndex <= lineFields.length);
+        
+        bool isFirstHeaderLine = super.processHeaderLine(lineFields);
+        if (isFirstHeaderLine)
+        {
+            _keyFieldHeader = lineFields[_keyFieldIndex].to!string;
+        }
+        return isFirstHeaderLine;
+    }
+
+    override void processNextLine(const char[][] lineFields)
+    {
+        assert(_keyFieldIndex < lineFields.length);
+        processNextLineWithKey(lineFields[_keyFieldIndex], lineFields);
+    }
+}
+
+/* This Summarizer is for the case where the unique key is based on multiple fields.
+ */
+class MultiKeySummarizer(OutputRange) : KeySummarizerBase!OutputRange
+{
+    private size_t[] _keyFieldIndices;
+    private string _keyFieldHeader;
+    private DList!string _uniqueKeys;
+
+    this(const size_t[] keyFieldIndices, char fieldDelimiter)
+    {
+        super(fieldDelimiter);
+        _keyFieldIndices = keyFieldIndices.dup;
+        _keyFieldHeader = _keyFieldIndices.map!(x => "field" ~ (x + 1).to!string).join(fieldDelimiter);
+    }
+
+    override string keyFieldHeader() const @property
+    {
+        return _keyFieldHeader;
+    }
+
+    override bool processHeaderLine(const char[][] lineFields)
+    {
+        assert(_keyFieldIndices.all!(x => x < lineFields.length));
+        assert(_keyFieldIndices.length >= 2);
+        
+        bool isFirstHeaderLine = super.processHeaderLine(lineFields);
+        if (isFirstHeaderLine)
+        {
+            _keyFieldHeader = _keyFieldIndices.map!(i => lineFields[i]).join(fieldDelimiter).to!string;
+        }
+        return isFirstHeaderLine;
+    }
+
+    override void processNextLine(const char[][] lineFields)
+    {
+        assert(_keyFieldIndices.all!(x => x < lineFields.length));
+        assert(_keyFieldIndices.length >= 2);
+        
+        string key = _keyFieldIndices.map!(i => lineFields[i]).join(fieldDelimiter).to!string;
+        processNextLineWithKey(key, lineFields);
+    }
+}
+
 /* Summary Operators and Calculators
  * 
  * Two types of objects are used in implementation: Operators and Calculators. An Operator
@@ -372,13 +686,227 @@ interface Operator
 {
     @property string header();
     void processHeaderLine(const char[][] fields);
+    size_t[] numericFieldsToSave();     // Numeric fields this Operator needs saved
+    size_t[] textFieldsToSave();        // Text fields this Operator needs saved
     Calculator makeCalculator();
 }
 
 interface Calculator
 {
     void processNextLine(const char[][] fields);
-    string calculate();
+    string calculate(UniqueKeyValuesLists valuesLists);
+}
+
+/* The SharedFieldValues and UniqueKeyValuesLists classes manage lists of values collected
+ * while reading data. Operations like median collect all values and operate on them when
+ * running the final calculation. Value lists are needed for each unique key. A command
+ * using multiple Operators may save multiple fields. And, different Operators may be run
+ * against the same field.
+ *
+ * The last part motivates these classes. Handling large data sets necessitates minimizing
+ * in-memory storage, making it desirable to share identical lists between Calculators.
+ * Otherwise, each Calculator could implement its own storage, which would be simpler.
+ * 
+ * The setup works as follows:
+ *  - Operators advertise fields they need saved ([text|numeric]FieldsToSave methods).
+ *  - The Summary object keeps a SharedFieldValues object, which in turn keeps list of the
+ *    fields shared by Operators. This gets created command initialization.
+ *  - The SharedFieldValues object is used to create a UniqueKeyValuesLists object every
+ *    time a new unique key is found, alongside the Calculator objects.
+ *  - A unique key's UniqueKeyValuesLists object is passed each input line, same as
+ *    Calculators, saving the values.
+ *  - Calculators retrieve the saved values during the calculation phase.
+ *
+ * One concession to duplicate storage is that text and numeric versions of the same
+ * field might be stored. The reason is because it's important to convert text to numbers
+ * as they are read so that useful error messages can be generated. And, storing both
+ * forms of the same field should be rare.
+ *
+ * Built-in calculations - UniqueKeyValueLists have a built-in median operation. This is
+ * to avoid repeated calculations of the median by different calculations.
+ */
+
+class SharedFieldValues
+{
+    // Arrays with field indices that need to be saved.
+    private size_t[] _numericFieldIndices;
+    private size_t[] _textFieldIndices;
+
+    final void addNumericIndex (size_t index)
+    {
+        if (!canFind(_numericFieldIndices, index))
+        {
+            _numericFieldIndices ~= index;
+        }
+    }
+
+    final void addTextIndex (size_t index)
+    {
+        if (!canFind(_textFieldIndices, index))
+        {
+            _textFieldIndices ~= index;
+        }
+    }
+
+    final UniqueKeyValuesLists makeUniqueKeyValuesLists()
+    {
+        return new UniqueKeyValuesLists(_numericFieldIndices, _textFieldIndices);
+    }
+}
+
+class UniqueKeyValuesLists
+{
+    /* A FieldValues object holds is a list of values collect for a specfic field. A
+     * unique key may hold several. For example, the command:
+     *     $ tsv-summarize --k 1 --median 4 -- median 5
+     * requires keeping lists for both fields 4 and 5. This in turn will result in a
+     * _numericFieldValues being a 2 element array, one with a list of field 4 values,
+     * the second of field 5 values. Linear search is used to find a specific field.
+     */
+    private FieldValues!double[] _numericFieldValues;
+    private FieldValues!string[] _textFieldValues;
+    private double[] _numericFieldMedians;
+
+    /* The UniqueKeyValuesLists constructor takes arrays of field indicies to be saved. */
+    this(const size_t[] numericFieldIndices, const size_t[] textFieldIndices)
+    {
+        if (numericFieldIndices.length > 0)
+        {
+            _numericFieldValues = new FieldValues!double[](numericFieldIndices.length);
+            foreach (i, fieldIndex; numericFieldIndices)
+                _numericFieldValues[i] = new FieldValues!double(fieldIndex);
+        }
+
+        if (textFieldIndices.length > 0)
+        {
+            _textFieldValues = new FieldValues!string[](textFieldIndices.length);
+            foreach (i, fieldIndex; textFieldIndices)
+                _textFieldValues[i] = new FieldValues!string(fieldIndex);
+        }
+    }
+
+    void processNextLine(const char[][] fields)
+    {
+        _numericFieldValues.each!((ref x) => x.processNextLine(fields));
+        _textFieldValues.each!((ref x) => x.processNextLine(fields));
+    }
+
+    private FieldValues!double findNumericFieldValues(size_t index)
+    {
+        alias pred = (FieldValues!double a, size_t b) => (a.fieldIndex == b);
+        auto r = find!pred(_numericFieldValues, index);
+        assert(!r.empty);
+        return r.front;
+    }
+    
+    private FieldValues!string findTextFieldValues(size_t index)
+    {
+        alias pred = (FieldValues!string a, size_t b) => (a.fieldIndex == b);
+        auto r = find!pred(_textFieldValues, index);
+        assert(!r.empty);
+        return r.front;
+    }
+    
+    final double[] numericValues(size_t index)
+    {
+        return findNumericFieldValues(index).getArray;
+    }
+    
+    final string[] textValues(size_t index)
+    {
+        return findTextFieldValues(index).getArray;
+    }
+
+    final double numericValuesMedian(size_t index)
+    {
+        return findNumericFieldValues(index).median;
+    }
+    
+    private class FieldValues(ValueType)
+    {
+        import std.array : appender;
+        private size_t _fieldIndex;
+        private Appender!(ValueType[]) _values;
+        private bool _haveMedian = false;
+        private ValueType _medianValue;
+        
+        this(size_t fieldIndex)
+        {
+            _fieldIndex = fieldIndex;
+        }
+
+        this(size_t fieldIndex, size_t capacity)
+        {
+            this(fieldIndex);
+            _values.reserve(capacity);
+        }
+        
+        final size_t length() const @property
+        {
+            return _values.data.length;
+        }
+
+        final size_t fieldIndex() const @property
+        {
+            return _fieldIndex;
+        }
+        
+        final void processNextLine(const char[][] fields)
+        {
+            debug writefln("[%s]: %s", __FUNCTION__, fields.to!string);
+            _values.put(fields[_fieldIndex].to!ValueType);
+        }
+        
+        /* Return a input range of the values. */
+        final auto values()
+        {
+            return _values.data;
+        }
+        
+        final ValueType[] getArray()
+        {
+            return _values.data;
+        }
+
+        final ValueType median()
+        {
+            if (!_haveMedian)
+            {
+                _medianValue = _values.data.rangeMedian();
+                _haveMedian = true;
+            }
+            
+            return _medianValue;
+        }
+    }
+}
+
+/* Finds the median. Partitions the range via topN in the process. */
+auto rangeMedian (Range) (Range r)
+    if (isRandomAccessRange!Range && hasLength!Range && hasSlicing!Range)
+{
+    import std.algorithm : max, reduce, topN;
+    import std.traits : isFloatingPoint;
+
+    ElementType!Range median;
+    
+    if (r.length > 0)
+    {
+        size_t medianIndex = r.length / 2;
+        topN(r, medianIndex);  // Partitions the array
+        
+        median = r[medianIndex];
+
+        static if (isFloatingPoint!(ElementType!Range))
+        {
+            if (r.length % 2 == 0)
+            {
+                /* Even number of values. Split the difference. */
+                median = (median + r[0..medianIndex].reduce!max) / 2.0;
+            }
+        }
+    }
+    return median;
 }
 
 /* SingleFieldOperator is a base class for single field operators, the most common
@@ -390,6 +918,8 @@ class SingleFieldOperator : Operator
     private string _header;
     private size_t _fieldIndex;
     private bool _hasCustomHeader;
+    private size_t[] _numericFieldsToSave;
+    private size_t[] _textFieldsToSave;
 
     this(string operatorName, size_t fieldIndex, string summaryHeader, bool hasCustomHeader = true)
     {
@@ -410,6 +940,21 @@ class SingleFieldOperator : Operator
         return _name;
     }
 
+    /* saveFieldValues[Numeric|Text] are called by derived classes to indicate that field
+     * that the field values should be saved. These should called during construction.
+     */
+    final void setSaveFieldValuesNumeric()
+    {
+        debug writefln("[%s] _fieldIndex: %d", __FUNCTION__, _fieldIndex);
+        _numericFieldsToSave ~= _fieldIndex;
+    }
+    
+    final void setSaveFieldValuesText()
+    {
+        debug writefln("[%s] _fieldIndex: %d", __FUNCTION__, _fieldIndex);
+        _textFieldsToSave ~= _fieldIndex;
+    }
+
     final size_t fieldIndex() const @property
     {
         return _fieldIndex;
@@ -423,9 +968,19 @@ class SingleFieldOperator : Operator
     void processHeaderLine(const char[][] fields)
     {
         if (!_hasCustomHeader) {
-            debug writefln("[processHeaderLine %s %d] fields: %s", _name, _fieldIndex, fields.to!string);
+            debug writefln("[%s %d] fields: %s", __FUNCTION__, _fieldIndex, fields.to!string);
             _header = fields[_fieldIndex].to!string ~ "_" ~ _name;
         }
+    }
+
+    final size_t[] numericFieldsToSave()
+    {
+        return _numericFieldsToSave;
+    }
+
+    final size_t[] textFieldsToSave()
+    {
+        return _textFieldsToSave;
     }
 
     abstract Calculator makeCalculator();
@@ -443,9 +998,14 @@ class SingleFieldCalculator : Calculator
         _fieldIndex = fieldIndex;
     }
 
+    size_t fieldIndex() const @property
+    {
+        return _fieldIndex;
+    }
+
     void processNextLine(const char[][] fields)
     {
-        debug writefln("[processNextLine %s %d] fields: %s", this.to!string, _fieldIndex, fields.to!string);
+        debug writefln("[%s %d] fields: %s", __FUNCTION__, _fieldIndex, fields.to!string);
         processNextField(fields[_fieldIndex]);
     }
     
@@ -487,6 +1047,18 @@ class CountOperator : Operator
     }
 
     void processHeaderLine(const char[][] fields) { }
+
+    final size_t[] numericFieldsToSave()
+    {
+        size_t[] emptyArray;
+        return emptyArray;
+    }
+
+    final size_t[] textFieldsToSave()
+    {
+        size_t[] emptyArray;
+        return emptyArray;
+    }
     
     final Calculator makeCalculator()
     {
@@ -499,11 +1071,11 @@ class CountOperator : Operator
 
         final void processNextLine(const char[][] fields)
         {
-            debug writefln("[processNextLine %s] fields: %s", this.to!string, fields.to!string);
+            debug writefln("[processNextLine %s] fields: %s", __FUNCTION__, fields.to!string);
             _count++;
         }
         
-        final string calculate()
+        final string calculate(UniqueKeyValuesLists valuesLists)
         {
             return _count.to!string;
         }
@@ -531,8 +1103,8 @@ class RetainOperator : SingleFieldOperator
 
     /* RetainOperator is similar to FirstOperator, except that it preserves the original
      * field name. The intent is for fields that are expected to have same value for each
-     * unique key, therefore there is no meaningful summarization to do. However, it may
-     * be useful to keep in the output.
+     * unique key, therefore there is no meaningful summarization to do. But, having the
+     * values in the output is still desirable.
      */
     static class RetainCalculator : SingleFieldCalculator
     {
@@ -553,7 +1125,7 @@ class RetainOperator : SingleFieldOperator
             }
         }
         
-        final string calculate()
+        final string calculate(UniqueKeyValuesLists valuesLists)
         {
             return _value;
         }
@@ -597,7 +1169,7 @@ class FirstOperator : SingleFieldOperator
             }
         }
 
-        final string calculate()
+        final string calculate(UniqueKeyValuesLists valuesLists)
         {
             return _value;
         }
@@ -635,7 +1207,7 @@ class LastOperator : SingleFieldOperator
             _value = nextField.to!string;
         }
         
-        final string calculate()
+        final string calculate(UniqueKeyValuesLists valuesLists)
         {
             return _value;
         }
@@ -683,7 +1255,7 @@ class MinOperator : SingleFieldOperator
             }
         }
         
-        final string calculate()
+        final string calculate(UniqueKeyValuesLists valuesLists)
         {
             return _value.to!string;
         }
@@ -731,13 +1303,66 @@ class MaxOperator : SingleFieldOperator
             }
         }
         
-        final string calculate()
+        final string calculate(UniqueKeyValuesLists valuesLists)
         {
             return _value.to!string;
         }
     }
 }
         
+class RangeOperator : SingleFieldOperator
+{
+    this(size_t fieldIndex)
+    {
+        super("range", fieldIndex);
+    }
+
+    this(size_t fieldIndex, string summaryHeader)
+    {
+        super("range", fieldIndex, summaryHeader);
+    }
+
+    final override Calculator makeCalculator()
+    {
+        return new RangeCalculator(fieldIndex);
+    }
+
+    static class RangeCalculator : SingleFieldCalculator
+    {
+        private bool _isFirst = true;
+        private double _minValue = 0.0;
+        private double _maxValue = 0.0;
+
+        this(size_t fieldIndex)
+        {
+            super(fieldIndex);
+        }
+
+        final override void processNextField(const char[] nextField)
+        {
+            double fieldValue = nextField.to!double;
+            if (_isFirst)
+            {
+                _minValue = _maxValue = fieldValue;
+                _isFirst = false;
+            }
+            else if (fieldValue > _maxValue)
+            {
+                _maxValue = fieldValue;
+            }
+            else if (fieldValue < _minValue)
+            {
+                _minValue = fieldValue;
+            }
+        }
+        
+        final string calculate(UniqueKeyValuesLists valuesLists)
+        {
+            return (_maxValue - _minValue).to!string;
+        }
+    }
+}
+
 class SumOperator : SingleFieldOperator
 {
     this(size_t fieldIndex)
@@ -769,7 +1394,7 @@ class SumOperator : SingleFieldOperator
             _total += nextField.to!double;
         }
 
-        final string calculate()
+        final string calculate(UniqueKeyValuesLists valuesLists)
         {
             return _total.to!string;
         }
@@ -809,247 +1434,128 @@ class MeanOperator : SingleFieldOperator
             _count++;
         }
         
-        final string calculate()
+        final string calculate(UniqueKeyValuesLists valuesLists)
         {
             return (_total / cast(double) _count).to!string;
         }
     }
 }
 
-/* A Summarizer maintains the state of the summarization and performs basic processing.
- * Handling of files and input lines is left to the caller.
- * API:
- * - addOperator - Called after initializing the object for each operator to be processed.
- * - processHeaderLine - Called to process the header line of each file. Returns true if
- *   it was the first header line processed (used when reading multiple files).
- * - processNextLine - Called to process non-header lines.
- * - writeSummaryHeader - Called to write the header line.
- * - writeSummaryBody - Called to write the result lines.
- */
-interface Summarizer(OutputRange)
+class MedianOperator : SingleFieldOperator
 {
-    void addOperator(Operator op);
-    bool processHeaderLine(const char[][] lineFields);
-    void processNextLine(const char[][] lineFields);
-    void writeSummaryHeader(ref OutputRange outputStream);
-    void writeSummaryBody(ref OutputRange outputStream);
-}
-
-class SummarizerBase(OutputRange) : Summarizer!OutputRange
-{
-    private char _fieldDelimiter;
-    private bool _hasProcessedFirstHeaderLine = false;
-    protected DList!Operator _operators;
-    protected size_t _numOperators = 0;
-
-    this(const char fieldDelimiter)
+    this(size_t fieldIndex)
     {
-        _fieldDelimiter = fieldDelimiter;
-    }
-
-    char fieldDelimiter() const @property
-    {
-        return _fieldDelimiter;
-    }
-
-    void addOperator(Operator op)
-    {
-        _operators.insertBack(op);
-        _numOperators++;
-    }
-
-    bool processHeaderLine(const char[][] lineFields)
-    {
-        if (!_hasProcessedFirstHeaderLine)
-        {
-            _operators.each!(x => x.processHeaderLine(lineFields));
-            _hasProcessedFirstHeaderLine = true;
-            return true;
-        }
-        else
-        {
-            return false;
-        }
-    }
-
-    abstract void processNextLine(const char[][] lineFields);
-    abstract void writeSummaryHeader(ref OutputRange outputStream);
-    abstract void writeSummaryBody(ref OutputRange outputStream);
-}
-
-/* This Summarizer a single summary for all the values in column.
- */
-class NoKeySummarizer(OutputRange) : SummarizerBase!OutputRange
-{
-    private Calculator[] _calculators;
-
-    this(const char fieldDelimiter)
-    {
-        super(fieldDelimiter);
-    }
-
-    /* Since there's only one Calculator per field, add them as Operators are added. */
-    override void addOperator(Operator op)
-    {
-        super.addOperator(op);
-        _calculators ~= op.makeCalculator;
-    }
-
-    override void processNextLine(const char[][] lineFields)
-    {
-        _calculators.each!(x => x.processNextLine(lineFields));
-    }
-
-    override void writeSummaryHeader(ref OutputRange outputStream)
-    {
-        put(outputStream, _operators[].map!(op => op.header).join(fieldDelimiter));
-        put(outputStream, '\n');
+        super("median", fieldIndex);
+        setSaveFieldValuesNumeric();
     }
     
-    override void writeSummaryBody(ref OutputRange outputStream)
+    this(size_t fieldIndex, string summaryHeader)
     {
-        put(outputStream, _calculators[].map!(x => x.calculate).join(fieldDelimiter));
-        put(outputStream, '\n');
+        super("median", fieldIndex, summaryHeader);
+        setSaveFieldValuesNumeric();
     }
-}
 
-class KeySummarizerBase(OutputRange) : SummarizerBase!OutputRange
-{
-    private DList!string _uniqueKeys;
-    private Calculator[][string] _uniqueKeyCalculators;
-
-    this(const char fieldDelimiter)
+    final override Calculator makeCalculator()
     {
-        super(fieldDelimiter);
+        return new MedianCalculator(fieldIndex);
     }
-    
-    protected Calculator[] addUniqueKey(string key)
-    {
-        assert(key !in _uniqueKeyCalculators);
 
-        _uniqueKeys.insertBack(key);
+    static class MedianCalculator : SingleFieldCalculator
+    {
+        this(size_t fieldIndex)
+        {
+            super(fieldIndex);
+        }
+
+        /* Work is done by saving the field values. */
+        final override void processNextField(const char[] nextField)
+        { }
         
-        auto calculators = new Calculator[_numOperators];
-        size_t i = 0;
-        foreach (op; _operators)
+        final string calculate(UniqueKeyValuesLists valuesLists)
         {
-            calculators[i] = op.makeCalculator;
-            i++;
-        }
-        return _uniqueKeyCalculators[key] = calculators;
-    }
-    
-    override void writeSummaryHeader(ref OutputRange outputStream)
-    {
-        put(outputStream, keyFieldHeader());
-        put(outputStream, fieldDelimiter);
-        put(outputStream, _operators[].map!(op => op.header).join(fieldDelimiter));
-        put(outputStream, '\n');
-    }
-    
-    override void writeSummaryBody(ref OutputRange outputStream)
-    {
-        foreach(key; _uniqueKeys)
-        {
-            put(outputStream, key);
-            put(outputStream, fieldDelimiter);
-            put(outputStream, _uniqueKeyCalculators[key][].map!(x => x.calculate).join(fieldDelimiter));
-            put(outputStream, '\n');
+            return valuesLists.numericValuesMedian(fieldIndex).to!string;
         }
     }
-    
-    abstract string keyFieldHeader() const @property;
 }
 
-/* This Summarizer is for the case where the unique key is based on exactly one field.
- */
-class OneKeySummarizer(OutputRange) : KeySummarizerBase!OutputRange
+class MadOperator : SingleFieldOperator
 {
-    private size_t _keyFieldIndex = 0;
-    private string _keyFieldHeader;
-    private DList!string _uniqueKeys;
-
-    this(size_t keyFieldIndex, char fieldDelimiter)
+    this(size_t fieldIndex)
     {
-        super(fieldDelimiter);
-        _keyFieldIndex = keyFieldIndex;
-        _keyFieldHeader = "field" ~ (keyFieldIndex + 1).to!string;
+        super("mad", fieldIndex);
+        setSaveFieldValuesNumeric();
     }
-
-    override string keyFieldHeader() const @property
-    {
-        return _keyFieldHeader;
-    }
-
-    override bool processHeaderLine(const char[][] lineFields)
-    {
-        assert(_keyFieldIndex <= lineFields.length);
-        
-        bool isFirstHeaderLine = super.processHeaderLine(lineFields);
-        if (isFirstHeaderLine)
-        {
-            _keyFieldHeader = lineFields[_keyFieldIndex].to!string;
-        }
-        return isFirstHeaderLine;
-    }
-
-    override void processNextLine(const char[][] lineFields)
-    {
-        assert(_keyFieldIndex < lineFields.length);
-
-        Calculator[]* calculatorsPtr = (lineFields[_keyFieldIndex] in _uniqueKeyCalculators);
-        Calculator[] calculators = (calculatorsPtr is null) ?
-            addUniqueKey(lineFields[_keyFieldIndex].to!string) : *calculatorsPtr;
-        
-        calculators.each!(x => x.processNextLine(lineFields));
-    }
-}
-
-/* This Summarizer is for the case where the unique key is based on multiple fields.
- */
-class MultiKeySummarizer(OutputRange) : KeySummarizerBase!OutputRange
-{
-    private size_t[] _keyFieldIndices;
-    private string _keyFieldHeader;
-    private DList!string _uniqueKeys;
-
-    this(const size_t[] keyFieldIndices, char fieldDelimiter)
-    {
-        super(fieldDelimiter);
-        _keyFieldIndices = keyFieldIndices.dup;
-        _keyFieldHeader = _keyFieldIndices.map!(x => "field" ~ (x + 1).to!string).join(fieldDelimiter);
-    }
-
-    override string keyFieldHeader() const @property
-    {
-        return _keyFieldHeader;
-    }
-
-    override bool processHeaderLine(const char[][] lineFields)
-    {
-        assert(_keyFieldIndices.all!(x => x < lineFields.length));
-        assert(_keyFieldIndices.length >= 2);
-        
-        bool isFirstHeaderLine = super.processHeaderLine(lineFields);
-        if (isFirstHeaderLine)
-        {
-            _keyFieldHeader = _keyFieldIndices.map!(i => lineFields[i]).join(fieldDelimiter).to!string;
-        }
-        return isFirstHeaderLine;
-    }
-
-    override void processNextLine(const char[][] lineFields)
-    {
-        assert(_keyFieldIndices.all!(x => x < lineFields.length));
-        assert(_keyFieldIndices.length >= 2);
-        
-        string key = _keyFieldIndices.map!(i => lineFields[i]).join(fieldDelimiter).to!string;
-        Calculator[]* calculatorsPtr = (key in _uniqueKeyCalculators);
-        Calculator[] calculators = (calculatorsPtr is null) ? addUniqueKey(key) : *calculatorsPtr;
-
-        calculators.each!(x => x.processNextLine(lineFields));
-    }
-}
-
-
     
+    this(size_t fieldIndex, string summaryHeader)
+    {
+        super("mad", fieldIndex, summaryHeader);
+        setSaveFieldValuesNumeric();
+    }
+
+    final override Calculator makeCalculator()
+    {
+        return new MadCalculator(fieldIndex);
+    }
+
+    static class MadCalculator : SingleFieldCalculator
+    {
+        this(size_t fieldIndex)
+        {
+            super(fieldIndex);
+        }
+
+        /* Work is done by saving the field values. */
+        final override void processNextField(const char[] nextField)
+        { }
+        
+        final string calculate(UniqueKeyValuesLists valuesLists)
+        {
+            import std.math : abs;
+            auto median = valuesLists.numericValuesMedian(fieldIndex);
+            auto values = valuesLists.numericValues(fieldIndex);
+            auto medianDevs = new double[values.length];
+            foreach (int i, double v; values)
+            {
+                medianDevs[i] = abs(v - median);
+            }
+            return medianDevs.rangeMedian.to!string;
+        }
+    }
+}
+
+class ListOperator : SingleFieldOperator
+{
+    this(size_t fieldIndex)
+    {
+        super("list", fieldIndex);
+        setSaveFieldValuesText();
+    }
+    
+    this(size_t fieldIndex, string summaryHeader)
+    {
+        super("list", fieldIndex, summaryHeader);
+        setSaveFieldValuesText();
+    }
+
+    final override Calculator makeCalculator()
+    {
+        return new ListCalculator(fieldIndex);
+    }
+
+    static class ListCalculator : SingleFieldCalculator
+    {
+        this(size_t fieldIndex)
+        {
+            super(fieldIndex);
+        }
+
+        /* Work is done by saving the field values. */
+        final override void processNextField(const char[] nextField)
+        { }
+        
+        final string calculate(UniqueKeyValuesLists valuesLists)
+        {
+            return valuesLists.textValues(fieldIndex).join('|');
+        }
+    }
+}
