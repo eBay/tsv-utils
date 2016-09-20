@@ -885,7 +885,7 @@ class UniqueKeyValuesLists
 auto rangeMedian (Range) (Range r)
     if (isRandomAccessRange!Range && hasLength!Range && hasSlicing!Range)
 {
-    import std.algorithm : max, reduce, topN;
+    import std.algorithm : max, reduce, sort;  // topN;
     import std.traits : isFloatingPoint;
 
     ElementType!Range median;
@@ -893,7 +893,12 @@ auto rangeMedian (Range) (Range r)
     if (r.length > 0)
     {
         size_t medianIndex = r.length / 2;
-        topN(r, medianIndex);  // Partitions the array
+        
+        /* topN should be the right algo, but it's pathologically slow is certain cases.
+         * For now use sort and try to get topN fixed.
+         *    topN(r, medianIndex);    
+         */
+        sort(r);
         
         median = r[medianIndex];
 
