@@ -881,34 +881,75 @@ class UniqueKeyValuesLists
     }
 }
 
-/* Finds the median. Partitions the range via topN in the process. */
+/* Finds the median. Modifies the range via topN or sort in the process.
+ * 
+ * Note: topN should be the preferred algorithm, but the current version (Phobos 2.071.1)
+ * is pathologically slow for certain data sets. Use sort for now, until an improved
+ * topN is available. Set version to rangeMedianViaSort or rangeMedianViaTopN.
+ * See: https://issues.dlang.org/show_bug.cgi?id=16517,
+ *      http://forum.dlang.org/post/ujuugklmbibuheptdwcn@forum.dlang.org
+ */
+version = rangeMedianViaSort;
+
 auto rangeMedian (Range) (Range r)
     if (isRandomAccessRange!Range && hasLength!Range && hasSlicing!Range)
 {
-    import std.algorithm : max, reduce, sort;  // topN;
-    import std.traits : isFloatingPoint;
+    version(rangeMedianViaSort)
+    {
+        version(rangeMedianViaTopN)
+        {
+            assert(0, "Both rangeMedianViaSort and rangeMedianViaTopN assigned as versions. Assign only one.");
+        }
+    }
+    else version(rangeMedianViaTopN)
+    {
+    }
+    else
+    {
+        static assert(0, "A version of rangeMedianViaSort or rangeMedianViaTopN must be assigned.");
+    }
 
+    import std.traits : isFloatingPoint;
+    
     ElementType!Range median;
     
     if (r.length > 0)
     {
         size_t medianIndex = r.length / 2;
         
-        /* topN should be the right algo, but it's pathologically slow is certain cases.
-         * For now use sort and try to get topN fixed.
-         *    topN(r, medianIndex);    
-         */
-        sort(r);
-        
-        median = r[medianIndex];
-
-        static if (isFloatingPoint!(ElementType!Range))
+        version(rangeMedianViaSort)
         {
-            if (r.length % 2 == 0)
+            import std.algorithm : sort;
+            sort(r);
+            median = r[medianIndex];
+            
+            static if (isFloatingPoint!(ElementType!Range))
             {
-                /* Even number of values. Split the difference. */
-                median = (median + r[0..medianIndex].reduce!max) / 2.0;
+                if (r.length % 2 == 0)
+                {
+                    /* Even number of values. Split the difference. */
+                    median = (median + r[medianIndex - 1]) / 2.0;
+                }
             }
+        }
+        else version(rangeMedianViaTopN)
+        {
+            import std.algorithm : max, reduce, topN;
+            topN(r, medianIndex);
+            median = r[medianIndex];
+            
+            static if (isFloatingPoint!(ElementType!Range))
+            {
+                if (r.length % 2 == 0)
+                {
+                    /* Even number of values. Split the difference. */
+                    median = (median + r[0..medianIndex].reduce!max) / 2.0;
+                }
+            }
+        }
+        else
+        {
+            static assert(0, "A version of rangeMedianViaSort or rangeMedianViaTopN must be assigned.");
         }
     }
     return median;
