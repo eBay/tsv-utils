@@ -22,18 +22,13 @@ import std.container : DList;
 int main(string[] cmdArgs) {
     TsvSummarizeOptions cmdopt;
     auto r = cmdopt.processArgs(cmdArgs);
-    if (!r[0]) {
-        return r[1];
-    }
-    try {
-        /* Process the input files.  */
-        tsvSummarize(cmdopt, cmdArgs[1..$]);
-    }
-    catch (Exception exc) {
+    if (!r[0]) return r[1];
+    try tsvSummarize(cmdopt, cmdArgs[1..$]);
+    catch (Exception exc)
+    {
         stderr.writeln("Error: ", exc.msg);
         return 1;
     }
-
     return 0;
 }
 
@@ -155,7 +150,6 @@ struct TsvSummarizeOptions {
             */
                 );
 
-
             if (r.helpWanted)
             {
                 defaultGetoptPrinter(helpText, r.options);
@@ -187,15 +181,14 @@ struct TsvSummarizeOptions {
         auto valSplit = findSplit(optionVal, ":");
         
         if (valSplit[0].empty || (!valSplit[1].empty && valSplit[2].empty))
+        {
             throw new Exception(
                 format("Invalid option value: '--%s %s'. Expected: '--%s <field>' or '--%s <field>:<val>' where <field> is a number and <val> a string.",
                        option, optionVal, option, option));
+        }
         
         size_t fieldNum;
-        try
-        {
-            fieldNum = valSplit[0].to!size_t;
-        }
+        try fieldNum = valSplit[0].to!size_t;
         catch (Exception exc)
         {
             throw new Exception(
@@ -210,12 +203,18 @@ struct TsvSummarizeOptions {
         size_t fieldIndex = fieldNum - 1;
         
         if (valSplit[2].empty)
+        {
             operators.insertBack(new OperatorClass(fieldIndex));
+        }
         else
+        {
             operators.insertBack(new OperatorClass(fieldIndex, valSplit[2].to!string));
+        }
         
         if (fieldIndex >= endFieldIndex)
+        {
             endFieldIndex = fieldIndex + 1;
+        }
     }
 
     private void countOptionHandler()
@@ -232,10 +231,14 @@ struct TsvSummarizeOptions {
     private void consistencyValidations()
     {
         if (keyFields.any!(x => x == 0))
+        {
             throw new Exception("Invalid --g|group-by option. Field numbers cannot be 0.");
+        }
 
         if (retainFields.any!(x => x == 0))
+        {
             throw new Exception("Invalid --r|retain option. Field numbers cannot be 0.");
+        }
     }
 
     /* Post-processing derivations. */
@@ -246,10 +249,12 @@ struct TsvSummarizeOptions {
          */
         [keyFields, retainFields]
             .joiner
-            .each!(delegate (ref size_t x) {
-                    if (x > endFieldIndex) endFieldIndex = x;
-                    --x;
-                });
+            .each!(delegate (ref size_t x)
+                   {
+                       if (x > endFieldIndex) endFieldIndex = x;
+                       --x;
+                   }
+                );
             
         /* Want retain fields printed before summary operators, so add them to the front
          * of the operator list.
@@ -335,10 +340,7 @@ void tsvSummarize(TsvSummarizeOptions cmdopt, in string[] inputFiles)
                 /* Process the line. Processing will fail (throw) if a field cannot be
                  * converted to the expected type.
                  */
-                try
-                {
-                    summarizer.processNextLine(lineFields);
-                }
+                try summarizer.processNextLine(lineFields);
                 catch (Exception exc)
                 {
                     throw new Exception(
@@ -356,7 +358,10 @@ void tsvSummarize(TsvSummarizeOptions cmdopt, in string[] inputFiles)
     auto stdoutWriter = stdout.lockingTextWriter;
     
     if (cmdopt.hasHeader || cmdopt.writeHeader)
+    {
         summarizer.writeSummaryHeader(stdoutWriter);
+    }
+
     summarizer.writeSummaryBody(stdoutWriter);
 }
 
@@ -417,8 +422,6 @@ class SummarizerBase(OutputRange) : Summarizer!OutputRange
             debug writefln("  [%s] numericFieldsToSave.length: %d, textFieldsToSave.length: %d",
                            op.to!string, numericFieldsToSave.length, textFieldsToSave.length);
 
-
-
             if (numericFieldsToSave.length > 0 || textFieldsToSave.length > 0)
             {
                 if (_sharedFieldValues is null)
@@ -473,20 +476,14 @@ class NoKeySummarizer(OutputRange) : SummarizerBase!OutputRange
     override void setOperators(InputRange!Operator operators)
     {
         super.setOperators(operators);
-        foreach (op; operators)
-        {
-            _calculators ~= op.makeCalculator;
-        }
+        foreach (op; operators) _calculators ~= op.makeCalculator;
         _valueLists = super.makeUniqueKeyValuesLists();
     }
 
     override void processNextLine(const char[][] lineFields)
     {
         _calculators.each!(x => x.processNextLine(lineFields));
-        if (_valueLists !is null)
-        {
-            _valueLists.processNextLine(lineFields);
-        }
+        if (_valueLists !is null) _valueLists.processNextLine(lineFields);
     }
 
     override void writeSummaryHeader(ref OutputRange outputStream)
@@ -533,10 +530,7 @@ class KeySummarizerBase(OutputRange) : SummarizerBase!OutputRange
         auto data = (dataPtr is null) ? addUniqueKey(key.to!string) : *dataPtr;
         
         data.calculators.each!(x => x.processNextLine(lineFields));
-        if (data.valuesLists !is null)
-        {
-            data.valuesLists.processNextLine(lineFields);
-        }
+        if (data.valuesLists !is null) data.valuesLists.processNextLine(lineFields);
     }
     
     protected UniqueKeyData addUniqueKey(string key)
@@ -740,18 +734,12 @@ class SharedFieldValues
 
     final void addNumericIndex (size_t index)
     {
-        if (!canFind(_numericFieldIndices, index))
-        {
-            _numericFieldIndices ~= index;
-        }
+        if (!canFind(_numericFieldIndices, index)) _numericFieldIndices ~= index;
     }
 
     final void addTextIndex (size_t index)
     {
-        if (!canFind(_textFieldIndices, index))
-        {
-            _textFieldIndices ~= index;
-        }
+        if (!canFind(_textFieldIndices, index)) _textFieldIndices ~= index;
     }
 
     final UniqueKeyValuesLists makeUniqueKeyValuesLists()
@@ -863,7 +851,7 @@ class UniqueKeyValuesLists
             _values.put(fields[_fieldIndex].to!ValueType);
         }
         
-        /* Return a input range of the values. */
+        /* Return an input range of the values. */
         final auto values()
         {
             return _values.data;
@@ -895,7 +883,11 @@ class UniqueKeyValuesLists
  * See: https://issues.dlang.org/show_bug.cgi?id=16517,
  *      http://forum.dlang.org/post/ujuugklmbibuheptdwcn@forum.dlang.org
  */
-version = rangeMedianViaSort;
+version(rangeMedianViaTopN) {}
+else
+{
+    version = rangeMedianViaSort;  // The default version, for now.
+}
 
 auto rangeMedian (Range) (Range r)
     if (isRandomAccessRange!Range && hasLength!Range && hasSlicing!Range)
@@ -949,7 +941,11 @@ auto rangeMedian (Range) (Range r)
                 if (r.length % 2 == 0)
                 {
                     /* Even number of values. Split the difference. */
-                    median = (median + r[0..medianIndex].reduce!max) / 2.0;
+                    if (r[medianIndex - 1] < median)
+                    {
+                        /* Note: Upcoming phobos has maxElement. */
+                        median = (median + r[0..medianIndex].reduce!max) / 2.0;
+                    }
                 }
             }
         }
@@ -1567,9 +1563,7 @@ class MadOperator : SingleFieldOperator
             auto values = valuesLists.numericValues(fieldIndex);
             auto medianDevs = new double[values.length];
             foreach (int i, double v; values)
-            {
                 medianDevs[i] = abs(v - median);
-            }
             return medianDevs.rangeMedian.to!string;
         }
     }
