@@ -96,8 +96,8 @@ struct TsvSummarizeOptions {
     size_t[] retainFields;           // -r, --retain
     bool hasHeader = false;          // --header
     bool writeHeader = false;        // -w, --write-header
-    char fieldDelimiter = '\t';      // --d|delimiter
-    char valuesDelimiter = ' ';      // --v|values-delimiter
+    char inputFieldDelimiter = '\t'; // --d|delimiter
+    char valuesDelimiter = '|';      // --v|values-delimiter
     bool helpBrief = false;          // --help-brief
     DList!Operator operators;        // Operators, in the order specified.
     size_t endFieldIndex = 0;        // Derived value. Max field index used plus one.
@@ -125,8 +125,8 @@ struct TsvSummarizeOptions {
                 "H|header",           "           Treat the first line of each file as a header.", &hasHeader,
                 std.getopt.config.caseInsensitive,
                 "w|write-header",     "           Write an output header even if there is no input header.", &writeHeader,
-                "d|delimiter",        "CHR        Field delimiter. Default: TAB. (Single byte UTF-8 characters only.)", &fieldDelimiter,
-                "v|values-delimiter", "CHR        Values delimiter. Default: SPACE. (Single byte UTF-8 characters only.)", &valuesDelimiter,
+                "d|delimiter",        "CHR        Field delimiter. Default: TAB. (Single byte UTF-8 characters only.)", &inputFieldDelimiter,
+                "v|values-delimiter", "CHR        Values delimiter. Default: vertical bar (|). (Single byte UTF-8 characters only.)", &valuesDelimiter,
                 "count",              "           Count occurrences of each unique key.", &countOptionHandler,
                 "count-header",       "STR        Count occurrences of each unique key, use header STR.", &countHeaderOptionHandler,
                 "first",              "FLD[:STR]  First value listed.", &operatorOptionHandler!FirstOperator,
@@ -137,7 +137,7 @@ struct TsvSummarizeOptions {
                 "sum",                "FLD[:STR]  Sum of the values. (Numeric fields only.)", &operatorOptionHandler!SumOperator,
                 "mean",               "FLD[:STR]  Mean (average) of the values. (Numeric fields only.)", &operatorOptionHandler!MeanOperator,
                 "median",             "FLD[:STR]  Median value. (Numeric fields only. Reads all values into memory.)", &operatorOptionHandler!MedianOperator,
-                "mad",                "FLD[:STR]  Median absolute deviation. The raw value, not scaled. (Numeric fields only. Reads all values into memory.)",
+                "mad",                "FLD[:STR]  Median absolute deviation. Raw value, not scaled. (Numeric fields only. Reads all values into memory.)",
                 &operatorOptionHandler!MadOperator,
                 
                 "values",             "FLD[:STR]  All the values, separated by --v|values-delimiter.", &operatorOptionHandler!ValuesOperator,
@@ -239,6 +239,11 @@ struct TsvSummarizeOptions {
         {
             throw new Exception("Invalid --r|retain option. Field numbers cannot be 0.");
         }
+
+        if (inputFieldDelimiter == valuesDelimiter)
+        {
+            throw new Exception("Cannot use the same character for both --d|field-delimiter and --v|values-delimiter.");
+        }
     }
 
     /* Post-processing derivations. */
@@ -270,12 +275,12 @@ void tsvSummarize(TsvSummarizeOptions cmdopt, in string[] inputFiles)
     /* Pick the Summarizer based on the number of key-fields entered. */
     auto summarizer =
         (cmdopt.keyFields.length == 0)
-        ? new NoKeySummarizer!(typeof(stdout.lockingTextWriter()))(cmdopt.fieldDelimiter)
+        ? new NoKeySummarizer!(typeof(stdout.lockingTextWriter()))(cmdopt.inputFieldDelimiter)
         
         : (cmdopt.keyFields.length == 1)
-        ? new OneKeySummarizer!(typeof(stdout.lockingTextWriter()))(cmdopt.keyFields[0], cmdopt.fieldDelimiter)
+        ? new OneKeySummarizer!(typeof(stdout.lockingTextWriter()))(cmdopt.keyFields[0], cmdopt.inputFieldDelimiter)
         
-        : new MultiKeySummarizer!(typeof(stdout.lockingTextWriter()))(cmdopt.keyFields, cmdopt.fieldDelimiter);
+        : new MultiKeySummarizer!(typeof(stdout.lockingTextWriter()))(cmdopt.keyFields, cmdopt.inputFieldDelimiter);
 
     /* Add the operators to the Summarizer. */
     summarizer.setOperators(inputRangeObject(cmdopt.operators[]));
@@ -295,7 +300,7 @@ void tsvSummarize(TsvSummarizeOptions cmdopt, in string[] inputFiles)
             if (cmdopt.endFieldIndex > 0)
             {
                 size_t fieldIndex = 0;
-                foreach (fieldValue; line.splitter(cmdopt.fieldDelimiter))
+                foreach (fieldValue; line.splitter(cmdopt.inputFieldDelimiter))
                 {
                     if (fieldIndex == cmdopt.endFieldIndex) break;
                     lineFields[fieldIndex] = fieldValue;
@@ -355,14 +360,24 @@ void tsvSummarize(TsvSummarizeOptions cmdopt, in string[] inputFiles)
     debug writeln("[tsvSummarize] After reading all data.");
 
     /* Whew! We're done. Run the calculations and print. */
+    auto printOptions = SummarizerPrintOptions(cmdopt.inputFieldDelimiter, cmdopt.valuesDelimiter);
     auto stdoutWriter = stdout.lockingTextWriter;
     
     if (cmdopt.hasHeader || cmdopt.writeHeader)
     {
-        summarizer.writeSummaryHeader(stdoutWriter);
+        summarizer.writeSummaryHeader(stdoutWriter, printOptions);
     }
 
-    summarizer.writeSummaryBody(stdoutWriter);
+    summarizer.writeSummaryBody(stdoutWriter, printOptions);
+}
+
+/* SummarizerPrintOptions holds printing options for Summarizers and Calculators. Typically
+ * specified with command line options, it is separated out for modularity.
+ */
+struct SummarizerPrintOptions
+{
+    char fieldDelimiter;
+    char valuesDelimiter;
 }
 
 /* A Summarizer maintains the state of the summarization and performs basic processing.
@@ -380,8 +395,8 @@ interface Summarizer(OutputRange)
     void setOperators(InputRange!Operator op);
     bool processHeaderLine(const char[][] lineFields);
     void processNextLine(const char[][] lineFields);
-    void writeSummaryHeader(ref OutputRange outputStream);
-    void writeSummaryBody(ref OutputRange outputStream);
+    void writeSummaryHeader(ref OutputRange outputStream, const ref SummarizerPrintOptions);
+    void writeSummaryBody(ref OutputRange outputStream, const ref SummarizerPrintOptions);
 }
 
 /* SummarizerBase performs work shared by all sumarizers, most everything except for
@@ -391,20 +406,20 @@ interface Summarizer(OutputRange)
  */
 class SummarizerBase(OutputRange) : Summarizer!OutputRange
 {
-    private char _fieldDelimiter;
+    private char _inputFieldDelimiter;
     private bool _hasProcessedFirstHeaderLine = false;
     private SharedFieldValues _sharedFieldValues = null;  // Null if no shared field value lists.
     protected DList!Operator _operators;
     protected size_t _numOperators = 0;
 
-    this(const char fieldDelimiter)
+    this(const char inputFieldDelimiter)
     {
-        _fieldDelimiter = fieldDelimiter;
+        _inputFieldDelimiter = inputFieldDelimiter;
     }
 
-    char fieldDelimiter() const @property
+    char inputFieldDelimiter() const @property
     {
-        return _fieldDelimiter;
+        return _inputFieldDelimiter;
     }
 
     /* Sets the Operators used by the Summarizer. Called after construction. */
@@ -456,8 +471,8 @@ class SummarizerBase(OutputRange) : Summarizer!OutputRange
     }
 
     abstract void processNextLine(const char[][] lineFields);
-    abstract void writeSummaryHeader(ref OutputRange outputStream);
-    abstract void writeSummaryBody(ref OutputRange outputStream);
+    abstract void writeSummaryHeader(ref OutputRange outputStream, const ref SummarizerPrintOptions);
+    abstract void writeSummaryBody(ref OutputRange outputStream, const ref SummarizerPrintOptions);
 }
 
 /* The NoKeySummarizer is used when summarizing values across the entire input.
@@ -467,9 +482,9 @@ class NoKeySummarizer(OutputRange) : SummarizerBase!OutputRange
     private Calculator[] _calculators;
     private UniqueKeyValuesLists _valueLists;
 
-    this(const char fieldDelimiter)
+    this(const char inputFieldDelimiter)
     {
-        super(fieldDelimiter);
+        super(inputFieldDelimiter);
     }
 
     /* Only one Calculator per Operation, so create them as Operators are added. */
@@ -486,18 +501,18 @@ class NoKeySummarizer(OutputRange) : SummarizerBase!OutputRange
         if (_valueLists !is null) _valueLists.processNextLine(lineFields);
     }
 
-    override void writeSummaryHeader(ref OutputRange outputStream)
+    override void writeSummaryHeader(ref OutputRange outputStream, const ref SummarizerPrintOptions printOptions)
     {
-        put(outputStream, _operators[].map!(op => op.header).join(fieldDelimiter));
+        put(outputStream, _operators[].map!(op => op.header).join(printOptions.fieldDelimiter));
         put(outputStream, '\n');
     }
     
-    override void writeSummaryBody(ref OutputRange outputStream)
+    override void writeSummaryBody(ref OutputRange outputStream, const ref SummarizerPrintOptions printOptions)
     {
         put(outputStream,
             _calculators[]
-            .map!(x => x.calculate(_valueLists))
-            .join(fieldDelimiter));
+            .map!(x => x.calculate(_valueLists, printOptions))
+            .join(printOptions.fieldDelimiter));
         put(outputStream, '\n');
     }
 }
@@ -517,9 +532,9 @@ class KeySummarizerBase(OutputRange) : SummarizerBase!OutputRange
     private DList!string _uniqueKeys;
     private UniqueKeyData[string] _uniqueKeyData;
 
-    this(const char fieldDelimiter)
+    this(const char inputFieldDelimiter)
     {
-        super(fieldDelimiter);
+        super(inputFieldDelimiter);
     }
 
     protected void processNextLineWithKey(T : const char[])(T key, const char[][] lineFields)
@@ -550,25 +565,25 @@ class KeySummarizerBase(OutputRange) : SummarizerBase!OutputRange
         return _uniqueKeyData[key] = UniqueKeyData(calculators, super.makeUniqueKeyValuesLists());
     }
     
-    override void writeSummaryHeader(ref OutputRange outputStream)
+    override void writeSummaryHeader(ref OutputRange outputStream, const ref SummarizerPrintOptions printOptions)
     {
         put(outputStream, keyFieldHeader());
-        put(outputStream, fieldDelimiter);
-        put(outputStream, _operators[].map!(op => op.header).join(fieldDelimiter));
+        put(outputStream, printOptions.fieldDelimiter);
+        put(outputStream, _operators[].map!(op => op.header).join(printOptions.fieldDelimiter));
         put(outputStream, '\n');
     }
     
-    override void writeSummaryBody(ref OutputRange outputStream)
+    override void writeSummaryBody(ref OutputRange outputStream, const ref SummarizerPrintOptions printOptions)
     {
         foreach(key; _uniqueKeys)
         {
             auto data = _uniqueKeyData[key];
             put(outputStream, key);
-            put(outputStream, fieldDelimiter);
+            put(outputStream, printOptions.fieldDelimiter);
             put(outputStream,
                 data.calculators[]
-                .map!(x => x.calculate(data.valuesLists))
-                .join(fieldDelimiter));
+                .map!(x => x.calculate(data.valuesLists, printOptions))
+                .join(printOptions.fieldDelimiter));
             put(outputStream, '\n');
         }
     }
@@ -584,9 +599,9 @@ class OneKeySummarizer(OutputRange) : KeySummarizerBase!OutputRange
     private string _keyFieldHeader;
     private DList!string _uniqueKeys;
 
-    this(size_t keyFieldIndex, char fieldDelimiter)
+    this(size_t keyFieldIndex, char inputFieldDelimiter)
     {
-        super(fieldDelimiter);
+        super(inputFieldDelimiter);
         _keyFieldIndex = keyFieldIndex;
         _keyFieldHeader = "field" ~ (keyFieldIndex + 1).to!string;
     }
@@ -623,11 +638,11 @@ class MultiKeySummarizer(OutputRange) : KeySummarizerBase!OutputRange
     private string _keyFieldHeader;
     private DList!string _uniqueKeys;
 
-    this(const size_t[] keyFieldIndices, char fieldDelimiter)
+    this(const size_t[] keyFieldIndices, char inputFieldDelimiter)
     {
-        super(fieldDelimiter);
+        super(inputFieldDelimiter);
         _keyFieldIndices = keyFieldIndices.dup;
-        _keyFieldHeader = _keyFieldIndices.map!(x => "field" ~ (x + 1).to!string).join(fieldDelimiter);
+        _keyFieldHeader = _keyFieldIndices.map!(x => "field" ~ (x + 1).to!string).join(inputFieldDelimiter);
     }
 
     override string keyFieldHeader() const @property
@@ -643,7 +658,7 @@ class MultiKeySummarizer(OutputRange) : KeySummarizerBase!OutputRange
         bool isFirstHeaderLine = super.processHeaderLine(lineFields);
         if (isFirstHeaderLine)
         {
-            _keyFieldHeader = _keyFieldIndices.map!(i => lineFields[i]).join(fieldDelimiter).to!string;
+            _keyFieldHeader = _keyFieldIndices.map!(i => lineFields[i]).join(inputFieldDelimiter).to!string;
         }
         return isFirstHeaderLine;
     }
@@ -653,7 +668,7 @@ class MultiKeySummarizer(OutputRange) : KeySummarizerBase!OutputRange
         assert(_keyFieldIndices.all!(x => x < lineFields.length));
         assert(_keyFieldIndices.length >= 2);
         
-        string key = _keyFieldIndices.map!(i => lineFields[i]).join(fieldDelimiter).to!string;
+        string key = _keyFieldIndices.map!(i => lineFields[i]).join(inputFieldDelimiter).to!string;
         processNextLineWithKey(key, lineFields);
     }
 }
@@ -694,7 +709,7 @@ interface Operator
 interface Calculator
 {
     void processNextLine(const char[][] fields);
-    string calculate(UniqueKeyValuesLists valuesLists);
+    string calculate(UniqueKeyValuesLists valuesLists, const ref SummarizerPrintOptions printOptions);
 }
 
 /* The SharedFieldValues and UniqueKeyValuesLists classes manage lists of values collected
@@ -1123,7 +1138,7 @@ class CountOperator : Operator
             _count++;
         }
         
-        final string calculate(UniqueKeyValuesLists valuesLists)
+        final string calculate(UniqueKeyValuesLists valuesLists, const ref SummarizerPrintOptions printOptions)
         {
             return _count.to!string;
         }
@@ -1173,7 +1188,7 @@ class RetainOperator : SingleFieldOperator
             }
         }
         
-        final string calculate(UniqueKeyValuesLists valuesLists)
+        final string calculate(UniqueKeyValuesLists valuesLists, const ref SummarizerPrintOptions printOptions)
         {
             return _value;
         }
@@ -1217,7 +1232,7 @@ class FirstOperator : SingleFieldOperator
             }
         }
 
-        final string calculate(UniqueKeyValuesLists valuesLists)
+        final string calculate(UniqueKeyValuesLists valuesLists, const ref SummarizerPrintOptions printOptions)
         {
             return _value;
         }
@@ -1255,7 +1270,7 @@ class LastOperator : SingleFieldOperator
             _value = nextField.to!string;
         }
         
-        final string calculate(UniqueKeyValuesLists valuesLists)
+        final string calculate(UniqueKeyValuesLists valuesLists, const ref SummarizerPrintOptions printOptions)
         {
             return _value;
         }
@@ -1303,7 +1318,7 @@ class MinOperator : SingleFieldOperator
             }
         }
         
-        final string calculate(UniqueKeyValuesLists valuesLists)
+        final string calculate(UniqueKeyValuesLists valuesLists, const ref SummarizerPrintOptions printOptions)
         {
             return _value.to!string;
         }
@@ -1351,7 +1366,7 @@ class MaxOperator : SingleFieldOperator
             }
         }
         
-        final string calculate(UniqueKeyValuesLists valuesLists)
+        final string calculate(UniqueKeyValuesLists valuesLists, const ref SummarizerPrintOptions printOptions)
         {
             return _value.to!string;
         }
@@ -1404,7 +1419,7 @@ class RangeOperator : SingleFieldOperator
             }
         }
         
-        final string calculate(UniqueKeyValuesLists valuesLists)
+        final string calculate(UniqueKeyValuesLists valuesLists, const ref SummarizerPrintOptions printOptions)
         {
             return (_maxValue - _minValue).to!string;
         }
@@ -1442,7 +1457,7 @@ class SumOperator : SingleFieldOperator
             _total += nextField.to!double;
         }
 
-        final string calculate(UniqueKeyValuesLists valuesLists)
+        final string calculate(UniqueKeyValuesLists valuesLists, const ref SummarizerPrintOptions printOptions)
         {
             return _total.to!string;
         }
@@ -1482,7 +1497,7 @@ class MeanOperator : SingleFieldOperator
             _count++;
         }
         
-        final string calculate(UniqueKeyValuesLists valuesLists)
+        final string calculate(UniqueKeyValuesLists valuesLists, const ref SummarizerPrintOptions printOptions)
         {
             return (_total / cast(double) _count).to!string;
         }
@@ -1519,7 +1534,7 @@ class MedianOperator : SingleFieldOperator
         final override void processNextField(const char[] nextField)
         { }
         
-        final string calculate(UniqueKeyValuesLists valuesLists)
+        final string calculate(UniqueKeyValuesLists valuesLists, const ref SummarizerPrintOptions printOptions)
         {
             return valuesLists.numericValuesMedian(fieldIndex).to!string;
         }
@@ -1556,7 +1571,7 @@ class MadOperator : SingleFieldOperator
         final override void processNextField(const char[] nextField)
         { }
         
-        final string calculate(UniqueKeyValuesLists valuesLists)
+        final string calculate(UniqueKeyValuesLists valuesLists, const ref SummarizerPrintOptions printOptions)
         {
             import std.math : abs;
             auto median = valuesLists.numericValuesMedian(fieldIndex);
@@ -1599,9 +1614,9 @@ class ValuesOperator : SingleFieldOperator
         final override void processNextField(const char[] nextField)
         { }
         
-        final string calculate(UniqueKeyValuesLists valuesLists)
+        final string calculate(UniqueKeyValuesLists valuesLists, const ref SummarizerPrintOptions printOptions)
         {
-            return valuesLists.textValues(fieldIndex).join('|');
+            return valuesLists.textValues(fieldIndex).join(printOptions.valuesDelimiter);
         }
     }
 }
