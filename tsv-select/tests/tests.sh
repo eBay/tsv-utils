@@ -110,6 +110,11 @@ cat input_3x2.tsv input_3x0.tsv | ${prog} -f 2,1 >> ${basic_tests_1} 2>&1
 echo "" >> ${basic_tests_1}; echo "====[cat input_3x2.tsv | tsv-select -f 2,1 -- input_3x3.tsv - input_3x1.tsv]====" >> ${basic_tests_1}
 cat input_3x2.tsv | ${prog} -f 2,1 -- input_3x3.tsv - input_3x1.tsv >> ${basic_tests_1} 2>&1
 
+## Header line tests
+runtest ${prog} "--header -f 1 input_header1.tsv" ${basic_tests_1}
+runtest ${prog} "-H -f 2 input_header1.tsv input_header2.tsv input_header3.tsv input_header4.tsv" ${basic_tests_1}
+runtest ${prog} "-H -f 1,2,3 input_header3.tsv input_header3.tsv input_header1.tsv" ${basic_tests_1}
+
 ## Error cases
 
 error_tests_1=${odir}/error_tests_1.txt
