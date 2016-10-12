@@ -15,16 +15,16 @@ Information on the D programming language is available at: http://dlang.org/.
 
 ## The tools
 
-These tools were developed for working with reasonably large data files. Perhaps larger than ideal for direct use in an application like R, but not so big as to necessitate moving to Hadoop or similar distributed compute environments. They work like traditional Unix command line utilities such as `cut`, `sort`, `grep`, etc., and are intended to complement these tools. Each tool is a standalone executable. They follow common Unix conventions for pipeline programs. Data is read from files or standard input, results are written to standard output. Documentation is available for each tool by invoking it with the `--help` option. If reading the code, look for the `helpText` variable near the top of the file.
+These tools were developed for working with reasonably large data files. Perhaps larger than ideal for direct use in an application like R, but not so big as to necessitate moving to Hadoop or similar distributed compute environments. They work like traditional Unix command line utilities such as `cut`, `sort`, `grep`, etc., and are intended to complement these tools. Each tool is a standalone executable. They follow common Unix conventions for pipeline programs. Data is read from files or standard input, results are written to standard output. The field separator defaults to TAB, but any character can be used. Documentation is available for each tool by invoking it with the `--help` option. If reading the code, look for the `helpText` variable near the top of the file.
 
 A short description of each tool follows. There is more detail in the [tool reference](#tool-reference) section later in this file.
 
-* [tsv-filter](#tsv-filter)
-* [tsv-join](#tsv-join)
-* [tsv-uniq](#tsv-uniq)
-* [tsv-select](#tsv-select)
-* [csv2tsv](#csv2tsv)
-* [number-lines](#number-lines)
+* [tsv-filter](#tsv-filter) - Filter rows in input files.
+* [tsv-join](#tsv-join) - Join lines from multiple files using fields as a key.
+* [tsv-uniq](#tsv-uniq) - Filter out duplicate lines using fields as a key.
+* [tsv-select](#tsv-select) - Keep a subset of the columns in the input.
+* [csv2tsv](#csv2tsv) - Convert CSV files to TSV.
+* [number-lines](#number-lines) - Number the input lines.
 * [Useful bash aliases](#useful-bash-aliases)
 * [Other toolkits](#other-toolkits)
 
@@ -66,12 +66,12 @@ As with `tsv-join`, this uses an in-memory lookup table to record unique entries
 
 ### tsv-select
 
-A version of the Unix `cut` utility with the additional ability to re-order the fields. The following command writes fields [4, 2, 9] from a pair of files to stdout:
+A version of the Unix `cut` utility with the additional ability to re-order the fields. It also helps with header lines by keeping only the header from the first file (`--header` option). The following command writes fields [4, 2, 9] from a pair of files to stdout:
 ```
 $ tsv-select -f 4,2,9 file1.tsv file2.tsv
 ```
 
-Reordering fields is a useful enhancement over `cut`. However, much of the motivation for writing it was to explore the D programming language and provide a comparison point against other common approaches to this task. Code for `tsv-select` is bit more liberal with comments pointing out D programming constructs than code for the other tools.
+Reordering fields and managing headers are useful enhancements over `cut`. However, much of the motivation for writing it was to explore the D programming language and provide a comparison point against other common approaches to this task. Code for `tsv-select` is bit more liberal with comments pointing out D programming constructs than code for the other tools.
 
 ### csv2tsv
 
@@ -572,9 +572,10 @@ $ tsv-uniq -f 1,2 --equiv --header data.tsv
 
 **Synopsis:** tsv-select -f n[,n...] [options] [file...]
 
-tsv-select reads files or standard input and writes specified fields to standard output in the order listed. Similar to 'cut' with the ability to reorder fields. Fields can be listed more than once, and fields not listed can be output using the --rest option.
+tsv-select reads files or standard input and writes specified fields to standard output in the order listed. Similar to 'cut' with the ability to reorder fields. Fields can be listed more than once, and fields not listed can be output using the `--rest` option. When working with multiple files, the `--header` option can be used to retain only the header from the first file.
 
 **Options:**
+* `--H|header` - Treat the first line of each file as a header. 
 * `--f|fields n[,n...]` - (Required) Fields to extract. Fields are output in the order listed.
 * `--r|rest none|first|last` - Location for remaining fields. Default: none
 * `--d|delimiter CHR` - Character to use as field delimiter. Default: TAB. (Single byte UTF-8 characters only.)

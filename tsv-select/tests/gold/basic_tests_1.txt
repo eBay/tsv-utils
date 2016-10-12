@@ -569,3 +569,21 @@ f2	f1
 2002	3x2-r2
 f2	f1
 201	3x1-r1
+
+====[tsv-select --header -f 1 input_header1.tsv]====
+field1
+11567
+21567
+
+====[tsv-select -H -f 2 input_header1.tsv input_header2.tsv input_header3.tsv input_header4.tsv]====
+field2
+12567
+22567
+12987
+12888
+22888
+
+====[tsv-select -H -f 1,2,3 input_header3.tsv input_header3.tsv input_header1.tsv]====
+field1	field2	field3
+11567	12567	13567
+21567	22567	23567

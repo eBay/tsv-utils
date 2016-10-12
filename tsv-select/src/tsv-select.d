@@ -29,10 +29,13 @@ import std.typecons : tuple, Tuple;
 auto helpText = q"EOS
 Synopsis: tsv-select -f n[,n...] [options] [file...]
 
-tsv-select reads files or standard input and writes specified fields to
-standard output in the order listed. Similar to 'cut' with the ability to
-reorder fields. Fields can be listed more than once, and fields not
-listed can be output using the --rest option. Examples:
+tsv-select reads files or standard input and writes specified fields to standard
+output in the order listed. Similar to 'cut' with the ability to reorder fields.
+Fields can be listed more than once, and fields not listed can be output using
+the --rest option. Multiple files with header lines can be managed with the
+--header option, which retains the header of the first file and drops the rest.
+
+Examples:
 
    tsv-select -f 4,2,9 file1.tsv file2.tsv
    tsv-select --delimiter ' ' -f 2,4,6 --rest last file1.txt
@@ -47,10 +50,11 @@ Container for command line options.
 struct TsvSelectOptions {
     // The allowed values for the --rest option.
     enum RestOptionVal { none, first, last };
-    
-    char delim = '\t';
-    size_t[] fields;
-    RestOptionVal rest;
+
+    bool hasHeader = false;     // --H|header
+    char delim = '\t';          // --d|delimiter
+    size_t[] fields;            // --f|fields
+    RestOptionVal rest;         // --rest none|first|last
 
     /** Process command line arguments (getopt cover).
      * 
@@ -71,6 +75,9 @@ struct TsvSelectOptions {
             arraySep = ",";    // Use comma to separate values in command line options
             auto r = getopt(
                 cmdArgs,
+                std.getopt.config.caseSensitive,  
+                "H|header",    "                 Treat the first line of each file as a header.", &hasHeader,
+                std.getopt.config.caseInsensitive,
                 "f|fields",    "n[,n...]         (Required) Fields to extract. Fields are output in the order listed.", &fields,
                 "r|rest",      "none|first|last  Location for remaining fields. Default: none", &rest,
                 "d|delimiter", "CHR              Character to use as field delimiter. Default: TAB. (Single byte UTF-8 characters only.)", &delim
@@ -196,9 +203,11 @@ void tsvSelect(CTERestLocation cteRest)(in TsvSelectOptions cmdopt, in string[] 
     /* Read each input file (or stdin) and iterate over each line. A filename of "-" is
      * interpreted as stdin, common behavior for unix command line tools.
      */
-    foreach (filename; (inputFiles.length > 0) ? inputFiles : ["-"]) {
+    foreach (fileNum, filename; (inputFiles.length > 0) ? inputFiles : ["-"]) {
         auto inputStream = (filename == "-") ? stdin : filename.File();
         foreach (lineNum, line; inputStream.byLine.enumerate(1)) {
+            if (lineNum == 1 && fileNum > 0 && cmdopt.hasHeader)
+                continue;   // Drop the header line from all but the first file.
             static if (cteRest != CTERestLocation.none) 
                 leftOverFieldsAppender.clear;
             fieldReordering.initNewLine;
