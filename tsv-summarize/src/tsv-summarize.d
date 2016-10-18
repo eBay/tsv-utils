@@ -894,6 +894,7 @@ class UniqueKeyValuesLists
         {
             debug writefln("[%s]: %s", __FUNCTION__, fields.to!string);
             _values.put(fields[_fieldIndex].to!ValueType);
+            _haveMedian = false;
         }
         
         /* Return an input range of the values. */
@@ -955,7 +956,7 @@ auto rangeMedian (Range) (Range r)
     import std.traits : isFloatingPoint;
     
     ElementType!Range median;
-    
+
     if (r.length > 0)
     {
         size_t medianIndex = r.length / 2;
@@ -999,6 +1000,7 @@ auto rangeMedian (Range) (Range r)
             static assert(0, "A version of rangeMedianViaSort or rangeMedianViaTopN must be assigned.");
         }
     }
+    
     return median;
 }
 
@@ -1017,7 +1019,7 @@ unittest
     assert(rangeMedian([3.0]) == 3.0);
     assert(rangeMedian([3.5]) == 3.5);
     assert(rangeMedian(["aaa"]) == "aaa");
-
+    
     /* Even number of elements: Split the difference for floating point, but not other types. */
     assert(rangeMedian([3, 4]) == 4);
     assert(rangeMedian([3.0, 4.0]) == 3.5);
@@ -1175,17 +1177,24 @@ version(unittest)
         (const char[][][] splitFile, size_t fieldIndex, string headerSuffix,
          const char[][] expectedValues)
     {
+        import std.format : format;
         import std.range : appender;
         import std.string : chomp;
         import std.traits : EnumMembers;
+
+        auto numFields = (splitFile[0]).length;
+        
+        assert(fieldIndex < numFields,
+               format("[testSingleFieldOperator] Invalid field index. headerSuffix: %s",
+                      headerSuffix));
+        assert(splitFile.length == expectedValues.length,
+               format("[testSingleFieldOperator] Number of expected values differs from number of rows. headerSuffix: %s",
+                      headerSuffix));
 
         /* printOptions - Only the 'values-delimiter' (2nd arg) is used these tests. */
         auto printOptions = SummarizerPrintOptions('#', '|');
 
         /* An input header line. */
-        auto numFields = (splitFile[0]).length;
-        assert(fieldIndex < numFields);
-
         string[] inputHeaderLine = new string[numFields];
         foreach (i; 0 .. numFields) inputHeaderLine[i] = "header" ~ i.to!string;
 
@@ -1204,18 +1213,14 @@ version(unittest)
 
         string headerAssertMessage(Operator op, HeaderUsecase hc, const char[] actual, const char[] expected)
         {
-            import std.format : format;
-
-            return format("Unexpected header. Operator: %s; Usecase: %s;  Actual: '%s';  Expected: '%s'",
+            return format("[testSingleFieldOperator] Unexpected header. Operator: %s; Usecase: %s;  Actual: '%s';  Expected: '%s'",
                           op.name, hc, actual, expected);
         }
 
         string valueAssertMessage(Operator op, HeaderUsecase hc, size_t rowIndex, size_t fieldIndex,
                                   const char[] actual, const char[] expected)
         {
-            import std.format : format;
-
-            return format("Unexpected value. Operator: %s; Usecase: %s;  RowIndex: %d, FieldIndex: %d\n    Actual: '%s';  Expected: '%s'",
+            return format("[testSingleFieldOperator] Unexpected value. Operator: %s; Usecase: %s;  RowIndex: %d, FieldIndex: %d\n    Actual: '%s';  Expected: '%s'",
                           op.name, hc, rowIndex, fieldIndex, actual, expected);
         }
 
@@ -1280,7 +1285,7 @@ version(unittest)
                     break;
                 case HeaderUsecase.NoHeaderLine_NoOutputHeader:
                     break;
-                }
+               }
                 
             }
 
@@ -1420,7 +1425,7 @@ class RetainOperator : SingleFieldOperator
         }
         
         final string calculate(UniqueKeyValuesLists valuesLists, const ref SummarizerPrintOptions printOptions)
-        {
+       {
             return _value;
         }
     }
@@ -1471,17 +1476,8 @@ class FirstOperator : SingleFieldOperator
     }
 }
 
-/* FirstOperator unit tests, and much of the base class functionality. Because of testing 
- * the base class functionality, FirstOperator tests are more extensive than other operators.
- *
- * Functionality tested includes:
- * - All field combinations in 1, 2, and 3 column files.
- * - Header construction in all field combinations, with and without header lines and 
- *   headers specified as on the command line.
- */
 unittest
 {
-    /* Represent 1, 2, and 3 column files with three lines each.*/
     auto a1colFile = [["r1c1"], ["r2c1"], ["r3c1"]];
     auto a2colFile = [["r1c1", "r1c2"], ["r2c1", "r2c2"], ["r3c1", "r3c2"]];
     auto a3colFile = [["r1c1", "r1c2", "r1c3"], ["r2c1", "r2c2", "r2c3"], ["r3c1", "r3c2", "r3c3"]];
@@ -1532,6 +1528,20 @@ class LastOperator : SingleFieldOperator
     }
 }
 
+unittest
+{
+    auto a1colFile = [["r1c1"], ["r2c1"], ["r3c1"]];
+    auto a2colFile = [["r1c1", "r1c2"], ["r2c1", "r2c2"], ["r3c1", "r3c2"]];
+    auto a3colFile = [["r1c1", "r1c2", "r1c3"], ["r2c1", "r2c2", "r2c3"], ["r3c1", "r3c2", "r3c3"]];
+
+    testSingleFieldOperator!LastOperator(a1colFile, 0, "last", ["r1c1", "r2c1", "r3c1"]);
+    testSingleFieldOperator!LastOperator(a2colFile, 0, "last", ["r1c1", "r2c1", "r3c1"]);
+    testSingleFieldOperator!LastOperator(a2colFile, 1, "last", ["r1c2", "r2c2", "r3c2"]);
+    testSingleFieldOperator!LastOperator(a3colFile, 0, "last", ["r1c1", "r2c1", "r3c1"]);
+    testSingleFieldOperator!LastOperator(a3colFile, 1, "last", ["r1c2", "r2c2", "r3c2"]);
+    testSingleFieldOperator!LastOperator(a3colFile, 2, "last", ["r1c3", "r2c3", "r3c3"]);
+}
+
 class MinOperator : SingleFieldOperator
 {
     this(size_t fieldIndex)
@@ -1580,6 +1590,20 @@ class MinOperator : SingleFieldOperator
     }
 }
         
+unittest
+{
+    auto a1colFile = [["10"], ["9.5"], ["11"]];
+    auto a2colFile = [["20", "-30"], ["21", "-29"], ["22", "-31"]];
+    auto a3colFile = [["9009", "9", "-4.5"], ["199", "0", "-0.5"], ["3003", "0.2", "12"]];
+
+    testSingleFieldOperator!MinOperator(a1colFile, 0, "min", ["10", "9.5", "9.5"]);
+    testSingleFieldOperator!MinOperator(a2colFile, 0, "min", ["20", "20", "20"]);
+    testSingleFieldOperator!MinOperator(a2colFile, 1, "min", ["-30", "-30", "-31"]);
+    testSingleFieldOperator!MinOperator(a3colFile, 0, "min", ["9009", "199", "199"]);
+    testSingleFieldOperator!MinOperator(a3colFile, 1, "min", ["9", "0", "0"]);
+    testSingleFieldOperator!MinOperator(a3colFile, 2, "min", ["-4.5", "-4.5", "-4.5"]);
+}
+
 class MaxOperator : SingleFieldOperator
 {
     this(size_t fieldIndex)
@@ -1628,6 +1652,20 @@ class MaxOperator : SingleFieldOperator
     }
 }
         
+unittest
+{
+    auto a1colFile = [["10"], ["9.5"], ["11"]];
+    auto a2colFile = [["20", "-30"], ["21", "-29"], ["22", "-31"]];
+    auto a3colFile = [["9009", "9", "-4.5"], ["199", "0", "-0.5"], ["3003", "0.2", "12"]];
+
+    testSingleFieldOperator!MaxOperator(a1colFile, 0, "max", ["10", "10", "11"]);
+    testSingleFieldOperator!MaxOperator(a2colFile, 0, "max", ["20", "21", "22"]);
+    testSingleFieldOperator!MaxOperator(a2colFile, 1, "max", ["-30", "-29", "-29"]);
+    testSingleFieldOperator!MaxOperator(a3colFile, 0, "max", ["9009", "9009", "9009"]);
+    testSingleFieldOperator!MaxOperator(a3colFile, 1, "max", ["9", "9", "9"]);
+    testSingleFieldOperator!MaxOperator(a3colFile, 2, "max", ["-4.5", "-0.5", "12"]);
+}
+
 class RangeOperator : SingleFieldOperator
 {
     this(size_t fieldIndex)
@@ -1681,6 +1719,20 @@ class RangeOperator : SingleFieldOperator
     }
 }
 
+unittest
+{
+    auto a1colFile = [["10"], ["9.5"], ["11"]];
+    auto a2colFile = [["20", "-30"], ["21", "-29"], ["22", "-31"]];
+    auto a3colFile = [["9009", "9", "-4.5"], ["199", "0", "-0.5"], ["3003", "0.2", "12"]];
+
+    testSingleFieldOperator!RangeOperator(a1colFile, 0, "range", ["0", "0.5", "1.5"]);
+    testSingleFieldOperator!RangeOperator(a2colFile, 0, "range", ["0", "1", "2"]);
+    testSingleFieldOperator!RangeOperator(a2colFile, 1, "range", ["0", "1", "2"]);
+    testSingleFieldOperator!RangeOperator(a3colFile, 0, "range", ["0", "8810", "8810"]);
+    testSingleFieldOperator!RangeOperator(a3colFile, 1, "range", ["0", "9", "9"]);
+    testSingleFieldOperator!RangeOperator(a3colFile, 2, "range", ["0", "4", "16.5"]);
+}
+
 class SumOperator : SingleFieldOperator
 {
     this(size_t fieldIndex)
@@ -1717,6 +1769,20 @@ class SumOperator : SingleFieldOperator
             return _total.to!string;
         }
     }
+}
+
+unittest
+{
+    auto a1colFile = [["10"], ["9.5"], ["11"]];
+    auto a2colFile = [["20", "-30"], ["21", "-29"], ["22", "-31"]];
+    auto a3colFile = [["9009", "9", "-4.5"], ["199", "0", "-0.5"], ["3003", "0.2", "12"]];
+
+    testSingleFieldOperator!SumOperator(a1colFile, 0, "sum", ["10", "19.5", "30.5"]);
+    testSingleFieldOperator!SumOperator(a2colFile, 0, "sum", ["20", "41", "63"]);
+    testSingleFieldOperator!SumOperator(a2colFile, 1, "sum", ["-30", "-59", "-90"]);
+    testSingleFieldOperator!SumOperator(a3colFile, 0, "sum", ["9009", "9208", "12211"]);
+    testSingleFieldOperator!SumOperator(a3colFile, 1, "sum", ["9", "9", "9.2"]);
+    testSingleFieldOperator!SumOperator(a3colFile, 2, "sum", ["-4.5", "-5", "7"]);
 }
 
 class MeanOperator : SingleFieldOperator
@@ -1759,6 +1825,20 @@ class MeanOperator : SingleFieldOperator
     }
 }
 
+unittest
+{
+    auto a1colFile = [["10"], ["9.5"], ["7.5"]];
+    auto a2colFile = [["20", "-30"], ["21", "-29"], ["22", "-31"]];
+    auto a3colFile = [["9009", "9", "-4.5"], ["9", "0", "-1.5"], ["4509", "-3", "12"]];
+
+    testSingleFieldOperator!MeanOperator(a1colFile, 0, "mean", ["10", "9.75", "9"]);
+    testSingleFieldOperator!MeanOperator(a2colFile, 0, "mean", ["20", "20.5", "21"]);
+    testSingleFieldOperator!MeanOperator(a2colFile, 1, "mean", ["-30", "-29.5", "-30"]);
+    testSingleFieldOperator!MeanOperator(a3colFile, 0, "mean", ["9009", "4509", "4509"]);
+    testSingleFieldOperator!MeanOperator(a3colFile, 1, "mean", ["9", "4.5", "2"]);
+    testSingleFieldOperator!MeanOperator(a3colFile, 2, "mean", ["-4.5", "-3", "2"]);
+}
+
 class MedianOperator : SingleFieldOperator
 {
     this(size_t fieldIndex)
@@ -1794,6 +1874,20 @@ class MedianOperator : SingleFieldOperator
             return valuesLists.numericValuesMedian(fieldIndex).to!string;
         }
     }
+}
+
+unittest
+{
+    auto a1colFile = [["10"], ["9.5"], ["7.5"]];
+    auto a2colFile = [["20", "-30"], ["21", "-29"], ["22", "-31"]];
+    auto a3colFile = [["9009", "9", "-4.5"], ["9", "0", "-1.5"], ["4509", "-3", "12"]];
+
+    testSingleFieldOperator!MedianOperator(a1colFile, 0, "median", ["10", "9.75", "9.5"]);
+    testSingleFieldOperator!MedianOperator(a2colFile, 0, "median", ["20", "20.5", "21"]);
+    testSingleFieldOperator!MedianOperator(a2colFile, 1, "median", ["-30", "-29.5", "-30"]);
+    testSingleFieldOperator!MedianOperator(a3colFile, 0, "median", ["9009", "4509", "4509"]);
+    testSingleFieldOperator!MedianOperator(a3colFile, 1, "median", ["9", "4.5", "0"]);
+    testSingleFieldOperator!MedianOperator(a3colFile, 2, "median", ["-4.5", "-3", "-1.5"]);
 }
 
 class MadOperator : SingleFieldOperator
@@ -1874,4 +1968,18 @@ class ValuesOperator : SingleFieldOperator
             return valuesLists.textValues(fieldIndex).join(printOptions.valuesDelimiter);
         }
     }
+}
+
+unittest
+{
+    auto a1colFile = [["10"], ["15"], ["20"], ["25"], ["30"]];
+    auto a2colFile = [["2", "50"], ["2", "51"], ["2", "52"]];
+    auto a3colFile = [["16", "8", "-4"], ["8", "8", "-2"], ["8", "16", "0"]];
+
+    testSingleFieldOperator!MadOperator(a1colFile, 0, "mad", ["0", "2.5", "5", "5", "5"]);
+    testSingleFieldOperator!MadOperator(a2colFile, 0, "mad", ["0", "0", "0"]);
+    testSingleFieldOperator!MadOperator(a2colFile, 1, "mad", ["0", "0.5", "1"]);
+    testSingleFieldOperator!MadOperator(a3colFile, 0, "mad", ["0", "4", "0"]);
+    testSingleFieldOperator!MadOperator(a3colFile, 1, "mad", ["0", "0", "0"]);
+    testSingleFieldOperator!MadOperator(a3colFile, 2, "mad", ["0", "1", "2"]);
 }
