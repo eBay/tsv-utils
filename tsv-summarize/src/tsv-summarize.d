@@ -19,17 +19,24 @@ import std.traits;
 import std.typecons : tuple;
 import std.container : DList;
 
-int main(string[] cmdArgs) {
-    TsvSummarizeOptions cmdopt;
-    auto r = cmdopt.processArgs(cmdArgs);
-    if (!r[0]) return r[1];
-    try tsvSummarize(cmdopt, cmdArgs[1..$]);
-    catch (Exception exc)
-    {
-        stderr.writeln("Error: ", exc.msg);
-        return 1;
+version(unittest)
+{
+    // When running unit tests, use main from -main compiler switch.
+}
+else
+{
+    int main(string[] cmdArgs) {
+        TsvSummarizeOptions cmdopt;
+        auto r = cmdopt.processArgs(cmdArgs);
+        if (!r[0]) return r[1];
+        try tsvSummarize(cmdopt, cmdArgs[1..$]);
+        catch (Exception exc)
+        {
+            stderr.writeln("Error: ", exc.msg);
+            return 1;
+        }
+        return 0;
     }
-    return 0;
 }
 
 auto helpText = q"EOS
@@ -315,7 +322,7 @@ void tsvSummarize(TsvSummarizeOptions cmdopt, in string[] inputFiles)
                     /* Bug work-around. Empty lines are not handled properly by splitter.
                      *   - Bug: https://issues.dlang.org/show_bug.cgi?id=15735
                      *   - Pull Request: https://github.com/D-Programming-Language/phobos/pull/4030
-                     * This can arise for: '$ tsv-summarize -k 1 --count'. This counts the
+                     * This can arise for: '$ tsv-summarize -g 1 --count'. This counts the
                      * unique values in field 1. If there's only one column, then an empty
                      * line becomes an empty string for field 1. Work-around: Point to the
                      * line. It's an empty string.
@@ -369,6 +376,26 @@ void tsvSummarize(TsvSummarizeOptions cmdopt, in string[] inputFiles)
     }
 
     summarizer.writeSummaryBody(stdoutWriter, printOptions);
+}
+
+/* The default field header. This is used when the input doesn't have field headers,
+ * but field headers are used in the output. The default is "fieldN", where N is the
+ * 1-upped field number.
+ */
+string headerFromFieldIndex(size_t fieldIndex)
+{
+    enum prefix = "field";
+    return prefix ~ (fieldIndex + 1).to!string;
+}
+
+/* Produce a summary header from an existing header. The result has the form
+ * "<header>_<operation>". e.g. If the existing header is "length" and the operation is
+ * "max", the summary header is "length_max". The existing header typically comes a
+ * header line in the input data or was constructed by headerFromFieldIndex().
+ */
+string summaryHeaderFromHeader(string header, string operationName)
+{
+    return header ~ "_" ~ operationName;
 }
 
 /* SummarizerPrintOptions holds printing options for Summarizers and Calculators. Typically
@@ -603,7 +630,7 @@ class OneKeySummarizer(OutputRange) : KeySummarizerBase!OutputRange
     {
         super(inputFieldDelimiter);
         _keyFieldIndex = keyFieldIndex;
-        _keyFieldHeader = "field" ~ (keyFieldIndex + 1).to!string;
+        _keyFieldHeader = headerFromFieldIndex(keyFieldIndex);
     }
 
     override string keyFieldHeader() const @property
@@ -642,7 +669,9 @@ class MultiKeySummarizer(OutputRange) : KeySummarizerBase!OutputRange
     {
         super(inputFieldDelimiter);
         _keyFieldIndices = keyFieldIndices.dup;
-        _keyFieldHeader = _keyFieldIndices.map!(x => "field" ~ (x + 1).to!string).join(inputFieldDelimiter);
+        _keyFieldHeader =
+            _keyFieldIndices.map!(i => headerFromFieldIndex(i))
+            .join(inputFieldDelimiter);
     }
 
     override string keyFieldHeader() const @property
@@ -700,6 +729,7 @@ class MultiKeySummarizer(OutputRange) : KeySummarizerBase!OutputRange
 interface Operator
 {
     @property string header();
+    @property string name();
     void processHeaderLine(const char[][] fields);
     size_t[] numericFieldsToSave();     // Numeric fields this Operator needs saved
     size_t[] textFieldsToSave();        // Text fields this Operator needs saved
@@ -972,8 +1002,49 @@ auto rangeMedian (Range) (Range r)
     return median;
 }
 
+/* rangeMedian unit tests. */
+unittest
+{
+    import std.math : isNaN;
+    import std.algorithm : all, permutations;
+
+    // Median of empty range is (type).init. Zero for int, nan for floats/doubles
+    assert(rangeMedian(new int[0]) == int.init);
+    assert(rangeMedian(new double[0]).isNaN && double.init.isNaN);
+    assert(rangeMedian(new string[0]) == "");
+    
+    assert(rangeMedian([3]) == 3);
+    assert(rangeMedian([3.0]) == 3.0);
+    assert(rangeMedian([3.5]) == 3.5);
+    assert(rangeMedian(["aaa"]) == "aaa");
+
+    /* Even number of elements: Split the difference for floating point, but not other types. */
+    assert(rangeMedian([3, 4]) == 4);
+    assert(rangeMedian([3.0, 4.0]) == 3.5);
+    
+    assert(rangeMedian([3, 6, 12]) == 6);
+    assert(rangeMedian([3.0, 6.5, 12.5]) == 6.5);
+    
+    // Do the rest with permutations
+    assert([4, 7].permutations.all!(x => (x.rangeMedian == 7)));
+    assert([4.0, 7.0].permutations.all!(x => (x.rangeMedian == 5.5)));
+    assert(["aaa", "bbb"].permutations.all!(x => (x.rangeMedian == "bbb")));
+    
+    assert([4, 7, 19].permutations.all!(x => (x.rangeMedian == 7)));
+    assert([4.5, 7.5, 19.5].permutations.all!(x => (x.rangeMedian == 7.5)));
+    assert(["aaa", "bbb", "ccc"].permutations.all!(x => (x.rangeMedian == "bbb")));
+
+    assert([4.5, 7.5, 19.5, 21.0].permutations.all!(x => (x.rangeMedian == 13.5)));
+    assert([4.5, 7.5, 19.5, 20.5, 36.0].permutations.all!(x => (x.rangeMedian == 19.5)));
+    assert([4.5, 7.5, 19.5, 24.0, 24.5, 25.0].permutations.all!(x => (x.rangeMedian == 21.75)));
+    assert([1.5, 3.25, 3.55, 4.5, 24.5, 25.0, 25.6].permutations.all!(x => (x.rangeMedian == 4.5)));
+}
+
 /* SingleFieldOperator is a base class for single field operators, the most common
  * Operator. Derived classes implement makeCalculator and the Calculator class it returns.
+ *
+ * Unit tests for the SingleFieldOperator base class are included in FirstOperator unit
+ * tests.
  */
 class SingleFieldOperator : Operator
 {
@@ -994,7 +1065,7 @@ class SingleFieldOperator : Operator
 
     this(string operatorName, size_t fieldIndex)
     {
-        string defaultHeader = "field" ~ (fieldIndex + 1).to!string ~ "_" ~ operatorName;
+        string defaultHeader = summaryHeaderFromHeader(headerFromFieldIndex(fieldIndex), operatorName);
         this(operatorName, fieldIndex, defaultHeader, false);
     }
 
@@ -1032,7 +1103,7 @@ class SingleFieldOperator : Operator
     {
         if (!_hasCustomHeader) {
             debug writefln("[%s %d] fields: %s", __FUNCTION__, _fieldIndex, fields.to!string);
-            _header = fields[_fieldIndex].to!string ~ "_" ~ _name;
+            _header = summaryHeaderFromHeader(fields[_fieldIndex].to!string, _name);
         }
     }
 
@@ -1075,6 +1146,161 @@ class SingleFieldCalculator : Calculator
     abstract void processNextField(const char[] field);
 }
 
+/* Unittest helper functions. Only compiled when -unittest is in effect. */
+version(unittest)
+{
+    /** A helper for SingleFieldOperator unit tests.
+     *
+     * testSingleFieldOperator takes a set of split file values, a field index, a header
+     * suffix, and a set of expected values. The expected values array contains the
+     * expected values after each line. An example testing the 'min' operator against a
+     * file with 2 columns, 3 rows, using field index 1:
+     *
+     *    testSingleFieldOperator!MinOperator(
+     *       [["10", "100"],           // The split file. 3 lines by 2 rows.
+     *        ["5", "50"],
+     *        ["20", "200"]],
+     *       1,                        // Field index (zero-based)
+     *       "min",                    // The header suffix, normally the operator name.
+     *       ["100", "50", 50"]);      // Min value after processing each line.
+     *
+     * Recommended setup is to pick use three "files", one each of a 1x3, 2x3, and 3x3.
+     * Then run the operator against each column, a total of six calls. Headers are
+     * automatically checked.
+     * 
+     * These tests do not check unique key behavior (group-by). Operators don't have info
+     * about unique keys, and interact with them only indirectly, via Calculators.
+     */
+    void testSingleFieldOperator(OperatorClass : SingleFieldOperator)
+        (const char[][][] splitFile, size_t fieldIndex, string headerSuffix,
+         const char[][] expectedValues)
+    {
+        import std.range : appender;
+        import std.string : chomp;
+        import std.traits : EnumMembers;
+
+        /* printOptions - Only the 'values-delimiter' (2nd arg) is used these tests. */
+        auto printOptions = SummarizerPrintOptions('#', '|');
+
+        /* An input header line. */
+        auto numFields = (splitFile[0]).length;
+        assert(fieldIndex < numFields);
+
+        string[] inputHeaderLine = new string[numFields];
+        foreach (i; 0 .. numFields) inputHeaderLine[i] = "header" ~ i.to!string;
+
+        /* The different expected output field headers. */
+        auto outputFieldHeaderWithNoHeaderLine = summaryHeaderFromHeader(headerFromFieldIndex(fieldIndex), headerSuffix);
+        auto outputFieldHeaderFromHeaderLine = summaryHeaderFromHeader(inputHeaderLine[fieldIndex], headerSuffix);
+        auto customOutputFieldHeader = "custom";
+
+        enum HeaderUsecase {
+            HeaderLine_DefaultHeader,
+            HeaderLine_CustomHeader,
+            NoHeaderLine_DefaultHeader,
+            NoHeaderLine_CustomHeader,
+            NoHeaderLine_NoOutputHeader,
+        }
+
+        string headerAssertMessage(Operator op, HeaderUsecase hc, const char[] actual, const char[] expected)
+        {
+            import std.format : format;
+
+            return format("Unexpected header. Operator: %s; Usecase: %s;  Actual: '%s';  Expected: '%s'",
+                          op.name, hc, actual, expected);
+        }
+
+        string valueAssertMessage(Operator op, HeaderUsecase hc, size_t rowIndex, size_t fieldIndex,
+                                  const char[] actual, const char[] expected)
+        {
+            import std.format : format;
+
+            return format("Unexpected value. Operator: %s; Usecase: %s;  RowIndex: %d, FieldIndex: %d\n    Actual: '%s';  Expected: '%s'",
+                          op.name, hc, rowIndex, fieldIndex, actual, expected);
+        }
+
+        /* Run the logic for each header use case. Perhaps overkill, but works. */
+        foreach (hc; EnumMembers!HeaderUsecase)
+        {
+            bool hasInputHeader = ( 
+                hc == HeaderUsecase.HeaderLine_DefaultHeader ||
+                hc == HeaderUsecase.HeaderLine_CustomHeader
+                );
+            bool hasOutputHeader = (
+                hc == HeaderUsecase.HeaderLine_DefaultHeader ||
+                hc == HeaderUsecase.HeaderLine_CustomHeader ||
+                hc == HeaderUsecase.NoHeaderLine_DefaultHeader ||
+                hc == HeaderUsecase.NoHeaderLine_CustomHeader
+                );
+            bool hasCustomHeader = (
+                hc == HeaderUsecase.HeaderLine_CustomHeader ||
+                hc == HeaderUsecase.NoHeaderLine_CustomHeader
+                );
+
+            if (hasCustomHeader) assert(hasOutputHeader);
+            
+            Operator[] operatorArray;
+            operatorArray ~= hasCustomHeader
+                ? new OperatorClass(fieldIndex, customOutputFieldHeader)
+                : new OperatorClass(fieldIndex);
+
+            auto summarizer = new NoKeySummarizer!(typeof(appender!(char[])()))('#');
+            summarizer.setOperators(inputRangeObject(operatorArray));
+
+            if (hasInputHeader) summarizer.processHeaderLine(inputHeaderLine);
+
+            if (hasOutputHeader)
+            {
+                /* Write the header line. Note that this is a one-field header, */
+                auto headerLineOutput = appender!(char[])();
+                summarizer.writeSummaryHeader(headerLineOutput, printOptions);
+
+                /* Test that the header was generated correctly.
+                 *
+                 * Note: Because the output is generated by a Summarizer, it will have a
+                 * trailing newline. Use chomp to trim it.
+                 */
+                final switch (hc)
+                {
+                case HeaderUsecase.HeaderLine_DefaultHeader:
+                    assert(headerLineOutput.data.chomp == outputFieldHeaderFromHeaderLine,
+                           headerAssertMessage(operatorArray[0], hc, headerLineOutput.data.chomp,
+                                               outputFieldHeaderFromHeaderLine));
+                    break;
+                case HeaderUsecase.NoHeaderLine_DefaultHeader:
+                    assert(headerLineOutput.data.chomp == outputFieldHeaderWithNoHeaderLine,
+                           headerAssertMessage(operatorArray[0], hc, headerLineOutput.data.chomp,
+                                               outputFieldHeaderWithNoHeaderLine));
+                    break;
+                case HeaderUsecase.HeaderLine_CustomHeader:
+                case HeaderUsecase.NoHeaderLine_CustomHeader:
+                    assert(headerLineOutput.data.chomp == customOutputFieldHeader,
+                           headerAssertMessage(operatorArray[0], hc, headerLineOutput.data.chomp,
+                                               customOutputFieldHeader));
+                    break;
+                case HeaderUsecase.NoHeaderLine_NoOutputHeader:
+                    break;
+                }
+                
+            }
+
+            /* For each line, process the line, generate the output, and test that the
+             * value is correct.
+             */
+            foreach (i, const char[][] splitLine; splitFile)
+            {
+                summarizer.processNextLine(splitLine);
+                
+                auto summaryLineOutput = appender!(char[])();
+                summarizer.writeSummaryBody(summaryLineOutput, printOptions);
+                assert(summaryLineOutput.data.chomp == expectedValues[i],
+                       valueAssertMessage(operatorArray[0], hc, i, fieldIndex,
+                                          summaryLineOutput.data.chomp, expectedValues[i]));
+            }
+        }
+    }
+}
+
 /* Specific operators.
  *
  * Notes: 
@@ -1083,9 +1309,11 @@ class SingleFieldCalculator : Calculator
  *   need to hold all needed state, typically the field index they are summarizing.
  */
 
-/* CountOperator counts the number of occurrences of each unique key. It differs from most
- * operators in that it doesn't summarize a specific field. Instead it is summarizing a 
- * property of the unique key itself. For this reason it doesn't use SingleFieldOperator.
+/** CountOperator counts the number of occurrences of each unique key.
+ *
+ * CountOperator differs from most other operators in that it doesn't summarize a specific
+ * field on the line. Instead it is summarizing a property of the unique key itself. For
+ * this reason it doesn't derive from SingleFieldOperator.
  */
 class CountOperator : Operator
 {
@@ -1145,7 +1373,15 @@ class CountOperator : Operator
     }
 }
 
-
+/** RetainOperator retains the first occurrence of a field, without changing the header.
+ *
+ * RetainOperator is intended for fields where the value is expected to be the same for
+ * all occurrences of the unique key, and the goal is to pass the value through unchanged.
+ * It is like FirstOperator, except that the original header is preserved.
+ *
+ * Notes:
+ * - An option to signal an error if multiple values are encountered might be useful.
+ */
 class RetainOperator : SingleFieldOperator
 {
     this(size_t fieldIndex)
@@ -1164,11 +1400,6 @@ class RetainOperator : SingleFieldOperator
         return new RetainCalculator(fieldIndex);
     }
 
-    /* RetainOperator is similar to FirstOperator, except that it preserves the original
-     * field name. The intent is for fields that are expected to have same value for each
-     * unique key, therefore there is no meaningful summarization to do. But, having the
-     * values in the output is still desirable.
-     */
     static class RetainCalculator : SingleFieldCalculator
     {
         private bool _done = false;
@@ -1195,7 +1426,8 @@ class RetainOperator : SingleFieldOperator
     }
 }
 
-
+/** FirstOperator outputs the first value found for the field.
+ */
 class FirstOperator : SingleFieldOperator
 {
     this(size_t fieldIndex)
@@ -1237,6 +1469,29 @@ class FirstOperator : SingleFieldOperator
             return _value;
         }
     }
+}
+
+/* FirstOperator unit tests, and much of the base class functionality. Because of testing 
+ * the base class functionality, FirstOperator tests are more extensive than other operators.
+ *
+ * Functionality tested includes:
+ * - All field combinations in 1, 2, and 3 column files.
+ * - Header construction in all field combinations, with and without header lines and 
+ *   headers specified as on the command line.
+ */
+unittest
+{
+    /* Represent 1, 2, and 3 column files with three lines each.*/
+    auto a1colFile = [["r1c1"], ["r2c1"], ["r3c1"]];
+    auto a2colFile = [["r1c1", "r1c2"], ["r2c1", "r2c2"], ["r3c1", "r3c2"]];
+    auto a3colFile = [["r1c1", "r1c2", "r1c3"], ["r2c1", "r2c2", "r2c3"], ["r3c1", "r3c2", "r3c3"]];
+
+    testSingleFieldOperator!FirstOperator(a1colFile, 0, "first", ["r1c1", "r1c1", "r1c1"]);
+    testSingleFieldOperator!FirstOperator(a2colFile, 0, "first", ["r1c1", "r1c1", "r1c1"]);
+    testSingleFieldOperator!FirstOperator(a2colFile, 1, "first", ["r1c2", "r1c2", "r1c2"]);
+    testSingleFieldOperator!FirstOperator(a3colFile, 0, "first", ["r1c1", "r1c1", "r1c1"]);
+    testSingleFieldOperator!FirstOperator(a3colFile, 1, "first", ["r1c2", "r1c2", "r1c2"]);
+    testSingleFieldOperator!FirstOperator(a3colFile, 2, "first", ["r1c3", "r1c3", "r1c3"]);
 }
 
 class LastOperator : SingleFieldOperator
