@@ -581,7 +581,7 @@ struct TsvFilterOptions {
         void handlerFFAbsDiffLE(string option, string value) { fieldFieldNumOptionHandler(tests, maxFieldIndex, &ffAbsDiffLE, option, value); }
         void handlerFFAbsDiffGT(string option, string value) { fieldFieldNumOptionHandler(tests, maxFieldIndex, &ffAbsDiffGT, option, value); }
         void handlerFFRelDiffLE(string option, string value) { fieldFieldNumOptionHandler(tests, maxFieldIndex, &ffRelDiffLE, option, value); }
-        void handlerFFRelDiffGT(string option, string value) { fieldFieldNumOptionHandler(tests, maxFieldIndex, &ffAbsDiffGT, option, value); }
+        void handlerFFRelDiffGT(string option, string value) { fieldFieldNumOptionHandler(tests, maxFieldIndex, &ffRelDiffGT, option, value); }
 
         try {
             arraySep = ",";    // Use comma to separate values in command line options
