@@ -74,9 +74,9 @@ The above follow the standard operator syntax, which is:
   --<operator-name> FIELD[:header]
 
 Summarization operators are:
-  count     min       sum        std     values
-  first     max       mean       var     values-asc
-  last      range     median     mad     values-dsc
+  count     min       sum        mad
+  first     max       mean       mode
+  last      range     median     values
 
 Calculations hold onto the miminum data needed while reading data. However,
 operations like median must keep all data values in memory. For such
@@ -146,7 +146,8 @@ struct TsvSummarizeOptions {
                 "median",             "FLD[:STR]  Median value. (Numeric fields only. Reads all values into memory.)", &operatorOptionHandler!MedianOperator,
                 "mad",                "FLD[:STR]  Median absolute deviation. Raw value, not scaled. (Numeric fields only. Reads all values into memory.)",
                 &operatorOptionHandler!MadOperator,
-                
+                "mode",               "FLD[:STR]  Mode. The most frequent value (text). Reads all values into memory.", &operatorOptionHandler!ModeOperator,
+                "count-unique",       "FLD[:STR]  Number of unique values (text). Reads all values into memory.", &operatorOptionHandler!UniqueCountOperator,
                 "values",             "FLD[:STR]  All the values, separated by --v|values-delimiter.", &operatorOptionHandler!ValuesOperator,
 
                 /*  Not implemented yet.
@@ -1933,6 +1934,20 @@ class MadOperator : SingleFieldOperator
     }
 }
 
+unittest
+{
+    auto a1colFile = [["10"], ["15"], ["20"], ["25"], ["30"]];
+    auto a2colFile = [["2", "50"], ["2", "51"], ["2", "52"]];
+    auto a3colFile = [["16", "8", "-4"], ["8", "8", "-2"], ["8", "16", "0"]];
+
+    testSingleFieldOperator!MadOperator(a1colFile, 0, "mad", ["0", "2.5", "5", "5", "5"]);
+    testSingleFieldOperator!MadOperator(a2colFile, 0, "mad", ["0", "0", "0"]);
+    testSingleFieldOperator!MadOperator(a2colFile, 1, "mad", ["0", "0.5", "1"]);
+    testSingleFieldOperator!MadOperator(a3colFile, 0, "mad", ["0", "4", "0"]);
+    testSingleFieldOperator!MadOperator(a3colFile, 1, "mad", ["0", "0", "0"]);
+    testSingleFieldOperator!MadOperator(a3colFile, 2, "mad", ["0", "1", "2"]);
+}
+
 class ValuesOperator : SingleFieldOperator
 {
     this(size_t fieldIndex)
@@ -1970,16 +1985,134 @@ class ValuesOperator : SingleFieldOperator
     }
 }
 
+class ModeOperator : SingleFieldOperator
+{
+    this(size_t fieldIndex)
+    {
+        super("mode", fieldIndex);
+    }
+    
+    this(size_t fieldIndex, string summaryHeader)
+    {
+        super("mode", fieldIndex, summaryHeader);
+    }
+
+    final override Calculator makeCalculator()
+    {
+        return new ModeCalculator(fieldIndex);
+    }
+
+    static class ModeCalculator : SingleFieldCalculator
+    {
+        private size_t[string] _valueCounts;
+        private Appender!(string[]) _uniqueValues;
+        
+        this(size_t fieldIndex)
+        {
+            super(fieldIndex);
+        }
+
+        final override void processNextField(const char[] nextField)
+        {
+            auto countPtr = (nextField in _valueCounts);
+            
+            if (countPtr is null)
+            {
+                string value = nextField.to!string;
+                _uniqueValues.put(value);
+                _valueCounts[value] = 1;
+            }
+            else
+            {
+                (*countPtr)++;
+            }
+        }
+        
+        final string calculate(UniqueKeyValuesLists valuesLists, const ref SummarizerPrintOptions printOptions)
+        {
+            string modeValue = "";
+            size_t modeCount = 0;
+
+            foreach (value; _uniqueValues.data)
+            {
+                assert(value in _valueCounts);
+
+                auto count = _valueCounts[value];
+                
+                if (count > modeCount)
+                {
+                    modeValue = value;
+                    modeCount = count;
+                }
+            }
+            
+            return modeValue;
+        }
+    }
+}
+
 unittest
 {
-    auto a1colFile = [["10"], ["15"], ["20"], ["25"], ["30"]];
-    auto a2colFile = [["2", "50"], ["2", "51"], ["2", "52"]];
-    auto a3colFile = [["16", "8", "-4"], ["8", "8", "-2"], ["8", "16", "0"]];
+    auto a1colFile = [["a"], ["b"], ["c"], ["c"], ["b"], ["b"], ["a"]];
+    auto a2colFile = [["abc", "pqr"], ["def", "pqr"], ["def", "xyz"]];
+    auto a3colFile = [["1.0", "1", "a"], ["2.0", "a", "1"], ["2", "a", "1.0"]];
 
-    testSingleFieldOperator!MadOperator(a1colFile, 0, "mad", ["0", "2.5", "5", "5", "5"]);
-    testSingleFieldOperator!MadOperator(a2colFile, 0, "mad", ["0", "0", "0"]);
-    testSingleFieldOperator!MadOperator(a2colFile, 1, "mad", ["0", "0.5", "1"]);
-    testSingleFieldOperator!MadOperator(a3colFile, 0, "mad", ["0", "4", "0"]);
-    testSingleFieldOperator!MadOperator(a3colFile, 1, "mad", ["0", "0", "0"]);
-    testSingleFieldOperator!MadOperator(a3colFile, 2, "mad", ["0", "1", "2"]);
+    testSingleFieldOperator!ModeOperator(a1colFile, 0, "mode", ["a", "a", "a", "c", "b", "b", "b"]);
+    testSingleFieldOperator!ModeOperator(a2colFile, 0, "mode", ["abc", "abc", "def"]);
+    testSingleFieldOperator!ModeOperator(a2colFile, 1, "mode", ["pqr", "pqr", "pqr"]);
+    testSingleFieldOperator!ModeOperator(a3colFile, 0, "mode", ["1.0", "1.0", "1.0"]);
+    testSingleFieldOperator!ModeOperator(a3colFile, 1, "mode", ["1", "1", "a"]);
+    testSingleFieldOperator!ModeOperator(a3colFile, 2, "mode", ["a", "a", "a"]);
+}
+
+class UniqueCountOperator : SingleFieldOperator
+{
+    this(size_t fieldIndex)
+    {
+        super("unique_count", fieldIndex);
+    }
+    
+    this(size_t fieldIndex, string summaryHeader)
+    {
+        super("unique_count", fieldIndex, summaryHeader);
+    }
+
+    final override Calculator makeCalculator()
+    {
+        return new UniqueCountCalculator(fieldIndex);
+    }
+
+    static class UniqueCountCalculator : SingleFieldCalculator
+    {
+        private bool[string] _values;
+        
+        this(size_t fieldIndex)
+        {
+            super(fieldIndex);
+        }
+
+        final override void processNextField(const char[] nextField)
+        {
+            _values[nextField.to!string] = true;
+        }
+        
+        final string calculate(UniqueKeyValuesLists valuesLists, const ref SummarizerPrintOptions printOptions)
+        {
+            return _values.length.to!string;
+        }
+    }
+}
+
+unittest
+{
+    auto a1colFile = [["a"], ["b"], ["c"], ["c"], ["b"], ["b"], ["a"], ["ab"]];
+    auto a2colFile = [["abc", "pqr"], ["def", "pqr"], ["def", "xyz"]];
+    auto a3colFile = [["1.0", "1", "a"], ["2.0", "a", "1"], ["2", "a", "1.0"]];
+
+    testSingleFieldOperator!UniqueCountOperator(a1colFile, 0, "unique_count", ["1", "2", "3", "3", "3", "3", "3", "4"]);
+    testSingleFieldOperator!UniqueCountOperator(a2colFile, 0, "unique_count", ["1", "2", "2"]);
+    testSingleFieldOperator!UniqueCountOperator(a2colFile, 1, "unique_count", ["1", "1", "2"]);
+    testSingleFieldOperator!UniqueCountOperator(a3colFile, 0, "unique_count", ["1", "2", "3"]);
+    testSingleFieldOperator!UniqueCountOperator(a3colFile, 1, "unique_count", ["1", "2", "2"]);
+    testSingleFieldOperator!UniqueCountOperator(a3colFile, 2, "unique_count", ["1", "2", "3"]);
 }
