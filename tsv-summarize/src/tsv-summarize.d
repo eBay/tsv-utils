@@ -1985,6 +1985,21 @@ class ValuesOperator : SingleFieldOperator
     }
 }
 
+unittest
+{
+    auto a1colFile = [["a"], [""], ["b"], ["cd"], ["e"]];
+    auto a2colFile = [["", "50"], ["", "51"], ["xyz", "52"]];
+    auto a3colFile = [["z", "a", "-"], ["y", "ab", "--"], ["w", "ba", "---"]];
+
+    testSingleFieldOperator!ValuesOperator(a1colFile, 0, "values", ["a", "a|", "a||b", "a||b|cd", "a||b|cd|e"]);
+    testSingleFieldOperator!ValuesOperator(a2colFile, 0, "values", ["", "|", "||xyz"]);
+    testSingleFieldOperator!ValuesOperator(a2colFile, 1, "values", ["50", "50|51", "50|51|52"]);
+    testSingleFieldOperator!ValuesOperator(a3colFile, 0, "values", ["z", "z|y", "z|y|w"]);
+    testSingleFieldOperator!ValuesOperator(a3colFile, 1, "values", ["a", "a|ab", "a|ab|ba"]);
+    testSingleFieldOperator!ValuesOperator(a3colFile, 2, "values", ["-", "-|--", "-|--|---"]);
+}
+
+
 class ModeOperator : SingleFieldOperator
 {
     this(size_t fieldIndex)
