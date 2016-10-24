@@ -5,7 +5,7 @@ equivalent keys.
 Copyright (c) 2016, eBay Software Foundation
 Initially written by Jon Degenhardt
 
-License: Boost Licence 1.0 (http://boost.org/LICENSE_1_0.txt) 
+License: Boost License 1.0 (http://boost.org/LICENSE_1_0.txt) 
 */
 module tsv_summarize;
 
@@ -78,7 +78,7 @@ Summarization operators are:
   first     max       mean       mode
   last      range     median     values
 
-Calculations hold onto the miminum data needed while reading data. However,
+Calculations hold onto the minimum data needed while reading data. However,
 operations like median must keep all data values in memory. For such
 operations there is a limit on the size of the data that can be processed.
 
@@ -721,7 +721,7 @@ class MultiKeySummarizer(OutputRange) : KeySummarizerBase!OutputRange
  *
  * Summary field headers
  *
- * There are several options for specifing summary field headers. The defaults combine the
+ * There are several options for specifying summary field headers. The defaults combine the
  * operator name and the header of the field summarized. The defaults can be overridden on
  * on the command line. These scenarios are supported via the operator constructor and the
  * processHeaderLine() method.
@@ -796,7 +796,7 @@ class SharedFieldValues
 
 class UniqueKeyValuesLists
 {
-    /* A FieldValues object holds is a list of values collect for a specfic field. A
+    /* A FieldValues object holds is a list of values collect for a specific field. A
      * unique key may hold several. For example, the command:
      *     $ tsv-summarize --k 1 --median 4 -- median 5
      * requires keeping lists for both fields 4 and 5. This in turn will result in a
@@ -807,7 +807,7 @@ class UniqueKeyValuesLists
     private FieldValues!string[] _textFieldValues;
     private double[] _numericFieldMedians;
 
-    /* The UniqueKeyValuesLists constructor takes arrays of field indicies to be saved. */
+    /* The UniqueKeyValuesLists constructor takes arrays of field indices to be saved. */
     this(const size_t[] numericFieldIndices, const size_t[] textFieldIndices)
     {
         if (numericFieldIndices.length > 0)
