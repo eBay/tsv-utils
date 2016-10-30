@@ -219,20 +219,18 @@ struct TsvSummarizeOptions {
                 format("Invalid option: '--%s %s'. Zero is not a valid field index.", option, optionVal));
 
         size_t fieldIndex = fieldNum - 1;
-        
-        if (valSplit[2].empty)
+        auto op = new OperatorClass(fieldIndex);
+
+        if (!valSplit[2].empty)
         {
-            operators.insertBack(new OperatorClass(fieldIndex));
+            if (!op.allowCustomHeader)
+                throw new Exception(
+                    format("Invalid option: '--%s %s'. Operator does not support custom headers (':<custom-header>').", option, optionVal));
+
+            op.setCustomHeader(valSplit[2].to!string);
         }
-        else
-        {
-            operators.insertBack(new OperatorClass(fieldIndex, valSplit[2].to!string));
-        }
-        
-        if (fieldIndex >= endFieldIndex)
-        {
-            endFieldIndex = fieldIndex + 1;
-        }
+
+        operators.insertBack(op);
     }
 
     private void countOptionHandler()
@@ -393,20 +391,23 @@ void tsvSummarize(TsvSummarizeOptions cmdopt, in string[] inputFiles)
  * but field headers are used in the output. The default is "fieldN", where N is the
  * 1-upped field number.
  */
-string headerFromFieldIndex(size_t fieldIndex)
+string fieldHeaderFromIndex(size_t fieldIndex)
 {
     enum prefix = "field";
     return prefix ~ (fieldIndex + 1).to!string;
 }
 
-/* Produce a summary header from an existing header. The result has the form
- * "<header>_<operation>". e.g. If the existing header is "length" and the operation is
- * "max", the summary header is "length_max". The existing header typically comes a
- * header line in the input data or was constructed by headerFromFieldIndex().
+/* Produce a summary header from a field header. The result has the form
+ * "<fieldHeader>_<operation>". e.g. If the field header is "length" and the operation is
+ * "max", the summary header is "length_max". The field header typically comes a
+ * header line in the input data or was constructed by fieldHeaderFromIndex().
+ *
+ * If operationName is the empty string, then fieldHeader is used unchanged. This supports
+ * the Retain operator.
  */
-string summaryHeaderFromHeader(string header, string operationName)
+string summaryHeaderFromFieldHeader(string fieldHeader, string operationName)
 {
-    return header ~ "_" ~ operationName;
+    return (operationName.length > 0) ? fieldHeader ~ "_" ~ operationName : fieldHeader;
 }
 
 /* SummarizerPrintOptions holds printing options for Summarizers and Calculators. Typically
@@ -641,7 +642,7 @@ class OneKeySummarizer(OutputRange) : KeySummarizerBase!OutputRange
     {
         super(inputFieldDelimiter);
         _keyFieldIndex = keyFieldIndex;
-        _keyFieldHeader = headerFromFieldIndex(keyFieldIndex);
+        _keyFieldHeader = fieldHeaderFromIndex(keyFieldIndex);
     }
 
     override string keyFieldHeader() const @property
@@ -681,7 +682,7 @@ class MultiKeySummarizer(OutputRange) : KeySummarizerBase!OutputRange
         super(inputFieldDelimiter);
         _keyFieldIndices = keyFieldIndices.dup;
         _keyFieldHeader =
-            _keyFieldIndices.map!(i => headerFromFieldIndex(i))
+            _keyFieldIndices.map!(i => fieldHeaderFromIndex(i))
             .join(inputFieldDelimiter);
     }
 
@@ -1061,30 +1062,46 @@ unittest
  */
 class SingleFieldOperator : Operator
 {
+    import std.typecons : Flag;
+    
     private string _name;
     private string _header;
     private size_t _fieldIndex;
-    private bool _hasCustomHeader;
+    private bool _useHeaderSuffix;
+    private bool _allowCustomHeader;
+    private bool _hasCustomHeader = false;
     private size_t[] _numericFieldsToSave;
     private size_t[] _textFieldsToSave;
 
-    this(string operatorName, size_t fieldIndex, string summaryHeader, bool hasCustomHeader = true)
+    this(string operatorName, size_t fieldIndex,
+         Flag!"useHeaderSuffix" useHeaderSuffix = Yes.useHeaderSuffix,
+         Flag!"allowCustomHeader" allowCustomHeader = Yes.allowCustomHeader)
     {
         _name = operatorName;
         _fieldIndex = fieldIndex;
-        _header = summaryHeader;
-        _hasCustomHeader = hasCustomHeader;
+        _useHeaderSuffix = useHeaderSuffix;
+        _allowCustomHeader = allowCustomHeader;
+        // Default header. May be overrridden by custom header or header line.
+        _header =
+            fieldHeaderFromIndex(fieldIndex)
+            .summaryHeaderFromFieldHeader(_useHeaderSuffix ? operatorName : "");
     }
 
-    this(string operatorName, size_t fieldIndex)
+    void setCustomHeader (string customHeader)
     {
-        string defaultHeader = summaryHeaderFromHeader(headerFromFieldIndex(fieldIndex), operatorName);
-        this(operatorName, fieldIndex, defaultHeader, false);
+        assert(_allowCustomHeader);
+        _header = customHeader;
+        _hasCustomHeader = true;
     }
 
     final string name() const @property
     {
         return _name;
+    }
+
+    final bool allowCustomHeader() const @property
+    {
+        return _allowCustomHeader;
     }
 
     /* saveFieldValues[Numeric|Text] are called by derived classes to indicate that field
@@ -1112,11 +1129,17 @@ class SingleFieldOperator : Operator
         return _header;
     }
 
+    final bool useHeaderSuffix() const @property
+    {
+        return _useHeaderSuffix;
+    }
+
     void processHeaderLine(const char[][] fields)
     {
         if (!_hasCustomHeader) {
             debug writefln("[%s %d] fields: %s", __FUNCTION__, _fieldIndex, fields.to!string);
-            _header = summaryHeaderFromHeader(fields[_fieldIndex].to!string, _name);
+            _header = summaryHeaderFromFieldHeader(fields[_fieldIndex].to!string,
+                                                   _useHeaderSuffix ? _name : "");
         }
     }
 
@@ -1210,8 +1233,12 @@ version(unittest)
         foreach (i; 0 .. numFields) inputHeaderLine[i] = "header" ~ i.to!string;
 
         /* The different expected output field headers. */
-        auto outputFieldHeaderWithNoHeaderLine = summaryHeaderFromHeader(headerFromFieldIndex(fieldIndex), headerSuffix);
-        auto outputFieldHeaderFromHeaderLine = summaryHeaderFromHeader(inputHeaderLine[fieldIndex], headerSuffix);
+        auto outputFieldHeaderWithNoHeaderLine =
+            fieldHeaderFromIndex(fieldIndex)
+            .summaryHeaderFromFieldHeader(headerSuffix);
+        auto outputFieldHeaderFromHeaderLine =
+            inputHeaderLine[fieldIndex]
+            .summaryHeaderFromFieldHeader(headerSuffix);
         auto customOutputFieldHeader = "custom";
 
         enum HeaderUsecase {
@@ -1254,11 +1281,17 @@ version(unittest)
                 );
 
             if (hasCustomHeader) assert(hasOutputHeader);
+
+            auto op = new OperatorClass(fieldIndex);
+            
+            if (hasCustomHeader)
+            {
+                if (!op.allowCustomHeader) continue;   // Custom header not support by this operator
+                op.setCustomHeader(customOutputFieldHeader);
+            }
             
             Operator[] operatorArray;
-            operatorArray ~= hasCustomHeader
-                ? new OperatorClass(fieldIndex, customOutputFieldHeader)
-                : new OperatorClass(fieldIndex);
+            operatorArray ~= op;
 
             auto summarizer = new NoKeySummarizer!(typeof(appender!(char[])()))('#');
             summarizer.setOperators(inputRangeObject(operatorArray));
@@ -1402,13 +1435,7 @@ class RetainOperator : SingleFieldOperator
 {
     this(size_t fieldIndex)
     {
-        super("retain", fieldIndex);
-    }
-
-    override void processHeaderLine(const char[][] fields)
-    {
-        debug writefln("[processHeaderLine %s %d] fields: %s", _name, _fieldIndex, fields.to!string);
-        _header = fields[fieldIndex].to!string;
+        super("retain", fieldIndex, No.useHeaderSuffix, No.allowCustomHeader);
     }
 
     final override Calculator makeCalculator()
@@ -1442,6 +1469,20 @@ class RetainOperator : SingleFieldOperator
     }
 }
 
+unittest
+{
+    auto a1colFile = [["r1c1"], ["r2c1"], ["r3c1"]];
+    auto a2colFile = [["r1c1", "r1c2"], ["r2c1", "r2c2"], ["r3c1", "r3c2"]];
+    auto a3colFile = [["r1c1", "r1c2", "r1c3"], ["r2c1", "r2c2", "r2c3"], ["r3c1", "r3c2", "r3c3"]];
+
+    testSingleFieldOperator!RetainOperator(a1colFile, 0, "", ["r1c1", "r1c1", "r1c1"]);
+    testSingleFieldOperator!RetainOperator(a2colFile, 0, "", ["r1c1", "r1c1", "r1c1"]);
+    testSingleFieldOperator!RetainOperator(a2colFile, 1, "", ["r1c2", "r1c2", "r1c2"]);
+    testSingleFieldOperator!RetainOperator(a3colFile, 0, "", ["r1c1", "r1c1", "r1c1"]);
+    testSingleFieldOperator!RetainOperator(a3colFile, 1, "", ["r1c2", "r1c2", "r1c2"]);
+    testSingleFieldOperator!RetainOperator(a3colFile, 2, "", ["r1c3", "r1c3", "r1c3"]);
+}
+
 /** FirstOperator outputs the first value found for the field.
  */
 class FirstOperator : SingleFieldOperator
@@ -1449,11 +1490,6 @@ class FirstOperator : SingleFieldOperator
     this(size_t fieldIndex)
     {
         super("first", fieldIndex);
-    }
-
-    this(size_t fieldIndex, string summaryHeader)
-    {
-        super("first", fieldIndex, summaryHeader);
     }
 
     final override Calculator makeCalculator()
@@ -1508,11 +1544,6 @@ class LastOperator : SingleFieldOperator
         super("last", fieldIndex);
     }
 
-    this(size_t fieldIndex, string summaryHeader)
-    {
-        super("last", fieldIndex, summaryHeader);
-    }
-
     final override Calculator makeCalculator()
     {
         return new LastCalculator(fieldIndex);
@@ -1558,11 +1589,6 @@ class MinOperator : SingleFieldOperator
     this(size_t fieldIndex)
     {
         super("min", fieldIndex);
-    }
-
-    this(size_t fieldIndex, string summaryHeader)
-    {
-        super("min", fieldIndex, summaryHeader);
     }
 
     final override Calculator makeCalculator()
@@ -1622,11 +1648,6 @@ class MaxOperator : SingleFieldOperator
         super("max", fieldIndex);
     }
 
-    this(size_t fieldIndex, string summaryHeader)
-    {
-        super("max", fieldIndex, summaryHeader);
-    }
-
     final override Calculator makeCalculator()
     {
         return new MaxCalculator(fieldIndex);
@@ -1682,11 +1703,6 @@ class RangeOperator : SingleFieldOperator
     this(size_t fieldIndex)
     {
         super("range", fieldIndex);
-    }
-
-    this(size_t fieldIndex, string summaryHeader)
-    {
-        super("range", fieldIndex, summaryHeader);
     }
 
     final override Calculator makeCalculator()
@@ -1751,11 +1767,6 @@ class SumOperator : SingleFieldOperator
         super("sum", fieldIndex);
     }
 
-    this(size_t fieldIndex, string summaryHeader)
-    {
-        super("sum", fieldIndex, summaryHeader);
-    }
-
     final override Calculator makeCalculator()
     {
         return new SumCalculator(fieldIndex);
@@ -1803,11 +1814,6 @@ class MeanOperator : SingleFieldOperator
         super("mean", fieldIndex);
     }
     
-    this(size_t fieldIndex, string summaryHeader)
-    {
-        super("mean", fieldIndex, summaryHeader);
-    }
-
     final override Calculator makeCalculator()
     {
         return new MeanCalculator(fieldIndex);
@@ -1858,12 +1864,6 @@ class MedianOperator : SingleFieldOperator
         setSaveFieldValuesNumeric();
     }
     
-    this(size_t fieldIndex, string summaryHeader)
-    {
-        super("median", fieldIndex, summaryHeader);
-        setSaveFieldValuesNumeric();
-    }
-
     final override Calculator makeCalculator()
     {
         return new MedianCalculator(fieldIndex);
@@ -1909,12 +1909,6 @@ class MadOperator : SingleFieldOperator
         setSaveFieldValuesNumeric();
     }
     
-    this(size_t fieldIndex, string summaryHeader)
-    {
-        super("mad", fieldIndex, summaryHeader);
-        setSaveFieldValuesNumeric();
-    }
-
     final override Calculator makeCalculator()
     {
         return new MadCalculator(fieldIndex);
@@ -1965,12 +1959,6 @@ class ValuesOperator : SingleFieldOperator
         super("values", fieldIndex);
         setSaveFieldValuesText();
     }
-    
-    this(size_t fieldIndex, string summaryHeader)
-    {
-        super("values", fieldIndex, summaryHeader);
-        setSaveFieldValuesText();
-    }
 
     final override Calculator makeCalculator()
     {
@@ -2009,7 +1997,6 @@ unittest
     testSingleFieldOperator!ValuesOperator(a3colFile, 2, "values", ["-", "-|--", "-|--|---"]);
 }
 
-
 class ModeOperator : SingleFieldOperator
 {
     this(size_t fieldIndex)
@@ -2017,11 +2004,6 @@ class ModeOperator : SingleFieldOperator
         super("mode", fieldIndex);
     }
     
-    this(size_t fieldIndex, string summaryHeader)
-    {
-        super("mode", fieldIndex, summaryHeader);
-    }
-
     final override Calculator makeCalculator()
     {
         return new ModeCalculator(fieldIndex);
@@ -2097,11 +2079,6 @@ class UniqueCountOperator : SingleFieldOperator
         super("unique_count", fieldIndex);
     }
     
-    this(size_t fieldIndex, string summaryHeader)
-    {
-        super("unique_count", fieldIndex, summaryHeader);
-    }
-
     final override Calculator makeCalculator()
     {
         return new UniqueCountCalculator(fieldIndex);
