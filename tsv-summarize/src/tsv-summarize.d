@@ -138,7 +138,7 @@ struct TsvSummarizeOptions {
                 "help-verbose",       "           Print full help.", &helpVerbose,
                 "g|group-by",         "n[,n...]   Fields to use as key.", &keyFields,
                 "r|retain",           "n[,n...]   Retain one copy of the listed fields.", &retainFields,
-                std.getopt.config.caseSensitive,  
+                std.getopt.config.caseSensitive,
                 "H|header",           "           Treat the first line of each file as a header.", &hasHeader,
                 std.getopt.config.caseInsensitive,
                 "w|write-header",     "           Write an output header even if there is no input header.", &writeHeader,
@@ -1170,17 +1170,17 @@ version(unittest)
      * file with 2 columns, 3 rows, using field index 1:
      *
      *    testSingleFieldOperator!MinOperator(
-     *       [["10", "100"],           // The split file. 3 lines by 2 rows.
+     *       [["10", "100"],        // The split file. 3 lines by 2 rows.
      *        ["5", "50"],
      *        ["20", "200"]],
-     *       1,                        // Field index (zero-based)
-     *       "min",                    // The header suffix, normally the operator name.
-     *       ["100", "50", 50"]);      // Min value after processing each line.
+     *       1,                     // Field index (zero-based, so "100", "50", "200")
+     *       "min",                 // The header suffix, normally the operator name.
+     *       ["100", "50", 50"]);   // Min value after processing each line.
      *
-     * Recommended setup is to pick use three "files", one each of a 1x3, 2x3, and 3x3.
-     * Then run the operator against each column, a total of six calls. Headers are
-     * automatically checked.
-     * 
+     * A typical operator unit test uses three "files", one each of 1x3, 2x3, and 3x3.
+     * Then run the operator is tested against each column, a total of six calls. Headers
+     * are automatically checked. Additional entries are used to extend coverage.
+     *
      * These tests do not check unique key behavior (group-by). Operators don't have info
      * about unique keys, and interact with them only indirectly, via Calculators.
      */
