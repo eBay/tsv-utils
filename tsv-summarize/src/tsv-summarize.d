@@ -77,6 +77,11 @@ Most operators take custom headers in a similarly way, generally following:
 
   --<operator-name> FIELD[:header]
 
+Operators can be specified multiple times. They can also take multiple
+fields (though not when a custom header is specified). Example:
+
+  --median 2,3,4
+
 Summarization operators available are:
   count     min       sum        mad         count-unique
   first     max       mean       mode        retain
@@ -110,7 +115,6 @@ EOS";
 struct TsvSummarizeOptions {
     /* Options set directly by on the command line.. */
     size_t[] keyFields;              // -g, --group-by
-    size_t[] retainFields;           // -r, --retain
     bool hasHeader = false;          // --header
     bool writeHeader = false;        // -w, --write-header
     char inputFieldDelimiter = '\t'; // --d|delimiter
@@ -135,36 +139,36 @@ struct TsvSummarizeOptions {
             arraySep = ",";    // Use comma to separate values in command line options
             auto r = getopt(
                 cmdArgs,
-                "help-verbose",       "           Print full help.", &helpVerbose,
-                "g|group-by",         "n[,n...]   Fields to use as key.", &keyFields,
-                "r|retain",           "n[,n...]   Retain one copy of the listed fields.", &retainFields,
+                "help-verbose",       "                Print full help.", &helpVerbose,
+                "g|group-by",         "n[,n...]        Fields to use as key.", &keyFields,
                 std.getopt.config.caseSensitive,
-                "H|header",           "           Treat the first line of each file as a header.", &hasHeader,
+                "H|header",           "                Treat the first line of each file as a header.", &hasHeader,
                 std.getopt.config.caseInsensitive,
-                "w|write-header",     "           Write an output header even if there is no input header.", &writeHeader,
-                "d|delimiter",        "CHR        Field delimiter. Default: TAB. (Single byte UTF-8 characters only.)", &inputFieldDelimiter,
-                "v|values-delimiter", "CHR        Values delimiter. Default: vertical bar (|). (Single byte UTF-8 characters only.)", &valuesDelimiter,
-                "count",              "           Count occurrences of each unique key.", &countOptionHandler,
-                "count-header",       "STR        Count occurrences of each unique key, use header STR.", &countHeaderOptionHandler,
-                "first",              "FLD[:STR]  First value listed.", &operatorOptionHandler!FirstOperator,
-                "last",               "FLD[:STR]  Last value of file.", &operatorOptionHandler!LastOperator,
-                "min",                "FLD[:STR]  Min value. (Numeric fields only.)", &operatorOptionHandler!MinOperator,
-                "max",                "FLD[:STR]  Max value. Numeric fields only.", &operatorOptionHandler!MaxOperator,
-                "range",              "FLD[:STR]  Difference between min and max values. (Numeric fields only.)", &operatorOptionHandler!RangeOperator,
-                "sum",                "FLD[:STR]  Sum of the values. (Numeric fields only.)", &operatorOptionHandler!SumOperator,
-                "mean",               "FLD[:STR]  Mean (average) of the values. (Numeric fields only.)", &operatorOptionHandler!MeanOperator,
-                "median",             "FLD[:STR]  Median value. (Numeric fields only. Reads all values into memory.)", &operatorOptionHandler!MedianOperator,
-                "mad",                "FLD[:STR]  Median absolute deviation. Raw value, not scaled. (Numeric fields only. Reads all values into memory.)",
+                "w|write-header",     "                Write an output header even if there is no input header.", &writeHeader,
+                "d|delimiter",        "CHR             Field delimiter. Default: TAB. (Single byte UTF-8 characters only.)", &inputFieldDelimiter,
+                "v|values-delimiter", "CHR             Values delimiter. Default: vertical bar (|). (Single byte UTF-8 characters only.)", &valuesDelimiter,
+                "count",              "                Count occurrences of each unique key.", &countOptionHandler,
+                "count-header",       "STR             Count occurrences of each unique key, use header STR.", &countHeaderOptionHandler,
+                "retain",             "n[,n...]        Retain one copy of the listed fields.", &operatorOptionHandler!RetainOperator,
+                "first",              "n[,n...][:STR]  First value listed.", &operatorOptionHandler!FirstOperator,
+                "last",               "n[,n...][:STR]  Last value of file.", &operatorOptionHandler!LastOperator,
+                "min",                "n[,n...][:STR]  Min value. (Numeric fields only.)", &operatorOptionHandler!MinOperator,
+                "max",                "n[,n...][:STR]  Max value. Numeric fields only.", &operatorOptionHandler!MaxOperator,
+                "range",              "n[,n...][:STR]  Difference between min and max values. (Numeric fields only.)", &operatorOptionHandler!RangeOperator,
+                "sum",                "n[,n...][:STR]  Sum of the values. (Numeric fields only.)", &operatorOptionHandler!SumOperator,
+                "mean",               "n[,n...][:STR]  Mean (average) of the values. (Numeric fields only.)", &operatorOptionHandler!MeanOperator,
+                "median",             "n[,n...][:STR]  Median value. (Numeric fields only. Reads all values into memory.)", &operatorOptionHandler!MedianOperator,
+                "mad",                "n[,n...][:STR]  Median absolute deviation. Raw value, not scaled. (Numeric fields only. Reads all values into memory.)",
                 &operatorOptionHandler!MadOperator,
-                "mode",               "FLD[:STR]  Mode. The most frequent value (text). Reads all values into memory.", &operatorOptionHandler!ModeOperator,
-                "count-unique",       "FLD[:STR]  Number of unique values (text). Reads all values into memory.", &operatorOptionHandler!UniqueCountOperator,
-                "values",             "FLD[:STR]  All the values, separated by --v|values-delimiter.", &operatorOptionHandler!ValuesOperator,
+                "mode",               "n[,n...][:STR]  Mode. The most frequent value (text). Reads all values into memory.", &operatorOptionHandler!ModeOperator,
+                "count-unique",       "n[,n...][:STR]  Number of unique values (text). Reads all values into memory.", &operatorOptionHandler!UniqueCountOperator,
+                "values",             "n[,n...][:STR]  All the values, separated by --v|values-delimiter.", &operatorOptionHandler!ValuesOperator,
 
                 /*  Not implemented yet.
-                "std",                "FLD[:STR]  First value listed (numeric fields only).", &operatorOptionHandler!FirstOperator,
-                "var",                "FLD[:STR]  First value listed (numeric fields only).", &operatorOptionHandler!FirstOperator,
-                "values-asc",         "FLD[:STR]  First value listed (numeric fields only).", &operatorOptionHandler!FirstOperator,
-                "values-dsc",         "FLD[:STR]  First value listed (numeric fields only).", &operatorOptionHandler!FirstOperator,
+                "std",                "n[,n...][:STR]  First value listed (numeric fields only).", &operatorOptionHandler!FirstOperator,
+                "var",                "n[,n...][:STR]  First value listed (numeric fields only).", &operatorOptionHandler!FirstOperator,
+                "values-asc",         "n[,n...][:STR]  First value listed (numeric fields only).", &operatorOptionHandler!FirstOperator,
+                "values-dsc",         "n[,n...][:STR]  First value listed (numeric fields only).", &operatorOptionHandler!FirstOperator,
             */
                 );
 
@@ -189,6 +193,7 @@ struct TsvSummarizeOptions {
         }
         return tuple(true, 0);
     }
+    
     /* operationOptionHandler functions are callbacks that process command line options
      * specifying summarization operations. eg. '--max 5', '--last 3:LastEntry'. Handlers
      * check syntactic correctness and instantiate Operator objects that do the work. This
@@ -196,41 +201,54 @@ struct TsvSummarizeOptions {
      */
     private void operatorOptionHandler(OperatorClass : SingleFieldOperator)(string option, string optionVal)
     {
+        /* The most common error message. */
+        auto formatErrorMsg(string option, string optionVal)
+        {
+            return format(
+                "Invalid option value: '--%s %s'. Expected: '--%s <field>[,<field>]' or '--%s <field>:<header>' where <field> is a number and <header> a string.",
+                option, optionVal, option, option);
+        }
+
         auto valSplit = findSplit(optionVal, ":");
         
         if (valSplit[0].empty || (!valSplit[1].empty && valSplit[2].empty))
-        {
-            throw new Exception(
-                format("Invalid option value: '--%s %s'. Expected: '--%s <field>' or '--%s <field>:<val>' where <field> is a number and <val> a string.",
-                       option, optionVal, option, option));
-        }
-        
-        size_t fieldNum;
-        try fieldNum = valSplit[0].to!size_t;
-        catch (Exception exc)
-        {
-            throw new Exception(
-                format("Invalid option value: '--%s %s'. Expected: '--%s <field>' or '--%s <field>:<val>' where <field> is a number and <val> a string.",
-                       option, optionVal, option, option));
-        }
+            throw new Exception(formatErrorMsg(option, optionVal));
 
-        if (fieldNum == 0)
-            throw new Exception(
-                format("Invalid option: '--%s %s'. Zero is not a valid field index.", option, optionVal));
+        if (!valSplit[2].empty && valSplit[0].canFind(","))
+            throw new Exception(format("Invalid option: '--%s %s'. Cannot specify a custom header when using multiple fields.",
+                                       option, optionVal));
 
-        size_t fieldIndex = fieldNum - 1;
-        auto op = new OperatorClass(fieldIndex);
+        debug writefln("[Option %s %s] Split: %s|%s", option, optionVal, valSplit[0], valSplit[2]);
 
-        if (!valSplit[2].empty)
+        foreach (str; valSplit[0].splitter(','))
         {
-            if (!op.allowCustomHeader)
+            size_t fieldNum;
+
+            try fieldNum = str.to!size_t;
+            catch (Exception exc) 
+                throw new Exception(formatErrorMsg(option, optionVal));
+
+            if (fieldNum == 0)
                 throw new Exception(
-                    format("Invalid option: '--%s %s'. Operator does not support custom headers (':<custom-header>').", option, optionVal));
+                    format("Invalid option: '--%s %s'. Zero is not a valid field index.", option, optionVal));
 
-            op.setCustomHeader(valSplit[2].to!string);
+            size_t fieldIndex = fieldNum - 1;
+            auto op = new OperatorClass(fieldIndex);
+
+            debug writefln("[Option %s %s] fieldIndex: %d", option, optionVal, fieldIndex);
+
+            if (!valSplit[2].empty)
+            {
+                if (!op.allowCustomHeader)
+                    throw new Exception(
+                        format("Invalid option: '--%s %s'. Operator does not support custom headers.", option, optionVal));
+
+                op.setCustomHeader(valSplit[2].to!string);
+            }
+
+            operators.insertBack(op);
+            if (fieldIndex >= endFieldIndex) endFieldIndex = fieldIndex + 1;
         }
-
-        operators.insertBack(op);
     }
 
     private void countOptionHandler()
@@ -251,11 +269,6 @@ struct TsvSummarizeOptions {
             throw new Exception("Invalid --g|group-by option. Field numbers cannot be 0.");
         }
 
-        if (retainFields.any!(x => x == 0))
-        {
-            throw new Exception("Invalid --r|retain option. Field numbers cannot be 0.");
-        }
-
         if (inputFieldDelimiter == valuesDelimiter)
         {
             throw new Exception("Cannot use the same character for both --d|field-delimiter and --v|values-delimiter.");
@@ -265,22 +278,16 @@ struct TsvSummarizeOptions {
     /* Post-processing derivations. */
     void derivations() {
 
-        /* keyFields and retainFields need to be made zero-based field indices. They also
-         * need to be included in the endFieldIndex, which is one past the last field index.
+        /* keyFields needs to be made zero-based field indices. It also needs to be included
+         * in the endFieldIndex, which is one past the last field index.
          */
-        [keyFields, retainFields]
-            .joiner
+        keyFields
             .each!(delegate (ref size_t x)
                    {
                        if (x > endFieldIndex) endFieldIndex = x;
                        --x;
                    }
                 );
-            
-        /* Want retain fields printed before summary operators, so add them to the front
-         * of the operator list.
-         */
-        retainFields.retro.each!(x => operators.insertFront(new RetainOperator(x)));
     }
 }
 
