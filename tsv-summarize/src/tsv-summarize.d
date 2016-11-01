@@ -1063,9 +1063,6 @@ unittest
 
 /* SingleFieldOperator is a base class for single field operators, the most common
  * Operator. Derived classes implement makeCalculator and the Calculator class it returns.
- *
- * Unit tests for the SingleFieldOperator base class are included in FirstOperator unit
- * tests.
  */
 class SingleFieldOperator : Operator
 {
@@ -1160,7 +1157,7 @@ class SingleFieldOperator : Operator
         return _textFieldsToSave;
     }
 
-    abstract Calculator makeCalculator();
+    abstract SingleFieldCalculator makeCalculator();
 }
 
 /* SingleFieldCalculator is a base class for the common case of calculators using a single
@@ -1175,12 +1172,12 @@ class SingleFieldCalculator : Calculator
         _fieldIndex = fieldIndex;
     }
 
-    size_t fieldIndex() const @property
+    final size_t fieldIndex() const @property
     {
         return _fieldIndex;
     }
 
-    void processNextLine(const char[][] fields)
+    final void processNextLine(const char[][] fields)
     {
         debug writefln("[%s %d] fields: %s", __FUNCTION__, _fieldIndex, fields.to!string);
         processNextField(fields[_fieldIndex]);
@@ -1445,7 +1442,7 @@ class RetainOperator : SingleFieldOperator
         super("retain", fieldIndex, No.useHeaderSuffix, No.allowCustomHeader);
     }
 
-    final override Calculator makeCalculator()
+    final override SingleFieldCalculator makeCalculator()
     {
         return new RetainCalculator(fieldIndex);
     }
@@ -1499,7 +1496,7 @@ class FirstOperator : SingleFieldOperator
         super("first", fieldIndex);
     }
 
-    final override Calculator makeCalculator()
+    final override SingleFieldCalculator makeCalculator()
     {
         return new FirstCalculator(fieldIndex);
     }
@@ -1551,7 +1548,7 @@ class LastOperator : SingleFieldOperator
         super("last", fieldIndex);
     }
 
-    final override Calculator makeCalculator()
+    final override SingleFieldCalculator makeCalculator()
     {
         return new LastCalculator(fieldIndex);
     }
@@ -1598,7 +1595,7 @@ class MinOperator : SingleFieldOperator
         super("min", fieldIndex);
     }
 
-    final override Calculator makeCalculator()
+    final override SingleFieldCalculator makeCalculator()
     {
         return new MinCalculator(fieldIndex);
     }
@@ -1655,7 +1652,7 @@ class MaxOperator : SingleFieldOperator
         super("max", fieldIndex);
     }
 
-    final override Calculator makeCalculator()
+    final override SingleFieldCalculator makeCalculator()
     {
         return new MaxCalculator(fieldIndex);
     }
@@ -1712,7 +1709,7 @@ class RangeOperator : SingleFieldOperator
         super("range", fieldIndex);
     }
 
-    final override Calculator makeCalculator()
+    final override SingleFieldCalculator makeCalculator()
     {
         return new RangeCalculator(fieldIndex);
     }
@@ -1774,7 +1771,7 @@ class SumOperator : SingleFieldOperator
         super("sum", fieldIndex);
     }
 
-    final override Calculator makeCalculator()
+    final override SingleFieldCalculator makeCalculator()
     {
         return new SumCalculator(fieldIndex);
     }
@@ -1821,7 +1818,7 @@ class MeanOperator : SingleFieldOperator
         super("mean", fieldIndex);
     }
     
-    final override Calculator makeCalculator()
+    final override SingleFieldCalculator makeCalculator()
     {
         return new MeanCalculator(fieldIndex);
     }
@@ -1871,7 +1868,7 @@ class MedianOperator : SingleFieldOperator
         setSaveFieldValuesNumeric();
     }
     
-    final override Calculator makeCalculator()
+    final override SingleFieldCalculator makeCalculator()
     {
         return new MedianCalculator(fieldIndex);
     }
@@ -1916,7 +1913,7 @@ class MadOperator : SingleFieldOperator
         setSaveFieldValuesNumeric();
     }
     
-    final override Calculator makeCalculator()
+    final override SingleFieldCalculator makeCalculator()
     {
         return new MadCalculator(fieldIndex);
     }
@@ -1967,7 +1964,7 @@ class ValuesOperator : SingleFieldOperator
         setSaveFieldValuesText();
     }
 
-    final override Calculator makeCalculator()
+    final override SingleFieldCalculator makeCalculator()
     {
         return new ValuesCalculator(fieldIndex);
     }
@@ -2011,7 +2008,7 @@ class ModeOperator : SingleFieldOperator
         super("mode", fieldIndex);
     }
     
-    final override Calculator makeCalculator()
+    final override SingleFieldCalculator makeCalculator()
     {
         return new ModeCalculator(fieldIndex);
     }
@@ -2086,7 +2083,7 @@ class UniqueCountOperator : SingleFieldOperator
         super("unique_count", fieldIndex);
     }
     
-    final override Calculator makeCalculator()
+    final override SingleFieldCalculator makeCalculator()
     {
         return new UniqueCountCalculator(fieldIndex);
     }
