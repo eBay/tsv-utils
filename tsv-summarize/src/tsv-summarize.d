@@ -258,7 +258,9 @@ struct TsvSummarizeOptions {
 
     private void countHeaderOptionHandler(string option, string optionVal)
     {
-        operators.insertBack(new CountOperator(optionVal));
+        auto op = new CountOperator();
+        op.setCustomHeader(optionVal);
+        operators.insertBack(op);
     }
 
     /* This routine does validations not handled by processArgs. */
@@ -1202,11 +1204,11 @@ version(unittest)
      *        ["20", "200"]],
      *       1,                     // Field index (zero-based, so "100", "50", "200")
      *       "min",                 // The header suffix, normally the operator name.
-     *       ["100", "50", 50"]);   // Min value after processing each line.
+     *       ["100", "50", "50"]);  // Min value after processing each line.
      *
      * A typical operator unit test uses three "files", one each of 1x3, 2x3, and 3x3.
      * Then run the operator is tested against each column, a total of six calls. Headers
-     * are automatically checked. Additional entries are used to extend coverage.
+     * are automatically checked. Additional entries can be used to extend coverage.
      *
      * These tests do not check unique key behavior (group-by). Operators don't have info
      * about unique keys, and interact with them only indirectly, via Calculators.
@@ -1354,6 +1356,234 @@ version(unittest)
     }
 }
 
+/* ZeroFieldOperator is a base class for operators that take no input. The main use
+ * case is the CountOperator, which counts the occurrences of each unique key. Other
+ * uses are possible, for example, weighted random number assignment.
+ *
+ * The primary rationale for ZeroFieldOperator and ZeroFieldCalculator is to clarify
+ * the information available to such a routine. In particular, the split fields passed
+ * to processHeaderLine and processNextLine don't include all fields in the input,
+ * something that might not be obviouse when implementing an operator. (Only fields
+ * required by operators acting on specific fields are included.)
+ */
+class ZeroFieldOperator : Operator
+{
+    import std.typecons : Flag;
+    
+    private string _name;
+    private string _header;
+
+    this(string operatorName)
+    {
+        _name = operatorName;
+        _header = operatorName;
+    }
+
+    void setCustomHeader (string customHeader)
+    {
+        _header = customHeader;
+    }
+
+    bool allowCustomHeader() const @property
+    {
+        return true;
+    }
+
+    final string name() const @property
+    {
+        return _name;
+    }
+
+    final string header() const @property
+    {
+        return _header;
+    }
+
+    /* A no-op. ZeroFieldOperators have no access to the header line. */
+    final void processHeaderLine(const char[][] fields) { }
+
+    /* A no-op. ZeroFieldOperators have no access to fields. */
+    final size_t[] numericFieldsToSave()
+    {
+        size_t[] emptyArray;
+        return emptyArray;
+    }
+
+    /* A no-op. ZeroFieldOperators have no access to fields. */
+    final size_t[] textFieldsToSave()
+    {
+        size_t[] emptyArray;
+        return emptyArray;
+    }
+
+    abstract ZeroFieldCalculator makeCalculator();
+}
+
+/* ZeroFieldCalculator is a base class for operators that don't use fields as input.
+ * In particular, the Count operator. It is a companion to the ZeroFieldOperator class.
+ *
+ * Derived classes implement processNextEntry() rather than processNextLine(), and the
+ * single argument form of calculate() given as an abstract function.
+ */
+class ZeroFieldCalculator : Calculator
+{
+    this() { }
+
+    final void processNextLine(const char[][] fields)
+    {
+        debug writefln("[%s]", __FUNCTION__,);
+        processNextEntry();
+    }
+
+    final string calculate(UniqueKeyValuesLists valuesLists, const ref SummarizerPrintOptions printOptions)
+    {
+        return calculate(printOptions);
+    }
+    
+    abstract void processNextEntry();
+    abstract string calculate(const ref SummarizerPrintOptions printOptions);
+}
+
+version(unittest)
+{
+    /** A helper for ZeroFieldOperator unit tests.
+     *
+     * testZeroFieldOperator takes a set of split file values, a default header, and a
+     * set of expected values. The expected values array contains the expected values
+     * after each line.
+     *
+     * testZeroFieldOperator is very similar to testSingleFieldOperator, except that
+     * there is no use of field indices and fewer types of headers. See the latter's
+     * documentation and the CountOperator unit tests for examples.
+     */
+    void testZeroFieldOperator(OperatorClass : ZeroFieldOperator)
+        (const char[][][] splitFile, string defaultHeader, const char[][] expectedValues)
+    {
+        import std.format : format;
+        import std.range : appender;
+        import std.string : chomp;
+        import std.traits : EnumMembers;
+
+        auto numFields = (splitFile[0]).length;
+        
+        assert(splitFile.length == expectedValues.length,
+               format("[testZeroFieldOperator] Number of expected values differs from number of rows. headerSuffix: %s",
+                      defaultHeader));
+
+        /* printOptions - Not used these tests, but needed for API calls. */
+        auto printOptions = SummarizerPrintOptions('#', '|');
+
+        /* An input header line. */
+        string[] inputHeaderLine = new string[numFields];
+        foreach (i; 0 .. numFields) inputHeaderLine[i] = "header" ~ i.to!string;
+
+        auto customOutputFieldHeader = "custom";
+
+        enum HeaderUsecase {
+            HeaderLine_DefaultHeader,
+            HeaderLine_CustomHeader,
+            NoHeaderLine_DefaultHeader,
+            NoHeaderLine_CustomHeader,
+            NoHeaderLine_NoOutputHeader,
+        }
+
+        string headerAssertMessage(Operator op, HeaderUsecase hc, const char[] actual, const char[] expected)
+        {
+            return format("[testZeroFieldOperator] Unexpected header. Operator: %s; Usecase: %s;  Actual: '%s';  Expected: '%s'",
+                          op.name, hc, actual, expected);
+        }
+
+        string valueAssertMessage(Operator op, HeaderUsecase hc, size_t rowIndex,
+                                  const char[] actual, const char[] expected)
+        {
+            return format("[testZeroFieldOperator] Unexpected value. Operator: %s; Usecase: %s;  RowIndex: %d\n    Actual: '%s';  Expected: '%s'",
+                          op.name, hc, rowIndex, actual, expected);
+        }
+
+        /* Run the logic for each header use case. */
+        foreach (hc; EnumMembers!HeaderUsecase)
+        {
+            bool hasInputHeader = ( 
+                hc == HeaderUsecase.HeaderLine_DefaultHeader ||
+                hc == HeaderUsecase.HeaderLine_CustomHeader
+                );
+            bool hasOutputHeader = (
+                hc == HeaderUsecase.HeaderLine_DefaultHeader ||
+                hc == HeaderUsecase.HeaderLine_CustomHeader ||
+                hc == HeaderUsecase.NoHeaderLine_DefaultHeader ||
+                hc == HeaderUsecase.NoHeaderLine_CustomHeader
+                );
+            bool hasCustomHeader = (
+                hc == HeaderUsecase.HeaderLine_CustomHeader ||
+                hc == HeaderUsecase.NoHeaderLine_CustomHeader
+                );
+
+            if (hasCustomHeader) assert(hasOutputHeader);
+            
+            auto op = new OperatorClass();
+            
+            if (hasCustomHeader)
+            {
+                if (!op.allowCustomHeader) continue;   // Custom header not support by this operator
+                op.setCustomHeader(customOutputFieldHeader);
+            }
+            
+            Operator[] operatorArray;
+            operatorArray ~= op;
+
+            auto summarizer = new NoKeySummarizer!(typeof(appender!(char[])()))('#');
+            summarizer.setOperators(inputRangeObject(operatorArray));
+
+            if (hasInputHeader) summarizer.processHeaderLine(inputHeaderLine);
+
+            if (hasOutputHeader)
+            {
+                /* Write the header line. Note that this is a one-field header, */
+                auto headerLineOutput = appender!(char[])();
+                summarizer.writeSummaryHeader(headerLineOutput, printOptions);
+
+                /* Test that the header was generated correctly.
+                 *
+                 * Note: Because the output is generated by a Summarizer, it will have a
+                 * trailing newline. Use chomp to trim it.
+                 */
+                final switch (hc)
+                {
+                case HeaderUsecase.HeaderLine_DefaultHeader:
+                case HeaderUsecase.NoHeaderLine_DefaultHeader:
+                    assert(headerLineOutput.data.chomp == defaultHeader,
+                           headerAssertMessage(operatorArray[0], hc, headerLineOutput.data.chomp,
+                                               defaultHeader));
+                    break;
+                case HeaderUsecase.HeaderLine_CustomHeader:
+                case HeaderUsecase.NoHeaderLine_CustomHeader:
+                    assert(headerLineOutput.data.chomp == customOutputFieldHeader,
+                           headerAssertMessage(operatorArray[0], hc, headerLineOutput.data.chomp,
+                                               customOutputFieldHeader));
+                    break;
+                case HeaderUsecase.NoHeaderLine_NoOutputHeader:
+                    break;
+                }
+                
+            }
+            
+            /* For each line, process the line, generate the output, and test that the
+             * value is correct.
+             */
+            foreach (i, const char[][] splitLine; splitFile)
+            {
+                summarizer.processNextLine(splitLine);
+                
+                auto summaryLineOutput = appender!(char[])();
+                summarizer.writeSummaryBody(summaryLineOutput, printOptions);
+                assert(summaryLineOutput.data.chomp == expectedValues[i],
+                       valueAssertMessage(operatorArray[0], hc, i,
+                                          summaryLineOutput.data.chomp, expectedValues[i]));
+            }
+        }
+    }
+}
+
 /* Specific operators.
  *
  * Notes: 
@@ -1368,62 +1598,43 @@ version(unittest)
  * field on the line. Instead it is summarizing a property of the unique key itself. For
  * this reason it doesn't derive from SingleFieldOperator.
  */
-class CountOperator : Operator
+class CountOperator : ZeroFieldOperator
 {
-    private string _name = "count";
-    private string _header = "count";
-
-    this() { }
-
-    this(string summaryHeader)
+    this()
     {
-        _header = summaryHeader;
+        super("count");
     }
 
-    final string name() const @property
-    {
-        return _name;
-    }
-
-    final string header() const @property
-    {
-        return _header;
-    }
-
-    void processHeaderLine(const char[][] fields) { }
-
-    final size_t[] numericFieldsToSave()
-    {
-        size_t[] emptyArray;
-        return emptyArray;
-    }
-
-    final size_t[] textFieldsToSave()
-    {
-        size_t[] emptyArray;
-        return emptyArray;
-    }
-    
-    final Calculator makeCalculator()
+    final override ZeroFieldCalculator makeCalculator()
     {
         return new CountCalculator();
     }
 
-    static class CountCalculator : Calculator
+    static class CountCalculator : ZeroFieldCalculator
     {
         private size_t _count = 0;
 
-        final void processNextLine(const char[][] fields)
+        final override void processNextEntry()
         {
-            debug writefln("[processNextLine %s] fields: %s", __FUNCTION__, fields.to!string);
             _count++;
         }
         
-        final string calculate(UniqueKeyValuesLists valuesLists, const ref SummarizerPrintOptions printOptions)
+        final override string calculate(const ref SummarizerPrintOptions printOptions)
         {
             return _count.to!string;
         }
     }
+}
+
+unittest
+{
+    auto a1colFile = [["10"], ["9.5"], ["11"]];
+    auto a2colFile = [["20", "-30"], ["21", "-29"], ["22", "-31"]];
+    auto a3colFile = [["9009", "9", "-4.5"], ["199", "0", "-0.5"], ["3003", "0.2", "12"]];
+
+    testZeroFieldOperator!CountOperator(a1colFile, "count", ["1", "2", "3"]);
+    testZeroFieldOperator!CountOperator(a2colFile, "count", ["1", "2", "3"]);
+    testZeroFieldOperator!CountOperator(a3colFile, "count", ["1", "2", "3"]);
 }
 
 /** RetainOperator retains the first occurrence of a field, without changing the header.
