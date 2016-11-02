@@ -1592,7 +1592,8 @@ version(unittest)
  *   need to hold all needed state, typically the field index they are summarizing.
  */
 
-/** CountOperator counts the number of occurrences of each unique key.
+/** CountOperator counts the number of occurrences of each unique key, or the number of
+ * input lines if there is no unique key.
  *
  * CountOperator differs from most other operators in that it doesn't summarize a specific
  * field on the line. Instead it is summarizing a property of the unique key itself. For
@@ -1626,7 +1627,7 @@ class CountOperator : ZeroFieldOperator
     }
 }
 
-unittest
+unittest // CountOperator
 {
     auto a1colFile = [["10"], ["9.5"], ["11"]];
     auto a2colFile = [["20", "-30"], ["21", "-29"], ["22", "-31"]];
@@ -1641,7 +1642,8 @@ unittest
  *
  * RetainOperator is intended for fields where the value is expected to be the same for
  * all occurrences of the unique key, and the goal is to pass the value through unchanged.
- * It is like FirstOperator, except that the original header is preserved.
+ * It is like FirstOperator, except that the original header is preserved. The original
+ * header preservation is setup in the call to the SingleFieldOperation constructor.
  *
  * Notes:
  * - An option to signal an error if multiple values are encountered might be useful.
@@ -1684,7 +1686,7 @@ class RetainOperator : SingleFieldOperator
     }
 }
 
-unittest
+unittest // RetainOperator
 {
     auto a1colFile = [["r1c1"], ["r2c1"], ["r3c1"]];
     auto a2colFile = [["r1c1", "r1c2"], ["r2c1", "r2c2"], ["r3c1", "r3c2"]];
@@ -1738,7 +1740,7 @@ class FirstOperator : SingleFieldOperator
     }
 }
 
-unittest
+unittest // FirstOperator
 {
     auto a1colFile = [["r1c1"], ["r2c1"], ["r3c1"]];
     auto a2colFile = [["r1c1", "r1c2"], ["r2c1", "r2c2"], ["r3c1", "r3c2"]];
@@ -1752,6 +1754,8 @@ unittest
     testSingleFieldOperator!FirstOperator(a3colFile, 2, "first", ["r1c3", "r1c3", "r1c3"]);
 }
 
+/** LastOperator outputs the last value found for the field.
+ */
 class LastOperator : SingleFieldOperator
 {
     this(size_t fieldIndex)
@@ -1785,7 +1789,7 @@ class LastOperator : SingleFieldOperator
     }
 }
 
-unittest
+unittest // LastOperator
 {
     auto a1colFile = [["r1c1"], ["r2c1"], ["r3c1"]];
     auto a2colFile = [["r1c1", "r1c2"], ["r2c1", "r2c2"], ["r3c1", "r3c2"]];
@@ -1799,6 +1803,8 @@ unittest
     testSingleFieldOperator!LastOperator(a3colFile, 2, "last", ["r1c3", "r2c3", "r3c3"]);
 }
 
+/* MinOperator output the minimum value for the field. This is a numeric operator.
+ */
 class MinOperator : SingleFieldOperator
 {
     this(size_t fieldIndex)
@@ -1842,7 +1848,7 @@ class MinOperator : SingleFieldOperator
     }
 }
         
-unittest
+unittest // MinOperator
 {
     auto a1colFile = [["10"], ["9.5"], ["11"]];
     auto a2colFile = [["20", "-30"], ["21", "-29"], ["22", "-31"]];
@@ -1856,6 +1862,8 @@ unittest
     testSingleFieldOperator!MinOperator(a3colFile, 2, "min", ["-4.5", "-4.5", "-4.5"]);
 }
 
+/* MaxOperator output the maximum value for the field. This is a numeric operator.
+ */
 class MaxOperator : SingleFieldOperator
 {
     this(size_t fieldIndex)
@@ -1899,7 +1907,7 @@ class MaxOperator : SingleFieldOperator
     }
 }
         
-unittest
+unittest // MaxOperator
 {
     auto a1colFile = [["10"], ["9.5"], ["11"]];
     auto a2colFile = [["20", "-30"], ["21", "-29"], ["22", "-31"]];
@@ -1913,6 +1921,10 @@ unittest
     testSingleFieldOperator!MaxOperator(a3colFile, 2, "max", ["-4.5", "-0.5", "12"]);
 }
 
+/* RangeOperator outputs the difference between the minimum and maximum values. If there
+ * is a single value, or all values are the same, the range is zero. This is a numeric
+ * operator.
+ */
 class RangeOperator : SingleFieldOperator
 {
     this(size_t fieldIndex)
@@ -1961,7 +1973,7 @@ class RangeOperator : SingleFieldOperator
     }
 }
 
-unittest
+unittest // RangeOperator
 {
     auto a1colFile = [["10"], ["9.5"], ["11"]];
     auto a2colFile = [["20", "-30"], ["21", "-29"], ["22", "-31"]];
@@ -1975,6 +1987,8 @@ unittest
     testSingleFieldOperator!RangeOperator(a3colFile, 2, "range", ["0", "4", "16.5"]);
 }
 
+/* SumOperator produces the sum of all the values. This is a numeric operator.
+ */
 class SumOperator : SingleFieldOperator
 {
     this(size_t fieldIndex)
@@ -2008,7 +2022,7 @@ class SumOperator : SingleFieldOperator
     }
 }
 
-unittest
+unittest // SumOperator
 {
     auto a1colFile = [["10"], ["9.5"], ["11"]];
     auto a2colFile = [["20", "-30"], ["21", "-29"], ["22", "-31"]];
@@ -2022,6 +2036,8 @@ unittest
     testSingleFieldOperator!SumOperator(a3colFile, 2, "sum", ["-4.5", "-5", "7"]);
 }
 
+/* MeanOperator produces the mean (average) of all the values. This is a numeric operator.
+ */
 class MeanOperator : SingleFieldOperator
 {
     this(size_t fieldIndex)
@@ -2057,7 +2073,7 @@ class MeanOperator : SingleFieldOperator
     }
 }
 
-unittest
+unittest // MeanOperator
 {
     auto a1colFile = [["10"], ["9.5"], ["7.5"]];
     auto a2colFile = [["20", "-30"], ["21", "-29"], ["22", "-31"]];
@@ -2071,6 +2087,11 @@ unittest
     testSingleFieldOperator!MeanOperator(a3colFile, 2, "mean", ["-4.5", "-3", "2"]);
 }
 
+/* MedianOperator produces the median of all the values. This is a numeric operator.
+ *
+ * All the field values are stored in memory as part of this calculation. This is
+ * handled by unique key value lists.
+ */
 class MedianOperator : SingleFieldOperator
 {
     this(size_t fieldIndex)
@@ -2102,7 +2123,7 @@ class MedianOperator : SingleFieldOperator
     }
 }
 
-unittest
+unittest // MedianOperator
 {
     auto a1colFile = [["10"], ["9.5"], ["7.5"]];
     auto a2colFile = [["20", "-30"], ["21", "-29"], ["22", "-31"]];
@@ -2116,6 +2137,14 @@ unittest
     testSingleFieldOperator!MedianOperator(a3colFile, 2, "median", ["-4.5", "-3", "-1.5"]);
 }
 
+/* MadOperator produces the median absolute deviation from the median. This is a numeric
+ * operation.
+ *
+ * The result is the raw MAD value, without a normalization applied.
+ *
+ * All the field values are stored in memory as part of this calculation. This is
+ * handled by unique key value lists.
+ */
 class MadOperator : SingleFieldOperator
 {
     this(size_t fieldIndex)
@@ -2153,7 +2182,7 @@ class MadOperator : SingleFieldOperator
     }
 }
 
-unittest
+unittest // MadOperator
 {
     auto a1colFile = [["10"], ["15"], ["20"], ["25"], ["30"]];
     auto a2colFile = [["2", "50"], ["2", "51"], ["2", "52"]];
@@ -2166,6 +2195,12 @@ unittest
     testSingleFieldOperator!MadOperator(a3colFile, 1, "mad", ["0", "0", "0"]);
     testSingleFieldOperator!MadOperator(a3colFile, 2, "mad", ["0", "1", "2"]);
 }
+
+/* ValuesOperator outputs each value delimited by an alternate delimiter character.
+ *
+ * All the field values are stored in memory as part of this calculation. This is
+ * handled by unique key value lists.
+ */
 
 class ValuesOperator : SingleFieldOperator
 {
@@ -2198,7 +2233,7 @@ class ValuesOperator : SingleFieldOperator
     }
 }
 
-unittest
+unittest // ValuesOperator
 {
     auto a1colFile = [["a"], [""], ["b"], ["cd"], ["e"]];
     auto a2colFile = [["", "50"], ["", "51"], ["xyz", "52"]];
@@ -2212,6 +2247,12 @@ unittest
     testSingleFieldOperator!ValuesOperator(a3colFile, 2, "values", ["-", "-|--", "-|--|---"]);
 }
 
+/* ModeOperator outputs the most frequent value seen. In the event of a tie, the
+ * first value seen is produced.
+ * 
+ * All the field values are stored in memory as part of this calculation.
+ *
+ */
 class ModeOperator : SingleFieldOperator
 {
     this(size_t fieldIndex)
@@ -2273,7 +2314,7 @@ class ModeOperator : SingleFieldOperator
     }
 }
 
-unittest
+unittest // ModeOperator
 {
     auto a1colFile = [["a"], ["b"], ["c"], ["c"], ["b"], ["b"], ["a"]];
     auto a2colFile = [["abc", "pqr"], ["def", "pqr"], ["def", "xyz"]];
@@ -2287,6 +2328,11 @@ unittest
     testSingleFieldOperator!ModeOperator(a3colFile, 2, "mode", ["a", "a", "a"]);
 }
 
+/* UniqueCountOperator generates the number of unique values. Unique values are 
+ * based on exact text match calculation, not a numeric comparison.
+ *
+ * All the unique field values are stored in memory as part of this calculation.
+ */
 class UniqueCountOperator : SingleFieldOperator
 {
     this(size_t fieldIndex)
@@ -2320,7 +2366,7 @@ class UniqueCountOperator : SingleFieldOperator
     }
 }
 
-unittest
+unittest // UniqueCount
 {
     auto a1colFile = [["a"], ["b"], ["c"], ["c"], ["b"], ["b"], ["a"], ["ab"]];
     auto a2colFile = [["abc", "pqr"], ["def", "pqr"], ["def", "xyz"]];
