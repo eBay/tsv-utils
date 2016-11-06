@@ -1195,16 +1195,18 @@ version(unittest)
      *
      * testSingleFieldOperator takes a set of split file values, a field index, a header
      * suffix, and a set of expected values. The expected values array contains the
-     * expected values after each line. An example testing the 'min' operator against a
-     * file with 2 columns, 3 rows, using field index 1:
+     * initial value (zero entries) and the expected values after each line. (One more
+     * expected value than input lines.) The zero entry case is what is generated for an
+     * empty file. An example testing the 'min' operator against a file with 2 columns,
+     * 3 rows, using field index 1:
      *
      *    testSingleFieldOperator!MinOperator(
-     *       [["10", "100"],        // The split file. 3 lines by 2 rows.
+     *       [["10", "100"],               // The split file. 3 lines by 2 rows.
      *        ["5", "50"],
      *        ["20", "200"]],
-     *       1,                     // Field index (zero-based, so "100", "50", "200")
-     *       "min",                 // The header suffix, normally the operator name.
-     *       ["100", "50", "50"]);  // Min value after processing each line.
+     *       1,                            // Field index (zero-based, so "100", "50", "200")
+     *       "min",                        // The header suffix, normally the operator name.
+     *       ["nan", "100", "50", "50"]);  // Min value after processing each line.
      *
      * A typical operator unit test uses three "files", one each of 1x3, 2x3, and 3x3.
      * Then run the operator is tested against each column, a total of six calls. Headers
@@ -1227,8 +1229,8 @@ version(unittest)
         assert(fieldIndex < numFields,
                format("[testSingleFieldOperator] Invalid field index. headerSuffix: %s",
                       headerSuffix));
-        assert(splitFile.length == expectedValues.length,
-               format("[testSingleFieldOperator] Number of expected values differs from number of rows. headerSuffix: %s",
+        assert(splitFile.length + 1 == expectedValues.length,
+               format("[testSingleFieldOperator] Need one more expected value than number of rows. headerSuffix: %s",
                       headerSuffix));
 
         /* printOptions - Only the 'values-delimiter' (2nd arg) is used these tests. */
@@ -1268,7 +1270,7 @@ version(unittest)
                           op.name, hc, rowIndex, fieldIndex, actual, expected);
         }
 
-        /* Run the logic for each header use case. Perhaps overkill, but works. */
+        /* Run the logic for each header use case. */
         foreach (hc; EnumMembers!HeaderUsecase)
         {
             bool hasInputHeader = ( 
@@ -1340,15 +1342,14 @@ version(unittest)
             }
 
             /* For each line, process the line, generate the output, and test that the
-             * value is correct.
+             * value is correct. Start with the empty file case.
              */
-            foreach (i, const char[][] splitLine; splitFile)
+            foreach (i, const char[] expected; expectedValues)
             {
-                summarizer.processNextLine(splitLine);
-                
+                if (i > 0) summarizer.processNextLine(splitFile[i - 1]);
                 auto summaryLineOutput = appender!(char[])();
                 summarizer.writeSummaryBody(summaryLineOutput, printOptions);
-                assert(summaryLineOutput.data.chomp == expectedValues[i],
+                assert(summaryLineOutput.data.chomp == expected,
                        valueAssertMessage(operatorArray[0], hc, i, fieldIndex,
                                           summaryLineOutput.data.chomp, expectedValues[i]));
             }
@@ -1466,8 +1467,8 @@ version(unittest)
 
         auto numFields = (splitFile[0]).length;
         
-        assert(splitFile.length == expectedValues.length,
-               format("[testZeroFieldOperator] Number of expected values differs from number of rows. headerSuffix: %s",
+        assert(splitFile.length + 1 == expectedValues.length,
+               format("[testZeroFieldOperator] Need one more expected value than number of rows. headerSuffix: %s",
                       defaultHeader));
 
         /* printOptions - Not used these tests, but needed for API calls. */
@@ -1568,15 +1569,14 @@ version(unittest)
             }
             
             /* For each line, process the line, generate the output, and test that the
-             * value is correct.
+             * value is correct. Start with the empty file case.
              */
-            foreach (i, const char[][] splitLine; splitFile)
+            foreach (i, const char[] expected; expectedValues)
             {
-                summarizer.processNextLine(splitLine);
-                
+                if (i > 0) summarizer.processNextLine(splitFile[i - 1]);
                 auto summaryLineOutput = appender!(char[])();
                 summarizer.writeSummaryBody(summaryLineOutput, printOptions);
-                assert(summaryLineOutput.data.chomp == expectedValues[i],
+                assert(summaryLineOutput.data.chomp == expected,
                        valueAssertMessage(operatorArray[0], hc, i,
                                           summaryLineOutput.data.chomp, expectedValues[i]));
             }
@@ -1633,9 +1633,9 @@ unittest // CountOperator
     auto col2File = [["20", "-30"], ["21", "-29"], ["22", "-31"]];
     auto col3File = [["9009", "9", "-4.5"], ["199", "0", "-0.5"], ["3003", "0.2", "12"]];
 
-    testZeroFieldOperator!CountOperator(col1File, "count", ["1", "2", "3"]);
-    testZeroFieldOperator!CountOperator(col2File, "count", ["1", "2", "3"]);
-    testZeroFieldOperator!CountOperator(col3File, "count", ["1", "2", "3"]);
+    testZeroFieldOperator!CountOperator(col1File, "count", ["0", "1", "2", "3"]);
+    testZeroFieldOperator!CountOperator(col2File, "count", ["0", "1", "2", "3"]);
+    testZeroFieldOperator!CountOperator(col3File, "count", ["0", "1", "2", "3"]);
 }
 
 /** RetainOperator retains the first occurrence of a field, without changing the header.
@@ -1692,12 +1692,12 @@ unittest // RetainOperator
     auto col2File = [["r1c1", "r1c2"], ["r2c1", "r2c2"], ["r3c1", "r3c2"]];
     auto col3File = [["r1c1", "r1c2", "r1c3"], ["r2c1", "r2c2", "r2c3"], ["r3c1", "r3c2", "r3c3"]];
 
-    testSingleFieldOperator!RetainOperator(col1File, 0, "", ["r1c1", "r1c1", "r1c1"]);
-    testSingleFieldOperator!RetainOperator(col2File, 0, "", ["r1c1", "r1c1", "r1c1"]);
-    testSingleFieldOperator!RetainOperator(col2File, 1, "", ["r1c2", "r1c2", "r1c2"]);
-    testSingleFieldOperator!RetainOperator(col3File, 0, "", ["r1c1", "r1c1", "r1c1"]);
-    testSingleFieldOperator!RetainOperator(col3File, 1, "", ["r1c2", "r1c2", "r1c2"]);
-    testSingleFieldOperator!RetainOperator(col3File, 2, "", ["r1c3", "r1c3", "r1c3"]);
+    testSingleFieldOperator!RetainOperator(col1File, 0, "", ["", "r1c1", "r1c1", "r1c1"]);
+    testSingleFieldOperator!RetainOperator(col2File, 0, "", ["", "r1c1", "r1c1", "r1c1"]);
+    testSingleFieldOperator!RetainOperator(col2File, 1, "", ["", "r1c2", "r1c2", "r1c2"]);
+    testSingleFieldOperator!RetainOperator(col3File, 0, "", ["", "r1c1", "r1c1", "r1c1"]);
+    testSingleFieldOperator!RetainOperator(col3File, 1, "", ["", "r1c2", "r1c2", "r1c2"]);
+    testSingleFieldOperator!RetainOperator(col3File, 2, "", ["", "r1c3", "r1c3", "r1c3"]);
 }
 
 /** FirstOperator outputs the first value found for the field.
@@ -1746,12 +1746,12 @@ unittest // FirstOperator
     auto col2File = [["r1c1", "r1c2"], ["r2c1", "r2c2"], ["r3c1", "r3c2"]];
     auto col3File = [["r1c1", "r1c2", "r1c3"], ["r2c1", "r2c2", "r2c3"], ["r3c1", "r3c2", "r3c3"]];
 
-    testSingleFieldOperator!FirstOperator(col1File, 0, "first", ["r1c1", "r1c1", "r1c1"]);
-    testSingleFieldOperator!FirstOperator(col2File, 0, "first", ["r1c1", "r1c1", "r1c1"]);
-    testSingleFieldOperator!FirstOperator(col2File, 1, "first", ["r1c2", "r1c2", "r1c2"]);
-    testSingleFieldOperator!FirstOperator(col3File, 0, "first", ["r1c1", "r1c1", "r1c1"]);
-    testSingleFieldOperator!FirstOperator(col3File, 1, "first", ["r1c2", "r1c2", "r1c2"]);
-    testSingleFieldOperator!FirstOperator(col3File, 2, "first", ["r1c3", "r1c3", "r1c3"]);
+    testSingleFieldOperator!FirstOperator(col1File, 0, "first", ["", "r1c1", "r1c1", "r1c1"]);
+    testSingleFieldOperator!FirstOperator(col2File, 0, "first", ["", "r1c1", "r1c1", "r1c1"]);
+    testSingleFieldOperator!FirstOperator(col2File, 1, "first", ["", "r1c2", "r1c2", "r1c2"]);
+    testSingleFieldOperator!FirstOperator(col3File, 0, "first", ["", "r1c1", "r1c1", "r1c1"]);
+    testSingleFieldOperator!FirstOperator(col3File, 1, "first", ["", "r1c2", "r1c2", "r1c2"]);
+    testSingleFieldOperator!FirstOperator(col3File, 2, "first", ["", "r1c3", "r1c3", "r1c3"]);
 }
 
 /** LastOperator outputs the last value found for the field.
@@ -1795,12 +1795,12 @@ unittest // LastOperator
     auto col2File = [["r1c1", "r1c2"], ["r2c1", "r2c2"], ["r3c1", "r3c2"]];
     auto col3File = [["r1c1", "r1c2", "r1c3"], ["r2c1", "r2c2", "r2c3"], ["r3c1", "r3c2", "r3c3"]];
 
-    testSingleFieldOperator!LastOperator(col1File, 0, "last", ["r1c1", "r2c1", "r3c1"]);
-    testSingleFieldOperator!LastOperator(col2File, 0, "last", ["r1c1", "r2c1", "r3c1"]);
-    testSingleFieldOperator!LastOperator(col2File, 1, "last", ["r1c2", "r2c2", "r3c2"]);
-    testSingleFieldOperator!LastOperator(col3File, 0, "last", ["r1c1", "r2c1", "r3c1"]);
-    testSingleFieldOperator!LastOperator(col3File, 1, "last", ["r1c2", "r2c2", "r3c2"]);
-    testSingleFieldOperator!LastOperator(col3File, 2, "last", ["r1c3", "r2c3", "r3c3"]);
+    testSingleFieldOperator!LastOperator(col1File, 0, "last", ["", "r1c1", "r2c1", "r3c1"]);
+    testSingleFieldOperator!LastOperator(col2File, 0, "last", ["", "r1c1", "r2c1", "r3c1"]);
+    testSingleFieldOperator!LastOperator(col2File, 1, "last", ["", "r1c2", "r2c2", "r3c2"]);
+    testSingleFieldOperator!LastOperator(col3File, 0, "last", ["", "r1c1", "r2c1", "r3c1"]);
+    testSingleFieldOperator!LastOperator(col3File, 1, "last", ["", "r1c2", "r2c2", "r3c2"]);
+    testSingleFieldOperator!LastOperator(col3File, 2, "last", ["", "r1c3", "r2c3", "r3c3"]);
 }
 
 /* MinOperator output the minimum value for the field. This is a numeric operator.
@@ -1820,7 +1820,7 @@ class MinOperator : SingleFieldOperator
     static class MinCalculator : SingleFieldCalculator
     {
         private bool _isFirst = true;
-        private double _value = 0.0;
+        private double _value = double.nan;
 
         this(size_t fieldIndex)
         {
@@ -1854,12 +1854,12 @@ unittest // MinOperator
     auto col2File = [["20", "-30"], ["21", "-29"], ["22", "-31"]];
     auto col3File = [["9009", "9", "-4.5"], ["199", "0", "-0.5"], ["3003", "0.2", "12"]];
 
-    testSingleFieldOperator!MinOperator(col1File, 0, "min", ["10", "9.5", "9.5"]);
-    testSingleFieldOperator!MinOperator(col2File, 0, "min", ["20", "20", "20"]);
-    testSingleFieldOperator!MinOperator(col2File, 1, "min", ["-30", "-30", "-31"]);
-    testSingleFieldOperator!MinOperator(col3File, 0, "min", ["9009", "199", "199"]);
-    testSingleFieldOperator!MinOperator(col3File, 1, "min", ["9", "0", "0"]);
-    testSingleFieldOperator!MinOperator(col3File, 2, "min", ["-4.5", "-4.5", "-4.5"]);
+    testSingleFieldOperator!MinOperator(col1File, 0, "min", ["nan", "10", "9.5", "9.5"]);
+    testSingleFieldOperator!MinOperator(col2File, 0, "min", ["nan", "20", "20", "20"]);
+    testSingleFieldOperator!MinOperator(col2File, 1, "min", ["nan", "-30", "-30", "-31"]);
+    testSingleFieldOperator!MinOperator(col3File, 0, "min", ["nan", "9009", "199", "199"]);
+    testSingleFieldOperator!MinOperator(col3File, 1, "min", ["nan", "9", "0", "0"]);
+    testSingleFieldOperator!MinOperator(col3File, 2, "min", ["nan", "-4.5", "-4.5", "-4.5"]);
 }
 
 /* MaxOperator output the maximum value for the field. This is a numeric operator.
@@ -1879,7 +1879,7 @@ class MaxOperator : SingleFieldOperator
     static class MaxCalculator : SingleFieldCalculator
     {
         private bool _isFirst = true;
-        private double _value = 0.0;
+        private double _value = double.nan;
 
         this(size_t fieldIndex)
         {
@@ -1913,12 +1913,12 @@ unittest // MaxOperator
     auto col2File = [["20", "-30"], ["21", "-29"], ["22", "-31"]];
     auto col3File = [["9009", "9", "-4.5"], ["199", "0", "-0.5"], ["3003", "0.2", "12"]];
 
-    testSingleFieldOperator!MaxOperator(col1File, 0, "max", ["10", "10", "11"]);
-    testSingleFieldOperator!MaxOperator(col2File, 0, "max", ["20", "21", "22"]);
-    testSingleFieldOperator!MaxOperator(col2File, 1, "max", ["-30", "-29", "-29"]);
-    testSingleFieldOperator!MaxOperator(col3File, 0, "max", ["9009", "9009", "9009"]);
-    testSingleFieldOperator!MaxOperator(col3File, 1, "max", ["9", "9", "9"]);
-    testSingleFieldOperator!MaxOperator(col3File, 2, "max", ["-4.5", "-0.5", "12"]);
+    testSingleFieldOperator!MaxOperator(col1File, 0, "max", ["nan", "10", "10", "11"]);
+    testSingleFieldOperator!MaxOperator(col2File, 0, "max", ["nan", "20", "21", "22"]);
+    testSingleFieldOperator!MaxOperator(col2File, 1, "max", ["nan", "-30", "-29", "-29"]);
+    testSingleFieldOperator!MaxOperator(col3File, 0, "max", ["nan", "9009", "9009", "9009"]);
+    testSingleFieldOperator!MaxOperator(col3File, 1, "max", ["nan", "9", "9", "9"]);
+    testSingleFieldOperator!MaxOperator(col3File, 2, "max", ["nan", "-4.5", "-0.5", "12"]);
 }
 
 /* RangeOperator outputs the difference between the minimum and maximum values. If there
@@ -1979,12 +1979,12 @@ unittest // RangeOperator
     auto col2File = [["20", "-30"], ["21", "-29"], ["22", "-31"]];
     auto col3File = [["9009", "9", "-4.5"], ["199", "0", "-0.5"], ["3003", "0.2", "12"]];
 
-    testSingleFieldOperator!RangeOperator(col1File, 0, "range", ["0", "0.5", "1.5"]);
-    testSingleFieldOperator!RangeOperator(col2File, 0, "range", ["0", "1", "2"]);
-    testSingleFieldOperator!RangeOperator(col2File, 1, "range", ["0", "1", "2"]);
-    testSingleFieldOperator!RangeOperator(col3File, 0, "range", ["0", "8810", "8810"]);
-    testSingleFieldOperator!RangeOperator(col3File, 1, "range", ["0", "9", "9"]);
-    testSingleFieldOperator!RangeOperator(col3File, 2, "range", ["0", "4", "16.5"]);
+    testSingleFieldOperator!RangeOperator(col1File, 0, "range", ["0", "0", "0.5", "1.5"]);
+    testSingleFieldOperator!RangeOperator(col2File, 0, "range", ["0", "0", "1", "2"]);
+    testSingleFieldOperator!RangeOperator(col2File, 1, "range", ["0", "0", "1", "2"]);
+    testSingleFieldOperator!RangeOperator(col3File, 0, "range", ["0", "0", "8810", "8810"]);
+    testSingleFieldOperator!RangeOperator(col3File, 1, "range", ["0", "0", "9", "9"]);
+    testSingleFieldOperator!RangeOperator(col3File, 2, "range", ["0", "0", "4", "16.5"]);
 }
 
 /* SumOperator produces the sum of all the values. This is a numeric operator.
@@ -2028,12 +2028,12 @@ unittest // SumOperator
     auto col2File = [["20", "-30"], ["21", "-29"], ["22", "-31"]];
     auto col3File = [["9009", "9", "-4.5"], ["199", "0", "-0.5"], ["3003", "0.2", "12"]];
 
-    testSingleFieldOperator!SumOperator(col1File, 0, "sum", ["10", "19.5", "30.5"]);
-    testSingleFieldOperator!SumOperator(col2File, 0, "sum", ["20", "41", "63"]);
-    testSingleFieldOperator!SumOperator(col2File, 1, "sum", ["-30", "-59", "-90"]);
-    testSingleFieldOperator!SumOperator(col3File, 0, "sum", ["9009", "9208", "12211"]);
-    testSingleFieldOperator!SumOperator(col3File, 1, "sum", ["9", "9", "9.2"]);
-    testSingleFieldOperator!SumOperator(col3File, 2, "sum", ["-4.5", "-5", "7"]);
+    testSingleFieldOperator!SumOperator(col1File, 0, "sum", ["0", "10", "19.5", "30.5"]);
+    testSingleFieldOperator!SumOperator(col2File, 0, "sum", ["0", "20", "41", "63"]);
+    testSingleFieldOperator!SumOperator(col2File, 1, "sum", ["0", "-30", "-59", "-90"]);
+    testSingleFieldOperator!SumOperator(col3File, 0, "sum", ["0", "9009", "9208", "12211"]);
+    testSingleFieldOperator!SumOperator(col3File, 1, "sum", ["0", "9", "9", "9.2"]);
+    testSingleFieldOperator!SumOperator(col3File, 2, "sum", ["0", "-4.5", "-5", "7"]);
 }
 
 /* MeanOperator produces the mean (average) of all the values. This is a numeric operator.
@@ -2080,12 +2080,12 @@ unittest // MeanOperator
     auto col2File = [["20", "-30"], ["21", "-29"], ["22", "-31"]];
     auto col3File = [["9009", "9", "-4.5"], ["9", "0", "-1.5"], ["4509", "-3", "12"]];
 
-    testSingleFieldOperator!MeanOperator(col1File, 0, "mean", ["10", "9.75", "9"]);
-    testSingleFieldOperator!MeanOperator(col2File, 0, "mean", ["20", "20.5", "21"]);
-    testSingleFieldOperator!MeanOperator(col2File, 1, "mean", ["-30", "-29.5", "-30"]);
-    testSingleFieldOperator!MeanOperator(col3File, 0, "mean", ["9009", "4509", "4509"]);
-    testSingleFieldOperator!MeanOperator(col3File, 1, "mean", ["9", "4.5", "2"]);
-    testSingleFieldOperator!MeanOperator(col3File, 2, "mean", ["-4.5", "-3", "2"]);
+    testSingleFieldOperator!MeanOperator(col1File, 0, "mean", ["nan", "10", "9.75", "9"]);
+    testSingleFieldOperator!MeanOperator(col2File, 0, "mean", ["nan", "20", "20.5", "21"]);
+    testSingleFieldOperator!MeanOperator(col2File, 1, "mean", ["nan", "-30", "-29.5", "-30"]);
+    testSingleFieldOperator!MeanOperator(col3File, 0, "mean", ["nan", "9009", "4509", "4509"]);
+    testSingleFieldOperator!MeanOperator(col3File, 1, "mean", ["nan", "9", "4.5", "2"]);
+    testSingleFieldOperator!MeanOperator(col3File, 2, "mean", ["nan", "-4.5", "-3", "2"]);
 }
 
 class VarianceOperator : SingleFieldOperator
@@ -2134,12 +2134,12 @@ unittest // VarianceOperator
     auto col2File = [["-5", "-5"], ["-10", "0"], ["-15", "5"]];
     auto col3File = [["1", "2", "100"], ["2", "3", "100"], ["3", "4", "103"]];
 
-    testSingleFieldOperator!VarianceOperator(col1File, 0, "var", ["nan", "12.5", "25"]);
-    testSingleFieldOperator!VarianceOperator(col2File, 0, "var", ["nan", "12.5", "25"]);
-    testSingleFieldOperator!VarianceOperator(col2File, 1, "var", ["nan", "12.5", "25"]);
-    testSingleFieldOperator!VarianceOperator(col3File, 0, "var", ["nan", "0.5", "1"]);
-    testSingleFieldOperator!VarianceOperator(col3File, 1, "var", ["nan", "0.5", "1"]);
-    testSingleFieldOperator!VarianceOperator(col3File, 2, "var", ["nan", "0", "3"]);
+    testSingleFieldOperator!VarianceOperator(col1File, 0, "var", ["nan", "nan", "12.5", "25"]);
+    testSingleFieldOperator!VarianceOperator(col2File, 0, "var", ["nan", "nan", "12.5", "25"]);
+    testSingleFieldOperator!VarianceOperator(col2File, 1, "var", ["nan", "nan", "12.5", "25"]);
+    testSingleFieldOperator!VarianceOperator(col3File, 0, "var", ["nan", "nan", "0.5", "1"]);
+    testSingleFieldOperator!VarianceOperator(col3File, 1, "var", ["nan", "nan", "0.5", "1"]);
+    testSingleFieldOperator!VarianceOperator(col3File, 2, "var", ["nan", "nan", "0", "3"]);
 }
 
 /* MedianOperator produces the median of all the values. This is a numeric operator.
@@ -2184,12 +2184,12 @@ unittest // MedianOperator
     auto col2File = [["20", "-30"], ["21", "-29"], ["22", "-31"]];
     auto col3File = [["9009", "9", "-4.5"], ["9", "0", "-1.5"], ["4509", "-3", "12"]];
 
-    testSingleFieldOperator!MedianOperator(col1File, 0, "median", ["10", "9.75", "9.5"]);
-    testSingleFieldOperator!MedianOperator(col2File, 0, "median", ["20", "20.5", "21"]);
-    testSingleFieldOperator!MedianOperator(col2File, 1, "median", ["-30", "-29.5", "-30"]);
-    testSingleFieldOperator!MedianOperator(col3File, 0, "median", ["9009", "4509", "4509"]);
-    testSingleFieldOperator!MedianOperator(col3File, 1, "median", ["9", "4.5", "0"]);
-    testSingleFieldOperator!MedianOperator(col3File, 2, "median", ["-4.5", "-3", "-1.5"]);
+    testSingleFieldOperator!MedianOperator(col1File, 0, "median", ["nan", "10", "9.75", "9.5"]);
+    testSingleFieldOperator!MedianOperator(col2File, 0, "median", ["nan", "20", "20.5", "21"]);
+    testSingleFieldOperator!MedianOperator(col2File, 1, "median", ["nan", "-30", "-29.5", "-30"]);
+    testSingleFieldOperator!MedianOperator(col3File, 0, "median", ["nan", "9009", "4509", "4509"]);
+    testSingleFieldOperator!MedianOperator(col3File, 1, "median", ["nan", "9", "4.5", "0"]);
+    testSingleFieldOperator!MedianOperator(col3File, 2, "median", ["nan", "-4.5", "-3", "-1.5"]);
 }
 
 /* MadOperator produces the median absolute deviation from the median. This is a numeric
@@ -2243,12 +2243,12 @@ unittest // MadOperator
     auto col2File = [["2", "50"], ["2", "51"], ["2", "52"]];
     auto col3File = [["16", "8", "-4"], ["8", "8", "-2"], ["8", "16", "0"]];
 
-    testSingleFieldOperator!MadOperator(col1File, 0, "mad", ["0", "2.5", "5", "5", "5"]);
-    testSingleFieldOperator!MadOperator(col2File, 0, "mad", ["0", "0", "0"]);
-    testSingleFieldOperator!MadOperator(col2File, 1, "mad", ["0", "0.5", "1"]);
-    testSingleFieldOperator!MadOperator(col3File, 0, "mad", ["0", "4", "0"]);
-    testSingleFieldOperator!MadOperator(col3File, 1, "mad", ["0", "0", "0"]);
-    testSingleFieldOperator!MadOperator(col3File, 2, "mad", ["0", "1", "2"]);
+    testSingleFieldOperator!MadOperator(col1File, 0, "mad", ["nan", "0", "2.5", "5", "5", "5"]);
+    testSingleFieldOperator!MadOperator(col2File, 0, "mad", ["nan", "0", "0", "0"]);
+    testSingleFieldOperator!MadOperator(col2File, 1, "mad", ["nan", "0", "0.5", "1"]);
+    testSingleFieldOperator!MadOperator(col3File, 0, "mad", ["nan", "0", "4", "0"]);
+    testSingleFieldOperator!MadOperator(col3File, 1, "mad", ["nan", "0", "0", "0"]);
+    testSingleFieldOperator!MadOperator(col3File, 2, "mad", ["nan", "0", "1", "2"]);
 }
 
 /* ValuesOperator outputs each value delimited by an alternate delimiter character.
@@ -2294,12 +2294,12 @@ unittest // ValuesOperator
     auto col2File = [["", "50"], ["", "51"], ["xyz", "52"]];
     auto col3File = [["z", "a", "-"], ["y", "ab", "--"], ["w", "ba", "---"]];
 
-    testSingleFieldOperator!ValuesOperator(col1File, 0, "values", ["a", "a|", "a||b", "a||b|cd", "a||b|cd|e"]);
-    testSingleFieldOperator!ValuesOperator(col2File, 0, "values", ["", "|", "||xyz"]);
-    testSingleFieldOperator!ValuesOperator(col2File, 1, "values", ["50", "50|51", "50|51|52"]);
-    testSingleFieldOperator!ValuesOperator(col3File, 0, "values", ["z", "z|y", "z|y|w"]);
-    testSingleFieldOperator!ValuesOperator(col3File, 1, "values", ["a", "a|ab", "a|ab|ba"]);
-    testSingleFieldOperator!ValuesOperator(col3File, 2, "values", ["-", "-|--", "-|--|---"]);
+    testSingleFieldOperator!ValuesOperator(col1File, 0, "values", ["", "a", "a|", "a||b", "a||b|cd", "a||b|cd|e"]);
+    testSingleFieldOperator!ValuesOperator(col2File, 0, "values", ["", "", "|", "||xyz"]);
+    testSingleFieldOperator!ValuesOperator(col2File, 1, "values", ["", "50", "50|51", "50|51|52"]);
+    testSingleFieldOperator!ValuesOperator(col3File, 0, "values", ["", "z", "z|y", "z|y|w"]);
+    testSingleFieldOperator!ValuesOperator(col3File, 1, "values", ["", "a", "a|ab", "a|ab|ba"]);
+    testSingleFieldOperator!ValuesOperator(col3File, 2, "values", ["", "-", "-|--", "-|--|---"]);
 }
 
 /* ModeOperator outputs the most frequent value seen. In the event of a tie, the
@@ -2375,12 +2375,12 @@ unittest // ModeOperator
     auto col2File = [["abc", "pqr"], ["def", "pqr"], ["def", "xyz"]];
     auto col3File = [["1.0", "1", "a"], ["2.0", "a", "1"], ["2", "a", "1.0"]];
 
-    testSingleFieldOperator!ModeOperator(col1File, 0, "mode", ["a", "a", "a", "c", "b", "b", "b"]);
-    testSingleFieldOperator!ModeOperator(col2File, 0, "mode", ["abc", "abc", "def"]);
-    testSingleFieldOperator!ModeOperator(col2File, 1, "mode", ["pqr", "pqr", "pqr"]);
-    testSingleFieldOperator!ModeOperator(col3File, 0, "mode", ["1.0", "1.0", "1.0"]);
-    testSingleFieldOperator!ModeOperator(col3File, 1, "mode", ["1", "1", "a"]);
-    testSingleFieldOperator!ModeOperator(col3File, 2, "mode", ["a", "a", "a"]);
+    testSingleFieldOperator!ModeOperator(col1File, 0, "mode", ["", "a", "a", "a", "c", "b", "b", "b"]);
+    testSingleFieldOperator!ModeOperator(col2File, 0, "mode", ["", "abc", "abc", "def"]);
+    testSingleFieldOperator!ModeOperator(col2File, 1, "mode", ["", "pqr", "pqr", "pqr"]);
+    testSingleFieldOperator!ModeOperator(col3File, 0, "mode", ["", "1.0", "1.0", "1.0"]);
+    testSingleFieldOperator!ModeOperator(col3File, 1, "mode", ["", "1", "1", "a"]);
+    testSingleFieldOperator!ModeOperator(col3File, 2, "mode", ["", "a", "a", "a"]);
 }
 
 /* UniqueCountOperator generates the number of unique values. Unique values are 
@@ -2427,10 +2427,10 @@ unittest // UniqueCount
     auto col2File = [["abc", "pqr"], ["def", "pqr"], ["def", "xyz"]];
     auto col3File = [["1.0", "1", "a"], ["2.0", "a", "1"], ["2", "a", "1.0"]];
 
-    testSingleFieldOperator!UniqueCountOperator(col1File, 0, "unique_count", ["1", "2", "3", "3", "3", "3", "3", "4"]);
-    testSingleFieldOperator!UniqueCountOperator(col2File, 0, "unique_count", ["1", "2", "2"]);
-    testSingleFieldOperator!UniqueCountOperator(col2File, 1, "unique_count", ["1", "1", "2"]);
-    testSingleFieldOperator!UniqueCountOperator(col3File, 0, "unique_count", ["1", "2", "3"]);
-    testSingleFieldOperator!UniqueCountOperator(col3File, 1, "unique_count", ["1", "2", "2"]);
-    testSingleFieldOperator!UniqueCountOperator(col3File, 2, "unique_count", ["1", "2", "3"]);
+    testSingleFieldOperator!UniqueCountOperator(col1File, 0, "unique_count", ["0", "1", "2", "3", "3", "3", "3", "3", "4"]);
+    testSingleFieldOperator!UniqueCountOperator(col2File, 0, "unique_count", ["0", "1", "2", "2"]);
+    testSingleFieldOperator!UniqueCountOperator(col2File, 1, "unique_count", ["0", "1", "1", "2"]);
+    testSingleFieldOperator!UniqueCountOperator(col3File, 0, "unique_count", ["0", "1", "2", "3"]);
+    testSingleFieldOperator!UniqueCountOperator(col3File, 1, "unique_count", ["0", "1", "2", "2"]);
+    testSingleFieldOperator!UniqueCountOperator(col3File, 2, "unique_count", ["0", "1", "2", "3"]);
 }
