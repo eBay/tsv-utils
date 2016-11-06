@@ -158,6 +158,7 @@ struct TsvSummarizeOptions {
                 "sum",                "n[,n...][:STR]  Sum of the values. (Numeric fields only.)", &operatorOptionHandler!SumOperator,
                 "mean",               "n[,n...][:STR]  Mean (average) of the values. (Numeric fields only.)", &operatorOptionHandler!MeanOperator,
                 "median",             "n[,n...][:STR]  Median value. (Numeric fields only. Reads all values into memory.)", &operatorOptionHandler!MedianOperator,
+                "var",                "n[,n...][:STR]  Sample variance (numeric fields only).", &operatorOptionHandler!VarianceOperator,
                 "mad",                "n[,n...][:STR]  Median absolute deviation. Raw value, not scaled. (Numeric fields only. Reads all values into memory.)",
                 &operatorOptionHandler!MadOperator,
                 "mode",               "n[,n...][:STR]  Mode. The most frequent value (text). Reads all values into memory.", &operatorOptionHandler!ModeOperator,
@@ -166,7 +167,6 @@ struct TsvSummarizeOptions {
 
                 /*  Not implemented yet.
                 "std",                "n[,n...][:STR]  First value listed (numeric fields only).", &operatorOptionHandler!FirstOperator,
-                "var",                "n[,n...][:STR]  First value listed (numeric fields only).", &operatorOptionHandler!FirstOperator,
                 "values-asc",         "n[,n...][:STR]  First value listed (numeric fields only).", &operatorOptionHandler!FirstOperator,
                 "values-dsc",         "n[,n...][:STR]  First value listed (numeric fields only).", &operatorOptionHandler!FirstOperator,
             */
@@ -2068,7 +2068,8 @@ class MeanOperator : SingleFieldOperator
         
         final string calculate(UniqueKeyValuesLists valuesLists, const ref SummarizerPrintOptions printOptions)
         {
-            return (_total / cast(double) _count).to!string;
+            return ((_count > 0) ? (_total / castFrom!size_t.to!double(_count)) : double.nan)
+                .to!string;
         }
     }
 }
@@ -2085,6 +2086,60 @@ unittest // MeanOperator
     testSingleFieldOperator!MeanOperator(a3colFile, 0, "mean", ["9009", "4509", "4509"]);
     testSingleFieldOperator!MeanOperator(a3colFile, 1, "mean", ["9", "4.5", "2"]);
     testSingleFieldOperator!MeanOperator(a3colFile, 2, "mean", ["-4.5", "-3", "2"]);
+}
+
+class VarianceOperator : SingleFieldOperator
+{
+    this(size_t fieldIndex)
+    {
+        super("var", fieldIndex);
+    }
+    
+    final override SingleFieldCalculator makeCalculator()
+    {
+        return new VarianceCalculator(fieldIndex);
+    }
+
+    static class VarianceCalculator : SingleFieldCalculator
+    {
+        private double _count = 0.0;
+        private double _mean = 0.0;
+        private double _m2 = 0.0;     // Sum of squares of differences from current mean
+
+        this(size_t fieldIndex)
+        {
+            super(fieldIndex);
+        }
+
+        final override void processNextField(const char[] nextField)
+        {
+            _count += 1.0;
+            double fieldValue = nextField.to!double;
+            double delta = fieldValue - _mean;
+            _mean += delta / _count;
+            _m2 += delta * (fieldValue - _mean);
+        }
+        
+        final string calculate(UniqueKeyValuesLists valuesLists, const ref SummarizerPrintOptions printOptions)
+        {
+            return ((_count >= 2.0) ? (_m2 / (_count - 1.0)) : double.nan)
+                .to!string;
+        }
+    }
+}
+
+unittest // VarianceOperator
+{
+    auto a1colFile = [["5"], ["10"], ["15"]];
+    auto a2colFile = [["-5", "-5"], ["-10", "0"], ["-15", "5"]];
+    auto a3colFile = [["1", "2", "100"], ["2", "3", "100"], ["3", "4", "103"]];
+
+    testSingleFieldOperator!VarianceOperator(a1colFile, 0, "var", ["nan", "12.5", "25"]);
+    testSingleFieldOperator!VarianceOperator(a2colFile, 0, "var", ["nan", "12.5", "25"]);
+    testSingleFieldOperator!VarianceOperator(a2colFile, 1, "var", ["nan", "12.5", "25"]);
+    testSingleFieldOperator!VarianceOperator(a3colFile, 0, "var", ["nan", "0.5", "1"]);
+    testSingleFieldOperator!VarianceOperator(a3colFile, 1, "var", ["nan", "0.5", "1"]);
+    testSingleFieldOperator!VarianceOperator(a3colFile, 2, "var", ["nan", "0", "3"]);
 }
 
 /* MedianOperator produces the median of all the values. This is a numeric operator.
