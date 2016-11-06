@@ -83,9 +83,10 @@ fields (though not when a custom header is specified). Example:
   --median 2,3,4
 
 Summarization operators available are:
-  count     min       sum        mad         count-unique
-  first     max       mean       mode        retain
-  last      range     median     values
+  count       min        mean       stddev
+  retain      max        median     count-unique
+  first       range      mad        mode
+  last        sum        var        values
 
 Calculations hold onto the minimum data needed while reading data. A few
 operations like median keep all data values in memory. These operations will
@@ -149,27 +150,21 @@ struct TsvSummarizeOptions {
                 "v|values-delimiter", "CHR             Values delimiter. Default: vertical bar (|). (Single byte UTF-8 characters only.)", &valuesDelimiter,
                 "count",              "                Count occurrences of each unique key.", &countOptionHandler,
                 "count-header",       "STR             Count occurrences of each unique key, use header STR.", &countHeaderOptionHandler,
-                "retain",             "n[,n...]        Retain one copy of the listed fields.", &operatorOptionHandler!RetainOperator,
-                "first",              "n[,n...][:STR]  First value listed.", &operatorOptionHandler!FirstOperator,
-                "last",               "n[,n...][:STR]  Last value of file.", &operatorOptionHandler!LastOperator,
+                "retain",             "n[,n...]        Retain one copy of the field.", &operatorOptionHandler!RetainOperator,
+                "first",              "n[,n...][:STR]  First value seen.", &operatorOptionHandler!FirstOperator,
+                "last",               "n[,n...][:STR]  Last value seen.", &operatorOptionHandler!LastOperator,
                 "min",                "n[,n...][:STR]  Min value. (Numeric fields only.)", &operatorOptionHandler!MinOperator,
                 "max",                "n[,n...][:STR]  Max value. Numeric fields only.", &operatorOptionHandler!MaxOperator,
                 "range",              "n[,n...][:STR]  Difference between min and max values. (Numeric fields only.)", &operatorOptionHandler!RangeOperator,
                 "sum",                "n[,n...][:STR]  Sum of the values. (Numeric fields only.)", &operatorOptionHandler!SumOperator,
-                "mean",               "n[,n...][:STR]  Mean (average) of the values. (Numeric fields only.)", &operatorOptionHandler!MeanOperator,
+                "mean",               "n[,n...][:STR]  Mean (average). (Numeric fields only.)", &operatorOptionHandler!MeanOperator,
                 "median",             "n[,n...][:STR]  Median value. (Numeric fields only. Reads all values into memory.)", &operatorOptionHandler!MedianOperator,
-                "var",                "n[,n...][:STR]  Sample variance (numeric fields only).", &operatorOptionHandler!VarianceOperator,
-                "mad",                "n[,n...][:STR]  Median absolute deviation. Raw value, not scaled. (Numeric fields only. Reads all values into memory.)",
-                &operatorOptionHandler!MadOperator,
-                "mode",               "n[,n...][:STR]  Mode. The most frequent value (text). Reads all values into memory.", &operatorOptionHandler!ModeOperator,
-                "count-unique",       "n[,n...][:STR]  Number of unique values (text). Reads all values into memory.", &operatorOptionHandler!UniqueCountOperator,
-                "values",             "n[,n...][:STR]  All the values, separated by --v|values-delimiter.", &operatorOptionHandler!ValuesOperator,
-
-                /*  Not implemented yet.
-                "std",                "n[,n...][:STR]  First value listed (numeric fields only).", &operatorOptionHandler!FirstOperator,
-                "values-asc",         "n[,n...][:STR]  First value listed (numeric fields only).", &operatorOptionHandler!FirstOperator,
-                "values-dsc",         "n[,n...][:STR]  First value listed (numeric fields only).", &operatorOptionHandler!FirstOperator,
-            */
+                "mad",                "n[,n...][:STR]  Median absolute deviation from the median. Raw value, not scaled. (Numeric fields only. Reads all values into memory.)", &operatorOptionHandler!MadOperator,
+                "var",                "n[,n...][:STR]  Variance. (Sample variance, numeric fields only).", &operatorOptionHandler!VarianceOperator,
+                "stdev",              "n[,n...][:STR]  Standard deviation. (Sample st.dev, numeric fields only).", &operatorOptionHandler!StDevOperator,
+                "count-unique",       "n[,n...][:STR]  Number of unique values. (Reads all values into memory.", &operatorOptionHandler!UniqueCountOperator,
+                "mode",               "n[,n...][:STR]  Mode. The most frequent value. (Reads all values into memory.)", &operatorOptionHandler!ModeOperator,
+                "values",             "n[,n...][:STR]  All the values, separated by --v|values-delimiter. (Reads all values into memory.)", &operatorOptionHandler!ValuesOperator,
                 );
 
             if (r.helpWanted)
@@ -2088,60 +2083,6 @@ unittest // MeanOperator
     testSingleFieldOperator!MeanOperator(col3File, 2, "mean", ["nan", "-4.5", "-3", "2"]);
 }
 
-class VarianceOperator : SingleFieldOperator
-{
-    this(size_t fieldIndex)
-    {
-        super("var", fieldIndex);
-    }
-    
-    final override SingleFieldCalculator makeCalculator()
-    {
-        return new VarianceCalculator(fieldIndex);
-    }
-
-    static class VarianceCalculator : SingleFieldCalculator
-    {
-        private double _count = 0.0;
-        private double _mean = 0.0;
-        private double _m2 = 0.0;     // Sum of squares of differences from current mean
-
-        this(size_t fieldIndex)
-        {
-            super(fieldIndex);
-        }
-
-        final override void processNextField(const char[] nextField)
-        {
-            _count += 1.0;
-            double fieldValue = nextField.to!double;
-            double delta = fieldValue - _mean;
-            _mean += delta / _count;
-            _m2 += delta * (fieldValue - _mean);
-        }
-        
-        final string calculate(UniqueKeyValuesLists valuesLists, const ref SummarizerPrintOptions printOptions)
-        {
-            return ((_count >= 2.0) ? (_m2 / (_count - 1.0)) : double.nan)
-                .to!string;
-        }
-    }
-}
-
-unittest // VarianceOperator
-{
-    auto col1File = [["5"], ["10"], ["15"]];
-    auto col2File = [["-5", "-5"], ["-10", "0"], ["-15", "5"]];
-    auto col3File = [["1", "2", "100"], ["2", "3", "100"], ["3", "4", "103"]];
-
-    testSingleFieldOperator!VarianceOperator(col1File, 0, "var", ["nan", "nan", "12.5", "25"]);
-    testSingleFieldOperator!VarianceOperator(col2File, 0, "var", ["nan", "nan", "12.5", "25"]);
-    testSingleFieldOperator!VarianceOperator(col2File, 1, "var", ["nan", "nan", "12.5", "25"]);
-    testSingleFieldOperator!VarianceOperator(col3File, 0, "var", ["nan", "nan", "0.5", "1"]);
-    testSingleFieldOperator!VarianceOperator(col3File, 1, "var", ["nan", "nan", "0.5", "1"]);
-    testSingleFieldOperator!VarianceOperator(col3File, 2, "var", ["nan", "nan", "0", "3"]);
-}
-
 /* MedianOperator produces the median of all the values. This is a numeric operator.
  *
  * All the field values are stored in memory as part of this calculation. This is
@@ -2251,55 +2192,168 @@ unittest // MadOperator
     testSingleFieldOperator!MadOperator(col3File, 2, "mad", ["nan", "0", "1", "2"]);
 }
 
-/* ValuesOperator outputs each value delimited by an alternate delimiter character.
- *
- * All the field values are stored in memory as part of this calculation. This is
- * handled by unique key value lists.
- */
-
-class ValuesOperator : SingleFieldOperator
+class VarianceOperator : SingleFieldOperator
 {
     this(size_t fieldIndex)
     {
-        super("values", fieldIndex);
-        setSaveFieldValuesText();
+        super("var", fieldIndex);
     }
-
+    
     final override SingleFieldCalculator makeCalculator()
     {
-        return new ValuesCalculator(fieldIndex);
+        return new VarianceCalculator(fieldIndex);
     }
 
-    static class ValuesCalculator : SingleFieldCalculator
+    static class VarianceCalculator : SingleFieldCalculator
     {
+        private double _count = 0.0;
+        private double _mean = 0.0;
+        private double _m2 = 0.0;     // Sum of squares of differences from current mean
+
         this(size_t fieldIndex)
         {
             super(fieldIndex);
         }
 
-        /* Work is done by saving the field values. */
         final override void processNextField(const char[] nextField)
-        { }
+        {
+            _count += 1.0;
+            double fieldValue = nextField.to!double;
+            double delta = fieldValue - _mean;
+            _mean += delta / _count;
+            _m2 += delta * (fieldValue - _mean);
+        }
         
         final string calculate(UniqueKeyValuesLists valuesLists, const ref SummarizerPrintOptions printOptions)
         {
-            return valuesLists.textValues(fieldIndex).join(printOptions.valuesDelimiter);
+            return ((_count >= 2.0) ? (_m2 / (_count - 1.0)) : double.nan)
+                .to!string;
         }
     }
 }
 
-unittest // ValuesOperator
+unittest // VarianceOperator
 {
-    auto col1File = [["a"], [""], ["b"], ["cd"], ["e"]];
-    auto col2File = [["", "50"], ["", "51"], ["xyz", "52"]];
-    auto col3File = [["z", "a", "-"], ["y", "ab", "--"], ["w", "ba", "---"]];
+    auto col1File = [["5"], ["10"], ["15"]];
+    auto col2File = [["-5", "-5"], ["-10", "0"], ["-15", "5"]];
+    auto col3File = [["1", "2", "100"], ["2", "3", "100"], ["3", "4", "103"]];
 
-    testSingleFieldOperator!ValuesOperator(col1File, 0, "values", ["", "a", "a|", "a||b", "a||b|cd", "a||b|cd|e"]);
-    testSingleFieldOperator!ValuesOperator(col2File, 0, "values", ["", "", "|", "||xyz"]);
-    testSingleFieldOperator!ValuesOperator(col2File, 1, "values", ["", "50", "50|51", "50|51|52"]);
-    testSingleFieldOperator!ValuesOperator(col3File, 0, "values", ["", "z", "z|y", "z|y|w"]);
-    testSingleFieldOperator!ValuesOperator(col3File, 1, "values", ["", "a", "a|ab", "a|ab|ba"]);
-    testSingleFieldOperator!ValuesOperator(col3File, 2, "values", ["", "-", "-|--", "-|--|---"]);
+    testSingleFieldOperator!VarianceOperator(col1File, 0, "var", ["nan", "nan", "12.5", "25"]);
+    testSingleFieldOperator!VarianceOperator(col2File, 0, "var", ["nan", "nan", "12.5", "25"]);
+    testSingleFieldOperator!VarianceOperator(col2File, 1, "var", ["nan", "nan", "12.5", "25"]);
+    testSingleFieldOperator!VarianceOperator(col3File, 0, "var", ["nan", "nan", "0.5", "1"]);
+    testSingleFieldOperator!VarianceOperator(col3File, 1, "var", ["nan", "nan", "0.5", "1"]);
+    testSingleFieldOperator!VarianceOperator(col3File, 2, "var", ["nan", "nan", "0", "3"]);
+}
+
+class StDevOperator : SingleFieldOperator
+{
+    this(size_t fieldIndex)
+    {
+        super("stdev", fieldIndex);
+    }
+    
+    final override SingleFieldCalculator makeCalculator()
+    {
+        return new StDevCalculator(fieldIndex);
+    }
+
+    static class StDevCalculator : SingleFieldCalculator
+    {
+        private double _count = 0.0;
+        private double _mean = 0.0;
+        private double _m2 = 0.0;     // Sum of squares of differences from current mean
+
+        this(size_t fieldIndex)
+        {
+            super(fieldIndex);
+        }
+
+        final override void processNextField(const char[] nextField)
+        {
+            _count += 1.0;
+            double fieldValue = nextField.to!double;
+            double delta = fieldValue - _mean;
+            _mean += delta / _count;
+            _m2 += delta * (fieldValue - _mean);
+        }
+        
+        final string calculate(UniqueKeyValuesLists valuesLists, const ref SummarizerPrintOptions printOptions)
+        {
+            import std.math : sqrt;
+            return ((_count >= 2.0) ? (_m2 / (_count - 1.0)).sqrt : double.nan)
+                .to!string;
+        }
+    }
+}
+
+/* StDevOperator unit tests - These would be improved with arbitrary precision output
+ * and a tolerance option.
+ */
+unittest
+{
+    auto col1File = [["1"], ["4"], ["7"]];
+    auto col2File = [["3", "3"], ["3", "9"], ["7", "15"]];
+    auto col3File = [["11", "10", "10"], ["24", "22", "25"], ["37", "34", "40"]];
+
+    testSingleFieldOperator!StDevOperator(col1File, 0, "stdev", ["nan", "nan", "2.12132", "3"]);
+    testSingleFieldOperator!StDevOperator(col2File, 0, "stdev", ["nan", "nan", "0", "2.3094"]);
+    testSingleFieldOperator!StDevOperator(col2File, 1, "stdev", ["nan", "nan", "4.24264", "6"]);
+    testSingleFieldOperator!StDevOperator(col3File, 0, "stdev", ["nan", "nan", "9.19239", "13"]);
+    testSingleFieldOperator!StDevOperator(col3File, 1, "stdev", ["nan", "nan", "8.48528", "12"]);
+    testSingleFieldOperator!StDevOperator(col3File, 2, "stdev", ["nan", "nan", "10.6066", "15"]);
+}
+
+/* UniqueCountOperator generates the number of unique values. Unique values are 
+ * based on exact text match calculation, not a numeric comparison.
+ *
+ * All the unique field values are stored in memory as part of this calculation.
+ */
+class UniqueCountOperator : SingleFieldOperator
+{
+    this(size_t fieldIndex)
+    {
+        super("unique_count", fieldIndex);
+    }
+    
+    final override SingleFieldCalculator makeCalculator()
+    {
+        return new UniqueCountCalculator(fieldIndex);
+    }
+
+    static class UniqueCountCalculator : SingleFieldCalculator
+    {
+        private bool[string] _values;
+        
+        this(size_t fieldIndex)
+        {
+            super(fieldIndex);
+        }
+
+        final override void processNextField(const char[] nextField)
+        {
+            _values[nextField.to!string] = true;
+        }
+        
+        final string calculate(UniqueKeyValuesLists valuesLists, const ref SummarizerPrintOptions printOptions)
+        {
+            return _values.length.to!string;
+        }
+    }
+}
+
+unittest // UniqueCount
+{
+    auto col1File = [["a"], ["b"], ["c"], ["c"], ["b"], ["b"], ["a"], ["ab"]];
+    auto col2File = [["abc", "pqr"], ["def", "pqr"], ["def", "xyz"]];
+    auto col3File = [["1.0", "1", "a"], ["2.0", "a", "1"], ["2", "a", "1.0"]];
+
+    testSingleFieldOperator!UniqueCountOperator(col1File, 0, "unique_count", ["0", "1", "2", "3", "3", "3", "3", "3", "4"]);
+    testSingleFieldOperator!UniqueCountOperator(col2File, 0, "unique_count", ["0", "1", "2", "2"]);
+    testSingleFieldOperator!UniqueCountOperator(col2File, 1, "unique_count", ["0", "1", "1", "2"]);
+    testSingleFieldOperator!UniqueCountOperator(col3File, 0, "unique_count", ["0", "1", "2", "3"]);
+    testSingleFieldOperator!UniqueCountOperator(col3File, 1, "unique_count", ["0", "1", "2", "2"]);
+    testSingleFieldOperator!UniqueCountOperator(col3File, 2, "unique_count", ["0", "1", "2", "3"]);
 }
 
 /* ModeOperator outputs the most frequent value seen. In the event of a tie, the
@@ -2383,54 +2437,53 @@ unittest // ModeOperator
     testSingleFieldOperator!ModeOperator(col3File, 2, "mode", ["", "a", "a", "a"]);
 }
 
-/* UniqueCountOperator generates the number of unique values. Unique values are 
- * based on exact text match calculation, not a numeric comparison.
+/* ValuesOperator outputs each value delimited by an alternate delimiter character.
  *
- * All the unique field values are stored in memory as part of this calculation.
+ * All the field values are stored in memory as part of this calculation. This is
+ * handled by unique key value lists.
  */
-class UniqueCountOperator : SingleFieldOperator
+
+class ValuesOperator : SingleFieldOperator
 {
     this(size_t fieldIndex)
     {
-        super("unique_count", fieldIndex);
-    }
-    
-    final override SingleFieldCalculator makeCalculator()
-    {
-        return new UniqueCountCalculator(fieldIndex);
+        super("values", fieldIndex);
+        setSaveFieldValuesText();
     }
 
-    static class UniqueCountCalculator : SingleFieldCalculator
+    final override SingleFieldCalculator makeCalculator()
     {
-        private bool[string] _values;
-        
+        return new ValuesCalculator(fieldIndex);
+    }
+
+    static class ValuesCalculator : SingleFieldCalculator
+    {
         this(size_t fieldIndex)
         {
             super(fieldIndex);
         }
 
+        /* Work is done by saving the field values. */
         final override void processNextField(const char[] nextField)
-        {
-            _values[nextField.to!string] = true;
-        }
+        { }
         
         final string calculate(UniqueKeyValuesLists valuesLists, const ref SummarizerPrintOptions printOptions)
         {
-            return _values.length.to!string;
+            return valuesLists.textValues(fieldIndex).join(printOptions.valuesDelimiter);
         }
     }
 }
 
-unittest // UniqueCount
+unittest // ValuesOperator
 {
-    auto col1File = [["a"], ["b"], ["c"], ["c"], ["b"], ["b"], ["a"], ["ab"]];
-    auto col2File = [["abc", "pqr"], ["def", "pqr"], ["def", "xyz"]];
-    auto col3File = [["1.0", "1", "a"], ["2.0", "a", "1"], ["2", "a", "1.0"]];
+    auto col1File = [["a"], [""], ["b"], ["cd"], ["e"]];
+    auto col2File = [["", "50"], ["", "51"], ["xyz", "52"]];
+    auto col3File = [["z", "a", "-"], ["y", "ab", "--"], ["w", "ba", "---"]];
 
-    testSingleFieldOperator!UniqueCountOperator(col1File, 0, "unique_count", ["0", "1", "2", "3", "3", "3", "3", "3", "4"]);
-    testSingleFieldOperator!UniqueCountOperator(col2File, 0, "unique_count", ["0", "1", "2", "2"]);
-    testSingleFieldOperator!UniqueCountOperator(col2File, 1, "unique_count", ["0", "1", "1", "2"]);
-    testSingleFieldOperator!UniqueCountOperator(col3File, 0, "unique_count", ["0", "1", "2", "3"]);
-    testSingleFieldOperator!UniqueCountOperator(col3File, 1, "unique_count", ["0", "1", "2", "2"]);
-    testSingleFieldOperator!UniqueCountOperator(col3File, 2, "unique_count", ["0", "1", "2", "3"]);
+    testSingleFieldOperator!ValuesOperator(col1File, 0, "values", ["", "a", "a|", "a||b", "a||b|cd", "a||b|cd|e"]);
+    testSingleFieldOperator!ValuesOperator(col2File, 0, "values", ["", "", "|", "||xyz"]);
+    testSingleFieldOperator!ValuesOperator(col2File, 1, "values", ["", "50", "50|51", "50|51|52"]);
+    testSingleFieldOperator!ValuesOperator(col3File, 0, "values", ["", "z", "z|y", "z|y|w"]);
+    testSingleFieldOperator!ValuesOperator(col3File, 1, "values", ["", "a", "a|ab", "a|ab|ba"]);
+    testSingleFieldOperator!ValuesOperator(col3File, 2, "values", ["", "-", "-|--", "-|--|---"]);
 }
