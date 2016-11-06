@@ -1629,13 +1629,13 @@ class CountOperator : ZeroFieldOperator
 
 unittest // CountOperator
 {
-    auto a1colFile = [["10"], ["9.5"], ["11"]];
-    auto a2colFile = [["20", "-30"], ["21", "-29"], ["22", "-31"]];
-    auto a3colFile = [["9009", "9", "-4.5"], ["199", "0", "-0.5"], ["3003", "0.2", "12"]];
+    auto col1File = [["10"], ["9.5"], ["11"]];
+    auto col2File = [["20", "-30"], ["21", "-29"], ["22", "-31"]];
+    auto col3File = [["9009", "9", "-4.5"], ["199", "0", "-0.5"], ["3003", "0.2", "12"]];
 
-    testZeroFieldOperator!CountOperator(a1colFile, "count", ["1", "2", "3"]);
-    testZeroFieldOperator!CountOperator(a2colFile, "count", ["1", "2", "3"]);
-    testZeroFieldOperator!CountOperator(a3colFile, "count", ["1", "2", "3"]);
+    testZeroFieldOperator!CountOperator(col1File, "count", ["1", "2", "3"]);
+    testZeroFieldOperator!CountOperator(col2File, "count", ["1", "2", "3"]);
+    testZeroFieldOperator!CountOperator(col3File, "count", ["1", "2", "3"]);
 }
 
 /** RetainOperator retains the first occurrence of a field, without changing the header.
@@ -1688,16 +1688,16 @@ class RetainOperator : SingleFieldOperator
 
 unittest // RetainOperator
 {
-    auto a1colFile = [["r1c1"], ["r2c1"], ["r3c1"]];
-    auto a2colFile = [["r1c1", "r1c2"], ["r2c1", "r2c2"], ["r3c1", "r3c2"]];
-    auto a3colFile = [["r1c1", "r1c2", "r1c3"], ["r2c1", "r2c2", "r2c3"], ["r3c1", "r3c2", "r3c3"]];
+    auto col1File = [["r1c1"], ["r2c1"], ["r3c1"]];
+    auto col2File = [["r1c1", "r1c2"], ["r2c1", "r2c2"], ["r3c1", "r3c2"]];
+    auto col3File = [["r1c1", "r1c2", "r1c3"], ["r2c1", "r2c2", "r2c3"], ["r3c1", "r3c2", "r3c3"]];
 
-    testSingleFieldOperator!RetainOperator(a1colFile, 0, "", ["r1c1", "r1c1", "r1c1"]);
-    testSingleFieldOperator!RetainOperator(a2colFile, 0, "", ["r1c1", "r1c1", "r1c1"]);
-    testSingleFieldOperator!RetainOperator(a2colFile, 1, "", ["r1c2", "r1c2", "r1c2"]);
-    testSingleFieldOperator!RetainOperator(a3colFile, 0, "", ["r1c1", "r1c1", "r1c1"]);
-    testSingleFieldOperator!RetainOperator(a3colFile, 1, "", ["r1c2", "r1c2", "r1c2"]);
-    testSingleFieldOperator!RetainOperator(a3colFile, 2, "", ["r1c3", "r1c3", "r1c3"]);
+    testSingleFieldOperator!RetainOperator(col1File, 0, "", ["r1c1", "r1c1", "r1c1"]);
+    testSingleFieldOperator!RetainOperator(col2File, 0, "", ["r1c1", "r1c1", "r1c1"]);
+    testSingleFieldOperator!RetainOperator(col2File, 1, "", ["r1c2", "r1c2", "r1c2"]);
+    testSingleFieldOperator!RetainOperator(col3File, 0, "", ["r1c1", "r1c1", "r1c1"]);
+    testSingleFieldOperator!RetainOperator(col3File, 1, "", ["r1c2", "r1c2", "r1c2"]);
+    testSingleFieldOperator!RetainOperator(col3File, 2, "", ["r1c3", "r1c3", "r1c3"]);
 }
 
 /** FirstOperator outputs the first value found for the field.
@@ -1742,16 +1742,16 @@ class FirstOperator : SingleFieldOperator
 
 unittest // FirstOperator
 {
-    auto a1colFile = [["r1c1"], ["r2c1"], ["r3c1"]];
-    auto a2colFile = [["r1c1", "r1c2"], ["r2c1", "r2c2"], ["r3c1", "r3c2"]];
-    auto a3colFile = [["r1c1", "r1c2", "r1c3"], ["r2c1", "r2c2", "r2c3"], ["r3c1", "r3c2", "r3c3"]];
+    auto col1File = [["r1c1"], ["r2c1"], ["r3c1"]];
+    auto col2File = [["r1c1", "r1c2"], ["r2c1", "r2c2"], ["r3c1", "r3c2"]];
+    auto col3File = [["r1c1", "r1c2", "r1c3"], ["r2c1", "r2c2", "r2c3"], ["r3c1", "r3c2", "r3c3"]];
 
-    testSingleFieldOperator!FirstOperator(a1colFile, 0, "first", ["r1c1", "r1c1", "r1c1"]);
-    testSingleFieldOperator!FirstOperator(a2colFile, 0, "first", ["r1c1", "r1c1", "r1c1"]);
-    testSingleFieldOperator!FirstOperator(a2colFile, 1, "first", ["r1c2", "r1c2", "r1c2"]);
-    testSingleFieldOperator!FirstOperator(a3colFile, 0, "first", ["r1c1", "r1c1", "r1c1"]);
-    testSingleFieldOperator!FirstOperator(a3colFile, 1, "first", ["r1c2", "r1c2", "r1c2"]);
-    testSingleFieldOperator!FirstOperator(a3colFile, 2, "first", ["r1c3", "r1c3", "r1c3"]);
+    testSingleFieldOperator!FirstOperator(col1File, 0, "first", ["r1c1", "r1c1", "r1c1"]);
+    testSingleFieldOperator!FirstOperator(col2File, 0, "first", ["r1c1", "r1c1", "r1c1"]);
+    testSingleFieldOperator!FirstOperator(col2File, 1, "first", ["r1c2", "r1c2", "r1c2"]);
+    testSingleFieldOperator!FirstOperator(col3File, 0, "first", ["r1c1", "r1c1", "r1c1"]);
+    testSingleFieldOperator!FirstOperator(col3File, 1, "first", ["r1c2", "r1c2", "r1c2"]);
+    testSingleFieldOperator!FirstOperator(col3File, 2, "first", ["r1c3", "r1c3", "r1c3"]);
 }
 
 /** LastOperator outputs the last value found for the field.
@@ -1791,16 +1791,16 @@ class LastOperator : SingleFieldOperator
 
 unittest // LastOperator
 {
-    auto a1colFile = [["r1c1"], ["r2c1"], ["r3c1"]];
-    auto a2colFile = [["r1c1", "r1c2"], ["r2c1", "r2c2"], ["r3c1", "r3c2"]];
-    auto a3colFile = [["r1c1", "r1c2", "r1c3"], ["r2c1", "r2c2", "r2c3"], ["r3c1", "r3c2", "r3c3"]];
+    auto col1File = [["r1c1"], ["r2c1"], ["r3c1"]];
+    auto col2File = [["r1c1", "r1c2"], ["r2c1", "r2c2"], ["r3c1", "r3c2"]];
+    auto col3File = [["r1c1", "r1c2", "r1c3"], ["r2c1", "r2c2", "r2c3"], ["r3c1", "r3c2", "r3c3"]];
 
-    testSingleFieldOperator!LastOperator(a1colFile, 0, "last", ["r1c1", "r2c1", "r3c1"]);
-    testSingleFieldOperator!LastOperator(a2colFile, 0, "last", ["r1c1", "r2c1", "r3c1"]);
-    testSingleFieldOperator!LastOperator(a2colFile, 1, "last", ["r1c2", "r2c2", "r3c2"]);
-    testSingleFieldOperator!LastOperator(a3colFile, 0, "last", ["r1c1", "r2c1", "r3c1"]);
-    testSingleFieldOperator!LastOperator(a3colFile, 1, "last", ["r1c2", "r2c2", "r3c2"]);
-    testSingleFieldOperator!LastOperator(a3colFile, 2, "last", ["r1c3", "r2c3", "r3c3"]);
+    testSingleFieldOperator!LastOperator(col1File, 0, "last", ["r1c1", "r2c1", "r3c1"]);
+    testSingleFieldOperator!LastOperator(col2File, 0, "last", ["r1c1", "r2c1", "r3c1"]);
+    testSingleFieldOperator!LastOperator(col2File, 1, "last", ["r1c2", "r2c2", "r3c2"]);
+    testSingleFieldOperator!LastOperator(col3File, 0, "last", ["r1c1", "r2c1", "r3c1"]);
+    testSingleFieldOperator!LastOperator(col3File, 1, "last", ["r1c2", "r2c2", "r3c2"]);
+    testSingleFieldOperator!LastOperator(col3File, 2, "last", ["r1c3", "r2c3", "r3c3"]);
 }
 
 /* MinOperator output the minimum value for the field. This is a numeric operator.
@@ -1850,16 +1850,16 @@ class MinOperator : SingleFieldOperator
         
 unittest // MinOperator
 {
-    auto a1colFile = [["10"], ["9.5"], ["11"]];
-    auto a2colFile = [["20", "-30"], ["21", "-29"], ["22", "-31"]];
-    auto a3colFile = [["9009", "9", "-4.5"], ["199", "0", "-0.5"], ["3003", "0.2", "12"]];
+    auto col1File = [["10"], ["9.5"], ["11"]];
+    auto col2File = [["20", "-30"], ["21", "-29"], ["22", "-31"]];
+    auto col3File = [["9009", "9", "-4.5"], ["199", "0", "-0.5"], ["3003", "0.2", "12"]];
 
-    testSingleFieldOperator!MinOperator(a1colFile, 0, "min", ["10", "9.5", "9.5"]);
-    testSingleFieldOperator!MinOperator(a2colFile, 0, "min", ["20", "20", "20"]);
-    testSingleFieldOperator!MinOperator(a2colFile, 1, "min", ["-30", "-30", "-31"]);
-    testSingleFieldOperator!MinOperator(a3colFile, 0, "min", ["9009", "199", "199"]);
-    testSingleFieldOperator!MinOperator(a3colFile, 1, "min", ["9", "0", "0"]);
-    testSingleFieldOperator!MinOperator(a3colFile, 2, "min", ["-4.5", "-4.5", "-4.5"]);
+    testSingleFieldOperator!MinOperator(col1File, 0, "min", ["10", "9.5", "9.5"]);
+    testSingleFieldOperator!MinOperator(col2File, 0, "min", ["20", "20", "20"]);
+    testSingleFieldOperator!MinOperator(col2File, 1, "min", ["-30", "-30", "-31"]);
+    testSingleFieldOperator!MinOperator(col3File, 0, "min", ["9009", "199", "199"]);
+    testSingleFieldOperator!MinOperator(col3File, 1, "min", ["9", "0", "0"]);
+    testSingleFieldOperator!MinOperator(col3File, 2, "min", ["-4.5", "-4.5", "-4.5"]);
 }
 
 /* MaxOperator output the maximum value for the field. This is a numeric operator.
@@ -1909,16 +1909,16 @@ class MaxOperator : SingleFieldOperator
         
 unittest // MaxOperator
 {
-    auto a1colFile = [["10"], ["9.5"], ["11"]];
-    auto a2colFile = [["20", "-30"], ["21", "-29"], ["22", "-31"]];
-    auto a3colFile = [["9009", "9", "-4.5"], ["199", "0", "-0.5"], ["3003", "0.2", "12"]];
+    auto col1File = [["10"], ["9.5"], ["11"]];
+    auto col2File = [["20", "-30"], ["21", "-29"], ["22", "-31"]];
+    auto col3File = [["9009", "9", "-4.5"], ["199", "0", "-0.5"], ["3003", "0.2", "12"]];
 
-    testSingleFieldOperator!MaxOperator(a1colFile, 0, "max", ["10", "10", "11"]);
-    testSingleFieldOperator!MaxOperator(a2colFile, 0, "max", ["20", "21", "22"]);
-    testSingleFieldOperator!MaxOperator(a2colFile, 1, "max", ["-30", "-29", "-29"]);
-    testSingleFieldOperator!MaxOperator(a3colFile, 0, "max", ["9009", "9009", "9009"]);
-    testSingleFieldOperator!MaxOperator(a3colFile, 1, "max", ["9", "9", "9"]);
-    testSingleFieldOperator!MaxOperator(a3colFile, 2, "max", ["-4.5", "-0.5", "12"]);
+    testSingleFieldOperator!MaxOperator(col1File, 0, "max", ["10", "10", "11"]);
+    testSingleFieldOperator!MaxOperator(col2File, 0, "max", ["20", "21", "22"]);
+    testSingleFieldOperator!MaxOperator(col2File, 1, "max", ["-30", "-29", "-29"]);
+    testSingleFieldOperator!MaxOperator(col3File, 0, "max", ["9009", "9009", "9009"]);
+    testSingleFieldOperator!MaxOperator(col3File, 1, "max", ["9", "9", "9"]);
+    testSingleFieldOperator!MaxOperator(col3File, 2, "max", ["-4.5", "-0.5", "12"]);
 }
 
 /* RangeOperator outputs the difference between the minimum and maximum values. If there
@@ -1975,16 +1975,16 @@ class RangeOperator : SingleFieldOperator
 
 unittest // RangeOperator
 {
-    auto a1colFile = [["10"], ["9.5"], ["11"]];
-    auto a2colFile = [["20", "-30"], ["21", "-29"], ["22", "-31"]];
-    auto a3colFile = [["9009", "9", "-4.5"], ["199", "0", "-0.5"], ["3003", "0.2", "12"]];
+    auto col1File = [["10"], ["9.5"], ["11"]];
+    auto col2File = [["20", "-30"], ["21", "-29"], ["22", "-31"]];
+    auto col3File = [["9009", "9", "-4.5"], ["199", "0", "-0.5"], ["3003", "0.2", "12"]];
 
-    testSingleFieldOperator!RangeOperator(a1colFile, 0, "range", ["0", "0.5", "1.5"]);
-    testSingleFieldOperator!RangeOperator(a2colFile, 0, "range", ["0", "1", "2"]);
-    testSingleFieldOperator!RangeOperator(a2colFile, 1, "range", ["0", "1", "2"]);
-    testSingleFieldOperator!RangeOperator(a3colFile, 0, "range", ["0", "8810", "8810"]);
-    testSingleFieldOperator!RangeOperator(a3colFile, 1, "range", ["0", "9", "9"]);
-    testSingleFieldOperator!RangeOperator(a3colFile, 2, "range", ["0", "4", "16.5"]);
+    testSingleFieldOperator!RangeOperator(col1File, 0, "range", ["0", "0.5", "1.5"]);
+    testSingleFieldOperator!RangeOperator(col2File, 0, "range", ["0", "1", "2"]);
+    testSingleFieldOperator!RangeOperator(col2File, 1, "range", ["0", "1", "2"]);
+    testSingleFieldOperator!RangeOperator(col3File, 0, "range", ["0", "8810", "8810"]);
+    testSingleFieldOperator!RangeOperator(col3File, 1, "range", ["0", "9", "9"]);
+    testSingleFieldOperator!RangeOperator(col3File, 2, "range", ["0", "4", "16.5"]);
 }
 
 /* SumOperator produces the sum of all the values. This is a numeric operator.
@@ -2024,16 +2024,16 @@ class SumOperator : SingleFieldOperator
 
 unittest // SumOperator
 {
-    auto a1colFile = [["10"], ["9.5"], ["11"]];
-    auto a2colFile = [["20", "-30"], ["21", "-29"], ["22", "-31"]];
-    auto a3colFile = [["9009", "9", "-4.5"], ["199", "0", "-0.5"], ["3003", "0.2", "12"]];
+    auto col1File = [["10"], ["9.5"], ["11"]];
+    auto col2File = [["20", "-30"], ["21", "-29"], ["22", "-31"]];
+    auto col3File = [["9009", "9", "-4.5"], ["199", "0", "-0.5"], ["3003", "0.2", "12"]];
 
-    testSingleFieldOperator!SumOperator(a1colFile, 0, "sum", ["10", "19.5", "30.5"]);
-    testSingleFieldOperator!SumOperator(a2colFile, 0, "sum", ["20", "41", "63"]);
-    testSingleFieldOperator!SumOperator(a2colFile, 1, "sum", ["-30", "-59", "-90"]);
-    testSingleFieldOperator!SumOperator(a3colFile, 0, "sum", ["9009", "9208", "12211"]);
-    testSingleFieldOperator!SumOperator(a3colFile, 1, "sum", ["9", "9", "9.2"]);
-    testSingleFieldOperator!SumOperator(a3colFile, 2, "sum", ["-4.5", "-5", "7"]);
+    testSingleFieldOperator!SumOperator(col1File, 0, "sum", ["10", "19.5", "30.5"]);
+    testSingleFieldOperator!SumOperator(col2File, 0, "sum", ["20", "41", "63"]);
+    testSingleFieldOperator!SumOperator(col2File, 1, "sum", ["-30", "-59", "-90"]);
+    testSingleFieldOperator!SumOperator(col3File, 0, "sum", ["9009", "9208", "12211"]);
+    testSingleFieldOperator!SumOperator(col3File, 1, "sum", ["9", "9", "9.2"]);
+    testSingleFieldOperator!SumOperator(col3File, 2, "sum", ["-4.5", "-5", "7"]);
 }
 
 /* MeanOperator produces the mean (average) of all the values. This is a numeric operator.
@@ -2076,16 +2076,16 @@ class MeanOperator : SingleFieldOperator
 
 unittest // MeanOperator
 {
-    auto a1colFile = [["10"], ["9.5"], ["7.5"]];
-    auto a2colFile = [["20", "-30"], ["21", "-29"], ["22", "-31"]];
-    auto a3colFile = [["9009", "9", "-4.5"], ["9", "0", "-1.5"], ["4509", "-3", "12"]];
+    auto col1File = [["10"], ["9.5"], ["7.5"]];
+    auto col2File = [["20", "-30"], ["21", "-29"], ["22", "-31"]];
+    auto col3File = [["9009", "9", "-4.5"], ["9", "0", "-1.5"], ["4509", "-3", "12"]];
 
-    testSingleFieldOperator!MeanOperator(a1colFile, 0, "mean", ["10", "9.75", "9"]);
-    testSingleFieldOperator!MeanOperator(a2colFile, 0, "mean", ["20", "20.5", "21"]);
-    testSingleFieldOperator!MeanOperator(a2colFile, 1, "mean", ["-30", "-29.5", "-30"]);
-    testSingleFieldOperator!MeanOperator(a3colFile, 0, "mean", ["9009", "4509", "4509"]);
-    testSingleFieldOperator!MeanOperator(a3colFile, 1, "mean", ["9", "4.5", "2"]);
-    testSingleFieldOperator!MeanOperator(a3colFile, 2, "mean", ["-4.5", "-3", "2"]);
+    testSingleFieldOperator!MeanOperator(col1File, 0, "mean", ["10", "9.75", "9"]);
+    testSingleFieldOperator!MeanOperator(col2File, 0, "mean", ["20", "20.5", "21"]);
+    testSingleFieldOperator!MeanOperator(col2File, 1, "mean", ["-30", "-29.5", "-30"]);
+    testSingleFieldOperator!MeanOperator(col3File, 0, "mean", ["9009", "4509", "4509"]);
+    testSingleFieldOperator!MeanOperator(col3File, 1, "mean", ["9", "4.5", "2"]);
+    testSingleFieldOperator!MeanOperator(col3File, 2, "mean", ["-4.5", "-3", "2"]);
 }
 
 class VarianceOperator : SingleFieldOperator
@@ -2130,16 +2130,16 @@ class VarianceOperator : SingleFieldOperator
 
 unittest // VarianceOperator
 {
-    auto a1colFile = [["5"], ["10"], ["15"]];
-    auto a2colFile = [["-5", "-5"], ["-10", "0"], ["-15", "5"]];
-    auto a3colFile = [["1", "2", "100"], ["2", "3", "100"], ["3", "4", "103"]];
+    auto col1File = [["5"], ["10"], ["15"]];
+    auto col2File = [["-5", "-5"], ["-10", "0"], ["-15", "5"]];
+    auto col3File = [["1", "2", "100"], ["2", "3", "100"], ["3", "4", "103"]];
 
-    testSingleFieldOperator!VarianceOperator(a1colFile, 0, "var", ["nan", "12.5", "25"]);
-    testSingleFieldOperator!VarianceOperator(a2colFile, 0, "var", ["nan", "12.5", "25"]);
-    testSingleFieldOperator!VarianceOperator(a2colFile, 1, "var", ["nan", "12.5", "25"]);
-    testSingleFieldOperator!VarianceOperator(a3colFile, 0, "var", ["nan", "0.5", "1"]);
-    testSingleFieldOperator!VarianceOperator(a3colFile, 1, "var", ["nan", "0.5", "1"]);
-    testSingleFieldOperator!VarianceOperator(a3colFile, 2, "var", ["nan", "0", "3"]);
+    testSingleFieldOperator!VarianceOperator(col1File, 0, "var", ["nan", "12.5", "25"]);
+    testSingleFieldOperator!VarianceOperator(col2File, 0, "var", ["nan", "12.5", "25"]);
+    testSingleFieldOperator!VarianceOperator(col2File, 1, "var", ["nan", "12.5", "25"]);
+    testSingleFieldOperator!VarianceOperator(col3File, 0, "var", ["nan", "0.5", "1"]);
+    testSingleFieldOperator!VarianceOperator(col3File, 1, "var", ["nan", "0.5", "1"]);
+    testSingleFieldOperator!VarianceOperator(col3File, 2, "var", ["nan", "0", "3"]);
 }
 
 /* MedianOperator produces the median of all the values. This is a numeric operator.
@@ -2180,16 +2180,16 @@ class MedianOperator : SingleFieldOperator
 
 unittest // MedianOperator
 {
-    auto a1colFile = [["10"], ["9.5"], ["7.5"]];
-    auto a2colFile = [["20", "-30"], ["21", "-29"], ["22", "-31"]];
-    auto a3colFile = [["9009", "9", "-4.5"], ["9", "0", "-1.5"], ["4509", "-3", "12"]];
+    auto col1File = [["10"], ["9.5"], ["7.5"]];
+    auto col2File = [["20", "-30"], ["21", "-29"], ["22", "-31"]];
+    auto col3File = [["9009", "9", "-4.5"], ["9", "0", "-1.5"], ["4509", "-3", "12"]];
 
-    testSingleFieldOperator!MedianOperator(a1colFile, 0, "median", ["10", "9.75", "9.5"]);
-    testSingleFieldOperator!MedianOperator(a2colFile, 0, "median", ["20", "20.5", "21"]);
-    testSingleFieldOperator!MedianOperator(a2colFile, 1, "median", ["-30", "-29.5", "-30"]);
-    testSingleFieldOperator!MedianOperator(a3colFile, 0, "median", ["9009", "4509", "4509"]);
-    testSingleFieldOperator!MedianOperator(a3colFile, 1, "median", ["9", "4.5", "0"]);
-    testSingleFieldOperator!MedianOperator(a3colFile, 2, "median", ["-4.5", "-3", "-1.5"]);
+    testSingleFieldOperator!MedianOperator(col1File, 0, "median", ["10", "9.75", "9.5"]);
+    testSingleFieldOperator!MedianOperator(col2File, 0, "median", ["20", "20.5", "21"]);
+    testSingleFieldOperator!MedianOperator(col2File, 1, "median", ["-30", "-29.5", "-30"]);
+    testSingleFieldOperator!MedianOperator(col3File, 0, "median", ["9009", "4509", "4509"]);
+    testSingleFieldOperator!MedianOperator(col3File, 1, "median", ["9", "4.5", "0"]);
+    testSingleFieldOperator!MedianOperator(col3File, 2, "median", ["-4.5", "-3", "-1.5"]);
 }
 
 /* MadOperator produces the median absolute deviation from the median. This is a numeric
@@ -2239,16 +2239,16 @@ class MadOperator : SingleFieldOperator
 
 unittest // MadOperator
 {
-    auto a1colFile = [["10"], ["15"], ["20"], ["25"], ["30"]];
-    auto a2colFile = [["2", "50"], ["2", "51"], ["2", "52"]];
-    auto a3colFile = [["16", "8", "-4"], ["8", "8", "-2"], ["8", "16", "0"]];
+    auto col1File = [["10"], ["15"], ["20"], ["25"], ["30"]];
+    auto col2File = [["2", "50"], ["2", "51"], ["2", "52"]];
+    auto col3File = [["16", "8", "-4"], ["8", "8", "-2"], ["8", "16", "0"]];
 
-    testSingleFieldOperator!MadOperator(a1colFile, 0, "mad", ["0", "2.5", "5", "5", "5"]);
-    testSingleFieldOperator!MadOperator(a2colFile, 0, "mad", ["0", "0", "0"]);
-    testSingleFieldOperator!MadOperator(a2colFile, 1, "mad", ["0", "0.5", "1"]);
-    testSingleFieldOperator!MadOperator(a3colFile, 0, "mad", ["0", "4", "0"]);
-    testSingleFieldOperator!MadOperator(a3colFile, 1, "mad", ["0", "0", "0"]);
-    testSingleFieldOperator!MadOperator(a3colFile, 2, "mad", ["0", "1", "2"]);
+    testSingleFieldOperator!MadOperator(col1File, 0, "mad", ["0", "2.5", "5", "5", "5"]);
+    testSingleFieldOperator!MadOperator(col2File, 0, "mad", ["0", "0", "0"]);
+    testSingleFieldOperator!MadOperator(col2File, 1, "mad", ["0", "0.5", "1"]);
+    testSingleFieldOperator!MadOperator(col3File, 0, "mad", ["0", "4", "0"]);
+    testSingleFieldOperator!MadOperator(col3File, 1, "mad", ["0", "0", "0"]);
+    testSingleFieldOperator!MadOperator(col3File, 2, "mad", ["0", "1", "2"]);
 }
 
 /* ValuesOperator outputs each value delimited by an alternate delimiter character.
@@ -2290,16 +2290,16 @@ class ValuesOperator : SingleFieldOperator
 
 unittest // ValuesOperator
 {
-    auto a1colFile = [["a"], [""], ["b"], ["cd"], ["e"]];
-    auto a2colFile = [["", "50"], ["", "51"], ["xyz", "52"]];
-    auto a3colFile = [["z", "a", "-"], ["y", "ab", "--"], ["w", "ba", "---"]];
+    auto col1File = [["a"], [""], ["b"], ["cd"], ["e"]];
+    auto col2File = [["", "50"], ["", "51"], ["xyz", "52"]];
+    auto col3File = [["z", "a", "-"], ["y", "ab", "--"], ["w", "ba", "---"]];
 
-    testSingleFieldOperator!ValuesOperator(a1colFile, 0, "values", ["a", "a|", "a||b", "a||b|cd", "a||b|cd|e"]);
-    testSingleFieldOperator!ValuesOperator(a2colFile, 0, "values", ["", "|", "||xyz"]);
-    testSingleFieldOperator!ValuesOperator(a2colFile, 1, "values", ["50", "50|51", "50|51|52"]);
-    testSingleFieldOperator!ValuesOperator(a3colFile, 0, "values", ["z", "z|y", "z|y|w"]);
-    testSingleFieldOperator!ValuesOperator(a3colFile, 1, "values", ["a", "a|ab", "a|ab|ba"]);
-    testSingleFieldOperator!ValuesOperator(a3colFile, 2, "values", ["-", "-|--", "-|--|---"]);
+    testSingleFieldOperator!ValuesOperator(col1File, 0, "values", ["a", "a|", "a||b", "a||b|cd", "a||b|cd|e"]);
+    testSingleFieldOperator!ValuesOperator(col2File, 0, "values", ["", "|", "||xyz"]);
+    testSingleFieldOperator!ValuesOperator(col2File, 1, "values", ["50", "50|51", "50|51|52"]);
+    testSingleFieldOperator!ValuesOperator(col3File, 0, "values", ["z", "z|y", "z|y|w"]);
+    testSingleFieldOperator!ValuesOperator(col3File, 1, "values", ["a", "a|ab", "a|ab|ba"]);
+    testSingleFieldOperator!ValuesOperator(col3File, 2, "values", ["-", "-|--", "-|--|---"]);
 }
 
 /* ModeOperator outputs the most frequent value seen. In the event of a tie, the
@@ -2371,16 +2371,16 @@ class ModeOperator : SingleFieldOperator
 
 unittest // ModeOperator
 {
-    auto a1colFile = [["a"], ["b"], ["c"], ["c"], ["b"], ["b"], ["a"]];
-    auto a2colFile = [["abc", "pqr"], ["def", "pqr"], ["def", "xyz"]];
-    auto a3colFile = [["1.0", "1", "a"], ["2.0", "a", "1"], ["2", "a", "1.0"]];
+    auto col1File = [["a"], ["b"], ["c"], ["c"], ["b"], ["b"], ["a"]];
+    auto col2File = [["abc", "pqr"], ["def", "pqr"], ["def", "xyz"]];
+    auto col3File = [["1.0", "1", "a"], ["2.0", "a", "1"], ["2", "a", "1.0"]];
 
-    testSingleFieldOperator!ModeOperator(a1colFile, 0, "mode", ["a", "a", "a", "c", "b", "b", "b"]);
-    testSingleFieldOperator!ModeOperator(a2colFile, 0, "mode", ["abc", "abc", "def"]);
-    testSingleFieldOperator!ModeOperator(a2colFile, 1, "mode", ["pqr", "pqr", "pqr"]);
-    testSingleFieldOperator!ModeOperator(a3colFile, 0, "mode", ["1.0", "1.0", "1.0"]);
-    testSingleFieldOperator!ModeOperator(a3colFile, 1, "mode", ["1", "1", "a"]);
-    testSingleFieldOperator!ModeOperator(a3colFile, 2, "mode", ["a", "a", "a"]);
+    testSingleFieldOperator!ModeOperator(col1File, 0, "mode", ["a", "a", "a", "c", "b", "b", "b"]);
+    testSingleFieldOperator!ModeOperator(col2File, 0, "mode", ["abc", "abc", "def"]);
+    testSingleFieldOperator!ModeOperator(col2File, 1, "mode", ["pqr", "pqr", "pqr"]);
+    testSingleFieldOperator!ModeOperator(col3File, 0, "mode", ["1.0", "1.0", "1.0"]);
+    testSingleFieldOperator!ModeOperator(col3File, 1, "mode", ["1", "1", "a"]);
+    testSingleFieldOperator!ModeOperator(col3File, 2, "mode", ["a", "a", "a"]);
 }
 
 /* UniqueCountOperator generates the number of unique values. Unique values are 
@@ -2423,14 +2423,14 @@ class UniqueCountOperator : SingleFieldOperator
 
 unittest // UniqueCount
 {
-    auto a1colFile = [["a"], ["b"], ["c"], ["c"], ["b"], ["b"], ["a"], ["ab"]];
-    auto a2colFile = [["abc", "pqr"], ["def", "pqr"], ["def", "xyz"]];
-    auto a3colFile = [["1.0", "1", "a"], ["2.0", "a", "1"], ["2", "a", "1.0"]];
+    auto col1File = [["a"], ["b"], ["c"], ["c"], ["b"], ["b"], ["a"], ["ab"]];
+    auto col2File = [["abc", "pqr"], ["def", "pqr"], ["def", "xyz"]];
+    auto col3File = [["1.0", "1", "a"], ["2.0", "a", "1"], ["2", "a", "1.0"]];
 
-    testSingleFieldOperator!UniqueCountOperator(a1colFile, 0, "unique_count", ["1", "2", "3", "3", "3", "3", "3", "4"]);
-    testSingleFieldOperator!UniqueCountOperator(a2colFile, 0, "unique_count", ["1", "2", "2"]);
-    testSingleFieldOperator!UniqueCountOperator(a2colFile, 1, "unique_count", ["1", "1", "2"]);
-    testSingleFieldOperator!UniqueCountOperator(a3colFile, 0, "unique_count", ["1", "2", "3"]);
-    testSingleFieldOperator!UniqueCountOperator(a3colFile, 1, "unique_count", ["1", "2", "2"]);
-    testSingleFieldOperator!UniqueCountOperator(a3colFile, 2, "unique_count", ["1", "2", "3"]);
+    testSingleFieldOperator!UniqueCountOperator(col1File, 0, "unique_count", ["1", "2", "3", "3", "3", "3", "3", "4"]);
+    testSingleFieldOperator!UniqueCountOperator(col2File, 0, "unique_count", ["1", "2", "2"]);
+    testSingleFieldOperator!UniqueCountOperator(col2File, 1, "unique_count", ["1", "1", "2"]);
+    testSingleFieldOperator!UniqueCountOperator(col3File, 0, "unique_count", ["1", "2", "3"]);
+    testSingleFieldOperator!UniqueCountOperator(col3File, 1, "unique_count", ["1", "2", "2"]);
+    testSingleFieldOperator!UniqueCountOperator(col3File, 2, "unique_count", ["1", "2", "3"]);
 }
