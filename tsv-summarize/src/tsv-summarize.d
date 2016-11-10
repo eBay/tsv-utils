@@ -120,6 +120,7 @@ struct TsvSummarizeOptions {
     bool writeHeader = false;        // -w, --write-header
     char inputFieldDelimiter = '\t'; // --d|delimiter
     char valuesDelimiter = '|';      // --v|values-delimiter
+    size_t floatPrecision = 12;      // --p|float-precision
     bool helpVerbose = false;        // --help-verbose
     DList!Operator operators;        // Operators, in the order specified.
     size_t endFieldIndex = 0;        // Derived value. Max field index used plus one.
@@ -148,6 +149,7 @@ struct TsvSummarizeOptions {
                 "w|write-header",     "                Write an output header even if there is no input header.", &writeHeader,
                 "d|delimiter",        "CHR             Field delimiter. Default: TAB. (Single byte UTF-8 characters only.)", &inputFieldDelimiter,
                 "v|values-delimiter", "CHR             Values delimiter. Default: vertical bar (|). (Single byte UTF-8 characters only.)", &valuesDelimiter,
+                "p|float-precision",  "NUM             'Precision' to use printing floating point numbers. Affects the number of digits printed and exponent use. Default: 12", &floatPrecision,
                 "count",              "                Count occurrences of each unique key.", &countOptionHandler,
                 "count-header",       "STR             Count occurrences of each unique key, use header STR.", &countHeaderOptionHandler,
                 "retain",             "n[,n...]        Retain one copy of the field.", &operatorOptionHandler!RetainOperator,
@@ -380,7 +382,7 @@ void tsvSummarize(TsvSummarizeOptions cmdopt, in string[] inputFiles)
     debug writeln("[tsvSummarize] After reading all data.");
 
     /* Whew! We're done. Run the calculations and print. */
-    auto printOptions = SummarizerPrintOptions(cmdopt.inputFieldDelimiter, cmdopt.valuesDelimiter);
+    auto printOptions = SummarizerPrintOptions(cmdopt.inputFieldDelimiter, cmdopt.valuesDelimiter, cmdopt.floatPrecision);
     auto stdoutWriter = stdout.lockingTextWriter;
     
     if (cmdopt.hasHeader || cmdopt.writeHeader)
@@ -421,6 +423,18 @@ struct SummarizerPrintOptions
 {
     char fieldDelimiter;
     char valuesDelimiter;
+    size_t floatPrecision = 12;
+
+    import std.traits : isNumeric, isFloatingPoint, isIntegral;
+    
+    auto formatNumber(T)(T n) const if (isNumeric!T)
+    {
+        import std.format : format;
+        
+        static if (isFloatingPoint!T) return format("%.*g", floatPrecision, n);
+        else static if (isIntegral!T) return format("%d", n);
+        else static assert(0);
+    }
 }
 
 /* A Summarizer maintains the state of the summarization and performs basic processing.
@@ -519,6 +533,9 @@ class SummarizerBase(OutputRange) : Summarizer!OutputRange
 }
 
 /* The NoKeySummarizer is used when summarizing values across the entire input.
+ *
+ * Note: NoKeySummarizer is used in Operator unit tests and gets extensive testing
+ * through that mechanism.
  */
 class NoKeySummarizer(OutputRange) : SummarizerBase!OutputRange
 {
@@ -559,6 +576,7 @@ class NoKeySummarizer(OutputRange) : SummarizerBase!OutputRange
         put(outputStream, '\n');
     }
 }
+
 /* KeySummarizerBase does work shared by the single key and multi-key summarizers. The
  * primary difference between those two is the formation of the key. The primary reason
  * for separating those into two separate classes is to simplify (speed-up) handling of
@@ -1617,7 +1635,7 @@ class CountOperator : ZeroFieldOperator
         
         final override string calculate(const ref SummarizerPrintOptions printOptions)
         {
-            return _count.to!string;
+            return printOptions.formatNumber(_count);
         }
     }
 }
@@ -1838,7 +1856,7 @@ class MinOperator : SingleFieldOperator
         
         final string calculate(UniqueKeyValuesLists valuesLists, const ref SummarizerPrintOptions printOptions)
         {
-            return _value.to!string;
+            return printOptions.formatNumber(_value);
         }
     }
 }
@@ -1897,7 +1915,7 @@ class MaxOperator : SingleFieldOperator
         
         final string calculate(UniqueKeyValuesLists valuesLists, const ref SummarizerPrintOptions printOptions)
         {
-            return _value.to!string;
+            return printOptions.formatNumber(_value);
         }
     }
 }
@@ -1963,7 +1981,7 @@ class RangeOperator : SingleFieldOperator
         
         final string calculate(UniqueKeyValuesLists valuesLists, const ref SummarizerPrintOptions printOptions)
         {
-            return (_maxValue - _minValue).to!string;
+            return printOptions.formatNumber(_maxValue - _minValue);
         }
     }
 }
@@ -2012,7 +2030,7 @@ class SumOperator : SingleFieldOperator
 
         final string calculate(UniqueKeyValuesLists valuesLists, const ref SummarizerPrintOptions printOptions)
         {
-            return _total.to!string;
+            return printOptions.formatNumber(_total);
         }
     }
 }
@@ -2063,8 +2081,8 @@ class MeanOperator : SingleFieldOperator
         
         final string calculate(UniqueKeyValuesLists valuesLists, const ref SummarizerPrintOptions printOptions)
         {
-            return ((_count > 0) ? (_total / castFrom!size_t.to!double(_count)) : double.nan)
-                .to!string;
+            return printOptions.formatNumber(
+                (_count > 0) ? (_total / castFrom!size_t.to!double(_count)) : double.nan);
         }
     }
 }
@@ -2114,7 +2132,7 @@ class MedianOperator : SingleFieldOperator
         
         final string calculate(UniqueKeyValuesLists valuesLists, const ref SummarizerPrintOptions printOptions)
         {
-            return valuesLists.numericValuesMedian(fieldIndex).to!string;
+            return printOptions.formatNumber(valuesLists.numericValuesMedian(fieldIndex));
         }
     }
 }
@@ -2173,7 +2191,8 @@ class MadOperator : SingleFieldOperator
             auto medianDevs = new double[values.length];
             foreach (int i, double v; values)
                 medianDevs[i] = abs(v - median);
-            return medianDevs.rangeMedian.to!string;
+
+            return printOptions.formatNumber(medianDevs.rangeMedian);
         }
     }
 }
@@ -2226,8 +2245,8 @@ class VarianceOperator : SingleFieldOperator
         
         final string calculate(UniqueKeyValuesLists valuesLists, const ref SummarizerPrintOptions printOptions)
         {
-            return ((_count >= 2.0) ? (_m2 / (_count - 1.0)) : double.nan)
-                .to!string;
+            return printOptions.formatNumber(
+                (_count >= 2.0) ? (_m2 / (_count - 1.0)) : double.nan);
         }
     }
 }
@@ -2281,14 +2300,13 @@ class StDevOperator : SingleFieldOperator
         final string calculate(UniqueKeyValuesLists valuesLists, const ref SummarizerPrintOptions printOptions)
         {
             import std.math : sqrt;
-            return ((_count >= 2.0) ? (_m2 / (_count - 1.0)).sqrt : double.nan)
-                .to!string;
+            return printOptions.formatNumber(
+                (_count >= 2.0) ? (_m2 / (_count - 1.0)).sqrt : double.nan);
         }
     }
 }
 
-/* StDevOperator unit tests - These would be improved with arbitrary precision output
- * and a tolerance option.
+/* StDevOperator unit tests - These would be improved with a tolerance option.
  */
 unittest
 {
@@ -2296,12 +2314,12 @@ unittest
     auto col2File = [["3", "3"], ["3", "9"], ["7", "15"]];
     auto col3File = [["11", "10", "10"], ["24", "22", "25"], ["37", "34", "40"]];
 
-    testSingleFieldOperator!StDevOperator(col1File, 0, "stdev", ["nan", "nan", "2.12132", "3"]);
-    testSingleFieldOperator!StDevOperator(col2File, 0, "stdev", ["nan", "nan", "0", "2.3094"]);
-    testSingleFieldOperator!StDevOperator(col2File, 1, "stdev", ["nan", "nan", "4.24264", "6"]);
-    testSingleFieldOperator!StDevOperator(col3File, 0, "stdev", ["nan", "nan", "9.19239", "13"]);
-    testSingleFieldOperator!StDevOperator(col3File, 1, "stdev", ["nan", "nan", "8.48528", "12"]);
-    testSingleFieldOperator!StDevOperator(col3File, 2, "stdev", ["nan", "nan", "10.6066", "15"]);
+    testSingleFieldOperator!StDevOperator(col1File, 0, "stdev", ["nan", "nan", "2.12132034356", "3"]);
+    testSingleFieldOperator!StDevOperator(col2File, 0, "stdev", ["nan", "nan", "0", "2.30940107676"]);
+    testSingleFieldOperator!StDevOperator(col2File, 1, "stdev", ["nan", "nan", "4.24264068712", "6"]);
+    testSingleFieldOperator!StDevOperator(col3File, 0, "stdev", ["nan", "nan", "9.19238815543", "13"]);
+    testSingleFieldOperator!StDevOperator(col3File, 1, "stdev", ["nan", "nan", "8.48528137424", "12"]);
+    testSingleFieldOperator!StDevOperator(col3File, 2, "stdev", ["nan", "nan", "10.6066017178", "15"]);
 }
 
 /* UniqueCountOperator generates the number of unique values. Unique values are 
@@ -2337,7 +2355,7 @@ class UniqueCountOperator : SingleFieldOperator
         
         final string calculate(UniqueKeyValuesLists valuesLists, const ref SummarizerPrintOptions printOptions)
         {
-            return _values.length.to!string;
+            return printOptions.formatNumber(_values.length);
         }
     }
 }
