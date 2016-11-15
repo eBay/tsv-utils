@@ -1,3 +1,5 @@
 include ../makedefs.mk
-common_srcs = $(common_srcdir)/tsvutil.d
 include ../makeapp.mk
+
+# No built-in unit tests
+unittest: ;

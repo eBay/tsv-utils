@@ -22,7 +22,6 @@ Acknowledgements:
   License: Boost Licence 1.0 (http://boost.org/LICENSE_1_0.txt)
   Copyright: 2008-2015 Andrei Alexandrescu
 */
-module getopt_inorder;
 
 import std.getopt;
 

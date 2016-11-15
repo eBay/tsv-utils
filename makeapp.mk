@@ -1,6 +1,7 @@
 app ?= $(notdir $(basename $(CURDIR)))
-common_srcs ?=
-srcs ?= src/$(app).d $(common_srcs)
+common_srcs ?= $(common_srcdir)/tsvutil.d $(common_srcdir)/getopt_inorder.d
+app_src ?= src/$(app).d
+srcs ?= $(app_src) $(common_srcs)
 imports ?= -I$(common_srcdir)
 
 app_debug = $(project_bindir)/$(app).dbg
@@ -20,7 +21,13 @@ clean:
 	-rm $(objdir)/*.o
 
 .PHONY: test
-test: test-debug test-release
+test: unittest test-debug test-release
+
+.PHONY: unittest
+unittest:
+	@echo '---> Running $(notdir $(basename $(CURDIR))) unit tests'
+	$(DCOMPILER) $(imports) $(common_srcs) $(unittest_flags) $(app_src)
+	@echo '---> Unit tests completed successfully.'
 
 .PHONY: test-debug
 test-debug: $(app_debug)
