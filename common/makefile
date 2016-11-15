@@ -1,6 +1,6 @@
 include ../makedefs.mk
 
-srcs = src/tsvutil.d
+srcs = src/tsvutil.d src/getopt_inorder.d
 
 release: ;
 debug: ;
