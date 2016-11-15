@@ -135,11 +135,12 @@ struct TsvSummarizeOptions {
     auto processArgs (ref string[] cmdArgs) {
         import std.algorithm : any, each;
         import std.getopt;
+        import getopt_inorder;
 
         try
         {
             arraySep = ",";    // Use comma to separate values in command line options
-            auto r = getopt(
+            auto r = getoptInorder(
                 cmdArgs,
                 "help-verbose",       "                Print full help.", &helpVerbose,
                 "g|group-by",         "n[,n...]        Fields to use as key.", &keyFields,

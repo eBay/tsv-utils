@@ -1,5 +1,5 @@
 include ../makedefs.mk
-common_srcs = $(common_srcdir)/tsvutil.d
+common_srcs = $(common_srcdir)/tsvutil.d $(common_srcdir)/getopt_inorder.d 
 include ../makeapp.mk
 
 test: unittest
