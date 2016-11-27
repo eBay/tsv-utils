@@ -216,8 +216,6 @@ struct TsvSummarizeOptions {
             throw new Exception(format("Invalid option: '--%s %s'. Cannot specify a custom header when using multiple fields.",
                                        option, optionVal));
 
-        debug writefln("[Option %s %s] Split: %s|%s", option, optionVal, valSplit[0], valSplit[2]);
-
         foreach (str; valSplit[0].splitter(','))
         {
             size_t fieldNum;
@@ -232,8 +230,6 @@ struct TsvSummarizeOptions {
 
             size_t fieldIndex = fieldNum - 1;
             auto op = new OperatorClass(fieldIndex);
-
-            debug writefln("[Option %s %s] fieldIndex: %d", option, optionVal, fieldIndex);
 
             if (!valSplit[2].empty)
             {
@@ -382,8 +378,9 @@ void tsvSummarize(TsvSummarizeOptions cmdopt, in string[] inputFiles)
 
     debug writeln("[tsvSummarize] After reading all data.");
 
-    /* Whew! We're done. Run the calculations and print. */
-    auto printOptions = SummarizerPrintOptions(cmdopt.inputFieldDelimiter, cmdopt.valuesDelimiter, cmdopt.floatPrecision);
+    /* Whew! We're done processing input data. Run the calculations and print. */
+    auto printOptions = SummarizerPrintOptions(
+        cmdopt.inputFieldDelimiter, cmdopt.valuesDelimiter, cmdopt.floatPrecision);
     auto stdoutWriter = stdout.lockingTextWriter;
     
     if (cmdopt.hasHeader || cmdopt.writeHeader)
@@ -404,6 +401,12 @@ string fieldHeaderFromIndex(size_t fieldIndex)
     return prefix ~ (fieldIndex + 1).to!string;
 }
 
+unittest
+{
+    assert(fieldHeaderFromIndex(0) == "field1");
+    assert(fieldHeaderFromIndex(10) == "field11");
+}
+
 /* Produce a summary header from a field header. The result has the form
  * "<fieldHeader>_<operation>". e.g. If the field header is "length" and the operation is
  * "max", the summary header is "length_max". The field header typically comes a
@@ -415,6 +418,12 @@ string fieldHeaderFromIndex(size_t fieldIndex)
 string summaryHeaderFromFieldHeader(string fieldHeader, string operationName)
 {
     return (operationName.length > 0) ? fieldHeader ~ "_" ~ operationName : fieldHeader;
+}
+
+unittest
+{
+    assert(summaryHeaderFromFieldHeader("originalfield", "mycalc") == "originalfield_mycalc");
+    assert(summaryHeaderFromFieldHeader("originalfield", "") == "originalfield");
 }
 
 /* SummarizerPrintOptions holds printing options for Summarizers and Calculators. Typically
@@ -483,17 +492,12 @@ class SummarizerBase(OutputRange) : Summarizer!OutputRange
     /* Sets the Operators used by the Summarizer. Called after construction. */
     void setOperators(InputRange!Operator operators)
     {
-        debug writefln("[%s]", __FUNCTION__);
-        
         foreach (op; operators)
         {
             _operators.insertBack(op);
             _numOperators++;
             auto numericFieldsToSave = op.numericFieldsToSave();
             auto textFieldsToSave = op.textFieldsToSave();
-
-            debug writefln("  [%s] numericFieldsToSave.length: %d, textFieldsToSave.length: %d",
-                           op.to!string, numericFieldsToSave.length, textFieldsToSave.length);
 
             if (numericFieldsToSave.length > 0 || textFieldsToSave.length > 0)
             {
@@ -745,7 +749,7 @@ class MultiKeySummarizer(OutputRange) : KeySummarizerBase!OutputRange
  *
  * As an example, consider the command: 
  *
- *    $tsv-summary --key-field 1 --mean 3 --mean 5
+ *    $tsv-summary --group-by 1 --mean 3 --mean 5
  *
  * This command will create two instances of a MeanOperator, one each for fields 3 and 5.
  * They produce the output field headers (e.g. "field3_mean", "field5_mean"). They also
@@ -1129,13 +1133,11 @@ class SingleFieldOperator : Operator
      */
     final void setSaveFieldValuesNumeric()
     {
-        debug writefln("[%s] _fieldIndex: %d", __FUNCTION__, _fieldIndex);
         _numericFieldsToSave ~= _fieldIndex;
     }
     
     final void setSaveFieldValuesText()
     {
-        debug writefln("[%s] _fieldIndex: %d", __FUNCTION__, _fieldIndex);
         _textFieldsToSave ~= _fieldIndex;
     }
 
