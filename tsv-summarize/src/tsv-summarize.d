@@ -741,72 +741,102 @@ class MultiKeySummarizer(OutputRange) : KeySummarizerBase!OutputRange
     }
 }
 
-unittest
+version(unittest)
 {
-    /* Single-key and multi-key summarizer tests.
+    /* testSummarizer is a helper that can run many types of unit tests against
+     * Summarizers. It can also test operators, but there are separate helper functions
+     * better suited for that purpose.
      *
-     * These unit tests are run by constructing several different file representations
-     * and running a simple operator against them in different combinations.
+     * Arguments are a command line args, an input file, and expected output. The
+     * input file and expected output are already split into lines and fields, the helper
+     * manages re-assembly. The program name from the command line args is printed if an
+     * an error occurs, it is useful to identify the test that failed.
+     *
+     * Note: Much of this is a duplication tsvSummarize logic. Better abstraction of
+     * file input/output would enable running unit tests directly on top of tsvSummarize.
      */
-    
-    /* This operator concatenates the characters in the input fields with a vertical
-     * bar separator.
-     */
-    class UnitTestConcatOperator : SingleFieldOperator {
-        this (size_t fieldIndex)
-        {
-            super("concat", fieldIndex);
-        }
-        final override SingleFieldCalculator makeCalculator()
-        {
-            return new UnitTestConcatCalculator(fieldIndex);
-        }
-        static class UnitTestConcatCalculator : SingleFieldCalculator
-        {
-            private string _result = 0;
-            this(size_t fieldIndex)
-            {
-                super(fieldIndex);
-            }
-            final override void processNextField(const char[] nextField)
-            {
-                if (_result.length > 0) _result ~= "|";
-                _result ~= nextField;
-            }
-            final string calculate(UniqueKeyValuesLists valuesLists, const ref SummarizerPrintOptions printOptions)
-            {
-                return _result;
-            }
-        }
-    }
-
-    struct TestCase
+    void testSummarizer(string[] cmdArgs, string[][] file, string[][] expected)
     {
-        string[][] file;
-        size_t[] keyFields;
-        size_t[] valFields;
-        string[][] expected;
-        SingleFieldOperator operator = UnitTestConcatOperator;
-    }
+        import std.array : appender;
 
-    void runTestCase(bool hasHeader, bool hasCustomHeader)(TestCase case, string testId, string customHeader="")
-    {
+        assert(cmdArgs.length > 0, "[testSummarizer] cmdArgs must not be empty.");
+
+        auto formatAssertMessage(T...)(string msg, T formatArgs)
+        {
+            auto formatString = "[testSummarizer] %s: " ~ msg;
+            return format(formatString, cmdArgs[0], formatArgs);
+        }
+        
+        TsvSummarizeOptions cmdopt;
+        auto savedCmdArgs = cmdArgs.to!string;
+        auto r = cmdopt.processArgs(cmdArgs);
+        assert(r[0], formatAssertMessage("Invalid command lines arg: '%s'.", savedCmdArgs));
+
+        assert(file.all!(line => line.length >= cmdopt.endFieldIndex),
+               formatAssertMessage("group-by or operator field number greater than number of fields a line of the input file."));
+        
         /* Pick the Summarizer based on the number of key-fields entered. */
         auto summarizer =
             (cmdopt.keyFields.length == 0)
-            ? new NoKeySummarizer!(typeof(stdout.lockingTextWriter()))(cmdopt.inputFieldDelimiter)
+            ? new NoKeySummarizer!(typeof(appender!(char[])()))(cmdopt.inputFieldDelimiter)
             
             : (cmdopt.keyFields.length == 1)
-            ? new OneKeySummarizer!(typeof(stdout.lockingTextWriter()))(cmdopt.keyFields[0], cmdopt.inputFieldDelimiter)
+            ? new OneKeySummarizer!(typeof(appender!(char[])()))(cmdopt.keyFields[0], cmdopt.inputFieldDelimiter)
             
-            : new MultiKeySummarizer!(typeof(stdout.lockingTextWriter()))(cmdopt.keyFields, cmdopt.inputFieldDelimiter);
+            : new MultiKeySummarizer!(typeof(appender!(char[])()))(cmdopt.keyFields, cmdopt.inputFieldDelimiter);
 
-        //===============HERE===========================
+        /* Add the operators to the Summarizer. */
+        summarizer.setOperators(inputRangeObject(cmdopt.operators[]));
+
+        /* Process the file one line at a time. */
+        auto lineFields = new char[][](cmdopt.endFieldIndex);
+        bool headerFound = false;
+        foreach (lineNum, line; file.enumerate(1))
+        {
+            /* Copy the needed fields to the fields array. */
+            foreach (i, val; line[0..cmdopt.endFieldIndex]) lineFields[i] = val.dup;
+
+            if (cmdopt.hasHeader && lineNum == 1)
+            {
+                if (!headerFound)
+                {
+                    summarizer.processHeaderLine(lineFields);
+                    headerFound = true;
+                }
+            }
+            else
+            {
+                try summarizer.processNextLine(lineFields);
+                catch (Exception exc)
+                {
+                    assert(false, formatAssertMessage(exc.msg));
+                }
+            }
+        }
+        auto printOptions = SummarizerPrintOptions(
+        cmdopt.inputFieldDelimiter, cmdopt.valuesDelimiter, cmdopt.floatPrecision);
+        
+        auto summarizerOutput = appender!(char[])();
+        
+        if (cmdopt.hasHeader || cmdopt.writeHeader)
+        {
+            summarizer.writeSummaryHeader(summarizerOutput, printOptions);
+        }
+
+        summarizer.writeSummaryBody(summarizerOutput, printOptions);
+        auto expectedOutput = expected.map!(x => x.joiner(cmdopt.inputFieldDelimiter.to!string)).joiner("\n").to!string ~ "\n";
+
+        assert(summarizerOutput.data == expectedOutput,
+               formatAssertMessage(
+                   "Result != expected:\n=====Expected=====\n%s=====Actual=======\n%s==================",
+                   expectedOutput.to!string, summarizerOutput.data.to!string));
     }
+}
 
-    TestCase[] testCases;
+unittest
+{
+    /* Single-key and multi-key summarizer tests. */
 
-    /* Data files represented already split into rows and columns. */
     auto file1 = [["fld1", "fld2", "fld3"],
                   ["a", "a",  "3"],
                   ["c", "a",  "2b"],
@@ -815,135 +845,154 @@ unittest
                   ["",  "bc", ""],
                   ["c", "bc", "3"]];
 
-    testCases ~= TestCase(file1, [1], [1],
-                          [["fld1", "fld1_concat"],
-                           ["a", "a|a"],
-                           ["c", "c|c|c"],
-                           ["",  ""]]
+    testSummarizer(["unittest-1", "-H", "--group-by", "1", "--values", "1"],
+                   file1,
+                   [["fld1", "fld1_values"],
+                    ["a", "a|a"],
+                    ["c", "c|c|c"],
+                    ["",  ""]]
         );
-    testCases ~= TestCase(file1, [1], [2],
-                          [["fld1", "fld2_concat"],
-                           ["a", "a|c"],
-                           ["c", "a|bc|bc"],
-                           ["",  "bc"]]
+    testSummarizer(["unittest-2", "-H", "--group-by", "1", "--values", "2"],
+                   file1,
+                   [["fld1", "fld2_values"],
+                    ["a", "a|c"],
+                    ["c", "a|bc|bc"],
+                    ["",  "bc"]]
         );
-    testCases ~= TestCase(file1, [1], [3],
-                          [["fld1", "fld3_concat"],
-                           ["a", "3|2b"],
-                           ["c", "2b||3"],
-                           ["",  ""]]
+    testSummarizer(["unittest-3", "-H", "--group-by", "1", "--values", "3"],
+                   file1,
+                   [["fld1", "fld3_values"],
+                    ["a", "3|2b"],
+                    ["c", "2b||3"],
+                    ["",  ""]]
         );
-    testCases ~= TestCase(file1, [1], [1, 2, 3],
-                          [["fld1", "fld1_concat", "fld2_concat", "fld3_concat"],
-                           ["a", "a|a",   "a|c",     "3|2b"],
-                           ["c", "c|c|c", "a|bc|bc", "2b||3"],
-                           ["",  "",      "bc",      ""]]
+    testSummarizer(["unittest-4", "-H", "--group-by", "1", "--values", "1,2,3"],
+                   file1,
+                   [["fld1", "fld1_values", "fld2_values", "fld3_values"],
+                    ["a", "a|a",   "a|c",     "3|2b"],
+                    ["c", "c|c|c", "a|bc|bc", "2b||3"],
+                    ["",  "",      "bc",      ""]]
         );
-    testCases ~= TestCase(file1, [1], [3, 2, 1],
-                          [["fld1", "fld3_concat", "fld2_concat", "fld1_concat"],
-                           ["a", "3|2b",  "a|c",     "a"],
-                           ["c", "2b||3", "a|bc|bc", "c"],
-                           ["",  "",      "bc",      ""]]
+    testSummarizer(["unittest-5", "-H", "--group-by", "1", "--values", "3,2,1"],
+                   file1,
+                   [["fld1", "fld3_values", "fld2_values", "fld1_values"],
+                    ["a", "3|2b",  "a|c",     "a|a"],
+                    ["c", "2b||3", "a|bc|bc", "c|c|c"],
+                    ["",  "",      "bc",      ""]]
         );
-    testCases ~= TestCase(file1, [2], [1],
-                          [["fld2", "fld1_concat"],
-                           ["a",  "a|c"],
-                           ["bc", "c||c"],
-                           ["c",  "a"]]
+    testSummarizer(["unittest-6", "-H", "--group-by", "2", "--values", "1"],
+                   file1,
+                   [["fld2", "fld1_values"],
+                    ["a",  "a|c"],
+                    ["bc", "c||c"],
+                    ["c",  "a"]]
         );
-    testCases ~= TestCase(file1, [2], [2],
-                          [["fld2", "fld2_concat"],
-                           ["a",  "a|c"],
-                           ["bc", "c||c"],
-                           ["c",  "c"]]
+    testSummarizer(["unittest-7", "-H", "--group-by", "2", "--values", "2"],
+                   file1,
+                   [["fld2", "fld2_values"],
+                    ["a",  "a|a"],
+                    ["bc", "bc|bc|bc"],
+                    ["c",  "c"]]
         );
-    testCases ~= TestCase(file1, [2], [3],
-                          [["fld2", "fld2_concat"],
-                           ["a",  "3|2b"],
-                           ["bc", "||3"],
-                           ["c",  "2b"]]
+    testSummarizer(["unittest-8", "-H", "--group-by", "2", "--values", "3"],
+                   file1,
+                   [["fld2", "fld3_values"],
+                    ["a",  "3|2b"],
+                    ["bc", "||3"],
+                    ["c",  "2b"]]
         );
-    testCases ~= TestCase(file1, [2], [1, 3],
-                          [["fld2", "fld1_concat", "fld3_concat"],
-                           ["a",  "a|c",  "3|2b"],
-                           ["bc", "c||c", "||3"],
-                           ["c",  "a",    "2b"]]
+    testSummarizer(["unittest-9", "-H", "--group-by", "2", "--values", "1,3"],
+                   file1,
+                   [["fld2", "fld1_values", "fld3_values"],
+                    ["a",  "a|c",  "3|2b"],
+                    ["bc", "c||c", "||3"],
+                    ["c",  "a",    "2b"]]
         );
-    testCases ~= TestCase(file1, [2], [3, 1],
-                          [["fld2", "fld3_concat", "fld1_concat"],
-                           ["a",  "3|2b", "a|c"],
-                           ["bc", "||3",  "c||c"],
-                           ["c",  "2b",   "a"]]
+    testSummarizer(["unittest-10", "-H", "--group-by", "2", "--values", "3,1"],
+                   file1,
+                   [["fld2", "fld3_values", "fld1_values"],
+                    ["a",  "3|2b", "a|c"],
+                    ["bc", "||3",  "c||c"],
+                    ["c",  "2b",   "a"]]
         );
-    testCases ~= TestCase(file1, [3], [1],
-                          [["fld3", "fld1_concat"],
-                           ["3",  "a|c"],
-                           ["2b", "c|a"],
-                           ["",   "c||"]]
+    testSummarizer(["unittest-11", "-H", "--group-by", "3", "--values", "1"],
+                   file1,
+                   [["fld3", "fld1_values"],
+                    ["3",  "a|c"],
+                    ["2b", "c|a"],
+                    ["",   "c|"]]
         );
-    testCases ~= TestCase(file1, [3], [2],
-                          [["fld3", "fld2_concat"],
-                           ["3",  "a|bc"],
-                           ["2b", "a|c"],
-                           ["",   "bc|bc"]]
+    testSummarizer(["unittest-12", "-H", "--group-by", "3", "--values", "2"],
+                   file1,
+                   [["fld3", "fld2_values"],
+                    ["3",  "a|bc"],
+                    ["2b", "a|c"],
+                    ["",   "bc|bc"]]
         );
-    testCases ~= TestCase(file1, [3], [1, 2],
-                          [["fld3", "fld1_concat", "fld2_concat"],
-                           ["3",  "a|c", "a|bc"],
-                           ["2b", "c|a" "a|c"],
-                           ["",   "c||", "bc|bc"]]
+    testSummarizer(["unittest-13", "-H", "--group-by", "3", "--values", "1,2"],
+                   file1,
+                   [["fld3", "fld1_values", "fld2_values"],
+                    ["3",  "a|c", "a|bc"],
+                    ["2b", "c|a", "a|c"],
+                    ["",   "c|",  "bc|bc"]]
         );
-    testCases ~= TestCase(file1, [1, 2], [1],
-                          [["fld1", "fld2", "fld1_concat"],
-                           ["a", "a",  "a"],
-                           ["c", "a",  "c"],
-                           ["c", "bc", "c|c"],
-                           ["a", "c",  "a"],
-                           ["", "bc",  ""]]
+    testSummarizer(["unittest-14", "-H", "--group-by", "1,2", "--values", "1"],
+                   file1,
+                   [["fld1", "fld2", "fld1_values"],
+                    ["a", "a",  "a"],
+                    ["c", "a",  "c"],
+                    ["c", "bc", "c|c"],
+                    ["a", "c",  "a"],
+                    ["", "bc",  ""]]
         );
-    testCases ~= TestCase(file1, [1, 2], [2],
-                          [["fld1", "fld2", "fld2_concat"],
-                           ["a", "a",  "a"],
-                           ["c", "a",  "a"],
-                           ["c", "bc", "bc|bc"],
-                           ["a", "c",  "c"],
-                           ["", "bc",  "bc"]]
+    testSummarizer(["unittest-15", "-H", "--group-by", "1,2", "--values", "2"],
+                   file1,
+                   [["fld1", "fld2", "fld2_values"],
+                    ["a", "a",  "a"],
+                    ["c", "a",  "a"],
+                    ["c", "bc", "bc|bc"],
+                    ["a", "c",  "c"],
+                    ["", "bc",  "bc"]]
         );
-    testCases ~= TestCase(file1, [1, 2], [3],
-                          [["fld1", "fld2", "fld3_concat"],
-                           ["a", "a",  "3"],
-                           ["c", "a",  "2b"],
-                           ["c", "bc", "|3"],
-                           ["a", "c",  "2b"],
-                           ["", "bc",  ""]]
-        );
-
-    testCases ~= TestCase(file1, [1, 2], [3, 1],
-                          [["fld1", "fld2", "fld3_concat", "fld1_concat"],
-                           ["a", "a",  "3", "a"],
-                           ["c", "a",  "2b", "c"],
-                           ["c", "bc", "|3", "c|c"],
-                           ["a", "c",  "2b", "a"],
-                           ["",  "bc", "",   ""]]
-        );
-    
-    testCases ~= TestCase(file1, [3, 2], [1],
-                          [["fld3", "fld2", "fld1_concat"],
-                           ["3",  "a",  "a"],
-                           ["2b", "a",  "c"],
-                           ["",   "bc", "c|"],
-                           ["2b", "c",  "a"],
-                           ["3",  "bc", "c"]]
+    testSummarizer(["unittest-16", "-H", "--group-by", "1,2", "--values", "3"],
+                   file1,
+                   [["fld1", "fld2", "fld3_values"],
+                    ["a", "a",  "3"],
+                    ["c", "a",  "2b"],
+                    ["c", "bc", "|3"],
+                    ["a", "c",  "2b"],
+                    ["", "bc",  ""]]
         );
     
-    testCases ~= TestCase(file1, [2, 1, 3], [2],
-                          [["fld2", "fld1", "fld3", "fld2_concat"],
-                           ["a", "a", "3",  "a"],
-                           ["a", "c", "2b", "a"],
-                           ["bc", "c", "",  "bc"],
-                           ["c", "a", "2b", "c"],
-                           ["bc", "", "",   "bc"],
-                           ["bc", "c", "3", "bc"]]
+    testSummarizer(["unittest-17", "-H", "--group-by", "1,2", "--values", "3,1"],
+                   file1,
+                   [["fld1", "fld2", "fld3_values", "fld1_values"],
+                    ["a", "a",  "3", "a"],
+                    ["c", "a",  "2b", "c"],
+                    ["c", "bc", "|3", "c|c"],
+                    ["a", "c",  "2b", "a"],
+                    ["",  "bc", "",   ""]]
+        );
+    
+    testSummarizer(["unittest-18", "-H", "--group-by", "3,2", "--values", "1"],
+                   file1,
+                   [["fld3", "fld2", "fld1_values"],
+                    ["3",  "a",  "a"],
+                    ["2b", "a",  "c"],
+                    ["",   "bc", "c|"],
+                    ["2b", "c",  "a"],
+                    ["3",  "bc", "c"]]
+        );
+    
+    testSummarizer(["unittest-19", "-H", "--group-by", "2,1,3", "--values", "2"],
+                   file1,
+                   [["fld2", "fld1", "fld3", "fld2_values"],
+                    ["a", "a", "3",  "a"],
+                    ["a", "c", "2b", "a"],
+                    ["bc", "c", "",  "bc"],
+                    ["c", "a", "2b", "c"],
+                    ["bc", "", "",   "bc"],
+                    ["bc", "c", "3", "bc"]]
         );
 }
 
