@@ -835,8 +835,12 @@ version(unittest)
 
 unittest
 {
-    /* Summarizer unit tests. Primarily tests of single-key and multi-key summarizers.
-     * No-key summarizers are tested via operator unit tests.
+    /* Summarizer unit tests. Primarily single-key and multi-key summarizers, and to a
+     * limited extent, command line option handling in TsvSummarizeOptions. Individual
+     * operators have separate tests, those tests test the no-key summarizer. The Values
+     * operator is used in these tests. It engages a number of behaviors, and the result
+     * values have limited ambiguity. Using only one operator limits dependence on
+     * individual operators.
      */
 
     auto file1 = [["fld1", "fld2", "fld3"],
@@ -847,7 +851,8 @@ unittest
                   ["",  "bc", ""],
                   ["c", "bc", "3"]];
 
-    /* Basic single-key summarizer tests. */
+    /* Single-key summarizer tests.
+     */
     testSummarizer(["unittest-1", "-H", "--group-by", "1", "--values", "1"],
                    file1,
                    [["fld1", "fld1_values"],
@@ -940,7 +945,8 @@ unittest
                     ["",   "c|",  "bc|bc"]]
         );
 
-    /* Basic multi-key summarizer tests. */
+    /* Multi-key summarizer tests.
+     */
     testSummarizer(["unittest-14", "-H", "--group-by", "1,2", "--values", "1"],
                    file1,
                    [["fld1", "fld2", "fld1_values"],
@@ -997,14 +1003,16 @@ unittest
                     ["bc", "c", "3",  "bc"]]
         );
 
-    /* Validate that the no-key summarizer works with testSummarizer helper function. */
+    /* Validate that the no-key summarizer works with testSummarizer helper function.
+     */
     testSummarizer(["unittest-20", "-H", "--values", "1,2"],
                    file1,
                    [["fld1_values", "fld2_values"],
                     ["a|c|c|a||c", "a|a|bc|c|bc|bc"]]
         );
 
-    /* Alternate header combinations. */
+    /* Header variations: no header line; auto-generated header line; custom headers.
+     */
     testSummarizer(["unittest-21", "--group-by", "1", "--values", "1"],
                    file1[1..$],
                    [["a", "a|a"],
@@ -1019,14 +1027,14 @@ unittest
                     ["a", "c",  "c"],
                     ["", "bc",  "bc"]]
         );
-    testSummarizer(["unittest-23", "-w", "--group-by", "2", "--values", "1"],
+    testSummarizer(["unittest-23", "--write-header", "--group-by", "2", "--values", "1"],
                    file1[1..$],
                    [["field2", "field1_values"],
                     ["a",  "a|c"],
                     ["bc", "c||c"],
                     ["c",  "a"]]
         );
-    testSummarizer(["unittest-24", "-w", "--group-by", "3,2", "--values", "1"],
+    testSummarizer(["unittest-24", "--write-header", "--group-by", "3,2", "--values", "1"],
                    file1[1..$],
                    [["field3", "field2", "field1_values"],
                     ["3",  "a",  "a"],
@@ -1051,14 +1059,14 @@ unittest
                     ["a", "c",  "2b", "a"],
                     ["",  "bc", "",   ""]]
         );
-    testSummarizer(["unittest-27", "-w", "--group-by", "1", "--values", "3:f3_vals","--values", "2:f2_vals", "--values", "1:f1_vals"],
+    testSummarizer(["unittest-27", "--write-header", "--group-by", "1", "--values", "3:f3_vals","--values", "2:f2_vals", "--values", "1:f1_vals"],
                    file1[1..$],
                    [["field1", "f3_vals", "f2_vals", "f1_vals"],
                     ["a", "3|2b",  "a|c",     "a|a"],
                     ["c", "2b||3", "a|bc|bc", "c|c|c"],
                     ["",  "",      "bc",      ""]]
         );
-    testSummarizer(["unittest-28", "-w", "--group-by", "1,3,2", "--values", "3", "--values", "1:ValsField1", "--values", "2:ValsField2"],
+    testSummarizer(["unittest-28", "--write-header", "--group-by", "1,3,2", "--values", "3", "--values", "1:ValsField1", "--values", "2:ValsField2"],
                    file1[1..$],
                    [["field1", "field3", "field2", "field3_values", "ValsField1", "ValsField2"],
                     ["a", "3",  "a",  "3",  "a", "a"],
@@ -1068,6 +1076,9 @@ unittest
                     ["",  "",   "bc", "",   "",  "bc"],
                     ["c", "3",  "bc", "3",  "c", "bc"]]
         );
+
+    /* TODO: Alternate file widths and lengths.
+     */
 }
 
 /* Summary Operators and Calculators
