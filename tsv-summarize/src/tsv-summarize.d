@@ -835,7 +835,9 @@ version(unittest)
 
 unittest
 {
-    /* Single-key and multi-key summarizer tests. */
+    /* Summarizer unit tests. Primarily tests of single-key and multi-key summarizers.
+     * No-key summarizers are tested via operator unit tests.
+     */
 
     auto file1 = [["fld1", "fld2", "fld3"],
                   ["a", "a",  "3"],
@@ -845,6 +847,7 @@ unittest
                   ["",  "bc", ""],
                   ["c", "bc", "3"]];
 
+    /* Basic single-key summarizer tests. */
     testSummarizer(["unittest-1", "-H", "--group-by", "1", "--values", "1"],
                    file1,
                    [["fld1", "fld1_values"],
@@ -936,6 +939,8 @@ unittest
                     ["2b", "c|a", "a|c"],
                     ["",   "c|",  "bc|bc"]]
         );
+
+    /* Basic multi-key summarizer tests. */
     testSummarizer(["unittest-14", "-H", "--group-by", "1,2", "--values", "1"],
                    file1,
                    [["fld1", "fld2", "fld1_values"],
@@ -963,7 +968,6 @@ unittest
                     ["a", "c",  "2b"],
                     ["", "bc",  ""]]
         );
-    
     testSummarizer(["unittest-17", "-H", "--group-by", "1,2", "--values", "3,1"],
                    file1,
                    [["fld1", "fld2", "fld3_values", "fld1_values"],
@@ -973,7 +977,6 @@ unittest
                     ["a", "c",  "2b", "a"],
                     ["",  "bc", "",   ""]]
         );
-    
     testSummarizer(["unittest-18", "-H", "--group-by", "3,2", "--values", "1"],
                    file1,
                    [["fld3", "fld2", "fld1_values"],
@@ -983,16 +986,87 @@ unittest
                     ["2b", "c",  "a"],
                     ["3",  "bc", "c"]]
         );
-    
     testSummarizer(["unittest-19", "-H", "--group-by", "2,1,3", "--values", "2"],
                    file1,
                    [["fld2", "fld1", "fld3", "fld2_values"],
-                    ["a", "a", "3",  "a"],
-                    ["a", "c", "2b", "a"],
-                    ["bc", "c", "",  "bc"],
-                    ["c", "a", "2b", "c"],
-                    ["bc", "", "",   "bc"],
-                    ["bc", "c", "3", "bc"]]
+                    ["a",  "a", "3",  "a"],
+                    ["a",  "c", "2b", "a"],
+                    ["bc", "c", "",   "bc"],
+                    ["c",  "a", "2b", "c"],
+                    ["bc", "",  "",   "bc"],
+                    ["bc", "c", "3",  "bc"]]
+        );
+
+    /* Validate that the no-key summarizer works with testSummarizer helper function. */
+    testSummarizer(["unittest-20", "-H", "--values", "1,2"],
+                   file1,
+                   [["fld1_values", "fld2_values"],
+                    ["a|c|c|a||c", "a|a|bc|c|bc|bc"]]
+        );
+
+    /* Alternate header combinations. */
+    testSummarizer(["unittest-21", "--group-by", "1", "--values", "1"],
+                   file1[1..$],
+                   [["a", "a|a"],
+                    ["c", "c|c|c"],
+                    ["",  ""]]
+        );
+    testSummarizer(["unittest-22", "--group-by", "1,2", "--values", "2"],
+                   file1[1..$],
+                   [["a", "a",  "a"],
+                    ["c", "a",  "a"],
+                    ["c", "bc", "bc|bc"],
+                    ["a", "c",  "c"],
+                    ["", "bc",  "bc"]]
+        );
+    testSummarizer(["unittest-23", "-w", "--group-by", "2", "--values", "1"],
+                   file1[1..$],
+                   [["field2", "field1_values"],
+                    ["a",  "a|c"],
+                    ["bc", "c||c"],
+                    ["c",  "a"]]
+        );
+    testSummarizer(["unittest-24", "-w", "--group-by", "3,2", "--values", "1"],
+                   file1[1..$],
+                   [["field3", "field2", "field1_values"],
+                    ["3",  "a",  "a"],
+                    ["2b", "a",  "c"],
+                    ["",   "bc", "c|"],
+                    ["2b", "c",  "a"],
+                    ["3",  "bc", "c"]]
+        );
+    testSummarizer(["unittest-25", "-H", "--group-by", "2", "--values", "3:Field3Values"],
+                   file1,
+                   [["fld2", "Field3Values"],
+                    ["a",  "3|2b"],
+                    ["bc", "||3"],
+                    ["c",  "2b"]]
+        );
+    testSummarizer(["unittest-26", "-H", "--group-by", "1,2", "--values", "3:FieldThreeValues", "--values", "1:FieldOneValues"],
+                   file1,
+                   [["fld1", "fld2", "FieldThreeValues", "FieldOneValues"],
+                    ["a", "a",  "3", "a"],
+                    ["c", "a",  "2b", "c"],
+                    ["c", "bc", "|3", "c|c"],
+                    ["a", "c",  "2b", "a"],
+                    ["",  "bc", "",   ""]]
+        );
+    testSummarizer(["unittest-27", "-w", "--group-by", "1", "--values", "3:f3_vals","--values", "2:f2_vals", "--values", "1:f1_vals"],
+                   file1[1..$],
+                   [["field1", "f3_vals", "f2_vals", "f1_vals"],
+                    ["a", "3|2b",  "a|c",     "a|a"],
+                    ["c", "2b||3", "a|bc|bc", "c|c|c"],
+                    ["",  "",      "bc",      ""]]
+        );
+    testSummarizer(["unittest-28", "-w", "--group-by", "1,3,2", "--values", "3", "--values", "1:ValsField1", "--values", "2:ValsField2"],
+                   file1[1..$],
+                   [["field1", "field3", "field2", "field3_values", "ValsField1", "ValsField2"],
+                    ["a", "3",  "a",  "3",  "a", "a"],
+                    ["c", "2b", "a",  "2b", "c", "a"],
+                    ["c", "",   "bc", "",   "c", "bc"],
+                    ["a", "2b", "c",  "2b", "a", "c"],
+                    ["",  "",   "bc", "",   "",  "bc"],
+                    ["c", "3",  "bc", "3",  "c", "bc"]]
         );
 }
 
@@ -1168,12 +1242,6 @@ class UniqueKeyValuesLists
             _fieldIndex = fieldIndex;
         }
 
-        this(size_t fieldIndex, size_t capacity)
-        {
-            this(fieldIndex);
-            _values.reserve(capacity);
-        }
-        
         final size_t length() const @property
         {
             return _values.data.length;
