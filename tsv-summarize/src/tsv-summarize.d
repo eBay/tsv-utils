@@ -824,7 +824,8 @@ version(unittest)
         }
 
         summarizer.writeSummaryBody(summarizerOutput, printOptions);
-        auto expectedOutput = expected.map!(x => x.joiner(cmdopt.inputFieldDelimiter.to!string)).joiner("\n").to!string ~ "\n";
+        auto expectedOutput = expected.map!(x => x.joiner(cmdopt.inputFieldDelimiter.to!string)).joiner("\n").to!string;
+        if (expectedOutput.length > 0 && expectedOutput[$-1] != '\n') expectedOutput ~= "\n";
 
         assert(summarizerOutput.data == expectedOutput,
                formatAssertMessage(
@@ -1077,8 +1078,176 @@ unittest
                     ["c", "3",  "bc", "3",  "c", "bc"]]
         );
 
-    /* TODO: Alternate file widths and lengths.
+    /* Alternate file widths and lengths.
      */
+
+    auto file3x2 = [["fld1", "fld2", "fld3"],
+                    ["a", "b", "c"],
+                    ["c", "b", "a"]];
+
+    testSummarizer(["unittest-50", "-H", "--group-by", "1", "--values", "3"],
+                   file3x2,
+                   [["fld1", "fld3_values"],
+                    ["a", "c"],
+                    ["c", "a"]]
+        );
+    testSummarizer(["unittest-51", "-H", "--group-by", "2", "--values", "3"],
+                   file3x2,
+                   [["fld2", "fld3_values"],
+                    ["b", "c|a"]]
+        );
+    testSummarizer(["unittest-52", "-H", "--group-by", "2,1", "--values", "3"],
+                   file3x2,
+                   [["fld2", "fld1", "fld3_values"],
+                    ["b", "a", "c"],
+                    ["b", "c", "a"]]
+        );
+
+    auto file3x1 = [["fld1", "fld2", "fld3"],
+                    ["a", "b", "c"]];
+
+    testSummarizer(["unittest-53", "-H", "--group-by", "1", "--values", "3"],
+                   file3x1,
+                   [["fld1", "fld3_values"],
+                    ["a", "c"]]
+        );
+    testSummarizer(["unittest-54", "--group-by", "1", "--values", "3"],
+                   file3x1[1..$],
+                   [["a", "c"]]
+        );
+    testSummarizer(["unittest-55", "-H", "--group-by", "2,1", "--values", "3"],
+                   file3x1,
+                   [["fld2", "fld1", "fld3_values"],
+                    ["b", "a", "c"]]
+        );
+    testSummarizer(["unittest-56", "--group-by", "2,1", "--values", "3"],
+                   file3x1[1..$],
+                   [["b", "a", "c"]]
+        );
+
+    auto file3x0 = [["fld1", "fld2", "fld3"]];
+
+    testSummarizer(["unittest-57", "-H", "--group-by", "1", "--values", "3"],
+                   file3x0,
+                   [["fld1", "fld3_values"]]
+        );
+    testSummarizer(["unittest-58", "--group-by", "1", "--values", "3"],
+                   file3x0[1..$],
+                   []
+        );
+    testSummarizer(["unittest-59", "--write-header", "--group-by", "1", "--values", "3"],
+                   file3x0[1..$],
+                   [["field1", "field3_values"]]
+        );
+
+    
+    testSummarizer(["unittest-60", "-H", "--group-by", "2,1", "--values", "3"],
+                   file3x0,
+                   [["fld2", "fld1", "fld3_values"]]
+        );
+
+    testSummarizer(["unittest-61", "--group-by", "2,1", "--values", "3"],
+                   file3x0[1..$],
+                   []
+        );
+
+    testSummarizer(["unittest-62", "--write-header", "--group-by", "2,1", "--values", "3"],
+                   file3x0[1..$],
+                   [["field2", "field1", "field3_values"]]
+        );
+
+    auto file2x1 = [["fld1", "fld2"],
+                    ["a", "b"]];
+
+    testSummarizer(["unittest-63", "-H", "--group-by", "1", "--values", "2"],
+                   file2x1,
+                   [["fld1", "fld2_values"],
+                    ["a", "b"]]
+        );
+    testSummarizer(["unittest-64", "-H", "--group-by", "2,1", "--values", "1"],
+                   file2x1,
+                   [["fld2", "fld1", "fld1_values"],
+                    ["b", "a", "a"]]
+        );
+
+    auto file2x0 = [["fld1", "fld2"]];
+    
+    testSummarizer(["unittest-65", "-H", "--group-by", "1", "--values", "2"],
+                   file2x0,
+                   [["fld1", "fld2_values"]]
+        );
+    testSummarizer(["unittest-66", "-H", "--group-by", "2,1", "--values", "1"],
+                   file2x0,
+                   [["fld2", "fld1", "fld1_values"]]
+        );
+    
+    auto file1x2 = [["fld1"],
+                    ["a"],
+                    [""]];
+    
+    testSummarizer(["unittest-67", "-H", "--group-by", "1", "--values", "1"],
+                   file1x2,
+                   [["fld1", "fld1_values"],
+                    ["a", "a"],
+                    ["",  ""]]
+        );
+
+    auto file1x2b = [["fld1"],
+                     [""],
+                     [""]];
+
+    testSummarizer(["unittest-68", "-H", "--group-by", "1", "--values", "1"],
+                   file1x2b,
+                   [["fld1", "fld1_values"],
+                    ["", "|"]]
+        );
+
+    auto file1x1 = [["fld1"],
+                    ["x"]];
+    
+    testSummarizer(["unittest-69", "-H", "--group-by", "1", "--values", "1"],
+                   file1x1,
+                   [["fld1", "fld1_values"],
+                    ["x", "x"]]
+        );
+
+    testSummarizer(["unittest-70", "--group-by", "1", "--values", "1"],
+                   file1x1[1..$],
+                   [["x", "x"]]
+        );
+
+    testSummarizer(["unittest-71", "--write-header", "--group-by", "1", "--values", "1"],
+                   file1x1[1..$],
+                   [["field1", "field1_values"],
+                    ["x", "x"]]
+        );
+
+    auto file1x1b = [["fld1"],
+                    [""]];
+    
+    testSummarizer(["unittest-72", "-H", "--group-by", "1", "--values", "1"],
+                   file1x1b,
+                   [["fld1", "fld1_values"],
+                    ["", ""]]
+        );
+    
+    auto file1x0 = [["fld1"]];
+    
+    testSummarizer(["unittest-73", "-H", "--group-by", "1", "--values", "1"],
+                   file1x0,
+                   [["fld1", "fld1_values"]]
+        );
+
+    testSummarizer(["unittest-74", "--group-by", "1", "--values", "1"],
+                   file1x0[1..$],
+                   []
+        );
+
+    testSummarizer(["unittest-75", "--write-header", "--group-by", "1", "--values", "1"],
+                   file1x0[1..$],
+                   [["field1", "field1_values"]]
+        );
+
 }
 
 /* Summary Operators and Calculators
