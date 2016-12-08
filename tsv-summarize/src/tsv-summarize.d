@@ -836,12 +836,11 @@ version(unittest)
 
 unittest
 {
-    /* Summarizer unit tests. Primarily single-key and multi-key summarizers, and to a
-     * limited extent, command line option handling in TsvSummarizeOptions. Individual
-     * operators have separate tests, those tests test the no-key summarizer. The Values
-     * operator is used in these tests. It engages a number of behaviors, and the result
-     * values have limited ambiguity. Using only one operator limits dependence on
-     * individual operators.
+    /* Summarizer unit tests. Primarily single-key and multi-key summarizers. To a limited
+     * extent, command line option handling (TsvSummarizeOptions). Individual operators
+     * have separate tests, those tests test the no-key summarizer. The Values operator is
+     * used in these tests. It engages a number of behaviors, and the results have limited
+     * ambiguity. Using only one operator limits dependence on individual operators.
      */
 
     auto file1 = [["fld1", "fld2", "fld3"],
@@ -1248,6 +1247,39 @@ unittest
                    [["field1", "field1_values"]]
         );
 
+    /* Alternate delimiters. */
+    testSummarizer(["unittest-90", "-H", "--values", "1,2", "--delimiter", "%"],
+                   file1,
+                   [["fld1_values", "fld2_values"],
+                    ["a|c|c|a||c", "a|a|bc|c|bc|bc"]]
+        );
+    testSummarizer(["unittest-91", "-H", "--values", "1,2", "--values-delimiter", "$"],
+                   file1,
+                   [["fld1_values", "fld2_values"],
+                    ["a$c$c$a$$c", "a$a$bc$c$bc$bc"]]
+        );
+    testSummarizer(["unittest-92", "-H", "--values", "1,2", "--delimiter", "#", "--values-delimiter", ","],
+                   file1,
+                   [["fld1_values", "fld2_values"],
+                    ["a,c,c,a,,c", "a,a,bc,c,bc,bc"]]
+        );
+    testSummarizer(["unittest-93", "--write-header", "--group-by", "2", "--values", "1",
+                    "--delimiter", "^", "--values-delimiter", ":"],
+                   file1[1..$],
+                   [["field2", "field1_values"],
+                    ["a",  "a:c"],
+                    ["bc", "c::c"],
+                    ["c",  "a"]]
+        );
+    testSummarizer(["unittest-94", "--group-by", "1,2", "--values", "2", "--delimiter", "/",
+                    "--values-delimiter", "\\"],
+                   file1[1..$],
+                   [["a", "a",  "a"],
+                    ["c", "a",  "a"],
+                    ["c", "bc", "bc\\bc"],
+                    ["a", "c",  "c"],
+                    ["", "bc",  "bc"]]
+        );
 }
 
 /* Summary Operators and Calculators

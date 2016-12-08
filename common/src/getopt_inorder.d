@@ -278,8 +278,10 @@ unittest // Issue 16539
 
     version(none)
     {
-        /* This case crashes, whether calling getoptInorder or simply getopt. Not clear why. 
-         * Even converting the whole test case to getopt still results in failure at this line.
+        /* About version(none) - This case crashes, whether calling getoptInorder or simply
+         * getopt. Not clear why. Even converting the whole test case to getopt still results
+         * in failure at this line. (Implies getoptInorder is not itself the cause, but could
+         * involve context in which the test is run.)
          */
         assertThrown(getoptInorder(args, "", "forgot to put a string", &opt));
     }
