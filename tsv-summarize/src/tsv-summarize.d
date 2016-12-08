@@ -260,6 +260,11 @@ struct TsvSummarizeOptions {
     /* This routine does validations not handled by processArgs. */
     private void consistencyValidations()
     {
+        if (operators.empty)
+        {
+            throw new Exception("At least one summary operator is required.");
+        }
+
         if (keyFields.any!(x => x == 0))
         {
             throw new Exception("Invalid --g|group-by option. Field numbers cannot be 0.");
