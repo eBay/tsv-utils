@@ -858,7 +858,7 @@ unittest
 
     /* Single-key summarizer tests.
      */
-    testSummarizer(["unittest-1", "-H", "--group-by", "1", "--values", "1"],
+    testSummarizer(["unittest-1", "--header", "--group-by", "1", "--values", "1"],
                    file1,
                    [["fld1", "fld1_values"],
                     ["a", "a|a"],
@@ -872,7 +872,7 @@ unittest
                     ["c", "a|bc|bc"],
                     ["",  "bc"]]
         );
-    testSummarizer(["unittest-3", "-H", "--group-by", "1", "--values", "3"],
+    testSummarizer(["unittest-3", "-H", "-g", "1", "--values", "3"],
                    file1,
                    [["fld1", "fld3_values"],
                     ["a", "3|2b"],
@@ -952,7 +952,7 @@ unittest
 
     /* Multi-key summarizer tests.
      */
-    testSummarizer(["unittest-14", "-H", "--group-by", "1,2", "--values", "1"],
+    testSummarizer(["unittest-14", "--header", "--group-by", "1,2", "--values", "1"],
                    file1,
                    [["fld1", "fld2", "fld1_values"],
                     ["a", "a",  "a"],
@@ -1039,7 +1039,7 @@ unittest
                     ["bc", "c||c"],
                     ["c",  "a"]]
         );
-    testSummarizer(["unittest-24", "--write-header", "--group-by", "3,2", "--values", "1"],
+    testSummarizer(["unittest-24", "-w", "--group-by", "3,2", "--values", "1"],
                    file1[1..$],
                    [["field3", "field2", "field1_values"],
                     ["3",  "a",  "a"],
@@ -2625,10 +2625,12 @@ class MeanOperator : SingleFieldOperator
         final string calculate(UniqueKeyValuesLists valuesLists, const ref SummarizerPrintOptions printOptions)
         {
             return printOptions.formatNumber(
-                (_count > 0) ? (_total / castFrom!size_t.to!double(_count)) : double.nan);
+                (_count > 0) ? (_total / _count.to!double) : double.nan);
         }
     }
 }
+
+//(_count > 0) ? (_total / castFrom!size_t.to!double(_count)) : double.nan);
 
 unittest // MeanOperator
 {
