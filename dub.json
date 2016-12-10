@@ -14,6 +14,7 @@
         "tsv-utils-dlang:tsv-select": "*",
         "tsv-utils-dlang:tsv-filter": "*",
         "tsv-utils-dlang:tsv-join": "*",
+        "tsv-utils-dlang:tsv-summarize": "*",
         "tsv-utils-dlang:tsv-uniq": "*"
     },
     "subPackages": [
@@ -23,6 +24,7 @@
         "./tsv-select/",
         "./tsv-filter/",
         "./tsv-join/",
+        "./tsv-summarize/",
         "./tsv-uniq/"
     ],
     "configurations": [
