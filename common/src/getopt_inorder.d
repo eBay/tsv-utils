@@ -3,7 +3,7 @@ A cover for D standard library 'getopt' routine (std.getopt.getopt) function tha
 command line argument processing order.
 
 This is a work-around to a limitation in getopt, in that getopt does not process arguments
-in command line order. Instead, getopt processes options in the order specfied in the call
+in command line order. Instead, getopt processes options in the order specified in the call
 to getopt. That is, the order in the text of the code. This prevents using command line
 options in ways where order specified by the user is taken into account.
 
@@ -12,14 +12,14 @@ More details here: https://issues.dlang.org/show_bug.cgi?id=16539
 Copyright (c) 2016, eBay Software Foundation
 Initially written by Jon Degenhardt
 
-License: Boost Licence 1.0 (http://boost.org/LICENSE_1_0.txt)
+License: Boost License 1.0 (http://boost.org/LICENSE_1_0.txt)
 
-Acknowledgements:
+Acknowledgments:
 
 - Unit tests in this file have been adopted from unit tests for the D programming language
   std.getopt standard library modules (https://dlang.org/phobos/std_getopt.html).
 
-  License: Boost Licence 1.0 (http://boost.org/LICENSE_1_0.txt)
+  License: Boost License 1.0 (http://boost.org/LICENSE_1_0.txt)
   Copyright: 2008-2015 Andrei Alexandrescu
 */
 

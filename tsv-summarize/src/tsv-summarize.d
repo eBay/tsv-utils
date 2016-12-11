@@ -165,7 +165,7 @@ struct TsvSummarizeOptions {
                 "mad",                "n[,n...][:STR]  Median absolute deviation from the median. Raw value, not scaled. (Numeric fields only. Reads all values into memory.)", &operatorOptionHandler!MadOperator,
                 "var",                "n[,n...][:STR]  Variance. (Sample variance, numeric fields only).", &operatorOptionHandler!VarianceOperator,
                 "stdev",              "n[,n...][:STR]  Standard deviation. (Sample st.dev, numeric fields only).", &operatorOptionHandler!StDevOperator,
-                "unique-count",       "n[,n...][:STR]  Number of unique values. (Reads all values into memory.", &operatorOptionHandler!UniqueCountOperator,
+                "unique-count",       "n[,n...][:STR]  Number of unique values. (Reads all values into memory.)", &operatorOptionHandler!UniqueCountOperator,
                 "mode",               "n[,n...][:STR]  Mode. The most frequent value. (Reads all values into memory.)", &operatorOptionHandler!ModeOperator,
                 "values",             "n[,n...][:STR]  All the values, separated by --v|values-delimiter. (Reads all values into memory.)", &operatorOptionHandler!ValuesOperator,
                 );
@@ -1920,7 +1920,7 @@ version(unittest)
  * The primary rationale for ZeroFieldOperator and ZeroFieldCalculator is to clarify
  * the information available to such a routine. In particular, the split fields passed
  * to processHeaderLine and processNextLine don't include all fields in the input,
- * something that might not be obviouse when implementing an operator. (Only fields
+ * something that might not be obvious when implementing an operator. (Only fields
  * required by operators acting on specific fields are included.)
  */
 class ZeroFieldOperator : Operator
