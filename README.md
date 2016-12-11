@@ -23,7 +23,7 @@ A short description of each tool follows. There is more detail in the [tool refe
 * [tsv-join](#tsv-join) - Join lines from multiple files using fields as a key.
 * [tsv-uniq](#tsv-uniq) - Filter out duplicate lines using fields as a key.
 * [tsv-select](#tsv-select) - Keep a subset of the columns in the input.
-* [tsv-summarize](#tsv-summarize) - Aggregate field values across an entire file or grouped by key.
+* [tsv-summarize](#tsv-summarize) - Aggregate field values, summarizing across the entire file or grouped by key.
 * [csv2tsv](#csv2tsv) - Convert CSV files to TSV.
 * [number-lines](#number-lines) - Number the input lines.
 * [Useful bash aliases](#useful-bash-aliases)
@@ -84,7 +84,7 @@ See the [tsv-select reference](#tsv-select-reference) for details.
 
 ### tsv-summarize
 
-tsv-summarize runs aggregation operations on fields files. For example, generating the sum or median of a field's values. Summarization calculations can be run across the entire input or can be grouped by key fields. A single row of output is produced for the former, multiple rows for the latter. As an example, consider the file `data.tsv`:
+tsv-summarize runs aggregation operations on fields. For example, generating the sum or median of a field's values. Summarization calculations can be run across the entire input or can be grouped by key fields. A single row of output is produced for the former, multiple rows for the latter. As an example, consider the file `data.tsv`:
 ```
 color   weight
 red     6
@@ -693,6 +693,7 @@ Summarization operators available are:
 Calculations hold onto the minimum data needed while reading data. A few operations like median keep all data values in memory. These operations will start to encounter performance issues as available memory becomes scarce. The size that can be handled effectively is machine dependent, but often quite large files can be handled. Operations requiring numeric entries will signal an error and terminate processing if a non-numeric entry is found.
 
 **Options:**
+* `--h|help` - Brief help.
 * `--help-verbose` - Print full help.
 * `--g|group-by n[,n...]` - Fields to use as key.
 * `--H|header` - Treat the first line of each file as a header.
@@ -700,6 +701,8 @@ Calculations hold onto the minimum data needed while reading data. A few operati
 * `--d|delimiter CHR` - Field delimiter. Default: TAB. (Single byte UTF-8 characters only.)
 * `--v|values-delimiter CHR` - Values delimiter. Default: vertical bar (|). (Single byte UTF-8 characters only.)
 * `--p|float-precision NUM` - 'Precision' to use printing floating point numbers. Affects the number of digits printed and exponent use. Default: 12
+
+**Operators:**
 * `--count` - Count occurrences of each unique key.
 * `--count-header STR` - Count occurrences of each unique key, use header STR.
 * `--retain n[,n...]` - Retain one copy of the field.
@@ -717,7 +720,6 @@ Calculations hold onto the minimum data needed while reading data. A few operati
 * `--unique-count n[,n...][:STR]`  Number of unique values. (Reads all values into memory).
 * `--mode n[,n...][:STR]` - Mode. The most frequent value. (Reads all values into memory.)
 * `--values n[,n...][:STR]` - All the values, separated by --v|values-delimiter. (Reads all values into memory.)
-* `--h|help This help information.
 
 ### csv2tsv reference
 
