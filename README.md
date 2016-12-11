@@ -152,9 +152,9 @@ There are a number of toolkits that have similar or related functionality. Sever
 * [tsvutils](https://github.com/brendano/tsvutils) - TSV tools, especially rich in format converters. Written in Python.
 * [xsv](https://github.com/BurntSushi/xsv) - CSV tools, written in Rust.
 
-The different toolkits are certainly worth investigating if you work with tabular data files frequently. Several have quite extensive feature sets. Each toolkit has its own strengths, your workflow and preferences are likely to fit some better than others.
+The different toolkits are certainly worth investigating if you work with tabular data files. Several have quite extensive feature sets. Each toolkit has its own strengths, your workflow and preferences are likely to fit some toolkits better than others.
 
-If you're wondering about the rationale for using TSV files, there is very nice discussion in the [tsvutils README](https://github.com/brendano/tsvutils#the-philosophy-of-tsvutils) file. 
+If you are wondering about the rationale for using TSV files, there is very nice discussion in the [tsvutils README](https://github.com/brendano/tsvutils#the-philosophy-of-tsvutils) file. 
 
 ## Installation
 
