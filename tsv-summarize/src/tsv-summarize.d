@@ -84,7 +84,7 @@ fields (though not when a custom header is specified). Example:
 
 Summarization operators available are:
   count       min        mean       stddev
-  retain      max        median     count-unique
+  retain      max        median     unique-count
   first       range      mad        mode
   last        sum        var        values
 
@@ -165,7 +165,7 @@ struct TsvSummarizeOptions {
                 "mad",                "n[,n...][:STR]  Median absolute deviation from the median. Raw value, not scaled. (Numeric fields only. Reads all values into memory.)", &operatorOptionHandler!MadOperator,
                 "var",                "n[,n...][:STR]  Variance. (Sample variance, numeric fields only).", &operatorOptionHandler!VarianceOperator,
                 "stdev",              "n[,n...][:STR]  Standard deviation. (Sample st.dev, numeric fields only).", &operatorOptionHandler!StDevOperator,
-                "count-unique",       "n[,n...][:STR]  Number of unique values. (Reads all values into memory.", &operatorOptionHandler!UniqueCountOperator,
+                "unique-count",       "n[,n...][:STR]  Number of unique values. (Reads all values into memory.", &operatorOptionHandler!UniqueCountOperator,
                 "mode",               "n[,n...][:STR]  Mode. The most frequent value. (Reads all values into memory.)", &operatorOptionHandler!ModeOperator,
                 "values",             "n[,n...][:STR]  All the values, separated by --v|values-delimiter. (Reads all values into memory.)", &operatorOptionHandler!ValuesOperator,
                 );
@@ -2629,8 +2629,6 @@ class MeanOperator : SingleFieldOperator
         }
     }
 }
-
-//(_count > 0) ? (_total / castFrom!size_t.to!double(_count)) : double.nan);
 
 unittest // MeanOperator
 {
