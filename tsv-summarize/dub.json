@@ -1,0 +1,28 @@
+{
+    "name": "tsv-summarize",
+    "description": "Run aggregation and summarization operations on fields from TSV files.",
+    "homepage": "https://github.com/eBay/tsv-utils-dlang",
+    "authors": ["Jon Degenhardt"],
+    "copyright": "Copyright (c) 2016, eBay Software Foundation",
+    "license": "BSL-1.0",
+    "targetType": "executable",
+    "configurations": [
+        {
+            "name" : "executable",
+            "targetName": "tsv-summarize",
+            "targetPath": "../bin/",
+            "mainSourceFile": "src/tsv-summarize.d",
+            "dependencies": {
+                "tsv-utils-dlang:common": "*"
+            }
+        },
+        {
+            "name": "unittest",
+            "targetType": "none"
+        }
+    ],
+    "buildTypes": {
+        "debug": { "buildOptions": ["debugMode", "optimize"] },
+        "release": { "buildOptions": ["releaseMode", "optimize", "inline"], "dflags": ["-boundscheck=off"] }
+    }
+}

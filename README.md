@@ -23,6 +23,7 @@ A short description of each tool follows. There is more detail in the [tool refe
 * [tsv-join](#tsv-join) - Join lines from multiple files using fields as a key.
 * [tsv-uniq](#tsv-uniq) - Filter out duplicate lines using fields as a key.
 * [tsv-select](#tsv-select) - Keep a subset of the columns in the input.
+* [tsv-summarize](#tsv-summarize) - Aggregate field values, summarizing across the entire file or grouped by key.
 * [csv2tsv](#csv2tsv) - Convert CSV files to TSV.
 * [number-lines](#number-lines) - Number the input lines.
 * [Useful bash aliases](#useful-bash-aliases)
@@ -42,6 +43,8 @@ This outputs lines where field 3 satisfies (100 <= fieldval <= 200) and field 4 
 $ tsv-filter --ne 3:0 file.tsv | wc -l
 ```
 
+See the [tsv-filter reference](#tsv-filter-reference) for details.
+
 ### tsv-join
 
 Joins lines from multiple files based on a common key. One file, the 'filter' file, contains the records (lines) being matched. The other input files are scanned for matching records. Matching records are written to standard output, along with any designated fields from the filter file. In database parlance this is a hash semi-join. Example:
@@ -52,6 +55,8 @@ $ tsv-join --filter-file filter.tsv --key-fields 1,3 --append-fields 5,6 data.ts
 This reads `filter.tsv`, creating a lookup table keyed on fields 1 and 3. `data.tsv` is read, lines with a matching key are written to standard output with fields 5 and 6 from `filter.tsv` appended. This is a form of inner-join. Outer-joins and anti-joins can also be done.
 
 Common uses for `tsv-join` are to join related datasets or to filter one dataset based on another. Filter file entries are kept in memory, this limits the ultimate size that can be handled effectively. The author has found that filter files up to about 10 million lines are processed effectively, but performance starts to degrade after that.
+
+See the [tsv-join reference](#tsv-join-reference) for details.
 
 ### tsv-uniq
 
@@ -64,6 +69,8 @@ $ tsv-uniq -f 2,3 data.tsv
 
 As with `tsv-join`, this uses an in-memory lookup table to record unique entries. This ultimately limits the data sizes that can be processed. The author has found that datasets with up to about 10 million unique entries work fine, but performance degrades after that.
 
+See the [tsv-uniq reference](#tsv-uniq-reference) for details.
+
 ### tsv-select
 
 A version of the Unix `cut` utility with the additional ability to re-order the fields. It also helps with header lines by keeping only the header from the first file (`--header` option). The following command writes fields [4, 2, 9] from a pair of files to stdout:
@@ -72,6 +79,35 @@ $ tsv-select -f 4,2,9 file1.tsv file2.tsv
 ```
 
 Reordering fields and managing headers are useful enhancements over `cut`. However, much of the motivation for writing it was to explore the D programming language and provide a comparison point against other common approaches to this task. Code for `tsv-select` is bit more liberal with comments pointing out D programming constructs than code for the other tools.
+
+See the [tsv-select reference](#tsv-select-reference) for details.
+
+### tsv-summarize
+
+tsv-summarize runs aggregation operations on fields. For example, generating the sum or median of a field's values. Summarization calculations can be run across the entire input or can be grouped by key fields. A single row of output is produced for the former, multiple rows for the latter. As an example, consider the file `data.tsv`:
+```
+color   weight
+red     6
+red     5
+blue    15
+red     4
+blue    10
+```
+The sum and mean weights are calculated as follows:
+```
+$ tsv-summarize --header --sum 2 --mean 2 data.tsv
+weight_sum  weight_mean
+40          8
+
+$ tsv-summarize --header --group-by 1 --sum 2 --mean 2 data.tsv
+color  weight_sum  weight_mean
+red    15          5
+blue   25          12.5
+```
+
+Note that it was not necessary to sort the file prior to using `--group-by`, this convenience is built-in.
+
+A number of aggregation operations are available, see the [tsv-summarize reference](#tsv-summarize-reference) for details.
 
 ### csv2tsv
 
@@ -89,6 +125,8 @@ A simpler version of the Unix 'nl' program. It prepends a line number to each li
 $ number-lines myfile.txt
 ```
 
+See the [number-lines reference](#tsv-summarize-reference) for details.
+
 ### Useful bash aliases
 
 Any number of convenient utilities can be created using shell facilities. A couple are given below. One of the most useful is `tsv-header`, which shows the field number for each column name in the header. Very useful when using numeric field indexes.
@@ -104,18 +142,23 @@ tsv-sort () { sort -t $'\t' $* ; }
 
 ### Other toolkits
 
-There are a number of toolkits with similar functionality. Here are a few:
+There are a number of toolkits that have similar or related functionality. Several are listed below. Those handling CSV files handle TSV files as well:
 
 * [csvkit](https://github.com/wireservice/csvkit) - CSV tools, written in Python.
 * [csvtk](https://github.com/shenwei356/csvtk) - CSV tools, written in Go.
-* [dplyr](https://github.com/hadley/dplyr) - Tools for tabular data in R storage formats. Written in R and C++.
+* [GNU datamash](https://www.gnu.org/software/datamash/) - Performs numeric, textual and statistical operations TSV files. Written in C.
+* [dplyr](https://github.com/hadley/dplyr) - Tools for tabular data in R storage formats. Runs in an R environment, code is in C++.
 * [miller](https://github.com/johnkerl/miller) - CSV and JSON tools, written in C.
 * [tsvutils](https://github.com/brendano/tsvutils) - TSV tools, especially rich in format converters. Written in Python.
 * [xsv](https://github.com/BurntSushi/xsv) - CSV tools, written in Rust.
 
+The different toolkits are certainly worth investigating if you work with tabular data files. Several have quite extensive feature sets. Each toolkit has its own strengths, your workflow and preferences are likely to fit some toolkits better than others.
+
+If you are wondering about the rationale for using TSV files, there is very nice discussion in the [tsvutils README](https://github.com/brendano/tsvutils#the-philosophy-of-tsvutils) file. 
+
 ## Installation
 
-Download a D compiler (http://dlang.org/download.html). These tools have been tested with the DMD and LDC compilers, on Mac OSX and Linux. Use DMD version 2.068 or later, LDC version 0.17.0 or later.
+Download a D compiler (http://dlang.org/download.html). These tools have been tested with the DMD and LDC compilers, on Mac OSX and Linux. Use DMD version 2.070 or later, LDC version 1.0.0 or later.
 
 Clone this repository, select a compiler, and run `make` from the top level directory:
 ```
@@ -166,6 +209,8 @@ The simplest tool is `number-lines`. It is useful as an illustration of the code
 
 `tsv-join` and `tsv-filter` also have relatively straightforward functionality, but support more use cases resulting in more code. `tsv-filter` in particular has more elaborate setup steps that take a bit more time to understand. `tsv-filter` uses several features like delegates (closures) and regular expressions not used in the other tools.
 
+`tsv-summarize` is one or the more recent tools. It uses a more object oriented style than the other tools, this makes it relatively easy to add new operations. It also makes quite extensive use of built-in unit tests.
+
 The `common` directory has code shared by the tools. At present this very limited, one helper class written as template. In addition to being an example of a simple template, it also makes use of a D ranges, a very useful sequence abstraction, and built-in unit tests.
 
 New tools can be added by creating a new directory and a source tree following the same pattern as one of existing tools.
@@ -213,7 +258,7 @@ $ make test-nobuild
 
 ### Unit tests
 
-D has an excellent facility for adding unit tests right with the code. The `common` utility functions in this package take advantage of built-in unit tests. However, most of the command line executables do not, and instead use more traditional invocation of the command line executables and diffs the output against a "gold" result set. The exception is `csv2tsv`, which uses both built-in unit tests and tests against the executable. The built-in unit tests are much nicer, and also the advantage of being naturally cross-platform. The command line executable tests assume a Unix shell.
+D has an excellent facility for adding unit tests right with the code. The `common` utility functions in this package take advantage of built-in unit tests. However, most of the command line executables do not, and instead use more traditional invocation of the command line executables and diffs the output against a "gold" result set. The exceptions are `csv2tsv` and `tsv-summarize`. These use both built-in unit tests and tests against the executable. The built-in unit tests are much nicer, and also the advantage of being naturally cross-platform. The command line executable tests assume a Unix shell.
 
 Tests for the command line executables are in the `tests` directory of each tool. Overall the tests cover a fair number of cases and are quite useful checks when modifying the code. They may also be helpful as an examples of command line tool invocations. See the `tests.sh` file in each `test` directory, and the `test` makefile target in `makeapp.mk`.
 
@@ -592,6 +637,89 @@ $ tsv-select -f 1 --rest first data.tsv
 $ # Move fields 7 and 3 to the start of the line
 $ tsv-select -f 7,3 --rest last data.tsv
 ```
+### tsv-summarize reference
+
+Synopsis: tsv-summarize [options] file [file...]
+
+tsv-summarize reads tabular data files (tab-separated by default), tracks field values for each unique key, and runs summarization algorithms. Consider the file data.tsv:
+```
+make    color   time
+ford    blue    131
+chevy   green   124
+ford    red     128
+bmw     black   118
+bmw     black   126
+ford    blue    122
+```
+
+The min and average times for each make is generated by the command:
+```
+$ tsv-summarize --header --group-by 1 --min 3 --mean 3 data.tsv
+```
+
+This produces:
+```
+make   time_min time_mean
+ford   122      127
+chevy  124      124
+bmw    118      122
+```
+
+Using `--group 1,2` will group by both 'make' and 'color'. Omitting the `--group-by` entirely summarizes fields for full file.
+
+The program tries to generate useful headers, but custom headers can be specified. Example (using `-g` and `-H` shortcuts for `--header` and `--group-by`):
+```
+$ tsv-summarize -H -g 1 --min 3:fastest --mean 3:average data.tsv
+```
+
+Most operators take custom headers in a similarly way, generally following:
+```
+--<operator-name> FIELD[:header]
+```
+
+Operators can be specified multiple times. They can also take multiple fields (though not when a custom header is specified). Example:
+```
+--median 2,3,4
+```
+
+Summarization operators available are:
+```
+   count       min        mean       stddev
+   retain      max        median     unique-count
+   first       range      mad        mode
+   last        sum        var        values
+```
+
+Calculations hold onto the minimum data needed while reading data. A few operations like median keep all data values in memory. These operations will start to encounter performance issues as available memory becomes scarce. The size that can be handled effectively is machine dependent, but often quite large files can be handled. Operations requiring numeric entries will signal an error and terminate processing if a non-numeric entry is found.
+
+**Options:**
+* `--h|help` - Brief help.
+* `--help-verbose` - Print full help.
+* `--g|group-by n[,n...]` - Fields to use as key.
+* `--H|header` - Treat the first line of each file as a header.
+* `--w|write-header` - Write an output header even if there is no input header.
+* `--d|delimiter CHR` - Field delimiter. Default: TAB. (Single byte UTF-8 characters only.)
+* `--v|values-delimiter CHR` - Values delimiter. Default: vertical bar (|). (Single byte UTF-8 characters only.)
+* `--p|float-precision NUM` - 'Precision' to use printing floating point numbers. Affects the number of digits printed and exponent use. Default: 12
+
+**Operators:**
+* `--count` - Count occurrences of each unique key.
+* `--count-header STR` - Count occurrences of each unique key, use header STR.
+* `--retain n[,n...]` - Retain one copy of the field.
+* `--first n[,n...][:STR]` - First value seen.
+* `--last n[,n...][:STR]`- Last value seen.
+* `--min n[,n...][:STR]` - Min value. (Numeric fields only.)
+* `--max n[,n...][:STR]` - Max value. Numeric fields only.
+* `--range n[,n...][:STR]` - Difference between min and max values. (Numeric fields only.)
+* `--sum n[,n...][:STR]` - Sum of the values. (Numeric fields only.)
+* `--mean n[,n...][:STR]` - Mean (average). (Numeric fields only.)
+* `--median n[,n...][:STR]` - Median value. (Numeric fields only. Reads all values into memory.)
+* `--mad n[,n...][:STR]` - Median absolute deviation from the median. Raw value, not scaled. (Numeric fields only. Reads all values into memory.)
+* `--var n[,n...][:STR]` - Variance. (Sample variance, numeric fields only).
+* `--stdev n[,n...][:STR]` - Standard deviation. (Sample st.dev, numeric fields only).
+* `--unique-count n[,n...][:STR]`  Number of unique values. (Reads all values into memory).
+* `--mode n[,n...][:STR]` - Mode. The most frequent value. (Reads all values into memory.)
+* `--values n[,n...][:STR]` - All the values, separated by --v|values-delimiter. (Reads all values into memory.)
 
 ### csv2tsv reference
 

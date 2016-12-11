@@ -1,11 +1,15 @@
 include ../makedefs.mk
 
-srcs = src/tsvutil.d
-
 release: ;
 debug: ;
 clean: ;
-test test-release:
-	@echo '---> Running $(notdir $(basename $(CURDIR))) unit tests.'
-	$(DCOMPILER) $(unittest_flags) $(srcs)
+test: unittest
+test-release: ;
+test-nobuild: ;
+
+.PHONY: unittest
+unittest:
+	@echo '---> Running $(notdir $(basename $(CURDIR))) unit tests'
+	$(DCOMPILER) $(common_srcs) $(unittest_flags) src/tsvutil.d
+	$(DCOMPILER) $(common_srcs) $(unittest_flags) src/getopt_inorder.d
 	@echo '---> Unit tests completed successfully.'
