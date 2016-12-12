@@ -9,6 +9,10 @@ options in ways where order specified by the user is taken into account.
 
 More details here: https://issues.dlang.org/show_bug.cgi?id=16539
 
+This should only be used when retaining order is important. Though minimized, there are
+cases that don't work as expected, the most important involving option arguments starting
+with a dash. See the getoptInorder function comments for specifics.
+
 Copyright (c) 2016, eBay Software Foundation
 Initially written by Jon Degenhardt
 
@@ -54,22 +58,60 @@ private void checkForUnsupportedConfigOptions(T...)(T opts)
     }
 }
 
-/* hasStopOnFirstNotOption walks the config list returns true if an one of the
+/* hasStopOnFirstNotOption walks the config list returns true if one of the
  * options in is std.getopt.config.stopOnFirstNonOption.
  */ 
 private bool hasStopOnFirstNonOption(T...)(T opts)
 {
-    bool hasStopOn = false;
     static if (opts.length > 0)
     {
         static if (is(typeof(opts[0]) : std.getopt.config))
         {
-            hasStopOn |= (opts[0] == std.getopt.config.stopOnFirstNonOption);
+            if (opts[0] == std.getopt.config.stopOnFirstNonOption) return true;
         }
 
-        checkForUnsupportedConfigOptions(opts[1..$]);
+        return hasStopOnFirstNonOption(opts[1..$]);
     }
-    return hasStopOn;
+    return false;
+}
+
+unittest
+{
+    int[] vals;
+
+    assert(!hasStopOnFirstNonOption(
+               "a|aa", "aaa VAL", &vals,
+               "b|bb", "bbb VAL", &vals,
+               "c|cc", "ccc VAL", &vals,
+               ));
+
+    assert(hasStopOnFirstNonOption(
+               std.getopt.config.stopOnFirstNonOption,
+               "a|aa", "aaa VAL", &vals,
+               "b|bb", "bbb VAL", &vals,
+               "c|cc", "ccc VAL", &vals,
+               ));
+
+    assert(hasStopOnFirstNonOption(
+               "a|aa", "aaa VAL", &vals,
+               std.getopt.config.stopOnFirstNonOption,
+               "b|bb", "bbb VAL", &vals,
+               "c|cc", "ccc VAL", &vals,
+               ));
+
+    assert(hasStopOnFirstNonOption(
+               "a|aa", "aaa VAL", &vals,
+               "b|bb", "bbb VAL", &vals,
+               std.getopt.config.stopOnFirstNonOption,
+               "c|cc", "ccc VAL", &vals,
+               ));
+
+    assert(hasStopOnFirstNonOption(
+               "a|aa", "aaa VAL", &vals,
+               "b|bb", "bbb VAL", &vals,
+               "c|cc", "ccc VAL", &vals,
+               std.getopt.config.stopOnFirstNonOption,
+               ));
 }
 
 /* getoptInorder is a cover to std.getopt that processes command line options in the
@@ -77,24 +119,43 @@ private bool hasStopOnFirstNonOption(T...)(T opts)
  *
  * This is intended for command line argument processing where the order of arguments
  * on the command line is important. The standard library std.getopt routine processes
- * options in the order listed in call to getopt.
+ * options in the order listed in call to getopt. Behavioral changes involve order of
+ * callback processing and array filling.
  *
- * Processing in command line order is a change when filling arrays or using callback
- * functions. The std.getopt.config.required option is not supported, otherwise this
- * routine works the same as getopt.
+ * Other changes from std.getopt:
+ * - The std.getopt.config.required option is not supported.
+ * - Single digits cannot be used as short options. e.g. '-1' cannot be an option.
+ * - Non-numeric option arguments starting with a dash are not interpreted correctly,
+ *   unless it looks like a negative number or is a single dash. Some examples,
+ *   assuming ("--val") takes one argument:
+ *      ["--val", "-9"] - Okay, "-9" is arg
+ *      ["--val", "-"]  - Okay, "-" is arg
+ *      ["--val", "-a"] - Not okay, "-a" is treated as separate option.
  */
 GetoptResult getoptInorder(T...)(ref string[] args, T opts)
 {
     import std.algorithm : min, remove;
     import std.typecons : tuple;
-    debug import std.stdio;
 
+    debug import std.stdio;
     debug writeln("\n=========================\n");
     debug writeln("[getoptInorder] args: ", args, " opts: ", opts);
 
     checkForUnsupportedConfigOptions(opts);
     bool configHasStopOnFirstNonOption = hasStopOnFirstNonOption(opts);
-    
+
+    bool isOption(string arg)
+    {
+        import std.string : isNumeric;
+        import std.ascii : isDigit;
+
+        return
+            (arg == std.getopt.endOfOptions) ||
+            (arg.length >= 2 &&
+             arg[0] == std.getopt.optionChar &&
+             !(arg[1].isDigit && arg.isNumeric));
+    }
+
     /* Walk input args, passing one command option at a time to getopt.
      * Example - Assume the args array is:
      *
@@ -121,7 +182,7 @@ GetoptResult getoptInorder(T...)(ref string[] args, T opts)
     bool helpWanted = false;   // Need to track if help is ever requested.
     size_t argStart = 1;       // Start at 1, index zero is program name.
     bool isLastCall = false;
-    
+
     while (!isLastCall)
     {
         /* This is the last call to getopt if:
@@ -136,7 +197,7 @@ GetoptResult getoptInorder(T...)(ref string[] args, T opts)
             /* Find the next option. */
             for (size_t i = argStart + 1; i < args.length; i++)
             {
-                if (args[i].length > 0 && args[i][0] == std.getopt.optionChar)
+                if (isOption(args[i]))
                 {
                     argEnd = i;
                     break;
@@ -233,6 +294,26 @@ unittest // Issue 16539
         );
 
     assert(cmdvals == ["1", "2", "3", "4", "5", "6", "7", "8", "9"]);
+}
+
+unittest // Dashes
+{
+    auto args = ["program", "-m", "-5", "-n", "-50", "-c", "-"];
+
+    int m;
+    int n;
+    char c;
+    
+    getoptInorder(
+        args,
+        "m|mm", "integer", &m,
+        "n|nn", "integer", &n,
+        "c|cc", "character", &c,
+        );
+
+    assert(m == -5);
+    assert(n == -50);
+    assert(c == '-');
 }
 
 

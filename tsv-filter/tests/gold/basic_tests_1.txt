@@ -205,6 +205,30 @@ last line
 
 
 
+====Short circuit tests===
+
+====[tsv-filter --header --not-blank 1 --str-ne 1:none --eq 1:100 input_num_or_empty.tsv]====
+f1	f2	f3
+100	21	31
+100	24	33
+
+====[tsv-filter --header --or --blank 1 --str-eq 1:none --eq 1:100 input_num_or_empty.tsv]====
+f1	f2	f3
+100	21	31
+  	22	32
+	23	33
+100	24	33
+none	25	34
+
+====[tsv-filter --header --invert --not-blank 1 --str-ne 1:none --eq 1:100 input_num_or_empty.tsv]====
+f1	f2	f3
+  	22	32
+	23	33
+none	25	34
+
+====[tsv-filter --header --invert --or --blank 1 --str-eq 1:none --eq 1:100 input_num_or_empty.tsv]====
+f1	f2	f3
+
 ====String tests===
 
 ====[tsv-filter --header --str-eq 3:a input1.tsv]====

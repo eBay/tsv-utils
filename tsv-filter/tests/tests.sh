@@ -58,6 +58,14 @@ runtest ${prog} "--not-empty 1 input_onefield.txt" ${basic_tests_1}
 runtest ${prog} "--blank 1 input_onefield.txt" ${basic_tests_1}
 runtest ${prog} "--empty 1 input_onefield.txt" ${basic_tests_1}
 
+# Short circuit by order. Ensure not blank or "none" before numeric test.
+echo "" >> ${basic_tests_1}; echo "====Short circuit tests===" >> ${basic_tests_1}
+runtest ${prog} "--header --not-blank 1 --str-ne 1:none --eq 1:100 input_num_or_empty.tsv" ${basic_tests_1}
+runtest ${prog} "--header --or --blank 1 --str-eq 1:none --eq 1:100 input_num_or_empty.tsv" ${basic_tests_1}
+runtest ${prog} "--header --invert --not-blank 1 --str-ne 1:none --eq 1:100 input_num_or_empty.tsv" ${basic_tests_1}
+runtest ${prog} "--header --invert --or --blank 1 --str-eq 1:none --eq 1:100 input_num_or_empty.tsv" ${basic_tests_1}
+
+
 # String field tests
 echo "" >> ${basic_tests_1}; echo "====String tests===" >> ${basic_tests_1}
 
