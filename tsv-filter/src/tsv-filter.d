@@ -529,6 +529,7 @@ struct TsvFilterOptions {
      */ 
     auto processArgs (ref string[] cmdArgs) {
         import std.getopt;
+        import getopt_inorder;
         
         /* Command option handlers - One handler for each option. These conform to the
          * getopt required handler signature, and separate knowledge the specific command
@@ -585,7 +586,7 @@ struct TsvFilterOptions {
 
         try {
             arraySep = ",";    // Use comma to separate values in command line options
-            auto r = getopt(
+            auto r = getoptInorder(
                 cmdArgs,
                 "help-brief",    "     Print brief help.", &helpBrief,
                 "header",          "     Treat the first line of each file as a header.", &hasHeader,
