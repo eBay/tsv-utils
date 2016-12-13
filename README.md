@@ -154,7 +154,7 @@ There are a number of toolkits that have similar or related functionality. Sever
 
 The different toolkits are certainly worth investigating if you work with tabular data files. Several have quite extensive feature sets. Each toolkit has its own strengths, your workflow and preferences are likely to fit some toolkits better than others.
 
-If you are wondering about the rationale for using TSV files, there is very nice discussion in the [tsvutils README](https://github.com/brendano/tsvutils#the-philosophy-of-tsvutils) file. 
+File format is perhaps the most important dimension. CSV files cannot be processed reliably by traditional unix tools, so CSV toolkits naturally extend further into this space. However, this tends to increase complexity of the tools when working with TSV files. Tradeoffs between file formats is its own topic. The [tsvutils README](https://github.com/brendano/tsvutils#the-philosophy-of-tsvutils) has a nice discussion of the rationale for using TSV files.
 
 ## Installation
 
