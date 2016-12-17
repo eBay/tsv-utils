@@ -72,7 +72,10 @@ private bool hasStopOnFirstNonOption(T...)(T opts)
 
         return hasStopOnFirstNonOption(opts[1..$]);
     }
-    return false;
+    else
+    {
+        return false;
+    }
 }
 
 unittest
