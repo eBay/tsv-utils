@@ -13,7 +13,9 @@
             "targetName": "tsv-filter",
             "targetPath": "../bin/",
             "mainSourceFile": "src/tsv-filter.d",
-            "dependencies": { }
+            "dependencies": {
+                "tsv-utils-dlang:common": "*"
+            }
         },
         {
             "name": "unittest",
