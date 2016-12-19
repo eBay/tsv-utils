@@ -84,7 +84,7 @@ See the [tsv-select reference](#tsv-select-reference) for details.
 
 ### tsv-summarize
 
-tsv-summarize runs aggregation operations on fields. For example, generating the sum or median of a field's values. Summarization calculations can be run across the entire input or can be grouped by key fields. A single row of output is produced for the former, multiple rows for the latter. As an example, consider the file `data.tsv`:
+tsv-summarize runs aggregation operations on fields. For example, generating the sum or median of a field's values. Summarization calculations can be run across the entire input or can be grouped by key fields. As an example, consider the file `data.tsv`:
 ```
 color   weight
 red     6
@@ -93,7 +93,7 @@ blue    15
 red     4
 blue    10
 ```
-The sum and mean weights are calculated as follows:
+Calculation of the sum and mean of the `weight` column are below. The first command runs calculations on all values. The second groups them by color.
 ```
 $ tsv-summarize --header --sum 2 --mean 2 data.tsv
 weight_sum  weight_mean
@@ -105,9 +105,9 @@ red    15          5
 blue   25          12.5
 ```
 
-Note that it was not necessary to sort the file prior to using `--group-by`, this convenience is built-in.
+Multiple fields can be used as the `--group-by` key. The file's sort order does not matter, there is no need to sort in the `--group-by` order first.
 
-A number of aggregation operations are available, see the [tsv-summarize reference](#tsv-summarize-reference) for details.
+See the [tsv-summarize reference](#tsv-summarize-reference) for the list of statistical and other aggregation operations available.
 
 ### csv2tsv
 
