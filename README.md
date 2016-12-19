@@ -164,25 +164,25 @@ Clone this repository, select a compiler, and run `make` from the top level dire
 ```
 $ git clone https://github.com/eBay/tsv-utils-dlang.git
 $ cd tsv-utils-dlang
-$ make
+$ make         # For LDC: make DCOMPILER=ldc2
 ```
 
-Executables are written to `tsv-utils-dlang/bin`, place this directory or the executables in the PATH. The compiler defaults to DMD, this can be changed on the make command line (e.g. `make DCOMPILER=ldc2`). LDC is a common choice as it generates fast code. See [BUILD_COMMANDS](BUILD_COMMANDS.md) for alternate build steps if `make` is not available on your system.
+Executables are written to `tsv-utils-dlang/bin`, place this directory or the executables in the PATH. The compiler defaults to DMD, this can be changed on the make command line (e.g. `make DCOMPILER=ldc2`). DMD is the reference compiler, but LDC generates faster code. See [BUILD_COMMANDS](BUILD_COMMANDS.md) for alternate build steps if `make` is not available on your system.
 
 ### Install using DUB
 
 If you are already a D user you likely use DUB, the D package manager. You can install and build using DUB as follows:
 ```
 $ dub fetch tsv-utils-dlang
-$ dub run tsv-utils-dlang
+$ dub run tsv-utils-dlang    # For LDC: dub run tsv-utils-dlang -- --compiler=ldc
 ```
 
-The `dub run` commands compiles all the tools. Use a command like `dub run tsv-utils-dlang -- --compiler=ldc2` to use a different compiler. The executables are written to a DUB package repository directory. For example: `~/.dub/packages/tsv-utils-dlang-1.0.2/bin`. Add the executables to the PATH. As an alternative, clone the repository and run as follows:
+The `dub run` command compiles all the tools. The executables are written to a DUB package repository directory. For example: `~/.dub/packages/tsv-utils-dlang-1.0.8/bin`. Add the executables to the PATH. Installation to a DUB package repository is not always most convenient. As an alternative, clone the repository and run dub from the source directory. This puts the executables in the `tsv-utils-dlang/bin` directory:
 ```
 $ git clone https://github.com/eBay/tsv-utils-dlang.git
 $ dub add-local tsv-utils-dlang
 $ cd tsv-utils-dlang
-$ dub run
+$ dub run      # For LDC: dub run -- --compiler=ldc2
 ```
 
 See the [Building and makefile](#building-and-makefile) section for more information.
