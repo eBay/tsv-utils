@@ -384,7 +384,7 @@ $ tsv-uniq -help   # Invalid.
 
 #### Help (-h, --help, --help-verbose)
 
-All tools print help if given the `-h` or `--help` option. Many of the tools provide a more details with the `--help-verbose` option.
+All tools print help if given the `-h` or `--help` option. Many of the tools provide more details with the `--help-verbose` option.
 
 #### Field indices
 
