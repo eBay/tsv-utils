@@ -48,48 +48,15 @@ int main(string[] cmdArgs) {
 auto helpText = q"EOS
 Synopsis: tsv-filter [options] [file...]
 
-Filter lines of tab-delimited files via comparison tests against fields. Multiple
-tests can be specified, by default they are evaluated as AND clause. Lines
-satisfying the tests are written to standard output.
-
-Typical test syntax is '--op field:value', where 'op' is an operator, 'field' is a
-1-based field index, and 'value' is the comparison basis. For example, '--lt 3:500'
-tests if field 3 is less than 500. A more complete example:
-
-  tsv-filter --header --gt 1:50 --lt 1:100 --le 2:1000 data.tsv
-
-This outputs all lines from file data.tsv where field 1 is greater than 50 and less
-than 100, and field 2 is less than or equal to 1000. The header is also output.
-
-Tests available include:
-  * Test if a field is empty (no characters) or blank (empty or whitespace only).
-  * Compare a field to a number - Numeric equality and relational tests.
-  * Compare a field to a string - String equality and relational tests.
-  * Test if a field matches a regular expression. Case sensitive or insensitive.
-  * Test if a field contains a string. Sub-string search, case sensitive or insensitive.
-  * Field to field comparisons - Similar to the other tests, except comparing
-    one field to another in the same line.
-
-Details:
-  * The run is aborted if there are not enough fields in an input line.
-  * Numeric tests will fail and abort the run if a field cannot be interpreted as a
-    number. This includes fields with no text. Handle such cases by piping one run
-    tsv-filter to another, the first invocation filtering out non-numeric entries.
-  * Regular expression syntax is defined by the D programming language. They follow
-    common conventions (perl, python, etc.). Most common forms work as expected.
-
-Options:
-EOS";
-
-// helpTextBrief is shorter help that provides a summary of command line options.
-auto helpTextBrief = q"EOS
-Synopsis: tsv-filter [options] [file...]
-Filter tab-delimited files for matching lines.
+Filter tab-delimited files for matching lines via comparison tests against
+individual fields. Use '--help-verbose' for a more detailed description.
 
 Global options:
-  --header    Treat the first line of each file as a header.
-  --or        Evaluate tests as an OR rather than an AND clause.
-  --v|invert  Invert the filter, printing lines that do not match.
+  --help-verbose      Print full help.
+  --help-options      Print the options list by itself.
+  --H|header          Treat the first line of each file as a header.
+  --or                Evaluate tests as an OR rather than an AND clause.
+  --v|invert          Invert the filter, printing lines that do not match.
   --d|delimiter CHR   Field delimiter. Default: TAB.
 
 Operators:
@@ -124,6 +91,48 @@ Operators:
            --ff-reldiff-le|ff-reldiff-gt FIELD1:FIELD2:NUM
   Example: --ff-absdiff-lt 1:3:0.25   // True if abs(field1 - field2) < 0.25
 
+EOS";
+
+auto helpTextVerbose = q"EOS
+Synopsis: tsv-filter [options] [file...]
+
+Filter lines of tab-delimited files via comparison tests against fields. Multiple
+tests can be specified, by default they are evaluated as AND clause. Lines
+satisfying the tests are written to standard output.
+
+Typical test syntax is '--op field:value', where 'op' is an operator, 'field' is a
+1-based field index, and 'value' is the comparison basis. For example, '--lt 3:500'
+tests if field 3 is less than 500. A more complete example:
+
+  tsv-filter --header --gt 1:50 --lt 1:100 --le 2:1000 data.tsv
+
+This outputs all lines from file data.tsv where field 1 is greater than 50 and less
+than 100, and field 2 is less than or equal to 1000. The header is also output.
+
+Tests available include:
+  * Test if a field is empty (no characters) or blank (empty or whitespace only).
+  * Compare a field to a number - Numeric equality and relational tests.
+  * Compare a field to a string - String equality and relational tests.
+  * Test if a field matches a regular expression. Case sensitive or insensitive.
+  * Test if a field contains a string. Sub-string search, case sensitive or insensitive.
+  * Field to field comparisons - Similar to the other tests, except comparing
+    one field to another in the same line.
+
+Details:
+  * The run is aborted if there are not enough fields in an input line.
+  * Numeric tests will fail and abort the run if a field cannot be interpreted as a
+    number. This includes fields with no text. Handle such cases by piping one run
+    tsv-filter to another, the first invocation filtering out non-numeric entries.
+  * Regular expression syntax is defined by the D programming language. They follow
+    common conventions (perl, python, etc.). Most common forms work as expected.
+
+Options:
+EOS";
+
+auto helpTextOptions = q"EOS
+Synopsis: tsv-filter [options] [file...]
+
+Options:
 EOS";
 
 /**
@@ -514,11 +523,12 @@ void fieldFieldNumOptionHandler(
 struct TsvFilterOptions {
     FieldsPredicate[] tests;         // Derived from tests
     size_t maxFieldIndex;            // Derived from tests
-    bool hasHeader = false;          // --header
+    bool hasHeader = false;          // --H|header
     bool invert = false;             // --invert
     bool disjunct = false;           // --or
     char delim = '\t';               // --delimiter
-    bool helpBrief = false;          // --help-brief
+    bool helpVerbose = false;        // --help-verbose
+    bool helpOptions = false;        // --help-options
 
     /* Returns a tuple. First value is true if command line arguments were successfully
      * processed and execution should continue, or false if an error occurred or the user
@@ -588,8 +598,11 @@ struct TsvFilterOptions {
             arraySep = ",";    // Use comma to separate values in command line options
             auto r = getoptInorder(
                 cmdArgs,
-                "help-brief",    "     Print brief help.", &helpBrief,
-                "header",          "     Treat the first line of each file as a header.", &hasHeader,
+                "help-verbose",    "     Print full help.", &helpVerbose,
+                "help-options",    "     Print the options list by itself.", &helpOptions,
+                 std.getopt.config.caseSensitive,
+                "H|header",        "     Treat the first line of each file as a header.", &hasHeader,
+                std.getopt.config.caseInsensitive,
                 "or",              "     Evaluate tests as an OR rather than an AND.", &disjunct, 
                 "v|invert",        "     Invert the filter, printing lines that do not match.", &invert,
                 "d|delimiter",     "CHR  Field delimiter. Default: TAB. (Single byte UTF-8 characters only.)", &delim,
@@ -640,12 +653,18 @@ struct TsvFilterOptions {
                 "ff-reldiff-le",   "FIELD1:FIELD2:NUM   abs(FIELD1 - FIELD2) / min(abs(FIELD1), abs(FIELD2)) <= NUM", &handlerFFRelDiffLE,
                 "ff-reldiff-gt",   "FIELD1:FIELD2:NUM   abs(FIELD1 - FIELD2) / min(abs(FIELD1), abs(FIELD2))  > NUM", &handlerFFRelDiffGT,
                 );
-            
+
+            /* Both help texts are a bit long. In this case, for "regular" help, don't
+             * print options, just the text. The text summarizes the options.
+             */
             if (r.helpWanted) {
-                defaultGetoptPrinter(helpText, r.options);
+                stdout.write(helpText); 
                 return tuple(false, 0);
-            } else if (helpBrief) {
-                stdout.write(helpTextBrief); 
+            } else if (helpVerbose) {
+                defaultGetoptPrinter(helpTextVerbose, r.options);
+                return tuple(false, 0);
+            } else if (helpOptions) {
+                defaultGetoptPrinter(helpTextOptions, r.options);
                 return tuple(false, 0);
             }
         } catch (Exception exc) {

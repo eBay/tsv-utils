@@ -27,6 +27,7 @@ echo "-----------------" >> ${basic_tests_1}
 echo "" >> ${basic_tests_1}; echo "====Numeric tests===" >> ${basic_tests_1}
 
 runtest ${prog} "--header --eq 2:1 input1.tsv" ${basic_tests_1}
+runtest ${prog} "-H --eq 2:1 input1.tsv" ${basic_tests_1}
 runtest ${prog} "--header --eq 2:1. input1.tsv" ${basic_tests_1}
 runtest ${prog} "--header --eq 2:1.0 input1.tsv" ${basic_tests_1}
 runtest ${prog} "--header --eq 2:2 input1.tsv" ${basic_tests_1}

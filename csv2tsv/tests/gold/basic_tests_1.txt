@@ -119,6 +119,16 @@ jkl	mno	pqr
 ABC	DEF	GHI
 JKL	MNO	PQR
 
+====[csv2tsv -H header1.csv header2.csv header3.csv header4.csv header5.csv]====
+field1	field2	field3
+123	456	789
+234	567	890
+345	678	901
+abc	def	ghi
+jkl	mno	pqr
+ABC	DEF	GHI
+JKL	MNO	PQR
+
 ====[cat header3.csv | csv2tsv --header -- header1.csv header2.csv - header4.csv header5.csv]====
 field1	field2	field3
 123	456	789

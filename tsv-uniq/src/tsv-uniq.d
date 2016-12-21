@@ -22,12 +22,16 @@ import std.stdio;
 import std.format : format;
 import std.typecons : tuple;
 
-auto helpTextBrief = q"EOS
+auto helpText = q"EOS
 Synopsis: tsv-uniq [options] [file...]
+
+tsv-uniq filters out duplicate lines using fields as a key. Filtering is based
+on the entire line if a key is not provided.
+
 Options:
 EOS";
 
-auto helpText = q"EOS
+auto helpTextVerbose = q"EOS
 Synopsis: tsv-uniq [options] [file...]
 
 tsv-uniq identifies equivalent lines in tab-separated value files. Input is read
@@ -55,7 +59,7 @@ struct TsvUniqOptions {
     enum defaultEquivHeader = "equiv_id";
     enum defaultEquivStartID = 1;
     
-    bool helpBrief = false;                   // --help-brief
+    bool helpVerbose = false;                 // --help-verbose
     size_t[] fields;                          // --fields
     bool hasHeader = false;                   // --header
     bool equivMode = false;                   // --equiv
@@ -81,8 +85,10 @@ struct TsvUniqOptions {
             arraySep = ",";    // Use comma to separate values in command line options
             auto r = getopt(
                 cmdArgs,
-                "help-brief",    "          Print brief help.", &helpBrief,
-                "header",        "          Treat the first line of each file as a header.", &hasHeader,
+                "help-verbose",  "          Print full help.", &helpVerbose,
+                std.getopt.config.caseSensitive,
+                "H|header",      "          Treat the first line of each file as a header.", &hasHeader,
+                std.getopt.config.caseInsensitive,
                 "f|fields",      "n[,n...]  Fields to use as the key. Default: 0 (entire line).", &fields,
                 "i|ignore-case", "          Ignore case when comparing keys.", &ignoreCase,
                 "e|equiv",       "          Output equiv class IDs rather than uniq'ing entries.", &equivMode,
@@ -94,8 +100,8 @@ struct TsvUniqOptions {
             if (r.helpWanted) {
                 defaultGetoptPrinter(helpText, r.options);
                 return tuple(false, 0);
-            } else if (helpBrief) {
-                defaultGetoptPrinter(helpTextBrief, r.options);
+            } else if (helpVerbose) {
+                defaultGetoptPrinter(helpTextVerbose, r.options);
                 return tuple(false, 0);
             }
 

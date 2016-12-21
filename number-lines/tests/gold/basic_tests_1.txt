@@ -163,6 +163,15 @@ line^The first line - Is it a header?
 19		
 20	Previous line a single tab
 
+====[number-lines -H input2.txt input2.txt input2.txt]====
+line	The first line
+1	The second line
+2	The third line
+3	The second line
+4	The third line
+5	The second line
+6	The third line
+
 ====[number-lines --header input1.txt input2.txt empty-file.txt one-line-file.txt]====
 line	The first line - Is it a header?
 1	abc	def	ghi

@@ -382,9 +382,9 @@ $ tsv-uniq --help  # Valid
 $ tsv-uniq -help   # Invalid.
 ```
 
-#### Help (-h, --help, --help-brief)
+#### Help (-h, --help, --help-verbose)
 
-All tools print help if given the `-h` or `--help` option. Several tools provide a brief form of help with the `--help-brief` option.
+All tools print help if given the `-h` or `--help` option. Many of the tools provide more details with the `--help-verbose` option.
 
 #### Field indices
 
@@ -400,9 +400,9 @@ Any character can be used as a delimiter, TAB is the default. However, there is 
 
 Aside from a header line, all lines are expected to have data. There is no comment mechanism and no special handling for blank lines. Tools taking field indices as arguments expect the specified fields to be available on every line.
 
-#### Headers (--header)
+#### Headers (-H, --header)
 
-Most tools handle the first line of files as a header when given the `--header` option. For example, `tsv-filter` passes the header through without filtering it. When `--header` is used, all files and stdin are assumed to have header lines. Only one header line is written to stdout. If multiple files are being processed, header lines from subsequent files are discarded.
+Most tools handle the first line of files as a header when given the `-H` or `--header` option. For example, `tsv-filter` passes the header through without filtering it. When `--header` is used, all files and stdin are assumed to have header lines. Only one header line is written to stdout. If multiple files are being processed, header lines from subsequent files are discarded.
 
 #### Multiple files and standard input
 
@@ -421,8 +421,9 @@ Filter lines of tab-delimited files via comparison tests against fields. Multipl
 
 **General options:**
 * `--help` - Print help.
-* `--help-brief` - Print brief help (option summary).
-* `--header` - Treat the first line of each file as a header.
+* `--help-verbose` - Print detailed help.
+* `--help-options` - Print the options list by itself.
+* `--H|header` - Treat the first line of each file as a header.
 * `--d|delimiter CHR` - Field delimiter. Default: TAB. (Single byte UTF-8 characters only.)
 * `--or` - Evaluate tests as an OR rather than an AND. This applies globally.
 * `--v|invert` - Invert the filter, printing lines that do not match. This applies globally.
@@ -524,18 +525,18 @@ $ tsv-filter --regex '2:\p{Cyrillic}' data.tsv
 tsv-join matches input lines against lines from a 'filter' file. The match is based on exact match comparison of one or more 'key' fields. Fields are TAB delimited by default. Matching lines are written to standard output, along with any additional fields from the key file that have been specified.
 
 **Options:**
+* `--h|help` - Print help.
+* `--h|help-verbose` - Print detailed help.
 * `--f|filter-file FILE` - (Required) File with records to use as a filter.
 * `--k|key-fields n[,n...]` - Fields to use as join key. Default: 0 (entire line).
 * `--d|data-fields n[,n...]` - Data record fields to use as join key, if different than --key-fields.
 * `--a|append-fields n[,n...]` - Filter fields to append to matched records.
-* `--header` - Treat the first line of each file as a header.
+* `--H|header` - Treat the first line of each file as a header.
 * `--p|prefix STR` - String to use as a prefix for --append-fields when writing a header line.
 * `--w|write-all STR` - Output all data records. STR is the --append-fields value when writing unmatched records. This is an outer join.
 * `--e|exclude` - Exclude matching records. This is an anti-join.
 * `--delimiter CHR` - Field delimiter. Default: TAB. (Single byte UTF-8 characters only.)
 * `--z|allow-duplicate-keys` - Allow duplicate keys with different append values (last entry wins). Default behavior is that this is an error.
-* `--h|help` - Print help.
-* `--h|help-brief` - Print brief help.
 
 **Examples:**
 
@@ -582,15 +583,15 @@ The alternate to 'uniq' mode is 'equiv-class' identification. In this mode, all 
 **Synopsis:** tsv-uniq [options] [file...]
 
 **Options:**
-* `--header` - Treat the first line of each file as a header.
+* `-h|help` - Print help.
+* `--help-verbose` - Print detailed help.
+* `--H|header` - Treat the first line of each file as a header.
 * `--f|fields n[,n...]` - Fields to use as the key. Default: 0 (entire line).
 * `--i|ignore-case` - Ignore case when comparing keys.
 * `--e|equiv` - Output equiv class IDs rather than uniq'ing entries.
 * `--equiv-header STR` - Use STR as the equiv-id field header. Applies when using '--header --equiv'. Default: 'equiv_id'.
 * `--equiv-start INT` - Use INT as the first equiv-id. Default: 1.
 * `--d|delimiter CHR` - Field delimiter. Default: TAB. (Single byte UTF-8 characters only.)
-* `-h|help` - Print help.
-* `--help-brief` - Print brief help.
 
 **Examples:**
 ```
@@ -620,11 +621,11 @@ $ tsv-uniq -f 1,2 --equiv --header data.tsv
 tsv-select reads files or standard input and writes specified fields to standard output in the order listed. Similar to 'cut' with the ability to reorder fields. Fields can be listed more than once, and fields not listed can be output using the `--rest` option. When working with multiple files, the `--header` option can be used to retain only the header from the first file.
 
 **Options:**
+* `--h|help` - Print help.
 * `--H|header` - Treat the first line of each file as a header. 
 * `--f|fields n[,n...]` - (Required) Fields to extract. Fields are output in the order listed.
 * `--r|rest none|first|last` - Location for remaining fields. Default: none
 * `--d|delimiter CHR` - Character to use as field delimiter. Default: TAB. (Single byte UTF-8 characters only.)
-* `--h|help` - Print help.
 
 **Examples:**
 ```
@@ -693,8 +694,8 @@ Summarization operators available are:
 Calculations hold onto the minimum data needed while reading data. A few operations like median keep all data values in memory. These operations will start to encounter performance issues as available memory becomes scarce. The size that can be handled effectively is machine dependent, but often quite large files can be handled. Operations requiring numeric entries will signal an error and terminate processing if a non-numeric entry is found.
 
 **Options:**
-* `--h|help` - Brief help.
-* `--help-verbose` - Print full help.
+* `--h|help` - Print help.
+* `--help-verbose` - Print detailed help.
 * `--g|group-by n[,n...]` - Fields to use as key.
 * `--H|header` - Treat the first line of each file as a header.
 * `--w|write-header` - Write an output header even if there is no input header.
@@ -746,12 +747,13 @@ This program does not validate CSV correctness, but will terminate with an error
 UTF-8 input is assumed. Convert other encodings prior to invoking this tool.
 
 **Options:**
-* `--header` - Treat the first line of each file as a header. Only the header of the first file is output.
+* `--h|help` - Print help.
+* `--help-verbose` - Print detailed help.
+* `--H|header` - Treat the first line of each file as a header. Only the header of the first file is output.
 * `--q|quote CHR` - Quoting character in CSV data. Default: double-quote (")
 * `--c|csv-delim CHR` - Field delimiter in CSV data. Default: comma (,).
 * `--t|tsv-delim CHR` - Field delimiter in TSV data. Default: TAB
 * `--r|replacement STR` - Replacement for newline and TSV field delimiters found in CSV input. Default: Space.
-* `--h|help` - Print help.
 
 ### number-lines reference
 
@@ -760,11 +762,11 @@ UTF-8 input is assumed. Convert other encodings prior to invoking this tool.
 number-lines reads from files or standard input and writes each line to standard output preceded by a line number. It is a simplified version of the Unix 'nl' program. It supports one feature 'nl' does not: the ability to treat the first line of files as a header. This is useful when working with tab-separated-value files. If header processing used, a header line is written for the first file, and the header lines are dropped from any subsequent files.
 
 **Options:**
-* `--header` - Treat the first line of each file as a header. The first input file's header is output, subsequent file headers are discarded.
+* `--h|help` - Print help.
+* `--H|header` - Treat the first line of each file as a header. The first input file's header is output, subsequent file headers are discarded.
 * `--s|header-string STR` - String to use as the header for the line number field. Implies --header. Default: 'line'.
 * `--n|start-number NUM` - Number to use for the first line. Default: 1.
 * `--d|delimiter CHR` - Character appended to line number, preceding the rest of the line. Default: TAB (Single byte UTF-8 characters only.)
-* `--h|help` - Print help.
 
 **Examples:**
 ```

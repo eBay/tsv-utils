@@ -48,6 +48,7 @@ runtest ${prog} "input1.tsv --header -f 4,3" ${basic_tests_1}
 runtest ${prog} "input1.tsv --header -f 3,4 --ignore-case" ${basic_tests_1}
 runtest ${prog} "input1.tsv --header -f 5" ${basic_tests_1}
 runtest ${prog} "input1.tsv --header -f 3,4 --equiv --ignore-case" ${basic_tests_1}
+runtest ${prog} "input1.tsv -H -f 3,4 --equiv --ignore-case" ${basic_tests_1}
 runtest ${prog} "input1.tsv --header -f 3,4 --equiv --equiv-start 10 --ignore-case" ${basic_tests_1}
 runtest ${prog} "input1.tsv --header -f 3,4 --equiv --equiv-start 10 --equiv-header id --ignore-case" ${basic_tests_1}
 
