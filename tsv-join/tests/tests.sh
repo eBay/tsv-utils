@@ -50,6 +50,7 @@ echo "" >> ${basic_tests_1}; echo "====Single key, different data key===" >> ${b
 
 runtest ${prog} "--header -f input1.tsv -k 2 --data-fields 2 input2.tsv" ${basic_tests_1}
 runtest ${prog} "--header -f input1.tsv -k 1 -d 3 input2.tsv" ${basic_tests_1}
+runtest ${prog} "-H -f input1.tsv -k 1 -d 3 input2.tsv input2.tsv" ${basic_tests_1}
 runtest ${prog} "--header -f input1.tsv -k 2 -d 3 input2.tsv" ${basic_tests_1}
 runtest ${prog} "--header -f input1.tsv -k 3 -d 2 input2.tsv" ${basic_tests_1}
 runtest ${prog} "--header -f input1.tsv -k 2 -d 3 -e input2.tsv" ${basic_tests_1}

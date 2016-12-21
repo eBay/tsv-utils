@@ -201,6 +201,11 @@ f1	f2	f3	f4	f5
 f1	f2	f3	f4	f5
 14	-1	1	1489b	1421b
 
+====[tsv-join -H -f input1.tsv -k 1 -d 3 input2.tsv input2.tsv]====
+f1	f2	f3	f4	f5
+14	-1	1	1489b	1421b
+14	-1	1	1489b	1421b
+
 ====[tsv-join --header -f input1.tsv -k 2 -d 3 input2.tsv]====
 f1	f2	f3	f4	f5
 3	nnn	GGG	336b	3b

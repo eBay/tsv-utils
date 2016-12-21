@@ -7,6 +7,10 @@ Basic tests set 1
 F1	F2	F3	F4
 1	1.0	a	A
 
+====[tsv-filter -H --eq 2:1 input1.tsv]====
+F1	F2	F3	F4
+1	1.0	a	A
+
 ====[tsv-filter --header --eq 2:1. input1.tsv]====
 F1	F2	F3	F4
 1	1.0	a	A

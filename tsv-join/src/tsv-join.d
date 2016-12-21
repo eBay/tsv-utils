@@ -17,12 +17,16 @@ import std.stdio;
 import std.format : format;
 import std.typecons : tuple;
 
-auto helpTextBrief = q"EOS
+auto helpText = q"EOS
 Synopsis: tsv-join --filter-file file [options] file [file...]
+
+tsv-join matches input lines against lines from a 'filter' file. The match is
+based on fields or the entire line. Use '--help-verbose' for more details.
+ 
 Options:
 EOS";
 
-auto helpText = q"EOS
+auto helpTextVerbose = q"EOS
 Synopsis: tsv-join --filter-file file [options] file [file...]
 
 tsv-join matches input lines against lines from a 'filter' file. The match is
@@ -56,13 +60,13 @@ struct TsvJoinOptions {
     size_t[] keyFields;              // --key-fields
     size_t[] dataFields;             // --data-fields
     size_t[] appendFields;           // --append-fields
-    bool hasHeader = false;          // --header
+    bool hasHeader = false;          // --H|header
     string appendHeaderPrefix = "";  // --append-header-prefix
     bool writeAll = false;           // --write-all
     string writeAllValue;            // --write-all
     bool exclude = false;            // --exclude
     char delim = '\t';               // --delimiter
-    bool helpBrief = false;          // --help-brief
+    bool helpVerbose = false;        // --help-verbose
     bool allowDupliateKeys = false;  // --allow-duplicate-keys
     bool keyIsFullLine = false;      // Derived: --key-fields 0
     bool dataIsFullLine = false;     // Derived: --data-fields 0
@@ -91,12 +95,14 @@ struct TsvJoinOptions {
             arraySep = ",";    // Use comma to separate values in command line options
             auto r = getopt(
                 cmdArgs,
-                "help-brief",      "          Print brief help.", &helpBrief,
+                "help-verbose",    "          Print full help.", &helpVerbose,
                 "f|filter-file",   "FILE      (Required) File with records to use as a filter.", &filterFile,
                 "k|key-fields",    "n[,n...]  Fields to use as join key. Default: 0 (entire line).", &keyFields,
                 "d|data-fields",   "n[,n...]  Data record fields to use as join key, if different than --key-fields.", &dataFields,
                 "a|append-fields", "n[,n...]  Filter fields to append to matched records.", &appendFields,
-                "header",          "          Treat the first line of each file as a header.", &hasHeader,
+                std.getopt.config.caseSensitive,
+                "H|header",        "          Treat the first line of each file as a header.", &hasHeader,
+                std.getopt.config.caseInsensitive,
                 "p|prefix",        "STR       String to use as a prefix for --append-fields when writing a header line.", &appendHeaderPrefix,
                 "w|write-all",     "STR       Output all data records. STR is the --append-fields value when writing unmatched records.", &writeAllHandler,
                 "e|exclude",       "          Exclude matching records.", &exclude,
@@ -108,8 +114,8 @@ struct TsvJoinOptions {
             if (r.helpWanted) {
                 defaultGetoptPrinter(helpText, r.options);
                 return tuple(false, 0);
-            } else if (helpBrief) {
-                defaultGetoptPrinter(helpTextBrief, r.options);
+            } else if (helpVerbose) {
+                defaultGetoptPrinter(helpTextVerbose, r.options);
                 return tuple(false, 0);
             }
 

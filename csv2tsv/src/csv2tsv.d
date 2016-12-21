@@ -18,6 +18,16 @@ import std.typecons : Nullable, tuple;
 auto helpText = q"EOS
 Synopsis: csv2tsv [options] [file...]
 
+csv2tsv converts comma-separated text (CSV) to tab-separated format (TSV). Records
+are read from files or standard input, converted records written to standard output.
+Use '--help-verbose' for details the CSV formats accepted.
+
+Options:
+EOS";
+
+auto helpTextVerbose = q"EOS
+Synopsis: csv2tsv [options] [file...]
+
 csv2tsv converts CSV (comma-separated) text to TSV (tab-separated) format. Records
 are read from files or standard input, converted records written to standard output.
 
@@ -58,6 +68,7 @@ EOS";
 Container for command line options. 
  */
 struct Csv2tsvOptions {
+    bool helpVerbose = false;          // --help-verbose
     bool hasHeader = false;            // --header
     char csvQuoteChar = '"';           // --q|quote
     char csvDelimChar = ',';           // --c|csv-delim
@@ -71,7 +82,10 @@ struct Csv2tsvOptions {
         try {
             auto r = getopt(
                 cmdArgs,
-                "header",        "     Treat the first line of each file as a header. Only the header of the first file is output.", &hasHeader,
+                "help-verbose",  "     Print full help.", &helpVerbose,
+                std.getopt.config.caseSensitive,
+                "H|header",      "     Treat the first line of each file as a header. Only the header of the first file is output.", &hasHeader,
+                std.getopt.config.caseSensitive,
                 "q|quote",       "CHR  Quoting character in CSV data. Default: double-quote (\")", &csvQuoteChar,
                 "c|csv-delim",   "CHR  Field delimiter in CSV data. Default: comma (,).", &csvDelimChar,
                 "t|tsv-delim",   "CHR  Field delimiter in TSV data. Default: TAB", &tsvDelimChar,
@@ -80,6 +94,9 @@ struct Csv2tsvOptions {
 
             if (r.helpWanted) {
                 defaultGetoptPrinter(helpText, r.options);
+                return tuple(false, 0);
+            } else if (helpVerbose) {
+                defaultGetoptPrinter(helpTextVerbose, r.options);
                 return tuple(false, 0);
             }
 

@@ -75,7 +75,7 @@ struct TsvSelectOptions {
             arraySep = ",";    // Use comma to separate values in command line options
             auto r = getopt(
                 cmdArgs,
-                std.getopt.config.caseSensitive,  
+                std.getopt.config.caseSensitive,
                 "H|header",    "                 Treat the first line of each file as a header.", &hasHeader,
                 std.getopt.config.caseInsensitive,
                 "f|fields",    "n[,n...]         (Required) Fields to extract. Fields are output in the order listed.", &fields,

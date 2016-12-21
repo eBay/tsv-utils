@@ -54,7 +54,9 @@ struct NumberLinesOptions {
         try {
             auto r = getopt(
                 cmdArgs,
-                "header",          "     Treat the first line of each file as a header. The first input file's header is output, subsequent file headers are discarded.", &hasHeader,
+                std.getopt.config.caseSensitive,
+                "H|header",        "     Treat the first line of each file as a header. The first input file's header is output, subsequent file headers are discarded.", &hasHeader,
+                std.getopt.config.caseInsensitive,
                 "s|header-string", "STR  String to use in the header row. Implies --header. Default: 'line'", &headerString,
                 "n|start-number",  "NUM  Number to use for the first line. Default: 1", &startNum,
                 "d|delimiter",     "CHR  Character appended to line number, preceding the rest of the line. Default: TAB (Single byte UTF-8 characters only.)", &delim

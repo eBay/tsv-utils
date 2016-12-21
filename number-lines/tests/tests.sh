@@ -39,6 +39,7 @@ echo "" >> ${basic_tests_1}; echo "====Multi-file Tests===" >> ${basic_tests_1}
 runtest ${prog} "input1.txt input2.txt empty-file.txt one-line-file.txt" ${basic_tests_1}
 runtest ${prog} "input1.txt one-line-file.txt input2.txt empty-file.txt" ${basic_tests_1}
 runtest ${prog} "empty-file.txt input1.txt one-line-file.txt input2.txt input1.txt" ${basic_tests_1}
+runtest ${prog} "-H input2.txt input2.txt input2.txt" ${basic_tests_1}
 runtest ${prog} "--header input1.txt input2.txt empty-file.txt one-line-file.txt" ${basic_tests_1}
 runtest ${prog} "--header -n 10 input1.txt one-line-file.txt input2.txt empty-file.txt" ${basic_tests_1}
 runtest ${prog} "--header -s LINENUM empty-file.txt input1.txt one-line-file.txt input2.txt input1.txt" ${basic_tests_1}
