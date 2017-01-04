@@ -1,0 +1,28 @@
+{
+    "name": "tsv-append",
+    "description": "Concatenate TSV files. Header aware, with support for source file tracking.",
+    "homepage": "https://github.com/eBay/tsv-utils-dlang",
+    "authors": ["Jon Degenhardt"],
+    "copyright": "Copyright (c) 2017, eBay Software Foundation",
+    "license": "BSL-1.0",
+    "targetType": "executable",
+    "configurations": [
+        {
+            "name" : "executable",
+            "targetName": "tsv-append",
+            "targetPath": "../bin/",
+            "mainSourceFile": "src/tsv-append.d",
+            "dependencies": {
+                "tsv-utils-dlang:common": "*"
+            }
+        },
+        {
+            "name": "unittest",
+            "targetType": "none"
+        }
+    ],
+    "buildTypes": {
+        "debug": { "buildOptions": ["debugMode", "optimize"] },
+        "release": { "buildOptions": ["releaseMode", "optimize", "inline"], "dflags": ["-boundscheck=off"] }
+    }
+}

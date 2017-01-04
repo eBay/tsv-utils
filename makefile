@@ -1,4 +1,4 @@
-appdirs =  csv2tsv number-lines tsv-filter tsv-join tsv-select tsv-uniq tsv-summarize
+appdirs =  csv2tsv number-lines tsv-filter tsv-join tsv-select tsv-uniq tsv-summarize tsv-append
 subdirs = common $(appdirs)
 
 release: make_subdirs
