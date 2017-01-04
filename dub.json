@@ -11,9 +11,10 @@
         "tsv-utils-dlang:common": "*",
         "tsv-utils-dlang:csv2tsv": "*",
         "tsv-utils-dlang:number-lines": "*",
-        "tsv-utils-dlang:tsv-select": "*",
+        "tsv-utils-dlang:tsv-append": "*",
         "tsv-utils-dlang:tsv-filter": "*",
         "tsv-utils-dlang:tsv-join": "*",
+        "tsv-utils-dlang:tsv-select": "*",
         "tsv-utils-dlang:tsv-summarize": "*",
         "tsv-utils-dlang:tsv-uniq": "*"
     },
@@ -21,9 +22,10 @@
         "./common/",
         "./csv2tsv/",
         "./number-lines/",
-        "./tsv-select/",
+        "./tsv-append/",
         "./tsv-filter/",
         "./tsv-join/",
+        "./tsv-select/",
         "./tsv-summarize/",
         "./tsv-uniq/"
     ],

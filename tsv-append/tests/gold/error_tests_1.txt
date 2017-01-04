@@ -1,0 +1,14 @@
+Error test set 1
+----------------
+
+====[tsv-append no_such_file.tsv]====
+Error [tsv-append]: Cannot open file `no_such_file.tsv' in mode `rb' (No such file or directory)
+
+====[tsv-append -f none=no_such_file.tsv]====
+Error [tsv-append]: Cannot open file `no_such_file.tsv' in mode `rb' (No such file or directory)
+
+====[tsv-append --no-such-param input1x3.tsv]====
+[tsv-append] Error processing command line arguments: Unrecognized option --no-such-param
+
+====[tsv-append -d ß input1x3.tsv]====
+[tsv-append] Error processing command line arguments: Invalid UTF-8 sequence (at index 1)

@@ -13,7 +13,7 @@ Another use-case:
 
     dub fetch --local <package>
     cd <package>
-    dub build
+    dub run
 
 This executable is intended to handle these cases. It also has one additional function:
 inform the user where the binaries are stored so they can be added to the path.
@@ -56,7 +56,7 @@ int main(string[] args) {
 
     // Note: At present 'common' is a source library and does not need a standalone compilation step.
     auto packageName = "tsv-utils-dlang";
-    auto subPackages = ["csv2tsv", "number-lines", "tsv-filter", "tsv-join", "tsv-select", "tsv-summarize", "tsv-uniq"];
+    auto subPackages = ["csv2tsv", "number-lines", "tsv-append", "tsv-filter", "tsv-join", "tsv-select", "tsv-summarize", "tsv-uniq"];
     auto buildCmdArgs = ["dub", "build", "<package>", "--force", "-b"];
     buildCmdArgs ~= debugBuild ? "debug" : "release";
     if (compiler.length > 0) {

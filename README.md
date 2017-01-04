@@ -24,6 +24,7 @@ A short description of each tool follows. There is more detail in the [tool refe
 * [tsv-uniq](#tsv-uniq) - Filter out duplicate lines using fields as a key.
 * [tsv-select](#tsv-select) - Keep a subset of the columns in the input.
 * [tsv-summarize](#tsv-summarize) - Aggregate field values, summarizing across the entire file or grouped by key.
+* [tsv-append](#tsv-append) - Concatenate TSV files. Header aware; supports source file tracking.
 * [csv2tsv](#csv2tsv) - Convert CSV files to TSV.
 * [number-lines](#number-lines) - Number the input lines.
 * [Useful bash aliases](#useful-bash-aliases)
@@ -84,7 +85,7 @@ See the [tsv-select reference](#tsv-select-reference) for details.
 
 ### tsv-summarize
 
-tsv-summarize runs aggregation operations on fields. For example, generating the sum or median of a field's values. Summarization calculations can be run across the entire input or can be grouped by key fields. As an example, consider the file `data.tsv`:
+`tsv-summarize` runs aggregation operations on fields. For example, generating the sum or median of a field's values. Summarization calculations can be run across the entire input or can be grouped by key fields. As an example, consider the file `data.tsv`:
 ```
 color   weight
 red     6
@@ -108,6 +109,18 @@ blue   25          12.5
 Multiple fields can be used as the `--group-by` key. The file's sort order does not matter, there is no need to sort in the `--group-by` order first.
 
 See the [tsv-summarize reference](#tsv-summarize-reference) for the list of statistical and other aggregation operations available.
+
+### tsv-append
+
+`tsv-append` concatenates multiple TSV files, similar to the Unix 'cat' utility. It is header aware, writing the header from only the first file. It also supports source tracking, adding a column indicating the original file to each row.
+
+Concatenation with header support is useful when preparing data for traditional Unix utilities like `sort` and `sed` or applications that read a single file.
+
+Source tracking is useful when creating long/narrow form tabular data. This format is used by many statistics and data mining packages. (See [Wide & Long Data - Stanford University](http://stanford.edu/~ejdemyr/r-tutorials/wide-and-long/) or Hadley Wickham's [Tidy data](http://vita.had.co.nz/papers/tidy-data.html) for more info.)
+
+In this scenario, files have been used to capture related data sets, the difference between data sets being a condition represented by the file. For example, results from different variants of an experiment might each be recorded in their own files. Retaining the source file as an output column preserves the condition represented by the file. The source values default to the file names, but this can be customized.
+
+See the [tsv-append reference](#tsv-append-reference) for the complete list of options available.
 
 ### csv2tsv
 
@@ -364,6 +377,8 @@ This section provides more detailed documentation about the different tools as w
 * [tsv-join reference](#tsv-join-reference)
 * [tsv-uniq reference](#tsv-uniq-reference)
 * [tsv-select reference](#tsv-select-reference)
+* [tsv-summarize reference](#tsv-summarize-reference)
+* [tsv-append reference](#tsv-append-reference)
 * [csv2tsv reference](#csv2tsv-reference)
 * [number-lines reference](#number-lines-reference)
 
@@ -721,6 +736,39 @@ Calculations hold onto the minimum data needed while reading data. A few operati
 * `--unique-count n[,n...][:STR]`  Number of unique values. (Reads all values into memory).
 * `--mode n[,n...][:STR]` - Mode. The most frequent value. (Reads all values into memory.)
 * `--values n[,n...][:STR]` - All the values, separated by --v|values-delimiter. (Reads all values into memory.)
+
+### tsv-append reference
+
+**Synopsis:** tsv-append [options] [file...]
+
+tsv-append concatenates multiple TSV files, similar to the Unix 'cat' utility. Unlike 'cat', it is header aware ('--H|header'), writing the header from only the first file. It also supports source tracking, adding a column indicating the original file to each row. Results are written to standard output.
+
+Concatenation with header support is useful when preparing data for traditional Unix utilities like 'sort' and 'sed' or applications that read a single file.
+
+Source tracking is useful when creating long/narrow form tabular data, a format used by many statistics and data mining packages. In this scenario, files have been used to capture related data sets, the difference between data sets being a condition represented by the file. For example, results from different variants of an experiment might each be recorded in their own files. Retaining the source file as an output column preserves the condition represented by the file.
+
+The file-name (without extension) is used as the source value. This can customized using the --f|file option.
+
+Example: Header processing:
+
+   $ tsv-append -H file1.tsv file2.tsv file3.tsv
+
+Example: Header processing and source tracking:
+
+   $ tsv-append -H -t file1.tsv file2.tsv file3.tsv
+
+Example: Source tracking with custom values:
+
+   $ tsv-append -H -s test_id -f test1=file1.tsv -f test2=file2.tsv
+
+**Options:**
+* `--h|help` - Print help.
+* `--help-verbose` - Print detailed help.
+* `--H|header` - Treat the first line of each file as a header.
+* `--t|track-source` - Track the source file. Adds an column with the source name.
+* `--s|source-header STR` - Use STR as the header for the source column. Implies --H|header and --t|track-source. Default: 'file'
+* `--f|file STR=FILE` - Read file FILE, using STR as the 'source' value. Implies --t|track-source.
+* `--d|delimiter CHR` - Field delimiter. Default: TAB. (Single byte UTF-8 characters only.)
 
 ### csv2tsv reference
 

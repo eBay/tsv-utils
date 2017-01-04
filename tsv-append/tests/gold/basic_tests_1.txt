@@ -1,0 +1,270 @@
+Basic tests set 1
+-----------------
+
+====[tsv-append input3x2.tsv input3x5.tsv]====
+field1	field2	field3
+abc	def	ghi
+field1	field2	field3
+jkl	mno	pqr
+123	456	789
+xy1	xy2	xy3
+pqx	pqy	pqz
+
+====[tsv-append input1x3.tsv input1x4.tsv]====
+field1
+row 1
+row 2
+field1
+next-empty
+
+last-line
+
+====[tsv-append input3x2.tsv input1x3.tsv input3x5.tsv input1x4.tsv]====
+field1	field2	field3
+abc	def	ghi
+field1
+row 1
+row 2
+field1	field2	field3
+jkl	mno	pqr
+123	456	789
+xy1	xy2	xy3
+pqx	pqy	pqz
+field1
+next-empty
+
+last-line
+
+====[tsv-append input3x5.tsv]====
+field1	field2	field3
+jkl	mno	pqr
+123	456	789
+xy1	xy2	xy3
+pqx	pqy	pqz
+
+====[tsv-append --header input3x2.tsv input3x5.tsv]====
+field1	field2	field3
+abc	def	ghi
+jkl	mno	pqr
+123	456	789
+xy1	xy2	xy3
+pqx	pqy	pqz
+
+====[tsv-append -H input1x3.tsv input1x4.tsv]====
+field1
+row 1
+row 2
+next-empty
+
+last-line
+
+====[tsv-append -H input3x2.tsv input1x3.tsv input3x5.tsv input1x4.tsv]====
+field1	field2	field3
+abc	def	ghi
+row 1
+row 2
+jkl	mno	pqr
+123	456	789
+xy1	xy2	xy3
+pqx	pqy	pqz
+next-empty
+
+last-line
+
+====[tsv-append -H input3x5.tsv]====
+field1	field2	field3
+jkl	mno	pqr
+123	456	789
+xy1	xy2	xy3
+pqx	pqy	pqz
+
+====[tsv-append --track-source input3x2.tsv input3x5.tsv]====
+input3x2	field1	field2	field3
+input3x2	abc	def	ghi
+input3x5	field1	field2	field3
+input3x5	jkl	mno	pqr
+input3x5	123	456	789
+input3x5	xy1	xy2	xy3
+input3x5	pqx	pqy	pqz
+
+====[tsv-append -t input1x3.tsv input1x4.tsv]====
+input1x3	field1
+input1x3	row 1
+input1x3	row 2
+input1x4	field1
+input1x4	next-empty
+input1x4	
+input1x4	last-line
+
+====[tsv-append -t input3x2.tsv input1x3.tsv input3x5.tsv input1x4.tsv]====
+input3x2	field1	field2	field3
+input3x2	abc	def	ghi
+input1x3	field1
+input1x3	row 1
+input1x3	row 2
+input3x5	field1	field2	field3
+input3x5	jkl	mno	pqr
+input3x5	123	456	789
+input3x5	xy1	xy2	xy3
+input3x5	pqx	pqy	pqz
+input1x4	field1
+input1x4	next-empty
+input1x4	
+input1x4	last-line
+
+====[tsv-append -t input3x5.tsv]====
+input3x5	field1	field2	field3
+input3x5	jkl	mno	pqr
+input3x5	123	456	789
+input3x5	xy1	xy2	xy3
+input3x5	pqx	pqy	pqz
+
+====[tsv-append --header --track-source input3x2.tsv input3x5.tsv]====
+file	field1	field2	field3
+input3x2	abc	def	ghi
+input3x5	jkl	mno	pqr
+input3x5	123	456	789
+input3x5	xy1	xy2	xy3
+input3x5	pqx	pqy	pqz
+
+====[tsv-append -H -t input1x3.tsv input1x4.tsv]====
+file	field1
+input1x3	row 1
+input1x3	row 2
+input1x4	next-empty
+input1x4	
+input1x4	last-line
+
+====[tsv-append -H -t input3x2.tsv input1x3.tsv input3x5.tsv input1x4.tsv]====
+file	field1	field2	field3
+input3x2	abc	def	ghi
+input1x3	row 1
+input1x3	row 2
+input3x5	jkl	mno	pqr
+input3x5	123	456	789
+input3x5	xy1	xy2	xy3
+input3x5	pqx	pqy	pqz
+input1x4	next-empty
+input1x4	
+input1x4	last-line
+
+====[tsv-append -H -t input3x5.tsv]====
+file	field1	field2	field3
+input3x5	jkl	mno	pqr
+input3x5	123	456	789
+input3x5	xy1	xy2	xy3
+input3x5	pqx	pqy	pqz
+
+====[tsv-append --source-header source input3x2.tsv input3x5.tsv]====
+source	field1	field2	field3
+input3x2	abc	def	ghi
+input3x5	jkl	mno	pqr
+input3x5	123	456	789
+input3x5	xy1	xy2	xy3
+input3x5	pqx	pqy	pqz
+
+====[tsv-append --s source input1x3.tsv input1x4.tsv]====
+source	field1
+input1x3	row 1
+input1x3	row 2
+input1x4	next-empty
+input1x4	
+input1x4	last-line
+
+====[tsv-append -s source input3x2.tsv input1x3.tsv input3x5.tsv input1x4.tsv]====
+source	field1	field2	field3
+input3x2	abc	def	ghi
+input1x3	row 1
+input1x3	row 2
+input3x5	jkl	mno	pqr
+input3x5	123	456	789
+input3x5	xy1	xy2	xy3
+input3x5	pqx	pqy	pqz
+input1x4	next-empty
+input1x4	
+input1x4	last-line
+
+====[tsv-append -s source input3x5.tsv]====
+source	field1	field2	field3
+input3x5	jkl	mno	pqr
+input3x5	123	456	789
+input3x5	xy1	xy2	xy3
+input3x5	pqx	pqy	pqz
+
+====[tsv-append -H -s source input3x2.tsv input3x5.tsv]====
+source	field1	field2	field3
+input3x2	abc	def	ghi
+input3x5	jkl	mno	pqr
+input3x5	123	456	789
+input3x5	xy1	xy2	xy3
+input3x5	pqx	pqy	pqz
+
+====[tsv-append -H -t -s source input3x2.tsv input3x5.tsv]====
+source	field1	field2	field3
+input3x2	abc	def	ghi
+input3x5	jkl	mno	pqr
+input3x5	123	456	789
+input3x5	xy1	xy2	xy3
+input3x5	pqx	pqy	pqz
+
+====[tsv-append -t --file Input-A=input1x3.tsv --file Input-B=input1x4.tsv]====
+Input-A	field1
+Input-A	row 1
+Input-A	row 2
+Input-B	field1
+Input-B	next-empty
+Input-B	
+Input-B	last-line
+
+====[tsv-append -H -t -f Input-A=input1x3.tsv -f Input-B=input1x4.tsv]====
+file	field1
+Input-A	row 1
+Input-A	row 2
+Input-B	next-empty
+Input-B	
+Input-B	last-line
+
+====[tsv-append -H -t -s πηγή -f κόκκινος=input1x3.tsv -f άσπρο=input1x4.tsv]====
+πηγή	field1
+κόκκινος	row 1
+κόκκινος	row 2
+άσπρο	next-empty
+άσπρο	
+άσπρο	last-line
+
+====[cat input3x2.tsv | tsv-append]====
+field1	field2	field3
+abc	def	ghi
+
+====[cat input3x2.tsv | tsv-append -- - input3x5.tsv]====
+field1	field2	field3
+abc	def	ghi
+field1	field2	field3
+jkl	mno	pqr
+123	456	789
+xy1	xy2	xy3
+pqx	pqy	pqz
+
+====[cat input3x2.tsv | tsv-append -H -- - input3x5.tsv]====
+field1	field2	field3
+abc	def	ghi
+jkl	mno	pqr
+123	456	789
+xy1	xy2	xy3
+pqx	pqy	pqz
+
+====[cat input3x2.tsv | tsv-append -H input3x5.tsv -- -]====
+field1	field2	field3
+jkl	mno	pqr
+123	456	789
+xy1	xy2	xy3
+pqx	pqy	pqz
+abc	def	ghi
+
+====[cat input3x2.tsv | tsv-append -H -f standard-input=- -f 3x5=input3x5.tsv ]====
+file	field1	field2	field3
+standard-input	abc	def	ghi
+3x5	jkl	mno	pqr
+3x5	123	456	789
+3x5	xy1	xy2	xy3
+3x5	pqx	pqy	pqz
