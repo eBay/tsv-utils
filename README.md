@@ -1,4 +1,4 @@
-# Command line TSV Utilities in D
+# Command line utilities for tabular data files
 
 This is a set of command line utilities for working with tab-separated value files. They were originally developed in Perl and used for day-to-day work in a large scale data mining environment. One of the tools was re-written in D as an exercise exploring the language. Significant performance gains and agreeable programmer characteristics soon led to writing the other utilities D as well.
 
@@ -15,16 +15,16 @@ Information on the D programming language is available at: http://dlang.org/.
 
 ## The tools
 
-These tools were developed for working with reasonably large data files. Perhaps larger than ideal for direct use in an application like R, but not so big as to necessitate moving to Hadoop or similar distributed compute environments. They work like traditional Unix command line utilities such as `cut`, `sort`, `grep`, etc., and are intended to complement these tools. Each tool is a standalone executable. They follow common Unix conventions for pipeline programs. Data is read from files or standard input, results are written to standard output. The field separator defaults to TAB, but any character can be used. Input and output is UTF-8, and all operations are unicode ready, including regular expression match (`tsv-filter`). Documentation is available for each tool by invoking it with the `--help` option. If reading the code, look for the `helpText` variable near the top of the file.
+These tools were developed for working with reasonably large data files. Larger than ideal for loading entirely in memory in an application like R, but not so big as to necessitate moving to Hadoop or similar distributed compute environments. They work like traditional Unix command line utilities such as `cut`, `sort`, `grep`, etc., and are intended to complement these tools. Each tool is a standalone executable. They follow common Unix conventions for pipeline programs. Data is read from files or standard input, results are written to standard output. The field separator defaults to TAB, but any character can be used. Input and output is UTF-8, and all operations are unicode ready, including regular expression match (`tsv-filter`). Documentation is available for each tool by invoking it with the `--help` option. If reading the code, look for the `helpText` variable near the top of the file.
 
-A short description of each tool follows. There is more detail in the [tool reference](#tool-reference) section later in this file.
+The rest of this section contains a short description of each tool. There is more detail in the [tool reference](#tool-reference) section towards the end of file.
 
-* [tsv-filter](#tsv-filter) - Filter rows in input files.
-* [tsv-join](#tsv-join) - Join lines from multiple files using fields as a key.
-* [tsv-uniq](#tsv-uniq) - Filter out duplicate lines using fields as a key.
+* [tsv-filter](#tsv-filter) - Filter rows in input files via numeric and string comparisions.
 * [tsv-select](#tsv-select) - Keep a subset of the columns in the input.
 * [tsv-summarize](#tsv-summarize) - Aggregate field values, summarizing across the entire file or grouped by key.
+* [tsv-join](#tsv-join) - Join lines from multiple files using fields as a key.
 * [tsv-append](#tsv-append) - Concatenate TSV files. Header aware; supports source file tracking.
+* [tsv-uniq](#tsv-uniq) - Filter out duplicate lines using fields as a key.
 * [csv2tsv](#csv2tsv) - Convert CSV files to TSV.
 * [number-lines](#number-lines) - Number the input lines.
 * [Useful bash aliases](#useful-bash-aliases)
@@ -39,38 +39,12 @@ $ tsv-filter --ge 3:100 --le 3:200 --str-eq 4:red file.tsv
 
 This outputs lines where field 3 satisfies (100 <= fieldval <= 200) and field 4 matches 'red'.
 
-`tsv-filter` is the most widely applicable of the tools, as dataset pruning is a common task. Because it's stream oriented, it can handle arbitrarily large files. It is also convenient for quickly answering simple questions about a dataset. For example, to count the number of records with a non-zero value in field 3, use the command:
+`tsv-filter` is the most widely applicable of the tools, as dataset pruning is a common task. Because it's stream oriented, it can handle arbitrarily large files. It is quite fast, faster than other tools the author has tried. This makes it idea for preparing data for applications like R and Pandas. It is also convenient for quickly answering simple questions about a dataset. For example, to count the number of records with a non-zero value in field 3, use the command:
 ```
 $ tsv-filter --ne 3:0 file.tsv | wc -l
 ```
 
 See the [tsv-filter reference](#tsv-filter-reference) for details.
-
-### tsv-join
-
-Joins lines from multiple files based on a common key. One file, the 'filter' file, contains the records (lines) being matched. The other input files are scanned for matching records. Matching records are written to standard output, along with any designated fields from the filter file. In database parlance this is a hash semi-join. Example:
-```
-$ tsv-join --filter-file filter.tsv --key-fields 1,3 --append-fields 5,6 data.tsv
-```
-
-This reads `filter.tsv`, creating a lookup table keyed on fields 1 and 3. `data.tsv` is read, lines with a matching key are written to standard output with fields 5 and 6 from `filter.tsv` appended. This is a form of inner-join. Outer-joins and anti-joins can also be done.
-
-Common uses for `tsv-join` are to join related datasets or to filter one dataset based on another. Filter file entries are kept in memory, this limits the ultimate size that can be handled effectively. The author has found that filter files up to about 10 million lines are processed effectively, but performance starts to degrade after that.
-
-See the [tsv-join reference](#tsv-join-reference) for details.
-
-### tsv-uniq
-
-Similar in spirit to the Unix `uniq` tool, `tsv-uniq` filters a dataset so there is only one copy of each line. `tsv-uniq` goes beyond Unix `uniq` in a couple ways. First, data does not need to be sorted. Second, equivalence is based on a subset of fields rather than the full line. `tsv-uniq` can also be run in an 'equivalence class identification' mode, where equivalent entries are marked with a unique id rather than being filtered. An example uniq'ing a file on fields 2 and 3:
-```
-$ tsv-uniq -f 2,3 data.tsv
-```
-
-`tsv-uniq` operates on the entire line when no fields are specified. This is a useful alternative to the traditional `sort -u` or `sort | uniq` paradigms for identifying unique lines in unsorted files, as it is often quite a bit faster.
-
-As with `tsv-join`, this uses an in-memory lookup table to record unique entries. This ultimately limits the data sizes that can be processed. The author has found that datasets with up to about 10 million unique entries work fine, but performance degrades after that.
-
-See the [tsv-uniq reference](#tsv-uniq-reference) for details.
 
 ### tsv-select
 
@@ -110,6 +84,19 @@ Multiple fields can be used as the `--group-by` key. The file's sort order does 
 
 See the [tsv-summarize reference](#tsv-summarize-reference) for the list of statistical and other aggregation operations available.
 
+### tsv-join
+
+Joins lines from multiple files based on a common key. One file, the 'filter' file, contains the records (lines) being matched. The other input files are scanned for matching records. Matching records are written to standard output, along with any designated fields from the filter file. In database parlance this is a hash semi-join. Example:
+```
+$ tsv-join --filter-file filter.tsv --key-fields 1,3 --append-fields 5,6 data.tsv
+```
+
+This reads `filter.tsv`, creating a lookup table keyed on fields 1 and 3. `data.tsv` is read, lines with a matching key are written to standard output with fields 5 and 6 from `filter.tsv` appended. This is a form of inner-join. Outer-joins and anti-joins can also be done.
+
+Common uses for `tsv-join` are to join related datasets or to filter one dataset based on another. Filter file entries are kept in memory, this limits the ultimate size that can be handled effectively. The author has found that filter files up to about 10 million lines are processed effectively, but performance starts to degrade after that.
+
+See the [tsv-join reference](#tsv-join-reference) for details.
+
 ### tsv-append
 
 `tsv-append` concatenates multiple TSV files, similar to the Unix `cat` utility. It is header aware, writing the header from only the first file. It also supports source tracking, adding a column indicating the original file to each row.
@@ -121,6 +108,19 @@ Source tracking is useful when creating long/narrow form tabular data. This form
 In this scenario, files have been used to capture related data sets, the difference between data sets being a condition represented by the file. For example, results from different variants of an experiment might each be recorded in their own files. Retaining the source file as an output column preserves the condition represented by the file. The source values default to the file names, but this can be customized.
 
 See the [tsv-append reference](#tsv-append-reference) for the complete list of options available.
+
+### tsv-uniq
+
+Similar in spirit to the Unix `uniq` tool, `tsv-uniq` filters a dataset so there is only one copy of each line. `tsv-uniq` goes beyond Unix `uniq` in a couple ways. First, data does not need to be sorted. Second, equivalence is based on a subset of fields rather than the full line. `tsv-uniq` can also be run in an 'equivalence class identification' mode, where equivalent entries are marked with a unique id rather than being filtered. An example uniq'ing a file on fields 2 and 3:
+```
+$ tsv-uniq -f 2,3 data.tsv
+```
+
+`tsv-uniq` operates on the entire line when no fields are specified. This is a useful alternative to the traditional `sort -u` or `sort | uniq` paradigms for identifying unique lines in unsorted files, as it is often quite a bit faster.
+
+As with `tsv-join`, this uses an in-memory lookup table to record unique entries. This ultimately limits the data sizes that can be processed. The author has found that datasets with up to about 10 million unique entries work fine, but performance degrades after that.
+
+See the [tsv-uniq reference](#tsv-uniq-reference) for details.
 
 ### csv2tsv
 
@@ -167,7 +167,9 @@ There are a number of toolkits that have similar or related functionality. Sever
 
 The different toolkits are certainly worth investigating if you work with tabular data files. Several have quite extensive feature sets. Each toolkit has its own strengths, your workflow and preferences are likely to fit some toolkits better than others.
 
-File format is perhaps the most important dimension. CSV files cannot be processed reliably by traditional unix tools, so CSV toolkits naturally extend further into this space. However, this tends to increase complexity of the tools when working with TSV files. Tradeoffs between file formats is its own topic. The [tsvutils README](https://github.com/brendano/tsvutils#the-philosophy-of-tsvutils) has a nice discussion of the rationale for using TSV files.
+File format is perhaps the most important dimension. CSV files cannot be processed reliably by traditional unix tools, so CSV toolkits naturally extend further into this space. However, this tends to increase complexity of the tools when working with TSV files.
+
+Tradeoffs between file formats is its own topic. The [tsvutils README](https://github.com/brendano/tsvutils#the-philosophy-of-tsvutils) has a nice discussion of the rationale for using TSV files. Note that many numeric CSV data sets use comma as a separator, but don't use CSV escapes. Such data sets can be processed reliabily by Unix tools and this toolset by setting the delimiter character.
 
 ## Installation
 
@@ -180,11 +182,14 @@ $ cd tsv-utils-dlang
 $ make         # For LDC: make DCOMPILER=ldc2
 ```
 
-Executables are written to `tsv-utils-dlang/bin`, place this directory or the executables in the PATH. The compiler defaults to DMD, this can be changed on the make command line (e.g. `make DCOMPILER=ldc2`). DMD is the reference compiler, but LDC generates faster code. See [BUILD_COMMANDS](BUILD_COMMANDS.md) for alternate build steps if `make` is not available on your system.
+Executables are written to `tsv-utils-dlang/bin`, place this directory or the executables in the PATH. The compiler defaults to DMD, this can be changed on the make command line (e.g. `make DCOMPILER=ldc2`). DMD is the reference compiler, but LDC produces faster executables. (For some tools LDC is quite a bit faster than DMD.)
+
+If `make` is not available on your system the DUB is the other option (next section). It is also possible to run
+build commands manually, see [BUILD_COMMANDS](BUILD_COMMANDS.md) for details.
 
 ### Install using DUB
 
-If you are already a D user you likely use DUB, the D package manager. You can install and build using DUB as follows:
+If you are already a D user you likely use DUB, the D package manager. DUB comes packaged with DMD starting with DMD 2.072. You can install and build using DUB as follows:
 ```
 $ dub fetch tsv-utils-dlang
 $ dub run tsv-utils-dlang    # For LDC: dub run tsv-utils-dlang -- --compiler=ldc
@@ -376,11 +381,11 @@ This section provides more detailed documentation about the different tools as w
 
 * [Common options and behavior](#common-options-and-behavior)
 * [tsv-filter reference](#tsv-filter-reference)
-* [tsv-join reference](#tsv-join-reference)
-* [tsv-uniq reference](#tsv-uniq-reference)
 * [tsv-select reference](#tsv-select-reference)
 * [tsv-summarize reference](#tsv-summarize-reference)
+* [tsv-join reference](#tsv-join-reference)
 * [tsv-append reference](#tsv-append-reference)
+* [tsv-uniq reference](#tsv-uniq-reference)
 * [csv2tsv reference](#csv2tsv-reference)
 * [number-lines reference](#number-lines-reference)
 
@@ -535,102 +540,6 @@ $ # Field 2 containing at least one cyrillic character.
 $ tsv-filter --regex '2:\p{Cyrillic}' data.tsv
 ```
 
-### tsv-join reference
-
-**Synopsis:** tsv-join --filter-file file [options] file [file...]
-
-tsv-join matches input lines against lines from a 'filter' file. The match is based on exact match comparison of one or more 'key' fields. Fields are TAB delimited by default. Matching lines are written to standard output, along with any additional fields from the key file that have been specified.
-
-**Options:**
-* `--h|help` - Print help.
-* `--h|help-verbose` - Print detailed help.
-* `--f|filter-file FILE` - (Required) File with records to use as a filter.
-* `--k|key-fields n[,n...]` - Fields to use as join key. Default: 0 (entire line).
-* `--d|data-fields n[,n...]` - Data record fields to use as join key, if different than --key-fields.
-* `--a|append-fields n[,n...]` - Filter fields to append to matched records.
-* `--H|header` - Treat the first line of each file as a header.
-* `--p|prefix STR` - String to use as a prefix for --append-fields when writing a header line.
-* `--w|write-all STR` - Output all data records. STR is the --append-fields value when writing unmatched records. This is an outer join.
-* `--e|exclude` - Exclude matching records. This is an anti-join.
-* `--delimiter CHR` - Field delimiter. Default: TAB. (Single byte UTF-8 characters only.)
-* `--z|allow-duplicate-keys` - Allow duplicate keys with different append values (last entry wins). Default behavior is that this is an error.
-
-**Examples:**
-
-Filter one file based on another, using the full line as the key.
-```
-$ # Output lines in data.txt that appear in filter.txt
-$ tsv-join -f filter.txt data.txt
-
-$ # Output lines in data.txt that do not appear in filter.txt
-$ tsv-join -f filter.txt --exclude data.txt
-```
-
-Filter multiple files, using fields 2 & 3 as the filter key.
-```
-$ tsv-join -f filter.tsv --key-fields 2,3 data1.tsv data2.tsv data3.tsv
-```
-
-Same as previous, except use field 4 & 5 from the data files.
-```
-$ tsv-join -f filter.tsv --key-fields 2,3 --data-fields 4,5 data1.tsv data2.tsv data3.tsv
-```
-
-Append a field from the filter file to matched records.
-```
-$ tsv-join -f filter.tsv --key-fields 1 --append-fields 2 data.tsv
-```
-
-Write out all records from the data file, but when there is no match, write the 'append fields' as NULL. This is an outer join.
-```
-$ tsv-join -f filter.tsv --key-fields 1 --append-fields 2 --write-all NULL data.tsv
-```
-
-Managing headers: Often it's useful to join a field from one data file to anther, where the data fields are related and the headers have the same name in both files. They can be kept distinct by adding a prefix to the filter file header. Example:
-```
-$ tsv-join -f run1.tsv --header --key-fields 1 --append-fields 2 --prefix run1_ run2.tsv
-```
-
-### tsv-uniq reference
-
-tsv-uniq identifies equivalent lines in tab-separated value files. Input is read line by line, recording a key based on one or more of the fields. Two lines are equivalent if they have the same key. When operating in 'uniq' mode, the first time a key is seen the line is written to standard output, but subsequent lines are discarded. This is similar to the Unix 'uniq' program, but based on individual fields and without requiring sorted data.
-
-The alternate to 'uniq' mode is 'equiv-class' identification. In this mode, all lines are written to standard output, but with a new field added marking equivalent entries with an ID. The ID is simply a one-upped counter.
-
-**Synopsis:** tsv-uniq [options] [file...]
-
-**Options:**
-* `-h|help` - Print help.
-* `--help-verbose` - Print detailed help.
-* `--H|header` - Treat the first line of each file as a header.
-* `--f|fields n[,n...]` - Fields to use as the key. Default: 0 (entire line).
-* `--i|ignore-case` - Ignore case when comparing keys.
-* `--e|equiv` - Output equiv class IDs rather than uniq'ing entries.
-* `--equiv-header STR` - Use STR as the equiv-id field header. Applies when using '--header --equiv'. Default: 'equiv_id'.
-* `--equiv-start INT` - Use INT as the first equiv-id. Default: 1.
-* `--d|delimiter CHR` - Field delimiter. Default: TAB. (Single byte UTF-8 characters only.)
-
-**Examples:**
-```
-$ # Uniq a file, using the full line as the key
-$ tsv-uniq data.txt
-
-$ # Same as above, but case-insensitive
-$ tsv-uniq --ignore-case data.txt
-
-$ # Unique a file based on one field
-$ tsv-unique -f 1 data.tsv
-
-$ # Unique a file based on two fields
-$ tsv-uniq -f 1,2 data.tsv
-
-$ # Output all the lines, generating an ID for each unique entry
-$ tsv-uniq -f 1,2 --equiv data.tsv
-
-$ # Generate uniq IDs, but account for headers
-$ tsv-uniq -f 1,2 --equiv --header data.tsv
-```
-
 ### tsv-select reference
 
 **Synopsis:** tsv-select -f n[,n...] [options] [file...]
@@ -739,6 +648,62 @@ Calculations hold onto the minimum data needed while reading data. A few operati
 * `--mode n[,n...][:STR]` - Mode. The most frequent value. (Reads all values into memory.)
 * `--values n[,n...][:STR]` - All the values, separated by --v|values-delimiter. (Reads all values into memory.)
 
+### tsv-join reference
+
+**Synopsis:** tsv-join --filter-file file [options] file [file...]
+
+tsv-join matches input lines against lines from a 'filter' file. The match is based on exact match comparison of one or more 'key' fields. Fields are TAB delimited by default. Matching lines are written to standard output, along with any additional fields from the key file that have been specified.
+
+**Options:**
+* `--h|help` - Print help.
+* `--h|help-verbose` - Print detailed help.
+* `--f|filter-file FILE` - (Required) File with records to use as a filter.
+* `--k|key-fields n[,n...]` - Fields to use as join key. Default: 0 (entire line).
+* `--d|data-fields n[,n...]` - Data record fields to use as join key, if different than --key-fields.
+* `--a|append-fields n[,n...]` - Filter fields to append to matched records.
+* `--H|header` - Treat the first line of each file as a header.
+* `--p|prefix STR` - String to use as a prefix for --append-fields when writing a header line.
+* `--w|write-all STR` - Output all data records. STR is the --append-fields value when writing unmatched records. This is an outer join.
+* `--e|exclude` - Exclude matching records. This is an anti-join.
+* `--delimiter CHR` - Field delimiter. Default: TAB. (Single byte UTF-8 characters only.)
+* `--z|allow-duplicate-keys` - Allow duplicate keys with different append values (last entry wins). Default behavior is that this is an error.
+
+**Examples:**
+
+Filter one file based on another, using the full line as the key.
+```
+$ # Output lines in data.txt that appear in filter.txt
+$ tsv-join -f filter.txt data.txt
+
+$ # Output lines in data.txt that do not appear in filter.txt
+$ tsv-join -f filter.txt --exclude data.txt
+```
+
+Filter multiple files, using fields 2 & 3 as the filter key.
+```
+$ tsv-join -f filter.tsv --key-fields 2,3 data1.tsv data2.tsv data3.tsv
+```
+
+Same as previous, except use field 4 & 5 from the data files.
+```
+$ tsv-join -f filter.tsv --key-fields 2,3 --data-fields 4,5 data1.tsv data2.tsv data3.tsv
+```
+
+Append a field from the filter file to matched records.
+```
+$ tsv-join -f filter.tsv --key-fields 1 --append-fields 2 data.tsv
+```
+
+Write out all records from the data file, but when there is no match, write the 'append fields' as NULL. This is an outer join.
+```
+$ tsv-join -f filter.tsv --key-fields 1 --append-fields 2 --write-all NULL data.tsv
+```
+
+Managing headers: Often it's useful to join a field from one data file to anther, where the data fields are related and the headers have the same name in both files. They can be kept distinct by adding a prefix to the filter file header. Example:
+```
+$ tsv-join -f run1.tsv --header --key-fields 1 --append-fields 2 --prefix run1_ run2.tsv
+```
+
 ### tsv-append reference
 
 **Synopsis:** tsv-append [options] [file...]
@@ -771,6 +736,46 @@ Example: Source tracking with custom values:
 * `--s|source-header STR` - Use STR as the header for the source column. Implies --H|header and --t|track-source. Default: 'file'
 * `--f|file STR=FILE` - Read file FILE, using STR as the 'source' value. Implies --t|track-source.
 * `--d|delimiter CHR` - Field delimiter. Default: TAB. (Single byte UTF-8 characters only.)
+
+### tsv-uniq reference
+
+tsv-uniq identifies equivalent lines in tab-separated value files. Input is read line by line, recording a key based on one or more of the fields. Two lines are equivalent if they have the same key. When operating in 'uniq' mode, the first time a key is seen the line is written to standard output, but subsequent lines are discarded. This is similar to the Unix 'uniq' program, but based on individual fields and without requiring sorted data.
+
+The alternate to 'uniq' mode is 'equiv-class' identification. In this mode, all lines are written to standard output, but with a new field added marking equivalent entries with an ID. The ID is simply a one-upped counter.
+
+**Synopsis:** tsv-uniq [options] [file...]
+
+**Options:**
+* `-h|help` - Print help.
+* `--help-verbose` - Print detailed help.
+* `--H|header` - Treat the first line of each file as a header.
+* `--f|fields n[,n...]` - Fields to use as the key. Default: 0 (entire line).
+* `--i|ignore-case` - Ignore case when comparing keys.
+* `--e|equiv` - Output equiv class IDs rather than uniq'ing entries.
+* `--equiv-header STR` - Use STR as the equiv-id field header. Applies when using '--header --equiv'. Default: 'equiv_id'.
+* `--equiv-start INT` - Use INT as the first equiv-id. Default: 1.
+* `--d|delimiter CHR` - Field delimiter. Default: TAB. (Single byte UTF-8 characters only.)
+
+**Examples:**
+```
+$ # Uniq a file, using the full line as the key
+$ tsv-uniq data.txt
+
+$ # Same as above, but case-insensitive
+$ tsv-uniq --ignore-case data.txt
+
+$ # Unique a file based on one field
+$ tsv-unique -f 1 data.tsv
+
+$ # Unique a file based on two fields
+$ tsv-uniq -f 1,2 data.tsv
+
+$ # Output all the lines, generating an ID for each unique entry
+$ tsv-uniq -f 1,2 --equiv data.tsv
+
+$ # Generate uniq IDs, but account for headers
+$ tsv-uniq -f 1,2 --equiv --header data.tsv
+```
 
 ### csv2tsv reference
 
