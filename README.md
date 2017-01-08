@@ -1,6 +1,6 @@
 # Command line utilities for tabular data files
 
-This is a set of command line utilities for working with tab-separated value files. They were originally developed in Perl and used for day-to-day work in a large scale data mining environment. One of the tools was re-written in D as an exercise exploring the language. Significant performance gains and agreeable programmer characteristics soon led to writing the other utilities D as well.
+This is a set of command line utilities for working with tab-separated value files. They were originally developed in Perl and used for day-to-day work in a large scale data mining environment. One of the tools was re-written in D as an exercise exploring the language. Significant performance gains and agreeable programmer characteristics soon led to writing the other utilities in D as well.
 
 The tools have been made available in the hope they will benefit others needing similar tools or who are considering D as a programming language.
 
@@ -17,10 +17,10 @@ Information on the D programming language is available at: http://dlang.org/.
 
 These tools were developed for working with reasonably large data files. Larger than ideal for loading entirely in memory in an application like R, but not so big as to necessitate moving to Hadoop or similar distributed compute environments. They work like traditional Unix command line utilities such as `cut`, `sort`, `grep`, etc., and are intended to complement these tools. Each tool is a standalone executable. They follow common Unix conventions for pipeline programs. Data is read from files or standard input, results are written to standard output. The field separator defaults to TAB, but any character can be used. Input and output is UTF-8, and all operations are unicode ready, including regular expression match (`tsv-filter`). Documentation is available for each tool by invoking it with the `--help` option. If reading the code, look for the `helpText` variable near the top of the file.
 
-The rest of this section contains a short description of each tool. There is more detail in the [tool reference](#tool-reference) section towards the end of file.
+The rest of this section contains a short description of each tool. There is more detail in the [tool reference](#tool-reference) section towards the end of the file.
 
-* [tsv-filter](#tsv-filter) - Filter rows in input files via numeric and string comparisions.
-* [tsv-select](#tsv-select) - Keep a subset of the columns in the input.
+* [tsv-filter](#tsv-filter) - Filter data file rows via numeric and string comparisions.
+* [tsv-select](#tsv-select) - Keep a subset of the columns (fields) in the input.
 * [tsv-summarize](#tsv-summarize) - Aggregate field values, summarizing across the entire file or grouped by key.
 * [tsv-join](#tsv-join) - Join lines from multiple files using fields as a key.
 * [tsv-append](#tsv-append) - Concatenate TSV files. Header aware; supports source file tracking.
@@ -39,7 +39,7 @@ $ tsv-filter --ge 3:100 --le 3:200 --str-eq 4:red file.tsv
 
 This outputs lines where field 3 satisfies (100 <= fieldval <= 200) and field 4 matches 'red'.
 
-`tsv-filter` is the most widely applicable of the tools, as dataset pruning is a common task. Because it's stream oriented, it can handle arbitrarily large files. It is quite fast, faster than other tools the author has tried. This makes it idea for preparing data for applications like R and Pandas. It is also convenient for quickly answering simple questions about a dataset. For example, to count the number of records with a non-zero value in field 3, use the command:
+`tsv-filter` is the most widely applicable of the tools, as dataset pruning is a common task. It is stream oriented, so it can handle arbitrarily large files. It is quite fast, faster than other tools the author has tried. This makes it idea for preparing data for applications like R and Pandas. It is also convenient for quickly answering simple questions about a dataset. For example, to count the number of records with a non-zero value in field 3, use the command:
 ```
 $ tsv-filter --ne 3:0 file.tsv | wc -l
 ```
@@ -170,6 +170,8 @@ The different toolkits are certainly worth investigating if you work with tabula
 File format is perhaps the most important dimension. CSV files cannot be processed reliably by traditional unix tools, so CSV toolkits naturally extend further into this space. However, this tends to increase complexity of the tools when working with TSV files.
 
 Tradeoffs between file formats is its own topic. The [tsvutils README](https://github.com/brendano/tsvutils#the-philosophy-of-tsvutils) has a nice discussion of the rationale for using TSV files. Note that many numeric CSV data sets use comma as a separator, but don't use CSV escapes. Such data sets can be processed reliabily by Unix tools and this toolset by setting the delimiter character.
+
+An even broader list of tools can be found here: [Structured text tools](https://github.com/dbohdan/structured-text-tools).
 
 ## Installation
 
