@@ -66,6 +66,15 @@ runtest ${prog} "--header --or --blank 1 --str-eq 1:none --eq 1:100 input_num_or
 runtest ${prog} "--header --invert --not-blank 1 --str-ne 1:none --eq 1:100 input_num_or_empty.tsv" ${basic_tests_1}
 runtest ${prog} "--header --invert --or --blank 1 --str-eq 1:none --eq 1:100 input_num_or_empty.tsv" ${basic_tests_1}
 
+# Numeric type recognition and short circuiting.
+runtest ${prog} "-H --is-numeric 2 input_numeric_tests.tsv" ${basic_tests_1}
+runtest ${prog} "-H --is-finite 2 input_numeric_tests.tsv" ${basic_tests_1}
+runtest ${prog} "-H --is-nan 2 input_numeric_tests.tsv" ${basic_tests_1}
+runtest ${prog} "-H --is-infinity 2 input_numeric_tests.tsv" ${basic_tests_1}
+runtest ${prog} "-H --is-numeric 2 --gt 2:10 input_numeric_tests.tsv" ${basic_tests_1}
+runtest ${prog} "-H --is-numeric 2 --le 2:10 input_numeric_tests.tsv" ${basic_tests_1}
+runtest ${prog} "-H --is-finite 2 --gt 2:10 input_numeric_tests.tsv" ${basic_tests_1}
+runtest ${prog} "-H --is-finite 2 --le 2:10 input_numeric_tests.tsv" ${basic_tests_1}
 
 # String field tests
 echo "" >> ${basic_tests_1}; echo "====String tests===" >> ${basic_tests_1}
