@@ -3,7 +3,7 @@ Convert CSV formatted data to TSV format.
 
 This program converts comma-separated value data to tab-separated format.
 
-Copyright (c) 2016, eBay Software Foundation
+Copyright (c) 2016-2017, eBay Software Foundation
 Initially written by Jon Degenhardt
 
 License: Boost Licence 1.0 (http://boost.org/LICENSE_1_0.txt)
