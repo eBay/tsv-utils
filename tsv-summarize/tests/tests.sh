@@ -20,7 +20,7 @@ echo "Testing ${prog}, output to ${odir}"
 ## Three args: program, args, output file
 runtest () {
     echo "" >> $3
-    echo "====[tsv-uniq $2]====" >> $3
+    echo "====[tsv-summarize $2]====" >> $3
     $1 $2 >> $3 2>&1
     return 0
 }

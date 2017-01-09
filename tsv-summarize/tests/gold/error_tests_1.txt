@@ -1,51 +1,51 @@
 Error test set 1
 ----------------
 
-====[tsv-uniq --count no_such_file.tsv]====
+====[tsv-summarize --count no_such_file.tsv]====
 Error: Cannot open file `no_such_file.tsv' in mode `rb' (No such file or directory)
 
-====[tsv-uniq --unique-count 0 input_5field_a.tsv]====
+====[tsv-summarize --unique-count 0 input_5field_a.tsv]====
 Error processing command line arguments: Invalid option: '--unique-count 0'. Zero is not a valid field index.
 
-====[tsv-uniq --unique-count 2, input_5field_a.tsv]====
+====[tsv-summarize --unique-count 2, input_5field_a.tsv]====
 Error processing command line arguments: Invalid option value: '--unique-count 2,'. Expected: '--unique-count <field>[,<field>]' or '--unique-count <field>:<header>' where <field> is a number and <header> a string.
 
-====[tsv-uniq --unique-count 2: input_5field_a.tsv]====
+====[tsv-summarize --unique-count 2: input_5field_a.tsv]====
 Error processing command line arguments: Invalid option value: '--unique-count 2:'. Expected: '--unique-count <field>[,<field>]' or '--unique-count <field>:<header>' where <field> is a number and <header> a string.
 
-====[tsv-uniq --unique-count x input_5field_a.tsv]====
+====[tsv-summarize --unique-count x input_5field_a.tsv]====
 Error processing command line arguments: Invalid option value: '--unique-count x'. Expected: '--unique-count <field>[,<field>]' or '--unique-count <field>:<header>' where <field> is a number and <header> a string.
 
-====[tsv-uniq --unique-count 2 input_5field_a.tsv input_1field_a.tsv]====
+====[tsv-summarize --unique-count 2 input_5field_a.tsv input_1field_a.tsv]====
 Error: Not enough fields in line. File: input_1field_a.tsv, Line: 1
 
-====[tsv-uniq --group-by 0 input_5field_a.tsv]====
+====[tsv-summarize --group-by 0 input_5field_a.tsv]====
 Error processing command line arguments: At least one summary operator is required.
 
-====[tsv-uniq --group-by 2, input_5field_a.tsv]====
+====[tsv-summarize --group-by 2, input_5field_a.tsv]====
 Error processing command line arguments: Unexpected end of input when converting from type string to type ulong
 
-====[tsv-uniq --group-by 2: input_5field_a.tsv]====
+====[tsv-summarize --group-by 2: input_5field_a.tsv]====
 Error processing command line arguments: Unexpected ':' when converting from type string to type ulong
 
-====[tsv-uniq --group-by x input_5field_a.tsv]====
+====[tsv-summarize --group-by x input_5field_a.tsv]====
 Error processing command line arguments: Unexpected 'x' when converting from type string to type ulong
 
-====[tsv-uniq --group-by 2 --unique-count 1 input_5field_a.tsv input_1field_a.tsv]====
+====[tsv-summarize --group-by 2 --unique-count 1 input_5field_a.tsv input_1field_a.tsv]====
 Error: Not enough fields in line. File: input_1field_a.tsv, Line: 1
 
-====[tsv-uniq --header --max 1 input_1field_a.tsv]====
+====[tsv-summarize --header --max 1 input_1field_a.tsv]====
 Error: Could not process line or field: no digits seen
   File: input_1field_a.tsv Line: 3
 
-====[tsv-uniq -d abc --count input_5field_a.tsv]====
+====[tsv-summarize -d abc --count input_5field_a.tsv]====
 Error processing command line arguments: Unexpected 'b' when converting from type string to type char
 
-====[tsv-uniq -d ß --count input_5field_a.tsv]====
+====[tsv-summarize -d ß --count input_5field_a.tsv]====
 Error processing command line arguments: Invalid UTF-8 sequence (at index 1)
 
-====[tsv-uniq -v abc --count input_5field_a.tsv]====
+====[tsv-summarize -v abc --count input_5field_a.tsv]====
 Error processing command line arguments: Unexpected 'b' when converting from type string to type char
 
-====[tsv-uniq -v ß --count input_5field_a.tsv]====
+====[tsv-summarize -v ß --count input_5field_a.tsv]====
 Error processing command line arguments: Invalid UTF-8 sequence (at index 1)
