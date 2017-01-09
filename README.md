@@ -245,7 +245,7 @@ These tools were implemented with these trade-offs in mind. The code was deliber
 
 * Custom I/O buffer management, including reading entire files into memory.
 * Custom hash tables rather than built-in associative arrays.
-* Avoiding garbage collection
+* Avoiding garbage collection.
 
 A useful aspect of D is that is additional optimization can be made as the need arises. Coding of these tools did utilize a several optimizations that might not have been done in an initial effort. These include:
 

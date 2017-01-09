@@ -1,7 +1,7 @@
 /**
 Utilities used by TSV applications.
 
-Copyright (c) 2015-2016, eBay Software Foundation
+Copyright (c) 2015-2017, eBay Software Foundation
 Initially written by Jon Degenhardt
 
 License: Boost Licence 1.0 (http://boost.org/LICENSE_1_0.txt)

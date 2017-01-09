@@ -1,9 +1,9 @@
 {
     "name": "tsv-utils-dlang",
-    "description": "Command line utilities for tab-separated value files.",
+    "description": "Command line utilities for tabular data files.",
     "homepage": "https://github.com/eBay/tsv-utils-dlang",
     "authors": ["Jon Degenhardt"],
-    "copyright": "Copyright (c) 2015-2016, eBay Software Foundation",
+    "copyright": "Copyright (c) 2015-2017, eBay Software Foundation",
     "license": "BSL-1.0",
     "targetType": "executable",
     "#": "NOTE: Add new apps to dub_build.d also.",

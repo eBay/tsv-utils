@@ -11,7 +11,7 @@ The alternate to 'uniq' is 'equiv-class' identification. In this mode, all lines
 written to standard output, but a new field is added marking equivalent entries with
 with an ID. The ID is simply a one-upped counter.
 
-Copyright (c) 2015-2016, eBay Software Foundation
+Copyright (c) 2015-2017, eBay Software Foundation
 Initially written by Jon Degenhardt
 
 License: Boost Licence 1.0 (http://boost.org/LICENSE_1_0.txt)
