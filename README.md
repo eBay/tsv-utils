@@ -460,6 +460,12 @@ Empty and blank field tests:
 * `--blank FIELD` - True if field is empty or all whitespace.
 * `--not-blank FIELD` - True if field contains a non-whitespace character.
 
+Numeric type tests:
+* `--is-numeric FIELD` - True if the field can be interpreted as a number.
+* `--is-finite FIELD` - True if the field can be interpreted as a number, and it is not NaN or infinity.
+* `--is-nan FIELD` - True if the field is NaN (including: "nan", "NaN", "NAN").
+* `--is-infinity FIELD` - True if the field is infinity (including: "inf", "INF", "-inf", "-INF")
+
 Numeric comparisons:
 * `--le FIELD:NUM` - FIELD <= NUM (numeric).
 * `--lt FIELD:NUM` - FIELD <  NUM (numeric).
@@ -541,6 +547,20 @@ $ tsv-filter --regex '2:^\w+\s+(\w+\s+)+\w+$' data.tsv
 $ # Field 2 containing at least one cyrillic character.
 $ tsv-filter --regex '2:\p{Cyrillic}' data.tsv
 ```
+
+Short-circuiting expressions:
+
+Numeric tests like `--gt` (greater-than) assume field values can be interpreted as numbers. An error occurs if the field cannot be parsed as a number, halting the program. This can be avoiding by including a testing ensure the field is recognizable as a number. For example:
+
+```
+$ # Ensure field 2 is a number before testing for greater-than 10.
+$ tsv-filter --is-numeric 2 --gt 2:10 data.tsv
+
+$ # Ensure field 2 is a number, not NaN or infinity before testing for greater-than 10.
+$ tsv-filter --is-finite 2 --gt 2:10 data.tsv
+```
+
+The above tests work because `tsv-filter` short-circuits evaluation, only running as many tests as necessary to filter each line. Tests are run in the order listed on the command line. In the first example, if `--is-numeric 2` is false, the remaining tests do not get run.
 
 ### tsv-select reference
 

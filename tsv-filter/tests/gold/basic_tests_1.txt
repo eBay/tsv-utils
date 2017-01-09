@@ -233,6 +233,77 @@ none	25	34
 ====[tsv-filter --header --invert --or --blank 1 --str-eq 1:none --eq 1:100 input_num_or_empty.tsv]====
 f1	f2	f3
 
+====[tsv-filter -H --is-numeric 2 input_numeric_tests.tsv]====
+f1	f2
+1	nan
+2	NaN
+3	NAN
+4	inf
+5	-inf
+6	INF
+9	23
+10	-33.5
+11	42.5
+12	+45
+13	.19
+14	-.20
+15	9e+02
+16	8E-17
+
+====[tsv-filter -H --is-finite 2 input_numeric_tests.tsv]====
+f1	f2
+9	23
+10	-33.5
+11	42.5
+12	+45
+13	.19
+14	-.20
+15	9e+02
+16	8E-17
+
+====[tsv-filter -H --is-nan 2 input_numeric_tests.tsv]====
+f1	f2
+1	nan
+2	NaN
+3	NAN
+
+====[tsv-filter -H --is-infinity 2 input_numeric_tests.tsv]====
+f1	f2
+4	inf
+5	-inf
+6	INF
+
+====[tsv-filter -H --is-numeric 2 --gt 2:10 input_numeric_tests.tsv]====
+f1	f2
+4	inf
+6	INF
+9	23
+11	42.5
+12	+45
+15	9e+02
+
+====[tsv-filter -H --is-numeric 2 --le 2:10 input_numeric_tests.tsv]====
+f1	f2
+5	-inf
+10	-33.5
+13	.19
+14	-.20
+16	8E-17
+
+====[tsv-filter -H --is-finite 2 --gt 2:10 input_numeric_tests.tsv]====
+f1	f2
+9	23
+11	42.5
+12	+45
+15	9e+02
+
+====[tsv-filter -H --is-finite 2 --le 2:10 input_numeric_tests.tsv]====
+f1	f2
+10	-33.5
+13	.19
+14	-.20
+16	8E-17
+
 ====String tests===
 
 ====[tsv-filter --header --str-eq 3:a input1.tsv]====

@@ -14,9 +14,10 @@ module tsv_filter;
 import std.algorithm : canFind, equal, findSplit, max, min; 
 import std.conv : to;
 import std.format : format;
-import std.math : abs;
+import std.math : abs, isFinite, isInfinity, isNaN;
 import std.regex;
 import std.stdio;
+import std.string : isNumeric;
 import std.typecons : tuple;
 import std.uni: asLowerCase, toLower;
 
@@ -63,6 +64,10 @@ Operators:
 * Test if a field is empty (no characters) or blank (empty or whitespace only).
   Syntax:  --empty|not-empty|blank|not-blank  FIELD
   Example: --empty 5          // True if field 5 is empty
+
+* Test if a field is numeric, finite, NaN, or infinity
+  Syntax:  --is-numeric|is-finite|is-nan|is-infinity FIELD
+  Example: --is-numeric 5 --gt 5:100  // Ensure field 5 is numeric before --gt test. 
 
 * Compare a field to a number (integer or float)
   Syntax:  --eq|ne|lt|le|gt|ge  FIELD:NUM
@@ -111,6 +116,7 @@ than 100, and field 2 is less than or equal to 1000. The header is also output.
 
 Tests available include:
   * Test if a field is empty (no characters) or blank (empty or whitespace only).
+  * Test if a field is interpretable as a number, a finite number, NaN, or Infinity.
   * Compare a field to a number - Numeric equality and relational tests.
   * Compare a field to a string - String equality and relational tests.
   * Test if a field matches a regular expression. Case sensitive or insensitive.
@@ -121,8 +127,9 @@ Tests available include:
 Details:
   * The run is aborted if there are not enough fields in an input line.
   * Numeric tests will fail and abort the run if a field cannot be interpreted as a
-    number. This includes fields with no text. Handle such cases by piping one run
-    tsv-filter to another, the first invocation filtering out non-numeric entries.
+    number. This includes fields with no text. To avoid this use '--is-numeric' or
+    '--is-finite' prior to the numeric test. For example, '--is-numeric 5 --gt 5:100'
+    ensures field 5 is numeric before running the --gt test.
   * Regular expression syntax is defined by the D programming language. They follow
     common conventions (perl, python, etc.). Most common forms work as expected.
 
@@ -213,6 +220,11 @@ bool fldEmpty(const char[][] fields, size_t index) { return fields[index].length
 bool fldNotEmpty(const char[][] fields, size_t index) { return fields[index].length != 0; }
 bool fldBlank(const char[][] fields, size_t index) { return cast(bool) fields[index].matchFirst(ctRegex!`^\s*$`); }
 bool fldNotBlank(const char[][] fields, size_t index) { return !fields[index].matchFirst(ctRegex!`^\s*$`); }
+
+bool fldIsNumeric(const char[][] fields, size_t index) { return fields[index].isNumeric; }
+bool fldIsFinite(const char[][] fields, size_t index) { return fields[index].isNumeric && fields[index].to!double.isFinite; }
+bool fldIsNaN(const char[][] fields, size_t index) { return fields[index].isNumeric && fields[index].to!double.isNaN; }
+bool fldIsInfinity(const char[][] fields, size_t index) { return fields[index].isNumeric && fields[index].to!double.isInfinity; }
 
 bool numLE(const char[][] fields, size_t index, double val) { return fields[index].to!double <= val; }
 bool numLT(const char[][] fields, size_t index, double val) { return fields[index].to!double  < val; }
@@ -549,6 +561,11 @@ struct TsvFilterOptions {
         void handlerFldNotEmpty(string option, string value) { fieldUnaryOptionHandler(tests, maxFieldIndex, &fldNotEmpty, option, value); }
         void handlerFldBlank(string option, string value)    { fieldUnaryOptionHandler(tests, maxFieldIndex, &fldBlank,    option, value); }
         void handlerFldNotBlank(string option, string value) { fieldUnaryOptionHandler(tests, maxFieldIndex, &fldNotBlank, option, value); }
+
+        void handlerFldIsNumeric(string option, string value)  { fieldUnaryOptionHandler(tests, maxFieldIndex, &fldIsNumeric, option, value); }
+        void handlerFldIsFinite(string option, string value)   { fieldUnaryOptionHandler(tests, maxFieldIndex, &fldIsFinite, option, value); }
+        void handlerFldIsNaN(string option, string value)      { fieldUnaryOptionHandler(tests, maxFieldIndex, &fldIsNaN, option, value); }
+        void handlerFldIsInfinity(string option, string value) { fieldUnaryOptionHandler(tests, maxFieldIndex, &fldIsInfinity, option, value); }
         
         void handlerNumLE(string option, string value) { fieldVsNumberOptionHandler(tests, maxFieldIndex, &numLE, option, value); }
         void handlerNumLT(string option, string value) { fieldVsNumberOptionHandler(tests, maxFieldIndex, &numLT, option, value); }
@@ -611,6 +628,11 @@ struct TsvFilterOptions {
                 "not-empty",       "FIELD       True if field is not empty.", &handlerFldNotEmpty,
                 "blank",           "FIELD       True if field is empty or all whitespace.", &handlerFldBlank,
                 "not-blank",       "FIELD       True if field contains a non-whitespace character.", &handlerFldNotBlank,
+
+                "is-numeric",      "FIELD       True if field is interpretable as a number.", &handlerFldIsNumeric,
+                "is-finite",       "FIELD       True if field is interpretable as a number and is not NaN or infinity.", &handlerFldIsFinite,
+                "is-nan",          "FIELD       True if field is NaN.", &handlerFldIsNaN,
+                "is-infinity",     "FIELD       True if field is infinity.", &handlerFldIsInfinity,
                 
                 "le",              "FIELD:NUM   FIELD <= NUM (numeric).", &handlerNumLE,
                 "lt",              "FIELD:NUM   FIELD <  NUM (numeric).", &handlerNumLT,
