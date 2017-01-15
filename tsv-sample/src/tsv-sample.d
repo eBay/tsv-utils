@@ -9,7 +9,6 @@ License: Boost License 1.0 (http://boost.org/LICENSE_1_0.txt)
 */
 module tsv_sample;
 
-import std.conv;
 import std.range;
 import std.stdio;
 import std.typecons : tuple;
@@ -37,17 +36,31 @@ else
 auto helpText = q"EOS
 Synposis: tsv-sample [options] [file...]
 
-Generates a weighted random sample from the input lines. The field to use
-for weights are number of lines to output are specified via the `--f|field'
-and '--n|num` options. All lines get the same weight if a field is not
-specified. All input lines are output if a sample size is not provided.
+Randomizes or samples input lines. By default, all lines are output in a
+random order. '--n|num' can be used to limit the sample size produced. A
+weighted random sample can be created with the '--f|field' option.
 
-Weights should be greater than zero. Negative weights are treated as zero.
-However, any positive values can be used.
+Options:
+EOS";
 
-Reservoir sampling is used to limit lines held in memory to the number
-requested ('--n|num' option). The entire input is held in-memory if this
-is not provided.
+auto helpTextVerbose = q"EOS
+Synposis: tsv-sample [options] [file...]
+
+Randomizes or samples input lines. By default, all lines are output in a
+random order. '--n|num' can be used to limit the sample size produced. A
+weighted random sample can be created with the '--f|field' option.
+Sampling is without replacement in all cases.
+
+Reservior sampling is used. If all input lines are included in the output,
+they must all be held in memory. Memory required for large files can be
+reduced significantly by specifying a sample size ('--n|num').
+
+Weighted random sampling is done using the algorithm described by Efraimidis
+and Spirakis. Weights should be positive numbers, but otherwise any values
+can be used. For more information on the algorithm, see:
+  * https://en.wikipedia.org/wiki/Reservoir_sampling
+  * "Weighted Radom Sampling over Data Streams", Pavlos S. Efraimidis
+    (https://arxiv.org/abs/1012.0256)
 
 Options:
 EOS";
@@ -56,10 +69,12 @@ struct TsvSampleOptions
 {
     string programName;
     string[] files;
+    bool helpVerbose = false;    // --help-verbose
     size_t sampleSize = 0;       // --n|num - Size of the desired sample
     size_t weightField = 0;      // --f|field - Field holding the weight
     bool hasHeader = false;      // --H|header
     bool printRandom = false;    // --p|print-random
+    bool staticSeed = false;     // --s|static-seed
     char delim = '\t';           // --d|delimiter
     bool hasWeightField = false; // Derived.
     bool sampleAllLines = true;  // Derived. 
@@ -76,18 +91,25 @@ struct TsvSampleOptions
             arraySep = ",";    // Use comma to separate values in command line options
             auto r = getopt(
                 cmdArgs,
+                "help-verbose",    "          Print full help.", &helpVerbose,
                 std.getopt.config.caseSensitive,
                 "H|header",        "     Treat the first line of each file as a header.", &hasHeader,
                 std.getopt.config.caseInsensitive,
                 "n|num",           "NUM  Number of lines to include in the output. If not provided or zero, all lines are output.", &sampleSize,
                 "f|field",         "NUM  Field number containing weights. If not provided or zero, all lines get equal weight.", &weightField,
                 "p|print-random",  "     Output the random values that were assigned.", &printRandom,
+                "s|static-seed",   "     Use the same random seed every run. This produces consistent results every run. By default different results are produced each run.", &staticSeed,
                 "d|delimiter",     "CHR  Field delimiter.", &delim,
                 );
 
             if (r.helpWanted)
             {
                 defaultGetoptPrinter(helpText, r.options);
+                return tuple(false, 0);
+            }
+            else if (helpVerbose)
+            {
+                defaultGetoptPrinter(helpTextVerbose, r.options);
                 return tuple(false, 0);
             }
 
@@ -113,7 +135,7 @@ struct TsvSampleOptions
     }
 }
 
-/* Implementation of Efraimidis and Spirakis Algorithm for weighted reservoir sampling.
+/* Implementation of Efraimidis and Spirakis algorithm for weighted reservoir sampling.
  * For more information see:
  * - https://en.wikipedia.org/wiki/Reservoir_sampling
  * - "Weighted Radom Sampling over Data Streams", Pavlos S. Efraimidis
@@ -122,8 +144,10 @@ struct TsvSampleOptions
 void weightedReservoirSamplingES(OutputRange)(TsvSampleOptions cmdopt, OutputRange outputStream)
     if (isOutputRange!(OutputRange, char))
 {
-    import std.random : uniform, uniform01;
+    import std.random : Random, unpredictableSeed, uniform01;
     import std.container.binaryheap;
+
+    auto randomGenerator = Random(cmdopt.staticSeed ? 2438424139 : unpredictableSeed);
 
     struct Entry
     {
@@ -131,7 +155,23 @@ void weightedReservoirSamplingES(OutputRange)(TsvSampleOptions cmdopt, OutputRan
         char[] line;
     }
 
-    auto reservoir = BinaryHeap!(Entry[], "a.score > b.score")(new Entry[](cmdopt.sampleSize), 0);
+    /* Use a plain array as BinaryHeap backing store in Phobos 2.072 and later. In earlier
+     * versions use an Array from std.container.array. In version 2.072 BinaryHeap was
+     * changed to allow resizing a regular array. Performance is similar, but the regular
+     * array uses less memory when extended.
+     */
+    static if (__VERSION__ >= 2072)
+    {
+        auto dataStore = new Entry[](cmdopt.sampleSize);
+    }
+    else
+    {
+        import std.container.array;
+        auto dataStore = Array!(Entry)();
+        dataStore.reserve(cmdopt.sampleSize);
+    }
+    
+    auto reservoir = heapify!("a.score > b.score")(dataStore, 0);
 
     bool headerWritten = false;
     foreach (filename; cmdopt.files)
@@ -160,7 +200,7 @@ void weightedReservoirSamplingES(OutputRange)(TsvSampleOptions cmdopt, OutputRan
                     : 1.0;
                 double lineScore =
                     (lineWeight > 0.0)
-                    ? uniform01 ^^ (1.0 / lineWeight)
+                    ? uniform01(randomGenerator) ^^ (1.0 / lineWeight)
                     : 0.0;
 
                 if (cmdopt.sampleAllLines || reservoir.length < cmdopt.sampleSize)
@@ -187,49 +227,52 @@ void weightedReservoirSamplingES(OutputRange)(TsvSampleOptions cmdopt, OutputRan
     }
 }
 
-/* getFieldValue extracts the value of a single field from an input line. It is intended for
- * cases where only a single field in a line is needed.
+/* A convenience function for extracting a single field from a line. See getTsvFieldValue in
+ * common/src/tsvutils.d for details. This wrapper creates error text tailored for this program.
  */
-T getFieldValue(T)(const char[] line, size_t fieldIndex, char delim, string filename, size_t lineNum)
+import std.traits : isSomeChar;
+T getFieldValue(T, C)(const C[] line, size_t fieldIndex, C delim, string filename, size_t lineNum)
+    pure @safe
+    if (isSomeChar!C)
 {
-    import std.algorithm : splitter;
+    import std.conv;
     import std.format : format;
-    
-    auto splitLine = line.splitter(delim);
-    size_t atField = 0;
-    
-    while (atField < fieldIndex && !splitLine.empty)
-    {
-        splitLine.popFront;
-        atField++;
-    }
+    import tsvutil : getTsvFieldValue;
 
     T val;
-    if (splitLine.empty)
+    try
     {
-        if (fieldIndex == 0)
-        {
-            /* This is a workaround to a splitter special case - If the input is empty,
-             * the returned split range is empty. This doesn't properly represent a single
-             * column file. Correct be a single value representing an empty string. The
-             * input line is a convenient source of an empty line. Info:
-             *   Bug: https://issues.dlang.org/show_bug.cgi?id=15735
-             *   Pull Request: https://github.com/D-Programming-Language/phobos/pull/4030
-             */
-            assert(line.empty);
-            val = line.to!T;
-        }
-        else
-        {
-            throw new Exception(
-                format("Not enough fields on line. Expecting %d fields.\n   File: %s, Line: %d\n  [Text] '%s'",
-                       fieldIndex + 1, filename, lineNum, line));
-        }
+        val = getTsvFieldValue!T(line, fieldIndex, delim);
     }
-    else
+    catch (ConvException exc)
     {
-        val = splitLine.front.to!T;
+        throw new Exception(
+            format("Could not process line: %s\n  File: %s Line: %s%s",
+                   exc.msg, (filename == "-") ? "Standard Input" : filename, lineNum,
+                   (lineNum == 1) ? "\n  Is this a header line? Use --H|header to skip." : ""));
+    }
+    catch (Exception exc)
+    {
+        /* Not enough fields on the line. */
+        throw new Exception(
+            format("Could not process line: %s\n  File: %s Line: %s",
+                   exc.msg, (filename == "-") ? "Standard Input" : filename, lineNum));
     }
 
     return val;
+}
+
+unittest
+{
+    /* getFieldValue unit tests. getTsvFieldValue has it's own tests.
+     * These tests make basic sanity checks on the getFieldValue wrapper.
+     */
+    import std.exception;
+    
+    assert(getFieldValue!double("123", 0, '\t', "unittest", 1) == 123);
+    assert(getFieldValue!double("123.4", 0, '\t', "unittest", 1) == 123.4);
+    assertThrown(getFieldValue!double("abc", 0, '\t', "unittest", 1));
+    assertThrown(getFieldValue!double("abc", 0, '\t', "unittest", 2));
+    assertThrown(getFieldValue!double("123", 1, '\t', "unittest", 1));
+    assertThrown(getFieldValue!double("123", 1, '\t', "unittest", 2));
 }
