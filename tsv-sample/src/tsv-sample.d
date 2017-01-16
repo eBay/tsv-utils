@@ -1,6 +1,6 @@
 /**
 Command line tool implementing weighted reservoir sampling on delimited data files.
-Weights are read from a field in the field.
+Weights are read from a field in the file.
 
 Copyright (c) 2017, eBay Software Foundation
 Initially written by Jon Degenhardt
@@ -34,7 +34,7 @@ else
 }
 
 auto helpText = q"EOS
-Synposis: tsv-sample [options] [file...]
+Synopsis: tsv-sample [options] [file...]
 
 Randomizes or samples input lines. By default, all lines are output in a
 random order. '--n|num' can be used to limit the sample size produced. A
@@ -44,14 +44,14 @@ Options:
 EOS";
 
 auto helpTextVerbose = q"EOS
-Synposis: tsv-sample [options] [file...]
+Synopsis: tsv-sample [options] [file...]
 
 Randomizes or samples input lines. By default, all lines are output in a
 random order. '--n|num' can be used to limit the sample size produced. A
 weighted random sample can be created with the '--f|field' option.
 Sampling is without replacement in all cases.
 
-Reservior sampling is used. If all input lines are included in the output,
+Reservoir sampling is used. If all input lines are included in the output,
 they must all be held in memory. Memory required for large files can be
 reduced significantly by specifying a sample size ('--n|num').
 
@@ -59,7 +59,7 @@ Weighted random sampling is done using the algorithm described by Efraimidis
 and Spirakis. Weights should be positive numbers, but otherwise any values
 can be used. For more information on the algorithm, see:
   * https://en.wikipedia.org/wiki/Reservoir_sampling
-  * "Weighted Radom Sampling over Data Streams", Pavlos S. Efraimidis
+  * "Weighted Random Sampling over Data Streams", Pavlos S. Efraimidis
     (https://arxiv.org/abs/1012.0256)
 
 Options:
@@ -138,8 +138,11 @@ struct TsvSampleOptions
 /* Implementation of Efraimidis and Spirakis algorithm for weighted reservoir sampling.
  * For more information see:
  * - https://en.wikipedia.org/wiki/Reservoir_sampling
- * - "Weighted Radom Sampling over Data Streams", Pavlos S. Efraimidis
+ * - "Weighted Random Sampling over Data Streams", Pavlos S. Efraimidis
  *   (https://arxiv.org/abs/1012.0256)
+ *
+ * This algorithm uses a 'min' binary heap (priority queue). Every input line is read
+ * and assigned a random weight. 
  */
 void weightedReservoirSamplingES(OutputRange)(TsvSampleOptions cmdopt, OutputRange outputStream)
     if (isOutputRange!(OutputRange, char))
@@ -157,7 +160,7 @@ void weightedReservoirSamplingES(OutputRange)(TsvSampleOptions cmdopt, OutputRan
 
     /* Use a plain array as BinaryHeap backing store in Phobos 2.072 and later. In earlier
      * versions use an Array from std.container.array. In version 2.072 BinaryHeap was
-     * changed to allow resizing a regular array. Performance is similar, but the regular
+     * changed to allow re-sizing a regular array. Performance is similar, but the regular
      * array uses less memory when extended.
      */
     static if (__VERSION__ >= 2072)
@@ -214,7 +217,14 @@ void weightedReservoirSamplingES(OutputRange)(TsvSampleOptions cmdopt, OutputRan
             }
         }
     }
-    foreach (entry; reservoir)
+
+    size_t totalEntries = reservoir.length;
+    Entry[] sortedEntries;
+    sortedEntries.reserve(totalEntries);
+    foreach (entry; reservoir) sortedEntries ~= entry;
+
+    import std.range : retro;
+    foreach (entry; sortedEntries.retro)
     {
         if (cmdopt.printRandom)
         {
