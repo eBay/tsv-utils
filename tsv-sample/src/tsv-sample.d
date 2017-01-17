@@ -334,10 +334,15 @@ unittest
     auto testDir = makeUnittestTempDir("tsv_sample");
     scope(exit) testDir.rmdirRecurse;
 
-    /* Tabular data sets and expected results using the built-in static seed.
-     * Tests are run by writing the data set to a file and reading running
-     * the main routine. The expected results were verified by hand prior to
-     * inclusion in the test.
+    /* Tabular data sets and expected results use the built-in static seed.
+     * Tests are run by writing the data set to a file, then calling the main 
+     * routine to process. The function testTsvSample plays the role of the
+     * main program. Rather than writing to expected output, the results are
+     * matched against expected. The expected results were verified by hand
+     * prior to inclusion in the test.
+     *
+     * The initial part of this section is simply setting up data files and
+     * expected results. 
      */
 
     /* Empty file. */
@@ -668,7 +673,11 @@ unittest
          ["0.840939024352278", "9", "8.23"],
          ["0.6565001592629", "10", "1.79"]];
 
-    /* Basic tests. Headers and static seed. No weights and weighted. */
+    /*
+     * Enough setup! Actually run some tests!
+     */
+
+    /* Basic tests. Headers and static seed. With weights and without. */
     testTsvSample(["test-a1", "--header", "--static-seed", fpath_dataEmpty], dataEmpty);
     testTsvSample(["test-a2", "--header", "--static-seed", fpath_data3x0], data3x0);
     testTsvSample(["test-a3", "-H", "-s", fpath_data3x1], data3x1);
@@ -725,9 +734,28 @@ unittest
     testTsvSample(["test-d1", "-H", "-s", fpath_data1x10], data1x10ExpectedNoWt);
 
     /* Distributions. */
-    testTsvSample(["test-d1", "-H", "-s", "-f", "2", "-p", fpath_data2x10a], data2x10aExpectedWt2Probs);
-    testTsvSample(["test-d1", "-H", "-s", "-f", "2", "-p", fpath_data2x10b], data2x10bExpectedWt2Probs);
-    testTsvSample(["test-d1", "-H", "-s", "-f", "2", "-p", fpath_data2x10c], data2x10cExpectedWt2Probs);
-    testTsvSample(["test-d1", "-H", "-s", "-f", "2", "-p", fpath_data2x10d], data2x10dExpectedWt2Probs);
-    testTsvSample(["test-d1", "-H", "-s", "-f", "2", "-p", fpath_data2x10e], data2x10eExpectedWt2Probs);
+    testTsvSample(["test-e1", "-H", "-s", "-f", "2", "-p", fpath_data2x10a], data2x10aExpectedWt2Probs);
+    testTsvSample(["test-e1", "-H", "-s", "-f", "2", "-p", fpath_data2x10b], data2x10bExpectedWt2Probs);
+    testTsvSample(["test-e1", "-H", "-s", "-f", "2", "-p", fpath_data2x10c], data2x10cExpectedWt2Probs);
+    testTsvSample(["test-e1", "-H", "-s", "-f", "2", "-p", fpath_data2x10d], data2x10dExpectedWt2Probs);
+    testTsvSample(["test-e1", "-H", "-s", "-f", "2", "-p", fpath_data2x10e], data2x10eExpectedWt2Probs);
+
+    /* Tests of subset requested lengths (--n|num) field. */
+    import std.algorithm : min;
+    for (size_t n = data3x6.length + 2; n >= 1; n--)
+    {
+        size_t expectedLength = min(data3x6.length, n + 1);
+        testTsvSample([format("test-f1_%d", n), "-s", "-n", n.to!string, "-H", fpath_data3x6], data3x6ExpectedNoWt[0..expectedLength]);
+        testTsvSample([format("test-f2_%d", n), "-s", "-n", n.to!string, "-H", "-p", fpath_data3x6], data3x6ExpectedNoWtProbs[0..expectedLength]);
+        testTsvSample([format("test-f3_%d", n), "-s", "-n", n.to!string, "-H", "-f", "3", fpath_data3x6], data3x6ExpectedWt3[0..expectedLength]);
+        testTsvSample([format("test-f4_%d", n), "-s", "-n", n.to!string, "-H", "-p", "-f", "3", fpath_data3x6], data3x6ExpectedWt3Probs[0..expectedLength]);
+
+        testTsvSample([format("test-f5_%d", n), "-s", "-n", n.to!string, fpath_data3x6_noheader], data3x6ExpectedNoWt[1..expectedLength]);
+        testTsvSample([format("test-f6_%d", n), "-s", "-n", n.to!string, "-p", fpath_data3x6_noheader], data3x6ExpectedNoWtProbs[1..expectedLength]);
+        testTsvSample([format("test-f7_%d", n), "-s", "-n", n.to!string, "-f", "3", fpath_data3x6_noheader], data3x6ExpectedWt3[1..expectedLength]);
+        testTsvSample([format("test-f8_%d", n), "-s", "-n", n.to!string, "-p", "-f", "3", fpath_data3x6_noheader], data3x6ExpectedWt3Probs[1..expectedLength]);
+    }
+
+
+    /* TODO - Error condition tests. */
 }
