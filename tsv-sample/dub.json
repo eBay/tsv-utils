@@ -1,6 +1,6 @@
 {
     "name": "tsv-sample",
-    "description": "Weighted reservoir sampling.",
+    "description": "Weighted reservoir sampling on delimited data files.",
     "homepage": "https://github.com/eBay/tsv-utils-dlang",
     "authors": ["Jon Degenhardt"],
     "copyright": "Copyright (c) 2017, eBay Software Foundation",

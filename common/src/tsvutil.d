@@ -357,8 +357,9 @@ T getTsvFieldValue(T, C)(const C[] line, size_t fieldIndex, C delim) pure @safe
         {
             /* This is a workaround to a splitter special case - If the input is empty,
              * the returned split range is empty. This doesn't properly represent a single
-             * column file. Correct for the case would be a single value representing an
-             * empty string. The input line is a convenient source of an empty line. Info:
+             * column file. More correct mathematically, and for this case, would be a
+             * single value representing an empty string. The input line is a convenient
+             * source of an empty line. Info:
              *   Bug: https://issues.dlang.org/show_bug.cgi?id=15735
              *   Pull Request: https://github.com/D-Programming-Language/phobos/pull/4030
              */
@@ -369,7 +370,7 @@ T getTsvFieldValue(T, C)(const C[] line, size_t fieldIndex, C delim) pure @safe
         {
             throw new Exception(
                 format("Not enough fields on line. Number required: %d; Number found: %d",
-                       fieldIndex + 1, atField + 1));
+                       fieldIndex + 1, atField));
         }
     }
     else

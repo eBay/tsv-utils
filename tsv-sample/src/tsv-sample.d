@@ -745,17 +745,28 @@ unittest
     for (size_t n = data3x6.length + 2; n >= 1; n--)
     {
         size_t expectedLength = min(data3x6.length, n + 1);
-        testTsvSample([format("test-f1_%d", n), "-s", "-n", n.to!string, "-H", fpath_data3x6], data3x6ExpectedNoWt[0..expectedLength]);
-        testTsvSample([format("test-f2_%d", n), "-s", "-n", n.to!string, "-H", "-p", fpath_data3x6], data3x6ExpectedNoWtProbs[0..expectedLength]);
-        testTsvSample([format("test-f3_%d", n), "-s", "-n", n.to!string, "-H", "-f", "3", fpath_data3x6], data3x6ExpectedWt3[0..expectedLength]);
-        testTsvSample([format("test-f4_%d", n), "-s", "-n", n.to!string, "-H", "-p", "-f", "3", fpath_data3x6], data3x6ExpectedWt3Probs[0..expectedLength]);
+        testTsvSample([format("test-f1_%d", n), "-s", "-n", n.to!string,
+                       "-H", fpath_data3x6], data3x6ExpectedNoWt[0..expectedLength]);
+        
+        testTsvSample([format("test-f2_%d", n), "-s", "-n", n.to!string,
+                       "-H", "-p", fpath_data3x6], data3x6ExpectedNoWtProbs[0..expectedLength]);
+        
+        testTsvSample([format("test-f3_%d", n), "-s", "-n", n.to!string,
+                       "-H", "-f", "3", fpath_data3x6], data3x6ExpectedWt3[0..expectedLength]);
+        
+        testTsvSample([format("test-f4_%d", n), "-s", "-n", n.to!string,
+                       "-H", "-p", "-f", "3", fpath_data3x6], data3x6ExpectedWt3Probs[0..expectedLength]);
 
-        testTsvSample([format("test-f5_%d", n), "-s", "-n", n.to!string, fpath_data3x6_noheader], data3x6ExpectedNoWt[1..expectedLength]);
-        testTsvSample([format("test-f6_%d", n), "-s", "-n", n.to!string, "-p", fpath_data3x6_noheader], data3x6ExpectedNoWtProbs[1..expectedLength]);
-        testTsvSample([format("test-f7_%d", n), "-s", "-n", n.to!string, "-f", "3", fpath_data3x6_noheader], data3x6ExpectedWt3[1..expectedLength]);
-        testTsvSample([format("test-f8_%d", n), "-s", "-n", n.to!string, "-p", "-f", "3", fpath_data3x6_noheader], data3x6ExpectedWt3Probs[1..expectedLength]);
+        testTsvSample([format("test-f5_%d", n), "-s", "-n", n.to!string,
+                       fpath_data3x6_noheader], data3x6ExpectedNoWt[1..expectedLength]);
+        
+        testTsvSample([format("test-f6_%d", n), "-s", "-n", n.to!string,
+                       "-p", fpath_data3x6_noheader], data3x6ExpectedNoWtProbs[1..expectedLength]);
+        
+        testTsvSample([format("test-f7_%d", n), "-s", "-n", n.to!string,
+                       "-f", "3", fpath_data3x6_noheader], data3x6ExpectedWt3[1..expectedLength]);
+        
+        testTsvSample([format("test-f8_%d", n), "-s", "-n", n.to!string,
+                       "-p", "-f", "3", fpath_data3x6_noheader], data3x6ExpectedWt3Probs[1..expectedLength]);
     }
-
-
-    /* TODO - Error condition tests. */
 }

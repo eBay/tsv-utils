@@ -1,0 +1,26 @@
+Error test set 1
+----------------
+
+====[tsv-sample no_such_file.tsv]====
+Error [tsv-sample]: Cannot open file `no_such_file.tsv' in mode `rb' (No such file or directory)
+
+====[tsv-sample --no-such-param input3x25.tsv]====
+[tsv-sample] Error processing command line arguments: Unrecognized option --no-such-param
+
+====[tsv-sample -d ß input3x25.tsv]====
+[tsv-sample] Error processing command line arguments: Invalid UTF-8 sequence (at index 1)
+
+====[tsv-sample -H -f 2 input3x25.tsv]====
+Error [tsv-sample]: Could not process line: no digits seen
+  File: input3x25.tsv Line: 2
+line	title	weight
+
+====[tsv-sample -f 3 input3x25.tsv]====
+Error [tsv-sample]: Could not process line: no digits seen
+  File: input3x25.tsv Line: 1
+  Is this a header line? Use --H|header to skip.
+
+====[tsv-sample -H -f 11 input3x25.tsv]====
+Error [tsv-sample]: Could not process line: Not enough fields on line. Number required: 11; Number found: 3
+  File: input3x25.tsv Line: 2
+line	title	weight
