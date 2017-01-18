@@ -11,7 +11,7 @@ module tsv_sample;
 
 import std.range;
 import std.stdio;
-import std.typecons : tuple;
+import std.typecons : tuple, Flag;
 
 version(unittest)
 {
@@ -23,7 +23,17 @@ else
         TsvSampleOptions cmdopt;
         auto r = cmdopt.processArgs(cmdArgs);
         if (!r[0]) return r[1];
-        try weightedReservoirSamplingES(cmdopt, stdout.lockingTextWriter);
+        try
+        {
+            if (cmdopt.sampleSize == 0)
+            {
+                weightedReservoirSamplingES!(Yes.permuteAll)(cmdopt, stdout.lockingTextWriter);
+            }
+            else
+            {
+                weightedReservoirSamplingES!(No.permuteAll)(cmdopt, stdout.lockingTextWriter);
+            }
+        }
         catch (Exception exc)
         {
             stderr.writefln("Error [%s]: %s", cmdopt.programName, exc.msg);
@@ -77,7 +87,6 @@ struct TsvSampleOptions
     bool staticSeed = false;     // --s|static-seed
     char delim = '\t';           // --d|delimiter
     bool hasWeightField = false; // Derived.
-    bool sampleAllLines = true;  // Derived. 
     
     auto processArgs(ref string[] cmdArgs)
     {
@@ -120,8 +129,6 @@ struct TsvSampleOptions
                 weightField--;    // Switch to zero-based indexes.
             }
 
-            sampleAllLines = (sampleSize == 0);
-
             /* Assume remaining args are files. Use standard input if files were not provided. */
             files ~= (cmdArgs.length > 1) ? cmdArgs[1..$] : ["-"];
             cmdArgs.length = 1;
@@ -144,12 +151,17 @@ struct TsvSampleOptions
  * This algorithm uses a 'min' binary heap (priority queue). Every input line is read
  * and assigned a random weight. 
  */
-void weightedReservoirSamplingES(OutputRange)(TsvSampleOptions cmdopt, OutputRange outputStream)
+void weightedReservoirSamplingES(Flag!"permuteAll" permuteAll, OutputRange)
+    (TsvSampleOptions cmdopt, OutputRange outputStream)
     if (isOutputRange!(OutputRange, char))
 {
     import std.random : Random, unpredictableSeed, uniform01;
     import std.container.binaryheap;
 
+    /* Ensure the correct version of the template was called. */
+    static if (permuteAll) assert(cmdopt.sampleSize == 0);
+    else assert(cmdopt.sampleSize > 0);
+                               
     auto randomGenerator = Random(cmdopt.staticSeed ? 2438424139 : unpredictableSeed);
 
     struct Entry
@@ -158,23 +170,43 @@ void weightedReservoirSamplingES(OutputRange)(TsvSampleOptions cmdopt, OutputRan
         char[] line;
     }
 
-    /* Use a plain array as BinaryHeap backing store in Phobos 2.072 and later. In earlier
-     * versions use an Array from std.container.array. In version 2.072 BinaryHeap was
-     * changed to allow re-sizing a regular array. Performance is similar, but the regular
-     * array uses less memory when extended.
+    /* Create the heap and backing data store. Several choices involved:
+     * Heap:
+     * -Use a max-heap if permuting all lines. All elements will go into the heap. At
+     *   the end of reading, elements are ordered in the output order, max line first.
+     * - Use a min-heap if producing the top-n lines. The min-heap keeps the max score
+     *    items. When done reading, it is reversed in order to output max items first.
+     * Backing store:
+     * - Built-in arrays appear to have better memory bevavior when appending than
+     *   std.container.array Arrays. However, built-in arrays cannot be used with
+     *   binaryheaps until Phobos version 2.072.
+     * - Another consideration: std.container.array Arrays with pre-allocated storage
+     *   can be used to efficiently reverse the order, but a bug prevents this from
+     *   working in other cases. Info: https://issues.dlang.org/show_bug.cgi?id=17094
+     * - Result: Use a built-in array if request is for permuteAll and Phobos version
+     *   is 2.072 or later. Otherwise use a std.container.array Array.
      */
-    static if (__VERSION__ >= 2072)
+
+    static if (permuteAll && __VERSION__ >= 2072)
     {
-        auto dataStore = new Entry[](cmdopt.sampleSize);
+        Entry[] dataStore;
     }
     else
     {
         import std.container.array;
-        auto dataStore = Array!(Entry)();
-        dataStore.reserve(cmdopt.sampleSize);
+        Array!Entry dataStore;
     }
-    
-    auto reservoir = heapify!("a.score > b.score")(dataStore, 0);
+
+    dataStore.reserve(cmdopt.sampleSize);
+
+    static if (permuteAll)
+    {
+        auto reservoir = dataStore.heapify!("a.score < b.score")(0);  // Max binaryheap
+    }
+    else
+    {
+        auto reservoir = dataStore.heapify!("a.score > b.score")(0);  // Min binaryheap
+    }
 
     bool headerWritten = false;
     foreach (filename; cmdopt.files)
@@ -206,25 +238,26 @@ void weightedReservoirSamplingES(OutputRange)(TsvSampleOptions cmdopt, OutputRan
                     ? uniform01(randomGenerator) ^^ (1.0 / lineWeight)
                     : 0.0;
 
-                if (cmdopt.sampleAllLines || reservoir.length < cmdopt.sampleSize)
+                static if (permuteAll)
                 {
                     reservoir.insert(Entry(lineScore, line.dup));
                 }
-                else if (reservoir.front.score < lineScore)
+                else
                 {
-                    reservoir.replaceFront(Entry(lineScore, line.dup));
+                    if (reservoir.length < cmdopt.sampleSize)
+                    {
+                        reservoir.insert(Entry(lineScore, line.dup));
+                    }
+                    else if (reservoir.front.score < lineScore)
+                    {
+                        reservoir.replaceFront(Entry(lineScore, line.dup));
+                    }
                 }
             }
         }
     }
 
-    size_t totalEntries = reservoir.length;
-    Entry[] sortedEntries;
-    sortedEntries.reserve(totalEntries);
-    foreach (entry; reservoir) sortedEntries ~= entry;
-
-    import std.range : retro;
-    foreach (entry; sortedEntries.retro)
+    void printEntry(Entry entry)
     {
         if (cmdopt.printRandom)
         {
@@ -234,6 +267,23 @@ void weightedReservoirSamplingES(OutputRange)(TsvSampleOptions cmdopt, OutputRan
         }
         outputStream.put(entry.line);
         outputStream.put("\n");
+    }
+
+    static if (permuteAll)
+    {
+        foreach (entry; reservoir) printEntry(entry);
+    }
+    else
+    {
+        /* Assert checks warranted due to potential changes to binaryheap behavior with
+         * respect to the backing data store.
+         */
+        size_t numLines = reservoir.length;
+        assert(numLines == dataStore.length);
+        
+        while (!reservoir.empty) reservoir.removeFront;
+        assert(numLines == dataStore.length);
+        foreach (entry; dataStore) printEntry(entry);
     }
 }
 
@@ -313,9 +363,17 @@ version(unittest)
         auto savedCmdArgs = cmdArgs.to!string;
         auto r = cmdopt.processArgs(cmdArgs);
         assert(r[0], formatAssertMessage("Invalid command lines arg: '%s'.", savedCmdArgs));
-
         auto output = appender!(char[])();
-        weightedReservoirSamplingES(cmdopt, output);
+
+        if (cmdopt.sampleSize == 0)
+        {
+            weightedReservoirSamplingES!(Yes.permuteAll)(cmdopt, output);
+        }
+        else
+        {
+            weightedReservoirSamplingES!(No.permuteAll)(cmdopt, output);
+        }
+
         auto expectedOutput = expected.tsvDataToString;
 
         assert(output.data == expectedOutput,
