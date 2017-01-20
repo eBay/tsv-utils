@@ -48,7 +48,7 @@ Synopsis: tsv-sample [options] [file...]
 
 Randomizes or samples input lines. By default, all lines are output in a
 random order. '--n|num' can be used to limit the sample size produced. A
-weighted random sample can be created with the '--f|field' option.
+weighted random sample can be produced with the '--f|field' option.
 
 Options:
 EOS";
@@ -58,19 +58,28 @@ Synopsis: tsv-sample [options] [file...]
 
 Randomizes or samples input lines. By default, all lines are output in a
 random order. '--n|num' can be used to limit the sample size produced. A
-weighted random sample can be created with the '--f|field' option.
-Sampling is without replacement in all cases.
+weighted random sample can be generated using '--f|field'. This specifies
+a field to use as weights for each line. Sampling is without replacement.
 
-Reservoir sampling is used. If all input lines are included in the output,
-they must all be held in memory. Memory required for large files can be
-reduced significantly by specifying a sample size ('--n|num').
-
-Weighted random sampling is done using the algorithm described by Efraimidis
-and Spirakis. Weights should be positive numbers, but otherwise any values
-can be used. For more information on the algorithm, see:
+Weighted random sampling is done using an algorithm described by Efraimidis
+and Spirakis. Weights should be positive values representing the relative
+weight of the entry in the collection. Negative values are not meaningful
+and given the value zero. However, any positive real values can be used.
+For more see:
   * https://en.wikipedia.org/wiki/Reservoir_sampling
   * "Weighted Random Sampling over Data Streams", Pavlos S. Efraimidis
     (https://arxiv.org/abs/1012.0256)
+
+Reservoir sampling is used. If all lines are output, all must be held in
+memory. Memory required for large files can be reduced significantly using
+a sample size. Both 'tsv-sample -n <num>' and 'tsv-sample | head -n <num>'
+produce the same results, but the former is faster.
+
+Each run produces a different randomization. This can be changed using
+'--s|static-seed'. This uses the same initial seed each run to produce
+consistent randomization orders. The random seed can also be specified
+using '--v|seed-value'. This takes a non-zero, 32-bit positive integer.
+(A zero value is a no-op and ignored.)
 
 Options:
 EOS";
@@ -85,6 +94,7 @@ struct TsvSampleOptions
     bool hasHeader = false;      // --H|header
     bool printRandom = false;    // --p|print-random
     bool staticSeed = false;     // --s|static-seed
+    uint seedValue = 0;          // --v|seed-value
     char delim = '\t';           // --d|delimiter
     bool hasWeightField = false; // Derived.
     
@@ -100,14 +110,15 @@ struct TsvSampleOptions
             arraySep = ",";    // Use comma to separate values in command line options
             auto r = getopt(
                 cmdArgs,
-                "help-verbose",    "          Print full help.", &helpVerbose,
+                "help-verbose",    "     Print more detailed help.", &helpVerbose,
                 std.getopt.config.caseSensitive,
                 "H|header",        "     Treat the first line of each file as a header.", &hasHeader,
                 std.getopt.config.caseInsensitive,
-                "n|num",           "NUM  Number of lines to include in the output. If not provided or zero, all lines are output.", &sampleSize,
-                "f|field",         "NUM  Field number containing weights. If not provided or zero, all lines get equal weight.", &weightField,
+                "n|num",           "NUM  Number of lines to output. All lines are output if not provided or zero.", &sampleSize,
+                "f|field",         "NUM  Field containing weights. All lines get equal weight if not provided or zero.", &weightField,
                 "p|print-random",  "     Output the random values that were assigned.", &printRandom,
-                "s|static-seed",   "     Use the same random seed every run. This produces consistent results every run. By default different results are produced each run.", &staticSeed,
+                "s|static-seed",   "     Use the same random seed every run.", &staticSeed,
+                "v|seed-value",    "NUM  Sets the initial random seed. Use a non-zero, 32 bit positive integer. Zero is a no-op.", &seedValue,
                 "d|delimiter",     "CHR  Field delimiter.", &delim,
                 );
 
@@ -161,8 +172,13 @@ void weightedReservoirSamplingES(Flag!"permuteAll" permuteAll, OutputRange)
     /* Ensure the correct version of the template was called. */
     static if (permuteAll) assert(cmdopt.sampleSize == 0);
     else assert(cmdopt.sampleSize > 0);
-                               
-    auto randomGenerator = Random(cmdopt.staticSeed ? 2438424139 : unpredictableSeed);
+
+    uint seed =
+        (cmdopt.seedValue != 0) ? cmdopt.seedValue
+        : cmdopt.staticSeed ? 2438424139
+        : unpredictableSeed;
+    
+    auto randomGenerator = Random(seed);
 
     struct Entry
     {
@@ -798,7 +814,11 @@ unittest
     testTsvSample(["test-e1", "-H", "-s", "-f", "2", "-p", fpath_data2x10d], data2x10dExpectedWt2Probs);
     testTsvSample(["test-e1", "-H", "-s", "-f", "2", "-p", fpath_data2x10e], data2x10eExpectedWt2Probs);
 
-    /* Tests of subset requested lengths (--n|num) field. */
+    /* Tests of subset sample (--n|num) field.
+     *
+     * Note: The way these tests are done ensures that subset length does not affect
+     * output order.
+     */
     import std.algorithm : min;
     for (size_t n = data3x6.length + 2; n >= 1; n--)
     {
