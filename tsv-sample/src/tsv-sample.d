@@ -27,11 +27,11 @@ else
         {
             if (cmdopt.sampleSize == 0)
             {
-                weightedReservoirSamplingES!(Yes.permuteAll)(cmdopt, stdout.lockingTextWriter);
+                reservoirSampling!(Yes.permuteAll)(cmdopt, stdout.lockingTextWriter);
             }
             else
             {
-                weightedReservoirSamplingES!(No.permuteAll)(cmdopt, stdout.lockingTextWriter);
+                reservoirSampling!(No.permuteAll)(cmdopt, stdout.lockingTextWriter);
             }
         }
         catch (Exception exc)
@@ -65,14 +65,16 @@ Weighted random sampling is done using an algorithm described by Efraimidis
 and Spirakis. Weights should be positive values representing the relative
 weight of the entry in the collection. Negative values are not meaningful
 and given the value zero. However, any positive real values can be used.
-For more see:
-  * https://en.wikipedia.org/wiki/Reservoir_sampling
-  * "Weighted Random Sampling over Data Streams", Pavlos S. Efraimidis
-    (https://arxiv.org/abs/1012.0256)
+Lines are output ordered by the randomized weight that was assigned. This
+means, for example, that a smaller sample can be produced by taking the
+first N lines of output. For more info on the sampling approach see:
+* Wikipedia: https://en.wikipedia.org/wiki/Reservoir_sampling
+* "Weighted Random Sampling over Data Streams", Pavlos S. Efraimidis
+  (https://arxiv.org/abs/1012.0256)
 
-Reservoir sampling is used. If all lines are output, all must be held in
-memory. Memory required for large files can be reduced significantly using
-a sample size. Both 'tsv-sample -n <num>' and 'tsv-sample | head -n <num>'
+The implementation uses reservoir sampling. All lines output must be held
+in memory. Memory needed for large inputs can reduced significantly using a
+sample size. Both 'tsv-sample -n <num>' and  'tsv-sample | head -n <num>'
 produce the same results, but the former is faster.
 
 Each run produces a different randomization. This can be changed using
@@ -153,16 +155,22 @@ struct TsvSampleOptions
     }
 }
 
-/* Implementation of Efraimidis and Spirakis algorithm for weighted reservoir sampling.
- * For more information see:
- * - https://en.wikipedia.org/wiki/Reservoir_sampling
- * - "Weighted Random Sampling over Data Streams", Pavlos S. Efraimidis
- *   (https://arxiv.org/abs/1012.0256)
+/* An implementation of reservior sampling. Both weighted and unweighted sampling are 
+ * supported. Both are implemented using the one-pass algorithm described by Efraimidis
+ * and Spirakis ("Weighted Random Sampling over Data Streams", Pavlos S. Efraimidis, 
+ * https://arxiv.org/abs/1012.0256). In the unweighted case weights are simply set to one.
  *
- * This algorithm uses a 'min' binary heap (priority queue). Every input line is read
- * and assigned a random weight. 
+ * Both sampling and full permutation of the input are supported, but the implementations
+ * differ. Both use a heap (priority queue). A "max" heap is used when permuting all lines,
+ * as it leaves the heap in the correct order for output. However, a "min" heap is used
+ * when sampling. When sampling the case the role of the heap is to indentify the top-k
+ * elements. Adding a new items means dropping the "min" item. When done reading all lines,
+ * the "min" heap is in the opposite order needed for output. The desired order is obtained
+ * by removing each element one at at time from the heap. The underlying data store will
+ * have the elements in correct order. The other notable difference is that the backing
+ * store can be pre-allocated when sampling, but must be grown when permuting all lines.
  */
-void weightedReservoirSamplingES(Flag!"permuteAll" permuteAll, OutputRange)
+void reservoirSampling(Flag!"permuteAll" permuteAll, OutputRange)
     (TsvSampleOptions cmdopt, OutputRange outputStream)
     if (isOutputRange!(OutputRange, char))
 {
@@ -186,19 +194,15 @@ void weightedReservoirSamplingES(Flag!"permuteAll" permuteAll, OutputRange)
         char[] line;
     }
 
-    /* Create the heap and backing data store. Several choices involved:
-     * Heap:
-     * -Use a max-heap if permuting all lines. All elements will go into the heap. At
-     *   the end of reading, elements are ordered in the output order, max line first.
-     * - Use a min-heap if producing the top-n lines. The min-heap keeps the max score
-     *    items. When done reading, it is reversed in order to output max items first.
-     * Backing store:
+    /* Create the heap and backing data store. A min or max heap is used as described
+     * above. The backing store has some complications resulting from the current 
+     * standard library implementation:
      * - Built-in arrays appear to have better memory bevavior when appending than
      *   std.container.array Arrays. However, built-in arrays cannot be used with
      *   binaryheaps until Phobos version 2.072.
-     * - Another consideration: std.container.array Arrays with pre-allocated storage
-     *   can be used to efficiently reverse the order, but a bug prevents this from
-     *   working in other cases. Info: https://issues.dlang.org/show_bug.cgi?id=17094
+     * - std.container.array Arrays with pre-allocated storage can be used to
+     *   efficiently reverse the heap, but a bug prevents this from working for other
+     *   data store use cases. Info: https://issues.dlang.org/show_bug.cgi?id=17094
      * - Result: Use a built-in array if request is for permuteAll and Phobos version
      *   is 2.072 or later. Otherwise use a std.container.array Array.
      */
@@ -224,6 +228,7 @@ void weightedReservoirSamplingES(Flag!"permuteAll" permuteAll, OutputRange)
         auto reservoir = dataStore.heapify!("a.score > b.score")(0);  // Min binaryheap
     }
 
+    /* Process each line. */
     bool headerWritten = false;
     foreach (filename; cmdopt.files)
     {
@@ -273,6 +278,13 @@ void weightedReservoirSamplingES(Flag!"permuteAll" permuteAll, OutputRange)
         }
     }
 
+    /* All entries are in the reservoir. Time to print. Entries are printed ordered
+     * by assigned weights. In the sampling/top-k cases this could sped up a little
+     * by simply printing the backing store array. However, there is real value in
+     * having a weighted order. This is especially true for weighted sampling, but
+     * there is also value in the unweighted case, especially when using static seeds.
+     */
+    
     void printEntry(Entry entry)
     {
         if (cmdopt.printRandom)
@@ -287,12 +299,12 @@ void weightedReservoirSamplingES(Flag!"permuteAll" permuteAll, OutputRange)
 
     static if (permuteAll)
     {
-        foreach (entry; reservoir) printEntry(entry);
+        foreach (entry; reservoir) printEntry(entry);  // Walk the max-heap
     }
     else
     {
-        /* Assert checks warranted due to potential changes to binaryheap behavior with
-         * respect to the backing data store.
+        /* Sampling/top-n case: Reorder the data store by extracting all the elements.
+         * Note: Asserts are chosen to avoid issues in the current binaryheap implementation.
          */
         size_t numLines = reservoir.length;
         assert(numLines == dataStore.length);
@@ -383,11 +395,11 @@ version(unittest)
 
         if (cmdopt.sampleSize == 0)
         {
-            weightedReservoirSamplingES!(Yes.permuteAll)(cmdopt, output);
+            reservoirSampling!(Yes.permuteAll)(cmdopt, output);
         }
         else
         {
-            weightedReservoirSamplingES!(No.permuteAll)(cmdopt, output);
+            reservoirSampling!(No.permuteAll)(cmdopt, output);
         }
 
         auto expectedOutput = expected.tsvDataToString;
@@ -522,6 +534,26 @@ unittest
          ["black", "黒", "0.983"],
          ["white", "白", "1.65"],
          ["green", "緑", "0.0072"]];
+
+    /* Using a different static seed. */
+    string[][] data3x6ExpectedNoWtV41Probs =
+        [["random_weight", "field_a", "field_b", "field_c"],
+         ["0.680572726530954", "green", "緑", "0.0072"],
+         ["0.676816243678331", "blue", "青", "12"],
+         ["0.32097338931635", "yellow", "黄", "12"],
+         ["0.250923618674278", "red", "赤", "23.8"],
+         ["0.155359342927113", "black", "黒", "0.983"],
+         ["0.0460958210751414", "white", "白", "1.65"]];
+    
+    string[][] data3x6ExpectedWt3V41Probs =
+        [["random_weight", "field_a", "field_b", "field_c"],
+         ["0.967993774989107", "blue", "青", "12"],
+         ["0.943562457925736", "red", "赤", "23.8"],
+         ["0.90964601024272", "yellow", "黄", "12"],
+         ["0.154916584092601", "white", "白", "1.65"],
+         ["0.15043620392537", "black", "黒", "0.983"],
+         ["6.13946748307015e-24", "green", "緑", "0.0072"]];
+
 
     /* Combo 1: 3x3, 3x1, 3x6, 3x2. No data files, only expected results. */
     string[][] combo1ExpectedNoWt =
@@ -761,6 +793,10 @@ unittest
     testTsvSample(["test-a7", "-H", "-s", "--print-random", fpath_data3x6], data3x6ExpectedNoWtProbs);
     testTsvSample(["test-a8", "-H", "-s", "--field", "3", fpath_data3x6], data3x6ExpectedWt3);
     testTsvSample(["test-a9", "-H", "-s", "-p", "-f", "3", fpath_data3x6], data3x6ExpectedWt3Probs);
+    testTsvSample(["test-a10", "-H", "--seed-value", "41", "-p", fpath_data3x6], data3x6ExpectedNoWtV41Probs);
+    testTsvSample(["test-a11", "-H", "-s", "-v", "41", "-p", fpath_data3x6], data3x6ExpectedNoWtV41Probs);
+    testTsvSample(["test-a12", "-H", "-s", "-v", "0", "-p", fpath_data3x6], data3x6ExpectedNoWtProbs);
+    testTsvSample(["test-a13", "-H", "-v", "41", "-f", "3", "-p", fpath_data3x6], data3x6ExpectedWt3V41Probs);
 
     /* Basic tests, without headers. */
     testTsvSample(["test-b1", "-s", fpath_data3x1_noheader], data3x1[1..$]);
@@ -770,6 +806,8 @@ unittest
     testTsvSample(["test-b5", "-s", "--print-random", fpath_data3x6_noheader], data3x6ExpectedNoWtProbs[1..$]);
     testTsvSample(["test-b6", "-s", "--field", "3", fpath_data3x6_noheader], data3x6ExpectedWt3[1..$]);
     testTsvSample(["test-b7", "-s", "-p", "-f", "3", fpath_data3x6_noheader], data3x6ExpectedWt3Probs[1..$]);
+    testTsvSample(["test-b8", "-v", "41", "-p", fpath_data3x6_noheader], data3x6ExpectedNoWtV41Probs[1..$]);
+    testTsvSample(["test-b9", "-v", "41", "-f", "3", "-p", fpath_data3x6_noheader], data3x6ExpectedWt3V41Probs[1..$]);
 
     /* Multi-file tests. */
     testTsvSample(["test-c1", "--header", "--static-seed",
@@ -846,5 +884,22 @@ unittest
         
         testTsvSample([format("test-f8_%d", n), "-s", "-n", n.to!string,
                        "-p", "-f", "3", fpath_data3x6_noheader], data3x6ExpectedWt3Probs[1..expectedLength]);
+    }
+
+    /* Similar tests with the 1x10 data set. */
+    for (size_t n = data1x10.length + 2; n >= 1; n--)
+    {
+        size_t expectedLength = min(data1x10.length, n + 1);
+        testTsvSample([format("test-g1_%d", n), "-s", "-n", n.to!string,
+                       "-H", fpath_data1x10], data1x10ExpectedNoWt[0..expectedLength]);
+        
+        testTsvSample([format("test-g2_%d", n), "-s", "-n", n.to!string,
+                       "-H", "-f", "1", fpath_data1x10], data1x10ExpectedWt1[0..expectedLength]);
+        
+        testTsvSample([format("test-g3_%d", n), "-s", "-n", n.to!string,
+                       fpath_data1x10_noheader], data1x10ExpectedNoWt[1..expectedLength]);
+        
+        testTsvSample([format("test-g4_%d", n), "-s", "-n", n.to!string,
+                       "-f", "1", fpath_data1x10_noheader], data1x10ExpectedWt1[1..expectedLength]);
     }
 }
