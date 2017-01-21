@@ -1,17 +1,20 @@
 #! /bin/sh
 
-## Most tsv-sample testing is done as unit tests. Tests executed by this script are
-## run against the final executable. This provides a sanity check that the
-## final executable is good. Tests are easy to run in this format, so there is
-## overlap. However, these tests do not test edge cases as rigorously as unit tests.
-## Instead, these tests focus on areas that are hard to test in unit tests.
+## Most tsv-sample testing is done as unit tests. Tests executed by this script are run
+## against the final executable. This provides a sanity check that the final executable
+## is good. Tests are easy to run in this format, so there is overlap. However, these
+## tests do not test edge cases as rigorously as unit tests. Instead, these tests focus
+## on areas that are hard to test in unit tests.
 ##
-## Portability note: Many of the tests here rely on generating consistent random
-## numbers across different platforms when using the same random seed. So far this
-## has succeeded on several different platorms, compiler, and library versions.
-## However, it is certainly possible for to break down when run on different
-## platforms. This portability is not part of tsv-sample guarantees, but it is
-## convenient for testing.
+## Portability note: Many of the tests here rely on generating consistent random numbers
+## across different platforms when using the same random seed. So far this has succeeded
+## on several different platorm, compiler, and library versions. However, it is certainly
+## possible this condition will not hold on other platforms.
+##
+## For tsv-sample, this portability implies generating the same results on different 
+## platforms when using the same random seed. This is NOT part of tsv-sample guarantees,
+## but it is convenient for testing. If platforms are identified that do not generate
+## the same results these tests will need to be adjusted.
 
 if [ $# -le 1 ]; then
     echo "Insufficient arguments. A program name and output directory are required."
