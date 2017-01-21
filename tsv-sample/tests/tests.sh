@@ -5,6 +5,13 @@
 ## final executable is good. Tests are easy to run in this format, so there is
 ## overlap. However, these tests do not test edge cases as rigorously as unit tests.
 ## Instead, these tests focus on areas that are hard to test in unit tests.
+##
+## Portability note: Many of the tests here rely on generating consistent random
+## numbers across different platforms when using the same random seed. So far this
+## has succeeded on several different platorms, compiler, and library versions.
+## However, it is certainly possible for to break down when run on different
+## platforms. This portability is not part of tsv-sample guarantees, but it is
+## convenient for testing.
 
 if [ $# -le 1 ]; then
     echo "Insufficient arguments. A program name and output directory are required."
@@ -52,17 +59,18 @@ runtest ${prog} "-d @ -H -s -p -n 20 input2x7_atsign.tsv" ${basic_tests_1}
 ## Need to run at least one test with the unpredictable seed. Can't compare the
 ## results, so check the number of lines returned. Check standard input also.
 ## runtest can't do these, write these out by hand.
-echo "" >> ${basic_tests_1}; echo "====[tsv-sample -H input3x10.tsv | wc -l]====" >> ${basic_tests_1}
+## Note: The "tr -d ' '" construct strips whitespace, which differs between 'wc -l' implementations.
+echo "" >> ${basic_tests_1}; echo "====[tsv-sample -H input3x10.tsv | wc -l | tr -d ' ']====" >> ${basic_tests_1}
 ${prog} -H input3x10.tsv | wc -l >> ${basic_tests_1} 2>&1
 
-echo "" >> ${basic_tests_1}; echo "====[cat input3x10.tsv tsv-sample -H -p | wc -l]====" >> ${basic_tests_1}
-cat input3x10.tsv | ${prog} -H -p | wc -l >> ${basic_tests_1} 2>&1
+echo "" >> ${basic_tests_1}; echo "====[cat input3x10.tsv tsv-sample -H -p | wc -l | tr -d ' ']====" >> ${basic_tests_1}
+cat input3x10.tsv | ${prog} -H -p | wc -l | tr -d ' ' >> ${basic_tests_1} 2>&1
 
-echo "" >> ${basic_tests_1}; echo "====[cat input3x10.tsv tsv-sample -H -p -f 3 -- - input3x25.tsv | wc -l]====" >> ${basic_tests_1}
-cat input3x10.tsv | ${prog} -H -p -f 3 -- - input3x25.tsv | wc -l >> ${basic_tests_1} 2>&1
+echo "" >> ${basic_tests_1}; echo "====[cat input3x10.tsv tsv-sample -H -p -f 3 -- - input3x25.tsv | wc -l | tr -d ' ']====" >> ${basic_tests_1}
+cat input3x10.tsv | ${prog} -H -p -f 3 -- - input3x25.tsv | wc -l | tr -d ' ' >> ${basic_tests_1} 2>&1
 
-echo "" >> ${basic_tests_1}; echo "====[cat input3x10.tsv tsv-sample -H -p -f 3 -n 10 -- - input3x25.tsv | wc -l]====" >> ${basic_tests_1}
-cat input3x10.tsv | ${prog} -H -p -f 3 -n 10 -- - input3x25.tsv | wc -l >> ${basic_tests_1} 2>&1
+echo "" >> ${basic_tests_1}; echo "====[cat input3x10.tsv tsv-sample -H -p -f 3 -n 10 -- - input3x25.tsv | wc -l | tr -d ' ']====" >> ${basic_tests_1}
+cat input3x10.tsv | ${prog} -H -p -f 3 -n 10 -- - input3x25.tsv | wc -l | tr -d ' ' >> ${basic_tests_1} 2>&1
 
 ## Error cases
 

@@ -327,14 +327,14 @@ random_weight@title@weight
 0.159293440869078@法螺男爵旅土産@5803
 0.010968807619065@友情@5992
 
-====[tsv-sample -H input3x10.tsv | wc -l]====
+====[tsv-sample -H input3x10.tsv | wc -l | tr -d ' ']====
       11
 
-====[cat input3x10.tsv tsv-sample -H -p | wc -l]====
-      11
+====[cat input3x10.tsv tsv-sample -H -p | wc -l | tr -d ' ']====
+11
 
-====[cat input3x10.tsv tsv-sample -H -p -f 3 -- - input3x25.tsv | wc -l]====
-      36
+====[cat input3x10.tsv tsv-sample -H -p -f 3 -- - input3x25.tsv | wc -l | tr -d ' ']====
+36
 
-====[cat input3x10.tsv tsv-sample -H -p -f 3 -n 10 -- - input3x25.tsv | wc -l]====
-      11
+====[cat input3x10.tsv tsv-sample -H -p -f 3 -n 10 -- - input3x25.tsv | wc -l | tr -d ' ']====
+11

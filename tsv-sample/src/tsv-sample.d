@@ -366,6 +366,16 @@ unittest
 }
 
 /* Unit tests for the main program start here.
+ *
+ * Portability note: Many of the tests here rely on generating consistent random numbers
+ * across different platforms when using the same random seed. So far this has succeeded
+ * on several different platorm, compiler, and library versions. However, it is certainly
+ * possible this condition will not hold on other platforms.
+ *
+ * For tsv-sample, this portability implies generating the same results on different 
+ * platforms when using the same random seed. This is NOT part of tsv-sample guarantees,
+ * but it is convenient for testing. If platforms are identified that do not generate
+ * the same results these tests will need to be adjusted.
  */
 version(unittest)
 {
