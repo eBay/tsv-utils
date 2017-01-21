@@ -64,7 +64,7 @@ runtest ${prog} "-d @ -H -s -p -n 20 input2x7_atsign.tsv" ${basic_tests_1}
 ## runtest can't do these, write these out by hand.
 ## Note: The "tr -d ' '" construct strips whitespace, which differs between 'wc -l' implementations.
 echo "" >> ${basic_tests_1}; echo "====[tsv-sample -H input3x10.tsv | wc -l | tr -d ' ']====" >> ${basic_tests_1}
-${prog} -H input3x10.tsv | wc -l >> ${basic_tests_1} 2>&1
+${prog} -H input3x10.tsv | wc -l | tr -d ' ' >> ${basic_tests_1} 2>&1
 
 echo "" >> ${basic_tests_1}; echo "====[cat input3x10.tsv tsv-sample -H -p | wc -l | tr -d ' ']====" >> ${basic_tests_1}
 cat input3x10.tsv | ${prog} -H -p | wc -l | tr -d ' ' >> ${basic_tests_1} 2>&1

@@ -328,7 +328,7 @@ random_weight@title@weight
 0.010968807619065@友情@5992
 
 ====[tsv-sample -H input3x10.tsv | wc -l | tr -d ' ']====
-      11
+11
 
 ====[cat input3x10.tsv tsv-sample -H -p | wc -l | tr -d ' ']====
 11
