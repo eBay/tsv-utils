@@ -15,16 +15,17 @@ Information on the D programming language is available at: http://dlang.org/.
 
 ## The tools
 
-These tools were developed for working with reasonably large data files. Larger than ideal for loading entirely in memory in an application like R, but not so big as to necessitate moving to Hadoop or similar distributed compute environments. They work like traditional Unix command line utilities such as `cut`, `sort`, `grep`, etc., and are intended to complement these tools. Each tool is a standalone executable. They follow common Unix conventions for pipeline programs. Data is read from files or standard input, results are written to standard output. The field separator defaults to TAB, but any character can be used. Input and output is UTF-8, and all operations are unicode ready, including regular expression match (`tsv-filter`). Documentation is available for each tool by invoking it with the `--help` option. If reading the code, look for the `helpText` variable near the top of the file.
+These tools were developed for working with reasonably large data files. Larger than ideal for loading entirely in memory in an application like R, but not so big as to necessitate moving to Hadoop or similar distributed compute environments. They work like traditional Unix command line utilities such as `cut`, `sort`, `grep`, etc., and are intended to complement these tools. Each tool is a standalone executable. They follow common Unix conventions for pipeline programs. Data is read from files or standard input, results are written to standard output. The field separator defaults to TAB, but any character can be used. Input and output is UTF-8, and all operations are Unicode ready, including regular expression match (`tsv-filter`). Documentation is available for each tool by invoking it with the `--help` option. If reading the code, look for the `helpText` variable near the top of the file.
 
 The rest of this section contains a short description of each tool. There is more detail in the [tool reference](#tool-reference) section towards the end of the file.
 
-* [tsv-filter](#tsv-filter) - Filter data file rows via numeric and string comparisions.
+* [tsv-filter](#tsv-filter) - Filter data file rows via numeric and string comparisons.
 * [tsv-select](#tsv-select) - Keep a subset of the columns (fields) in the input.
 * [tsv-summarize](#tsv-summarize) - Aggregate field values, summarizing across the entire file or grouped by key.
 * [tsv-join](#tsv-join) - Join lines from multiple files using fields as a key.
 * [tsv-append](#tsv-append) - Concatenate TSV files. Header aware; supports source file tracking.
 * [tsv-uniq](#tsv-uniq) - Filter out duplicate lines using fields as a key.
+* [tsv-sample](#tsv-sample) - Uniform and weighted random sampling or permutation of input lines.
 * [csv2tsv](#csv2tsv) - Convert CSV files to TSV.
 * [number-lines](#number-lines) - Number the input lines.
 * [Useful bash aliases](#useful-bash-aliases)
@@ -121,6 +122,10 @@ $ tsv-uniq -f 2,3 data.tsv
 As with `tsv-join`, this uses an in-memory lookup table to record unique entries. This ultimately limits the data sizes that can be processed. The author has found that datasets with up to about 10 million unique entries work fine, but performance degrades after that.
 
 See the [tsv-uniq reference](#tsv-uniq-reference) for details.
+
+### tsv-sample
+
+For uniform random sampling, the GNU `shuf` program is quite good. For weighted random sampling the choices are limited. This is where `tsv-sample` comes in. It implements weighted reservoir sampling. Weights are from a field in the input data. Uniform random sampling is supported as well. Performance is good, it works quite well on large files. See the [tsv-sample reference](#tsv-sample-reference) for details.
 
 ### csv2tsv
 
@@ -388,6 +393,7 @@ This section provides more detailed documentation about the different tools as w
 * [tsv-join reference](#tsv-join-reference)
 * [tsv-append reference](#tsv-append-reference)
 * [tsv-uniq reference](#tsv-uniq-reference)
+* [tsv-sample reference](#tsv-sample-reference)
 * [csv2tsv reference](#csv2tsv-reference)
 * [number-lines reference](#number-lines-reference)
 
@@ -799,6 +805,32 @@ $ # Generate uniq IDs, but account for headers
 $ tsv-uniq -f 1,2 --equiv --header data.tsv
 ```
 
+### tsv-sample reference
+
+**Synopsis:** tsv-sample [options] [file...]
+
+tsv-sample randomizes or samples input lines. By default, all lines are output in a random order. `--n|num` can be used to limit the sample size produced. A weighted random sample can be generated using `--f|field`. This specifies a field to use as weights for each line. Sampling is without replacement.
+
+Weighted random sampling is done using an algorithm described by Efraimidis and Spirakis. Weights should be positive values representing the relative weight of the entry in the collection. Negative values are not meaningful and given the value zero. However, any positive real values can be used. Lines are output ordered by the randomized weight that was assigned. This means, for example, that a smaller sample can be produced by taking the first N lines of output. For more info on the sampling approach see:
+* Wikipedia: https://en.wikipedia.org/wiki/Reservoir_sampling
+* "Weighted Random Sampling over Data Streams", Pavlos S. Efraimidis (https://arxiv.org/abs/1012.0256)
+
+The implementation uses reservoir sampling. All lines output must be held in memory. Memory needed for large inputs can reduced significantly using a sample size. Both `tsv-sample -n <num>` and  `tsv-sample | head -n <num>` produce the same results, but the former is faster.
+
+Each run produces a different randomization. This can be changed using `--s|static-seed`. This uses the same initial seed each run to produce consistent randomization orders. The random seed can also be specified using `--v|seed-value`. This takes a non-zero, 32-bit positive integer. (A zero value is a no-op and ignored.)
+
+**Options:**
+
+* `--help-verbose` - Print more detailed help.
+* `--H|header` - Treat the first line of each file as a header.
+* `--n|num NUM` - Number of lines to output. All lines are output if not provided or zero.
+* `--f|field NUM` - Field containing weights. All lines get equal weight if not provided or zero.
+* `--p|print-random` - Output the random values that were assigned.
+* `--s|static-seed` - Use the same random seed every run.
+* `--v|seed-value NUM` - Sets the initial random seed. Use a non-zero, 32 bit positive integer. Zero is a no-op.
+* `--d|delimiter CHR` - Field delimiter.
+* `--h|help` - This help information.
+ 
 ### csv2tsv reference
 
 **Synopsis:** csv2tsv [options] [file...]
