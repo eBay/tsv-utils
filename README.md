@@ -15,16 +15,17 @@ Information on the D programming language is available at: http://dlang.org/.
 
 ## The tools
 
-These tools were developed for working with reasonably large data files. Larger than ideal for loading entirely in memory in an application like R, but not so big as to necessitate moving to Hadoop or similar distributed compute environments. They work like traditional Unix command line utilities such as `cut`, `sort`, `grep`, etc., and are intended to complement these tools. Each tool is a standalone executable. They follow common Unix conventions for pipeline programs. Data is read from files or standard input, results are written to standard output. The field separator defaults to TAB, but any character can be used. Input and output is UTF-8, and all operations are unicode ready, including regular expression match (`tsv-filter`). Documentation is available for each tool by invoking it with the `--help` option. If reading the code, look for the `helpText` variable near the top of the file.
+These tools were developed for working with reasonably large data files. Larger than ideal for loading entirely in memory in an application like R, but not so big as to necessitate moving to Hadoop or similar distributed compute environments. They work like traditional Unix command line utilities such as `cut`, `sort`, `grep`, etc., and are intended to complement these tools. Each tool is a standalone executable. They follow common Unix conventions for pipeline programs. Data is read from files or standard input, results are written to standard output. The field separator defaults to TAB, but any character can be used. Input and output is UTF-8, and all operations are Unicode ready, including regular expression match (`tsv-filter`). Documentation is available for each tool by invoking it with the `--help` option. If reading the code, look for the `helpText` variable near the top of the file.
 
 The rest of this section contains a short description of each tool. There is more detail in the [tool reference](#tool-reference) section towards the end of the file.
 
-* [tsv-filter](#tsv-filter) - Filter data file rows via numeric and string comparisions.
+* [tsv-filter](#tsv-filter) - Filter data file rows via numeric and string comparisons.
 * [tsv-select](#tsv-select) - Keep a subset of the columns (fields) in the input.
 * [tsv-summarize](#tsv-summarize) - Aggregate field values, summarizing across the entire file or grouped by key.
 * [tsv-join](#tsv-join) - Join lines from multiple files using fields as a key.
 * [tsv-append](#tsv-append) - Concatenate TSV files. Header aware; supports source file tracking.
 * [tsv-uniq](#tsv-uniq) - Filter out duplicate lines using fields as a key.
+* [tsv-sample](#tsv-sample) - Uniform and weighted random sampling or permutation of input lines.
 * [csv2tsv](#csv2tsv) - Convert CSV files to TSV.
 * [number-lines](#number-lines) - Number the input lines.
 * [Useful bash aliases](#useful-bash-aliases)
@@ -121,6 +122,10 @@ $ tsv-uniq -f 2,3 data.tsv
 As with `tsv-join`, this uses an in-memory lookup table to record unique entries. This ultimately limits the data sizes that can be processed. The author has found that datasets with up to about 10 million unique entries work fine, but performance degrades after that.
 
 See the [tsv-uniq reference](#tsv-uniq-reference) for details.
+
+### tsv-sample
+
+For uniform random sampling, the GNU `shuf` program is quite good and widely available. For weighted random sampling the choices are limited, especially when working with large files. This is where `tsv-sample` is useful. It implements weighted reservoir sampling, with the weights taken from a field in the input data. Uniform random sampling is supported as well. Performance is good, it works quite well on large files. See the [tsv-sample reference](#tsv-sample-reference) for details.
 
 ### csv2tsv
 
@@ -227,7 +232,7 @@ Documentation for each tool is found near the top of the main file, both in the 
 
 The simplest tool is `number-lines`. It is useful as an illustration of the code outline followed by the other tools. `tsv-select` and `tsv-uniq` also have straightforward functionality, but employ a few more D programming concepts. `tsv-select` uses templates and compile-time programming in a somewhat less common way, it may be clearer after gaining some familiarity with D templates. A non-templatized version of the source code is included for comparison. 
 
-`tsv-append` has a simple code structure. It's one of the newer tools. It's only additional complexity is that writes to an 'output range' rather than directly to standard output. This enables better encapsulation for unit testing.
+`tsv-append` has a simple code structure. It's one of the newer tools. It's only additional complexity is that writes to an 'output range' rather than directly to standard output. This enables better encapsulation for unit testing. `tsv-sample`, another new tool, is written in a similar fashion. The code is only a bit more complicated, but the algorithm is much more interesting.
 
 `tsv-join` and `tsv-filter` also have relatively straightforward functionality, but support more use cases resulting in more code. `tsv-filter` in particular has more elaborate setup steps that take a bit more time to understand. `tsv-filter` uses several features like delegates (closures) and regular expressions not used in the other tools.
 
@@ -280,7 +285,7 @@ $ make test-nobuild
 
 ### Unit tests
 
-D has an excellent facility for adding unit tests right with the code. The `common` utility functions in this package take advantage of built-in unit tests. However, most of the command line executables do not, and instead use more traditional invocation of the command line executables and diffs the output against a "gold" result set. The exceptions are `csv2tsv`, `tsv-summarize` and `tsv-append`. These use both built-in unit tests and tests against the executable. The built-in unit tests are much nicer, and also the advantage of being naturally cross-platform. The command line executable tests assume a Unix shell.
+D has an excellent facility for adding unit tests right with the code. The `common` utility functions and the more recent tools take advantage of built-in unit tests. However, the earlier tools do not, and instead use more traditional invocation of the command line executables and diffs the output against a "gold" result set. The more recent tools use both built-in unit tests ad tests against the executable. This includes `csv2tsv`, `tsv-summarize`, `tsv-append`, and `tsv-sample`. The built-in unit tests are much nicer, and also the advantage of being naturally cross-platform. The command line executable tests assume a Unix shell.
 
 Tests for the command line executables are in the `tests` directory of each tool. Overall the tests cover a fair number of cases and are quite useful checks when modifying the code. They may also be helpful as an examples of command line tool invocations. See the `tests.sh` file in each `test` directory, and the `test` makefile target in `makeapp.mk`.
 
@@ -388,6 +393,7 @@ This section provides more detailed documentation about the different tools as w
 * [tsv-join reference](#tsv-join-reference)
 * [tsv-append reference](#tsv-append-reference)
 * [tsv-uniq reference](#tsv-uniq-reference)
+* [tsv-sample reference](#tsv-sample-reference)
 * [csv2tsv reference](#csv2tsv-reference)
 * [number-lines reference](#number-lines-reference)
 
@@ -799,6 +805,32 @@ $ # Generate uniq IDs, but account for headers
 $ tsv-uniq -f 1,2 --equiv --header data.tsv
 ```
 
+### tsv-sample reference
+
+**Synopsis:** tsv-sample [options] [file...]
+
+tsv-sample randomizes or samples input lines. By default, all lines are output in random order. `--n|num` can be used to limit the sample size produced. A weighted random sample is generated using the `--f|field` option, this identifies the field containing weights. Sampling is without replacement.
+
+Weighted random sampling is done using an algorithm described by Efraimidis and Spirakis. Weights should be positive values representing the relative weight of the entry in the collection. Negative values are not meaningful and given the value zero. However, any positive real values can be used. Lines are output ordered by the randomized weight that was assigned. This means, for example, that a smaller sample can be produced by taking the first N lines of output. For more info on the sampling approach see:
+* Wikipedia: https://en.wikipedia.org/wiki/Reservoir_sampling
+* "Weighted Random Sampling over Data Streams", Pavlos S. Efraimidis (https://arxiv.org/abs/1012.0256)
+
+The implementation uses reservoir sampling. All lines output must be held in memory. Memory needed for large inputs can reduced significantly using a sample size. Both `tsv-sample -n <num>` and  `tsv-sample | head -n <num>` produce the same results, but the former is faster.
+
+Each run produces a different randomization. This can be changed using `--s|static-seed`. This uses the same initial seed each run to produce consistent randomization orders. The random seed can also be specified using `--v|seed-value`. This takes a non-zero, 32-bit positive integer. (A zero value is a no-op and ignored.)
+
+**Options:**
+
+* `--help-verbose` - Print more detailed help.
+* `--H|header` - Treat the first line of each file as a header.
+* `--n|num NUM` - Number of lines to output. All lines are output if not provided or zero.
+* `--f|field NUM` - Field containing weights. All lines get equal weight if not provided or zero.
+* `--p|print-random` - Output the random values that were assigned.
+* `--s|static-seed` - Use the same random seed every run.
+* `--v|seed-value NUM` - Sets the initial random seed. Use a non-zero, 32 bit positive integer. Zero is a no-op.
+* `--d|delimiter CHR` - Field delimiter.
+* `--h|help` - This help information.
+ 
 ### csv2tsv reference
 
 **Synopsis:** csv2tsv [options] [file...]

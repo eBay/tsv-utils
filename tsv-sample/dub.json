@@ -1,0 +1,28 @@
+{
+    "name": "tsv-sample",
+    "description": "Weighted reservoir sampling on delimited data files.",
+    "homepage": "https://github.com/eBay/tsv-utils-dlang",
+    "authors": ["Jon Degenhardt"],
+    "copyright": "Copyright (c) 2017, eBay Software Foundation",
+    "license": "BSL-1.0",
+    "targetType": "executable",
+    "configurations": [
+        {
+            "name" : "executable",
+            "targetName": "tsv-sample",
+            "targetPath": "../bin/",
+            "mainSourceFile": "src/tsv-sample.d",
+            "dependencies": {
+                "tsv-utils-dlang:common": "*"
+            }
+        },
+        {
+            "name": "unittest",
+            "targetType": "none"
+        }
+    ],
+    "buildTypes": {
+        "debug": { "buildOptions": ["debugMode", "optimize"] },
+        "release": { "buildOptions": ["releaseMode", "optimize", "inline"], "dflags": ["-boundscheck=off"] }
+    }
+}

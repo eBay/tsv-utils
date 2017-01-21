@@ -1,6 +1,15 @@
 /**
 Utilities used by TSV applications.
 
+There are two main utilities in this file:
+* InputFieldReordering class - A class that creates a reordered subset of fields from an
+  input line. Fields in the subset are accessed by array indicies. This is especially 
+  useful when processing the subset in a specific order, such as the order listed on the
+  command-line at run-time.
+
+* getTsvFieldValue - A convenience function when only a single value is needed from an
+  input line.
+
 Copyright (c) 2015-2017, eBay Software Foundation
 Initially written by Jon Degenhardt
 
@@ -306,4 +315,132 @@ unittest {
         assert(ifr_3210.outputFields == expected_3210[lineIndex]); 
         assert(ifr_03001.outputFields == expected_03001[lineIndex]); 
     }
+}
+
+
+/**
+getTsvFieldValue extracts the value of a single field from a delimited text string.
+
+This is a convenience function intended for cases when only a single field from an
+input line is needed. If multiple values are needed, it will be more efficient to
+work directly with std.algorithm.splitter or the InputFieldReordering class.
+
+The input text is split by a delimiter character. The specified field is converted
+to the desired type and the value returned.
+
+An exception is thrown if there are not enough fields on the line or if conversion
+fails. Conversion is done with std.conv.to, it throws a std.conv.ConvException on
+failure. If not enough fields, the exception text is generated referencing 1-upped
+field numbers as would be provided by command line users.
+ */
+T getTsvFieldValue(T, C)(const C[] line, size_t fieldIndex, C delim) pure @safe
+    if (isSomeChar!C)
+{
+    import std.algorithm : splitter;
+    import std.conv;
+    import std.format : format;
+    import std.range;
+    
+    auto splitLine = line.splitter(delim);
+    size_t atField = 0;
+    
+    while (atField < fieldIndex && !splitLine.empty)
+    {
+        splitLine.popFront;
+        atField++;
+    }
+
+    T val;
+    if (splitLine.empty)
+    {
+        if (fieldIndex == 0)
+        {
+            /* This is a workaround to a splitter special case - If the input is empty,
+             * the returned split range is empty. This doesn't properly represent a single
+             * column file. More correct mathematically, and for this case, would be a
+             * single value representing an empty string. The input line is a convenient
+             * source of an empty line. Info:
+             *   Bug: https://issues.dlang.org/show_bug.cgi?id=15735
+             *   Pull Request: https://github.com/D-Programming-Language/phobos/pull/4030
+             */
+            assert(line.empty);
+            val = line.to!T;
+        }
+        else
+        {
+            throw new Exception(
+                format("Not enough fields on line. Number required: %d; Number found: %d",
+                       fieldIndex + 1, atField));
+        }
+    }
+    else
+    {
+        val = splitLine.front.to!T;
+    }
+
+    return val;
+}
+
+unittest
+{
+    import std.conv;
+    import std.exception;
+
+    /* Common cases. */
+    assert(getTsvFieldValue!double("123", 0, '\t') == 123.0);
+    assert(getTsvFieldValue!double("-10.5", 0, '\t') == -10.5);
+    assert(getTsvFieldValue!size_t("abc|123", 1, '|') == 123);
+    assert(getTsvFieldValue!int("紅\t红\t99", 2, '\t') == 99);
+    assert(getTsvFieldValue!int("紅\t红\t99", 2, '\t') == 99);
+    assert(getTsvFieldValue!string("紅\t红\t99", 2, '\t') == "99");
+    assert(getTsvFieldValue!string("紅\t红\t99", 1, '\t') == "红");
+    assert(getTsvFieldValue!string("紅\t红\t99", 0, '\t') == "紅");
+    assert(getTsvFieldValue!string("红色和绿色\tred and green\t赤と緑\t10.5", 2, '\t') == "赤と緑");
+    assert(getTsvFieldValue!double("红色和绿色\tred and green\t赤と緑\t10.5", 3, '\t') == 10.5);
+
+    /* The empty field cases. */
+    assert(getTsvFieldValue!string("", 0, '\t') == "");
+    assert(getTsvFieldValue!string("\t", 0, '\t') == "");
+    assert(getTsvFieldValue!string("\t", 1, '\t') == "");
+    assert(getTsvFieldValue!string("", 0, ':') == "");
+    assert(getTsvFieldValue!string(":", 0, ':') == "");
+    assert(getTsvFieldValue!string(":", 1, ':') == "");
+
+    /* Tests with different data types. */
+    string stringLine = "orange and black\tნარინჯისფერი და შავი\t88.5";
+    char[] charLine = "orange and black\tნარინჯისფერი და შავი\t88.5".to!(char[]);
+    dchar[] dcharLine = stringLine.to!(dchar[]);
+    wchar[] wcharLine = stringLine.to!(wchar[]);
+
+    assert(getTsvFieldValue!string(stringLine, 0, '\t') == "orange and black");
+    assert(getTsvFieldValue!string(stringLine, 1, '\t') == "ნარინჯისფერი და შავი");
+    assert(getTsvFieldValue!wstring(stringLine, 1, '\t') == "ნარინჯისფერი და შავი".to!wstring);
+    assert(getTsvFieldValue!double(stringLine, 2, '\t') == 88.5);
+
+    assert(getTsvFieldValue!string(charLine, 0, '\t') == "orange and black");
+    assert(getTsvFieldValue!string(charLine, 1, '\t') == "ნარინჯისფერი და შავი");
+    assert(getTsvFieldValue!wstring(charLine, 1, '\t') == "ნარინჯისფერი და შავი".to!wstring);
+    assert(getTsvFieldValue!double(charLine, 2, '\t') == 88.5);
+
+    assert(getTsvFieldValue!string(dcharLine, 0, '\t') == "orange and black");
+    assert(getTsvFieldValue!string(dcharLine, 1, '\t') == "ნარინჯისფერი და შავი");
+    assert(getTsvFieldValue!wstring(dcharLine, 1, '\t') == "ნარინჯისფერი და შავი".to!wstring);
+    assert(getTsvFieldValue!double(dcharLine, 2, '\t') == 88.5);
+
+    assert(getTsvFieldValue!string(wcharLine, 0, '\t') == "orange and black");
+    assert(getTsvFieldValue!string(wcharLine, 1, '\t') == "ნარინჯისფერი და შავი");
+    assert(getTsvFieldValue!wstring(wcharLine, 1, '\t') == "ნარინჯისფერი და შავი".to!wstring);
+    assert(getTsvFieldValue!double(wcharLine, 2, '\t') == 88.5);
+
+    /* Conversion errors. */
+    assertThrown!ConvException(getTsvFieldValue!double("", 0, '\t'));
+    assertThrown!ConvException(getTsvFieldValue!double("abc", 0, '|'));
+    assertThrown!ConvException(getTsvFieldValue!size_t("-1", 0, '|'));
+    assertThrown!ConvException(getTsvFieldValue!size_t("a23|23.4", 1, '|'));
+    assertThrown!ConvException(getTsvFieldValue!double("23.5|def", 1, '|'));
+
+    /* Not enough field errors. These should throw, but not a ConvException.*/
+    assertThrown(assertNotThrown!ConvException(getTsvFieldValue!double("", 1, '\t')));
+    assertThrown(assertNotThrown!ConvException(getTsvFieldValue!double("abc", 1, '\t')));
+    assertThrown(assertNotThrown!ConvException(getTsvFieldValue!double("abc\tdef", 2, '\t')));
 }
