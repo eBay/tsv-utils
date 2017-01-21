@@ -6,54 +6,61 @@ Using the make system if make runs on your system. Simply running `make` from th
 
 ```
 $ tsv-filter
-$ ${DCOMPILER} -release -O -boundscheck=off -odobj -of../tsv-utils-dlang/bin/tsv-filter -I../tsv-utils-dlang/common/src src/tsv-filter.d ../tsv-utils-dlang/common/src/tsvutil.d ../tsv-utils-dlang/common/src/getopt_inorder.d ../tsv-utils-dlang/common/src/unittest_utils.d
+$ ${DCOMPILER} -release -O -boundscheck=off -odobj -of../bin/tsv-filter -I../common/src src/tsv-filter.d ../common/src/tsvutil.d ../common/src/getopt_inorder.d ../common/src/unittest_utils.d
 ```
 
 ## tsv-select
 
 ```
 $ cd tsv-select
-$ ${DCOMPILER} -release -O -boundscheck=off -odobj -of../tsv-utils-dlang/bin/tsv-select -I../tsv-utils-dlang/common/src src/tsv-select.d ../tsv-utils-dlang/common/src/tsvutil.d ../tsv-utils-dlang/common/src/getopt_inorder.d ../tsv-utils-dlang/common/src/unittest_utils.d
+$ ${DCOMPILER} -release -O -boundscheck=off -odobj -of../bin/tsv-select -I../common/src src/tsv-select.d ../common/src/tsvutil.d ../common/src/getopt_inorder.d ../common/src/unittest_utils.d
 ```
 
 ## tsv-summarize
 
 ```
 $ cd tsv-summarize
-$ ${DCOMPILER} -release -O -boundscheck=off -odobj -of../tsv-utils-dlang/bin/tsv-summarize -I../tsv-utils-dlang/common/src src/tsv-summarize.d ../tsv-utils-dlang/common/src/tsvutil.d ../tsv-utils-dlang/common/src/getopt_inorder.d ../tsv-utils-dlang/common/src/unittest_utils.d
+$ ${DCOMPILER} -release -O -boundscheck=off -odobj -of../bin/tsv-summarize -I../common/src src/tsv-summarize.d ../common/src/tsvutil.d ../common/src/getopt_inorder.d ../common/src/unittest_utils.d
 ```
 
 ## tsv-join
 
 ```
 $ cd tsv-join
-$ ${DCOMPILER} -release -O -boundscheck=off -odobj -of../tsv-utils-dlang/bin/tsv-join -I../tsv-utils-dlang/common/src src/tsv-join.d ../tsv-utils-dlang/common/src/tsvutil.d ../tsv-utils-dlang/common/src/getopt_inorder.d ../tsv-utils-dlang/common/src/unittest_utils.d
+$ ${DCOMPILER} -release -O -boundscheck=off -odobj -of../bin/tsv-join -I../common/src src/tsv-join.d ../common/src/tsvutil.d ../common/src/getopt_inorder.d ../common/src/unittest_utils.d
+```
+
+## tsv-sample
+
+```
+$ cd tsv-sample
+$ ${DCOMPILER} -release -O -boundscheck=off -odobj  -of../bin/tsv-sample -I../common/src src/tsv-sample.d ../common/src/tsvutil.d ../common/src/getopt_inorder.d ../common/src/unittest_utils.d
 ```
 
 ## tsv-append
 
 ```
 $ cd tsv-append
-$ ${DCOMPILER} -release -O -boundscheck=off -odobj -of../tsv-utils-dlang/bin/tsv-append -I../tsv-utils-dlang/common/src src/tsv-append.d ../tsv-utils-dlang/common/src/tsvutil.d ../tsv-utils-dlang/common/src/getopt_inorder.d ../tsv-utils-dlang/common/src/unittest_utils.d
+$ ${DCOMPILER} -release -O -boundscheck=off -odobj -of../bin/tsv-append -I../common/src src/tsv-append.d ../common/src/tsvutil.d ../common/src/getopt_inorder.d ../common/src/unittest_utils.d
 ```
 
 ## tsv-uniq
 
 ```
 $ cd tsv-uniq
-$ ${DCOMPILER} -release -O -boundscheck=off -odobj -of../tsv-utils-dlang/bin/tsv-uniq -I../tsv-utils-dlang/common/src src/tsv-uniq.d ../tsv-utils-dlang/common/src/tsvutil.d ../tsv-utils-dlang/common/src/getopt_inorder.d ../tsv-utils-dlang/common/src/unittest_utils.d
+$ ${DCOMPILER} -release -O -boundscheck=off -odobj -of../bin/tsv-uniq -I../common/src src/tsv-uniq.d ../common/src/tsvutil.d ../common/src/getopt_inorder.d ../common/src/unittest_utils.d
 ```
 
 ## csv2tsv
 
 ```
 $ cd csv2tsv
-$ ${DCOMPILER} -release -O -boundscheck=off -odob -of../tsv-utils-dlang/bin/csv2tsv -I../tsv-utils-dlang/common/src src/csv2tsv.d ../tsv-utils-dlang/common/src/tsvutil.d ../tsv-utils-dlang/common/src/getopt_inorder.d ../tsv-utils-dlang/common/src/unittest_utils.d
+$ ${DCOMPILER} -release -O -boundscheck=off -odob -of../bin/csv2tsv -I../common/src src/csv2tsv.d ../common/src/tsvutil.d ../common/src/getopt_inorder.d ../common/src/unittest_utils.d
 ```
 
 ## number-lines
 
 ```
 $ cd number-lines
-$ ${DCOMPILER} -release -O -boundscheck=off -odobj -of../tsv-utils-dlang/bin/number-lines -I../tsv-utils-dlang/common/src src/number-lines.d ../tsv-utils-dlang/common/src/tsvutil.d ../tsv-utils-dlang/common/src/getopt_inorder.d ../tsv-utils-dlang/common/src/unittest_utils.d
+$ ${DCOMPILER} -release -O -boundscheck=off -odobj -of../bin/number-lines -I../common/src src/number-lines.d ../common/src/tsvutil.d ../common/src/getopt_inorder.d ../common/src/unittest_utils.d
 ```

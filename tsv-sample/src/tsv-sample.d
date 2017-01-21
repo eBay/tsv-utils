@@ -56,10 +56,10 @@ EOS";
 auto helpTextVerbose = q"EOS
 Synopsis: tsv-sample [options] [file...]
 
-Randomizes or samples input lines. By default, all lines are output in a
+Randomizes or samples input lines. By default, all lines are output in
 random order. '--n|num' can be used to limit the sample size produced. A
-weighted random sample can be generated using '--f|field'. This specifies
-a field to use as weights for each line. Sampling is without replacement.
+weighted random sample is generated using the '--f|field' option, this 
+identifies the field containing weights. Sampling is without replacement.
 
 Weighted random sampling is done using an algorithm described by Efraimidis
 and Spirakis. Weights should be positive values representing the relative
