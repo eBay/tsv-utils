@@ -11,7 +11,7 @@ Information on the D programming language is available at: http://dlang.org/.
 * [Installation](#installation) 
 
 **More details:**
-* [Tool reference](docs/ReferenceGuide.md)
+* [Tool reference](docs/ToolReference.md)
 * [Performance](docs/Performance.md)
 * [About the code](docs/AboutTheCode.md)
 
@@ -19,7 +19,7 @@ Information on the D programming language is available at: http://dlang.org/.
 
 These tools were developed for working with reasonably large data files. Larger than ideal for loading entirely in memory in an application like R, but not so big as to necessitate moving to Hadoop or similar distributed compute environments. They work like traditional Unix command line utilities such as `cut`, `sort`, `grep`, etc., and are intended to complement these tools. Each tool is a standalone executable. They follow common Unix conventions for pipeline programs. Data is read from files or standard input, results are written to standard output. The field separator defaults to TAB, but any character can be used. Input and output is UTF-8, and all operations are Unicode ready, including regular expression match (`tsv-filter`). Documentation is available for each tool by invoking it with the `--help` option. If reading the code, look for the `helpText` variable near the top of the file.
 
-The rest of this section contains a short description of each tool. There is more detail in the [tool reference](docs/ReferenceGuide.md).
+The rest of this section contains a short description of each tool. There is more detail in the [tool reference](docs/ToolReference.md).
 
 * [tsv-filter](#tsv-filter) - Filter data file rows via numeric and string comparisons.
 * [tsv-select](#tsv-select) - Keep a subset of the columns (fields) in the input.
@@ -47,7 +47,7 @@ This outputs lines where field 3 satisfies (100 <= fieldval <= 200) and field 4 
 $ tsv-filter --ne 3:0 file.tsv | wc -l
 ```
 
-See the [tsv-filter reference](docs/ReferenceGuide.md#tsv-filter-reference) for details.
+See the [tsv-filter reference](docs/ToolReference.md#tsv-filter-reference) for details.
 
 ### tsv-select
 
@@ -58,7 +58,7 @@ $ tsv-select -f 4,2,9 file1.tsv file2.tsv
 
 Reordering fields and managing headers are useful enhancements over `cut`. However, much of the motivation for writing it was to explore the D programming language and provide a comparison point against other common approaches to this task. Code for `tsv-select` is bit more liberal with comments pointing out D programming constructs than code for the other tools.
 
-See the [tsv-select reference](docs/ReferenceGuide.md#tsv-select-reference) for details.
+See the [tsv-select reference](docs/ToolReference.md#tsv-select-reference) for details.
 
 ### tsv-summarize
 
@@ -85,7 +85,7 @@ blue   25          12.5
 
 Multiple fields can be used as the `--group-by` key. The file's sort order does not matter, there is no need to sort in the `--group-by` order first.
 
-See the [tsv-summarize reference](docs/ReferenceGuide.md#tsv-summarize-reference) for the list of statistical and other aggregation operations available.
+See the [tsv-summarize reference](docs/ToolReference.md#tsv-summarize-reference) for the list of statistical and other aggregation operations available.
 
 ### tsv-join
 
@@ -98,7 +98,7 @@ This reads `filter.tsv`, creating a lookup table keyed on fields 1 and 3. `data.
 
 Common uses for `tsv-join` are to join related datasets or to filter one dataset based on another. Filter file entries are kept in memory, this limits the ultimate size that can be handled effectively. The author has found that filter files up to about 10 million lines are processed effectively, but performance starts to degrade after that.
 
-See the [tsv-join reference](docs/ReferenceGuide.md#tsv-join-reference) for details.
+See the [tsv-join reference](docs/ToolReference.md#tsv-join-reference) for details.
 
 ### tsv-append
 
@@ -110,7 +110,7 @@ Source tracking is useful when creating long/narrow form tabular data. This form
 
 In this scenario, files have been used to capture related data sets, the difference between data sets being a condition represented by the file. For example, results from different variants of an experiment might each be recorded in their own files. Retaining the source file as an output column preserves the condition represented by the file. The source values default to the file names, but this can be customized.
 
-See the [tsv-append reference](docs/ReferenceGuide.md#tsv-append-reference) for the complete list of options available.
+See the [tsv-append reference](docs/ToolReference.md#tsv-append-reference) for the complete list of options available.
 
 ### tsv-uniq
 
@@ -123,11 +123,11 @@ $ tsv-uniq -f 2,3 data.tsv
 
 As with `tsv-join`, this uses an in-memory lookup table to record unique entries. This ultimately limits the data sizes that can be processed. The author has found that datasets with up to about 10 million unique entries work fine, but performance degrades after that.
 
-See the [tsv-uniq reference](docs/ReferenceGuide.md#tsv-uniq-reference) for details.
+See the [tsv-uniq reference](docs/ToolReference.md#tsv-uniq-reference) for details.
 
 ### tsv-sample
 
-For uniform random sampling, the GNU `shuf` program is quite good and widely available. For weighted random sampling the choices are limited, especially when working with large files. This is where `tsv-sample` is useful. It implements weighted reservoir sampling, with the weights taken from a field in the input data. Uniform random sampling is supported as well. Performance is good, it works quite well on large files. See the [tsv-sample reference](docs/ReferenceGuide.md#tsv-sample-reference) for details.
+For uniform random sampling, the GNU `shuf` program is quite good and widely available. For weighted random sampling the choices are limited, especially when working with large files. This is where `tsv-sample` is useful. It implements weighted reservoir sampling, with the weights taken from a field in the input data. Uniform random sampling is supported as well. Performance is good, it works quite well on large files. See the [tsv-sample reference](docs/ToolReference.md#tsv-sample-reference) for details.
 
 ### csv2tsv
 
@@ -136,7 +136,7 @@ Sometimes you have a CSV file. This program does what you expect: convert CSV da
 $ csv2tsv data.csv > data.tsv
 ```
 
-CSV files come in different formats. See the [csv2tsv reference](docs/ReferenceGuide.md#csv2tsv-reference) for details of how this tool operates and the format variations handled.
+CSV files come in different formats. See the [csv2tsv reference](docs/ToolReference.md#csv2tsv-reference) for details of how this tool operates and the format variations handled.
 
 ### number-lines
 
@@ -145,7 +145,7 @@ A simpler version of the Unix 'nl' program. It prepends a line number to each li
 $ number-lines myfile.txt
 ```
 
-See the [number-lines reference](docs/ReferenceGuide.md#tsv-summarize-reference) for details.
+See the [number-lines reference](docs/ToolReference.md#tsv-summarize-reference) for details.
 
 ### Useful bash aliases
 
