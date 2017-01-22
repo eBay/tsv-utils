@@ -194,7 +194,7 @@ $ make         # For LDC: make DCOMPILER=ldc2
 Executables are written to `tsv-utils-dlang/bin`, place this directory or the executables in the PATH. The compiler defaults to DMD, this can be changed on the make command line (e.g. `make DCOMPILER=ldc2`). DMD is the reference compiler, but LDC produces faster executables. (For some tools LDC is quite a bit faster than DMD.)
 
 DUB, the D Package Manager, can also be used to install and build the executables. It is also possible to run
-build commands manually, see [BUILD_COMMANDS](BUILD_COMMANDS.md) for details.
+build commands manually, see [BuildCommands](docs/BuildCommands.md) file for details.
 
 ### Install using DUB
 
