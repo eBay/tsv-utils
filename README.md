@@ -8,7 +8,8 @@ Information on the D programming language is available at: http://dlang.org/.
 
 **In this README:**
 * [Tools overview](#tools-overview)
-* [Installation](#installation) 
+* [Installation](#installation)
+* [Other toolkits](#other-toolkits)
 
 **More details:**
 * [Tool reference](docs/ToolReference.md)
@@ -31,7 +32,6 @@ The rest of this section contains a short description of each tool. There is mor
 * [csv2tsv](#csv2tsv) - Convert CSV files to TSV.
 * [number-lines](#number-lines) - Number the input lines.
 * [Useful bash aliases](#useful-bash-aliases)
-* [Other toolkits](#other-toolkits)
 
 ### tsv-filter
 
@@ -160,26 +160,6 @@ tsv-header () { head -n 1 $* | tr $'\t' '\n' | nl ; }
 tsv-sort () { sort -t $'\t' $* ; }
 ```
 
-### Other toolkits
-
-There are a number of toolkits that have similar or related functionality. Several are listed below. Those handling CSV files handle TSV files as well:
-
-* [csvkit](https://github.com/wireservice/csvkit) - CSV tools, written in Python.
-* [csvtk](https://github.com/shenwei356/csvtk) - CSV tools, written in Go.
-* [GNU datamash](https://www.gnu.org/software/datamash/) - Performs numeric, textual and statistical operations TSV files. Written in C.
-* [dplyr](https://github.com/hadley/dplyr) - Tools for tabular data in R storage formats. Runs in an R environment, code is in C++.
-* [miller](https://github.com/johnkerl/miller) - CSV and JSON tools, written in C.
-* [tsvutils](https://github.com/brendano/tsvutils) - TSV tools, especially rich in format converters. Written in Python.
-* [xsv](https://github.com/BurntSushi/xsv) - CSV tools, written in Rust.
-
-The different toolkits are certainly worth investigating if you work with tabular data files. Several have quite extensive feature sets. Each toolkit has its own strengths, your workflow and preferences are likely to fit some toolkits better than others.
-
-File format is perhaps the most important dimension. CSV files cannot be processed reliably by traditional unix tools, so CSV toolkits naturally extend further into this space. However, this tends to increase complexity of the tools when working with TSV files.
-
-Tradeoffs between file formats is its own topic. The [tsvutils README](https://github.com/brendano/tsvutils#the-philosophy-of-tsvutils) has a nice discussion of the rationale for using TSV files. Note that many numeric CSV data sets use comma as a separator, but don't use CSV escapes. Such data sets can be processed reliabily by Unix tools and this toolset by setting the delimiter character.
-
-An even broader list of tools can be found here: [Structured text tools](https://github.com/dbohdan/structured-text-tools).
-
 ## Installation
 
 Download a D compiler (http://dlang.org/download.html). These tools have been tested with the DMD and LDC compilers, on Mac OSX and Linux. Use DMD version 2.070 or later, LDC version 1.0.0 or later.
@@ -213,3 +193,23 @@ $ dub run      # For LDC: dub run -- --compiler=ldc2
 ```
 
 See [Building and makefile](docs/AboutTheCode.md#building-and-makefile) for more information.
+
+## Other toolkits
+
+There are a number of toolkits that have similar or related functionality. Several are listed below. Those handling CSV files handle TSV files as well:
+
+* [csvkit](https://github.com/wireservice/csvkit) - CSV tools, written in Python.
+* [csvtk](https://github.com/shenwei356/csvtk) - CSV tools, written in Go.
+* [GNU datamash](https://www.gnu.org/software/datamash/) - Performs numeric, textual and statistical operations TSV files. Written in C.
+* [dplyr](https://github.com/hadley/dplyr) - Tools for tabular data in R storage formats. Runs in an R environment, code is in C++.
+* [miller](https://github.com/johnkerl/miller) - CSV and JSON tools, written in C.
+* [tsvutils](https://github.com/brendano/tsvutils) - TSV tools, especially rich in format converters. Written in Python.
+* [xsv](https://github.com/BurntSushi/xsv) - CSV tools, written in Rust.
+
+The different toolkits are certainly worth investigating if you work with tabular data files. Several have quite extensive feature sets. Each toolkit has its own strengths, your workflow and preferences are likely to fit some toolkits better than others.
+
+File format is perhaps the most important dimension. CSV files cannot be processed reliably by traditional unix tools, so CSV toolkits naturally extend further into this space. However, this tends to increase complexity of the tools when working with TSV files.
+
+Tradeoffs between file formats is its own topic. The [tsvutils README](https://github.com/brendano/tsvutils#the-philosophy-of-tsvutils) has a nice discussion of the rationale for using TSV files. Note that many numeric CSV data sets use comma as a separator, but don't use CSV escapes. Such data sets can be processed reliabily by Unix tools and this toolset by setting the delimiter character.
+
+An even broader list of tools can be found here: [Structured text tools](https://github.com/dbohdan/structured-text-tools).
