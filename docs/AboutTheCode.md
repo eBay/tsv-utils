@@ -1,6 +1,8 @@
 # About the code
 
-In this page:
+Some further details about the code used in the tsv-utils-dlang tools.
+
+Contents:
 * [Code structure](#code-structure)
 * [Coding philosophy](#coding-philosophy)
 * [Building and makefile](#building-and-makefile)
@@ -30,7 +32,7 @@ New tools can be added by creating a new directory and a source tree following t
 
 ## Coding philosophy
 
-The tools were written in part to explore D for use in a data science environment. Data mining environments have custom data and application needs. This leads to custom tools, which in turn raises the productivity vs execution speed question. This trade-off is exemplified by interpreted languages like Python on the one hand and system languages like C/C++ on the other. The D programming language occupies an interesting point on this spectrum. D's programmer experience is somewhere in the middle ground between interpreted languages and C/C++, but run-time performance is closer to C/C++. Execution speed is a very practical consideration in data mining environments: it increases dataset sizes that can handled on the researcher's own machine, without needing to switch to a distributed compute environment. There is additional value in having data science practitioners program these tools quickly, themselves, without needing to invest time in low-level programming.
+The tools were written in part to explore D for use in a data science environment. Data mining environments have custom data and application needs. This leads to custom tools, which in turn raises the productivity vs execution speed question. This trade-off is exemplified by interpreted languages like Python on the one hand and system languages like C/C++ on the other. The D programming language occupies an interesting point on this spectrum. D's programmer experience is somewhere in the middle ground between interpreted languages and C/C++, but run-time performance is closer to C/C++. Execution speed is a very practical consideration in data mining environments: it increases dataset sizes that can handled on a single machine, perhaps the researcher's own machine, without needing to switch to a distributed compute environment. There is additional value in having data science practitioners program these tools quickly, themselves, without needing to invest time in low-level programming.
 
 These tools were implemented with these trade-offs in mind. The code was deliberately kept at a reasonably high level. The obvious built-in facilities were used, notably the standard library. A certain amount of performance optimization was done to explore this dimension of D programming, but low-level optimizations were generally avoided. Indeed, there are options likely to improve performance, notably:
 
