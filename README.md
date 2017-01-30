@@ -15,6 +15,7 @@ Information on the D programming language is available at: http://dlang.org/.
 * [Tool reference](docs/ToolReference.md)
 * [Performance](docs/Performance.md)
 * [About the code](docs/AboutTheCode.md)
+* [Tips and tricks](docs/TipsAndTricks.md)
 
 Please file an issue if you have problems or questions.
 
