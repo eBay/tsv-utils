@@ -17,7 +17,7 @@ It's common to perform transformations on data prior to loading into application
 
 The first two use the `pipe` function to create the shell command. `fread` does this automatically.
 
-Note: One common issue is having the PATH environment setup correctly. Depending on setup, the R application might not have the full path normally available in a command shell. See the R documentation for details.
+*Note: One common issue is having the PATH environment setup correctly. Depending on setup, the R application might not have the full path normally available in a command shell. See the R documentation for details.*
 
 ## A faster way to unique a file
 
