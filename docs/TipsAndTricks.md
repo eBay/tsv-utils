@@ -4,7 +4,7 @@ Contents:
 
 * [Reading data in R](#reading-data-in-R)
 * [A faster way to unique a file](#a-faster-way-to-unique-a-file)
-* [Using grep as a pre-filter](#using grep-as-a-pre-filter)
+* [Using grep and tsv-filter together](#using-grep-and-tsv-filter-together)
 
 ## Reading data in R
 
@@ -41,13 +41,13 @@ Run-times for the above commands are show below. Two different files were used, 
 
 For more info, see the [tsv-uniq reference](ToolReference.md#tsv-uniq-reference).
 
-## Using grep as a pre-filter
+## Using grep and tsv-filter together
 
 `tsv-filter` is fast, but a quality Unix `grep` implementation is faster. There are good reasons for this, notably, `grep` can ignore line boundaries during initial matching (["why GNU grep is fast", Mike Haertel](https://lists.freebsd.org/pipermail/freebsd-current/2010-August/019310.html)).
 
-Much of the time this won't matter, as `tsv-filter` can process gigabyte files in a couple seconds. However, when working with much larger files or slow I/O devices, the wait may be longer. In these cases, it may be possible to speed things up using `grep`. This will work if there is a string, preferably several characters long, that is found on every line expected in the output, but winnows out a fair number of non-matching lines.
+Much of the time this won't matter, as `tsv-filter` can process gigabyte files in a couple seconds. However, when working with much larger files or slow I/O devices, the wait may be longer. In these cases, it may be possible to speed things up using `grep` as a first pass filter. This will work if there is a string, preferably several characters long, that is found on every line expected in the output, but winnows out a fair number of non-matching lines.
 
-An example, using a number of files from the [Google Books Ngram Viewer data-sets](http://storage.googleapis.com/books/ngrams/books/datasetsv2.html). In these files, each line holds stats for an ngram, field 2 is the year the stats apply to. In this test, `ngram_*.tsv` consists of 1.4 billion lines, 27.5 GB of data in 39 files. To get the lines for the year 1980, this command would be run:
+An example, using a number of files from the [Google Books Ngram Viewer data-sets](http://storage.googleapis.com/books/ngrams/books/datasetsv2.html). In these files, each line holds stats for an ngram, field 2 is the year the stats apply to. In this test, `ngram_*.tsv` consists of 1.4 billion lines, 27.5 GB of data in 39 files. To get the lines for the year 1850, this command would be run:
 ```
 $ tsv-filter --str-eq 2:1850 ngram_*.tsv
 ```
@@ -62,7 +62,7 @@ This took 37 seconds, quite a bit faster, but produced too many records (2943588
 $ grep 1850 ngram_*.tsv | tsv-filter --str-eq 2:1850
 ```
 
-This took 37 seconds. `grep` and `tsv-filter` run in parallel, and `tsv-filter` keeps up easily as it is processing fewer records.
+This took 37 seconds, same as `grep` by itself. `grep` and `tsv-filter` run in parallel, and `tsv-filter` keeps up easily as it is processing fewer records.
 
 The above example can be done entirely in `grep` by using regular expressions, but it's easy to get wrong and actually slower due to the regular expression use. For example (syntax may be different in your environment):
 ```
