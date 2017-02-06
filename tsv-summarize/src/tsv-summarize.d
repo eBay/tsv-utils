@@ -94,6 +94,11 @@ start to encounter performance issues as available memory becomes scarce.
 The size that can be handled effectively is machine dependent, but often
 quite large files can be handled.
 
+Numeric values are printed to 12 significant digits by default. This can be
+set with the'--p|float-precision' option. Values 6 or less are tuned for
+human consumption and the number set significant digits beyond the decimal
+point rather than the total number of significant digits.
+
 Operations requiring numeric entries will signal an error and terminate
 processing if a non-numeric entry is found.
 
@@ -440,15 +445,12 @@ struct SummarizerPrintOptions
     char valuesDelimiter;
     size_t floatPrecision = 12;
 
-    import std.traits : isNumeric, isFloatingPoint, isIntegral;
-    
-    auto formatNumber(T)(T n) const if (isNumeric!T)
+    import std.traits : isFloatingPoint, isIntegral;
+    auto formatNumber(T)(T n) const
+        if (isFloatingPoint!T || isIntegral!T)
     {
-        import std.format : format;
-        
-        static if (isFloatingPoint!T) return format("%.*g", floatPrecision, n);
-        else static if (isIntegral!T) return format("%d", n);
-        else static assert(0);
+        import tsvutil : formatNumber;
+        return formatNumber!T(n, floatPrecision);
     }
 }
 
