@@ -261,6 +261,8 @@ Summarization operators available are:
    last        sum        var        values
 ```
 
+Numeric values are printed to 12 significant digits by default. This can be set with the'--p|float-precision' option. Values 6 or less are tuned for human consumption and the number set significant digits beyond the decimal point rather than the total number of significant digits.
+
 Calculations hold onto the minimum data needed while reading data. A few operations like median keep all data values in memory. These operations will start to encounter performance issues as available memory becomes scarce. The size that can be handled effectively is machine dependent, but often quite large files can be handled. Operations requiring numeric entries will signal an error and terminate processing if a non-numeric entry is found.
 
 **Options:**
