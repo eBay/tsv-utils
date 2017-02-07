@@ -464,8 +464,7 @@ follows:
 - If the specified floatPrecision is between 0 and readablePrecisionMax, then floatPrecision
   is used to set the significant digits following the decimal point. Otherwise, it is used
   to set total significant digits. This does not apply to really large numbers, for doubles,
-  those larger than 2^53. The effect is an alternate way to choose between '%e' and '%f'
-  behavior than done by default by the '%g' format specifier.
+  those larger than 2^53. Trailing zeros are chopped in all cases.
 */
 import std.traits : isFloatingPoint, isIntegral, Unqual;
 auto formatNumber(T, size_t readablePrecisionMax = 6)(T num, const size_t floatPrecision = 12)
@@ -493,59 +492,76 @@ auto formatNumber(T, size_t readablePrecisionMax = 6)(T num, const size_t floatP
         {
             static assert(is(UT == float) || is(UT == double));
 
-            import std.math : fabs;
-            import core.stdc.math : modf, modff;
-
-            static if (is(UT == float)) alias modfUT = modff;
-            else static if (is(UT == double)) alias modfUT = modf;
-            else static assert(0);
-            
-            enum UT maxConsecutiveUTInteger = 2.0^^UT.mant_dig;
-            enum bool maxUTIntFitsInLong = (maxConsecutiveUTInteger <= long.max);
-
-            immutable UT absNum = num.fabs;
-            UT integerPart;
-
-            if (absNum < 1.0 || absNum > maxConsecutiveUTInteger)
+            if (floatPrecision <= readablePrecisionMax)
             {
-                /* No adjustments for very large, fractional only, or zero valued floats.
-                 * Note that zero prints like a decimal using %g, which is the intent.
+                /* Print with a fixed precision beyond the decimal point (%.*f), but
+                 * remove trailing zeros. Notes:
+                 * - This handles integer values stored in floating point types.
+                 * - Values like NaN and infinity also handled.
                  */
-                return format("%.*g", floatPrecision, num);
-            }
-            else if (maxUTIntFitsInLong && modfUT(num, &integerPart) == 0.0)
-            {
-                /* Integral value in the range of consecutive integers supported by the
-                 * floating point type. Print like a decimal number.
-                 * (Note: modfUT (modf/modff) returns the fractional part.)
-                 */
-                return format("%d", num.to!long);
-            }
-            else if (floatPrecision <= readablePrecisionMax && floatPrecision != 0)
-            {
-                /* Number with a fractional part, precision in the range normally used
-                 * for human readable numbers. Number may be large, but not huge. Adjust
-                 * the precision to be used as significant digits past decimal.
-                 */
+                auto str = format("%.*f", floatPrecision, num);
+                size_t trimToLength = str.length;
                 
-                size_t adjustedFloatPrecision = floatPrecision;
-                UT x = absNum;
-                while (x >= 1.0e+4)
+                if (floatPrecision != 0 && str.length > floatPrecision + 1)
                 {
-                    x /= 1.0e+4;
-                    adjustedFloatPrecision += 4;
-                }
-                
-                if (x < 1.0e+1) adjustedFloatPrecision += 1;
-                else if (x < 1.0e+2) adjustedFloatPrecision += 2;
-                else if (x < 1.0e+3) adjustedFloatPrecision += 3;
-                else adjustedFloatPrecision += 4;
+                    import std.ascii : isDigit;
+                    assert(str.length - floatPrecision - 1 > 0);
+                    size_t decimalIndex = str.length - floatPrecision - 1;
 
-                return format("%.*g", adjustedFloatPrecision, num);
+                    if (str[decimalIndex] == '.' && str[decimalIndex - 1].isDigit)
+                    {
+                        size_t lastNonZeroDigit = str.length - 1;
+                        assert(decimalIndex < lastNonZeroDigit);
+                        while (str[lastNonZeroDigit] == '0') lastNonZeroDigit--;
+                        trimToLength = (decimalIndex < lastNonZeroDigit)
+                            ? lastNonZeroDigit + 1
+                            : decimalIndex;
+                    }
+                }
+
+                return str[0 .. trimToLength];
             }
             else
             {
-                return format("%.*g", floatPrecision, num);
+                /* Determine if the number is subject to special integer value printing.
+                 * Goal is to avoid exponential notion for integer values that '%.*g'
+                 * generates. Numbers within the significant digit range of floatPrecision
+                 * will print as desired with '%.*g', whether there is a fractional part
+                 * or not. The '%.*g' format, with exponential notation, is also used for
+                 * really large numbers. "Really large" being numbers outside the range
+                 * of integers exactly representable by the floating point type.
+                 */
+
+                enum UT maxConsecutiveUTInteger = 2.0^^UT.mant_dig;
+                enum bool maxUTIntFitsInLong = (maxConsecutiveUTInteger <= long.max);
+
+                import std.math : fabs;
+                immutable UT absNum = num.fabs;
+
+                if (!maxUTIntFitsInLong ||
+                    absNum < 10.0^^floatPrecision ||
+                    absNum > maxConsecutiveUTInteger)
+                {
+                    /* Within signficant digits range or very large. */
+                    return format("%.*g", floatPrecision, num);
+                }
+                else
+                {
+                    /* Check for integral values needing to be printed in decimal format. 
+                     * modf/modff are used to determine if the value has a non-zero
+                     * fractional component.
+                     */
+                    import core.stdc.math : modf, modff;
+                
+                    static if (is(UT == float)) alias modfUT = modff;
+                    else static if (is(UT == double)) alias modfUT = modf;
+                    else static assert(0);
+                
+                    UT integerPart;
+
+                    if (modfUT(num, &integerPart) == 0.0) return format("%d", num.to!long);
+                    else return format("%.*g", floatPrecision, num);
+                }
             }
         }
     }
@@ -557,7 +573,7 @@ unittest  // formatNumber unit tests
     import std.conv;
     import std.format;
 
-    // Integer
+    /* Integers */
     assert(formatNumber(0) == "0");
     assert(formatNumber(1) == "1");
     assert(formatNumber(-1) == "-1");
@@ -569,12 +585,32 @@ unittest  // formatNumber unit tests
     const int a2 = -33234;               assert(a2.formatNumber == "-33234");
     immutable long a3 = -12345678912345; assert(a3.formatNumber == "-12345678912345");
 
-    import std.stdio;
+    // Specifying precision should never matter for integer values.
+    assert(formatNumber(0, 0) == "0");
+    assert(formatNumber(1, 0) == "1");
+    assert(formatNumber(-1, 0) == "-1");
+    assert(formatNumber(999, 0) == "999");
+    assert(formatNumber(12345678912345, 0) == "12345678912345");
+    assert(formatNumber(-12345678912345, 0) == "-12345678912345");
 
-    // Doubles
+    assert(formatNumber(0, 3) == "0");
+    assert(formatNumber(1, 3) == "1");
+    assert(formatNumber(-1, 3 ) == "-1");
+    assert(formatNumber(999, 3) == "999");
+    assert(formatNumber(12345678912345, 3) == "12345678912345");
+    assert(formatNumber(-12345678912345, 3) == "-12345678912345");
+
+    assert(formatNumber(0, 9) == "0");
+    assert(formatNumber(1, 9) == "1");
+    assert(formatNumber(-1, 9 ) == "-1");
+    assert(formatNumber(999, 9) == "999");
+    assert(formatNumber(12345678912345, 9) == "12345678912345");
+    assert(formatNumber(-12345678912345, 9) == "-12345678912345");
+
+    /* Doubles */
     assert(formatNumber(0.0) == "0");
     assert(formatNumber(0.2) == "0.2");
-    assert(formatNumber(0.123412, 0) == "0.1");
+    assert(formatNumber(0.123412, 0) == "0");
     assert(formatNumber(0.123412, 1) == "0.1");
     assert(formatNumber(0.123412, 2) == "0.12");
     assert(formatNumber(0.123412, 5) == "0.12341");
@@ -585,6 +621,11 @@ unittest  // formatNumber unit tests
     assert(formatNumber(99.123412, 5) == "99.12341");
     assert(formatNumber(99.123412, 6) == "99.123412");
     assert(formatNumber(99.123412, 7) == "99.12341");
+    assert(formatNumber(999.123412, 0) == "999");
+    assert(formatNumber(999.123412, 1) == "999.1");
+    assert(formatNumber(999.123412, 2) == "999.12");
+    assert(formatNumber(999.123412, 3) == "999.123");
+    assert(formatNumber(999.123412, 4) == "999.1234");
     assert(formatNumber(999.123412, 5) == "999.12341");
     assert(formatNumber(999.123412, 6) == "999.123412");
     assert(formatNumber(999.123412, 7) == "999.1234");
@@ -594,16 +635,78 @@ unittest  // formatNumber unit tests
     assert(formatNumber(1234567891234.0, 0) == "1234567891234");
     assert(formatNumber(1234567891234.0, 1) == "1234567891234");
 
+    // Test round off cases
+    assert(formatNumber(0.6, 0) == "1");
+    assert(formatNumber(0.6, 1) == "0.6");
+    assert(formatNumber(0.06, 0) == "0");
+    assert(formatNumber(0.06, 1) == "0.1");
+    assert(formatNumber(0.06, 2) == "0.06");
+    assert(formatNumber(0.06, 3) == "0.06");
+    assert(formatNumber(9.49999, 0) == "9");
+    assert(formatNumber(9.49999, 1) == "9.5");
+    assert(formatNumber(9.6, 0) == "10");
+    assert(formatNumber(9.6, 1) == "9.6");
+    assert(formatNumber(99.99, 0) == "100");
+    assert(formatNumber(99.99, 1) == "100");
+    assert(formatNumber(99.99, 2) == "99.99");
+    assert(formatNumber(9999.9996, 3) == "10000");
+    assert(formatNumber(9999.9996, 4) == "9999.9996");
+    assert(formatNumber(99999.99996, 4) == "100000");
+    assert(formatNumber(99999.99996, 5) == "99999.99996");
+    assert(formatNumber(999999.999996, 5) == "1000000");
+    assert(formatNumber(999999.999996, 6) == "999999.999996");
+    
+    /* Turn off precision, the 'human readable' style.
+     * Note: Remains o if both are zero (first test). If it becomes desirable to support
+     * turning it off when for the precision equal zero case the simple extension is to
+     * allow the 'human readable' precision template parameter to be negative.
+     */
+    assert(formatNumber!(double, 0)(999.123412, 0) == "999");
+    assert(formatNumber!(double, 0)(999.123412, 1) == "1e+03");
+    assert(formatNumber!(double, 0)(999.123412, 2) == "1e+03");
+    assert(formatNumber!(double, 0)(999.123412, 3) == "999");
+    assert(formatNumber!(double, 0)(999.123412, 4) == "999.1");
+
+    // Default number printing
+    assert(formatNumber(1.2) == "1.2");
+    assert(formatNumber(12.3) == "12.3");
+    assert(formatNumber(12.34) == "12.34");
+    assert(formatNumber(123.45) == "123.45");
+    assert(formatNumber(123.456) == "123.456");
+    assert(formatNumber(1234.567) == "1234.567");
+    assert(formatNumber(1234.5678) == "1234.5678");
+    assert(formatNumber(12345.6789) == "12345.6789");
+    assert(formatNumber(12345.67891) == "12345.67891");
+    assert(formatNumber(123456.78912) == "123456.78912");
+    assert(formatNumber(123456.789123) == "123456.789123");
+    assert(formatNumber(1234567.891234) == "1234567.89123");
+    assert(formatNumber(12345678.912345) == "12345678.9123");
+    assert(formatNumber(123456789.12345) == "123456789.123");
+    assert(formatNumber(1234567891.2345) == "1234567891.23");
+    assert(formatNumber(12345678912.345) == "12345678912.3");
+    assert(formatNumber(123456789123.45) == "123456789123");
+    assert(formatNumber(1234567891234.5) == "1.23456789123e+12");
+    assert(formatNumber(12345678912345.6) == "1.23456789123e+13");
+    assert(formatNumber(123456789123456.0) == "123456789123456");
+    assert(formatNumber(0.3) == "0.3");
+    assert(formatNumber(0.03) == "0.03");
+    assert(formatNumber(0.003) == "0.003");
+    assert(formatNumber(0.0003) == "0.0003");
+    assert(formatNumber(0.00003) == "3e-05" || formatNumber(0.00003) == "3e-5");
+    assert(formatNumber(0.000003) == "3e-06" || formatNumber(0.000003) == "3e-6");
+    assert(formatNumber(0.0000003) == "3e-07" || formatNumber(0.0000003) == "3e-7");
+    
+    // Large number inside and outside the contiguous integer representation range
     double dlarge = 2.0^^(double.mant_dig - 2) - 10.0;
     double dhuge =  2.0^^(double.mant_dig + 1) + 1000.0;
 
     assert(dlarge.formatNumber == format("%d", dlarge.to!long));
-    assert(dhuge.formatNumber!(double, 12) == format("%.12g", dhuge));
+    assert(dhuge.formatNumber!(double) == format("%.12g", dhuge));
 
-    // Negative values
-    assert(formatNumber(-0.0) == "-0");
+    // Negative values - Repeat most of above tests.
+    assert(formatNumber(-0.0) == "-0" || formatNumber(-0.0) == "0");
     assert(formatNumber(-0.2) == "-0.2");
-    assert(formatNumber(-0.123412, 0) == "-0.1");
+    assert(formatNumber(-0.123412, 0) == "-0");
     assert(formatNumber(-0.123412, 1) == "-0.1");
     assert(formatNumber(-0.123412, 2) == "-0.12");
     assert(formatNumber(-0.123412, 5) == "-0.12341");
@@ -614,6 +717,11 @@ unittest  // formatNumber unit tests
     assert(formatNumber(-99.123412, 5) == "-99.12341");
     assert(formatNumber(-99.123412, 6) == "-99.123412");
     assert(formatNumber(-99.123412, 7) == "-99.12341");
+    assert(formatNumber(-999.123412, 0) == "-999");
+    assert(formatNumber(-999.123412, 1) == "-999.1");
+    assert(formatNumber(-999.123412, 2) == "-999.12");
+    assert(formatNumber(-999.123412, 3) == "-999.123");
+    assert(formatNumber(-999.123412, 4) == "-999.1234");
     assert(formatNumber(-999.123412, 5) == "-999.12341");
     assert(formatNumber(-999.123412, 6) == "-999.123412");
     assert(formatNumber(-999.123412, 7) == "-999.1234");
@@ -623,11 +731,69 @@ unittest  // formatNumber unit tests
     assert(formatNumber(-1234567891234.0, 0) == "-1234567891234");
     assert(formatNumber(-1234567891234.0, 1) == "-1234567891234");
 
+    // Test round off cases
+    assert(formatNumber(-0.6, 0) == "-1");
+    assert(formatNumber(-0.6, 1) == "-0.6");
+    assert(formatNumber(-0.06, 0) == "-0");
+    assert(formatNumber(-0.06, 1) == "-0.1");
+    assert(formatNumber(-0.06, 2) == "-0.06");
+    assert(formatNumber(-0.06, 3) == "-0.06");
+    assert(formatNumber(-9.49999, 0) == "-9");
+    assert(formatNumber(-9.49999, 1) == "-9.5");
+    assert(formatNumber(-9.6, 0) == "-10");
+    assert(formatNumber(-9.6, 1) == "-9.6");
+    assert(formatNumber(-99.99, 0) == "-100");
+    assert(formatNumber(-99.99, 1) == "-100");
+    assert(formatNumber(-99.99, 2) == "-99.99");
+    assert(formatNumber(-9999.9996, 3) == "-10000");
+    assert(formatNumber(-9999.9996, 4) == "-9999.9996");
+    assert(formatNumber(-99999.99996, 4) == "-100000");
+    assert(formatNumber(-99999.99996, 5) == "-99999.99996");
+    assert(formatNumber(-999999.999996, 5) == "-1000000");
+    assert(formatNumber(-999999.999996, 6) == "-999999.999996");
+
+    assert(formatNumber!(double, 0)(-999.123412, 0) == "-999");
+    assert(formatNumber!(double, 0)(-999.123412, 1) == "-1e+03");
+    assert(formatNumber!(double, 0)(-999.123412, 2) == "-1e+03");
+    assert(formatNumber!(double, 0)(-999.123412, 3) == "-999");
+    assert(formatNumber!(double, 0)(-999.123412, 4) == "-999.1");
+
+    // Default number printing
+    assert(formatNumber(-1.2) == "-1.2");
+    assert(formatNumber(-12.3) == "-12.3");
+    assert(formatNumber(-12.34) == "-12.34");
+    assert(formatNumber(-123.45) == "-123.45");
+    assert(formatNumber(-123.456) == "-123.456");
+    assert(formatNumber(-1234.567) == "-1234.567");
+    assert(formatNumber(-1234.5678) == "-1234.5678");
+    assert(formatNumber(-12345.6789) == "-12345.6789");
+    assert(formatNumber(-12345.67891) == "-12345.67891");
+    assert(formatNumber(-123456.78912) == "-123456.78912");
+    assert(formatNumber(-123456.789123) == "-123456.789123");
+    assert(formatNumber(-1234567.891234) == "-1234567.89123");
+
+    assert(formatNumber(-12345678.912345) == "-12345678.9123");
+    assert(formatNumber(-123456789.12345) == "-123456789.123");
+    assert(formatNumber(-1234567891.2345) == "-1234567891.23");
+    assert(formatNumber(-12345678912.345) == "-12345678912.3");
+    assert(formatNumber(-123456789123.45) == "-123456789123");
+    assert(formatNumber(-1234567891234.5) == "-1.23456789123e+12");
+    assert(formatNumber(-12345678912345.6) == "-1.23456789123e+13");
+    assert(formatNumber(-123456789123456.0) == "-123456789123456");
+
+    assert(formatNumber(-0.3) == "-0.3");
+    assert(formatNumber(-0.03) == "-0.03");
+    assert(formatNumber(-0.003) == "-0.003");
+    assert(formatNumber(-0.0003) == "-0.0003");
+    assert(formatNumber(-0.00003) == "-3e-05" || formatNumber(-0.00003) == "-3e-5");
+    assert(formatNumber(-0.000003) == "-3e-06" || formatNumber(-0.000003) == "-3e-6");
+    assert(formatNumber(-0.0000003) == "-3e-07" || formatNumber(-0.0000003) == "-3e-7");
+    
     const double dlargeNeg = -2.0^^(double.mant_dig - 2) + 10.0;
     immutable double dhugeNeg =  -2.0^^(double.mant_dig + 1) - 1000.0;
 
     assert(dlargeNeg.formatNumber == format("%d", dlargeNeg.to!long));
-    assert(dhugeNeg.formatNumber!(double, 12) == format("%.12g", dhugeNeg));
+    assert(dhugeNeg.formatNumber!(double) == format("%.12g", dhugeNeg));
 
     // Type qualifiers
     const double b1 = 0.0;           assert(formatNumber(b1) == "0");
@@ -636,10 +802,20 @@ unittest  // formatNumber unit tests
     immutable double b4 = 99.123412; assert(formatNumber(b4, 5) == "99.12341");
     immutable double b5 = 99.123412; assert(formatNumber(b5, 7) == "99.12341");
 
+    // Special values
+    assert(formatNumber(double.nan) == "nan");
+    assert(formatNumber(double.nan, 0) == "nan");
+    assert(formatNumber(double.nan, 1) == "nan");
+    assert(formatNumber(double.nan, 9) == "nan");
+    assert(formatNumber(double.infinity) == "inf");
+    assert(formatNumber(double.infinity, 0) == "inf");
+    assert(formatNumber(double.infinity, 1) == "inf");
+    assert(formatNumber(double.infinity, 9) == "inf");
+
     // Float. Mix negative and type qualifiers in.
     assert(formatNumber(0.0f) == "0");
     assert(formatNumber(0.5f) == "0.5");    
-    assert(formatNumber(0.123412f, 0) == "0.1");
+    assert(formatNumber(0.123412f, 0) == "0");
     assert(formatNumber(0.123412f, 1) == "0.1");
     assert(formatNumber(-0.123412f, 2) == "-0.12");
     assert(formatNumber(9.123412f, 5) == "9.12341");
@@ -655,8 +831,8 @@ unittest  // formatNumber unit tests
     immutable float c5 = 12345678.0f; assert(formatNumber(c5, 0) == "12345678");
     immutable float c6 = 12345678.0f; assert(formatNumber(c6, 1) == "12345678");
 
-    double flarge = 2.0^^(float.mant_dig - 2) - 10.0;
-    double fhuge =  2.0^^(float.mant_dig + 1) + 1000.0;
+    float flarge = 2.0^^(float.mant_dig - 2) - 10.0;
+    float fhuge =  2.0^^(float.mant_dig + 1) + 1000.0;
 
     assert(flarge.formatNumber == format("%d", flarge.to!long));
     assert(fhuge.formatNumber!(float, 12) == format("%.12g", fhuge));
