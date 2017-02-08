@@ -236,7 +236,7 @@ chevy  124      124
 bmw    118      122
 ```
 
-Using `--group 1,2` will group by both 'make' and 'color'. Omitting the `--group-by` entirely summarizes fields for full file.
+Using `--group-by 1,2` will group by both 'make' and 'color'. Omitting the `--group-by` entirely summarizes fields for full file.
 
 The program tries to generate useful headers, but custom headers can be specified. Example (using `-g` and `-H` shortcuts for `--header` and `--group-by`):
 ```
