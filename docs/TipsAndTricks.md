@@ -5,6 +5,7 @@ Contents:
 * [Reading data in R](#reading-data-in-R)
 * [A faster way to unique a file](#a-faster-way-to-unique-a-file)
 * [Using grep and tsv-filter together](#using-grep-and-tsv-filter-together)
+* [Enable bash-completion](#enable-bash-completion)
 
 ## Reading data in R
 
@@ -72,3 +73,28 @@ $ grep $'^[^\t]*\t1850\t' ngram_*.tsv
 This produced the correct results, but took 48 seconds. It is feasible because only string comparisons are needed. It wouldn't work if numeric comparisons were also involved.
 
 Using `grep` as a pre-filter won't always be helpful, that will depend on the specific case, but on occasion it can be quite handy.
+
+## Enable bash-completion
+
+Bash command completion is quite handy for command line tools. Command names complete by default, already useful. Adding completion of command options is even better. As an example, with bash completion turned on, enter the command name, then a single dash (-):
+```
+$ tsv-select -
+```
+Now type a TAB (or pair of TABs depending on setup). A list of possible completions is printed and the command line restored for continued entry.
+```
+$ tsv-select -
+--delimiter  --fields     --header     --help       --rest
+$ tsv-select --
+```
+Now type 'r', then TAB, and the command will complete up to `$ tsv-select --rest`.
+
+Enabling bash completion is a bit more involved than other packages, but still not too hard. It will often be necessary to install a package. The way to do this is system specific. A good source of instructions can be found at the [bash-completion GitHub repository](https://github.com/scop/bash-completion). Mac users may find the MacPorts [How to use bash-completion](https://trac.macports.org/wiki/howto/bash-completion) guide useful. Procedures for Homebrew are similar, but the details differ a bit.
+
+After enabling bash-completion, add completions for the tsv-utils-dlang package. Completions are available in the `bash_completion/tsv-utils-dlang` file. One way to add them is to 'source' the file from the `~/.bash_completion` file. A line like the following will do this.
+```
+if [ -r ~/tsv-utils-dlang/bash_completion/tsv-utils-dlang ]; then
+    . ~/tsv-utils-dlang/bash_completion/tsv-utils-dlang
+fi
+```
+
+The file can also be added to the bash completions system directory on your system. The location is system specific, see the bash-completion installation instructions for details.

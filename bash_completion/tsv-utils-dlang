@@ -1,0 +1,251 @@
+# bash completion for tsv-utils-dlang command line tools.
+#
+# Copyright (c) 2017, eBay Software Foundation
+# Initially written by Jon Degenhardt
+#
+# License: Boost Licence 1.0 (http://boost.org/LICENSE_1_0.txt)
+#
+# -------------------------------------------------------------
+#
+# This file enables option completion for the command line tools. For
+# information bash completions and how to install them, see:
+#    https://github.com/scop/bash-completion
+#    https://debian-administration.org/article/316/An_introduction_to_bash_completion_part_1
+#
+# Mac users may benefit from setup instructions at:
+#    https://trac.macports.org/wiki/howto/bash-completion
+#    http://davidalger.com/development/bash-completion-on-os-x-with-brew/
+#
+
+_csv2tsv()
+{
+    local cur prev opts
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+    opts="--help --help-verbose --header --quote --csv-delim --tsv-delim --replacement"
+
+    case $prev in
+         -h|--help|--help-verbose|-q|--quote|-c|--csv-delim|-t|--tsv-delim|-r|--replacement)
+          return
+          ;;
+    esac
+    
+    if [[ ${cur} == -* ]] ; then
+        COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+        return 0
+    fi
+
+    if [[ ${cur} == -* ]] ; then
+        COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+        return 0
+    fi
+
+    compopt -o filenames
+    COMPREPLY=( $(compgen -f -X "$xspec" -- ${cur}) $( compgen -d -- "$cur" ) )
+}
+complete -F _csv2tsv csv2tsv
+
+_number_lines()
+{
+    local cur prev opts
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+    opts="--help --header --header-string --start-number --delimiter"
+
+    case $prev in
+         -h|--help|-s|--header-string|-n|--start-number|-d|--delimiter)
+          return
+          ;;
+    esac
+    
+    if [[ ${cur} == -* ]] ; then
+        COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+        return 0
+    fi
+
+    compopt -o filenames
+    COMPREPLY=( $(compgen -f -X "$xspec" -- ${cur}) $( compgen -d -- "$cur" ) )
+}
+complete -F _number_lines number-lines
+
+_tsv_append()
+{
+    local cur prev opts
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+    opts="--help --help-verbose --header --track-source --file --delimiter"
+
+    case $prev in
+         -h|--help|--help-verbose|-f|--file|-d|--delimiter)
+          return
+          ;;
+    esac
+    
+    if [[ ${cur} == -* ]] ; then
+        COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+        return 0
+    fi
+
+    compopt -o filenames
+    COMPREPLY=( $(compgen -f -X "$xspec" -- ${cur}) $( compgen -d -- "$cur" ) )
+}
+complete -F _tsv_append tsv-append
+
+_tsv_filter()
+{
+    local cur prev opts
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+    opts="--help --help-verbose --help-options --header --or --invert --delimiter --empty --not-empty --blank --not-blank --is-numeric --is-finite --is-nan --is-infinity --le --lt --ge --gt --eq --ne --str-le --str-lt --str-ge --str-gt --str-eq --istr-eq --str-ne --istr-ne --str-in-fld --istr-in-fld --str-not-in-fld --istr-not-in-fld --regex --iregex --not-regex --not-iregex --ff-le --ff-lt --ff-ge --ff-gt --ff-eq --ff-ne --ff-str-eq --ff-istr-eq --ff-str-ne --ff-istr-ne --ff-absdiff-le --ff-absdiff-gt|ff-reldiff-le --ff-reldiff-gt"
+
+    case $prev in
+         -h|--help|--help-verbose|--help-options|-H|--header|-d|--delimiter|--le|--lt|--ge|--gt|--eq|--ne|--str-le|--str-lt|--str-ge|--str-gt|--str-eq|--istr-eq|--str-ne|--istr-ne|--str-in-fld|--istr-in-fld|--str-not-in-fld|--istr-not-in-fld|--regex|--iregex|--not-regex|--not-iregex|--ff-le|--ff-lt|--ff-ge|--ff-gt|--ff-eq|--ff-ne|--ff-str-eq|--ff-istr-eq|--ff-str-ne|--ff-istr-ne|--ff-absdiff-le|--ff-absdiff-gt|ff-reldiff-le|--ff-reldiff-gt)
+         
+          return
+          ;;
+    esac
+    
+    if [[ ${cur} == -* ]] ; then
+        COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+        return 0
+    fi
+
+    compopt -o filenames
+    COMPREPLY=( $(compgen -f -X "$xspec" -- ${cur}) $( compgen -d -- "$cur" ) )
+}
+complete -F _tsv_filter tsv-filter
+
+_tsv_join()
+{
+    local cur prev opts
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+    opts="--help --help-verbose --filter-file --key-fields --data-fields --append-fields --header --prefix --write-all --exclude --delimiter --allow-duplicate-keys"
+
+    case $prev in
+         -h|--help|--help-verbose|-k|--key-fields|-d|--data-fields|-a|--append-fields|-p|--prefix|-w|--write-all|--delimiter)
+          return
+          ;;
+
+         -f|--filter-file)
+             compopt -o filenames
+             COMPREPLY=( $(compgen -f -X "$xspec" -- ${cur}) $( compgen -d -- "$cur" ) )
+             return 0
+             ;;
+    esac
+    
+    if [[ ${cur} == -* ]] ; then
+        COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+        return 0
+    fi
+
+    compopt -o filenames
+    COMPREPLY=( $(compgen -f -X "$xspec" -- ${cur}) $( compgen -d -- "$cur" ) )
+}
+complete -F _tsv_join tsv-join
+
+_tsv_sample()
+{
+    local cur prev opts
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+    opts="--help --help-verbose --header --num --field --print-random --static-seed --seed-value --delimiter"
+
+    case $prev in
+         -h|--help|--help-verbose|-n|--num|-f|--field|-v|--seed-value|-d|--delimiter)
+          return
+          ;;
+    esac
+    
+    if [[ ${cur} == -* ]] ; then
+        COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+        return 0
+    fi
+
+    compopt -o filenames
+    COMPREPLY=( $(compgen -f -X "$xspec" -- ${cur}) $( compgen -d -- "$cur" ) )
+}
+complete -F _tsv_sample tsv-sample
+
+_tsv_select()
+{
+    local cur prev opts
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+    opts="--help --header --fields --rest --delimiter"
+
+    case $prev in
+        -h|--help|-f|--fields|-d|--delimiter)
+            return
+            ;;
+        -r|--rest)
+            COMPREPLY=( $(compgen -W "none first last" -- ${cur}) )
+            return
+            ;;
+    esac
+    
+    if [[ ${cur} == -* ]] ; then
+        COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+        return 0
+    fi
+
+    compopt -o filenames
+    COMPREPLY=( $(compgen -f -X "$xspec" -- ${cur}) $( compgen -d -- "$cur" ) )
+}
+complete -F _tsv_select tsv-select
+
+_tsv_summarize()
+{
+    local cur prev opts
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+    opts="--help --help-verbose --group-by --header --write-header --delimiter --values-delimiter --float-precision --count --count-header --retain --first --last --min --max --range --sum --mean --median --mad --var --stdev --unique-count --mode --values"
+
+    case $prev in
+          -h|--help|--help-verbose|-g|--group-by|-d|--delimiter|-v|--values-delimiter|-p|--float-precision|--count-header|--retain|--first|--last|--min|--max|--range|--sum|--mean|--median|--mad|--var|--stdev|--unique-count|--mode|--values)
+          return
+          ;;
+    esac
+    
+    if [[ ${cur} == -* ]] ; then
+        COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+        return 0
+    fi
+
+    compopt -o filenames
+    COMPREPLY=( $(compgen -f -X "$xspec" -- ${cur}) $( compgen -d -- "$cur" ) )
+}
+complete -F _tsv_summarize tsv-summarize
+
+_tsv_uniq()
+{
+    local cur prev opts
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+    opts="--help --help-verbose --header --fields --ignore-case --equiv --equiv-header --equiv-start --delimiter"
+
+    case $prev in
+         -h|--help|--help-verbose|-f|--fields|--equiv-header|--equiv-start|-d|--delimiter)
+          return
+          ;;
+    esac
+    
+    if [[ ${cur} == -* ]] ; then
+        COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+        return 0
+    fi
+
+    compopt -o filenames
+    COMPREPLY=( $(compgen -f -X "$xspec" -- ${cur}) $( compgen -d -- "$cur" ) )
+}
+complete -F _tsv_uniq tsv-uniq
+
