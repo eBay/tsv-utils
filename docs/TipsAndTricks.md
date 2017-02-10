@@ -76,7 +76,7 @@ Using `grep` as a pre-filter won't always be helpful, that will depend on the sp
 
 ## Enable bash-completion
 
-Bash command completion is quite handy for command line tools. Command names complete by default, already useful. Adding completion of command options is even better. As an example, with bash completion turned, enter the command name, then a single dash (-):
+Bash command completion is quite handy for command line tools. Command names complete by default, already useful. Adding completion of command options is even better. As an example, with bash completion turned on, enter the command name, then a single dash (-):
 ```
 $ tsv-select -
 ```
