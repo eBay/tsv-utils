@@ -12,7 +12,7 @@
 #    https://github.com/scop/bash-completion
 #    https://debian-administration.org/article/316/An_introduction_to_bash_completion_part_1
 #
-# Mac users may benefit from:
+# Mac users may benefit from setup instructions at:
 #    https://trac.macports.org/wiki/howto/bash-completion
 #    http://davidalger.com/development/bash-completion-on-os-x-with-brew/
 #
@@ -187,6 +187,7 @@ _tsv_select()
             ;;
         -r|--rest)
             COMPREPLY=( $(compgen -W "none first last" -- ${cur}) )
+            return
             ;;
     esac
     
