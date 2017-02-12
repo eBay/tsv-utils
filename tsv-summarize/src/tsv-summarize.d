@@ -42,9 +42,9 @@ else
 auto helpTextVerbose = q"EOS
 Synopsis: tsv-summarize [options] file [file...]
 
-tsv-summarize reads tabular data files (tab-separated by default), tracks field
-values for each unique key, and runs summarization algorithms. Consider the file
-data.tsv:
+tsv-summarize reads tabular data files (tab-separated by default), tracks
+field values for each unique key, and runs summarization algorithms. Consider
+the file data.tsv:
 
    make    color   time
    ford    blue    131
@@ -90,17 +90,21 @@ Summarization operators available are:
 
 Numeric values are printed to 12 significant digits by default. This can be
 changed using the '--p|float-precision' option. If six or less it sets the
-number of significant digits after the decimal point. If greater than six
-it sets the total number of significant digits.
+number of significant digits after the decimal point. If greater than six it
+sets the total number of significant digits.
 
 Calculations hold onto the minimum data needed while reading data. A few
 operations like median keep all data values in memory. These operations will
-start to encounter performance issues as available memory becomes scarce.
-The size that can be handled effectively is machine dependent, but often
-quite large files can be handled.
+start to encounter performance issues as available memory becomes scarce. The
+size that can be handled effectively is machine dependent, but often quite
+large files can be handled.
 
 Operations requiring numeric entries will signal an error and terminate
 processing if a non-numeric entry is found.
+
+Missing values are not treated specially by default, this can be changed
+using the '--x|exclude-missing' or '--r|replace-missing' option. The former
+turns off processing for missing values, the latter uses a replacement value.
 
 Options:
 EOS";
@@ -120,15 +124,18 @@ EOS";
  */
 struct TsvSummarizeOptions {
     /* Options set directly by on the command line.. */
-    size_t[] keyFields;              // -g, --group-by
-    bool hasHeader = false;          // --header
-    bool writeHeader = false;        // -w, --write-header
-    char inputFieldDelimiter = '\t'; // --d|delimiter
-    char valuesDelimiter = '|';      // --v|values-delimiter
-    size_t floatPrecision = 12;      // --p|float-precision
-    bool helpVerbose = false;        // --help-verbose
-    DList!Operator operators;        // Operators, in the order specified.
-    size_t endFieldIndex = 0;        // Derived value. Max field index used plus one.
+    size_t[] keyFields;                // -g, --group-by
+    bool hasHeader = false;            // --header
+    bool writeHeader = false;          // -w, --write-header
+    char inputFieldDelimiter = '\t';   // --d|delimiter
+    char valuesDelimiter = '|';        // --v|values-delimiter
+    size_t floatPrecision = 12;        // --p|float-precision
+    bool excludeMissing = false;       // --x|exclude-missing
+    string missingValueReplacement;    // --r|replace-missing
+    bool helpVerbose = false;          // --help-verbose
+    DList!Operator operators;          // Operators, in the order specified.
+    size_t endFieldIndex = 0;          // Derived value. Max field index used plus one.
+    MissingFieldPolicy globalMissingPolicy = new MissingFieldPolicy;   // Derived value.
 
     /* Returns a tuple. First value is true if command line arguments were successfully
      * processed and execution should continue, or false if an error occurred or the user
@@ -156,6 +163,8 @@ struct TsvSummarizeOptions {
                 "d|delimiter",        "CHR             Field delimiter. Default: TAB. (Single byte UTF-8 characters only.)", &inputFieldDelimiter,
                 "v|values-delimiter", "CHR             Values delimiter. Default: vertical bar (|). (Single byte UTF-8 characters only.)", &valuesDelimiter,
                 "p|float-precision",  "NUM             'Precision' to use printing floating point numbers. Affects the number of digits printed and exponent use. Default: 12", &floatPrecision,
+                "x|exclude-missing",  "                Exclude missing (empty) fields from calculations.", &excludeMissing,
+                "r|replace-missing",  "STR             Replace missing (empty) fields with STR in calculations.", &missingValueReplacement,
                 "count",              "                Count occurrences of each unique key.", &countOptionHandler,
                 "count-header",       "STR             Count occurrences of each unique key, use header STR.", &countHeaderOptionHandler,
                 "retain",             "n[,n...]        Retain one copy of the field.", &operatorOptionHandler!RetainOperator,
@@ -234,7 +243,7 @@ struct TsvSummarizeOptions {
                     format("Invalid option: '--%s %s'. Zero is not a valid field index.", option, optionVal));
 
             size_t fieldIndex = fieldNum - 1;
-            auto op = new OperatorClass(fieldIndex);
+            auto op = new OperatorClass(fieldIndex, globalMissingPolicy);
 
             if (!valSplit[2].empty)
             {
@@ -279,10 +288,16 @@ struct TsvSummarizeOptions {
         {
             throw new Exception("Cannot use the same character for both --d|field-delimiter and --v|values-delimiter.");
         }
+
+        if (excludeMissing && missingValueReplacement.length != 0)
+        {
+            throw new Exception("Cannot use both '--x|exclude-missing' and '--r|replace-missing'.");
+        }
     }
 
     /* Post-processing derivations. */
-    void derivations() {
+    void derivations()
+    {
 
         /* keyFields needs to be made zero-based field indices. It also needs to be included
          * in the endFieldIndex, which is one past the last field index.
@@ -294,6 +309,9 @@ struct TsvSummarizeOptions {
                        --x;
                    }
                 );
+
+        /* Missing field policy. */
+        globalMissingPolicy.updatePolicy(excludeMissing, missingValueReplacement);
     }
 }
 
@@ -304,12 +322,15 @@ void tsvSummarize(TsvSummarizeOptions cmdopt, in string[] inputFiles)
     /* Pick the Summarizer based on the number of key-fields entered. */
     auto summarizer =
         (cmdopt.keyFields.length == 0)
-        ? new NoKeySummarizer!(typeof(stdout.lockingTextWriter()))(cmdopt.inputFieldDelimiter)
+        ? new NoKeySummarizer!(typeof(stdout.lockingTextWriter()))(
+            cmdopt.inputFieldDelimiter, cmdopt.globalMissingPolicy)
         
         : (cmdopt.keyFields.length == 1)
-        ? new OneKeySummarizer!(typeof(stdout.lockingTextWriter()))(cmdopt.keyFields[0], cmdopt.inputFieldDelimiter)
+        ? new OneKeySummarizer!(typeof(stdout.lockingTextWriter()))(
+            cmdopt.keyFields[0], cmdopt.inputFieldDelimiter, cmdopt.globalMissingPolicy)
         
-        : new MultiKeySummarizer!(typeof(stdout.lockingTextWriter()))(cmdopt.keyFields, cmdopt.inputFieldDelimiter);
+        : new MultiKeySummarizer!(typeof(stdout.lockingTextWriter()))(
+            cmdopt.keyFields, cmdopt.inputFieldDelimiter, cmdopt.globalMissingPolicy);
 
     /* Add the operators to the Summarizer. */
     summarizer.setOperators(inputRangeObject(cmdopt.operators[]));
@@ -483,12 +504,14 @@ class SummarizerBase(OutputRange) : Summarizer!OutputRange
     private char _inputFieldDelimiter;
     private bool _hasProcessedFirstHeaderLine = false;
     private SharedFieldValues _sharedFieldValues = null;  // Null if no shared field value lists.
+    protected MissingFieldPolicy _missingPolicy;
     protected DList!Operator _operators;
     protected size_t _numOperators = 0;
 
-    this(const char inputFieldDelimiter)
+    this(const char inputFieldDelimiter, MissingFieldPolicy missingPolicy)
     {
         _inputFieldDelimiter = inputFieldDelimiter;
+        _missingPolicy = missingPolicy;
     }
 
     char inputFieldDelimiter() const @property
@@ -554,9 +577,9 @@ class NoKeySummarizer(OutputRange) : SummarizerBase!OutputRange
     private Calculator[] _calculators;
     private UniqueKeyValuesLists _valueLists;
 
-    this(const char inputFieldDelimiter)
+    this(const char inputFieldDelimiter, MissingFieldPolicy missingPolicy)
     {
-        super(inputFieldDelimiter);
+        super(inputFieldDelimiter, missingPolicy);
     }
 
     /* Only one Calculator per Operation, so create them as Operators are added. */
@@ -570,7 +593,7 @@ class NoKeySummarizer(OutputRange) : SummarizerBase!OutputRange
     override void processNextLine(const char[][] lineFields)
     {
         _calculators.each!(x => x.processNextLine(lineFields));
-        if (_valueLists !is null) _valueLists.processNextLine(lineFields);
+        if (_valueLists !is null) _valueLists.processNextLine(lineFields, _missingPolicy);
     }
 
     override void writeSummaryHeader(ref OutputRange outputStream, const ref SummarizerPrintOptions printOptions)
@@ -605,9 +628,9 @@ class KeySummarizerBase(OutputRange) : SummarizerBase!OutputRange
     private DList!string _uniqueKeys;
     private UniqueKeyData[string] _uniqueKeyData;
 
-    this(const char inputFieldDelimiter)
+    this(const char inputFieldDelimiter, MissingFieldPolicy missingPolicy)
     {
-        super(inputFieldDelimiter);
+        super(inputFieldDelimiter, missingPolicy);
     }
 
     protected void processNextLineWithKey(T : const char[])(T key, const char[][] lineFields)
@@ -618,7 +641,7 @@ class KeySummarizerBase(OutputRange) : SummarizerBase!OutputRange
         auto data = (dataPtr is null) ? addUniqueKey(key.to!string) : *dataPtr;
         
         data.calculators.each!(x => x.processNextLine(lineFields));
-        if (data.valuesLists !is null) data.valuesLists.processNextLine(lineFields);
+        if (data.valuesLists !is null) data.valuesLists.processNextLine(lineFields, _missingPolicy);
     }
     
     protected UniqueKeyData addUniqueKey(string key)
@@ -672,9 +695,9 @@ class OneKeySummarizer(OutputRange) : KeySummarizerBase!OutputRange
     private string _keyFieldHeader;
     private DList!string _uniqueKeys;
 
-    this(size_t keyFieldIndex, char inputFieldDelimiter)
+    this(size_t keyFieldIndex, char inputFieldDelimiter, MissingFieldPolicy missingPolicy)
     {
-        super(inputFieldDelimiter);
+        super(inputFieldDelimiter, missingPolicy);
         _keyFieldIndex = keyFieldIndex;
         _keyFieldHeader = fieldHeaderFromIndex(keyFieldIndex);
     }
@@ -711,9 +734,9 @@ class MultiKeySummarizer(OutputRange) : KeySummarizerBase!OutputRange
     private string _keyFieldHeader;
     private DList!string _uniqueKeys;
 
-    this(const size_t[] keyFieldIndices, char inputFieldDelimiter)
+    this(const size_t[] keyFieldIndices, char inputFieldDelimiter, MissingFieldPolicy missingPolicy)
     {
-        super(inputFieldDelimiter);
+        super(inputFieldDelimiter, missingPolicy);
         _keyFieldIndices = keyFieldIndices.dup;
         _keyFieldHeader =
             _keyFieldIndices.map!(i => fieldHeaderFromIndex(i))
@@ -785,12 +808,15 @@ version(unittest)
         /* Pick the Summarizer based on the number of key-fields entered. */
         auto summarizer =
             (cmdopt.keyFields.length == 0)
-            ? new NoKeySummarizer!(typeof(appender!(char[])()))(cmdopt.inputFieldDelimiter)
+            ? new NoKeySummarizer!(typeof(appender!(char[])()))(
+                cmdopt.inputFieldDelimiter, cmdopt.globalMissingPolicy)
             
             : (cmdopt.keyFields.length == 1)
-            ? new OneKeySummarizer!(typeof(appender!(char[])()))(cmdopt.keyFields[0], cmdopt.inputFieldDelimiter)
+            ? new OneKeySummarizer!(typeof(appender!(char[])()))(
+                cmdopt.keyFields[0], cmdopt.inputFieldDelimiter, cmdopt.globalMissingPolicy)
             
-            : new MultiKeySummarizer!(typeof(appender!(char[])()))(cmdopt.keyFields, cmdopt.inputFieldDelimiter);
+            : new MultiKeySummarizer!(typeof(appender!(char[])()))(
+                cmdopt.keyFields, cmdopt.inputFieldDelimiter, cmdopt.globalMissingPolicy);
 
         /* Add the operators to the Summarizer. */
         summarizer.setOperators(inputRangeObject(cmdopt.operators[]));
@@ -1311,6 +1337,13 @@ unittest
  * operator name and the header of the field summarized. The defaults can be overridden on
  * on the command line. These scenarios are supported via the operator constructor and the
  * processHeaderLine() method.
+ *
+ * Missing field policy
+ *
+ * At present, tsv-summarize has a single policy for handling missing values that applies
+ * to all operators. However, it is logically operator specific and is implemented that
+ * way. The MissingFieldPolicy struct describes the policy, each operator contains one.
+ * Calculators access thier operator's policy struct.
  */
 
 interface Operator
@@ -1329,6 +1362,50 @@ interface Calculator
     string calculate(UniqueKeyValuesLists valuesLists, const ref SummarizerPrintOptions printOptions);
 }
 
+class MissingFieldPolicy
+{
+    private bool _useMissing = true;          // True if missing values are processed unchanged.
+    private bool _replaceMissing = false;     // True if missing values are replaced.
+    private string _missingReplacement;       // Replacement string if replaceMissing is true.
+
+    this (in bool excludeMissing = false, in string missingReplacement = "")
+    {
+        updatePolicy(excludeMissing, missingReplacement);
+    }
+
+    void updatePolicy(in bool excludeMissing, in string missingReplacement)
+    {
+        _missingReplacement = missingReplacement;
+        _replaceMissing = missingReplacement.length != 0;
+        _useMissing = !excludeMissing && !replaceMissing;
+    }
+    
+    final bool isMissingField(const char[] field) const
+    {
+        return field.length == 0;
+    }
+
+    final bool useMissing() const @property
+    {
+        return _useMissing;
+    }
+
+    final bool excludeMissing() const @property
+    {
+        return !_useMissing && !_replaceMissing;
+    }
+
+    final bool replaceMissing() const @property
+    {
+        return _replaceMissing;
+    }
+
+    final string missingReplacement() const @property
+    {
+        return _missingReplacement;
+    }
+}
+
 /* The SharedFieldValues and UniqueKeyValuesLists classes manage lists of values collected
  * while reading data. Operations like median collect all values and operate on them when
  * running the final calculation. Value lists are needed for each unique key. A command
@@ -1341,19 +1418,25 @@ interface Calculator
  * 
  * The setup works as follows:
  *  - Operators advertise fields they need saved ([text|numeric]FieldsToSave methods).
- *  - The Summary object keeps a SharedFieldValues object, which in turn keeps list of the
- *    fields shared by Operators. This gets created command initialization.
+ *  - The SummarizerBase object keeps a SharedFieldValues object, which in turn keeps list
+ *    of the fields advertised by Operators as needing sharing. This list gets created
+ *    during command initialization (SummarizerBase.setOperators).
  *  - The SharedFieldValues object is used to create a UniqueKeyValuesLists object every
- *    time a new unique key is found, alongside the Calculator objects.
+ *    time a new unique key is found, in parellel to the Calculator objects created for the
+ *    key. The UniqueKeyValuesLists objects are managed by derived Summarizer classes.
  *  - A unique key's UniqueKeyValuesLists object is passed each input line, same as
  *    Calculators, saving the values.
- *  - Calculators retrieve the saved values during the calculation phase.
+ *  - Calculators retrieve the saved values during the calculation phase. The calculator's
+ *    ProcessNextField method is typically a no-op.
  *
  * One concession to duplicate storage is that text and numeric versions of the same
  * field might be stored. The reason is because it's important to convert text to numbers
  * as they are read so that useful error messages can be generated. And, storing both
- * forms of the same field should be rare.
+ * forms of the same field should be less common.
  *
+ * The current implementation uses the same missing values policy for all fields. If
+ * multiple policies become supported this will need to change.
+ * 
  * Built-in calculations - UniqueKeyValueLists have a built-in median operation. This is
  * to avoid repeated calculations of the median by different calculations.
  */
@@ -1364,16 +1447,24 @@ class SharedFieldValues
     private size_t[] _numericFieldIndices;
     private size_t[] _textFieldIndices;
 
+    /* Called during summarizer setup to add a shared field value for a specific field index.
+     * eg. '--median 7' will add end up calling addNumericIdex(6), 6 being the zero-based index.
+     * A specific index is only added once.
+     */
     final void addNumericIndex (size_t index)
     {
         if (!canFind(_numericFieldIndices, index)) _numericFieldIndices ~= index;
     }
 
+    /* Similar to addNumericIndex, except adds a text index. */
     final void addTextIndex (size_t index)
     {
         if (!canFind(_textFieldIndices, index)) _textFieldIndices ~= index;
     }
 
+    /* Called every time a new key is found, or once at the beginning of the program if no keys
+     * are being used (entire column summarized).
+     */
     final UniqueKeyValuesLists makeUniqueKeyValuesLists()
     {
         return new UniqueKeyValuesLists(_numericFieldIndices, _textFieldIndices);
@@ -1411,10 +1502,10 @@ class UniqueKeyValuesLists
         }
     }
 
-    void processNextLine(const char[][] fields)
+    void processNextLine(const char[][] fields, MissingFieldPolicy missingPolicy)
     {
-        _numericFieldValues.each!((ref x) => x.processNextLine(fields));
-        _textFieldValues.each!((ref x) => x.processNextLine(fields));
+        _numericFieldValues.each!((ref x) => x.processNextLine(fields, missingPolicy));
+        _textFieldValues.each!((ref x) => x.processNextLine(fields, missingPolicy));
     }
 
     private FieldValues!double findNumericFieldValues(size_t index)
@@ -1471,11 +1562,21 @@ class UniqueKeyValuesLists
             return _fieldIndex;
         }
         
-        final void processNextLine(const char[][] fields)
+        final void processNextLine(const char[][] fields, MissingFieldPolicy missingPolicy)
         {
             debug writefln("[%s]: %s", __FUNCTION__, fields.to!string);
-            _values.put(fields[_fieldIndex].to!ValueType);
-            _haveMedian = false;
+            
+            const char[] field = fields[_fieldIndex];
+            if (missingPolicy.useMissing || !missingPolicy.isMissingField(field)) 
+            {
+                _values.put(field.to!ValueType);
+                _haveMedian = false;
+            }
+            else if (missingPolicy.replaceMissing)
+            {
+                _values.put(missingPolicy.missingReplacement.to!ValueType);
+                _haveMedian = false;
+            }
         }
         
         /* Return an input range of the values. */
@@ -1642,13 +1743,15 @@ class SingleFieldOperator : Operator
     private bool _hasCustomHeader = false;
     private size_t[] _numericFieldsToSave;
     private size_t[] _textFieldsToSave;
+    private MissingFieldPolicy _missingPolicy;
 
-    this(string operatorName, size_t fieldIndex,
+    this(string operatorName, size_t fieldIndex, MissingFieldPolicy missingPolicy,
          Flag!"useHeaderSuffix" useHeaderSuffix = Yes.useHeaderSuffix,
          Flag!"allowCustomHeader" allowCustomHeader = Yes.allowCustomHeader)
     {
         _name = operatorName;
         _fieldIndex = fieldIndex;
+        _missingPolicy = missingPolicy;
         _useHeaderSuffix = useHeaderSuffix;
         _allowCustomHeader = allowCustomHeader;
         // Default header. May be overrridden by custom header or header line.
@@ -1685,6 +1788,11 @@ class SingleFieldOperator : Operator
     final void setSaveFieldValuesText()
     {
         _textFieldsToSave ~= _fieldIndex;
+    }
+
+    final MissingFieldPolicy missingPolicy() @property
+    {
+        return _missingPolicy;
     }
 
     final size_t fieldIndex() const @property
@@ -1744,8 +1852,21 @@ class SingleFieldCalculator : Calculator
     final void processNextLine(const char[][] fields)
     {
         debug writefln("[%s %d] fields: %s", __FUNCTION__, _fieldIndex, fields.to!string);
-        processNextField(fields[_fieldIndex]);
+
+        auto missingPolicy = getOperator.missingPolicy;
+        const char[] field = fields[_fieldIndex];
+
+        if (missingPolicy.useMissing || !missingPolicy.isMissingField(field)) 
+        {
+            processNextField(field);
+        }
+        else if (missingPolicy.replaceMissing)
+        {
+            processNextField(missingPolicy.missingReplacement);
+        }
     }
+
+    abstract SingleFieldOperator getOperator();
     
     abstract void processNextField(const char[] field);
 }
@@ -1779,7 +1900,8 @@ version(unittest)
      */
     void testSingleFieldOperator(OperatorClass : SingleFieldOperator)
         (const char[][][] splitFile, size_t fieldIndex, string headerSuffix,
-         const char[][] expectedValues)
+         const char[][] expectedValues,
+         MissingFieldPolicy missingPolicy = new MissingFieldPolicy)
     {
         import std.format : format;
         import std.range : appender;
@@ -1852,7 +1974,7 @@ version(unittest)
 
             if (hasCustomHeader) assert(hasOutputHeader);
 
-            auto op = new OperatorClass(fieldIndex);
+            auto op = new OperatorClass(fieldIndex, missingPolicy);
             
             if (hasCustomHeader)
             {
@@ -1863,7 +1985,7 @@ version(unittest)
             Operator[] operatorArray;
             operatorArray ~= op;
 
-            auto summarizer = new NoKeySummarizer!(typeof(appender!(char[])()))('#');
+            auto summarizer = new NoKeySummarizer!(typeof(appender!(char[])()))('#', missingPolicy);
             summarizer.setOperators(inputRangeObject(operatorArray));
 
             if (hasInputHeader) summarizer.processHeaderLine(inputHeaderLine);
@@ -2036,6 +2158,9 @@ version(unittest)
         /* printOptions - Not used these tests, but needed for API calls. */
         auto printOptions = SummarizerPrintOptions('#', '|');
 
+        /* Missing policy doesn't apply to zero field operators, but need the object for the summarizer. */
+        auto missingPolicy = new MissingFieldPolicy;
+
         /* An input header line. */
         string[] inputHeaderLine = new string[numFields];
         foreach (i; 0 .. numFields) inputHeaderLine[i] = "header" ~ i.to!string;
@@ -2094,9 +2219,8 @@ version(unittest)
             Operator[] operatorArray;
             operatorArray ~= op;
 
-            auto summarizer = new NoKeySummarizer!(typeof(appender!(char[])()))('#');
+            auto summarizer = new NoKeySummarizer!(typeof(appender!(char[])()))('#', missingPolicy);
             summarizer.setOperators(inputRangeObject(operatorArray));
-
             if (hasInputHeader) summarizer.processHeaderLine(inputHeaderLine);
 
             if (hasOutputHeader)
@@ -2212,9 +2336,9 @@ unittest // CountOperator
  */
 class RetainOperator : SingleFieldOperator
 {
-    this(size_t fieldIndex)
+    this(size_t fieldIndex, MissingFieldPolicy missingPolicy)
     {
-        super("retain", fieldIndex, No.useHeaderSuffix, No.allowCustomHeader);
+        super("retain", fieldIndex, missingPolicy, No.useHeaderSuffix, No.allowCustomHeader);
     }
 
     final override SingleFieldCalculator makeCalculator()
@@ -2222,7 +2346,7 @@ class RetainOperator : SingleFieldOperator
         return new RetainCalculator(fieldIndex);
     }
 
-    static class RetainCalculator : SingleFieldCalculator
+    class RetainCalculator : SingleFieldCalculator
     {
         private bool _done = false;
         private string _value = "";
@@ -2230,6 +2354,11 @@ class RetainOperator : SingleFieldOperator
         this(size_t fieldIndex)
         {
             super(fieldIndex);
+        }
+
+        final override RetainOperator getOperator()
+        {
+            return this.outer;
         }
         
         final override void processNextField(const char[] nextField)
@@ -2266,9 +2395,9 @@ unittest // RetainOperator
  */
 class FirstOperator : SingleFieldOperator
 {
-    this(size_t fieldIndex)
+    this(size_t fieldIndex, MissingFieldPolicy missingPolicy)
     {
-        super("first", fieldIndex);
+        super("first", fieldIndex, missingPolicy);
     }
 
     final override SingleFieldCalculator makeCalculator()
@@ -2276,7 +2405,7 @@ class FirstOperator : SingleFieldOperator
         return new FirstCalculator(fieldIndex);
     }
     
-    static class FirstCalculator : SingleFieldCalculator
+    class FirstCalculator : SingleFieldCalculator
     {
         private bool _done = false;
         private string _value = "";
@@ -2284,6 +2413,11 @@ class FirstOperator : SingleFieldOperator
         this(size_t fieldIndex)
         {
             super(fieldIndex);
+        }
+        
+        final override FirstOperator getOperator()
+        {
+            return this.outer;
         }
         
         final override void processNextField(const char[] nextField)
@@ -2320,9 +2454,9 @@ unittest // FirstOperator
  */
 class LastOperator : SingleFieldOperator
 {
-    this(size_t fieldIndex)
+    this(size_t fieldIndex, MissingFieldPolicy missingPolicy)
     {
-        super("last", fieldIndex);
+        super("last", fieldIndex, missingPolicy);
     }
 
     final override SingleFieldCalculator makeCalculator()
@@ -2330,13 +2464,18 @@ class LastOperator : SingleFieldOperator
         return new LastCalculator(fieldIndex);
     }
 
-    static class LastCalculator : SingleFieldCalculator
+    class LastCalculator : SingleFieldCalculator
     {
         private string _value = "";
         
         this(size_t fieldIndex)
         {
             super(fieldIndex);
+        }
+        
+        final override LastOperator getOperator()
+        {
+            return this.outer;
         }
         
         final override void processNextField(const char[] nextField)
@@ -2369,9 +2508,9 @@ unittest // LastOperator
  */
 class MinOperator : SingleFieldOperator
 {
-    this(size_t fieldIndex)
+    this(size_t fieldIndex, MissingFieldPolicy missingPolicy)
     {
-        super("min", fieldIndex);
+        super("min", fieldIndex, missingPolicy);
     }
 
     final override SingleFieldCalculator makeCalculator()
@@ -2379,7 +2518,7 @@ class MinOperator : SingleFieldOperator
         return new MinCalculator(fieldIndex);
     }
 
-    static class MinCalculator : SingleFieldCalculator
+    class MinCalculator : SingleFieldCalculator
     {
         private bool _isFirst = true;
         private double _value = double.nan;
@@ -2389,6 +2528,11 @@ class MinOperator : SingleFieldOperator
             super(fieldIndex);
         }
 
+        final override MinOperator getOperator()
+        {
+            return this.outer;
+        }
+        
         final override void processNextField(const char[] nextField)
         {
             double fieldValue = nextField.to!double;
@@ -2428,9 +2572,9 @@ unittest // MinOperator
  */
 class MaxOperator : SingleFieldOperator
 {
-    this(size_t fieldIndex)
+    this(size_t fieldIndex, MissingFieldPolicy missingPolicy)
     {
-        super("max", fieldIndex);
+        super("max", fieldIndex, missingPolicy);
     }
 
     final override SingleFieldCalculator makeCalculator()
@@ -2438,7 +2582,7 @@ class MaxOperator : SingleFieldOperator
         return new MaxCalculator(fieldIndex);
     }
 
-    static class MaxCalculator : SingleFieldCalculator
+    class MaxCalculator : SingleFieldCalculator
     {
         private bool _isFirst = true;
         private double _value = double.nan;
@@ -2448,6 +2592,11 @@ class MaxOperator : SingleFieldOperator
             super(fieldIndex);
         }
 
+        final override MaxOperator getOperator()
+        {
+            return this.outer;
+        }
+        
         final override void processNextField(const char[] nextField)
         {
             double fieldValue = nextField.to!double;
@@ -2489,9 +2638,9 @@ unittest // MaxOperator
  */
 class RangeOperator : SingleFieldOperator
 {
-    this(size_t fieldIndex)
+    this(size_t fieldIndex, MissingFieldPolicy missingPolicy)
     {
-        super("range", fieldIndex);
+        super("range", fieldIndex, missingPolicy);
     }
 
     final override SingleFieldCalculator makeCalculator()
@@ -2499,7 +2648,7 @@ class RangeOperator : SingleFieldOperator
         return new RangeCalculator(fieldIndex);
     }
 
-    static class RangeCalculator : SingleFieldCalculator
+    class RangeCalculator : SingleFieldCalculator
     {
         private bool _isFirst = true;
         private double _minValue = 0.0;
@@ -2510,6 +2659,11 @@ class RangeOperator : SingleFieldOperator
             super(fieldIndex);
         }
 
+        final override RangeOperator getOperator()
+        {
+            return this.outer;
+        }
+        
         final override void processNextField(const char[] nextField)
         {
             double fieldValue = nextField.to!double;
@@ -2553,9 +2707,9 @@ unittest // RangeOperator
  */
 class SumOperator : SingleFieldOperator
 {
-    this(size_t fieldIndex)
+    this(size_t fieldIndex, MissingFieldPolicy missingPolicy)
     {
-        super("sum", fieldIndex);
+        super("sum", fieldIndex, missingPolicy);
     }
 
     final override SingleFieldCalculator makeCalculator()
@@ -2563,7 +2717,7 @@ class SumOperator : SingleFieldOperator
         return new SumCalculator(fieldIndex);
     }
 
-    static class SumCalculator : SingleFieldCalculator
+    class SumCalculator : SingleFieldCalculator
     {
         private double _total = 0.0;
 
@@ -2572,6 +2726,11 @@ class SumOperator : SingleFieldOperator
             super(fieldIndex);
         }
 
+        final override SumOperator getOperator()
+        {
+            return this.outer;
+        }
+        
         final override void processNextField(const char[] nextField)
         {
             _total += nextField.to!double;
@@ -2602,9 +2761,9 @@ unittest // SumOperator
  */
 class MeanOperator : SingleFieldOperator
 {
-    this(size_t fieldIndex)
+    this(size_t fieldIndex, MissingFieldPolicy missingPolicy)
     {
-        super("mean", fieldIndex);
+        super("mean", fieldIndex, missingPolicy);
     }
     
     final override SingleFieldCalculator makeCalculator()
@@ -2612,7 +2771,7 @@ class MeanOperator : SingleFieldOperator
         return new MeanCalculator(fieldIndex);
     }
 
-    static class MeanCalculator : SingleFieldCalculator
+    class MeanCalculator : SingleFieldCalculator
     {
         private double _total = 0.0;
         private size_t _count = 0;
@@ -2622,6 +2781,11 @@ class MeanOperator : SingleFieldOperator
             super(fieldIndex);
         }
 
+        final override MeanOperator getOperator()
+        {
+            return this.outer;
+        }
+        
         final override void processNextField(const char[] nextField)
         {
             _total += nextField.to!double;
@@ -2657,9 +2821,9 @@ unittest // MeanOperator
  */
 class MedianOperator : SingleFieldOperator
 {
-    this(size_t fieldIndex)
+    this(size_t fieldIndex, MissingFieldPolicy missingPolicy)
     {
-        super("median", fieldIndex);
+        super("median", fieldIndex, missingPolicy);
         setSaveFieldValuesNumeric();
     }
     
@@ -2668,13 +2832,18 @@ class MedianOperator : SingleFieldOperator
         return new MedianCalculator(fieldIndex);
     }
 
-    static class MedianCalculator : SingleFieldCalculator
+    class MedianCalculator : SingleFieldCalculator
     {
         this(size_t fieldIndex)
         {
             super(fieldIndex);
         }
 
+        final override MedianOperator getOperator()
+        {
+            return this.outer;
+        }
+        
         /* Work is done by saving the field values. */
         final override void processNextField(const char[] nextField)
         { }
@@ -2710,9 +2879,9 @@ unittest // MedianOperator
  */
 class MadOperator : SingleFieldOperator
 {
-    this(size_t fieldIndex)
+    this(size_t fieldIndex, MissingFieldPolicy missingPolicy)
     {
-        super("mad", fieldIndex);
+        super("mad", fieldIndex, missingPolicy);
         setSaveFieldValuesNumeric();
     }
     
@@ -2721,13 +2890,18 @@ class MadOperator : SingleFieldOperator
         return new MadCalculator(fieldIndex);
     }
 
-    static class MadCalculator : SingleFieldCalculator
+    class MadCalculator : SingleFieldCalculator
     {
         this(size_t fieldIndex)
         {
             super(fieldIndex);
         }
 
+        final override MadOperator getOperator()
+        {
+            return this.outer;
+        }
+        
         /* Work is done by saving the field values. */
         final override void processNextField(const char[] nextField)
         { }
@@ -2762,9 +2936,9 @@ unittest // MadOperator
 
 class VarianceOperator : SingleFieldOperator
 {
-    this(size_t fieldIndex)
+    this(size_t fieldIndex, MissingFieldPolicy missingPolicy)
     {
-        super("var", fieldIndex);
+        super("var", fieldIndex, missingPolicy);
     }
     
     final override SingleFieldCalculator makeCalculator()
@@ -2772,7 +2946,7 @@ class VarianceOperator : SingleFieldOperator
         return new VarianceCalculator(fieldIndex);
     }
 
-    static class VarianceCalculator : SingleFieldCalculator
+    class VarianceCalculator : SingleFieldCalculator
     {
         private double _count = 0.0;
         private double _mean = 0.0;
@@ -2783,6 +2957,11 @@ class VarianceOperator : SingleFieldOperator
             super(fieldIndex);
         }
 
+        final override VarianceOperator getOperator()
+        {
+            return this.outer;
+        }
+        
         final override void processNextField(const char[] nextField)
         {
             _count += 1.0;
@@ -2816,9 +2995,9 @@ unittest // VarianceOperator
 
 class StDevOperator : SingleFieldOperator
 {
-    this(size_t fieldIndex)
+    this(size_t fieldIndex, MissingFieldPolicy missingPolicy)
     {
-        super("stdev", fieldIndex);
+        super("stdev", fieldIndex, missingPolicy);
     }
     
     final override SingleFieldCalculator makeCalculator()
@@ -2826,7 +3005,7 @@ class StDevOperator : SingleFieldOperator
         return new StDevCalculator(fieldIndex);
     }
 
-    static class StDevCalculator : SingleFieldCalculator
+    class StDevCalculator : SingleFieldCalculator
     {
         private double _count = 0.0;
         private double _mean = 0.0;
@@ -2837,6 +3016,11 @@ class StDevOperator : SingleFieldOperator
             super(fieldIndex);
         }
 
+        final override StDevOperator getOperator()
+        {
+            return this.outer;
+        }
+        
         final override void processNextField(const char[] nextField)
         {
             _count += 1.0;
@@ -2878,9 +3062,9 @@ unittest
  */
 class UniqueCountOperator : SingleFieldOperator
 {
-    this(size_t fieldIndex)
+    this(size_t fieldIndex, MissingFieldPolicy missingPolicy)
     {
-        super("unique_count", fieldIndex);
+        super("unique_count", fieldIndex, missingPolicy);
     }
     
     final override SingleFieldCalculator makeCalculator()
@@ -2888,7 +3072,7 @@ class UniqueCountOperator : SingleFieldOperator
         return new UniqueCountCalculator(fieldIndex);
     }
 
-    static class UniqueCountCalculator : SingleFieldCalculator
+    class UniqueCountCalculator : SingleFieldCalculator
     {
         private bool[string] _values;
         
@@ -2897,6 +3081,11 @@ class UniqueCountOperator : SingleFieldOperator
             super(fieldIndex);
         }
 
+        final override UniqueCountOperator getOperator()
+        {
+            return this.outer;
+        }
+        
         final override void processNextField(const char[] nextField)
         {
             _values[nextField.to!string] = true;
@@ -2931,9 +3120,9 @@ unittest // UniqueCount
  */
 class ModeOperator : SingleFieldOperator
 {
-    this(size_t fieldIndex)
+    this(size_t fieldIndex, MissingFieldPolicy missingPolicy)
     {
-        super("mode", fieldIndex);
+        super("mode", fieldIndex, missingPolicy);
     }
     
     final override SingleFieldCalculator makeCalculator()
@@ -2941,7 +3130,7 @@ class ModeOperator : SingleFieldOperator
         return new ModeCalculator(fieldIndex);
     }
 
-    static class ModeCalculator : SingleFieldCalculator
+    class ModeCalculator : SingleFieldCalculator
     {
         private size_t[string] _valueCounts;
         private Appender!(string[]) _uniqueValues;
@@ -2951,6 +3140,11 @@ class ModeOperator : SingleFieldOperator
             super(fieldIndex);
         }
 
+        final override ModeOperator getOperator()
+        {
+            return this.outer;
+        }
+        
         final override void processNextField(const char[] nextField)
         {
             auto countPtr = (nextField in _valueCounts);
@@ -3012,9 +3206,9 @@ unittest // ModeOperator
 
 class ValuesOperator : SingleFieldOperator
 {
-    this(size_t fieldIndex)
+    this(size_t fieldIndex, MissingFieldPolicy missingPolicy)
     {
-        super("values", fieldIndex);
+        super("values", fieldIndex, missingPolicy);
         setSaveFieldValuesText();
     }
 
@@ -3023,13 +3217,18 @@ class ValuesOperator : SingleFieldOperator
         return new ValuesCalculator(fieldIndex);
     }
 
-    static class ValuesCalculator : SingleFieldCalculator
+    class ValuesCalculator : SingleFieldCalculator
     {
         this(size_t fieldIndex)
         {
             super(fieldIndex);
         }
 
+        final override ValuesOperator getOperator()
+        {
+            return this.outer;
+        }
+        
         /* Work is done by saving the field values. */
         final override void processNextField(const char[] nextField)
         { }
