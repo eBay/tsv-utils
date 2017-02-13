@@ -49,3 +49,6 @@ Error processing command line arguments: Unexpected 'b' when converting from typ
 
 ====[tsv-summarize -v ß --count input_5field_a.tsv]====
 Error processing command line arguments: Invalid UTF-8 sequence (at index 1)
+
+====[tsv-summarize --count --exclude-missing --replace-missing XYZ input_5field_a.tsv]====
+Error processing command line arguments: Cannot use both '--x|exclude-missing' and '--r|replace-missing'.

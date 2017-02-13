@@ -160,3 +160,21 @@ small	2	1
 8	1	1
 9	1	1
 medium	1	1
+
+====[tsv-summarize --count input_1field_a.tsv --exclude-missing]====
+7
+
+====[tsv-summarize --values 1 input_1field_a.tsv --exclude-missing]====
+size|10|small|small|8|10
+
+====[tsv-summarize --count input_1field_a.tsv --replace-missing XYZ]====
+7
+
+====[tsv-summarize --values 1 input_1field_a.tsv --replace-missing XYZ]====
+size|10|small|XYZ|small|8|10
+
+====[tsv-summarize --count empty_file.tsv --exclude-missing]====
+0
+
+====[tsv-summarize --count empty_file.tsv --replace-missing XYZ]====
+0

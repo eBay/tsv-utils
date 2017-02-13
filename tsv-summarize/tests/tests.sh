@@ -73,6 +73,14 @@ runtest ${prog} "--count --unique-count 1 input_1field_a.tsv input_1field_b.tsv 
 runtest ${prog} "--group-by 1 --count --unique-count 1 input_1field_a.tsv input_1field_b.tsv " ${basic_tests_1}
 runtest ${prog} "--group-by 1 --count --unique-count 1 input_1field_a.tsv input_1field_b.tsv empty_file.tsv" ${basic_tests_1}
 
+runtest ${prog} "--count input_1field_a.tsv --exclude-missing" ${basic_tests_1}
+runtest ${prog} "--values 1 input_1field_a.tsv --exclude-missing" ${basic_tests_1}
+runtest ${prog} "--count input_1field_a.tsv --replace-missing XYZ" ${basic_tests_1}
+runtest ${prog} "--values 1 input_1field_a.tsv --replace-missing XYZ" ${basic_tests_1}
+
+runtest ${prog} "--count empty_file.tsv --exclude-missing" ${basic_tests_1}
+runtest ${prog} "--count empty_file.tsv --replace-missing XYZ" ${basic_tests_1}
+
 ## Error cases
 
 error_tests_1=${odir}/error_tests_1.txt
@@ -96,3 +104,4 @@ runtest ${prog} "-d abc --count input_5field_a.tsv" ${error_tests_1}
 runtest ${prog} "-d ß --count input_5field_a.tsv" ${error_tests_1}
 runtest ${prog} "-v abc --count input_5field_a.tsv" ${error_tests_1}
 runtest ${prog} "-v ß --count input_5field_a.tsv" ${error_tests_1}
+runtest ${prog} "--count --exclude-missing --replace-missing XYZ input_5field_a.tsv" ${error_tests_1}
