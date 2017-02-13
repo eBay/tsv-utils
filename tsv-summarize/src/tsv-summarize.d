@@ -42,9 +42,9 @@ else
 auto helpTextVerbose = q"EOS
 Synopsis: tsv-summarize [options] file [file...]
 
-tsv-summarize reads tabular data files (tab-separated by default), tracks field
-values for each unique key, and runs summarization algorithms. Consider the file
-data.tsv:
+tsv-summarize reads tabular data files (tab-separated by default), tracks
+field values for each unique key, and runs summarization algorithms. Consider
+the file data.tsv:
 
    make    color   time
    ford    blue    131
@@ -83,24 +83,28 @@ fields (though not when a custom header is specified). Example:
   --median 2,3,4
 
 Summarization operators available are:
-  count       min        mean       stddev
-  retain      max        median     unique-count
-  first       range      mad        mode
-  last        sum        var        values
+  count       min        mean       stddev        unique-values
+  retain      max        median     mode          unique-count
+  first       range      mad        mode-count    missing-count
+  last        sum        var        values        not-missing-count
 
 Numeric values are printed to 12 significant digits by default. This can be
 changed using the '--p|float-precision' option. If six or less it sets the
-number of significant digits after the decimal point. If greater than six
-it sets the total number of significant digits.
+number of significant digits after the decimal point. If greater than six it
+sets the total number of significant digits.
 
 Calculations hold onto the minimum data needed while reading data. A few
 operations like median keep all data values in memory. These operations will
-start to encounter performance issues as available memory becomes scarce.
-The size that can be handled effectively is machine dependent, but often
-quite large files can be handled.
+start to encounter performance issues as available memory becomes scarce. The
+size that can be handled effectively is machine dependent, but often quite
+large files can be handled.
 
 Operations requiring numeric entries will signal an error and terminate
 processing if a non-numeric entry is found.
+
+Missing values are not treated specially by default, this can be changed
+using the '--x|exclude-missing' or '--r|replace-missing' option. The former
+turns off processing for missing values, the latter uses a replacement value.
 
 Options:
 EOS";
@@ -120,15 +124,18 @@ EOS";
  */
 struct TsvSummarizeOptions {
     /* Options set directly by on the command line.. */
-    size_t[] keyFields;              // -g, --group-by
-    bool hasHeader = false;          // --header
-    bool writeHeader = false;        // -w, --write-header
-    char inputFieldDelimiter = '\t'; // --d|delimiter
-    char valuesDelimiter = '|';      // --v|values-delimiter
-    size_t floatPrecision = 12;      // --p|float-precision
-    bool helpVerbose = false;        // --help-verbose
-    DList!Operator operators;        // Operators, in the order specified.
-    size_t endFieldIndex = 0;        // Derived value. Max field index used plus one.
+    size_t[] keyFields;                // -g, --group-by
+    bool hasHeader = false;            // --header
+    bool writeHeader = false;          // -w, --write-header
+    char inputFieldDelimiter = '\t';   // --d|delimiter
+    char valuesDelimiter = '|';        // --v|values-delimiter
+    size_t floatPrecision = 12;        // --p|float-precision
+    bool excludeMissing = false;       // --x|exclude-missing
+    string missingValueReplacement;    // --r|replace-missing
+    bool helpVerbose = false;          // --help-verbose
+    DList!Operator operators;          // Operators, in the order specified.
+    size_t endFieldIndex = 0;          // Derived value. Max field index used plus one.
+    MissingFieldPolicy globalMissingPolicy = new MissingFieldPolicy;   // Derived value.
 
     /* Returns a tuple. First value is true if command line arguments were successfully
      * processed and execution should continue, or false if an error occurred or the user
@@ -156,13 +163,15 @@ struct TsvSummarizeOptions {
                 "d|delimiter",        "CHR             Field delimiter. Default: TAB. (Single byte UTF-8 characters only.)", &inputFieldDelimiter,
                 "v|values-delimiter", "CHR             Values delimiter. Default: vertical bar (|). (Single byte UTF-8 characters only.)", &valuesDelimiter,
                 "p|float-precision",  "NUM             'Precision' to use printing floating point numbers. Affects the number of digits printed and exponent use. Default: 12", &floatPrecision,
+                "x|exclude-missing",  "                Exclude missing (empty) fields from calculations.", &excludeMissing,
+                "r|replace-missing",  "STR             Replace missing (empty) fields with STR in calculations.", &missingValueReplacement,
                 "count",              "                Count occurrences of each unique key.", &countOptionHandler,
                 "count-header",       "STR             Count occurrences of each unique key, use header STR.", &countHeaderOptionHandler,
                 "retain",             "n[,n...]        Retain one copy of the field.", &operatorOptionHandler!RetainOperator,
                 "first",              "n[,n...][:STR]  First value seen.", &operatorOptionHandler!FirstOperator,
                 "last",               "n[,n...][:STR]  Last value seen.", &operatorOptionHandler!LastOperator,
                 "min",                "n[,n...][:STR]  Min value. (Numeric fields only.)", &operatorOptionHandler!MinOperator,
-                "max",                "n[,n...][:STR]  Max value. Numeric fields only.", &operatorOptionHandler!MaxOperator,
+                "max",                "n[,n...][:STR]  Max value. (Numeric fields only.)", &operatorOptionHandler!MaxOperator,
                 "range",              "n[,n...][:STR]  Difference between min and max values. (Numeric fields only.)", &operatorOptionHandler!RangeOperator,
                 "sum",                "n[,n...][:STR]  Sum of the values. (Numeric fields only.)", &operatorOptionHandler!SumOperator,
                 "mean",               "n[,n...][:STR]  Mean (average). (Numeric fields only.)", &operatorOptionHandler!MeanOperator,
@@ -170,9 +179,13 @@ struct TsvSummarizeOptions {
                 "mad",                "n[,n...][:STR]  Median absolute deviation from the median. Raw value, not scaled. (Numeric fields only. Reads all values into memory.)", &operatorOptionHandler!MadOperator,
                 "var",                "n[,n...][:STR]  Variance. (Sample variance, numeric fields only).", &operatorOptionHandler!VarianceOperator,
                 "stdev",              "n[,n...][:STR]  Standard deviation. (Sample st.dev, numeric fields only).", &operatorOptionHandler!StDevOperator,
-                "unique-count",       "n[,n...][:STR]  Number of unique values. (Reads all values into memory.)", &operatorOptionHandler!UniqueCountOperator,
-                "mode",               "n[,n...][:STR]  Mode. The most frequent value. (Reads all values into memory.)", &operatorOptionHandler!ModeOperator,
+                "mode",               "n[,n...][:STR]  Mode. The most frequent value. (Reads all unique values into memory.)", &operatorOptionHandler!ModeOperator,
+                "mode-count",         "n[,n...][:STR]  Count of the most frequent value. (Reads all unique values into memory.)", &operatorOptionHandler!ModeOperator,
+                "unique-count",       "n[,n...][:STR]  Number of unique values. (Reads all unique values into memory.)", &operatorOptionHandler!UniqueCountOperator,
+                "missing-count",      "n[,n...][:STR]  Number of missing (empty) fields. Not affected by '--x|exclude-missing' or '--r|replace-missing'.", &operatorOptionHandler!MissingCountOperator,
+                "not-missing-count",  "n[,n...][:STR]  Number of filled (non-empty) fields. Not affected by '--r|replace-missing'.", &operatorOptionHandler!MissingCountOperator,
                 "values",             "n[,n...][:STR]  All the values, separated by --v|values-delimiter. (Reads all values into memory.)", &operatorOptionHandler!ValuesOperator,
+                "unique-values",      "n[,n...][:STR]  All the unique values, separated by --v|values-delimiter. (Reads all unique values into memory.)", &operatorOptionHandler!ValuesOperator,
                 );
 
             if (r.helpWanted)
@@ -234,7 +247,7 @@ struct TsvSummarizeOptions {
                     format("Invalid option: '--%s %s'. Zero is not a valid field index.", option, optionVal));
 
             size_t fieldIndex = fieldNum - 1;
-            auto op = new OperatorClass(fieldIndex);
+            auto op = new OperatorClass(fieldIndex, globalMissingPolicy);
 
             if (!valSplit[2].empty)
             {
@@ -279,10 +292,16 @@ struct TsvSummarizeOptions {
         {
             throw new Exception("Cannot use the same character for both --d|field-delimiter and --v|values-delimiter.");
         }
+
+        if (excludeMissing && missingValueReplacement.length != 0)
+        {
+            throw new Exception("Cannot use both '--x|exclude-missing' and '--r|replace-missing'.");
+        }
     }
 
     /* Post-processing derivations. */
-    void derivations() {
+    void derivations()
+    {
 
         /* keyFields needs to be made zero-based field indices. It also needs to be included
          * in the endFieldIndex, which is one past the last field index.
@@ -294,6 +313,9 @@ struct TsvSummarizeOptions {
                        --x;
                    }
                 );
+
+        /* Missing field policy. */
+        globalMissingPolicy.updatePolicy(excludeMissing, missingValueReplacement);
     }
 }
 
@@ -304,12 +326,15 @@ void tsvSummarize(TsvSummarizeOptions cmdopt, in string[] inputFiles)
     /* Pick the Summarizer based on the number of key-fields entered. */
     auto summarizer =
         (cmdopt.keyFields.length == 0)
-        ? new NoKeySummarizer!(typeof(stdout.lockingTextWriter()))(cmdopt.inputFieldDelimiter)
+        ? new NoKeySummarizer!(typeof(stdout.lockingTextWriter()))(
+            cmdopt.inputFieldDelimiter, cmdopt.globalMissingPolicy)
         
         : (cmdopt.keyFields.length == 1)
-        ? new OneKeySummarizer!(typeof(stdout.lockingTextWriter()))(cmdopt.keyFields[0], cmdopt.inputFieldDelimiter)
+        ? new OneKeySummarizer!(typeof(stdout.lockingTextWriter()))(
+            cmdopt.keyFields[0], cmdopt.inputFieldDelimiter, cmdopt.globalMissingPolicy)
         
-        : new MultiKeySummarizer!(typeof(stdout.lockingTextWriter()))(cmdopt.keyFields, cmdopt.inputFieldDelimiter);
+        : new MultiKeySummarizer!(typeof(stdout.lockingTextWriter()))(
+            cmdopt.keyFields, cmdopt.inputFieldDelimiter, cmdopt.globalMissingPolicy);
 
     /* Add the operators to the Summarizer. */
     summarizer.setOperators(inputRangeObject(cmdopt.operators[]));
@@ -483,12 +508,14 @@ class SummarizerBase(OutputRange) : Summarizer!OutputRange
     private char _inputFieldDelimiter;
     private bool _hasProcessedFirstHeaderLine = false;
     private SharedFieldValues _sharedFieldValues = null;  // Null if no shared field value lists.
+    protected MissingFieldPolicy _missingPolicy;
     protected DList!Operator _operators;
     protected size_t _numOperators = 0;
 
-    this(const char inputFieldDelimiter)
+    this(const char inputFieldDelimiter, MissingFieldPolicy missingPolicy)
     {
         _inputFieldDelimiter = inputFieldDelimiter;
+        _missingPolicy = missingPolicy;
     }
 
     char inputFieldDelimiter() const @property
@@ -554,9 +581,9 @@ class NoKeySummarizer(OutputRange) : SummarizerBase!OutputRange
     private Calculator[] _calculators;
     private UniqueKeyValuesLists _valueLists;
 
-    this(const char inputFieldDelimiter)
+    this(const char inputFieldDelimiter, MissingFieldPolicy missingPolicy)
     {
-        super(inputFieldDelimiter);
+        super(inputFieldDelimiter, missingPolicy);
     }
 
     /* Only one Calculator per Operation, so create them as Operators are added. */
@@ -570,7 +597,7 @@ class NoKeySummarizer(OutputRange) : SummarizerBase!OutputRange
     override void processNextLine(const char[][] lineFields)
     {
         _calculators.each!(x => x.processNextLine(lineFields));
-        if (_valueLists !is null) _valueLists.processNextLine(lineFields);
+        if (_valueLists !is null) _valueLists.processNextLine(lineFields, _missingPolicy);
     }
 
     override void writeSummaryHeader(ref OutputRange outputStream, const ref SummarizerPrintOptions printOptions)
@@ -605,9 +632,9 @@ class KeySummarizerBase(OutputRange) : SummarizerBase!OutputRange
     private DList!string _uniqueKeys;
     private UniqueKeyData[string] _uniqueKeyData;
 
-    this(const char inputFieldDelimiter)
+    this(const char inputFieldDelimiter, MissingFieldPolicy missingPolicy)
     {
-        super(inputFieldDelimiter);
+        super(inputFieldDelimiter, missingPolicy);
     }
 
     protected void processNextLineWithKey(T : const char[])(T key, const char[][] lineFields)
@@ -618,7 +645,7 @@ class KeySummarizerBase(OutputRange) : SummarizerBase!OutputRange
         auto data = (dataPtr is null) ? addUniqueKey(key.to!string) : *dataPtr;
         
         data.calculators.each!(x => x.processNextLine(lineFields));
-        if (data.valuesLists !is null) data.valuesLists.processNextLine(lineFields);
+        if (data.valuesLists !is null) data.valuesLists.processNextLine(lineFields, _missingPolicy);
     }
     
     protected UniqueKeyData addUniqueKey(string key)
@@ -672,9 +699,9 @@ class OneKeySummarizer(OutputRange) : KeySummarizerBase!OutputRange
     private string _keyFieldHeader;
     private DList!string _uniqueKeys;
 
-    this(size_t keyFieldIndex, char inputFieldDelimiter)
+    this(size_t keyFieldIndex, char inputFieldDelimiter, MissingFieldPolicy missingPolicy)
     {
-        super(inputFieldDelimiter);
+        super(inputFieldDelimiter, missingPolicy);
         _keyFieldIndex = keyFieldIndex;
         _keyFieldHeader = fieldHeaderFromIndex(keyFieldIndex);
     }
@@ -711,9 +738,9 @@ class MultiKeySummarizer(OutputRange) : KeySummarizerBase!OutputRange
     private string _keyFieldHeader;
     private DList!string _uniqueKeys;
 
-    this(const size_t[] keyFieldIndices, char inputFieldDelimiter)
+    this(const size_t[] keyFieldIndices, char inputFieldDelimiter, MissingFieldPolicy missingPolicy)
     {
-        super(inputFieldDelimiter);
+        super(inputFieldDelimiter, missingPolicy);
         _keyFieldIndices = keyFieldIndices.dup;
         _keyFieldHeader =
             _keyFieldIndices.map!(i => fieldHeaderFromIndex(i))
@@ -785,12 +812,15 @@ version(unittest)
         /* Pick the Summarizer based on the number of key-fields entered. */
         auto summarizer =
             (cmdopt.keyFields.length == 0)
-            ? new NoKeySummarizer!(typeof(appender!(char[])()))(cmdopt.inputFieldDelimiter)
+            ? new NoKeySummarizer!(typeof(appender!(char[])()))(
+                cmdopt.inputFieldDelimiter, cmdopt.globalMissingPolicy)
             
             : (cmdopt.keyFields.length == 1)
-            ? new OneKeySummarizer!(typeof(appender!(char[])()))(cmdopt.keyFields[0], cmdopt.inputFieldDelimiter)
+            ? new OneKeySummarizer!(typeof(appender!(char[])()))(
+                cmdopt.keyFields[0], cmdopt.inputFieldDelimiter, cmdopt.globalMissingPolicy)
             
-            : new MultiKeySummarizer!(typeof(appender!(char[])()))(cmdopt.keyFields, cmdopt.inputFieldDelimiter);
+            : new MultiKeySummarizer!(typeof(appender!(char[])()))(
+                cmdopt.keyFields, cmdopt.inputFieldDelimiter, cmdopt.globalMissingPolicy);
 
         /* Add the operators to the Summarizer. */
         summarizer.setOperators(inputRangeObject(cmdopt.operators[]));
@@ -860,91 +890,91 @@ unittest
 
     /* Single-key summarizer tests.
      */
-    testSummarizer(["unittest-1", "--header", "--group-by", "1", "--values", "1"],
+    testSummarizer(["unittest-sk-1", "--header", "--group-by", "1", "--values", "1"],
                    file1,
                    [["fld1", "fld1_values"],
                     ["a", "a|a"],
                     ["c", "c|c|c"],
                     ["",  ""]]
         );
-    testSummarizer(["unittest-2", "-H", "--group-by", "1", "--values", "2"],
+    testSummarizer(["unittest-sk-2", "-H", "--group-by", "1", "--values", "2"],
                    file1,
                    [["fld1", "fld2_values"],
                     ["a", "a|c"],
                     ["c", "a|bc|bc"],
                     ["",  "bc"]]
         );
-    testSummarizer(["unittest-3", "-H", "-g", "1", "--values", "3"],
+    testSummarizer(["unittest-sk-3", "-H", "-g", "1", "--values", "3"],
                    file1,
                    [["fld1", "fld3_values"],
                     ["a", "3|2b"],
                     ["c", "2b||3"],
                     ["",  ""]]
         );
-    testSummarizer(["unittest-4", "-H", "--group-by", "1", "--values", "1,2,3"],
+    testSummarizer(["unittest-sk-4", "-H", "--group-by", "1", "--values", "1,2,3"],
                    file1,
                    [["fld1", "fld1_values", "fld2_values", "fld3_values"],
                     ["a", "a|a",   "a|c",     "3|2b"],
                     ["c", "c|c|c", "a|bc|bc", "2b||3"],
                     ["",  "",      "bc",      ""]]
         );
-    testSummarizer(["unittest-5", "-H", "--group-by", "1", "--values", "3,2,1"],
+    testSummarizer(["unittest-sk-5", "-H", "--group-by", "1", "--values", "3,2,1"],
                    file1,
                    [["fld1", "fld3_values", "fld2_values", "fld1_values"],
                     ["a", "3|2b",  "a|c",     "a|a"],
                     ["c", "2b||3", "a|bc|bc", "c|c|c"],
                     ["",  "",      "bc",      ""]]
         );
-    testSummarizer(["unittest-6", "-H", "--group-by", "2", "--values", "1"],
+    testSummarizer(["unittest-sk-6", "-H", "--group-by", "2", "--values", "1"],
                    file1,
                    [["fld2", "fld1_values"],
                     ["a",  "a|c"],
                     ["bc", "c||c"],
                     ["c",  "a"]]
         );
-    testSummarizer(["unittest-7", "-H", "--group-by", "2", "--values", "2"],
+    testSummarizer(["unittest-sk-7", "-H", "--group-by", "2", "--values", "2"],
                    file1,
                    [["fld2", "fld2_values"],
                     ["a",  "a|a"],
                     ["bc", "bc|bc|bc"],
                     ["c",  "c"]]
         );
-    testSummarizer(["unittest-8", "-H", "--group-by", "2", "--values", "3"],
+    testSummarizer(["unittest-sk-8", "-H", "--group-by", "2", "--values", "3"],
                    file1,
                    [["fld2", "fld3_values"],
                     ["a",  "3|2b"],
                     ["bc", "||3"],
                     ["c",  "2b"]]
         );
-    testSummarizer(["unittest-9", "-H", "--group-by", "2", "--values", "1,3"],
+    testSummarizer(["unittest-sk-9", "-H", "--group-by", "2", "--values", "1,3"],
                    file1,
                    [["fld2", "fld1_values", "fld3_values"],
                     ["a",  "a|c",  "3|2b"],
                     ["bc", "c||c", "||3"],
                     ["c",  "a",    "2b"]]
         );
-    testSummarizer(["unittest-10", "-H", "--group-by", "2", "--values", "3,1"],
+    testSummarizer(["unittest-sk-10", "-H", "--group-by", "2", "--values", "3,1"],
                    file1,
                    [["fld2", "fld3_values", "fld1_values"],
                     ["a",  "3|2b", "a|c"],
                     ["bc", "||3",  "c||c"],
                     ["c",  "2b",   "a"]]
         );
-    testSummarizer(["unittest-11", "-H", "--group-by", "3", "--values", "1"],
+    testSummarizer(["unittest-sk-11", "-H", "--group-by", "3", "--values", "1"],
                    file1,
                    [["fld3", "fld1_values"],
                     ["3",  "a|c"],
                     ["2b", "c|a"],
                     ["",   "c|"]]
         );
-    testSummarizer(["unittest-12", "-H", "--group-by", "3", "--values", "2"],
+    testSummarizer(["unittest-sk-12", "-H", "--group-by", "3", "--values", "2"],
                    file1,
                    [["fld3", "fld2_values"],
                     ["3",  "a|bc"],
                     ["2b", "a|c"],
                     ["",   "bc|bc"]]
         );
-    testSummarizer(["unittest-13", "-H", "--group-by", "3", "--values", "1,2"],
+    testSummarizer(["unittest-sk-13", "-H", "--group-by", "3", "--values", "1,2"],
                    file1,
                    [["fld3", "fld1_values", "fld2_values"],
                     ["3",  "a|c", "a|bc"],
@@ -954,7 +984,7 @@ unittest
 
     /* Multi-key summarizer tests.
      */
-    testSummarizer(["unittest-14", "--header", "--group-by", "1,2", "--values", "1"],
+    testSummarizer(["unittest-mk-1", "--header", "--group-by", "1,2", "--values", "1"],
                    file1,
                    [["fld1", "fld2", "fld1_values"],
                     ["a", "a",  "a"],
@@ -963,7 +993,7 @@ unittest
                     ["a", "c",  "a"],
                     ["", "bc",  ""]]
         );
-    testSummarizer(["unittest-15", "-H", "--group-by", "1,2", "--values", "2"],
+    testSummarizer(["unittest-mk-2", "-H", "--group-by", "1,2", "--values", "2"],
                    file1,
                    [["fld1", "fld2", "fld2_values"],
                     ["a", "a",  "a"],
@@ -972,7 +1002,7 @@ unittest
                     ["a", "c",  "c"],
                     ["", "bc",  "bc"]]
         );
-    testSummarizer(["unittest-16", "-H", "--group-by", "1,2", "--values", "3"],
+    testSummarizer(["unittest-mk-3", "-H", "--group-by", "1,2", "--values", "3"],
                    file1,
                    [["fld1", "fld2", "fld3_values"],
                     ["a", "a",  "3"],
@@ -981,7 +1011,7 @@ unittest
                     ["a", "c",  "2b"],
                     ["", "bc",  ""]]
         );
-    testSummarizer(["unittest-17", "-H", "--group-by", "1,2", "--values", "3,1"],
+    testSummarizer(["unittest-mk-4", "-H", "--group-by", "1,2", "--values", "3,1"],
                    file1,
                    [["fld1", "fld2", "fld3_values", "fld1_values"],
                     ["a", "a",  "3", "a"],
@@ -990,7 +1020,7 @@ unittest
                     ["a", "c",  "2b", "a"],
                     ["",  "bc", "",   ""]]
         );
-    testSummarizer(["unittest-18", "-H", "--group-by", "3,2", "--values", "1"],
+    testSummarizer(["unittest-mk-5", "-H", "--group-by", "3,2", "--values", "1"],
                    file1,
                    [["fld3", "fld2", "fld1_values"],
                     ["3",  "a",  "a"],
@@ -999,7 +1029,121 @@ unittest
                     ["2b", "c",  "a"],
                     ["3",  "bc", "c"]]
         );
-    testSummarizer(["unittest-19", "-H", "--group-by", "2,1,3", "--values", "2"],
+    testSummarizer(["unittest-mk-6", "-H", "--group-by", "2,1,3", "--values", "2"],
+                   file1,
+                   [["fld2", "fld1", "fld3", "fld2_values"],
+                    ["a",  "a", "3",  "a"],
+                    ["a",  "c", "2b", "a"],
+                    ["bc", "c", "",   "bc"],
+                    ["c",  "a", "2b", "c"],
+                    ["bc", "",  "",   "bc"],
+                    ["bc", "c", "3",  "bc"]]
+        );
+
+    /* Missing policies. */
+    testSummarizer(["unittest-mis-1", "--header", "--group-by", "1", "--values", "1", "--exclude-missing"],
+                   file1,
+                   [["fld1", "fld1_values"],
+                    ["a", "a|a"],
+                    ["c", "c|c|c"],
+                    ["",  ""]]
+        );
+    testSummarizer(["unittest-mis-2", "-H", "--group-by", "1", "--values", "2", "-x"],
+                   file1,
+                   [["fld1", "fld2_values"],
+                    ["a", "a|c"],
+                    ["c", "a|bc|bc"],
+                    ["",  "bc"]]
+        );
+    testSummarizer(["unittest-mis-3", "-H", "-g", "1", "--values", "3", "-x"],
+                   file1,
+                   [["fld1", "fld3_values"],
+                    ["a", "3|2b"],
+                    ["c", "2b|3"],
+                    ["",  ""]]
+        );
+    testSummarizer(["unittest-mis-4", "-H", "--group-by", "1", "--values", "1,2,3", "-x"],
+                   file1,
+                   [["fld1", "fld1_values", "fld2_values", "fld3_values"],
+                    ["a", "a|a",   "a|c",     "3|2b"],
+                    ["c", "c|c|c", "a|bc|bc", "2b|3"],
+                    ["",  "",      "bc",      ""]]
+        );
+    testSummarizer(["unittest-mis-5", "--header", "--group-by", "1", "--values", "1", "--replace-missing", "NA"],
+                   file1,
+                   [["fld1", "fld1_values"],
+                    ["a", "a|a"],
+                    ["c", "c|c|c"],
+                    ["",  "NA"]]
+        );
+    testSummarizer(["unittest-mis-6", "-H", "--group-by", "1", "--values", "2", "-r", "NA"],
+                   file1,
+                   [["fld1", "fld2_values"],
+                    ["a", "a|c"],
+                    ["c", "a|bc|bc"],
+                    ["",  "bc"]]
+        );
+    testSummarizer(["unittest-mis-7", "-H", "-g", "1", "--values", "3", "-r", "NA"],
+                   file1,
+                   [["fld1", "fld3_values"],
+                    ["a", "3|2b"],
+                    ["c", "2b|NA|3"],
+                    ["",  "NA"]]
+        );
+    testSummarizer(["unittest-mis-8", "-H", "--group-by", "1", "--values", "1,2,3", "-r", "NA"],
+                   file1,
+                   [["fld1", "fld1_values", "fld2_values", "fld3_values"],
+                    ["a", "a|a",   "a|c",     "3|2b"],
+                    ["c", "c|c|c", "a|bc|bc", "2b|NA|3"],
+                    ["",  "NA",      "bc",      "NA"]]
+        );
+    testSummarizer(["unittest-mis-9", "-H", "--group-by", "1,2", "--values", "3,1", "-x"],
+                   file1,
+                   [["fld1", "fld2", "fld3_values", "fld1_values"],
+                    ["a", "a",  "3", "a"],
+                    ["c", "a",  "2b", "c"],
+                    ["c", "bc", "3", "c|c"],
+                    ["a", "c",  "2b", "a"],
+                    ["",  "bc", "",   ""]]
+        );
+    testSummarizer(["unittest-mis-10", "-H", "--group-by", "3,2", "--values", "1", "-x"],
+                   file1,
+                   [["fld3", "fld2", "fld1_values"],
+                    ["3",  "a",  "a"],
+                    ["2b", "a",  "c"],
+                    ["",   "bc", "c"],
+                    ["2b", "c",  "a"],
+                    ["3",  "bc", "c"]]
+        );
+    testSummarizer(["unittest-mis-11", "-H", "--group-by", "2,1,3", "--values", "2", "-x"],
+                   file1,
+                   [["fld2", "fld1", "fld3", "fld2_values"],
+                    ["a",  "a", "3",  "a"],
+                    ["a",  "c", "2b", "a"],
+                    ["bc", "c", "",   "bc"],
+                    ["c",  "a", "2b", "c"],
+                    ["bc", "",  "",   "bc"],
+                    ["bc", "c", "3",  "bc"]]
+        );
+    testSummarizer(["unittest-mis-12", "-H", "--group-by", "1,2", "--values", "3,1", "-r", "NA"],
+                   file1,
+                   [["fld1", "fld2", "fld3_values", "fld1_values"],
+                    ["a", "a",  "3", "a"],
+                    ["c", "a",  "2b", "c"],
+                    ["c", "bc", "NA|3", "c|c"],
+                    ["a", "c",  "2b", "a"],
+                    ["",  "bc", "NA",   "NA"]]
+        );
+    testSummarizer(["unittest-mis-13", "-H", "--group-by", "3,2", "--values", "1", "-r", "NA"],
+                   file1,
+                   [["fld3", "fld2", "fld1_values"],
+                    ["3",  "a",  "a"],
+                    ["2b", "a",  "c"],
+                    ["",   "bc", "c|NA"],
+                    ["2b", "c",  "a"],
+                    ["3",  "bc", "c"]]
+        );
+    testSummarizer(["unittest-mis-14", "-H", "--group-by", "2,1,3", "--values", "2", "-r", "NA"],
                    file1,
                    [["fld2", "fld1", "fld3", "fld2_values"],
                     ["a",  "a", "3",  "a"],
@@ -1012,7 +1156,7 @@ unittest
 
     /* Validate that the no-key summarizer works with testSummarizer helper function.
      */
-    testSummarizer(["unittest-20", "-H", "--values", "1,2"],
+    testSummarizer(["unittest-nk-1", "-H", "--values", "1,2"],
                    file1,
                    [["fld1_values", "fld2_values"],
                     ["a|c|c|a||c", "a|a|bc|c|bc|bc"]]
@@ -1020,13 +1164,13 @@ unittest
 
     /* Header variations: no header line; auto-generated header line; custom headers.
      */
-    testSummarizer(["unittest-21", "--group-by", "1", "--values", "1"],
+    testSummarizer(["unittest-hdr-1", "--group-by", "1", "--values", "1"],
                    file1[1..$],
                    [["a", "a|a"],
                     ["c", "c|c|c"],
                     ["",  ""]]
         );
-    testSummarizer(["unittest-22", "--group-by", "1,2", "--values", "2"],
+    testSummarizer(["unittest-hdr-2", "--group-by", "1,2", "--values", "2"],
                    file1[1..$],
                    [["a", "a",  "a"],
                     ["c", "a",  "a"],
@@ -1034,14 +1178,14 @@ unittest
                     ["a", "c",  "c"],
                     ["", "bc",  "bc"]]
         );
-    testSummarizer(["unittest-23", "--write-header", "--group-by", "2", "--values", "1"],
+    testSummarizer(["unittest-hdr-3", "--write-header", "--group-by", "2", "--values", "1"],
                    file1[1..$],
                    [["field2", "field1_values"],
                     ["a",  "a|c"],
                     ["bc", "c||c"],
                     ["c",  "a"]]
         );
-    testSummarizer(["unittest-24", "-w", "--group-by", "3,2", "--values", "1"],
+    testSummarizer(["unittest-hdr-4", "-w", "--group-by", "3,2", "--values", "1"],
                    file1[1..$],
                    [["field3", "field2", "field1_values"],
                     ["3",  "a",  "a"],
@@ -1050,14 +1194,14 @@ unittest
                     ["2b", "c",  "a"],
                     ["3",  "bc", "c"]]
         );
-    testSummarizer(["unittest-25", "-H", "--group-by", "2", "--values", "3:Field3Values"],
+    testSummarizer(["unittest-hdr-5", "-H", "--group-by", "2", "--values", "3:Field3Values"],
                    file1,
                    [["fld2", "Field3Values"],
                     ["a",  "3|2b"],
                     ["bc", "||3"],
                     ["c",  "2b"]]
         );
-    testSummarizer(["unittest-26", "-H", "--group-by", "1,2", "--values", "3:FieldThreeValues", "--values", "1:FieldOneValues"],
+    testSummarizer(["unittest-hdr-6", "-H", "--group-by", "1,2", "--values", "3:FieldThreeValues", "--values", "1:FieldOneValues"],
                    file1,
                    [["fld1", "fld2", "FieldThreeValues", "FieldOneValues"],
                     ["a", "a",  "3", "a"],
@@ -1066,14 +1210,14 @@ unittest
                     ["a", "c",  "2b", "a"],
                     ["",  "bc", "",   ""]]
         );
-    testSummarizer(["unittest-27", "--write-header", "--group-by", "1", "--values", "3:f3_vals","--values", "2:f2_vals", "--values", "1:f1_vals"],
+    testSummarizer(["unittest-hdr-7", "--write-header", "--group-by", "1", "--values", "3:f3_vals","--values", "2:f2_vals", "--values", "1:f1_vals"],
                    file1[1..$],
                    [["field1", "f3_vals", "f2_vals", "f1_vals"],
                     ["a", "3|2b",  "a|c",     "a|a"],
                     ["c", "2b||3", "a|bc|bc", "c|c|c"],
                     ["",  "",      "bc",      ""]]
         );
-    testSummarizer(["unittest-28", "--write-header", "--group-by", "1,3,2", "--values", "3", "--values", "1:ValsField1", "--values", "2:ValsField2"],
+    testSummarizer(["unittest-hdr-8", "--write-header", "--group-by", "1,3,2", "--values", "3", "--values", "1:ValsField1", "--values", "2:ValsField2"],
                    file1[1..$],
                    [["field1", "field3", "field2", "field3_values", "ValsField1", "ValsField2"],
                     ["a", "3",  "a",  "3",  "a", "a"],
@@ -1091,18 +1235,18 @@ unittest
                     ["a", "b", "c"],
                     ["c", "b", "a"]];
 
-    testSummarizer(["unittest-50", "-H", "--group-by", "1", "--values", "3"],
+    testSummarizer(["unittest-3x2-1", "-H", "--group-by", "1", "--values", "3"],
                    file3x2,
                    [["fld1", "fld3_values"],
                     ["a", "c"],
                     ["c", "a"]]
         );
-    testSummarizer(["unittest-51", "-H", "--group-by", "2", "--values", "3"],
+    testSummarizer(["unittest-3x2-2", "-H", "--group-by", "2", "--values", "3"],
                    file3x2,
                    [["fld2", "fld3_values"],
                     ["b", "c|a"]]
         );
-    testSummarizer(["unittest-52", "-H", "--group-by", "2,1", "--values", "3"],
+    testSummarizer(["unittest-3x2-3", "-H", "--group-by", "2,1", "--values", "3"],
                    file3x2,
                    [["fld2", "fld1", "fld3_values"],
                     ["b", "a", "c"],
@@ -1112,52 +1256,52 @@ unittest
     auto file3x1 = [["fld1", "fld2", "fld3"],
                     ["a", "b", "c"]];
 
-    testSummarizer(["unittest-53", "-H", "--group-by", "1", "--values", "3"],
+    testSummarizer(["unittest-3x1-1", "-H", "--group-by", "1", "--values", "3"],
                    file3x1,
                    [["fld1", "fld3_values"],
                     ["a", "c"]]
         );
-    testSummarizer(["unittest-54", "--group-by", "1", "--values", "3"],
+    testSummarizer(["unittest-3x1-2", "--group-by", "1", "--values", "3"],
                    file3x1[1..$],
                    [["a", "c"]]
         );
-    testSummarizer(["unittest-55", "-H", "--group-by", "2,1", "--values", "3"],
+    testSummarizer(["unittest-3x1-3", "-H", "--group-by", "2,1", "--values", "3"],
                    file3x1,
                    [["fld2", "fld1", "fld3_values"],
                     ["b", "a", "c"]]
         );
-    testSummarizer(["unittest-56", "--group-by", "2,1", "--values", "3"],
+    testSummarizer(["unittest-3x1-4", "--group-by", "2,1", "--values", "3"],
                    file3x1[1..$],
                    [["b", "a", "c"]]
         );
 
     auto file3x0 = [["fld1", "fld2", "fld3"]];
 
-    testSummarizer(["unittest-57", "-H", "--group-by", "1", "--values", "3"],
+    testSummarizer(["unittest-3x0-1", "-H", "--group-by", "1", "--values", "3"],
                    file3x0,
                    [["fld1", "fld3_values"]]
         );
-    testSummarizer(["unittest-58", "--group-by", "1", "--values", "3"],
+    testSummarizer(["unittest-3x0-2", "--group-by", "1", "--values", "3"],
                    file3x0[1..$],
                    []
         );
-    testSummarizer(["unittest-59", "--write-header", "--group-by", "1", "--values", "3"],
+    testSummarizer(["unittest-3x0-3", "--write-header", "--group-by", "1", "--values", "3"],
                    file3x0[1..$],
                    [["field1", "field3_values"]]
         );
 
     
-    testSummarizer(["unittest-60", "-H", "--group-by", "2,1", "--values", "3"],
+    testSummarizer(["unittest-3x0-4", "-H", "--group-by", "2,1", "--values", "3"],
                    file3x0,
                    [["fld2", "fld1", "fld3_values"]]
         );
 
-    testSummarizer(["unittest-61", "--group-by", "2,1", "--values", "3"],
+    testSummarizer(["unittest-3x0-5", "--group-by", "2,1", "--values", "3"],
                    file3x0[1..$],
                    []
         );
 
-    testSummarizer(["unittest-62", "--write-header", "--group-by", "2,1", "--values", "3"],
+    testSummarizer(["unittest-3x0-6", "--write-header", "--group-by", "2,1", "--values", "3"],
                    file3x0[1..$],
                    [["field2", "field1", "field3_values"]]
         );
@@ -1165,12 +1309,12 @@ unittest
     auto file2x1 = [["fld1", "fld2"],
                     ["a", "b"]];
 
-    testSummarizer(["unittest-63", "-H", "--group-by", "1", "--values", "2"],
+    testSummarizer(["unittest-2x1-1", "-H", "--group-by", "1", "--values", "2"],
                    file2x1,
                    [["fld1", "fld2_values"],
                     ["a", "b"]]
         );
-    testSummarizer(["unittest-64", "-H", "--group-by", "2,1", "--values", "1"],
+    testSummarizer(["unittest-2x1-2", "-H", "--group-by", "2,1", "--values", "1"],
                    file2x1,
                    [["fld2", "fld1", "fld1_values"],
                     ["b", "a", "a"]]
@@ -1178,11 +1322,11 @@ unittest
 
     auto file2x0 = [["fld1", "fld2"]];
     
-    testSummarizer(["unittest-65", "-H", "--group-by", "1", "--values", "2"],
+    testSummarizer(["unittest-2x0-1", "-H", "--group-by", "1", "--values", "2"],
                    file2x0,
                    [["fld1", "fld2_values"]]
         );
-    testSummarizer(["unittest-66", "-H", "--group-by", "2,1", "--values", "1"],
+    testSummarizer(["unittest-2x0-2", "-H", "--group-by", "2,1", "--values", "1"],
                    file2x0,
                    [["fld2", "fld1", "fld1_values"]]
         );
@@ -1191,7 +1335,7 @@ unittest
                     ["a"],
                     [""]];
     
-    testSummarizer(["unittest-67", "-H", "--group-by", "1", "--values", "1"],
+    testSummarizer(["unittest-1x2-1", "-H", "--group-by", "1", "--values", "1"],
                    file1x2,
                    [["fld1", "fld1_values"],
                     ["a", "a"],
@@ -1202,7 +1346,7 @@ unittest
                      [""],
                      [""]];
 
-    testSummarizer(["unittest-68", "-H", "--group-by", "1", "--values", "1"],
+    testSummarizer(["unittest-1x2b-2", "-H", "--group-by", "1", "--values", "1"],
                    file1x2b,
                    [["fld1", "fld1_values"],
                     ["", "|"]]
@@ -1211,18 +1355,18 @@ unittest
     auto file1x1 = [["fld1"],
                     ["x"]];
     
-    testSummarizer(["unittest-69", "-H", "--group-by", "1", "--values", "1"],
+    testSummarizer(["unittest-1x1-1", "-H", "--group-by", "1", "--values", "1"],
                    file1x1,
                    [["fld1", "fld1_values"],
                     ["x", "x"]]
         );
 
-    testSummarizer(["unittest-70", "--group-by", "1", "--values", "1"],
+    testSummarizer(["unittest-1x1-2", "--group-by", "1", "--values", "1"],
                    file1x1[1..$],
                    [["x", "x"]]
         );
 
-    testSummarizer(["unittest-71", "--write-header", "--group-by", "1", "--values", "1"],
+    testSummarizer(["unittest-1x1-3", "--write-header", "--group-by", "1", "--values", "1"],
                    file1x1[1..$],
                    [["field1", "field1_values"],
                     ["x", "x"]]
@@ -1231,7 +1375,7 @@ unittest
     auto file1x1b = [["fld1"],
                     [""]];
     
-    testSummarizer(["unittest-72", "-H", "--group-by", "1", "--values", "1"],
+    testSummarizer(["unittest-1x1b-1", "-H", "--group-by", "1", "--values", "1"],
                    file1x1b,
                    [["fld1", "fld1_values"],
                     ["", ""]]
@@ -1239,38 +1383,38 @@ unittest
     
     auto file1x0 = [["fld1"]];
     
-    testSummarizer(["unittest-73", "-H", "--group-by", "1", "--values", "1"],
+    testSummarizer(["unittest-1x0-1", "-H", "--group-by", "1", "--values", "1"],
                    file1x0,
                    [["fld1", "fld1_values"]]
         );
 
-    testSummarizer(["unittest-74", "--group-by", "1", "--values", "1"],
+    testSummarizer(["unittest-1x0-2", "--group-by", "1", "--values", "1"],
                    file1x0[1..$],
                    []
         );
 
-    testSummarizer(["unittest-75", "--write-header", "--group-by", "1", "--values", "1"],
+    testSummarizer(["unittest-1x0-3", "--write-header", "--group-by", "1", "--values", "1"],
                    file1x0[1..$],
                    [["field1", "field1_values"]]
         );
 
     /* Alternate delimiters. */
-    testSummarizer(["unittest-90", "-H", "--values", "1,2", "--delimiter", "%"],
+    testSummarizer(["unittest-delim-1", "-H", "--values", "1,2", "--delimiter", "%"],
                    file1,
                    [["fld1_values", "fld2_values"],
                     ["a|c|c|a||c", "a|a|bc|c|bc|bc"]]
         );
-    testSummarizer(["unittest-91", "-H", "--values", "1,2", "--values-delimiter", "$"],
+    testSummarizer(["unittest-delim-2", "-H", "--values", "1,2", "--values-delimiter", "$"],
                    file1,
                    [["fld1_values", "fld2_values"],
                     ["a$c$c$a$$c", "a$a$bc$c$bc$bc"]]
         );
-    testSummarizer(["unittest-92", "-H", "--values", "1,2", "--delimiter", "#", "--values-delimiter", ","],
+    testSummarizer(["unittest-delim-3", "-H", "--values", "1,2", "--delimiter", "#", "--values-delimiter", ","],
                    file1,
                    [["fld1_values", "fld2_values"],
                     ["a,c,c,a,,c", "a,a,bc,c,bc,bc"]]
         );
-    testSummarizer(["unittest-93", "--write-header", "--group-by", "2", "--values", "1",
+    testSummarizer(["unittest-delim-4", "--write-header", "--group-by", "2", "--values", "1",
                     "--delimiter", "^", "--values-delimiter", ":"],
                    file1[1..$],
                    [["field2", "field1_values"],
@@ -1278,7 +1422,7 @@ unittest
                     ["bc", "c::c"],
                     ["c",  "a"]]
         );
-    testSummarizer(["unittest-94", "--group-by", "1,2", "--values", "2", "--delimiter", "/",
+    testSummarizer(["unittest-delim-5", "--group-by", "1,2", "--values", "2", "--delimiter", "/",
                     "--values-delimiter", "\\"],
                    file1[1..$],
                    [["a", "a",  "a"],
@@ -1311,6 +1455,13 @@ unittest
  * operator name and the header of the field summarized. The defaults can be overridden on
  * on the command line. These scenarios are supported via the operator constructor and the
  * processHeaderLine() method.
+ *
+ * Missing field policy
+ *
+ * At present, tsv-summarize has a single policy for handling missing values that applies
+ * to all operators. However, it is logically operator specific and is implemented that
+ * way. The MissingFieldPolicy struct describes the policy, each operator contains one.
+ * Calculators access thier operator's policy struct.
  */
 
 interface Operator
@@ -1329,6 +1480,50 @@ interface Calculator
     string calculate(UniqueKeyValuesLists valuesLists, const ref SummarizerPrintOptions printOptions);
 }
 
+class MissingFieldPolicy
+{
+    private bool _useMissing = true;          // True if missing values are processed unchanged.
+    private bool _replaceMissing = false;     // True if missing values are replaced.
+    private string _missingReplacement;       // Replacement string if replaceMissing is true.
+
+    this (in bool excludeMissing = false, in string missingReplacement = "")
+    {
+        updatePolicy(excludeMissing, missingReplacement);
+    }
+
+    void updatePolicy(in bool excludeMissing, in string missingReplacement)
+    {
+        _missingReplacement = missingReplacement;
+        _replaceMissing = missingReplacement.length != 0;
+        _useMissing = !excludeMissing && !replaceMissing;
+    }
+    
+    final bool isMissingField(const char[] field) const
+    {
+        return field.length == 0;
+    }
+
+    final bool useMissing() const @property
+    {
+        return _useMissing;
+    }
+
+    final bool excludeMissing() const @property
+    {
+        return !_useMissing && !_replaceMissing;
+    }
+
+    final bool replaceMissing() const @property
+    {
+        return _replaceMissing;
+    }
+
+    final string missingReplacement() const @property
+    {
+        return _missingReplacement;
+    }
+}
+
 /* The SharedFieldValues and UniqueKeyValuesLists classes manage lists of values collected
  * while reading data. Operations like median collect all values and operate on them when
  * running the final calculation. Value lists are needed for each unique key. A command
@@ -1341,19 +1536,25 @@ interface Calculator
  * 
  * The setup works as follows:
  *  - Operators advertise fields they need saved ([text|numeric]FieldsToSave methods).
- *  - The Summary object keeps a SharedFieldValues object, which in turn keeps list of the
- *    fields shared by Operators. This gets created command initialization.
+ *  - The SummarizerBase object keeps a SharedFieldValues object, which in turn keeps list
+ *    of the fields advertised by Operators as needing sharing. This list gets created
+ *    during command initialization (SummarizerBase.setOperators).
  *  - The SharedFieldValues object is used to create a UniqueKeyValuesLists object every
- *    time a new unique key is found, alongside the Calculator objects.
+ *    time a new unique key is found, in parellel to the Calculator objects created for the
+ *    key. The UniqueKeyValuesLists objects are managed by derived Summarizer classes.
  *  - A unique key's UniqueKeyValuesLists object is passed each input line, same as
  *    Calculators, saving the values.
- *  - Calculators retrieve the saved values during the calculation phase.
+ *  - Calculators retrieve the saved values during the calculation phase. The calculator's
+ *    ProcessNextField method is typically a no-op.
  *
  * One concession to duplicate storage is that text and numeric versions of the same
  * field might be stored. The reason is because it's important to convert text to numbers
  * as they are read so that useful error messages can be generated. And, storing both
- * forms of the same field should be rare.
+ * forms of the same field should be less common.
  *
+ * The current implementation uses the same missing values policy for all fields. If
+ * multiple policies become supported this will need to change.
+ * 
  * Built-in calculations - UniqueKeyValueLists have a built-in median operation. This is
  * to avoid repeated calculations of the median by different calculations.
  */
@@ -1364,16 +1565,24 @@ class SharedFieldValues
     private size_t[] _numericFieldIndices;
     private size_t[] _textFieldIndices;
 
+    /* Called during summarizer setup to add a shared field value for a specific field index.
+     * eg. '--median 7' will add end up calling addNumericIdex(6), 6 being the zero-based index.
+     * A specific index is only added once.
+     */
     final void addNumericIndex (size_t index)
     {
         if (!canFind(_numericFieldIndices, index)) _numericFieldIndices ~= index;
     }
 
+    /* Similar to addNumericIndex, except adds a text index. */
     final void addTextIndex (size_t index)
     {
         if (!canFind(_textFieldIndices, index)) _textFieldIndices ~= index;
     }
 
+    /* Called every time a new key is found, or once at the beginning of the program if no keys
+     * are being used (entire column summarized).
+     */
     final UniqueKeyValuesLists makeUniqueKeyValuesLists()
     {
         return new UniqueKeyValuesLists(_numericFieldIndices, _textFieldIndices);
@@ -1411,10 +1620,10 @@ class UniqueKeyValuesLists
         }
     }
 
-    void processNextLine(const char[][] fields)
+    void processNextLine(const char[][] fields, MissingFieldPolicy missingPolicy)
     {
-        _numericFieldValues.each!((ref x) => x.processNextLine(fields));
-        _textFieldValues.each!((ref x) => x.processNextLine(fields));
+        _numericFieldValues.each!((ref x) => x.processNextLine(fields, missingPolicy));
+        _textFieldValues.each!((ref x) => x.processNextLine(fields, missingPolicy));
     }
 
     private FieldValues!double findNumericFieldValues(size_t index)
@@ -1471,11 +1680,21 @@ class UniqueKeyValuesLists
             return _fieldIndex;
         }
         
-        final void processNextLine(const char[][] fields)
+        final void processNextLine(const char[][] fields, MissingFieldPolicy missingPolicy)
         {
             debug writefln("[%s]: %s", __FUNCTION__, fields.to!string);
-            _values.put(fields[_fieldIndex].to!ValueType);
-            _haveMedian = false;
+            
+            const char[] field = fields[_fieldIndex];
+            if (missingPolicy.useMissing || !missingPolicy.isMissingField(field)) 
+            {
+                _values.put(field.to!ValueType);
+                _haveMedian = false;
+            }
+            else if (missingPolicy.replaceMissing)
+            {
+                _values.put(missingPolicy.missingReplacement.to!ValueType);
+                _haveMedian = false;
+            }
         }
         
         /* Return an input range of the values. */
@@ -1642,13 +1861,15 @@ class SingleFieldOperator : Operator
     private bool _hasCustomHeader = false;
     private size_t[] _numericFieldsToSave;
     private size_t[] _textFieldsToSave;
+    private MissingFieldPolicy _missingPolicy;
 
-    this(string operatorName, size_t fieldIndex,
+    this(string operatorName, size_t fieldIndex, MissingFieldPolicy missingPolicy,
          Flag!"useHeaderSuffix" useHeaderSuffix = Yes.useHeaderSuffix,
          Flag!"allowCustomHeader" allowCustomHeader = Yes.allowCustomHeader)
     {
         _name = operatorName;
         _fieldIndex = fieldIndex;
+        _missingPolicy = missingPolicy;
         _useHeaderSuffix = useHeaderSuffix;
         _allowCustomHeader = allowCustomHeader;
         // Default header. May be overrridden by custom header or header line.
@@ -1685,6 +1906,11 @@ class SingleFieldOperator : Operator
     final void setSaveFieldValuesText()
     {
         _textFieldsToSave ~= _fieldIndex;
+    }
+
+    final MissingFieldPolicy missingPolicy() @property
+    {
+        return _missingPolicy;
     }
 
     final size_t fieldIndex() const @property
@@ -1744,8 +1970,21 @@ class SingleFieldCalculator : Calculator
     final void processNextLine(const char[][] fields)
     {
         debug writefln("[%s %d] fields: %s", __FUNCTION__, _fieldIndex, fields.to!string);
-        processNextField(fields[_fieldIndex]);
+
+        auto missingPolicy = getOperator.missingPolicy;
+        const char[] field = fields[_fieldIndex];
+
+        if (missingPolicy.useMissing || !missingPolicy.isMissingField(field)) 
+        {
+            processNextField(field);
+        }
+        else if (missingPolicy.replaceMissing)
+        {
+            processNextField(missingPolicy.missingReplacement);
+        }
     }
+
+    abstract SingleFieldOperator getOperator();
     
     abstract void processNextField(const char[] field);
 }
@@ -1779,7 +2018,8 @@ version(unittest)
      */
     void testSingleFieldOperator(OperatorClass : SingleFieldOperator)
         (const char[][][] splitFile, size_t fieldIndex, string headerSuffix,
-         const char[][] expectedValues)
+         const char[][] expectedValues,
+         MissingFieldPolicy missingPolicy = new MissingFieldPolicy)
     {
         import std.format : format;
         import std.range : appender;
@@ -1852,7 +2092,7 @@ version(unittest)
 
             if (hasCustomHeader) assert(hasOutputHeader);
 
-            auto op = new OperatorClass(fieldIndex);
+            auto op = new OperatorClass(fieldIndex, missingPolicy);
             
             if (hasCustomHeader)
             {
@@ -1863,7 +2103,7 @@ version(unittest)
             Operator[] operatorArray;
             operatorArray ~= op;
 
-            auto summarizer = new NoKeySummarizer!(typeof(appender!(char[])()))('#');
+            auto summarizer = new NoKeySummarizer!(typeof(appender!(char[])()))('#', missingPolicy);
             summarizer.setOperators(inputRangeObject(operatorArray));
 
             if (hasInputHeader) summarizer.processHeaderLine(inputHeaderLine);
@@ -2036,6 +2276,9 @@ version(unittest)
         /* printOptions - Not used these tests, but needed for API calls. */
         auto printOptions = SummarizerPrintOptions('#', '|');
 
+        /* Missing policy doesn't apply to zero field operators, but need the object for the summarizer. */
+        auto missingPolicy = new MissingFieldPolicy;
+
         /* An input header line. */
         string[] inputHeaderLine = new string[numFields];
         foreach (i; 0 .. numFields) inputHeaderLine[i] = "header" ~ i.to!string;
@@ -2094,9 +2337,8 @@ version(unittest)
             Operator[] operatorArray;
             operatorArray ~= op;
 
-            auto summarizer = new NoKeySummarizer!(typeof(appender!(char[])()))('#');
+            auto summarizer = new NoKeySummarizer!(typeof(appender!(char[])()))('#', missingPolicy);
             summarizer.setOperators(inputRangeObject(operatorArray));
-
             if (hasInputHeader) summarizer.processHeaderLine(inputHeaderLine);
 
             if (hasOutputHeader)
@@ -2212,9 +2454,9 @@ unittest // CountOperator
  */
 class RetainOperator : SingleFieldOperator
 {
-    this(size_t fieldIndex)
+    this(size_t fieldIndex, MissingFieldPolicy missingPolicy)
     {
-        super("retain", fieldIndex, No.useHeaderSuffix, No.allowCustomHeader);
+        super("retain", fieldIndex, missingPolicy, No.useHeaderSuffix, No.allowCustomHeader);
     }
 
     final override SingleFieldCalculator makeCalculator()
@@ -2222,7 +2464,7 @@ class RetainOperator : SingleFieldOperator
         return new RetainCalculator(fieldIndex);
     }
 
-    static class RetainCalculator : SingleFieldCalculator
+    class RetainCalculator : SingleFieldCalculator
     {
         private bool _done = false;
         private string _value = "";
@@ -2230,6 +2472,11 @@ class RetainOperator : SingleFieldOperator
         this(size_t fieldIndex)
         {
             super(fieldIndex);
+        }
+
+        final override RetainOperator getOperator()
+        {
+            return this.outer;
         }
         
         final override void processNextField(const char[] nextField)
@@ -2260,15 +2507,21 @@ unittest // RetainOperator
     testSingleFieldOperator!RetainOperator(col3File, 0, "", ["", "r1c1", "r1c1", "r1c1"]);
     testSingleFieldOperator!RetainOperator(col3File, 1, "", ["", "r1c2", "r1c2", "r1c2"]);
     testSingleFieldOperator!RetainOperator(col3File, 2, "", ["", "r1c3", "r1c3", "r1c3"]);
+
+    auto col1misFile = [[""], ["r2c1"], ["r3c1"]];
+    testSingleFieldOperator!RetainOperator(col1misFile, 0, "", ["", "", "r2c1", "r2c1"],
+                                           new MissingFieldPolicy(true, ""));  // Exclude missing
+    testSingleFieldOperator!RetainOperator(col1misFile, 0, "", ["", "NA", "NA", "NA"],
+                                           new MissingFieldPolicy(false, "NA"));  // Replace missing
 }
 
 /** FirstOperator outputs the first value found for the field.
  */
 class FirstOperator : SingleFieldOperator
 {
-    this(size_t fieldIndex)
+    this(size_t fieldIndex, MissingFieldPolicy missingPolicy)
     {
-        super("first", fieldIndex);
+        super("first", fieldIndex, missingPolicy);
     }
 
     final override SingleFieldCalculator makeCalculator()
@@ -2276,7 +2529,7 @@ class FirstOperator : SingleFieldOperator
         return new FirstCalculator(fieldIndex);
     }
     
-    static class FirstCalculator : SingleFieldCalculator
+    class FirstCalculator : SingleFieldCalculator
     {
         private bool _done = false;
         private string _value = "";
@@ -2284,6 +2537,11 @@ class FirstOperator : SingleFieldOperator
         this(size_t fieldIndex)
         {
             super(fieldIndex);
+        }
+        
+        final override FirstOperator getOperator()
+        {
+            return this.outer;
         }
         
         final override void processNextField(const char[] nextField)
@@ -2314,15 +2572,21 @@ unittest // FirstOperator
     testSingleFieldOperator!FirstOperator(col3File, 0, "first", ["", "r1c1", "r1c1", "r1c1"]);
     testSingleFieldOperator!FirstOperator(col3File, 1, "first", ["", "r1c2", "r1c2", "r1c2"]);
     testSingleFieldOperator!FirstOperator(col3File, 2, "first", ["", "r1c3", "r1c3", "r1c3"]);
+
+    auto col1misFile = [[""], ["r2c1"], ["r3c1"]];
+    testSingleFieldOperator!FirstOperator(col1misFile, 0, "first", ["", "", "r2c1", "r2c1"],
+                                          new MissingFieldPolicy(true, ""));  // Exclude missing
+    testSingleFieldOperator!FirstOperator(col1misFile, 0, "first", ["", "NA", "NA", "NA"],
+                                          new MissingFieldPolicy(false, "NA"));  // Replace missing
 }
 
 /** LastOperator outputs the last value found for the field.
  */
 class LastOperator : SingleFieldOperator
 {
-    this(size_t fieldIndex)
+    this(size_t fieldIndex, MissingFieldPolicy missingPolicy)
     {
-        super("last", fieldIndex);
+        super("last", fieldIndex, missingPolicy);
     }
 
     final override SingleFieldCalculator makeCalculator()
@@ -2330,13 +2594,18 @@ class LastOperator : SingleFieldOperator
         return new LastCalculator(fieldIndex);
     }
 
-    static class LastCalculator : SingleFieldCalculator
+    class LastCalculator : SingleFieldCalculator
     {
         private string _value = "";
         
         this(size_t fieldIndex)
         {
             super(fieldIndex);
+        }
+        
+        final override LastOperator getOperator()
+        {
+            return this.outer;
         }
         
         final override void processNextField(const char[] nextField)
@@ -2363,15 +2632,21 @@ unittest // LastOperator
     testSingleFieldOperator!LastOperator(col3File, 0, "last", ["", "r1c1", "r2c1", "r3c1"]);
     testSingleFieldOperator!LastOperator(col3File, 1, "last", ["", "r1c2", "r2c2", "r3c2"]);
     testSingleFieldOperator!LastOperator(col3File, 2, "last", ["", "r1c3", "r2c3", "r3c3"]);
+
+    auto col1misFile = [[""], ["r2c1"], ["r3c1"]];
+    testSingleFieldOperator!LastOperator(col1misFile, 0, "last", ["", "", "r2c1", "r3c1"],
+                                          new MissingFieldPolicy(true, ""));  // Exclude missing
+    testSingleFieldOperator!LastOperator(col1misFile, 0, "last", ["", "NA", "r2c1", "r3c1"],
+                                          new MissingFieldPolicy(false, "NA"));  // Replace missing
 }
 
 /* MinOperator output the minimum value for the field. This is a numeric operator.
  */
 class MinOperator : SingleFieldOperator
 {
-    this(size_t fieldIndex)
+    this(size_t fieldIndex, MissingFieldPolicy missingPolicy)
     {
-        super("min", fieldIndex);
+        super("min", fieldIndex, missingPolicy);
     }
 
     final override SingleFieldCalculator makeCalculator()
@@ -2379,7 +2654,7 @@ class MinOperator : SingleFieldOperator
         return new MinCalculator(fieldIndex);
     }
 
-    static class MinCalculator : SingleFieldCalculator
+    class MinCalculator : SingleFieldCalculator
     {
         private bool _isFirst = true;
         private double _value = double.nan;
@@ -2389,6 +2664,11 @@ class MinOperator : SingleFieldOperator
             super(fieldIndex);
         }
 
+        final override MinOperator getOperator()
+        {
+            return this.outer;
+        }
+        
         final override void processNextField(const char[] nextField)
         {
             double fieldValue = nextField.to!double;
@@ -2422,15 +2702,21 @@ unittest // MinOperator
     testSingleFieldOperator!MinOperator(col3File, 0, "min", ["nan", "9009", "199", "199"]);
     testSingleFieldOperator!MinOperator(col3File, 1, "min", ["nan", "9", "0", "0"]);
     testSingleFieldOperator!MinOperator(col3File, 2, "min", ["nan", "-4.5", "-4.5", "-4.5"]);
+
+    auto col1misFile = [[""], ["10"], ["-10"]];
+    testSingleFieldOperator!MinOperator(col1misFile, 0, "min", ["nan", "nan", "10", "-10"],
+                                          new MissingFieldPolicy(true, ""));  // Exclude missing
+    testSingleFieldOperator!MinOperator(col1misFile, 0, "min", ["nan", "5", "5", "-10"],
+                                          new MissingFieldPolicy(false, "5"));  // Replace missing
 }
 
 /* MaxOperator output the maximum value for the field. This is a numeric operator.
  */
 class MaxOperator : SingleFieldOperator
 {
-    this(size_t fieldIndex)
+    this(size_t fieldIndex, MissingFieldPolicy missingPolicy)
     {
-        super("max", fieldIndex);
+        super("max", fieldIndex, missingPolicy);
     }
 
     final override SingleFieldCalculator makeCalculator()
@@ -2438,7 +2724,7 @@ class MaxOperator : SingleFieldOperator
         return new MaxCalculator(fieldIndex);
     }
 
-    static class MaxCalculator : SingleFieldCalculator
+    class MaxCalculator : SingleFieldCalculator
     {
         private bool _isFirst = true;
         private double _value = double.nan;
@@ -2448,6 +2734,11 @@ class MaxOperator : SingleFieldOperator
             super(fieldIndex);
         }
 
+        final override MaxOperator getOperator()
+        {
+            return this.outer;
+        }
+        
         final override void processNextField(const char[] nextField)
         {
             double fieldValue = nextField.to!double;
@@ -2481,6 +2772,12 @@ unittest // MaxOperator
     testSingleFieldOperator!MaxOperator(col3File, 0, "max", ["nan", "9009", "9009", "9009"]);
     testSingleFieldOperator!MaxOperator(col3File, 1, "max", ["nan", "9", "9", "9"]);
     testSingleFieldOperator!MaxOperator(col3File, 2, "max", ["nan", "-4.5", "-0.5", "12"]);
+
+    auto col1misFile = [[""], ["-10"], ["10"]];
+    testSingleFieldOperator!MaxOperator(col1misFile, 0, "max", ["nan", "nan", "-10", "10"],
+                                          new MissingFieldPolicy(true, ""));  // Exclude missing
+    testSingleFieldOperator!MaxOperator(col1misFile, 0, "max", ["nan", "5", "5", "10"],
+                                          new MissingFieldPolicy(false, "5"));  // Replace missing
 }
 
 /* RangeOperator outputs the difference between the minimum and maximum values. If there
@@ -2489,9 +2786,9 @@ unittest // MaxOperator
  */
 class RangeOperator : SingleFieldOperator
 {
-    this(size_t fieldIndex)
+    this(size_t fieldIndex, MissingFieldPolicy missingPolicy)
     {
-        super("range", fieldIndex);
+        super("range", fieldIndex, missingPolicy);
     }
 
     final override SingleFieldCalculator makeCalculator()
@@ -2499,7 +2796,7 @@ class RangeOperator : SingleFieldOperator
         return new RangeCalculator(fieldIndex);
     }
 
-    static class RangeCalculator : SingleFieldCalculator
+    class RangeCalculator : SingleFieldCalculator
     {
         private bool _isFirst = true;
         private double _minValue = 0.0;
@@ -2510,6 +2807,11 @@ class RangeOperator : SingleFieldOperator
             super(fieldIndex);
         }
 
+        final override RangeOperator getOperator()
+        {
+            return this.outer;
+        }
+        
         final override void processNextField(const char[] nextField)
         {
             double fieldValue = nextField.to!double;
@@ -2547,15 +2849,21 @@ unittest // RangeOperator
     testSingleFieldOperator!RangeOperator(col3File, 0, "range", ["0", "0", "8810", "8810"]);
     testSingleFieldOperator!RangeOperator(col3File, 1, "range", ["0", "0", "9", "9"]);
     testSingleFieldOperator!RangeOperator(col3File, 2, "range", ["0", "0", "4", "16.5"]);
+
+    auto col1misFile = [[""], ["10"], [""], ["9.5"], ["11"]];
+    testSingleFieldOperator!RangeOperator(col1misFile, 0, "range", ["0", "0", "0", "0", "0.5", "1.5"],
+                                          new MissingFieldPolicy(true, ""));  // Exclude missing
+    testSingleFieldOperator!RangeOperator(col1misFile, 0, "range", ["0", "0", "4.5", "4.5", "4.5", "5.5"],
+                                          new MissingFieldPolicy(false, "5.5"));  // Replace missing
 }
 
 /* SumOperator produces the sum of all the values. This is a numeric operator.
  */
 class SumOperator : SingleFieldOperator
 {
-    this(size_t fieldIndex)
+    this(size_t fieldIndex, MissingFieldPolicy missingPolicy)
     {
-        super("sum", fieldIndex);
+        super("sum", fieldIndex, missingPolicy);
     }
 
     final override SingleFieldCalculator makeCalculator()
@@ -2563,7 +2871,7 @@ class SumOperator : SingleFieldOperator
         return new SumCalculator(fieldIndex);
     }
 
-    static class SumCalculator : SingleFieldCalculator
+    class SumCalculator : SingleFieldCalculator
     {
         private double _total = 0.0;
 
@@ -2572,6 +2880,11 @@ class SumOperator : SingleFieldOperator
             super(fieldIndex);
         }
 
+        final override SumOperator getOperator()
+        {
+            return this.outer;
+        }
+        
         final override void processNextField(const char[] nextField)
         {
             _total += nextField.to!double;
@@ -2596,15 +2909,21 @@ unittest // SumOperator
     testSingleFieldOperator!SumOperator(col3File, 0, "sum", ["0", "9009", "9208", "12211"]);
     testSingleFieldOperator!SumOperator(col3File, 1, "sum", ["0", "9", "9", "9.2"]);
     testSingleFieldOperator!SumOperator(col3File, 2, "sum", ["0", "-4.5", "-5", "7"]);
+
+    auto col1misFile = [[""], ["10"], [""], ["9.5"], ["11"]];
+    testSingleFieldOperator!SumOperator(col1misFile, 0, "sum", ["0", "0", "10", "10", "19.5", "30.5"],
+                                          new MissingFieldPolicy(true, ""));  // Exclude missing
+    testSingleFieldOperator!SumOperator(col1misFile, 0, "sum", ["0", "1.5", "11.5", "13", "22.5", "33.5"],
+                                          new MissingFieldPolicy(false, "1.5"));  // Replace missing
 }
 
 /* MeanOperator produces the mean (average) of all the values. This is a numeric operator.
  */
 class MeanOperator : SingleFieldOperator
 {
-    this(size_t fieldIndex)
+    this(size_t fieldIndex, MissingFieldPolicy missingPolicy)
     {
-        super("mean", fieldIndex);
+        super("mean", fieldIndex, missingPolicy);
     }
     
     final override SingleFieldCalculator makeCalculator()
@@ -2612,7 +2931,7 @@ class MeanOperator : SingleFieldOperator
         return new MeanCalculator(fieldIndex);
     }
 
-    static class MeanCalculator : SingleFieldCalculator
+    class MeanCalculator : SingleFieldCalculator
     {
         private double _total = 0.0;
         private size_t _count = 0;
@@ -2622,6 +2941,11 @@ class MeanOperator : SingleFieldOperator
             super(fieldIndex);
         }
 
+        final override MeanOperator getOperator()
+        {
+            return this.outer;
+        }
+        
         final override void processNextField(const char[] nextField)
         {
             _total += nextField.to!double;
@@ -2648,6 +2972,12 @@ unittest // MeanOperator
     testSingleFieldOperator!MeanOperator(col3File, 0, "mean", ["nan", "9009", "4509", "4509"]);
     testSingleFieldOperator!MeanOperator(col3File, 1, "mean", ["nan", "9", "4.5", "2"]);
     testSingleFieldOperator!MeanOperator(col3File, 2, "mean", ["nan", "-4.5", "-3", "2"]);
+
+    auto col1misFile = [[""], ["6"], [""], ["14"], ["40"]];
+    testSingleFieldOperator!MeanOperator(col1misFile, 0, "mean", ["nan", "nan", "6", "6", "10", "20"],
+                                          new MissingFieldPolicy(true, ""));  // Exclude missing
+    testSingleFieldOperator!MeanOperator(col1misFile, 0, "mean", ["nan", "0", "3", "2", "5", "12"],
+                                          new MissingFieldPolicy(false, "0"));  // Replace missing
 }
 
 /* MedianOperator produces the median of all the values. This is a numeric operator.
@@ -2657,9 +2987,9 @@ unittest // MeanOperator
  */
 class MedianOperator : SingleFieldOperator
 {
-    this(size_t fieldIndex)
+    this(size_t fieldIndex, MissingFieldPolicy missingPolicy)
     {
-        super("median", fieldIndex);
+        super("median", fieldIndex, missingPolicy);
         setSaveFieldValuesNumeric();
     }
     
@@ -2668,13 +2998,18 @@ class MedianOperator : SingleFieldOperator
         return new MedianCalculator(fieldIndex);
     }
 
-    static class MedianCalculator : SingleFieldCalculator
+    class MedianCalculator : SingleFieldCalculator
     {
         this(size_t fieldIndex)
         {
             super(fieldIndex);
         }
 
+        final override MedianOperator getOperator()
+        {
+            return this.outer;
+        }
+        
         /* Work is done by saving the field values. */
         final override void processNextField(const char[] nextField)
         { }
@@ -2698,6 +3033,12 @@ unittest // MedianOperator
     testSingleFieldOperator!MedianOperator(col3File, 0, "median", ["nan", "9009", "4509", "4509"]);
     testSingleFieldOperator!MedianOperator(col3File, 1, "median", ["nan", "9", "4.5", "0"]);
     testSingleFieldOperator!MedianOperator(col3File, 2, "median", ["nan", "-4.5", "-3", "-1.5"]);
+
+    auto col1misFile = [[""], ["10"], [""], ["9.5"], ["7.5"]];
+    testSingleFieldOperator!MedianOperator(col1misFile, 0, "median", ["nan", "nan", "10", "10", "9.75", "9.5"],
+                                          new MissingFieldPolicy(true, ""));  // Exclude missing
+    testSingleFieldOperator!MedianOperator(col1misFile, 0, "median", ["nan", "0", "5", "0", "4.75", "7.5"],
+                                          new MissingFieldPolicy(false, "0"));  // Replace missing
 }
 
 /* MadOperator produces the median absolute deviation from the median. This is a numeric
@@ -2710,9 +3051,9 @@ unittest // MedianOperator
  */
 class MadOperator : SingleFieldOperator
 {
-    this(size_t fieldIndex)
+    this(size_t fieldIndex, MissingFieldPolicy missingPolicy)
     {
-        super("mad", fieldIndex);
+        super("mad", fieldIndex, missingPolicy);
         setSaveFieldValuesNumeric();
     }
     
@@ -2721,13 +3062,18 @@ class MadOperator : SingleFieldOperator
         return new MadCalculator(fieldIndex);
     }
 
-    static class MadCalculator : SingleFieldCalculator
+    class MadCalculator : SingleFieldCalculator
     {
         this(size_t fieldIndex)
         {
             super(fieldIndex);
         }
 
+        final override MadOperator getOperator()
+        {
+            return this.outer;
+        }
+        
         /* Work is done by saving the field values. */
         final override void processNextField(const char[] nextField)
         { }
@@ -2758,13 +3104,19 @@ unittest // MadOperator
     testSingleFieldOperator!MadOperator(col3File, 0, "mad", ["nan", "0", "4", "0"]);
     testSingleFieldOperator!MadOperator(col3File, 1, "mad", ["nan", "0", "0", "0"]);
     testSingleFieldOperator!MadOperator(col3File, 2, "mad", ["nan", "0", "1", "2"]);
+
+    auto col1misFile = [[""], ["16"], [""], ["32"], ["-4"]];
+    testSingleFieldOperator!MadOperator(col1misFile, 0, "mad", ["nan", "nan", "0", "0", "8", "16"],
+                                          new MissingFieldPolicy(true, ""));  // Exclude missing
+    testSingleFieldOperator!MadOperator(col1misFile, 0, "mad", ["nan", "0", "8", "0", "8", "4"],
+                                          new MissingFieldPolicy(false, "0"));  // Replace missing
 }
 
 class VarianceOperator : SingleFieldOperator
 {
-    this(size_t fieldIndex)
+    this(size_t fieldIndex, MissingFieldPolicy missingPolicy)
     {
-        super("var", fieldIndex);
+        super("var", fieldIndex, missingPolicy);
     }
     
     final override SingleFieldCalculator makeCalculator()
@@ -2772,7 +3124,7 @@ class VarianceOperator : SingleFieldOperator
         return new VarianceCalculator(fieldIndex);
     }
 
-    static class VarianceCalculator : SingleFieldCalculator
+    class VarianceCalculator : SingleFieldCalculator
     {
         private double _count = 0.0;
         private double _mean = 0.0;
@@ -2783,6 +3135,11 @@ class VarianceOperator : SingleFieldOperator
             super(fieldIndex);
         }
 
+        final override VarianceOperator getOperator()
+        {
+            return this.outer;
+        }
+        
         final override void processNextField(const char[] nextField)
         {
             _count += 1.0;
@@ -2812,13 +3169,19 @@ unittest // VarianceOperator
     testSingleFieldOperator!VarianceOperator(col3File, 0, "var", ["nan", "nan", "0.5", "1"]);
     testSingleFieldOperator!VarianceOperator(col3File, 1, "var", ["nan", "nan", "0.5", "1"]);
     testSingleFieldOperator!VarianceOperator(col3File, 2, "var", ["nan", "nan", "0", "3"]);
+
+    auto col1misFile = [["5"], ["10"], [""]];
+    testSingleFieldOperator!VarianceOperator(col1misFile, 0, "var", ["nan", "nan", "12.5", "12.5"],
+                                          new MissingFieldPolicy(true, ""));  // Exclude missing
+    testSingleFieldOperator!VarianceOperator(col1misFile, 0, "var", ["nan", "nan", "12.5", "25"],
+                                          new MissingFieldPolicy(false, "15"));  // Replace missing
 }
 
 class StDevOperator : SingleFieldOperator
 {
-    this(size_t fieldIndex)
+    this(size_t fieldIndex, MissingFieldPolicy missingPolicy)
     {
-        super("stdev", fieldIndex);
+        super("stdev", fieldIndex, missingPolicy);
     }
     
     final override SingleFieldCalculator makeCalculator()
@@ -2826,7 +3189,7 @@ class StDevOperator : SingleFieldOperator
         return new StDevCalculator(fieldIndex);
     }
 
-    static class StDevCalculator : SingleFieldCalculator
+    class StDevCalculator : SingleFieldCalculator
     {
         private double _count = 0.0;
         private double _mean = 0.0;
@@ -2837,6 +3200,11 @@ class StDevOperator : SingleFieldOperator
             super(fieldIndex);
         }
 
+        final override StDevOperator getOperator()
+        {
+            return this.outer;
+        }
+        
         final override void processNextField(const char[] nextField)
         {
             _count += 1.0;
@@ -2869,6 +3237,12 @@ unittest
     testSingleFieldOperator!StDevOperator(col3File, 0, "stdev", ["nan", "nan", "9.19238815543", "13"]);
     testSingleFieldOperator!StDevOperator(col3File, 1, "stdev", ["nan", "nan", "8.48528137424", "12"]);
     testSingleFieldOperator!StDevOperator(col3File, 2, "stdev", ["nan", "nan", "10.6066017178", "15"]);
+
+    auto col1misFile = [["1"], ["4"], [""]];
+    testSingleFieldOperator!StDevOperator(col1misFile, 0, "stdev", ["nan", "nan", "2.12132034356", "2.12132034356"],
+                                          new MissingFieldPolicy(true, ""));  // Exclude missing
+    testSingleFieldOperator!StDevOperator(col1misFile, 0, "stdev", ["nan", "nan", "2.12132034356", "3"],
+                                          new MissingFieldPolicy(false, "7"));  // Replace missing
 }
 
 /* UniqueCountOperator generates the number of unique values. Unique values are 
@@ -2878,9 +3252,9 @@ unittest
  */
 class UniqueCountOperator : SingleFieldOperator
 {
-    this(size_t fieldIndex)
+    this(size_t fieldIndex, MissingFieldPolicy missingPolicy)
     {
-        super("unique_count", fieldIndex);
+        super("unique_count", fieldIndex, missingPolicy);
     }
     
     final override SingleFieldCalculator makeCalculator()
@@ -2888,7 +3262,7 @@ class UniqueCountOperator : SingleFieldOperator
         return new UniqueCountCalculator(fieldIndex);
     }
 
-    static class UniqueCountCalculator : SingleFieldCalculator
+    class UniqueCountCalculator : SingleFieldCalculator
     {
         private bool[string] _values;
         
@@ -2897,6 +3271,11 @@ class UniqueCountOperator : SingleFieldOperator
             super(fieldIndex);
         }
 
+        final override UniqueCountOperator getOperator()
+        {
+            return this.outer;
+        }
+        
         final override void processNextField(const char[] nextField)
         {
             _values[nextField.to!string] = true;
@@ -2921,6 +3300,164 @@ unittest // UniqueCount
     testSingleFieldOperator!UniqueCountOperator(col3File, 0, "unique_count", ["0", "1", "2", "3"]);
     testSingleFieldOperator!UniqueCountOperator(col3File, 1, "unique_count", ["0", "1", "2", "2"]);
     testSingleFieldOperator!UniqueCountOperator(col3File, 2, "unique_count", ["0", "1", "2", "3"]);
+
+    auto col1misFile = [[""], ["a"], [""], ["b"], ["c"], ["c"], ["b"], ["b"], ["a"], ["ab"]];
+    testSingleFieldOperator!UniqueCountOperator(col1misFile, 0, "unique_count", ["0", "0", "1", "1", "2", "3", "3", "3", "3", "3", "4"],
+                                                new MissingFieldPolicy(true, ""));  // Exclude missing
+
+
+    testSingleFieldOperator!UniqueCountOperator(col1misFile, 0, "unique_count", ["0", "1", "2", "2", "3", "4", "4", "4", "4", "4", "5"],
+                                                new MissingFieldPolicy(false, "XYZ"));  // Replace missing
+}
+
+/* MissingCountOperator generates the number of missing values. This overrides
+ * the global missingFieldsPolicy.
+ */
+class MissingCountOperator : SingleFieldOperator
+{
+    private MissingFieldPolicy _globalMissingPolicy;
+    
+    this(size_t fieldIndex, MissingFieldPolicy missingPolicy)
+    {
+        _globalMissingPolicy = missingPolicy;
+        super("unique_count", fieldIndex, new MissingFieldPolicy(false, ""));
+    }
+    
+    final override SingleFieldCalculator makeCalculator()
+    {
+        return new MissingCountCalculator(fieldIndex);
+    }
+
+    class MissingCountCalculator : SingleFieldCalculator
+    {
+        private size_t _missingCount = 0;
+        
+        this(size_t fieldIndex)
+        {
+            super(fieldIndex);
+        }
+
+        final override MissingCountOperator getOperator()
+        {
+            return this.outer;
+        }
+        
+        final override void processNextField(const char[] nextField)
+        {
+            if (this.outer._globalMissingPolicy.isMissingField(nextField)) _missingCount++;
+        }
+        
+        final string calculate(UniqueKeyValuesLists valuesLists, const ref SummarizerPrintOptions printOptions)
+        {
+            return printOptions.formatNumber(_missingCount);
+        }
+    }
+}
+
+unittest // MissingCount
+{
+    auto col1File = [["a"], ["b"], [""], [" "], [""]];
+    auto col2File = [["abc", ""], ["", ""], ["def", ""]];
+    auto col3File = [["", "1", "a"], ["2.0", "", "1"], ["2", "", ""]];
+
+    testSingleFieldOperator!MissingCountOperator(col1File, 0, "unique_count", ["0", "0", "0", "1", "1", "2"]);
+    testSingleFieldOperator!MissingCountOperator(col2File, 0, "unique_count", ["0", "0", "1", "1"]);
+    testSingleFieldOperator!MissingCountOperator(col2File, 1, "unique_count", ["0", "1", "2", "3"]);
+    testSingleFieldOperator!MissingCountOperator(col3File, 0, "unique_count", ["0", "1", "1", "1"]);
+    testSingleFieldOperator!MissingCountOperator(col3File, 1, "unique_count", ["0", "0", "1", "2"]);
+    testSingleFieldOperator!MissingCountOperator(col3File, 2, "unique_count", ["0", "0", "0", "1"]);
+
+    auto excludeMissing = new MissingFieldPolicy(true, "");
+    auto replaceMissing = new MissingFieldPolicy(false, "X");
+
+    testSingleFieldOperator!MissingCountOperator(col1File, 0, "unique_count", ["0", "0", "0", "1", "1", "2"], excludeMissing);
+    testSingleFieldOperator!MissingCountOperator(col2File, 0, "unique_count", ["0", "0", "1", "1"], excludeMissing);
+    testSingleFieldOperator!MissingCountOperator(col2File, 1, "unique_count", ["0", "1", "2", "3"], excludeMissing);
+    testSingleFieldOperator!MissingCountOperator(col3File, 0, "unique_count", ["0", "1", "1", "1"], excludeMissing);
+    testSingleFieldOperator!MissingCountOperator(col3File, 1, "unique_count", ["0", "0", "1", "2"], excludeMissing);
+    testSingleFieldOperator!MissingCountOperator(col3File, 2, "unique_count", ["0", "0", "0", "1"], excludeMissing);
+
+    testSingleFieldOperator!MissingCountOperator(col1File, 0, "unique_count", ["0", "0", "0", "1", "1", "2"], replaceMissing);
+    testSingleFieldOperator!MissingCountOperator(col2File, 0, "unique_count", ["0", "0", "1", "1"], replaceMissing);
+    testSingleFieldOperator!MissingCountOperator(col2File, 1, "unique_count", ["0", "1", "2", "3"], replaceMissing);
+    testSingleFieldOperator!MissingCountOperator(col3File, 0, "unique_count", ["0", "1", "1", "1"], replaceMissing);
+    testSingleFieldOperator!MissingCountOperator(col3File, 1, "unique_count", ["0", "0", "1", "2"], replaceMissing);
+    testSingleFieldOperator!MissingCountOperator(col3File, 2, "unique_count", ["0", "0", "0", "1"], replaceMissing);
+}
+
+/* NotMissingCountOperator generates the number of not-missing values. This overrides
+ * the global missingFieldsPolicy.
+ */
+class NotMissingCountOperator : SingleFieldOperator
+{
+    private MissingFieldPolicy _globalMissingPolicy;
+    
+    this(size_t fieldIndex, MissingFieldPolicy missingPolicy)
+    {
+        _globalMissingPolicy = missingPolicy;
+        super("unique_count", fieldIndex, new MissingFieldPolicy(false, ""));
+    }
+    
+    final override SingleFieldCalculator makeCalculator()
+    {
+        return new NotMissingCountCalculator(fieldIndex);
+    }
+
+    class NotMissingCountCalculator : SingleFieldCalculator
+    {
+        private size_t _notMissingCount = 0;
+        
+        this(size_t fieldIndex)
+        {
+            super(fieldIndex);
+        }
+
+        final override NotMissingCountOperator getOperator()
+        {
+            return this.outer;
+        }
+        
+        final override void processNextField(const char[] nextField)
+        {
+            if (!this.outer._globalMissingPolicy.isMissingField(nextField)) _notMissingCount++;
+        }
+        
+        final string calculate(UniqueKeyValuesLists valuesLists, const ref SummarizerPrintOptions printOptions)
+        {
+            return printOptions.formatNumber(_notMissingCount);
+        }
+    }
+}
+
+unittest // NotMissingCount
+{
+    auto col1File = [["a"], ["b"], [""], [" "], [""]];
+    auto col2File = [["abc", ""], ["", ""], ["def", ""]];
+    auto col3File = [["", "1", "a"], ["2.0", "", "1"], ["2", "", ""]];
+
+    testSingleFieldOperator!NotMissingCountOperator(col1File, 0, "unique_count", ["0", "1", "2", "2", "3", "3"]);
+    testSingleFieldOperator!NotMissingCountOperator(col2File, 0, "unique_count", ["0", "1", "1", "2"]);
+    testSingleFieldOperator!NotMissingCountOperator(col2File, 1, "unique_count", ["0", "0", "0", "0"]);
+    testSingleFieldOperator!NotMissingCountOperator(col3File, 0, "unique_count", ["0", "0", "1", "2"]);
+    testSingleFieldOperator!NotMissingCountOperator(col3File, 1, "unique_count", ["0", "1", "1", "1"]);
+    testSingleFieldOperator!NotMissingCountOperator(col3File, 2, "unique_count", ["0", "1", "2", "2"]);
+
+    auto excludeMissing = new MissingFieldPolicy(true, "");
+    auto replaceMissing = new MissingFieldPolicy(false, "X");
+
+    testSingleFieldOperator!NotMissingCountOperator(col1File, 0, "unique_count", ["0", "1", "2", "2", "3", "3"], excludeMissing);
+    testSingleFieldOperator!NotMissingCountOperator(col2File, 0, "unique_count", ["0", "1", "1", "2"], excludeMissing);
+    testSingleFieldOperator!NotMissingCountOperator(col2File, 1, "unique_count", ["0", "0", "0", "0"], excludeMissing);
+    testSingleFieldOperator!NotMissingCountOperator(col3File, 0, "unique_count", ["0", "0", "1", "2"], excludeMissing);
+    testSingleFieldOperator!NotMissingCountOperator(col3File, 1, "unique_count", ["0", "1", "1", "1"], excludeMissing);
+    testSingleFieldOperator!NotMissingCountOperator(col3File, 2, "unique_count", ["0", "1", "2", "2"], excludeMissing);
+
+    testSingleFieldOperator!NotMissingCountOperator(col1File, 0, "unique_count", ["0", "1", "2", "2", "3", "3"], replaceMissing);
+    testSingleFieldOperator!NotMissingCountOperator(col2File, 0, "unique_count", ["0", "1", "1", "2"], replaceMissing);
+    testSingleFieldOperator!NotMissingCountOperator(col2File, 1, "unique_count", ["0", "0", "0", "0"], replaceMissing);
+    testSingleFieldOperator!NotMissingCountOperator(col3File, 0, "unique_count", ["0", "0", "1", "2"], replaceMissing);
+    testSingleFieldOperator!NotMissingCountOperator(col3File, 1, "unique_count", ["0", "1", "1", "1"], replaceMissing);
+    testSingleFieldOperator!NotMissingCountOperator(col3File, 2, "unique_count", ["0", "1", "2", "2"], replaceMissing);    
 }
 
 /* ModeOperator outputs the most frequent value seen. In the event of a tie, the
@@ -2931,9 +3468,9 @@ unittest // UniqueCount
  */
 class ModeOperator : SingleFieldOperator
 {
-    this(size_t fieldIndex)
+    this(size_t fieldIndex, MissingFieldPolicy missingPolicy)
     {
-        super("mode", fieldIndex);
+        super("mode", fieldIndex, missingPolicy);
     }
     
     final override SingleFieldCalculator makeCalculator()
@@ -2941,7 +3478,7 @@ class ModeOperator : SingleFieldOperator
         return new ModeCalculator(fieldIndex);
     }
 
-    static class ModeCalculator : SingleFieldCalculator
+    class ModeCalculator : SingleFieldCalculator
     {
         private size_t[string] _valueCounts;
         private Appender!(string[]) _uniqueValues;
@@ -2951,6 +3488,11 @@ class ModeOperator : SingleFieldOperator
             super(fieldIndex);
         }
 
+        final override ModeOperator getOperator()
+        {
+            return this.outer;
+        }
+        
         final override void processNextField(const char[] nextField)
         {
             auto countPtr = (nextField in _valueCounts);
@@ -3002,6 +3544,91 @@ unittest // ModeOperator
     testSingleFieldOperator!ModeOperator(col3File, 0, "mode", ["", "1.0", "1.0", "1.0"]);
     testSingleFieldOperator!ModeOperator(col3File, 1, "mode", ["", "1", "1", "a"]);
     testSingleFieldOperator!ModeOperator(col3File, 2, "mode", ["", "a", "a", "a"]);
+
+    auto col1misFile = [[""], ["a"], [""], ["b"], ["c"], ["c"], ["b"], ["b"]];
+    testSingleFieldOperator!ModeOperator(col1misFile, 0, "mode", ["", "", "a", "a", "a", "a", "c", "b", "b"],
+                                         new MissingFieldPolicy(true, ""));  // Exclude missing
+
+
+    testSingleFieldOperator!ModeOperator(col1misFile, 0, "mode", ["", "X", "X", "X", "X", "X", "X", "X", "b"],
+                                         new MissingFieldPolicy(false, "X"));  // Replace missing
+}
+
+/* ModeCountOperator outputs the count of the most frequent value seen.
+ * 
+ * All the field values are stored in memory as part of this calculation.
+ *
+ */
+class ModeCountOperator : SingleFieldOperator
+{
+    this(size_t fieldIndex, MissingFieldPolicy missingPolicy)
+    {
+        super("mode_count", fieldIndex, missingPolicy);
+    }
+    
+    final override SingleFieldCalculator makeCalculator()
+    {
+        return new ModeCountCalculator(fieldIndex);
+    }
+
+    class ModeCountCalculator : SingleFieldCalculator
+    {
+        private size_t[string] _valueCounts;
+        
+        this(size_t fieldIndex)
+        {
+            super(fieldIndex);
+        }
+
+        final override ModeCountOperator getOperator()
+        {
+            return this.outer;
+        }
+        
+        final override void processNextField(const char[] nextField)
+        {
+            auto countPtr = (nextField in _valueCounts);
+            
+            if (countPtr is null)
+            {
+                string value = nextField.to!string;
+                _valueCounts[value] = 1;
+            }
+            else
+            {
+                (*countPtr)++;
+            }
+        }
+        
+        final string calculate(UniqueKeyValuesLists valuesLists, const ref SummarizerPrintOptions printOptions)
+        {
+            size_t modeCount = 0;
+            foreach (count; _valueCounts.byValue) if (count > modeCount) modeCount = count;
+            return printOptions.formatNumber(modeCount);
+        }
+    }
+}
+
+unittest // ModeCountOperator
+{
+    auto col1File = [["a"], ["b"], ["c"], ["c"], ["b"], ["b"], ["a"]];
+    auto col2File = [["abc", ""], ["def", ""], ["def", "xyz"]];
+    auto col3File = [["1.0", "1", "a"], ["2.0", "a", "1"], ["2", "a", "1.0"]];
+
+    testSingleFieldOperator!ModeCountOperator(col1File, 0, "mode_count", ["0", "1", "1", "1", "2", "2", "3", "3"]);
+    testSingleFieldOperator!ModeCountOperator(col2File, 0, "mode_count", ["0", "1", "1", "2"]);
+    testSingleFieldOperator!ModeCountOperator(col2File, 1, "mode_count", ["0", "1", "2", "2"]);
+    testSingleFieldOperator!ModeCountOperator(col3File, 0, "mode_count", ["0", "1", "1", "1"]);
+    testSingleFieldOperator!ModeCountOperator(col3File, 1, "mode_count", ["0", "1", "1", "2"]);
+    testSingleFieldOperator!ModeCountOperator(col3File, 2, "mode_count", ["0", "1", "1", "1"]);
+
+    auto col1misFile = [[""], ["a"], [""], ["b"], ["c"], ["c"], ["b"], ["b"]];
+    testSingleFieldOperator!ModeCountOperator(col1misFile, 0, "mode_count", ["0", "0", "1", "1", "1", "1", "2", "2", "3"],
+                                              new MissingFieldPolicy(true, ""));  // Exclude missing
+
+
+    testSingleFieldOperator!ModeCountOperator(col1misFile, 0, "mode_count", ["0", "1", "1", "2", "2", "2", "2", "2", "3"],
+                                              new MissingFieldPolicy(false, "X"));  // Replace missing
 }
 
 /* ValuesOperator outputs each value delimited by an alternate delimiter character.
@@ -3012,9 +3639,9 @@ unittest // ModeOperator
 
 class ValuesOperator : SingleFieldOperator
 {
-    this(size_t fieldIndex)
+    this(size_t fieldIndex, MissingFieldPolicy missingPolicy)
     {
-        super("values", fieldIndex);
+        super("values", fieldIndex, missingPolicy);
         setSaveFieldValuesText();
     }
 
@@ -3023,13 +3650,18 @@ class ValuesOperator : SingleFieldOperator
         return new ValuesCalculator(fieldIndex);
     }
 
-    static class ValuesCalculator : SingleFieldCalculator
+    class ValuesCalculator : SingleFieldCalculator
     {
         this(size_t fieldIndex)
         {
             super(fieldIndex);
         }
 
+        final override ValuesOperator getOperator()
+        {
+            return this.outer;
+        }
+        
         /* Work is done by saving the field values. */
         final override void processNextField(const char[] nextField)
         { }
@@ -3043,14 +3675,94 @@ class ValuesOperator : SingleFieldOperator
 
 unittest // ValuesOperator
 {
-    auto col1File = [["a"], [""], ["b"], ["cd"], ["e"]];
+    auto col1File = [["a"], [""], ["b"], ["cd"], ["e"], [""], ["a"]];
     auto col2File = [["", "50"], ["", "51"], ["xyz", "52"]];
     auto col3File = [["z", "a", "-"], ["y", "ab", "--"], ["w", "ba", "---"]];
 
-    testSingleFieldOperator!ValuesOperator(col1File, 0, "values", ["", "a", "a|", "a||b", "a||b|cd", "a||b|cd|e"]);
+    testSingleFieldOperator!ValuesOperator(col1File, 0, "values", ["", "a", "a|", "a||b", "a||b|cd", "a||b|cd|e", "a||b|cd|e|", "a||b|cd|e||a"]);
     testSingleFieldOperator!ValuesOperator(col2File, 0, "values", ["", "", "|", "||xyz"]);
     testSingleFieldOperator!ValuesOperator(col2File, 1, "values", ["", "50", "50|51", "50|51|52"]);
     testSingleFieldOperator!ValuesOperator(col3File, 0, "values", ["", "z", "z|y", "z|y|w"]);
     testSingleFieldOperator!ValuesOperator(col3File, 1, "values", ["", "a", "a|ab", "a|ab|ba"]);
     testSingleFieldOperator!ValuesOperator(col3File, 2, "values", ["", "-", "-|--", "-|--|---"]);
+
+    testSingleFieldOperator!ValuesOperator(col1File, 0, "values", ["", "a", "a", "a|b", "a|b|cd", "a|b|cd|e", "a|b|cd|e", "a|b|cd|e|a"],
+                                         new MissingFieldPolicy(true, ""));  // Exclude missing
+
+
+    testSingleFieldOperator!ValuesOperator(col1File, 0, "values", ["", "a", "a|X", "a|X|b", "a|X|b|cd", "a|X|b|cd|e", "a|X|b|cd|e|X", "a|X|b|cd|e|X|a"],
+                                         new MissingFieldPolicy(false, "X"));  // Replace missing
+}
+
+/* UniqueValuesOperator outputs each unique value delimited by an alternate delimiter
+ * character. Values are output in the order seen. 
+ * 
+ * All unique field values are stored in memory as part of this calculation.
+ *
+ */
+class UniqueValuesOperator : SingleFieldOperator
+{
+    this(size_t fieldIndex, MissingFieldPolicy missingPolicy)
+    {
+        super("unique_values", fieldIndex, missingPolicy);
+    }
+    
+    final override SingleFieldCalculator makeCalculator()
+    {
+        return new UniqueValuesCalculator(fieldIndex);
+    }
+
+    class UniqueValuesCalculator : SingleFieldCalculator
+    {
+        private size_t[string] _valuesHash;
+        private Appender!(string[]) _uniqueValues;
+        
+        this(size_t fieldIndex)
+        {
+            super(fieldIndex);
+        }
+
+        final override UniqueValuesOperator getOperator()
+        {
+            return this.outer;
+        }
+        
+        final override void processNextField(const char[] nextField)
+        {
+            auto ptr = (nextField in _valuesHash);
+            
+            if (ptr is null)
+            {
+                string value = nextField.to!string;
+                _uniqueValues.put(value);
+                _valuesHash[value] = 1;
+            }
+        }
+        
+        final string calculate(UniqueKeyValuesLists valuesLists, const ref SummarizerPrintOptions printOptions)
+        {
+            return _uniqueValues.data.join(printOptions.valuesDelimiter);
+        }
+    }
+}
+
+unittest // UniqueValuesOperator
+{
+    auto col1File = [["a"], [""], ["b"], ["cd"], ["e"], [""], ["a"]];
+    auto col2File = [["", "50"], ["", "50"], ["xyz", "52"]];
+    auto col3File = [["z", "a", "-"], ["y", "ab", "--"], ["w", "ba", "-"]];
+
+    testSingleFieldOperator!UniqueValuesOperator(col1File, 0, "unique_values", ["", "a", "a|", "a||b", "a||b|cd", "a||b|cd|e", "a||b|cd|e", "a||b|cd|e"]);
+    testSingleFieldOperator!UniqueValuesOperator(col2File, 0, "unique_values", ["", "", "", "|xyz"]);
+    testSingleFieldOperator!UniqueValuesOperator(col2File, 1, "unique_values", ["", "50", "50", "50|52"]);
+    testSingleFieldOperator!UniqueValuesOperator(col3File, 0, "unique_values", ["", "z", "z|y", "z|y|w"]);
+    testSingleFieldOperator!UniqueValuesOperator(col3File, 1, "unique_values", ["", "a", "a|ab", "a|ab|ba"]);
+    testSingleFieldOperator!UniqueValuesOperator(col3File, 2, "unique_values", ["", "-", "-|--", "-|--"]);
+
+    testSingleFieldOperator!UniqueValuesOperator(col1File, 0, "unique_values", ["", "a", "a", "a|b", "a|b|cd", "a|b|cd|e", "a|b|cd|e", "a|b|cd|e"],
+                                                 new MissingFieldPolicy(true, ""));  // Exclude missing
+
+
+    testSingleFieldOperator!UniqueValuesOperator(col1File, 0, "unique_values", ["", "a", "a|X", "a|X|b", "a|X|b|cd", "a|X|b|cd|e", "a|X|b|cd|e", "a|X|b|cd|e"],
+                                                 new MissingFieldPolicy(false, "X"));  // Replace missing
 }

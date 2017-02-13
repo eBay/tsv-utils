@@ -255,15 +255,19 @@ Operators can be specified multiple times. They can also take multiple fields (t
 
 Summarization operators available are:
 ```
-   count       min        mean       stddev
-   retain      max        median     unique-count
-   first       range      mad        mode
-   last        sum        var        values
+   count      min        mean       stddev        unique-values
+   retain     max        median     mode          unique-count
+   first      range      mad        mode-count    missing-count
+   last       sum        var        values        not-missing-count
 ```
 
 Numeric values are printed to 12 significant digits by default. This can be changed using the '--p|float-precision' option. If six or less it sets the number of significant digits after the decimal point. If greater than six it sets the total number of significant digits.
 
-Calculations hold onto the minimum data needed while reading data. A few operations like median keep all data values in memory. These operations will start to encounter performance issues as available memory becomes scarce. The size that can be handled effectively is machine dependent, but often quite large files can be handled. Operations requiring numeric entries will signal an error and terminate processing if a non-numeric entry is found.
+Calculations hold onto the minimum data needed while reading data. A few operations like median keep all data values in memory. These operations will start to encounter performance issues as available memory becomes scarce. The size that can be handled effectively is machine dependent, but often quite large files can be handled.
+
+Operations requiring numeric entries will signal an error and terminate processing if a non-numeric entry is found.
+
+Missing values are not treated specially by default, this can be changed using the '--x|exclude-missing' or '--r|replace-missing' option. The former turns off processing for missing values, the latter uses a replacement value.
 
 **Options:**
 * `--h|help` - Print help.
@@ -274,6 +278,8 @@ Calculations hold onto the minimum data needed while reading data. A few operati
 * `--d|delimiter CHR` - Field delimiter. Default: TAB. (Single byte UTF-8 characters only.)
 * `--v|values-delimiter CHR` - Values delimiter. Default: vertical bar (|). (Single byte UTF-8 characters only.)
 * `--p|float-precision NUM` - 'Precision' to use printing floating point numbers. Affects the number of digits printed and exponent use. Default: 12
+* `--x|exclude-missing` - Exclude missing (empty) fields from calculations.
+* `--r|replace-missing STR` - Replace missing (empty) fields with STR in calculations.
 
 **Operators:**
 * `--count` - Count occurrences of each unique key.
@@ -290,9 +296,13 @@ Calculations hold onto the minimum data needed while reading data. A few operati
 * `--mad n[,n...][:STR]` - Median absolute deviation from the median. Raw value, not scaled. (Numeric fields only. Reads all values into memory.)
 * `--var n[,n...][:STR]` - Variance. (Sample variance, numeric fields only).
 * `--stdev n[,n...][:STR]` - Standard deviation. (Sample st.dev, numeric fields only).
-* `--unique-count n[,n...][:STR]`  Number of unique values. (Reads all values into memory).
-* `--mode n[,n...][:STR]` - Mode. The most frequent value. (Reads all values into memory.)
+* `--mode n[,n...][:STR]` - Mode. The most frequent value. (Reads all unique values into memory.)
+* `--mode-count n[,n...][:STR]` - Count of the most frequent value. (Reads all unique values into memory.)
+* `--unique-count n[,n...][:STR]` - Number of unique values. (Reads all unique values into memory).
+* `--missing-count n[,n...][:STR]` - Number of missing (empty) fields. Not affected by the '--x|exclude-missing' or '--r|replace-missing' options.
+* `--not-missing-count n[,n...][:STR]` - Number of filled (non-empty) fields. Not affected by '--r|replace-missing'.
 * `--values n[,n...][:STR]` - All the values, separated by --v|values-delimiter. (Reads all values into memory.)
+* `--unique-values n[,n...][:STR]` - All the unique values, separated by --v|values-delimiter. (Reads all unique values into memory.)
 
 ## tsv-join reference
 
