@@ -886,91 +886,91 @@ unittest
 
     /* Single-key summarizer tests.
      */
-    testSummarizer(["unittest-1", "--header", "--group-by", "1", "--values", "1"],
+    testSummarizer(["unittest-sk-1", "--header", "--group-by", "1", "--values", "1"],
                    file1,
                    [["fld1", "fld1_values"],
                     ["a", "a|a"],
                     ["c", "c|c|c"],
                     ["",  ""]]
         );
-    testSummarizer(["unittest-2", "-H", "--group-by", "1", "--values", "2"],
+    testSummarizer(["unittest-sk-2", "-H", "--group-by", "1", "--values", "2"],
                    file1,
                    [["fld1", "fld2_values"],
                     ["a", "a|c"],
                     ["c", "a|bc|bc"],
                     ["",  "bc"]]
         );
-    testSummarizer(["unittest-3", "-H", "-g", "1", "--values", "3"],
+    testSummarizer(["unittest-sk-3", "-H", "-g", "1", "--values", "3"],
                    file1,
                    [["fld1", "fld3_values"],
                     ["a", "3|2b"],
                     ["c", "2b||3"],
                     ["",  ""]]
         );
-    testSummarizer(["unittest-4", "-H", "--group-by", "1", "--values", "1,2,3"],
+    testSummarizer(["unittest-sk-4", "-H", "--group-by", "1", "--values", "1,2,3"],
                    file1,
                    [["fld1", "fld1_values", "fld2_values", "fld3_values"],
                     ["a", "a|a",   "a|c",     "3|2b"],
                     ["c", "c|c|c", "a|bc|bc", "2b||3"],
                     ["",  "",      "bc",      ""]]
         );
-    testSummarizer(["unittest-5", "-H", "--group-by", "1", "--values", "3,2,1"],
+    testSummarizer(["unittest-sk-5", "-H", "--group-by", "1", "--values", "3,2,1"],
                    file1,
                    [["fld1", "fld3_values", "fld2_values", "fld1_values"],
                     ["a", "3|2b",  "a|c",     "a|a"],
                     ["c", "2b||3", "a|bc|bc", "c|c|c"],
                     ["",  "",      "bc",      ""]]
         );
-    testSummarizer(["unittest-6", "-H", "--group-by", "2", "--values", "1"],
+    testSummarizer(["unittest-sk-6", "-H", "--group-by", "2", "--values", "1"],
                    file1,
                    [["fld2", "fld1_values"],
                     ["a",  "a|c"],
                     ["bc", "c||c"],
                     ["c",  "a"]]
         );
-    testSummarizer(["unittest-7", "-H", "--group-by", "2", "--values", "2"],
+    testSummarizer(["unittest-sk-7", "-H", "--group-by", "2", "--values", "2"],
                    file1,
                    [["fld2", "fld2_values"],
                     ["a",  "a|a"],
                     ["bc", "bc|bc|bc"],
                     ["c",  "c"]]
         );
-    testSummarizer(["unittest-8", "-H", "--group-by", "2", "--values", "3"],
+    testSummarizer(["unittest-sk-8", "-H", "--group-by", "2", "--values", "3"],
                    file1,
                    [["fld2", "fld3_values"],
                     ["a",  "3|2b"],
                     ["bc", "||3"],
                     ["c",  "2b"]]
         );
-    testSummarizer(["unittest-9", "-H", "--group-by", "2", "--values", "1,3"],
+    testSummarizer(["unittest-sk-9", "-H", "--group-by", "2", "--values", "1,3"],
                    file1,
                    [["fld2", "fld1_values", "fld3_values"],
                     ["a",  "a|c",  "3|2b"],
                     ["bc", "c||c", "||3"],
                     ["c",  "a",    "2b"]]
         );
-    testSummarizer(["unittest-10", "-H", "--group-by", "2", "--values", "3,1"],
+    testSummarizer(["unittest-sk-10", "-H", "--group-by", "2", "--values", "3,1"],
                    file1,
                    [["fld2", "fld3_values", "fld1_values"],
                     ["a",  "3|2b", "a|c"],
                     ["bc", "||3",  "c||c"],
                     ["c",  "2b",   "a"]]
         );
-    testSummarizer(["unittest-11", "-H", "--group-by", "3", "--values", "1"],
+    testSummarizer(["unittest-sk-11", "-H", "--group-by", "3", "--values", "1"],
                    file1,
                    [["fld3", "fld1_values"],
                     ["3",  "a|c"],
                     ["2b", "c|a"],
                     ["",   "c|"]]
         );
-    testSummarizer(["unittest-12", "-H", "--group-by", "3", "--values", "2"],
+    testSummarizer(["unittest-sk-12", "-H", "--group-by", "3", "--values", "2"],
                    file1,
                    [["fld3", "fld2_values"],
                     ["3",  "a|bc"],
                     ["2b", "a|c"],
                     ["",   "bc|bc"]]
         );
-    testSummarizer(["unittest-13", "-H", "--group-by", "3", "--values", "1,2"],
+    testSummarizer(["unittest-sk-13", "-H", "--group-by", "3", "--values", "1,2"],
                    file1,
                    [["fld3", "fld1_values", "fld2_values"],
                     ["3",  "a|c", "a|bc"],
@@ -980,7 +980,7 @@ unittest
 
     /* Multi-key summarizer tests.
      */
-    testSummarizer(["unittest-14", "--header", "--group-by", "1,2", "--values", "1"],
+    testSummarizer(["unittest-mk-1", "--header", "--group-by", "1,2", "--values", "1"],
                    file1,
                    [["fld1", "fld2", "fld1_values"],
                     ["a", "a",  "a"],
@@ -989,7 +989,7 @@ unittest
                     ["a", "c",  "a"],
                     ["", "bc",  ""]]
         );
-    testSummarizer(["unittest-15", "-H", "--group-by", "1,2", "--values", "2"],
+    testSummarizer(["unittest-mk-2", "-H", "--group-by", "1,2", "--values", "2"],
                    file1,
                    [["fld1", "fld2", "fld2_values"],
                     ["a", "a",  "a"],
@@ -998,7 +998,7 @@ unittest
                     ["a", "c",  "c"],
                     ["", "bc",  "bc"]]
         );
-    testSummarizer(["unittest-16", "-H", "--group-by", "1,2", "--values", "3"],
+    testSummarizer(["unittest-mk-3", "-H", "--group-by", "1,2", "--values", "3"],
                    file1,
                    [["fld1", "fld2", "fld3_values"],
                     ["a", "a",  "3"],
@@ -1007,7 +1007,7 @@ unittest
                     ["a", "c",  "2b"],
                     ["", "bc",  ""]]
         );
-    testSummarizer(["unittest-17", "-H", "--group-by", "1,2", "--values", "3,1"],
+    testSummarizer(["unittest-mk-4", "-H", "--group-by", "1,2", "--values", "3,1"],
                    file1,
                    [["fld1", "fld2", "fld3_values", "fld1_values"],
                     ["a", "a",  "3", "a"],
@@ -1016,7 +1016,7 @@ unittest
                     ["a", "c",  "2b", "a"],
                     ["",  "bc", "",   ""]]
         );
-    testSummarizer(["unittest-18", "-H", "--group-by", "3,2", "--values", "1"],
+    testSummarizer(["unittest-mk-5", "-H", "--group-by", "3,2", "--values", "1"],
                    file1,
                    [["fld3", "fld2", "fld1_values"],
                     ["3",  "a",  "a"],
@@ -1025,7 +1025,121 @@ unittest
                     ["2b", "c",  "a"],
                     ["3",  "bc", "c"]]
         );
-    testSummarizer(["unittest-19", "-H", "--group-by", "2,1,3", "--values", "2"],
+    testSummarizer(["unittest-mk-6", "-H", "--group-by", "2,1,3", "--values", "2"],
+                   file1,
+                   [["fld2", "fld1", "fld3", "fld2_values"],
+                    ["a",  "a", "3",  "a"],
+                    ["a",  "c", "2b", "a"],
+                    ["bc", "c", "",   "bc"],
+                    ["c",  "a", "2b", "c"],
+                    ["bc", "",  "",   "bc"],
+                    ["bc", "c", "3",  "bc"]]
+        );
+
+    /* Missing policies. */
+    testSummarizer(["unittest-mis-1", "--header", "--group-by", "1", "--values", "1", "--exclude-missing"],
+                   file1,
+                   [["fld1", "fld1_values"],
+                    ["a", "a|a"],
+                    ["c", "c|c|c"],
+                    ["",  ""]]
+        );
+    testSummarizer(["unittest-mis-2", "-H", "--group-by", "1", "--values", "2", "-x"],
+                   file1,
+                   [["fld1", "fld2_values"],
+                    ["a", "a|c"],
+                    ["c", "a|bc|bc"],
+                    ["",  "bc"]]
+        );
+    testSummarizer(["unittest-mis-3", "-H", "-g", "1", "--values", "3", "-x"],
+                   file1,
+                   [["fld1", "fld3_values"],
+                    ["a", "3|2b"],
+                    ["c", "2b|3"],
+                    ["",  ""]]
+        );
+    testSummarizer(["unittest-mis-4", "-H", "--group-by", "1", "--values", "1,2,3", "-x"],
+                   file1,
+                   [["fld1", "fld1_values", "fld2_values", "fld3_values"],
+                    ["a", "a|a",   "a|c",     "3|2b"],
+                    ["c", "c|c|c", "a|bc|bc", "2b|3"],
+                    ["",  "",      "bc",      ""]]
+        );
+    testSummarizer(["unittest-mis-5", "--header", "--group-by", "1", "--values", "1", "--replace-missing", "NA"],
+                   file1,
+                   [["fld1", "fld1_values"],
+                    ["a", "a|a"],
+                    ["c", "c|c|c"],
+                    ["",  "NA"]]
+        );
+    testSummarizer(["unittest-mis-6", "-H", "--group-by", "1", "--values", "2", "-r", "NA"],
+                   file1,
+                   [["fld1", "fld2_values"],
+                    ["a", "a|c"],
+                    ["c", "a|bc|bc"],
+                    ["",  "bc"]]
+        );
+    testSummarizer(["unittest-mis-7", "-H", "-g", "1", "--values", "3", "-r", "NA"],
+                   file1,
+                   [["fld1", "fld3_values"],
+                    ["a", "3|2b"],
+                    ["c", "2b|NA|3"],
+                    ["",  "NA"]]
+        );
+    testSummarizer(["unittest-mis-8", "-H", "--group-by", "1", "--values", "1,2,3", "-r", "NA"],
+                   file1,
+                   [["fld1", "fld1_values", "fld2_values", "fld3_values"],
+                    ["a", "a|a",   "a|c",     "3|2b"],
+                    ["c", "c|c|c", "a|bc|bc", "2b|NA|3"],
+                    ["",  "NA",      "bc",      "NA"]]
+        );
+    testSummarizer(["unittest-mis-9", "-H", "--group-by", "1,2", "--values", "3,1", "-x"],
+                   file1,
+                   [["fld1", "fld2", "fld3_values", "fld1_values"],
+                    ["a", "a",  "3", "a"],
+                    ["c", "a",  "2b", "c"],
+                    ["c", "bc", "3", "c|c"],
+                    ["a", "c",  "2b", "a"],
+                    ["",  "bc", "",   ""]]
+        );
+    testSummarizer(["unittest-mis-10", "-H", "--group-by", "3,2", "--values", "1", "-x"],
+                   file1,
+                   [["fld3", "fld2", "fld1_values"],
+                    ["3",  "a",  "a"],
+                    ["2b", "a",  "c"],
+                    ["",   "bc", "c"],
+                    ["2b", "c",  "a"],
+                    ["3",  "bc", "c"]]
+        );
+    testSummarizer(["unittest-mis-11", "-H", "--group-by", "2,1,3", "--values", "2", "-x"],
+                   file1,
+                   [["fld2", "fld1", "fld3", "fld2_values"],
+                    ["a",  "a", "3",  "a"],
+                    ["a",  "c", "2b", "a"],
+                    ["bc", "c", "",   "bc"],
+                    ["c",  "a", "2b", "c"],
+                    ["bc", "",  "",   "bc"],
+                    ["bc", "c", "3",  "bc"]]
+        );
+    testSummarizer(["unittest-mis-12", "-H", "--group-by", "1,2", "--values", "3,1", "-r", "NA"],
+                   file1,
+                   [["fld1", "fld2", "fld3_values", "fld1_values"],
+                    ["a", "a",  "3", "a"],
+                    ["c", "a",  "2b", "c"],
+                    ["c", "bc", "NA|3", "c|c"],
+                    ["a", "c",  "2b", "a"],
+                    ["",  "bc", "NA",   "NA"]]
+        );
+    testSummarizer(["unittest-mis-13", "-H", "--group-by", "3,2", "--values", "1", "-r", "NA"],
+                   file1,
+                   [["fld3", "fld2", "fld1_values"],
+                    ["3",  "a",  "a"],
+                    ["2b", "a",  "c"],
+                    ["",   "bc", "c|NA"],
+                    ["2b", "c",  "a"],
+                    ["3",  "bc", "c"]]
+        );
+    testSummarizer(["unittest-mis-14", "-H", "--group-by", "2,1,3", "--values", "2", "-r", "NA"],
                    file1,
                    [["fld2", "fld1", "fld3", "fld2_values"],
                     ["a",  "a", "3",  "a"],
@@ -1038,7 +1152,7 @@ unittest
 
     /* Validate that the no-key summarizer works with testSummarizer helper function.
      */
-    testSummarizer(["unittest-20", "-H", "--values", "1,2"],
+    testSummarizer(["unittest-nk-1", "-H", "--values", "1,2"],
                    file1,
                    [["fld1_values", "fld2_values"],
                     ["a|c|c|a||c", "a|a|bc|c|bc|bc"]]
@@ -1046,13 +1160,13 @@ unittest
 
     /* Header variations: no header line; auto-generated header line; custom headers.
      */
-    testSummarizer(["unittest-21", "--group-by", "1", "--values", "1"],
+    testSummarizer(["unittest-hdr-1", "--group-by", "1", "--values", "1"],
                    file1[1..$],
                    [["a", "a|a"],
                     ["c", "c|c|c"],
                     ["",  ""]]
         );
-    testSummarizer(["unittest-22", "--group-by", "1,2", "--values", "2"],
+    testSummarizer(["unittest-hdr-2", "--group-by", "1,2", "--values", "2"],
                    file1[1..$],
                    [["a", "a",  "a"],
                     ["c", "a",  "a"],
@@ -1060,14 +1174,14 @@ unittest
                     ["a", "c",  "c"],
                     ["", "bc",  "bc"]]
         );
-    testSummarizer(["unittest-23", "--write-header", "--group-by", "2", "--values", "1"],
+    testSummarizer(["unittest-hdr-3", "--write-header", "--group-by", "2", "--values", "1"],
                    file1[1..$],
                    [["field2", "field1_values"],
                     ["a",  "a|c"],
                     ["bc", "c||c"],
                     ["c",  "a"]]
         );
-    testSummarizer(["unittest-24", "-w", "--group-by", "3,2", "--values", "1"],
+    testSummarizer(["unittest-hdr-4", "-w", "--group-by", "3,2", "--values", "1"],
                    file1[1..$],
                    [["field3", "field2", "field1_values"],
                     ["3",  "a",  "a"],
@@ -1076,14 +1190,14 @@ unittest
                     ["2b", "c",  "a"],
                     ["3",  "bc", "c"]]
         );
-    testSummarizer(["unittest-25", "-H", "--group-by", "2", "--values", "3:Field3Values"],
+    testSummarizer(["unittest-hdr-5", "-H", "--group-by", "2", "--values", "3:Field3Values"],
                    file1,
                    [["fld2", "Field3Values"],
                     ["a",  "3|2b"],
                     ["bc", "||3"],
                     ["c",  "2b"]]
         );
-    testSummarizer(["unittest-26", "-H", "--group-by", "1,2", "--values", "3:FieldThreeValues", "--values", "1:FieldOneValues"],
+    testSummarizer(["unittest-hdr-6", "-H", "--group-by", "1,2", "--values", "3:FieldThreeValues", "--values", "1:FieldOneValues"],
                    file1,
                    [["fld1", "fld2", "FieldThreeValues", "FieldOneValues"],
                     ["a", "a",  "3", "a"],
@@ -1092,14 +1206,14 @@ unittest
                     ["a", "c",  "2b", "a"],
                     ["",  "bc", "",   ""]]
         );
-    testSummarizer(["unittest-27", "--write-header", "--group-by", "1", "--values", "3:f3_vals","--values", "2:f2_vals", "--values", "1:f1_vals"],
+    testSummarizer(["unittest-hdr-7", "--write-header", "--group-by", "1", "--values", "3:f3_vals","--values", "2:f2_vals", "--values", "1:f1_vals"],
                    file1[1..$],
                    [["field1", "f3_vals", "f2_vals", "f1_vals"],
                     ["a", "3|2b",  "a|c",     "a|a"],
                     ["c", "2b||3", "a|bc|bc", "c|c|c"],
                     ["",  "",      "bc",      ""]]
         );
-    testSummarizer(["unittest-28", "--write-header", "--group-by", "1,3,2", "--values", "3", "--values", "1:ValsField1", "--values", "2:ValsField2"],
+    testSummarizer(["unittest-hdr-8", "--write-header", "--group-by", "1,3,2", "--values", "3", "--values", "1:ValsField1", "--values", "2:ValsField2"],
                    file1[1..$],
                    [["field1", "field3", "field2", "field3_values", "ValsField1", "ValsField2"],
                     ["a", "3",  "a",  "3",  "a", "a"],
@@ -1117,18 +1231,18 @@ unittest
                     ["a", "b", "c"],
                     ["c", "b", "a"]];
 
-    testSummarizer(["unittest-50", "-H", "--group-by", "1", "--values", "3"],
+    testSummarizer(["unittest-3x2-1", "-H", "--group-by", "1", "--values", "3"],
                    file3x2,
                    [["fld1", "fld3_values"],
                     ["a", "c"],
                     ["c", "a"]]
         );
-    testSummarizer(["unittest-51", "-H", "--group-by", "2", "--values", "3"],
+    testSummarizer(["unittest-3x2-2", "-H", "--group-by", "2", "--values", "3"],
                    file3x2,
                    [["fld2", "fld3_values"],
                     ["b", "c|a"]]
         );
-    testSummarizer(["unittest-52", "-H", "--group-by", "2,1", "--values", "3"],
+    testSummarizer(["unittest-3x2-3", "-H", "--group-by", "2,1", "--values", "3"],
                    file3x2,
                    [["fld2", "fld1", "fld3_values"],
                     ["b", "a", "c"],
@@ -1138,52 +1252,52 @@ unittest
     auto file3x1 = [["fld1", "fld2", "fld3"],
                     ["a", "b", "c"]];
 
-    testSummarizer(["unittest-53", "-H", "--group-by", "1", "--values", "3"],
+    testSummarizer(["unittest-3x1-1", "-H", "--group-by", "1", "--values", "3"],
                    file3x1,
                    [["fld1", "fld3_values"],
                     ["a", "c"]]
         );
-    testSummarizer(["unittest-54", "--group-by", "1", "--values", "3"],
+    testSummarizer(["unittest-3x1-2", "--group-by", "1", "--values", "3"],
                    file3x1[1..$],
                    [["a", "c"]]
         );
-    testSummarizer(["unittest-55", "-H", "--group-by", "2,1", "--values", "3"],
+    testSummarizer(["unittest-3x1-3", "-H", "--group-by", "2,1", "--values", "3"],
                    file3x1,
                    [["fld2", "fld1", "fld3_values"],
                     ["b", "a", "c"]]
         );
-    testSummarizer(["unittest-56", "--group-by", "2,1", "--values", "3"],
+    testSummarizer(["unittest-3x1-4", "--group-by", "2,1", "--values", "3"],
                    file3x1[1..$],
                    [["b", "a", "c"]]
         );
 
     auto file3x0 = [["fld1", "fld2", "fld3"]];
 
-    testSummarizer(["unittest-57", "-H", "--group-by", "1", "--values", "3"],
+    testSummarizer(["unittest-3x0-1", "-H", "--group-by", "1", "--values", "3"],
                    file3x0,
                    [["fld1", "fld3_values"]]
         );
-    testSummarizer(["unittest-58", "--group-by", "1", "--values", "3"],
+    testSummarizer(["unittest-3x0-2", "--group-by", "1", "--values", "3"],
                    file3x0[1..$],
                    []
         );
-    testSummarizer(["unittest-59", "--write-header", "--group-by", "1", "--values", "3"],
+    testSummarizer(["unittest-3x0-3", "--write-header", "--group-by", "1", "--values", "3"],
                    file3x0[1..$],
                    [["field1", "field3_values"]]
         );
 
     
-    testSummarizer(["unittest-60", "-H", "--group-by", "2,1", "--values", "3"],
+    testSummarizer(["unittest-3x0-4", "-H", "--group-by", "2,1", "--values", "3"],
                    file3x0,
                    [["fld2", "fld1", "fld3_values"]]
         );
 
-    testSummarizer(["unittest-61", "--group-by", "2,1", "--values", "3"],
+    testSummarizer(["unittest-3x0-5", "--group-by", "2,1", "--values", "3"],
                    file3x0[1..$],
                    []
         );
 
-    testSummarizer(["unittest-62", "--write-header", "--group-by", "2,1", "--values", "3"],
+    testSummarizer(["unittest-3x0-6", "--write-header", "--group-by", "2,1", "--values", "3"],
                    file3x0[1..$],
                    [["field2", "field1", "field3_values"]]
         );
@@ -1191,12 +1305,12 @@ unittest
     auto file2x1 = [["fld1", "fld2"],
                     ["a", "b"]];
 
-    testSummarizer(["unittest-63", "-H", "--group-by", "1", "--values", "2"],
+    testSummarizer(["unittest-2x1-1", "-H", "--group-by", "1", "--values", "2"],
                    file2x1,
                    [["fld1", "fld2_values"],
                     ["a", "b"]]
         );
-    testSummarizer(["unittest-64", "-H", "--group-by", "2,1", "--values", "1"],
+    testSummarizer(["unittest-2x1-2", "-H", "--group-by", "2,1", "--values", "1"],
                    file2x1,
                    [["fld2", "fld1", "fld1_values"],
                     ["b", "a", "a"]]
@@ -1204,11 +1318,11 @@ unittest
 
     auto file2x0 = [["fld1", "fld2"]];
     
-    testSummarizer(["unittest-65", "-H", "--group-by", "1", "--values", "2"],
+    testSummarizer(["unittest-2x0-1", "-H", "--group-by", "1", "--values", "2"],
                    file2x0,
                    [["fld1", "fld2_values"]]
         );
-    testSummarizer(["unittest-66", "-H", "--group-by", "2,1", "--values", "1"],
+    testSummarizer(["unittest-2x0-2", "-H", "--group-by", "2,1", "--values", "1"],
                    file2x0,
                    [["fld2", "fld1", "fld1_values"]]
         );
@@ -1217,7 +1331,7 @@ unittest
                     ["a"],
                     [""]];
     
-    testSummarizer(["unittest-67", "-H", "--group-by", "1", "--values", "1"],
+    testSummarizer(["unittest-1x2-1", "-H", "--group-by", "1", "--values", "1"],
                    file1x2,
                    [["fld1", "fld1_values"],
                     ["a", "a"],
@@ -1228,7 +1342,7 @@ unittest
                      [""],
                      [""]];
 
-    testSummarizer(["unittest-68", "-H", "--group-by", "1", "--values", "1"],
+    testSummarizer(["unittest-1x2b-2", "-H", "--group-by", "1", "--values", "1"],
                    file1x2b,
                    [["fld1", "fld1_values"],
                     ["", "|"]]
@@ -1237,18 +1351,18 @@ unittest
     auto file1x1 = [["fld1"],
                     ["x"]];
     
-    testSummarizer(["unittest-69", "-H", "--group-by", "1", "--values", "1"],
+    testSummarizer(["unittest-1x1-1", "-H", "--group-by", "1", "--values", "1"],
                    file1x1,
                    [["fld1", "fld1_values"],
                     ["x", "x"]]
         );
 
-    testSummarizer(["unittest-70", "--group-by", "1", "--values", "1"],
+    testSummarizer(["unittest-1x1-2", "--group-by", "1", "--values", "1"],
                    file1x1[1..$],
                    [["x", "x"]]
         );
 
-    testSummarizer(["unittest-71", "--write-header", "--group-by", "1", "--values", "1"],
+    testSummarizer(["unittest-1x1-3", "--write-header", "--group-by", "1", "--values", "1"],
                    file1x1[1..$],
                    [["field1", "field1_values"],
                     ["x", "x"]]
@@ -1257,7 +1371,7 @@ unittest
     auto file1x1b = [["fld1"],
                     [""]];
     
-    testSummarizer(["unittest-72", "-H", "--group-by", "1", "--values", "1"],
+    testSummarizer(["unittest-1x1b-1", "-H", "--group-by", "1", "--values", "1"],
                    file1x1b,
                    [["fld1", "fld1_values"],
                     ["", ""]]
@@ -1265,38 +1379,38 @@ unittest
     
     auto file1x0 = [["fld1"]];
     
-    testSummarizer(["unittest-73", "-H", "--group-by", "1", "--values", "1"],
+    testSummarizer(["unittest-1x0-1", "-H", "--group-by", "1", "--values", "1"],
                    file1x0,
                    [["fld1", "fld1_values"]]
         );
 
-    testSummarizer(["unittest-74", "--group-by", "1", "--values", "1"],
+    testSummarizer(["unittest-1x0-2", "--group-by", "1", "--values", "1"],
                    file1x0[1..$],
                    []
         );
 
-    testSummarizer(["unittest-75", "--write-header", "--group-by", "1", "--values", "1"],
+    testSummarizer(["unittest-1x0-3", "--write-header", "--group-by", "1", "--values", "1"],
                    file1x0[1..$],
                    [["field1", "field1_values"]]
         );
 
     /* Alternate delimiters. */
-    testSummarizer(["unittest-90", "-H", "--values", "1,2", "--delimiter", "%"],
+    testSummarizer(["unittest-delim-1", "-H", "--values", "1,2", "--delimiter", "%"],
                    file1,
                    [["fld1_values", "fld2_values"],
                     ["a|c|c|a||c", "a|a|bc|c|bc|bc"]]
         );
-    testSummarizer(["unittest-91", "-H", "--values", "1,2", "--values-delimiter", "$"],
+    testSummarizer(["unittest-delim-2", "-H", "--values", "1,2", "--values-delimiter", "$"],
                    file1,
                    [["fld1_values", "fld2_values"],
                     ["a$c$c$a$$c", "a$a$bc$c$bc$bc"]]
         );
-    testSummarizer(["unittest-92", "-H", "--values", "1,2", "--delimiter", "#", "--values-delimiter", ","],
+    testSummarizer(["unittest-delim-3", "-H", "--values", "1,2", "--delimiter", "#", "--values-delimiter", ","],
                    file1,
                    [["fld1_values", "fld2_values"],
                     ["a,c,c,a,,c", "a,a,bc,c,bc,bc"]]
         );
-    testSummarizer(["unittest-93", "--write-header", "--group-by", "2", "--values", "1",
+    testSummarizer(["unittest-delim-4", "--write-header", "--group-by", "2", "--values", "1",
                     "--delimiter", "^", "--values-delimiter", ":"],
                    file1[1..$],
                    [["field2", "field1_values"],
@@ -1304,7 +1418,7 @@ unittest
                     ["bc", "c::c"],
                     ["c",  "a"]]
         );
-    testSummarizer(["unittest-94", "--group-by", "1,2", "--values", "2", "--delimiter", "/",
+    testSummarizer(["unittest-delim-5", "--group-by", "1,2", "--values", "2", "--delimiter", "/",
                     "--values-delimiter", "\\"],
                    file1[1..$],
                    [["a", "a",  "a"],
@@ -2389,6 +2503,12 @@ unittest // RetainOperator
     testSingleFieldOperator!RetainOperator(col3File, 0, "", ["", "r1c1", "r1c1", "r1c1"]);
     testSingleFieldOperator!RetainOperator(col3File, 1, "", ["", "r1c2", "r1c2", "r1c2"]);
     testSingleFieldOperator!RetainOperator(col3File, 2, "", ["", "r1c3", "r1c3", "r1c3"]);
+
+    auto col1misFile = [[""], ["r2c1"], ["r3c1"]];
+    testSingleFieldOperator!RetainOperator(col1misFile, 0, "", ["", "", "r2c1", "r2c1"],
+                                           new MissingFieldPolicy(true, ""));  // Exclude missing
+    testSingleFieldOperator!RetainOperator(col1misFile, 0, "", ["", "NA", "NA", "NA"],
+                                           new MissingFieldPolicy(false, "NA"));  // Replace missing
 }
 
 /** FirstOperator outputs the first value found for the field.
@@ -2448,6 +2568,12 @@ unittest // FirstOperator
     testSingleFieldOperator!FirstOperator(col3File, 0, "first", ["", "r1c1", "r1c1", "r1c1"]);
     testSingleFieldOperator!FirstOperator(col3File, 1, "first", ["", "r1c2", "r1c2", "r1c2"]);
     testSingleFieldOperator!FirstOperator(col3File, 2, "first", ["", "r1c3", "r1c3", "r1c3"]);
+
+    auto col1misFile = [[""], ["r2c1"], ["r3c1"]];
+    testSingleFieldOperator!FirstOperator(col1misFile, 0, "first", ["", "", "r2c1", "r2c1"],
+                                          new MissingFieldPolicy(true, ""));  // Exclude missing
+    testSingleFieldOperator!FirstOperator(col1misFile, 0, "first", ["", "NA", "NA", "NA"],
+                                          new MissingFieldPolicy(false, "NA"));  // Replace missing
 }
 
 /** LastOperator outputs the last value found for the field.
@@ -2502,6 +2628,12 @@ unittest // LastOperator
     testSingleFieldOperator!LastOperator(col3File, 0, "last", ["", "r1c1", "r2c1", "r3c1"]);
     testSingleFieldOperator!LastOperator(col3File, 1, "last", ["", "r1c2", "r2c2", "r3c2"]);
     testSingleFieldOperator!LastOperator(col3File, 2, "last", ["", "r1c3", "r2c3", "r3c3"]);
+
+    auto col1misFile = [[""], ["r2c1"], ["r3c1"]];
+    testSingleFieldOperator!LastOperator(col1misFile, 0, "last", ["", "", "r2c1", "r3c1"],
+                                          new MissingFieldPolicy(true, ""));  // Exclude missing
+    testSingleFieldOperator!LastOperator(col1misFile, 0, "last", ["", "NA", "r2c1", "r3c1"],
+                                          new MissingFieldPolicy(false, "NA"));  // Replace missing
 }
 
 /* MinOperator output the minimum value for the field. This is a numeric operator.
@@ -2566,6 +2698,12 @@ unittest // MinOperator
     testSingleFieldOperator!MinOperator(col3File, 0, "min", ["nan", "9009", "199", "199"]);
     testSingleFieldOperator!MinOperator(col3File, 1, "min", ["nan", "9", "0", "0"]);
     testSingleFieldOperator!MinOperator(col3File, 2, "min", ["nan", "-4.5", "-4.5", "-4.5"]);
+
+    auto col1misFile = [[""], ["10"], ["-10"]];
+    testSingleFieldOperator!MinOperator(col1misFile, 0, "min", ["nan", "nan", "10", "-10"],
+                                          new MissingFieldPolicy(true, ""));  // Exclude missing
+    testSingleFieldOperator!MinOperator(col1misFile, 0, "min", ["nan", "5", "5", "-10"],
+                                          new MissingFieldPolicy(false, "5"));  // Replace missing
 }
 
 /* MaxOperator output the maximum value for the field. This is a numeric operator.
@@ -2630,6 +2768,12 @@ unittest // MaxOperator
     testSingleFieldOperator!MaxOperator(col3File, 0, "max", ["nan", "9009", "9009", "9009"]);
     testSingleFieldOperator!MaxOperator(col3File, 1, "max", ["nan", "9", "9", "9"]);
     testSingleFieldOperator!MaxOperator(col3File, 2, "max", ["nan", "-4.5", "-0.5", "12"]);
+
+    auto col1misFile = [[""], ["-10"], ["10"]];
+    testSingleFieldOperator!MaxOperator(col1misFile, 0, "max", ["nan", "nan", "-10", "10"],
+                                          new MissingFieldPolicy(true, ""));  // Exclude missing
+    testSingleFieldOperator!MaxOperator(col1misFile, 0, "max", ["nan", "5", "5", "10"],
+                                          new MissingFieldPolicy(false, "5"));  // Replace missing
 }
 
 /* RangeOperator outputs the difference between the minimum and maximum values. If there
@@ -2701,6 +2845,12 @@ unittest // RangeOperator
     testSingleFieldOperator!RangeOperator(col3File, 0, "range", ["0", "0", "8810", "8810"]);
     testSingleFieldOperator!RangeOperator(col3File, 1, "range", ["0", "0", "9", "9"]);
     testSingleFieldOperator!RangeOperator(col3File, 2, "range", ["0", "0", "4", "16.5"]);
+
+    auto col1misFile = [[""], ["10"], [""], ["9.5"], ["11"]];
+    testSingleFieldOperator!RangeOperator(col1misFile, 0, "range", ["0", "0", "0", "0", "0.5", "1.5"],
+                                          new MissingFieldPolicy(true, ""));  // Exclude missing
+    testSingleFieldOperator!RangeOperator(col1misFile, 0, "range", ["0", "0", "4.5", "4.5", "4.5", "5.5"],
+                                          new MissingFieldPolicy(false, "5.5"));  // Replace missing
 }
 
 /* SumOperator produces the sum of all the values. This is a numeric operator.
@@ -2755,6 +2905,12 @@ unittest // SumOperator
     testSingleFieldOperator!SumOperator(col3File, 0, "sum", ["0", "9009", "9208", "12211"]);
     testSingleFieldOperator!SumOperator(col3File, 1, "sum", ["0", "9", "9", "9.2"]);
     testSingleFieldOperator!SumOperator(col3File, 2, "sum", ["0", "-4.5", "-5", "7"]);
+
+    auto col1misFile = [[""], ["10"], [""], ["9.5"], ["11"]];
+    testSingleFieldOperator!SumOperator(col1misFile, 0, "sum", ["0", "0", "10", "10", "19.5", "30.5"],
+                                          new MissingFieldPolicy(true, ""));  // Exclude missing
+    testSingleFieldOperator!SumOperator(col1misFile, 0, "sum", ["0", "1.5", "11.5", "13", "22.5", "33.5"],
+                                          new MissingFieldPolicy(false, "1.5"));  // Replace missing
 }
 
 /* MeanOperator produces the mean (average) of all the values. This is a numeric operator.
@@ -2812,6 +2968,12 @@ unittest // MeanOperator
     testSingleFieldOperator!MeanOperator(col3File, 0, "mean", ["nan", "9009", "4509", "4509"]);
     testSingleFieldOperator!MeanOperator(col3File, 1, "mean", ["nan", "9", "4.5", "2"]);
     testSingleFieldOperator!MeanOperator(col3File, 2, "mean", ["nan", "-4.5", "-3", "2"]);
+
+    auto col1misFile = [[""], ["6"], [""], ["14"], ["40"]];
+    testSingleFieldOperator!MeanOperator(col1misFile, 0, "mean", ["nan", "nan", "6", "6", "10", "20"],
+                                          new MissingFieldPolicy(true, ""));  // Exclude missing
+    testSingleFieldOperator!MeanOperator(col1misFile, 0, "mean", ["nan", "0", "3", "2", "5", "12"],
+                                          new MissingFieldPolicy(false, "0"));  // Replace missing
 }
 
 /* MedianOperator produces the median of all the values. This is a numeric operator.
@@ -2867,6 +3029,12 @@ unittest // MedianOperator
     testSingleFieldOperator!MedianOperator(col3File, 0, "median", ["nan", "9009", "4509", "4509"]);
     testSingleFieldOperator!MedianOperator(col3File, 1, "median", ["nan", "9", "4.5", "0"]);
     testSingleFieldOperator!MedianOperator(col3File, 2, "median", ["nan", "-4.5", "-3", "-1.5"]);
+
+    auto col1misFile = [[""], ["10"], [""], ["9.5"], ["7.5"]];
+    testSingleFieldOperator!MedianOperator(col1misFile, 0, "median", ["nan", "nan", "10", "10", "9.75", "9.5"],
+                                          new MissingFieldPolicy(true, ""));  // Exclude missing
+    testSingleFieldOperator!MedianOperator(col1misFile, 0, "median", ["nan", "0", "5", "0", "4.75", "7.5"],
+                                          new MissingFieldPolicy(false, "0"));  // Replace missing
 }
 
 /* MadOperator produces the median absolute deviation from the median. This is a numeric
@@ -2932,6 +3100,12 @@ unittest // MadOperator
     testSingleFieldOperator!MadOperator(col3File, 0, "mad", ["nan", "0", "4", "0"]);
     testSingleFieldOperator!MadOperator(col3File, 1, "mad", ["nan", "0", "0", "0"]);
     testSingleFieldOperator!MadOperator(col3File, 2, "mad", ["nan", "0", "1", "2"]);
+
+    auto col1misFile = [[""], ["16"], [""], ["32"], ["-4"]];
+    testSingleFieldOperator!MadOperator(col1misFile, 0, "mad", ["nan", "nan", "0", "0", "8", "16"],
+                                          new MissingFieldPolicy(true, ""));  // Exclude missing
+    testSingleFieldOperator!MadOperator(col1misFile, 0, "mad", ["nan", "0", "8", "0", "8", "4"],
+                                          new MissingFieldPolicy(false, "0"));  // Replace missing
 }
 
 class VarianceOperator : SingleFieldOperator
@@ -2991,6 +3165,12 @@ unittest // VarianceOperator
     testSingleFieldOperator!VarianceOperator(col3File, 0, "var", ["nan", "nan", "0.5", "1"]);
     testSingleFieldOperator!VarianceOperator(col3File, 1, "var", ["nan", "nan", "0.5", "1"]);
     testSingleFieldOperator!VarianceOperator(col3File, 2, "var", ["nan", "nan", "0", "3"]);
+
+    auto col1misFile = [["5"], ["10"], [""]];
+    testSingleFieldOperator!VarianceOperator(col1misFile, 0, "var", ["nan", "nan", "12.5", "12.5"],
+                                          new MissingFieldPolicy(true, ""));  // Exclude missing
+    testSingleFieldOperator!VarianceOperator(col1misFile, 0, "var", ["nan", "nan", "12.5", "25"],
+                                          new MissingFieldPolicy(false, "15"));  // Replace missing
 }
 
 class StDevOperator : SingleFieldOperator
@@ -3053,6 +3233,12 @@ unittest
     testSingleFieldOperator!StDevOperator(col3File, 0, "stdev", ["nan", "nan", "9.19238815543", "13"]);
     testSingleFieldOperator!StDevOperator(col3File, 1, "stdev", ["nan", "nan", "8.48528137424", "12"]);
     testSingleFieldOperator!StDevOperator(col3File, 2, "stdev", ["nan", "nan", "10.6066017178", "15"]);
+
+    auto col1misFile = [["1"], ["4"], [""]];
+    testSingleFieldOperator!StDevOperator(col1misFile, 0, "stdev", ["nan", "nan", "2.12132034356", "2.12132034356"],
+                                          new MissingFieldPolicy(true, ""));  // Exclude missing
+    testSingleFieldOperator!StDevOperator(col1misFile, 0, "stdev", ["nan", "nan", "2.12132034356", "3"],
+                                          new MissingFieldPolicy(false, "7"));  // Replace missing
 }
 
 /* UniqueCountOperator generates the number of unique values. Unique values are 
@@ -3110,6 +3296,14 @@ unittest // UniqueCount
     testSingleFieldOperator!UniqueCountOperator(col3File, 0, "unique_count", ["0", "1", "2", "3"]);
     testSingleFieldOperator!UniqueCountOperator(col3File, 1, "unique_count", ["0", "1", "2", "2"]);
     testSingleFieldOperator!UniqueCountOperator(col3File, 2, "unique_count", ["0", "1", "2", "3"]);
+
+    auto col1misFile = [[""], ["a"], [""], ["b"], ["c"], ["c"], ["b"], ["b"], ["a"], ["ab"]];
+    testSingleFieldOperator!UniqueCountOperator(col1misFile, 0, "unique_count", ["0", "0", "1", "1", "2", "3", "3", "3", "3", "3", "4"],
+                                                new MissingFieldPolicy(true, ""));  // Exclude missing
+
+
+    testSingleFieldOperator!UniqueCountOperator(col1misFile, 0, "unique_count", ["0", "1", "2", "2", "3", "4", "4", "4", "4", "4", "5"],
+                                                new MissingFieldPolicy(false, "XYZ"));  // Replace missing
 }
 
 /* ModeOperator outputs the most frequent value seen. In the event of a tie, the
@@ -3196,6 +3390,14 @@ unittest // ModeOperator
     testSingleFieldOperator!ModeOperator(col3File, 0, "mode", ["", "1.0", "1.0", "1.0"]);
     testSingleFieldOperator!ModeOperator(col3File, 1, "mode", ["", "1", "1", "a"]);
     testSingleFieldOperator!ModeOperator(col3File, 2, "mode", ["", "a", "a", "a"]);
+
+    auto col1misFile = [[""], ["a"], [""], ["b"], ["c"], ["c"], ["b"], ["b"]];
+    testSingleFieldOperator!ModeOperator(col1misFile, 0, "mode", ["", "", "a", "a", "a", "a", "c", "b", "b"],
+                                         new MissingFieldPolicy(true, ""));  // Exclude missing
+
+
+    testSingleFieldOperator!ModeOperator(col1misFile, 0, "mode", ["", "X", "X", "X", "X", "X", "X", "X", "b"],
+                                         new MissingFieldPolicy(false, "X"));  // Replace missing
 }
 
 /* ValuesOperator outputs each value delimited by an alternate delimiter character.
@@ -3252,4 +3454,12 @@ unittest // ValuesOperator
     testSingleFieldOperator!ValuesOperator(col3File, 0, "values", ["", "z", "z|y", "z|y|w"]);
     testSingleFieldOperator!ValuesOperator(col3File, 1, "values", ["", "a", "a|ab", "a|ab|ba"]);
     testSingleFieldOperator!ValuesOperator(col3File, 2, "values", ["", "-", "-|--", "-|--|---"]);
+
+    testSingleFieldOperator!ValuesOperator(col1File, 0, "values", ["", "a", "a", "a|b", "a|b|cd", "a|b|cd|e"],
+                                         new MissingFieldPolicy(true, ""));  // Exclude missing
+
+
+    testSingleFieldOperator!ValuesOperator(col1File, 0, "values", ["", "a", "a|X", "a|X|b", "a|X|b|cd", "a|X|b|cd|e"],
+                                         new MissingFieldPolicy(false, "X"));  // Replace missing
 }
+
