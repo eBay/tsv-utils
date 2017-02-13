@@ -83,10 +83,10 @@ fields (though not when a custom header is specified). Example:
   --median 2,3,4
 
 Summarization operators available are:
-  count       min        mean       stddev
-  retain      max        median     unique-count
-  first       range      mad        mode
-  last        sum        var        values
+  count       min        mean       stddev        unique-values
+  retain      max        median     mode          unique-count
+  first       range      mad        mode-count    missing-count
+  last        sum        var        values        not-missing-count
 
 Numeric values are printed to 12 significant digits by default. This can be
 changed using the '--p|float-precision' option. If six or less it sets the
@@ -171,7 +171,7 @@ struct TsvSummarizeOptions {
                 "first",              "n[,n...][:STR]  First value seen.", &operatorOptionHandler!FirstOperator,
                 "last",               "n[,n...][:STR]  Last value seen.", &operatorOptionHandler!LastOperator,
                 "min",                "n[,n...][:STR]  Min value. (Numeric fields only.)", &operatorOptionHandler!MinOperator,
-                "max",                "n[,n...][:STR]  Max value. Numeric fields only.", &operatorOptionHandler!MaxOperator,
+                "max",                "n[,n...][:STR]  Max value. (Numeric fields only.)", &operatorOptionHandler!MaxOperator,
                 "range",              "n[,n...][:STR]  Difference between min and max values. (Numeric fields only.)", &operatorOptionHandler!RangeOperator,
                 "sum",                "n[,n...][:STR]  Sum of the values. (Numeric fields only.)", &operatorOptionHandler!SumOperator,
                 "mean",               "n[,n...][:STR]  Mean (average). (Numeric fields only.)", &operatorOptionHandler!MeanOperator,
@@ -179,9 +179,13 @@ struct TsvSummarizeOptions {
                 "mad",                "n[,n...][:STR]  Median absolute deviation from the median. Raw value, not scaled. (Numeric fields only. Reads all values into memory.)", &operatorOptionHandler!MadOperator,
                 "var",                "n[,n...][:STR]  Variance. (Sample variance, numeric fields only).", &operatorOptionHandler!VarianceOperator,
                 "stdev",              "n[,n...][:STR]  Standard deviation. (Sample st.dev, numeric fields only).", &operatorOptionHandler!StDevOperator,
-                "unique-count",       "n[,n...][:STR]  Number of unique values. (Reads all values into memory.)", &operatorOptionHandler!UniqueCountOperator,
-                "mode",               "n[,n...][:STR]  Mode. The most frequent value. (Reads all values into memory.)", &operatorOptionHandler!ModeOperator,
+                "mode",               "n[,n...][:STR]  Mode. The most frequent value. (Reads all unique values into memory.)", &operatorOptionHandler!ModeOperator,
+                "mode-count",         "n[,n...][:STR]  Count of the most frequent value. (Reads all unique values into memory.)", &operatorOptionHandler!ModeOperator,
+                "unique-count",       "n[,n...][:STR]  Number of unique values. (Reads all unique values into memory.)", &operatorOptionHandler!UniqueCountOperator,
+                "missing-count",      "n[,n...][:STR]  Number of missing (empty) fields. Not affected by '--x|exclude-missing' or '--r|replace-missing'.", &operatorOptionHandler!MissingCountOperator,
+                "not-missing-count",  "n[,n...][:STR]  Number of filled (non-empty) fields. Not affected by '--r|replace-missing'.", &operatorOptionHandler!MissingCountOperator,
                 "values",             "n[,n...][:STR]  All the values, separated by --v|values-delimiter. (Reads all values into memory.)", &operatorOptionHandler!ValuesOperator,
+                "unique-values",      "n[,n...][:STR]  All the unique values, separated by --v|values-delimiter. (Reads all unique values into memory.)", &operatorOptionHandler!ValuesOperator,
                 );
 
             if (r.helpWanted)
@@ -3306,6 +3310,156 @@ unittest // UniqueCount
                                                 new MissingFieldPolicy(false, "XYZ"));  // Replace missing
 }
 
+/* MissingCountOperator generates the number of missing values. This overrides
+ * the global missingFieldsPolicy.
+ */
+class MissingCountOperator : SingleFieldOperator
+{
+    private MissingFieldPolicy _globalMissingPolicy;
+    
+    this(size_t fieldIndex, MissingFieldPolicy missingPolicy)
+    {
+        _globalMissingPolicy = missingPolicy;
+        super("unique_count", fieldIndex, new MissingFieldPolicy(false, ""));
+    }
+    
+    final override SingleFieldCalculator makeCalculator()
+    {
+        return new MissingCountCalculator(fieldIndex);
+    }
+
+    class MissingCountCalculator : SingleFieldCalculator
+    {
+        private size_t _missingCount = 0;
+        
+        this(size_t fieldIndex)
+        {
+            super(fieldIndex);
+        }
+
+        final override MissingCountOperator getOperator()
+        {
+            return this.outer;
+        }
+        
+        final override void processNextField(const char[] nextField)
+        {
+            if (this.outer._globalMissingPolicy.isMissingField(nextField)) _missingCount++;
+        }
+        
+        final string calculate(UniqueKeyValuesLists valuesLists, const ref SummarizerPrintOptions printOptions)
+        {
+            return printOptions.formatNumber(_missingCount);
+        }
+    }
+}
+
+unittest // MissingCount
+{
+    auto col1File = [["a"], ["b"], [""], [" "], [""]];
+    auto col2File = [["abc", ""], ["", ""], ["def", ""]];
+    auto col3File = [["", "1", "a"], ["2.0", "", "1"], ["2", "", ""]];
+
+    testSingleFieldOperator!MissingCountOperator(col1File, 0, "unique_count", ["0", "0", "0", "1", "1", "2"]);
+    testSingleFieldOperator!MissingCountOperator(col2File, 0, "unique_count", ["0", "0", "1", "1"]);
+    testSingleFieldOperator!MissingCountOperator(col2File, 1, "unique_count", ["0", "1", "2", "3"]);
+    testSingleFieldOperator!MissingCountOperator(col3File, 0, "unique_count", ["0", "1", "1", "1"]);
+    testSingleFieldOperator!MissingCountOperator(col3File, 1, "unique_count", ["0", "0", "1", "2"]);
+    testSingleFieldOperator!MissingCountOperator(col3File, 2, "unique_count", ["0", "0", "0", "1"]);
+
+    auto excludeMissing = new MissingFieldPolicy(true, "");
+    auto replaceMissing = new MissingFieldPolicy(false, "X");
+
+    testSingleFieldOperator!MissingCountOperator(col1File, 0, "unique_count", ["0", "0", "0", "1", "1", "2"], excludeMissing);
+    testSingleFieldOperator!MissingCountOperator(col2File, 0, "unique_count", ["0", "0", "1", "1"], excludeMissing);
+    testSingleFieldOperator!MissingCountOperator(col2File, 1, "unique_count", ["0", "1", "2", "3"], excludeMissing);
+    testSingleFieldOperator!MissingCountOperator(col3File, 0, "unique_count", ["0", "1", "1", "1"], excludeMissing);
+    testSingleFieldOperator!MissingCountOperator(col3File, 1, "unique_count", ["0", "0", "1", "2"], excludeMissing);
+    testSingleFieldOperator!MissingCountOperator(col3File, 2, "unique_count", ["0", "0", "0", "1"], excludeMissing);
+
+    testSingleFieldOperator!MissingCountOperator(col1File, 0, "unique_count", ["0", "0", "0", "1", "1", "2"], replaceMissing);
+    testSingleFieldOperator!MissingCountOperator(col2File, 0, "unique_count", ["0", "0", "1", "1"], replaceMissing);
+    testSingleFieldOperator!MissingCountOperator(col2File, 1, "unique_count", ["0", "1", "2", "3"], replaceMissing);
+    testSingleFieldOperator!MissingCountOperator(col3File, 0, "unique_count", ["0", "1", "1", "1"], replaceMissing);
+    testSingleFieldOperator!MissingCountOperator(col3File, 1, "unique_count", ["0", "0", "1", "2"], replaceMissing);
+    testSingleFieldOperator!MissingCountOperator(col3File, 2, "unique_count", ["0", "0", "0", "1"], replaceMissing);
+}
+
+/* NotMissingCountOperator generates the number of not-missing values. This overrides
+ * the global missingFieldsPolicy.
+ */
+class NotMissingCountOperator : SingleFieldOperator
+{
+    private MissingFieldPolicy _globalMissingPolicy;
+    
+    this(size_t fieldIndex, MissingFieldPolicy missingPolicy)
+    {
+        _globalMissingPolicy = missingPolicy;
+        super("unique_count", fieldIndex, new MissingFieldPolicy(false, ""));
+    }
+    
+    final override SingleFieldCalculator makeCalculator()
+    {
+        return new NotMissingCountCalculator(fieldIndex);
+    }
+
+    class NotMissingCountCalculator : SingleFieldCalculator
+    {
+        private size_t _notMissingCount = 0;
+        
+        this(size_t fieldIndex)
+        {
+            super(fieldIndex);
+        }
+
+        final override NotMissingCountOperator getOperator()
+        {
+            return this.outer;
+        }
+        
+        final override void processNextField(const char[] nextField)
+        {
+            if (!this.outer._globalMissingPolicy.isMissingField(nextField)) _notMissingCount++;
+        }
+        
+        final string calculate(UniqueKeyValuesLists valuesLists, const ref SummarizerPrintOptions printOptions)
+        {
+            return printOptions.formatNumber(_notMissingCount);
+        }
+    }
+}
+
+unittest // NotMissingCount
+{
+    auto col1File = [["a"], ["b"], [""], [" "], [""]];
+    auto col2File = [["abc", ""], ["", ""], ["def", ""]];
+    auto col3File = [["", "1", "a"], ["2.0", "", "1"], ["2", "", ""]];
+
+    testSingleFieldOperator!NotMissingCountOperator(col1File, 0, "unique_count", ["0", "1", "2", "2", "3", "3"]);
+    testSingleFieldOperator!NotMissingCountOperator(col2File, 0, "unique_count", ["0", "1", "1", "2"]);
+    testSingleFieldOperator!NotMissingCountOperator(col2File, 1, "unique_count", ["0", "0", "0", "0"]);
+    testSingleFieldOperator!NotMissingCountOperator(col3File, 0, "unique_count", ["0", "0", "1", "2"]);
+    testSingleFieldOperator!NotMissingCountOperator(col3File, 1, "unique_count", ["0", "1", "1", "1"]);
+    testSingleFieldOperator!NotMissingCountOperator(col3File, 2, "unique_count", ["0", "1", "2", "2"]);
+
+    auto excludeMissing = new MissingFieldPolicy(true, "");
+    auto replaceMissing = new MissingFieldPolicy(false, "X");
+
+    testSingleFieldOperator!NotMissingCountOperator(col1File, 0, "unique_count", ["0", "1", "2", "2", "3", "3"], excludeMissing);
+    testSingleFieldOperator!NotMissingCountOperator(col2File, 0, "unique_count", ["0", "1", "1", "2"], excludeMissing);
+    testSingleFieldOperator!NotMissingCountOperator(col2File, 1, "unique_count", ["0", "0", "0", "0"], excludeMissing);
+    testSingleFieldOperator!NotMissingCountOperator(col3File, 0, "unique_count", ["0", "0", "1", "2"], excludeMissing);
+    testSingleFieldOperator!NotMissingCountOperator(col3File, 1, "unique_count", ["0", "1", "1", "1"], excludeMissing);
+    testSingleFieldOperator!NotMissingCountOperator(col3File, 2, "unique_count", ["0", "1", "2", "2"], excludeMissing);
+
+    testSingleFieldOperator!NotMissingCountOperator(col1File, 0, "unique_count", ["0", "1", "2", "2", "3", "3"], replaceMissing);
+    testSingleFieldOperator!NotMissingCountOperator(col2File, 0, "unique_count", ["0", "1", "1", "2"], replaceMissing);
+    testSingleFieldOperator!NotMissingCountOperator(col2File, 1, "unique_count", ["0", "0", "0", "0"], replaceMissing);
+    testSingleFieldOperator!NotMissingCountOperator(col3File, 0, "unique_count", ["0", "0", "1", "2"], replaceMissing);
+    testSingleFieldOperator!NotMissingCountOperator(col3File, 1, "unique_count", ["0", "1", "1", "1"], replaceMissing);
+    testSingleFieldOperator!NotMissingCountOperator(col3File, 2, "unique_count", ["0", "1", "2", "2"], replaceMissing);    
+}
+
 /* ModeOperator outputs the most frequent value seen. In the event of a tie, the
  * first value seen is produced.
  * 
@@ -3400,6 +3554,83 @@ unittest // ModeOperator
                                          new MissingFieldPolicy(false, "X"));  // Replace missing
 }
 
+/* ModeCountOperator outputs the count of the most frequent value seen.
+ * 
+ * All the field values are stored in memory as part of this calculation.
+ *
+ */
+class ModeCountOperator : SingleFieldOperator
+{
+    this(size_t fieldIndex, MissingFieldPolicy missingPolicy)
+    {
+        super("mode_count", fieldIndex, missingPolicy);
+    }
+    
+    final override SingleFieldCalculator makeCalculator()
+    {
+        return new ModeCountCalculator(fieldIndex);
+    }
+
+    class ModeCountCalculator : SingleFieldCalculator
+    {
+        private size_t[string] _valueCounts;
+        
+        this(size_t fieldIndex)
+        {
+            super(fieldIndex);
+        }
+
+        final override ModeCountOperator getOperator()
+        {
+            return this.outer;
+        }
+        
+        final override void processNextField(const char[] nextField)
+        {
+            auto countPtr = (nextField in _valueCounts);
+            
+            if (countPtr is null)
+            {
+                string value = nextField.to!string;
+                _valueCounts[value] = 1;
+            }
+            else
+            {
+                (*countPtr)++;
+            }
+        }
+        
+        final string calculate(UniqueKeyValuesLists valuesLists, const ref SummarizerPrintOptions printOptions)
+        {
+            size_t modeCount = 0;
+            foreach (count; _valueCounts.byValue) if (count > modeCount) modeCount = count;
+            return printOptions.formatNumber(modeCount);
+        }
+    }
+}
+
+unittest // ModeCountOperator
+{
+    auto col1File = [["a"], ["b"], ["c"], ["c"], ["b"], ["b"], ["a"]];
+    auto col2File = [["abc", ""], ["def", ""], ["def", "xyz"]];
+    auto col3File = [["1.0", "1", "a"], ["2.0", "a", "1"], ["2", "a", "1.0"]];
+
+    testSingleFieldOperator!ModeCountOperator(col1File, 0, "mode_count", ["0", "1", "1", "1", "2", "2", "3", "3"]);
+    testSingleFieldOperator!ModeCountOperator(col2File, 0, "mode_count", ["0", "1", "1", "2"]);
+    testSingleFieldOperator!ModeCountOperator(col2File, 1, "mode_count", ["0", "1", "2", "2"]);
+    testSingleFieldOperator!ModeCountOperator(col3File, 0, "mode_count", ["0", "1", "1", "1"]);
+    testSingleFieldOperator!ModeCountOperator(col3File, 1, "mode_count", ["0", "1", "1", "2"]);
+    testSingleFieldOperator!ModeCountOperator(col3File, 2, "mode_count", ["0", "1", "1", "1"]);
+
+    auto col1misFile = [[""], ["a"], [""], ["b"], ["c"], ["c"], ["b"], ["b"]];
+    testSingleFieldOperator!ModeCountOperator(col1misFile, 0, "mode_count", ["0", "0", "1", "1", "1", "1", "2", "2", "3"],
+                                              new MissingFieldPolicy(true, ""));  // Exclude missing
+
+
+    testSingleFieldOperator!ModeCountOperator(col1misFile, 0, "mode_count", ["0", "1", "1", "2", "2", "2", "2", "2", "3"],
+                                              new MissingFieldPolicy(false, "X"));  // Replace missing
+}
+
 /* ValuesOperator outputs each value delimited by an alternate delimiter character.
  *
  * All the field values are stored in memory as part of this calculation. This is
@@ -3444,22 +3675,94 @@ class ValuesOperator : SingleFieldOperator
 
 unittest // ValuesOperator
 {
-    auto col1File = [["a"], [""], ["b"], ["cd"], ["e"]];
+    auto col1File = [["a"], [""], ["b"], ["cd"], ["e"], [""], ["a"]];
     auto col2File = [["", "50"], ["", "51"], ["xyz", "52"]];
     auto col3File = [["z", "a", "-"], ["y", "ab", "--"], ["w", "ba", "---"]];
 
-    testSingleFieldOperator!ValuesOperator(col1File, 0, "values", ["", "a", "a|", "a||b", "a||b|cd", "a||b|cd|e"]);
+    testSingleFieldOperator!ValuesOperator(col1File, 0, "values", ["", "a", "a|", "a||b", "a||b|cd", "a||b|cd|e", "a||b|cd|e|", "a||b|cd|e||a"]);
     testSingleFieldOperator!ValuesOperator(col2File, 0, "values", ["", "", "|", "||xyz"]);
     testSingleFieldOperator!ValuesOperator(col2File, 1, "values", ["", "50", "50|51", "50|51|52"]);
     testSingleFieldOperator!ValuesOperator(col3File, 0, "values", ["", "z", "z|y", "z|y|w"]);
     testSingleFieldOperator!ValuesOperator(col3File, 1, "values", ["", "a", "a|ab", "a|ab|ba"]);
     testSingleFieldOperator!ValuesOperator(col3File, 2, "values", ["", "-", "-|--", "-|--|---"]);
 
-    testSingleFieldOperator!ValuesOperator(col1File, 0, "values", ["", "a", "a", "a|b", "a|b|cd", "a|b|cd|e"],
+    testSingleFieldOperator!ValuesOperator(col1File, 0, "values", ["", "a", "a", "a|b", "a|b|cd", "a|b|cd|e", "a|b|cd|e", "a|b|cd|e|a"],
                                          new MissingFieldPolicy(true, ""));  // Exclude missing
 
 
-    testSingleFieldOperator!ValuesOperator(col1File, 0, "values", ["", "a", "a|X", "a|X|b", "a|X|b|cd", "a|X|b|cd|e"],
+    testSingleFieldOperator!ValuesOperator(col1File, 0, "values", ["", "a", "a|X", "a|X|b", "a|X|b|cd", "a|X|b|cd|e", "a|X|b|cd|e|X", "a|X|b|cd|e|X|a"],
                                          new MissingFieldPolicy(false, "X"));  // Replace missing
 }
 
+/* UniqueValuesOperator outputs each unique value delimited by an alternate delimiter
+ * character. Values are output in the order seen. 
+ * 
+ * All unique field values are stored in memory as part of this calculation.
+ *
+ */
+class UniqueValuesOperator : SingleFieldOperator
+{
+    this(size_t fieldIndex, MissingFieldPolicy missingPolicy)
+    {
+        super("unique_values", fieldIndex, missingPolicy);
+    }
+    
+    final override SingleFieldCalculator makeCalculator()
+    {
+        return new UniqueValuesCalculator(fieldIndex);
+    }
+
+    class UniqueValuesCalculator : SingleFieldCalculator
+    {
+        private size_t[string] _valuesHash;
+        private Appender!(string[]) _uniqueValues;
+        
+        this(size_t fieldIndex)
+        {
+            super(fieldIndex);
+        }
+
+        final override UniqueValuesOperator getOperator()
+        {
+            return this.outer;
+        }
+        
+        final override void processNextField(const char[] nextField)
+        {
+            auto ptr = (nextField in _valuesHash);
+            
+            if (ptr is null)
+            {
+                string value = nextField.to!string;
+                _uniqueValues.put(value);
+                _valuesHash[value] = 1;
+            }
+        }
+        
+        final string calculate(UniqueKeyValuesLists valuesLists, const ref SummarizerPrintOptions printOptions)
+        {
+            return _uniqueValues.data.join(printOptions.valuesDelimiter);
+        }
+    }
+}
+
+unittest // UniqueValuesOperator
+{
+    auto col1File = [["a"], [""], ["b"], ["cd"], ["e"], [""], ["a"]];
+    auto col2File = [["", "50"], ["", "50"], ["xyz", "52"]];
+    auto col3File = [["z", "a", "-"], ["y", "ab", "--"], ["w", "ba", "-"]];
+
+    testSingleFieldOperator!UniqueValuesOperator(col1File, 0, "unique_values", ["", "a", "a|", "a||b", "a||b|cd", "a||b|cd|e", "a||b|cd|e", "a||b|cd|e"]);
+    testSingleFieldOperator!UniqueValuesOperator(col2File, 0, "unique_values", ["", "", "", "|xyz"]);
+    testSingleFieldOperator!UniqueValuesOperator(col2File, 1, "unique_values", ["", "50", "50", "50|52"]);
+    testSingleFieldOperator!UniqueValuesOperator(col3File, 0, "unique_values", ["", "z", "z|y", "z|y|w"]);
+    testSingleFieldOperator!UniqueValuesOperator(col3File, 1, "unique_values", ["", "a", "a|ab", "a|ab|ba"]);
+    testSingleFieldOperator!UniqueValuesOperator(col3File, 2, "unique_values", ["", "-", "-|--", "-|--"]);
+
+    testSingleFieldOperator!UniqueValuesOperator(col1File, 0, "unique_values", ["", "a", "a", "a|b", "a|b|cd", "a|b|cd|e", "a|b|cd|e", "a|b|cd|e"],
+                                                 new MissingFieldPolicy(true, ""));  // Exclude missing
+
+
+    testSingleFieldOperator!UniqueValuesOperator(col1File, 0, "unique_values", ["", "a", "a|X", "a|X|b", "a|X|b|cd", "a|X|b|cd|e", "a|X|b|cd|e", "a|X|b|cd|e"],
+                                                 new MissingFieldPolicy(false, "X"));  // Replace missing
+}
