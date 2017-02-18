@@ -282,7 +282,7 @@ Calculations hold onto the minimum data needed while reading data. A few operati
 * `--first n[,n...][:STR]` - First value seen.
 * `--last n[,n...][:STR]`- Last value seen.
 * `--min n[,n...][:STR]` - Min value. (Numeric fields only.)
-* `--max n[,n...][:STR]` - Max value. Numeric fields only.
+* `--max n[,n...][:STR]` - Max value. (Numeric fields only.)
 * `--range n[,n...][:STR]` - Difference between min and max values. (Numeric fields only.)
 * `--sum n[,n...][:STR]` - Sum of the values. (Numeric fields only.)
 * `--mean n[,n...][:STR]` - Mean (average). (Numeric fields only.)
