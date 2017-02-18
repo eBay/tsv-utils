@@ -103,7 +103,7 @@ _tsv_filter()
     opts="--help --help-verbose --help-options --header --or --invert --delimiter --empty --not-empty --blank --not-blank --is-numeric --is-finite --is-nan --is-infinity --le --lt --ge --gt --eq --ne --str-le --str-lt --str-ge --str-gt --str-eq --istr-eq --str-ne --istr-ne --str-in-fld --istr-in-fld --str-not-in-fld --istr-not-in-fld --regex --iregex --not-regex --not-iregex --ff-le --ff-lt --ff-ge --ff-gt --ff-eq --ff-ne --ff-str-eq --ff-istr-eq --ff-str-ne --ff-istr-ne --ff-absdiff-le --ff-absdiff-gt|ff-reldiff-le --ff-reldiff-gt"
 
     case $prev in
-         -h|--help|--help-verbose|--help-options|-H|--header|-d|--delimiter|--le|--lt|--ge|--gt|--eq|--ne|--str-le|--str-lt|--str-ge|--str-gt|--str-eq|--istr-eq|--str-ne|--istr-ne|--str-in-fld|--istr-in-fld|--str-not-in-fld|--istr-not-in-fld|--regex|--iregex|--not-regex|--not-iregex|--ff-le|--ff-lt|--ff-ge|--ff-gt|--ff-eq|--ff-ne|--ff-str-eq|--ff-istr-eq|--ff-str-ne|--ff-istr-ne|--ff-absdiff-le|--ff-absdiff-gt|ff-reldiff-le|--ff-reldiff-gt)
+         -h|--help|--help-verbose|--help-options|--header|-d|--delimiter|--le|--lt|--ge|--gt|--eq|--ne|--str-le|--str-lt|--str-ge|--str-gt|--str-eq|--istr-eq|--str-ne|--istr-ne|--str-in-fld|--istr-in-fld|--str-not-in-fld|--istr-not-in-fld|--regex|--iregex|--not-regex|--not-iregex|--ff-le|--ff-lt|--ff-ge|--ff-gt|--ff-eq|--ff-ne|--ff-str-eq|--ff-istr-eq|--ff-str-ne|--ff-istr-ne|--ff-absdiff-le|--ff-absdiff-gt|ff-reldiff-le|--ff-reldiff-gt)
          
           return
           ;;
