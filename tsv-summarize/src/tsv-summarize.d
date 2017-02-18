@@ -180,12 +180,12 @@ struct TsvSummarizeOptions {
                 "var",                "n[,n...][:STR]  Variance. (Sample variance, numeric fields only).", &operatorOptionHandler!VarianceOperator,
                 "stdev",              "n[,n...][:STR]  Standard deviation. (Sample st.dev, numeric fields only).", &operatorOptionHandler!StDevOperator,
                 "mode",               "n[,n...][:STR]  Mode. The most frequent value. (Reads all unique values into memory.)", &operatorOptionHandler!ModeOperator,
-                "mode-count",         "n[,n...][:STR]  Count of the most frequent value. (Reads all unique values into memory.)", &operatorOptionHandler!ModeOperator,
+                "mode-count",         "n[,n...][:STR]  Count of the most frequent value. (Reads all unique values into memory.)", &operatorOptionHandler!ModeCountOperator,
                 "unique-count",       "n[,n...][:STR]  Number of unique values. (Reads all unique values into memory.)", &operatorOptionHandler!UniqueCountOperator,
                 "missing-count",      "n[,n...][:STR]  Number of missing (empty) fields. Not affected by '--x|exclude-missing' or '--r|replace-missing'.", &operatorOptionHandler!MissingCountOperator,
-                "not-missing-count",  "n[,n...][:STR]  Number of filled (non-empty) fields. Not affected by '--r|replace-missing'.", &operatorOptionHandler!MissingCountOperator,
+                "not-missing-count",  "n[,n...][:STR]  Number of filled (non-empty) fields. Not affected by '--r|replace-missing'.", &operatorOptionHandler!NotMissingCountOperator,
                 "values",             "n[,n...][:STR]  All the values, separated by --v|values-delimiter. (Reads all values into memory.)", &operatorOptionHandler!ValuesOperator,
-                "unique-values",      "n[,n...][:STR]  All the unique values, separated by --v|values-delimiter. (Reads all unique values into memory.)", &operatorOptionHandler!ValuesOperator,
+                "unique-values",      "n[,n...][:STR]  All the unique values, separated by --v|values-delimiter. (Reads all unique values into memory.)", &operatorOptionHandler!UniqueValuesOperator,
                 );
 
             if (r.helpWanted)

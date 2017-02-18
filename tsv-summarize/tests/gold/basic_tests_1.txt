@@ -1,6 +1,14 @@
 Basic tests set 1
 -----------------
 
+====[tsv-summarize --header --float-precision 2 --retain 1 --first 1 --last 1 --min 3 --max 3 --range 3 --sum 3 --median 3 --mad 3 --var 3 --stdev 3 --mode 1 --mode-count 1 --values 1 --unique-values 1 input_5field_a.tsv]====
+color	color_first	color_last	length_min	length_max	length_range	length_sum	length_median	length_mad	length_var	length_stdev	color_mode	color_mode_count	color_values	color_unique_values
+red	red	green	7.4	16	8.6	78.4	11	3	9.61	3.1	blue	3	red|red|blue|green|blue|blue|green	red|blue|green
+
+====[tsv-summarize --header --missing-count 1 --not-missing-count 1 input_1field_a.tsv]====
+size_unique_count	size_unique_count
+1	5
+
 ====[tsv-summarize --header --count --min 3,4,5 --max 3,4,5 input_5field_a.tsv]====
 count	length_min	width_min	height_min	length_max	width_max	height_max
 7	7.4	1	2	16	6	7
