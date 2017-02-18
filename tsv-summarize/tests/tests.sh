@@ -30,6 +30,12 @@ basic_tests_1=${odir}/basic_tests_1.txt
 echo "Basic tests set 1" > ${basic_tests_1}
 echo "-----------------" >> ${basic_tests_1}
 
+## One test for each operator. Make sure it is hooked up to the command line args properly
+runtest ${prog} "--header --float-precision 2 --retain 1 --first 1 --last 1 --min 3 --max 3 --range 3 --sum 3 --median 3 --mad 3 --var 3 --stdev 3 --mode 1 --mode-count 1 --values 1 --unique-values 1 input_5field_a.tsv" ${basic_tests_1}
+
+runtest ${prog} "--header --missing-count 1 --not-missing-count 1 input_1field_a.tsv" ${basic_tests_1}
+
+## Functionality tests
 runtest ${prog} "--header --count --min 3,4,5 --max 3,4,5 input_5field_a.tsv" ${basic_tests_1}
 runtest ${prog} "--header --group-by 1 --count --min 3,4,5 --max 3,4,5 input_5field_a.tsv" ${basic_tests_1}
 runtest ${prog} "--header --group-by 1,2 --count --min 3,4,5 --max 3,4,5 input_5field_a.tsv" ${basic_tests_1}
