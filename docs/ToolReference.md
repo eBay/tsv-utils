@@ -236,7 +236,7 @@ chevy  124      124
 bmw    118      122
 ```
 
-Using `--group 1,2` will group by both 'make' and 'color'. Omitting the `--group-by` entirely summarizes fields for full file.
+Using `--group-by 1,2` will group by both 'make' and 'color'. Omitting the `--group-by` entirely summarizes fields for full file.
 
 The program tries to generate useful headers, but custom headers can be specified. Example (using `-g` and `-H` shortcuts for `--header` and `--group-by`):
 ```
@@ -288,7 +288,7 @@ Missing values are not treated specially by default, this can be changed using t
 * `--first n[,n...][:STR]` - First value seen.
 * `--last n[,n...][:STR]`- Last value seen.
 * `--min n[,n...][:STR]` - Min value. (Numeric fields only.)
-* `--max n[,n...][:STR]` - Max value. Numeric fields only.
+* `--max n[,n...][:STR]` - Max value. (Numeric fields only.)
 * `--range n[,n...][:STR]` - Difference between min and max values. (Numeric fields only.)
 * `--sum n[,n...][:STR]` - Sum of the values. (Numeric fields only.)
 * `--mean n[,n...][:STR]` - Mean (average). (Numeric fields only.)
