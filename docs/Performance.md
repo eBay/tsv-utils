@@ -122,15 +122,15 @@ Runs against a 4.5 million line, 279 MB file were used to get a relative compari
 
 | Tool         | Records output | Time (seconds) | Max Memory (kbytes) |
 | ------------ | -------------: | -------------: | ------------------: |
-| tsv-filter   |         513788 |           0.65 |           8,192,000 |
-| number-lines |        4465613 |           0.97 |           6,324,224 |
-| cut (GNU)    |        4465613 |           0.98 |           5,373,952 |
-| tsv-filter   |        4125057 |           1.02 |           8,192,000 |
-| tsv-join     |          65537 |           1.19 |         125,255,680 |
-| tsv-select   |        4465613 |           1.20 |          10,534,912 |
-| tsv-uniq     |          65537 |           1.23 |          95,420,416 |
-| tsv-uniq     |        4465613 |           3.51 |       2,344,206,336 |
-| csv2tsv      |        4465613 |           5.13 |          10,354,688 |
-| tsv-join     |        4465613 |           5.87 |       1,413,578,752 |
+| tsv-filter   |        513,788 |           0.65 |           8,192,000 |
+| number-lines |      4,465,613 |           0.97 |           6,324,224 |
+| cut (GNU)    |      4,465,613 |           0.98 |           5,373,952 |
+| tsv-filter   |      4,125,057 |           1.02 |           8,192,000 |
+| tsv-join     |         65,537 |           1.19 |         125,255,680 |
+| tsv-select   |      44,65,613 |           1.20 |          10,534,912 |
+| tsv-uniq     |         65,537 |           1.23 |          95,420,416 |
+| tsv-uniq     |      4,465,613 |           3.51 |       2,344,206,336 |
+| csv2tsv      |      4,465,613 |           5.13 |          10,354,688 |
+| tsv-join     |      4,465,613 |           5.87 |       1,413,578,752 |
 
 Performance of `tsv-filter` looks especially good, even when outputting a large number of records. It's not far off GNU `cut`. `tsv-join` and `tsv-uniq` are fast, but show an impact when larger hash tables are needed (4.5M entries in the slower cases). `csv2tsv` is a bit slower than the other tools. Investigation indicates this is likely due to the byte-by-byte output style it uses.
