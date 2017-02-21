@@ -1,9 +1,12 @@
 # Performance Benchmarks
 
 Contents:
+* [Summary](#summary)
 * [Comparative Benchmarks](#comparative-benchmarks)
 * [DMD vs LDC](#dmd-vs-ldc)
 * [Relative performance of the tools](#relative-performance-of-the-tools)
+
+## Summary
 
 Performance is a key motivation for writing tools like this in D rather an interpreted language like Python or Perl. It is also a consideration in choosing between D and C/C++.
 
@@ -130,4 +133,4 @@ Runs against a 4.5 million line, 279 MB file were used to get a relative compari
 | csv2tsv      |        4465613 |           5.13 |          10,354,688 |
 | tsv-join     |        4465613 |           5.87 |       1,413,578,752 |
 
-Performance of `tsv-filter` looks especially good, even when outputting a large number of records. It's not far off GNU `cut`. `tsv-join` and `tsv-uniq` are fast, but show an impact when larger hash tables are needed (4.5M entries in the slower cases). `csv2tsv` is a bit slower than the other tools. Investigation indicates this is likely due to the byte-by-bytes output style it uses.
+Performance of `tsv-filter` looks especially good, even when outputting a large number of records. It's not far off GNU `cut`. `tsv-join` and `tsv-uniq` are fast, but show an impact when larger hash tables are needed (4.5M entries in the slower cases). `csv2tsv` is a bit slower than the other tools. Investigation indicates this is likely due to the byte-by-byte output style it uses.
