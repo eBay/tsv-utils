@@ -13,7 +13,7 @@ Information on the D programming language is available at: http://dlang.org/.
 
 **More details:**
 * [Tool reference](docs/ToolReference.md)
-* [Performance](docs/Performance.md)
+* [Performance benchmarks](docs/Performance.md)
 * [About the code](docs/AboutTheCode.md)
 * [Tips and tricks](docs/TipsAndTricks.md)
 
