@@ -1,6 +1,6 @@
 # Performance Benchmarks
 
-Sections:
+Contents:
 * [Comparative Benchmarks](#comparative-benchmarks)
 * [DMD vs LDC](#dmd-vs-ldc)
 * [Relative performance of the tools](#relative-performance-of-the-tools)
@@ -19,7 +19,7 @@ Despite any limitations in the benchmarks, this is certainly a good result. The 
 
 Six different operations were used for benchmarks. Two forms of row filtering: numeric comparisons and regular expression match. Column selection (Unix `cut`). Join two files on a common key. Simple statistical calculations (e.g. mean of column values). Convert CSV files to TSV. These tests were chosen because there were at least two other tools providing similar functionality. Reasonably large files were used in these tests, one 4.8 GB, 7 million rows, the other 2.7 GB, 14 million rows. The author also ran the tests on smaller files, in the 500 MB - 1 GB range, results were consistent with those reported here. The tests were conducted on a MacBook Pro, 2.8 GHz, 16 GB RAM, 4 cores, 500 GB of flash storage. All tools tested were updated to current releases the day the benchmark was performed (Feb 18, 2017). Several of the specialty tool-kits were built from scratch from current source. Compilers used were: LDC 1.1 (D compiler); clang 8.0.0 (C/C++); Rust 1.15.1; Go 1.8. Run-time and maximum memory used was measured using the Linux `time` facility. Each benchmark was run three times and the fastest run recorded.
 
-The specialty tool-kits have been anonymized in the descriptions below, except in the csv-to-tsv test, where two of these tool-kits were the best performers. The purpose of these benchmarks is to measure how well tools written in D performed, not to create a shootout between tool-kits. Tool-kits used are from the set listed under [Other toolkits](../README.md#other-toolkits) in the README file. Python tools were not benchmarked, this would be a useful comparison to add. Tools that run in in-memory environments like R were excluded from the benchmarks.
+The specialty tool-kits have been anonymized in the descriptions below, except in the csv-to-tsv test, where two of these tool-kits were the best performers. (The purpose of these benchmarks is to gauge performance of the D tools, not to make a detailed comparison of tool-kits.) Tool-kits used are from the set listed under [Other toolkits](../README.md#other-toolkits) in the README file. Python tools were not benchmarked, this would be a useful comparison to add. Tools that run in in-memory environments like R were excluded from the benchmarks.
 
 The worst performing tools in these tests were the Unix tools shipped with the Mac (`cut`, etc). It's worth installing the latest GNU coreutils versions if you use command line tools on a Mac. (MacPorts and Homebrew are popular package managers that can install GNU tools.)
 
@@ -100,16 +100,16 @@ This test converted a CSV file to TSV format. The file used was 14 million rows,
 
 ## DMD vs LDC
 
-It is generally understood that the LDC compiler produces faster executables than the DMD compiler. The same benchmarks used used for comparison to LDC and DMD. In this case, DMD version 2.073.1 was compared to LDC 1.1. LDC 1.1 uses an older version of the standard library (Phobos), version 2.071.2.
+It is generally understood that the LDC compiler produces faster executables than the DMD compiler. The same benchmarks used to compare against other tools were used to compare to LDC and DMD. In this case, DMD version 2.073.1 was compared to LDC 1.1. LDC 1.1 uses an older version of the standard library (Phobos), version 2.071.2. LDC was faster on all benchmarks, in some cases up to a 2x delta.
 
 | Test/tool                     | LDC Time (secs) | DMD Time (secs) |
 | ----------------------------- |---------------: | --------------: |
-| Numeric filter (tsv-filter)   |                 |                 |
-| Regex filter (tsv-filter)     |                 |                 |
-| Column select (tsv-select)    |                 |                 |
-| Join files (tsv-join)         |                 |                 |
-| Stats summary (tsv-summarize) |                 |                 |
-| CSV-to-TSV (csv2tsv)          |                 |                 |
+| Numeric filter (tsv-filter)   |            4.31 |            5.54 |
+| Regex filter (tsv-filter)     |            7.14 |           11.33 |
+| Column select (tsv-select)    |            4.06 |            9.46 |
+| Join files (tsv-join)         |           20.56 |           40.97 |
+| Stats summary (tsv-summarize) |           15.77 |           18.25 |
+| CSV-to-TSV (csv2tsv)          |           53.27 |           64.91 |
 
 ## Relative performance of the tools
 
