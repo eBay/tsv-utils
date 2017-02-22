@@ -9,13 +9,13 @@
 
 Performance is a key motivation for writing tools like this in D rather an interpreted language like Python or Perl. It is also a consideration in choosing between D and C/C++.
 
-As a way to gauge D's performance, benchmarks were run using `tsv-utils-dlang` tools and a number of other native language tools providing similar functionality. Included were traditional Unix tools as well as several more specialized toolkits. Programming languages involved were C, Go, and Rust.
+To gauge D's performance, benchmarks were run using these tools and a number of similar tools written in natively compiled programming languages. Included were traditional Unix tools as well as several more specialized toolkits. Programming languages involved were C, Go, and Rust.
 
-The D programs performed extremely well on these benchmarks, exceeding the author's expectations. They were the fastest on five of the six benchmarks run, by often by significant margins. This is impressive given that very little low-level programming was done. High level language constructs were used throughout, including the simplest forms of file I/O (no manual buffer management), GC (no manual memory management), built-in associative arrays and other facilities from the standard library, liberal used of functional programming constructs, etc. Performance tuning was done to identify poorly performing constructs, and templates were used in several places to improve performance, but nothing extensive. See [Coding philosophy](AboutTheCode.md#coding-philosophy) for the rationale behind these choices.
+The D programs performed extremely well on these benchmarks, exceeding the author's expectations. They were the fastest on five of the six benchmarks run, by often by significant margins. This is impressive given that very little low-level programming was done. High level language constructs were used throughout, including the simplest forms of file I/O (no manual buffer management), GC (no manual memory management), built-in associative arrays and other facilities from the standard library, liberal use of functional programming constructs, etc. Performance tuning was done to identify poorly performing constructs, and templates were used in several places to improve performance, but nothing extensive. See [Coding philosophy](AboutTheCode.md#coding-philosophy) for the rationale behind these choices.
 
-As with most benchmarks, there are important caveats. The tools tested are not exact equivalents, and in many cases have different design goals and capabilities likely to impact performance. Tasks performed are highly I/O dependent and follow similar computational patterns, so the results may not transfer to other applications.
+As with most benchmarks, there are important caveats. The tools used for comparison are not exact equivalents, and in many cases have different design goals and capabilities likely to impact performance. Tasks performed are highly I/O dependent and follow similar computational patterns, so the results may not transfer to other applications.
 
-Despite limitations in the benchmarks, this is certainly a good result. The different benchmarks engage a fair range of programming constructs, and the comparison basis includes nine distinct implementations and several long tenured Unix tools. As a practical matter, performance of the tools has changed the author's personal work habits, as calculations that used to take 15-20 seconds are now instantaneous, and calculations that took minutes often finish in 10 seconds or so.
+Despite limitations of the benchmarks, this is certainly a good result. The benchmarks engage a fair range of programming constructs, and the comparison basis includes nine distinct implementations and several long tenured Unix tools. As a practical matter, performance of the tools has changed the author's personal work habits, as calculations that used to take 15-20 seconds are now instantaneous, and calculations that took minutes often finish in 10 seconds or so.
 
 ## Comparative benchmarks
 
@@ -43,7 +43,7 @@ _Version info: GNU awk: GNU coreutils 8.26; mawk 1.3.4; OS X awk 20070501._
 
 ### Regular expression filter benchmark
 
-This operation filters rows from a TSV file based on a regular comparison against a field. The regular expression used was '[RD].*(ION[0-2])', it matched against a text field. The input file was 14 million rows, 49 columns, 2.7 GB. The filter matched 150K rows. Other regular expressions were tried, results were similar.
+This operation filters rows from a TSV file based on a regular comparison against a field. The regular expression used was '[RD].*(ION[0-2])', it was matched against a text field. The input file was 14 million rows, 49 columns, 2.7 GB. The filter matched 150K rows. Other regular expressions were tried, results were similar.
 
 | Tool                  | Time (seconds) |
 | --------------------- | -------------: |
@@ -105,7 +105,7 @@ This test converted a CSV file to TSV format. The file used was 14 million rows,
 | Tool        | Time (seconds) |
 | ----------- |--------------: |
 | csvtk       |          37.01 |
-| Toolkit 2   |          40.18 |
+| Toolkit 1   |          40.18 |
 | **csv2tsv** |          53.27 |
 
 ## DMD vs LDC
@@ -138,4 +138,4 @@ Runs against a 4.5 million line, 279 MB file were used to get a relative compari
 | csv2tsv      |      4,465,613 |           5.13 |
 | tsv-join     |      4,465,613 |           5.87 |
 
-Performance of `tsv-filter` looks especially good. Even when outputting a large number of records it is not far off GNU `cut`. Unlike the larger file tests, GNU `cut` is faster than `tsv-select`. This suggests GNU `cut` may have superior buffer management strategies when smaller files. `tsv-join` and `tsv-uniq` are fast, but show an impact when larger hash tables are needed (4.5M entries in the slower cases). `csv2tsv` is decidely slower than the other tools given the work it is doing. Investigation indicates this is likely due to the byte-at-at-time output style it uses.
+Performance of `tsv-filter` looks especially good. Even when outputting a large number of records it is not far off GNU `cut`. Unlike the larger file tests, GNU `cut` is faster than `tsv-select` on this metric. This suggests GNU `cut` may have superior buffer management strategies when operating on smaller files. `tsv-join` and `tsv-uniq` are fast, but show an impact when larger hash tables are needed (4.5M entries in the slower cases). `csv2tsv` is decidely slower than the other tools given the work it is doing. Investigation indicates this is likely due to the byte-at-at-time output style it uses.
