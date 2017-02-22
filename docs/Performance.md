@@ -9,7 +9,7 @@
 
 Performance is a key motivation for writing tools like this in D rather an interpreted language like Python or Perl. It is also a consideration in choosing between D and C/C++.
 
-To gauge D's performance, benchmarks were run using these tools and a number of similar tools written in natively compiled programming languages. Included were traditional Unix tools as well as several more specialized toolkits. Programming languages involved were C, Go, and Rust.
+To gauge D's performance, benchmarks were run using these tools and a number of similar tools written in native compiled programming languages. Included were traditional Unix tools as well as several specialized toolkits. Programming languages involved were C, Go, and Rust.
 
 The D programs performed extremely well on these benchmarks, exceeding the author's expectations. They were the fastest on five of the six benchmarks run, by often by significant margins. This is impressive given that very little low-level programming was done. High level language constructs were used throughout, including the simplest forms of file I/O (no manual buffer management), GC (no manual memory management), built-in associative arrays and other facilities from the standard library, liberal use of functional programming constructs, etc. Performance tuning was done to identify poorly performing constructs, and templates were used in several places to improve performance, but nothing extensive. See [Coding philosophy](AboutTheCode.md#coding-philosophy) for the rationale behind these choices.
 
