@@ -1,90 +1,141 @@
-# Performance
+# Performance Benchmarks
+
+* [Summary](#summary)
+* [Comparative Benchmarks](#comparative-benchmarks)
+* [DMD vs LDC](#dmd-vs-ldc)
+* [Relative performance of the tools](#relative-performance-of-the-tools)
+
+## Summary
 
 Performance is a key motivation for writing tools like this in D rather an interpreted language like Python or Perl. It is also a consideration in choosing between D and C/C++.
 
-The tools created don't by themselves enable proper benchmark comparison. Equivalent tools written in the other languages would be needed for that. Still, there were a couple benchmarks that could be done to get a high level view of performance. These are given in this section.
+To gauge D's performance, benchmarks were run using these tools and a number of similar tools written in native compiled programming languages. Included were traditional Unix tools as well as several specialized toolkits. Programming languages involved were C, Go, and Rust.
 
-Overall the D programs did well. Not as fast as a highly optimized C/C++ program, but meaningfully better than Python and Perl. Perl in particular fared quite poorly in these comparisons.
+The D programs performed extremely well on these benchmarks, exceeding the author's expectations. They were the fastest on five of the six benchmarks run, by often by significant margins. This is impressive given that very little low-level programming was done. High level language constructs were used throughout, including the simplest forms of file I/O (no manual buffer management), GC (no manual memory management), built-in associative arrays and other facilities from the standard library, liberal use of functional programming constructs, etc. Performance tuning was done to identify poorly performing constructs, and templates were used in several places to improve performance, but nothing extensive. See [Coding philosophy](AboutTheCode.md#coding-philosophy) for the rationale behind these choices.
 
-Perhaps the most surprising result is the poor performance of the utilities shipped with the Mac (`cut`, etc). It's worth installing the latest GNU coreutils versions if you are running on a Mac. (MacPorts and Homebrew are popular package managers that can install GNU tools.)
+As with most benchmarks, there are important caveats. The tools used for comparison are not exact equivalents, and in many cases have different design goals and capabilities likely to impact performance. Tasks performed are highly I/O dependent and follow similar computational patterns, so the results may not transfer to other applications.
 
-## tsv-select performance
+Despite limitations of the benchmarks, this is certainly a good result. The benchmarks engage a fair range of programming constructs, and the comparison basis includes nine distinct implementations and several long tenured Unix tools. As a practical matter, performance of the tools has changed the author's personal work habits, as calculations that used to take 15-20 seconds are now instantaneous, and calculations that took minutes often finish in 10 seconds or so.
 
-`tsv-select` is a variation on Unix `cut`, so `cut` is a reasonable comparison. Another popular option for this task is `awk`, which can be used to reorder fields. Simple versions of `cut` can be written easily in Python and Perl, which is what was done for these tests. (Code is in the `benchmarks` directory.) Timings were run on both a Macbook Pro (2.8 GHz Intel I7, 16GB ram, flash storage) and a Linux server (Ubuntu, Intel Xeon, 6 cores). They were run against a 2.5GB TSV file with 78 million lines, 11 fields per line. Most fields contained numeric data. These runs use `cut -f 1,4,7` or the equivalent. Each program was run several times and the best time recorded.
+## Comparative benchmarks
 
-**Macbook Pro (2.8 GHz Intel I7, 16GB ram, flash storage); File: 78M lines, 11 fields, 2.5GB**:
+Six different tasks were used as benchmarks. Two forms of row filtering: numeric comparisons and regular expression match. Column selection (aka 'cut'). Join two files on a common key. Simple statistical calculations (e.g. mean of column values). Convert CSV files to TSV. For each there are at least two other tools providing the same functionality. Reasonably large files were used, one 4.8 GB, 7 million rows, the other 2.7 GB, 14 million rows. Smaller files were also tested, in the 500 MB - 1 GB range. Those results are not reported, but were consistent with the larger file results given below.
 
-| Tool                   | version        | time (seconds) |
-| ---------------------- |--------------- | -------------: |
-| cut (GNU)              | 8.25           |           17.4 |
-| tsv-select (D)         | ldc 1.0        |           31.4 |
-| mawk (M. Brennan Awk)  | 1.3.4 20150503 |           51.1 |
-| cut (Mac built-in)     |                |           81.8 |
-| gawk (GNU awk)         | 4.1.3          |           97.4 |
-| python                 | 2.7.10         |          144.1 |
-| perl                   | 5.22.1         |          231.3 |
-| awk (Mac built-in)     | 20070501       |          247.3 |
+Tests were conducted on a MacBook Pro, 2.8 GHz, 16 GB RAM, 4 cores, 500 GB of flash storage. All tools were updated to current releases the day the benchmarks were run (Feb 18, 2017). Several of the specialty toolkits were built from current source code. Compilers used were: LDC 1.1 (D compiler, Phobos 2.071.2); clang 8.0.0 (C/C++); Rust 1.15.1; Go 1.8. Run-time was measured using the `time` facility. Each benchmark was run three times and the fastest run recorded.
 
-**Linux server (Ubuntu, Intel Xeon, 6 cores); File: 78M lines, 11 fields, 2.5GB**:
+The specialty toolkits have been anonymized in the tables below. The purpose of these benchmarks is to gauge performance of the D tools, not make comparisons between other toolkits. The exception is the csv-to-tsv test, where the fastest toolkit is named. Toolkits used are from the set listed under [Other toolkits](../README.md#other-toolkits) in the README. Python tools were not benchmarked, this would be a useful addition. Tools that run in in-memory environments like R were excluded.
 
-| Tool                   | version        | time (seconds) |
-| ---------------------- | -------------- | -------------: |
-| cut (GNU)              | 8.25           |           19.8 |
-| tsv-select (D)         | ldc 1.0        |           29.7 |
-| mawk (M. Brennan Awk)  | 1.3.3 Nov 1996 |           51.3 |
-| gawk (GNU awk)         | 3.1.8          |          128.1 |
-| python                 | 2.7.3          |          179.4 |
-| perl                   | 5.14.2         |          665.0 |
+The worst performers were the Unix tools shipped with the Mac (`cut`, etc). It's worth installing the GNU coreutils package if you use command line tools on the Mac. (MacPorts and Homebrew can install these tools.)
 
-GNU `cut` is best viewed as baseline for a well optimized program, rather than a C/C++ vs D comparison point. D's performance for this tool seems quite reasonable. The D version also handily beat the version of `cut` shipped with the Mac, also a C program, but clearly not as well optimized. 
+### Numeric filter benchmark
 
-## tsv-filter performance
+This operation filters rows from a TSV file based on a numeric comparison (less than, greater than, etc) of two fields in a line. A 7 million line, 29 column, 4.8 GB numeric data file was used. The filter matched 1.2 million lines.
 
-`tsv-filter` can be compared to Awk, and the author already had a perl version of tsv-filter. These measurements were run against four Google ngram files. 256 million lines, 4 fields, 5GB. Same compute boxes as for the tsv-select tests. The tsv-filter and awk/gawk/mawk invocations:
+| Tool                  | Time (seconds) |
+| --------------------- | -------------: |
+| **tsv-filter**        |           4.31 |
+| mawk (M. Brennan Awk) |          11.66 |
+| GNU awk               |          21.80 |
+| Toolkit 1             |          52.92 |
+| awk (Mac built-in)    |         284.96 |
 
-```
-$ cat <ngram-files> | tsv-filter --ge 4:50 > /dev/null
-$ cat <ngram-files> | awk  -F'\t' '{ if ($4 >= 50) print $0 }' > /dev/null
-```
+_Version info: GNU awk: GNU coreutils 8.26; mawk 1.3.4; OS X awk 20070501._
 
-Each line in the file has statistics for an ngram in a single year. The above commands return all lines where the ngram-year pair occurs in more than 50 books.
+### Regular expression filter benchmark
 
-**Macbook Pro (2.8 GHz Intel I7, 16GB ram, flash storage); File: 256M lines, 4 fields, 4GB**:
+This operation filters rows from a TSV file based on a regular comparison against a field. The regular expression used was '[RD].*(ION[0-2])', it was matched against a text field. The input file was 14 million rows, 49 columns, 2.7 GB. The filter matched 150K rows. Other regular expressions were tried, results were similar.
 
-| Tool                   | version        | time (seconds) |
-| ---------------------- | -------------- | -------------: |
-| tsv-filter (D)         | ldc 1.0        |           33.5 |
-| mawk (M. Brennan Awk)  | 1.3.4 20150503 |           52.0 |
-| gawk (GNU awk)         | 4.1.3          |          103.4 |
-| awk (Mac built-in)     | 20070501       |          314.2 |
-| tsv-filter (Perl)      |                |         1075.6 |
+| Tool                  | Time (seconds) |
+| --------------------- | -------------: |
+| **tsv-filter**        |           7.14 |
+| GNU awk               |          15.29 |
+| mawk (M. Brennan Awk) |          16.45 |
+| Toolkit 1             |          28.46 |
+| Toolkit 2             |          41.86 |
+| awk (Mac built-in)    |         113.05 |
+| Toolkit 3             |         123.22 |
 
-**Linux server (Ubuntu, Intel Xeon, 6 cores); File: 256M lines, 4 fields, 4GB**:
+### Column selection benchmark
 
-| Tool                    | version        | time (seconds) |
-| ----------------------- | -------------- | -------------: |
-| tsv-filter (D)          | ldc 1.0        |           34.2 |
-| mawk  (M. Brennan Awk)  | 1.3.3 Nov 1996 |           72.9 |
-| gawk (GNU awk)          | 3.1.8          |          215.4 |
-| tsv-filter (Perl)       | 5.14.2         |         1255.2 |
+This is the traditional Unix `cut` operation. Surprisingly, the `cut` implementations were not the fastest. The test selected fields 1, 8, 19 from a 7 million line, 29 column, 4.8 GB numeric data file.
+
+| Tool                  | Time (seconds) |
+| --------------------- |--------------: |
+| **tsv-select**        |           4.06 |
+| mawk (M. Brennan Awk) |           9.12 |
+| GNU cut               |          12.22 |
+| Toolkit 1             |          19.05 |
+| GNU awk               |          32.94 |
+| Toolkit 2             |          36.44 |
+| Toolkit 3             |          46.06 |
+| cut (Mac built-in)    |          77.79 |
+| awk (Mac built-in)    |         286.29 |
+
+_Version info: GNU cut: GNU coreutils 8.26_
+
+_Note: GNU cut is faster than tsv-select on small files, e.g. 250 MB. See [Relative performance of the tools](#relative-performance-of-the-tools) for an example._
+
+### Join two files
+
+This test was done taking a 7 million line, 29 column numeric data file, splitting it into two files, one containing columns 1-15, the second columns 16-29. Each line contained a unique row key shared by both files. The rows of each file were randomized. The join task reassembles the original file based on the shared row key. The original file is 4.8 GB, each half is 2.4 GB.
+
+| Tool         | Time (seconds) |
+| ------------ |--------------: |
+| **tsv-join** |          20.56 |
+| Toolkit 1    |         111.55 |
+| Toolkit 2    |         192.90 |
+| Toolkit 3    |         244.02 |
+
+### Summary statistics
+
+This test generates a set of summary statistics from the columns in a TSV file. The specific calculations were based on summary statistics available in the different available tools that had high overlap. The sets were not identical, but were close enough for rough comparison. Roughly, the count, sum, min, max, mean, and standard deviation of three fields from a 7 million row, 4.8 GB data file.
+
+| Tool              | Time (seconds) |
+| ------------------|--------------: |
+| **tsv-summarize** |          15.77 |
+| Toolkit 1         |          39.90 |
+| Toolkit 2         |          47.87 |
+| Toolkit 3         |          62.88 |
+| Toolkit 4         |          67.44 |
+
+### CSV to TSV conversion
+
+This test converted a CSV file to TSV format. The file used was 14 million rows, 49 columns, 2.7 GB. This is the one benchmark where the D tools were outperformed by other tools.
+
+| Tool        | Time (seconds) |
+| ----------- |--------------: |
+| csvtk       |          37.01 |
+| Toolkit 1   |          40.18 |
+| **csv2tsv** |          53.27 |
+
+## DMD vs LDC
+
+It is understood that the LDC compiler produces faster executables than the DMD compiler. But how much faster? To get some data, the set of benchmarks described above was used to compare to LDC and DMD. In this case, DMD version 2.073.1 was compared to LDC 1.1. LDC 1.1 uses an older version of the standard library (Phobos), version 2.071.2. LDC was faster on all benchmarks, in some cases up to a 2x delta.
+
+| Test/tool                     | LDC Time (seconds) | DMD Time (seconds) |
+| ----------------------------- |------------------: | -----------------: |
+| Numeric filter (tsv-filter)   |               4.31 |               5.54 |
+| Regex filter (tsv-filter)     |               7.14 |              11.33 |
+| Column select (tsv-select)    |               4.06 |               9.46 |
+| Join files (tsv-join)         |              20.56 |              40.97 |
+| Stats summary (tsv-summarize) |              15.77 |              18.25 |
+| CSV-to-TSV (csv2tsv)          |              53.27 |              64.91 |
 
 ## Relative performance of the tools
 
-Runs against a 4.5 million line, 279 MB file were used to get a relative comparison of the tools. The original file was a CSV file, allowing inclusion of `csv2tsv`. The TSV file generated was used in the other runs. Running time of routines filtering data is dependent on the amount output, so a different output sizes were used. `tsv-join` depends on the size of the filter file, a file the same size as the output was used in these tests. Performance of these tools also depends on the options selected, so actuals will vary.
-
-**Macbook Pro (2.8 GHz Intel I7, 16GB ram, flash storage); File: 4.46M lines, 8 fields, 279MB**:
+Runs against a 4.5 million line, 279 MB file were used to get a relative comparison of the tools. The original file was a CSV file, allowing inclusion of `csv2tsv`. The TSV file generated was used in the other runs. Execution time when filtering data is highly dependent on the amount of output, so different output sizes were tried. `tsv-join` depends on the size of the filter file, a file the same size as the output was used in these tests. Performance also depends on the specific command line options selected, so actuals will vary.
 
 | Tool         | Records output | Time (seconds) |
-| ------------ | -------------: |--------------: |
-| tsv-filter   |         513788 |           0.76 |
-| cut (GNU)    |        4465613 |           1.16 |
-| number-lines |        4465613 |           1.21 |
-| tsv-filter   |        4125057 |           1.25 |
-| tsv-uniq     |          65537 |           1.56 |
-| tsv-join     |          65537 |           1.61 |
-| tsv-select   |        4465613 |           1.81 |
-| tsv-uniq     |        4465613 |           4.34 |
-| csv2tsv      |        4465613 |           6.49 |
-| tsv-join     |        4465613 |           7.51 |
+| ------------ | -------------: | -------------: |
+| tsv-filter   |        513,788 |           0.65 |
+| number-lines |      4,465,613 |           0.97 |
+| cut (GNU)    |      4,465,613 |           0.98 |
+| tsv-filter   |      4,125,057 |           1.02 |
+| tsv-join     |         65,537 |           1.19 |
+| tsv-select   |      4,465,613 |           1.20 |
+| tsv-uniq     |         65,537 |           1.23 |
+| tsv-uniq     |      4,465,613 |           3.51 |
+| csv2tsv      |      4,465,613 |           5.13 |
+| tsv-join     |      4,465,613 |           5.87 |
 
-Performance of `tsv-filter` looks especially good, even when outputting a large number of records. It's not far off GNU `cut`. `tsv-join` and `tsv-uniq` are fast, but show an impact when larger hash tables are needed (4.5M entries in the slower cases). `csv2tsv` is a bit slower than the other tools for reasons that are not clear. It uses mechanisms not used in the other tools.
+Performance of `tsv-filter` looks especially good. Even when outputting a large number of records it is not far off GNU `cut`. Unlike the larger file tests, GNU `cut` is faster than `tsv-select` on this metric. This suggests GNU `cut` may have superior buffer management strategies when operating on smaller files. `tsv-join` and `tsv-uniq` are fast, but show an impact when larger hash tables are needed (4.5M entries in the slower cases). `csv2tsv` is decidely slower than the other tools given the work it is doing. Investigation indicates this is likely due to the byte-at-at-time output style it uses.

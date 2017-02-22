@@ -13,7 +13,7 @@ Information on the D programming language is available at: http://dlang.org/.
 
 **More details:**
 * [Tool reference](docs/ToolReference.md)
-* [Performance](docs/Performance.md)
+* [Performance benchmarks](docs/Performance.md)
 * [About the code](docs/AboutTheCode.md)
 * [Tips and tricks](docs/TipsAndTricks.md)
 
@@ -21,7 +21,7 @@ Please file an issue if you have problems or questions.
 
 ## Tools overview
 
-These tools were developed for working with reasonably large data files. Larger than ideal for loading entirely in memory in an application like R, but not so big as to necessitate moving to Hadoop or similar distributed compute environments. They work like traditional Unix command line utilities such as `cut`, `sort`, `grep`, etc., and are intended to complement these tools. Each tool is a standalone executable. They follow common Unix conventions for pipeline programs. Data is read from files or standard input, results are written to standard output. The field separator defaults to TAB, but any character can be used. Input and output is UTF-8, and all operations are Unicode ready, including regular expression match (`tsv-filter`). Documentation is available for each tool by invoking it with the `--help` option. If reading the code, look for the `helpText` variable near the top of the file.
+These tools were developed for working with reasonably large data files. Larger than ideal for loading entirely in memory in an application like R, but not so big as to necessitate moving to Hadoop or similar distributed compute environments. They work like traditional Unix command line utilities such as `cut`, `sort`, `grep`, etc., and are intended to complement these tools. Each tool is a standalone executable. They follow common Unix conventions for pipeline programs. Data is read from files or standard input, results are written to standard output. The field separator defaults to TAB, but any character can be used. Input and output is UTF-8, and all operations are Unicode ready, including regular expression match (`tsv-filter`). Documentation is available for each tool by invoking it with the `--help` option. Speed matters when processing large files. Check out [Performance benchmarks](docs/Performance.md) to see how these tools measure up.
 
 The rest of this section contains a short description of each tool. There is more detail in the [tool reference](docs/ToolReference.md).
 
