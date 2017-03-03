@@ -233,6 +233,29 @@ void csv2tsv(InputRange, OutputRange)
     if (isInputRange!InputRange && isOutputRange!(OutputRange, char) &&
         is(Unqual!(ElementType!InputRange) == ubyte))
 {
+    /* Writes are buffered to avoid byte-at-a-time output penalty. Writes are done on
+     * newline boundaries. This ensures valid utf-8 character sequences are written.
+     * Note: In Phobos version 2.073 and earlier it is important to do output with char
+     * rather than ubyte. See issue 17229 (https://issues.dlang.org/show_bug.cgi?id=17229).
+     */
+    auto outputBuffer = appender!(char[])();
+    outputBuffer.reserve(8192);
+
+    void outputChar(const char c)
+    {
+        put(outputBuffer, c);
+        if (c == '\n')
+        {
+            put(outputStream, outputBuffer.data);
+            outputBuffer.clear;
+        }
+    }
+
+    void outputString(string s)
+    {
+        put(outputBuffer, s);
+    }
+
     enum State { FieldEnd, NonQuotedField, QuotedField, QuoteInQuotedField }
 
     State currState = State.FieldEnd;
@@ -266,12 +289,12 @@ InputLoop: while (!inputStream.empty)
             
         case State.NonQuotedField:
             if (nextChar == csvDelim) {
-                put(outputStream, tsvDelim); 
+                outputChar(tsvDelim); 
                 currState = State.FieldEnd;
             } else if (nextChar == tsvDelim) {
-                put(outputStream, tsvDelimReplacement); 
+                outputString(tsvDelimReplacement); 
             } else if (nextChar == '\n') {
-                put(outputStream, '\n');
+                outputChar('\n');
                 ++recordNum;
                 fieldNum = 0;
                 currState = State.FieldEnd;
@@ -279,7 +302,7 @@ InputLoop: while (!inputStream.empty)
                     break InputLoop;
                 }
             } else {
-                put(outputStream, nextChar);
+                outputChar(nextChar);
             }
             break;
 
@@ -298,24 +321,24 @@ InputLoop: while (!inputStream.empty)
             }
             else if (nextChar ==  '\n') {
                 /* Newline in a quoted field. */
-                put(outputStream, tsvDelimReplacement); 
+                outputString(tsvDelimReplacement); 
             } else if (nextChar == tsvDelim) {
-                put(outputStream, tsvDelimReplacement); 
+                outputString(tsvDelimReplacement); 
             } else {
-                put(outputStream, nextChar);
+                outputChar(nextChar);
             }
             break;
 
         case State.QuoteInQuotedField:
             /* Just processed a quote in a quoted field. */
             if (nextChar == csvQuote) {
-                put(outputStream, csvQuote);
+                outputChar(csvQuote);
                 currState = State.QuotedField;
             } else if (nextChar == csvDelim) {
-                put(outputStream, tsvDelim);
+                outputChar(tsvDelim);
                 currState = State.FieldEnd;
             } else if (nextChar == '\n') {
-                put(outputStream, '\n');
+                outputChar('\n');
                 ++recordNum;
                 fieldNum = 0;
                 currState = State.FieldEnd;
@@ -339,8 +362,9 @@ InputLoop: while (!inputStream.empty)
                    currFileLineNumber + recordNum));
     }
     if (fieldNum > 0) {
-        put(outputStream, '\n');
+        outputChar('\n');
     }
+    assert(outputBuffer.data.length == 0);
 }
 
 unittest {
