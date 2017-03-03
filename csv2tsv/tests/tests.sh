@@ -34,6 +34,7 @@ runtest ${prog} "-q # -c | -t @ -r <--> input2.csv" ${basic_tests_1}
 runtest ${prog} "header1.csv header2.csv header3.csv header4.csv header5.csv" ${basic_tests_1}
 runtest ${prog} "--header header1.csv header2.csv header3.csv header4.csv header5.csv" ${basic_tests_1}
 runtest ${prog} "-H header1.csv header2.csv header3.csv header4.csv header5.csv" ${basic_tests_1}
+runtest ${prog} "input_unicode.csv" ${basic_tests_1}
 
 echo "" >> ${basic_tests_1}; echo "====[cat header3.csv | csv2tsv --header -- header1.csv header2.csv - header4.csv header5.csv]====" >> ${basic_tests_1}
 cat header3.csv | ${prog} --header -- header1.csv header2.csv - header4.csv header5.csv >> ${basic_tests_1} 2>&1
