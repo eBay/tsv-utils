@@ -23,9 +23,28 @@ Six tasks were used as benchmarks. Two forms of row filtering: numeric compariso
 
 Tests were conducted on a MacBook Pro, 16 GB RAM, 4 cores, and flash storage. All tools were updated to current versions, and several of the specialty toolkits were built from current source code. Run-time was measured using the `time` facility. Each benchmark was run three times and the fastest run recorded.
 
-The specialty toolkits are anonymized in the tables below. The purpose of these benchmarks is to gauge performance of the D tools, not make comparisons between other toolkits. (The exception is the csv-to-tsv benchmark. Each tool has had the best time in a prior version of this report and was therefored identified.) Links and info for these toolkits can be found in [Other toolkits](../README.md#other-toolkits) in the README. Python tools were not benchmarked, this would be a useful addition. Tools that run in in-memory environments like R were excluded.
+The specialty toolkits are anonymized in the tables below. The purpose of these benchmarks is to gauge performance of the D tools, not make comparisons between other toolkits. (The exception is the csv-to-tsv benchmark. Each tool has had the best time in a prior version of this report and was therefore identified.) Links and info for these toolkits can be found in [Other toolkits](../README.md#other-toolkits) in the README. Python tools were not benchmarked, this would be a useful addition. Tools that run in in-memory environments like R were excluded.
 
 The worst performers were the Unix tools shipped with the Mac (`cut`, etc). It's worth installing the GNU coreutils package if you use command line tools on the Mac. (MacPorts and Homebrew can install these tools.)
+
+### Summary: Top 3 in each benchmark
+
+The fastest three in each benchmark. Times in seconds. Complete results in the succeeding sections.
+
+| Benchmark             |   Tool/Time (sec) | Tool/Time | Tool/Time |
+| --------------------- | ----------------: | --------: | --------: |
+| Numeric row filter    |    **tsv-filter** |      mawk |   GNU awk |
+| _(4.8 GB, 7M lines)_  |              4.34 |     11.71 |     22.02 |
+| Regex row filter      |    **tsv-filter** |   GNU awk |      mawk |
+| _(2.7 GB, 14M lines)_ |              7.11 |     15.41 |     16.58 |
+| Column selection      |    **tsv-select** |      mawk |   GNU cut |
+| _(4.8 GB, 7M lines)_  |              4.09 |      9.38 |     12.27 |
+| Join two files        |      **tsv-join** | Toolkit 1 | Toolkit 2 |
+| _(4.8 GB, 7M lines)_  |             20.78 |    104.06 |    194.80 |
+| Summary statistics    | **tsv-summarize** | Toolkit 1 | Toolkit 2 |
+| _(4.8 GB, 7M lines)_  |             15.83 |     40.27 |     48.10 |
+| CSV-to-TSV            |       **csv2tsv** |     csvtk |       xsv |
+| _(2.7 GB, 14M lines)_ |             27.41 |     36.26 |     40.40 |
 
 ### Numeric filter benchmark
 
@@ -96,7 +115,7 @@ This test generates a set of summary statistics from the columns in a TSV file. 
 
 ### CSV to TSV conversion
 
-This test converted a CSV file to TSV format. The file used was 14 million rows, 49 columns, 2.7 GB. This is the most competitive of the benchmarks, each of the tools having been the fastest in a previous version of this report. The D tool, `csv2tsv`, was third fastest until buffered writes were used in version v1.1.1.
+This test converted a CSV file to TSV format. The file used was 14 million rows, 49 columns, 2.7 GB. This is the most competitive of the benchmarks, each of the tools having been the fastest in a previous version of this report. The D tool, `csv2tsv`, was third fastest until buffered writes were used in version 1.1.1.
 
 | Tool        | Time (seconds) |
 | ----------- |--------------: |
@@ -108,7 +127,7 @@ This test converted a CSV file to TSV format. The file used was 14 million rows,
 
 * Machine: MacBook Pro, 2.8 GHz, 16 GB RAM, 4 cores, 500 GB flash storage, OS X Sierra.
 * Test files: The 7 million line, 4.8 GB file is the HEPMASS training set from the UCI Machine Learning repository, available [here](http://archive.ics.uci.edu/ml/datasets/HEPMASS). The 2.7 GB, 14 million row file is from the Forest Inventory and Analysis Database, U.S. Department of Agriculture. The first 14 million lines from the TREE.csv file, available [here](https://apps.fs.usda.gov/fia/datamart/CSV/datamart_csv.html).
-* Tools: Latest versions available as of 3/3/2017. Several built from latest source. Versions: tsv-utils-dlang v1.1.1; GNU cut (GNU coreutils) 8.26; GNU Awk 4.1.4; mawk 1.3.4 (Michael Brennan awk); OS X awk 20070501; Miller (mlr) 5.0.0; csvtk v0.5.0; xsv 0.10.3; GNU datamash 1.1.1.
+* Tools: Latest versions available as of 3/3/2017. Several built from latest source. Versions: tsv-utils-dlang 1.1.1; GNU cut (GNU coreutils) 8.26; GNU Awk 4.1.4; mawk 1.3.4 (Michael Brennan awk); OS X awk 20070501; Miller (mlr) 5.0.0; csvtk v0.5.0; xsv 0.10.3; GNU datamash 1.1.1.
 * Compilers: LDC 1.1 (D compiler, Phobos 2.071.2); Apple clang 8.0.0 (C/C++); Rust 1.15.1; Go 1.8.
 
 ## DMD vs LDC
@@ -141,4 +160,4 @@ Runs against a 4.5 million line, 279 MB file were used to get a relative compari
 | tsv-uniq     |      4,465,613 |           3.52 |
 | tsv-join     |      4,465,613 |           5.86 |
 
-Performance of `tsv-filter` looks especially good. Even when outputting a large number of records it is not far off GNU `cut`. Unlike the larger file tests, GNU `cut` is faster than `tsv-select` on this metric. This suggests GNU `cut` may have superior buffer management strategies when operating on smaller files. `tsv-join` and `tsv-uniq` are fast, but show an impact when larger hash tables are needed (4.5M entries in the slower cases). `csv2tsv` is faster in the latest release, but is still slower than the other tools given the work it is doing.
+Performance of `tsv-filter` looks especially good. Even when outputting a large number of records it is not far off GNU `cut`. Unlike the larger file tests, GNU `cut` is faster than `tsv-select` on this metric. This suggests GNU `cut` may have superior buffer management strategies when operating on smaller files. `tsv-join` and `tsv-uniq` are fast, but show an impact when larger hash tables are needed (4.5M entries in the slower cases). `csv2tsv` has improved significantly in the latest release, but is still slower than the other tools given the work it is doing.
