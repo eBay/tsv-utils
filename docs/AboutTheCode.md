@@ -42,9 +42,10 @@ These tools were implemented with these trade-offs in mind. The code was deliber
 
 A useful aspect of D is that is additional optimization can be made as the need arises. Coding of these tools did utilize a several optimizations that might not have been done in an initial effort. These include:
 
-* The helper class in the `common` directory. This is an optimization for processing only the first N fields needed to for the particular invocation of the tool.
-* The template expansion done in `tsv-select`.
+* The `InputFieldReordering` class in the `common` directory. This is an optimization for processing only the first N fields needed for the individual command invocation. This is used by several tools. 
+* The template expansion done in `tsv-select`. This eliminates the number of if-tests in the inner loop.
 * Reusing arrays every input line, without re-allocating. Some programmers would do this naturally on the first attempt, for others it would be a second pass optimization.
+* The output buffering done in `csv2tsv`. The algorithm used naturally generates a single byte at a time, but writing a byte-at-a-time incurs a costly system call. Buffering the writes sped the program up signficantly.
 
 ## Building and makefile
 
