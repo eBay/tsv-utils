@@ -234,7 +234,8 @@ void csv2tsv(InputRange, OutputRange)
         is(Unqual!(ElementType!InputRange) == ubyte))
 {
     /* Writes are buffered to avoid byte-at-a-time output penalty. Writes are done on
-     * newline boundaries. This ensures valid utf-8 character sequences are written.
+     * newline boundaries, a simple but effective strategy. It has the side benefit that
+     * multi-byte utf-8 sequences are not split up when output is done.
      * Note: In Phobos version 2.073 and earlier it is important to do output with char
      * rather than ubyte. See issue 17229 (https://issues.dlang.org/show_bug.cgi?id=17229).
      */
