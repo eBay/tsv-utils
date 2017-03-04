@@ -27,9 +27,9 @@ The specialty toolkits are anonymized in the tables below. The purpose of these 
 
 The worst performers were the Unix tools shipped with the Mac (`cut`, etc). It's worth installing the GNU coreutils package if you use command line tools on the Mac. (MacPorts and Homebrew can install these tools.)
 
-### Summary: Top four in each benchmark
+### Top four in each benchmark
 
-The fastest times for each benchmark. Times are in seconds. Complete results for each are in the succeeding sections.
+This table shows fastest times for each benchmark. Times are in seconds. Complete results for each benchmark are in the succeeding sections.
 
 | Benchmark              |     Tool/Time | Tool/Time | Tool/Time | Tool/Time |
 | ---------------------- | ------------: | --------: | --------: | --------: |
@@ -42,7 +42,7 @@ The fastest times for each benchmark. Times are in seconds. Complete results for
 | **Join two files**     |      tsv-join | Toolkit 1 | Toolkit 2 | Toolkit 3 |
 | (4.8 GB, 7M lines)     |         20.78 |    104.06 |    194.80 |    266.42 |
 | **Summary statistics** | tsv-summarize | Toolkit 1 | Toolkit 2 | Toolkit 3 |
-| **(4.8 GB, 7M lines)** |         15.83 |     40.27 |     48.10 |     62.97 |
+| (4.8 GB, 7M lines)     |         15.83 |     40.27 |     48.10 |     62.97 |
 | **CSV-to-TSV**         |       csv2tsv |     csvtk |       xsv |           |
 | (2.7 GB, 14M lines)    |         27.41 |     36.26 |     40.40 |           |
 
