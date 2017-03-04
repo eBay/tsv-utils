@@ -19,11 +19,11 @@ Despite limitations of the benchmarks, this is certainly a good result. The benc
 
 ## Comparative benchmarks
 
-Six tasks were used as benchmarks. Two forms of row filtering: numeric comparisons and regular expression match. Column selection (aka 'cut'). Join two files on a common key. Simple statistical calculations (e.g. mean of column values). Convert CSV files to TSV. Reasonably large files were used, one 4.8 GB, 7 million rows, the other 2.7 GB, 14 million rows. Tests against smaller files showed results consistent with those reported here.
+Six tasks were used as benchmarks. Two forms of row filtering: numeric comparisons and regular expression match. Column selection (aka 'cut'). Join two files on a common key. Simple statistical calculations (e.g. mean of column values). Convert CSV files to TSV. Reasonably large files were used, one 4.8 GB, 7 million rows, the other 2.7 GB, 14 million rows. Tests against smaller files gave results consistent with the larger file tests.
 
 Tests were conducted on a MacBook Pro, 16 GB RAM, 4 cores, and flash storage. All tools were updated to current versions, and several of the specialty toolkits were built from current source code. Run-time was measured using the `time` facility. Each benchmark was run three times and the fastest run recorded.
 
-The specialty toolkits have been anonymized. The purpose of these benchmarks is to gauge performance of the D tools, not make comparisons between other toolkits. (The exception is the csv-to-tsv benchmark, where each tool has had the best time in a prior version of this report and was therefored identified.) Links and info for these toolkits can be found in [Other toolkits](../README.md#other-toolkits) in the README. Python tools were not benchmarked, this would be a useful addition. Tools that run in in-memory environments like R were excluded.
+The specialty toolkits are anonymized in the tables below. The purpose of these benchmarks is to gauge performance of the D tools, not make comparisons between other toolkits. (The exception is the csv-to-tsv benchmark. Each tool has had the best time in a prior version of this report and was therefored identified.) Links and info for these toolkits can be found in [Other toolkits](../README.md#other-toolkits) in the README. Python tools were not benchmarked, this would be a useful addition. Tools that run in in-memory environments like R were excluded.
 
 The worst performers were the Unix tools shipped with the Mac (`cut`, etc). It's worth installing the GNU coreutils package if you use command line tools on the Mac. (MacPorts and Homebrew can install these tools.)
 
