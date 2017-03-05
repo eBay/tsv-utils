@@ -20,7 +20,8 @@ version(unittest)
 }
 else
 {
-    int main(string[] cmdArgs) {
+    int main(string[] cmdArgs)
+    {
         TsvAppendOptions cmdopt;
         auto r = cmdopt.processArgs(cmdArgs);
         if (!r[0]) return r[1];
@@ -81,7 +82,8 @@ indicator of original file to each row of input.
 Options:
 EOS";
 
-struct TsvAppendOptions {
+struct TsvAppendOptions
+{
     string programName;
     string[] files;                    // Input files 
     string[string] fileSourceNames;    // Maps file path to the 'source' value
@@ -199,7 +201,8 @@ void tsvAppend(OutputRange)(TsvAppendOptions cmdopt, OutputRange outputStream)
                     headerWritten = true;
                 }
             }
-            else {
+            else
+            {
                 if (cmdopt.trackSource)
                 {
                     outputStream.put(sourceName);

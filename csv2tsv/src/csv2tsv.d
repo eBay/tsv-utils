@@ -156,7 +156,6 @@ else
         Csv2tsvOptions cmdopt;
         auto r = cmdopt.processArgs(cmdArgs);
         if (!r[0]) return r[1];
-
         try csv2tsvFiles(cmdopt, cmdArgs[1..$]);
         catch (Exception exc)
         {
