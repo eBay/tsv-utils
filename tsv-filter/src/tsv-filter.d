@@ -28,21 +28,17 @@ import std.uni: asLowerCase, toLower;
  * a lengthy set, one for each test.
  */
 
-int main(string[] cmdArgs) {
+int main(string[] cmdArgs)
+{
     TsvFilterOptions cmdopt;
     auto r = cmdopt.processArgs(cmdArgs);
-    if (!r[0]) {
-        return r[1];
-    }
-    try {
-        /* Process the input files.  */
-        tsvFilter(cmdopt, cmdArgs[1..$]);
-    }
-    catch (Exception exc) {
+    if (!r[0]) return r[1];
+    try tsvFilter(cmdopt, cmdArgs[1..$]);
+    catch (Exception exc)
+    {
         stderr.writeln("Error: ", exc.msg);
         return 1;
     }
-
     return 0;
 }
 
@@ -184,31 +180,38 @@ alias FieldVsRegexPredicate  = bool function(const char[][] fields, size_t index
 alias FieldVsFieldPredicate  = bool function(const char[][] fields, size_t index1, size_t index2);
 alias FieldFieldNumPredicate  = bool function(const char[][] fields, size_t index1, size_t index2, double value);
 
-FieldsPredicate makeFieldUnaryDelegate(FieldUnaryPredicate fn, size_t index) {
+FieldsPredicate makeFieldUnaryDelegate(FieldUnaryPredicate fn, size_t index)
+{
     return fields => fn(fields, index);
 }
 
-FieldsPredicate makeFieldVsNumberDelegate(FieldVsNumberPredicate fn, size_t index, double value) {
+FieldsPredicate makeFieldVsNumberDelegate(FieldVsNumberPredicate fn, size_t index, double value)
+{
     return fields => fn(fields, index, value);
 }
 
-FieldsPredicate makeFieldVsStringDelegate(FieldVsStringPredicate fn, size_t index, string value) {
+FieldsPredicate makeFieldVsStringDelegate(FieldVsStringPredicate fn, size_t index, string value)
+{
     return fields => fn(fields, index, value);
 }
 
-FieldsPredicate makeFieldVsIStringDelegate(FieldVsIStringPredicate fn, size_t index, dstring value) {
+FieldsPredicate makeFieldVsIStringDelegate(FieldVsIStringPredicate fn, size_t index, dstring value)
+{
     return fields => fn(fields, index, value);
 }
 
-FieldsPredicate makeFieldVsRegexDelegate(FieldVsRegexPredicate fn, size_t index, Regex!char value) {
+FieldsPredicate makeFieldVsRegexDelegate(FieldVsRegexPredicate fn, size_t index, Regex!char value)
+{
     return fields => fn(fields, index, value);
 }
 
-FieldsPredicate makeFieldVsFieldDelegate(FieldVsFieldPredicate fn, size_t index1, size_t index2) {
+FieldsPredicate makeFieldVsFieldDelegate(FieldVsFieldPredicate fn, size_t index1, size_t index2)
+{
     return fields => fn(fields, index1, index2);
 }
 
-FieldsPredicate makeFieldFieldNumDelegate(FieldFieldNumPredicate fn, size_t index1, size_t index2, double value) {
+FieldsPredicate makeFieldFieldNumDelegate(FieldFieldNumPredicate fn, size_t index1, size_t index2, double value)
+{
     return fields => fn(fields, index1, index2, value);
 }
 
@@ -263,26 +266,32 @@ bool ffEQ(const char[][] fields, size_t index1, size_t index2) { return fields[i
 bool ffNE(const char[][] fields, size_t index1, size_t index2) { return fields[index1].to!double != fields[index2].to!double; }
 bool ffStrEQ(const char[][] fields, size_t index1, size_t index2) { return fields[index1] == fields[index2]; }
 bool ffStrNE(const char[][] fields, size_t index1, size_t index2) { return fields[index1] != fields[index2]; }
-bool ffIStrEQ(const char[][] fields, size_t index1, size_t index2) {
+bool ffIStrEQ(const char[][] fields, size_t index1, size_t index2)
+{
     return equal(fields[index1].asLowerCase, fields[index2].asLowerCase);
 }
-bool ffIStrNE(const char[][] fields, size_t index1, size_t index2) {
+bool ffIStrNE(const char[][] fields, size_t index1, size_t index2)
+{
     return !equal(fields[index1].asLowerCase, fields[index2].asLowerCase);
 }
 
 auto AbsDiff(double v1, double v2) { return (v1 - v2).abs; }
 auto RelDiff(double v1, double v2) { return (v1 - v2).abs / min(v1.abs, v2.abs); }
 
-bool ffAbsDiffLE(const char[][] fields, size_t index1, size_t index2, double value) {
+bool ffAbsDiffLE(const char[][] fields, size_t index1, size_t index2, double value)
+{
     return AbsDiff(fields[index1].to!double, fields[index2].to!double) <= value; 
 }
-bool ffAbsDiffGT(const char[][] fields, size_t index1, size_t index2, double value) {
+bool ffAbsDiffGT(const char[][] fields, size_t index1, size_t index2, double value)
+{
     return AbsDiff(fields[index1].to!double, fields[index2].to!double) > value; 
 }
-bool ffRelDiffLE(const char[][] fields, size_t index1, size_t index2, double value) {
+bool ffRelDiffLE(const char[][] fields, size_t index1, size_t index2, double value)
+{
     return RelDiff(fields[index1].to!double, fields[index2].to!double) <= value; 
 }
-bool ffRelDiffGT(const char[][] fields, size_t index1, size_t index2, double value) {
+bool ffRelDiffGT(const char[][] fields, size_t index1, size_t index2, double value)
+{
     return RelDiff(fields[index1].to!double, fields[index2].to!double) > value; 
 }
 
@@ -310,15 +319,16 @@ void fieldUnaryOptionHandler(
     ref FieldsPredicate[] tests, ref size_t maxFieldIndex, FieldUnaryPredicate fn, string option, string optionVal)
 {
     size_t field;
-    try {
-        field = optionVal.to!size_t;
-    } catch (Exception exc) {
+    try field = optionVal.to!size_t;
+    catch (Exception exc)
+    {
         throw new Exception(
             format("Invalid value in option: '--%s %s'. Expected: '--%s <field>' where field is a 1-upped integer.",
                    option, optionVal, option));
     }
 
-    if (field == 0) {
+    if (field == 0)
+    {
         throw new Exception(
             format("Invalid option: '--%s %s'. Zero is not a valid field index.", option, optionVal));
     }
@@ -332,23 +342,28 @@ void fieldVsNumberOptionHandler(
     ref FieldsPredicate[] tests, ref size_t maxFieldIndex, FieldVsNumberPredicate fn, string option, string optionVal)
 {
     auto valSplit = findSplit(optionVal, ":");
-    if (valSplit[1].length == 0 || valSplit[2].length == 0) {
+    if (valSplit[1].length == 0 || valSplit[2].length == 0)
+    {
         throw new Exception(
             format("Invalid option: '%s %s'. Expected: '%s <field>:<val>' where <field> and <val> are numbers.",
                    option, optionVal, option));
     }
     size_t field;
     double value;
-    try {
+    try
+    {
         field = valSplit[0].to!size_t;
         value = valSplit[2].to!double;
-    } catch (Exception exc) {
+    }
+    catch (Exception exc)
+    {
         throw new Exception(
             format("Invalid numeric values in option: '--%s %s'. Expected: '--%s <field>:<val>' where <field> and <val> are numbers.",
                    option, optionVal, option));
     }
 
-    if (field == 0) {
+    if (field == 0)
+    {
         throw new Exception(
             format("Invalid option: '--%s %s'. Zero is not a valid field index.", option, optionVal));
     }
@@ -361,23 +376,28 @@ void fieldVsStringOptionHandler(
     ref FieldsPredicate[] tests, ref size_t maxFieldIndex, FieldVsStringPredicate fn, string option, string optionVal)
 {
     auto valSplit = findSplit(optionVal, ":");
-    if (valSplit[1].length == 0 || valSplit[2].length == 0) {
+    if (valSplit[1].length == 0 || valSplit[2].length == 0)
+    {
         throw new Exception(
             format("Invalid option: '--%s %s'. Expected: '--%s <field>:<val>' where <field> is a number and <val> is a string.",
                    option, optionVal, option));
     }
     size_t field;
     string value;
-    try {
+    try
+    {
         field = valSplit[0].to!size_t;
         value = valSplit[2].to!string;
-    } catch (Exception exc) {
+    }
+    catch (Exception exc)
+    {
         throw new Exception(
             format("Invalid values in option: '--%s %s'. Expected: '--%s <field>:<val>' where <field> is a number and <val> a string.",
                    option, optionVal, option));
     }
 
-    if (field == 0) {
+    if (field == 0)
+    {
         throw new Exception(
             format("Invalid option: '--%s %s'. Zero is not a valid field index.", option, optionVal));
     }
@@ -393,23 +413,28 @@ void fieldVsIStringOptionHandler(
     ref FieldsPredicate[] tests, ref size_t maxFieldIndex, FieldVsIStringPredicate fn, string option, string optionVal)
 {
     auto valSplit = findSplit(optionVal, ":");
-    if (valSplit[1].length == 0 || valSplit[2].length == 0) {
+    if (valSplit[1].length == 0 || valSplit[2].length == 0)
+    {
         throw new Exception(
             format("Invalid option: '--%s %s'. Expected: '--%s <field>:<val>' where <field> is a number and <val> is a string.",
                    option, optionVal, option));
     }
     size_t field;
     string value;
-    try {
+    try
+    {
         field = valSplit[0].to!size_t;
         value = valSplit[2].to!string;
-    } catch (Exception exc) {
+    }
+    catch (Exception exc)
+    {
         throw new Exception(
             format("Invalid values in option: '--%s %s'. Expected: '--%s <field>:<val>' where <field> is a number and <val> a string.",
                    option, optionVal, option));
     }
 
-    if (field == 0) {
+    if (field == 0)
+    {
         throw new Exception(
             format("Invalid option: '--%s %s'. Zero is not a valid field index.", option, optionVal));
     }
@@ -423,24 +448,29 @@ void fieldVsRegexOptionHandler(
     bool caseSensitive)
 {
     auto valSplit = findSplit(optionVal, ":");
-    if (valSplit[1].length == 0 || valSplit[2].length == 0) {
+    if (valSplit[1].length == 0 || valSplit[2].length == 0)
+    {
         throw new Exception(
             format("Invalid option: '--%s %s'. Expected: '--%s <field>:<val>' where <field> is a number and <val> is a regular expression.",
                    option, optionVal, option));
     }
     size_t field;
     Regex!char value;
-    try {
+    try
+    {
         auto modifiers = caseSensitive ? "" : "i";
         field = valSplit[0].to!size_t;
         value = regex(valSplit[2], modifiers);
-    } catch (Exception exc) {
+    }
+    catch (Exception exc)
+    {
         throw new Exception(
             format("Invalid values in option: '--%s %s'. Expected: '--%s <field>:<val>' where <field> is a number and <val> is a regular expression.",
                    option, optionVal, option));
     }
 
-    if (field == 0) {
+    if (field == 0)
+    {
         throw new Exception(
             format("Invalid option: '--%s %s'. Zero is not a valid field index.", option, optionVal));
     }
@@ -453,27 +483,34 @@ void fieldVsFieldOptionHandler(
     ref FieldsPredicate[] tests, ref size_t maxFieldIndex, FieldVsFieldPredicate fn, string option, string optionVal)
 {
     auto valSplit = findSplit(optionVal, ":");
-    if (valSplit[1].length == 0 || valSplit[2].length == 0) {
+    if (valSplit[1].length == 0 || valSplit[2].length == 0)
+    {
         throw new Exception(
             format("Invalid option: '--%s %s'. Expected: '--%s <field1>:<field2>' where fields are 1-upped integers.",
                    option, optionVal, option));
     }
     size_t field1;
     size_t field2;
-    try {
+    try
+    {
         field1 = valSplit[0].to!size_t;
         field2 = valSplit[2].to!size_t;
-    } catch (Exception exc) {
+    }
+    catch (Exception exc)
+    {
         throw new Exception(
             format("Invalid values in option: '--%s %s'. Expected: '--%s <field1>:<field2>' where fields are 1-upped integers.",
                    option, optionVal, option));
     }
 
-    if (field1 == 0 || field2 == 0) {
+    if (field1 == 0 || field2 == 0)
+    {
         throw new Exception(
             format("Invalid option: '--%s %s'. Zero is not a valid field index.", option, optionVal));
     }
-    if (field1 == field2) {
+    
+    if (field1 == field2)
+    {
         throw new Exception(
             format("Invalid option: '--%s %s'. Field1 and field2 must be different fields", option, optionVal));
     }
@@ -494,31 +531,39 @@ void fieldFieldNumOptionHandler(
     auto valSplit = findSplit(optionVal, ":");
     auto invalidOption = (valSplit[1].length == 0 || valSplit[2].length == 0);
 
-    if (!invalidOption) {
+    if (!invalidOption)
+    {
         auto valSplit2 = findSplit(valSplit[2], ":");
         invalidOption = (valSplit2[1].length == 0 || valSplit2[2].length == 0);
 
-        if (!invalidOption) {
-            try {
+        if (!invalidOption)
+        {
+            try
+            {
                 field1 = valSplit[0].to!size_t;
                 field2 = valSplit2[0].to!size_t;
                 value = valSplit2[2].to!double;
-            } catch (Exception exc) {
+            }
+            catch (Exception exc)
+            {
                 invalidOption = true;
             }
         }
     }
 
-    if (invalidOption) {
+    if (invalidOption)
+    {
         throw new Exception(
             format("Invalid values in option: '--%s %s'. Expected: '--%s <field1>:<field2>:<num>' where fields are 1-upped integers.",
                    option, optionVal, option));
     }
-    if (field1 == 0 || field2 == 0) {
+    if (field1 == 0 || field2 == 0)
+    {
         throw new Exception(
             format("Invalid option: '--%s %s'. Zero is not a valid field index.", option, optionVal));
     }
-    if (field1 == field2) {
+    if (field1 == field2)
+    {
         throw new Exception(
             format("Invalid option: '--%s %s'. Field1 and field2 must be different fields", option, optionVal));
     }
@@ -532,7 +577,8 @@ void fieldFieldNumOptionHandler(
 /* Command line options - This struct holds the results of command line option processing.
  * It also has a method, processArgs, that invokes command line arg processing.
  */
-struct TsvFilterOptions {
+struct TsvFilterOptions
+{
     FieldsPredicate[] tests;         // Derived from tests
     size_t maxFieldIndex;            // Derived from tests
     bool hasHeader = false;          // --H|header
@@ -549,7 +595,8 @@ struct TsvFilterOptions {
      * Returning true (execution continues) means args have been validated and the
      * tests array has been established.
      */ 
-    auto processArgs (ref string[] cmdArgs) {
+    auto processArgs (ref string[] cmdArgs)
+    {
         import std.getopt;
         import getopt_inorder;
         
@@ -611,7 +658,8 @@ struct TsvFilterOptions {
         void handlerFFRelDiffLE(string option, string value) { fieldFieldNumOptionHandler(tests, maxFieldIndex, &ffRelDiffLE, option, value); }
         void handlerFFRelDiffGT(string option, string value) { fieldFieldNumOptionHandler(tests, maxFieldIndex, &ffRelDiffGT, option, value); }
 
-        try {
+        try
+        {
             arraySep = ",";    // Use comma to separate values in command line options
             auto r = getoptInorder(
                 cmdArgs,
@@ -679,17 +727,24 @@ struct TsvFilterOptions {
             /* Both help texts are a bit long. In this case, for "regular" help, don't
              * print options, just the text. The text summarizes the options.
              */
-            if (r.helpWanted) {
+            if (r.helpWanted)
+            {
                 stdout.write(helpText); 
                 return tuple(false, 0);
-            } else if (helpVerbose) {
+            }
+            else if (helpVerbose)
+            {
                 defaultGetoptPrinter(helpTextVerbose, r.options);
                 return tuple(false, 0);
-            } else if (helpOptions) {
+            }
+            else if (helpOptions)
+            {
                 defaultGetoptPrinter(helpTextOptions, r.options);
                 return tuple(false, 0);
             }
-        } catch (Exception exc) {
+        }
+        catch (Exception exc)
+        {
             stderr.writeln("Error processing command line arguments: ", exc.msg);
             return tuple(false, 1);
         }
@@ -699,35 +754,41 @@ struct TsvFilterOptions {
 
 /** tsvFilter processes the input files and runs the tests.
  */
-void tsvFilter(in TsvFilterOptions cmdopt, in string[] inputFiles) {
+void tsvFilter(in TsvFilterOptions cmdopt, in string[] inputFiles)
+{
     import std.algorithm : all, any, splitter;
     import std.range;
 
     /* Process each input file, one line at a time. */
     auto lineFields = new char[][](cmdopt.maxFieldIndex + 1);
     bool headerWritten = false;
-    foreach (filename; (inputFiles.length > 0) ? inputFiles : ["-"]) {
+    foreach (filename; (inputFiles.length > 0) ? inputFiles : ["-"])
+    {
         auto inputStream = (filename == "-") ? stdin : filename.File();
-        foreach (lineNum, line; inputStream.byLine.enumerate(1)) {
-            if (cmdopt.hasHeader && lineNum == 1) {
+        foreach (lineNum, line; inputStream.byLine.enumerate(1))
+        {
+            if (cmdopt.hasHeader && lineNum == 1)
+            {
                 /* Header. Output on the first file, skip subsequent files. */
-                if (!headerWritten) {
+                if (!headerWritten)
+                {
                     writeln(line);
                     headerWritten = true;
                 }
             }
-            else {
+            else
+            {
                 /* Copy the needed number of fields to the fields array. */
                 int fieldIndex = -1;
-                foreach (fieldValue; line.splitter(cmdopt.delim)) {
-                    if (fieldIndex == cast(long) cmdopt.maxFieldIndex) {
-                        break;
-                    }
+                foreach (fieldValue; line.splitter(cmdopt.delim))
+                {
+                    if (fieldIndex == cast(long) cmdopt.maxFieldIndex) break;
                     fieldIndex++;
                     lineFields[fieldIndex] = fieldValue;
                 }
                 
-                if (fieldIndex == -1) {
+                if (fieldIndex == -1)
+                {
                     assert(line.length == 0);
                     /* Bug work-around. Currently empty lines are not handled properly by splitter.
                      *   Bug: https://issues.dlang.org/show_bug.cgi?id=15735
@@ -738,7 +799,8 @@ void tsvFilter(in TsvFilterOptions cmdopt, in string[] inputFiles) {
                     lineFields[fieldIndex] = line;
                 }
 
-                if (fieldIndex < cast(long) cmdopt.maxFieldIndex) {
+                if (fieldIndex < cast(long) cmdopt.maxFieldIndex)
+                {
                     throw new Exception(
                         format("Not enough fields in line. File: %s, Line: %s",
                                (filename == "-") ? "Standard Input" : filename, lineNum));
@@ -747,17 +809,16 @@ void tsvFilter(in TsvFilterOptions cmdopt, in string[] inputFiles) {
                 /* Run the tests. Tests will fail (throw) if a field cannot be converted
                  * to the expected type.
                  */
-                try {
+                try
+                {
                     bool passed = cmdopt.disjunct ? 
                         cmdopt.tests.any!(x => x(lineFields)) :
                         cmdopt.tests.all!(x => x(lineFields));
-                    if (cmdopt.invert) {
-                        passed = !passed;
-                    }
-                    if (passed) {
-                        writeln(line);
-                    }
-                } catch (Exception exc) {
+                    if (cmdopt.invert) passed = !passed;
+                    if (passed) writeln(line);
+                }
+                catch (Exception exc)
+                {
                     throw new Exception(
                         format("Could not process line or field: %s\n  File: %s Line: %s%s",
                                exc.msg, (filename == "-") ? "Standard Input" : filename, lineNum,
