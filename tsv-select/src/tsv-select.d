@@ -47,7 +47,8 @@ EOS";
 /** 
 Container for command line options. 
  */
-struct TsvSelectOptions {
+struct TsvSelectOptions
+{
     // The allowed values for the --rest option.
     enum RestOptionVal { none, first, last };
 
@@ -67,11 +68,13 @@ struct TsvSelectOptions {
      * Returning true (execution continues) means args have been validated and derived
      * values calculated. In addition, field indices have been converted to zero-based.
      */ 
-    auto processArgs (ref string[] cmdArgs) {
+    auto processArgs (ref string[] cmdArgs)
+    {
         import std.algorithm : any, each;
         import std.getopt;
         
-        try {
+        try
+        {
             arraySep = ",";    // Use comma to separate values in command line options
             auto r = getopt(
                 cmdArgs,
@@ -83,17 +86,20 @@ struct TsvSelectOptions {
                 "d|delimiter", "CHR              Character to use as field delimiter. Default: TAB. (Single byte UTF-8 characters only.)", &delim
                 );
             
-            if (r.helpWanted) {
+            if (r.helpWanted)
+            {
                 defaultGetoptPrinter(helpText, r.options);
                 return tuple(false, 0);
             }
         
             /* Consistency checks */
-            if (fields.length == 0) {
+            if (fields.length == 0)
+            {
                 throw new Exception("Required option --f|fields was not supplied.");
             }
         
-            if (fields.length > 0 && fields.any!(x => x == 0)) {
+            if (fields.length > 0 && fields.any!(x => x == 0))
+            {
                 throw new Exception("Zero is not a valid field number (--f|fields).");
             }
 
@@ -101,7 +107,9 @@ struct TsvSelectOptions {
             fields.each!((ref x) => --x);  // Convert to 1-based indexing. Using 'ref' in the lambda allows the actual
                                            // field value to be modified. Otherwise a copy would be passed.
             
-        } catch (Exception exc) {
+        }
+        catch (Exception exc)
+        {
             stderr.writeln("Error processing command line arguments: ", exc.msg);
             return tuple(false, 1);
         }
@@ -112,18 +120,19 @@ struct TsvSelectOptions {
 /**
 Main program.
  */
-int main(string[] cmdArgs) {
+int main(string[] cmdArgs)
+{
     TsvSelectOptions cmdopt;
     auto r = cmdopt.processArgs(cmdArgs);
-    if (!r[0]) {
-        return r[1];
-    }
-    try {
+    if (!r[0]) return r[1];
+    try
+    {
         /* Invoke the tsvSelect template matching the --rest option chosen. Option args
          * are removed by command line processing (getopt). The program name and any files
          * remain. Pass the files to tsvSelect.
          */
-        switch (cmdopt.rest) {
+        switch (cmdopt.rest)
+        {
         case TsvSelectOptions.RestOptionVal.none:
             tsvSelect!(CTERestLocation.none)(cmdopt, cmdArgs[1..$]);
             break;
@@ -138,7 +147,8 @@ int main(string[] cmdArgs) {
             assert(false, "Program error. Unexpected TsvSelectOptions.RestOptionVal.");
         }
     }
-    catch (Exception exc) {
+    catch (Exception exc)
+    {
         stderr.writeln("Error: ", exc.msg);
         return 1;
     }
@@ -170,7 +180,8 @@ instantiates this function three times, once for each of the --rest options. It 
 in a larger program, but is faster. Run-time improvements of 25% were measured compared
 to the non-templatized version. (Note: 'cte' stands for 'compile time evaluation'.)
 */
-void tsvSelect(CTERestLocation cteRest)(in TsvSelectOptions cmdopt, in string[] inputFiles) {
+void tsvSelect(CTERestLocation cteRest)(in TsvSelectOptions cmdopt, in string[] inputFiles)
+{
     import tsvutil: InputFieldReordering;
     import std.algorithm: splitter;
     import std.format: format;
@@ -179,11 +190,11 @@ void tsvSelect(CTERestLocation cteRest)(in TsvSelectOptions cmdopt, in string[] 
     // Ensure the correct template instantiation was called. 
     static if (cteRest == CTERestLocation.none)
         assert(cmdopt.rest == TsvSelectOptions.RestOptionVal.none);
-    else static if (cteRest == CTERestLocation.first) 
+    else static if (cteRest == CTERestLocation.first)
         assert(cmdopt.rest == TsvSelectOptions.RestOptionVal.first);
-    else static if (cteRest == CTERestLocation.last) 
+    else static if (cteRest == CTERestLocation.last)
         assert(cmdopt.rest == TsvSelectOptions.RestOptionVal.last);
-    else 
+    else
         static assert (false, "Unexpected cteRest value.");
 
     /* InputFieldReordering copies select fields from an input line to a new buffer.
@@ -197,34 +208,44 @@ void tsvSelect(CTERestLocation cteRest)(in TsvSelectOptions cmdopt, in string[] 
      * that grows as needed and is reused for each line. Typically it'll grow only
      * on the first line.
      */
-    static if (cteRest != CTERestLocation.none) 
-        auto leftOverFieldsAppender = appender!(char[][]); 
+    static if (cteRest != CTERestLocation.none)
+    {
+        auto leftOverFieldsAppender = appender!(char[][]);
+    }
 
     /* Read each input file (or stdin) and iterate over each line. A filename of "-" is
      * interpreted as stdin, common behavior for unix command line tools.
      */
-    foreach (fileNum, filename; (inputFiles.length > 0) ? inputFiles : ["-"]) {
+    foreach (fileNum, filename; (inputFiles.length > 0) ? inputFiles : ["-"])
+    {
         auto inputStream = (filename == "-") ? stdin : filename.File();
-        foreach (lineNum, line; inputStream.byLine.enumerate(1)) {
+        foreach (lineNum, line; inputStream.byLine.enumerate(1))
+        {
             if (lineNum == 1 && fileNum > 0 && cmdopt.hasHeader)
+            {
                 continue;   // Drop the header line from all but the first file.
-            static if (cteRest != CTERestLocation.none) 
+            }
+            static if (cteRest != CTERestLocation.none)
+            {
                 leftOverFieldsAppender.clear;
+            }
             fieldReordering.initNewLine;
-            foreach (fieldIndex, fieldValue; line.splitter(cmdopt.delim).enumerate) {
-                static if (cteRest == CTERestLocation.none) {
+            foreach (fieldIndex, fieldValue; line.splitter(cmdopt.delim).enumerate)
+            {
+                static if (cteRest == CTERestLocation.none)
+                {
                     fieldReordering.processNextField(fieldIndex, fieldValue);
-                    if (fieldReordering.allFieldsFilled)
-                        break;
+                    if (fieldReordering.allFieldsFilled) break;
                 }
-                else {
+                else
+                {
                     auto numMatched = fieldReordering.processNextField(fieldIndex, fieldValue);
-                    if (numMatched == 0)
-                        leftOverFieldsAppender.put(fieldValue);
+                    if (numMatched == 0) leftOverFieldsAppender.put(fieldValue);
                 }
             }
             // Finished with all fields in the line.
-            if (!fieldReordering.allFieldsFilled) {
+            if (!fieldReordering.allFieldsFilled)
+            {
                 throw new Exception(
                     format("Not enough fields in line. File: %s,  Line: %s",
                            (filename == "-") ? "Standard Input" : filename, lineNum));
@@ -232,20 +253,29 @@ void tsvSelect(CTERestLocation cteRest)(in TsvSelectOptions cmdopt, in string[] 
 
             // Write the re-ordered line.
             static if (cteRest == CTERestLocation.none)
-                writeln(fieldReordering.outputFields.join(cmdopt.delim));    
-
-            else static if (cteRest == CTERestLocation.first) {
-                if (leftOverFieldsAppender.data.length > 0) 
-                    write(leftOverFieldsAppender.data.join(cmdopt.delim), cmdopt.delim); 
+            {
                 writeln(fieldReordering.outputFields.join(cmdopt.delim));
             }
-            else static if (cteRest == CTERestLocation.last) {
+
+            else static if (cteRest == CTERestLocation.first)
+            {
+                if (leftOverFieldsAppender.data.length > 0)
+                {
+                    write(leftOverFieldsAppender.data.join(cmdopt.delim), cmdopt.delim);
+                }
+                writeln(fieldReordering.outputFields.join(cmdopt.delim));
+            }
+            else static if (cteRest == CTERestLocation.last)
+            {
                 write(fieldReordering.outputFields.join(cmdopt.delim));
                 if (leftOverFieldsAppender.data.length > 0)
+                {
                     write(cmdopt.delim, leftOverFieldsAppender.data.join(cmdopt.delim));
+                }
                 writeln();
             }
-            else {
+            else
+            {
                 static assert (false, "Unexpected cteRest value.");
             }
         }

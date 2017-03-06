@@ -35,7 +35,8 @@ EOS";
 /** 
 Container for command line options. 
  */
-struct NumberLinesOptions {
+struct NumberLinesOptions
+{
     enum defaultHeaderString = "line";
     
     bool hasHeader = false;       // --header
@@ -47,11 +48,13 @@ struct NumberLinesOptions {
      * processed and execution should continue, or false if an error occurred or the user
      * asked for help. If false, the second value is the appropriate exit code (0 or 1).
      */ 
-    auto processArgs (ref string[] cmdArgs) {
+    auto processArgs (ref string[] cmdArgs)
+    {
         import std.algorithm : any, each;
         import std.getopt;
         
-        try {
+        try
+        {
             auto r = getopt(
                 cmdArgs,
                 std.getopt.config.caseSensitive,
@@ -62,20 +65,18 @@ struct NumberLinesOptions {
                 "d|delimiter",     "CHR  Character appended to line number, preceding the rest of the line. Default: TAB (Single byte UTF-8 characters only.)", &delim
             );
 
-            if (r.helpWanted) {
+            if (r.helpWanted)
+            {
                 defaultGetoptPrinter(helpText, r.options);
                 return tuple(false, 0);
             }
 
             /* Derivations. */
-            if (headerString.length > 0) {
-                hasHeader = true;
-            }
-            else {
-                headerString = defaultHeaderString;
-            }
-            
-        } catch (Exception exc) {
+            if (headerString.length > 0) hasHeader = true;
+            else headerString = defaultHeaderString;
+        }
+        catch (Exception exc)
+        {
             stderr.writeln("Error processing command line arguments: ", exc.msg);
             return tuple(false, 1);
         }
@@ -83,16 +84,14 @@ struct NumberLinesOptions {
     }           
 }
 
-int main(string[] cmdArgs) {
+int main(string[] cmdArgs)
+{
     NumberLinesOptions cmdopt;
     auto r = cmdopt.processArgs(cmdArgs);
-    if (!r[0]) {
-        return r[1];
-    }
-    try {
-        numberLines(cmdopt, cmdArgs[1..$]);
-    }
-    catch (Exception exc) {
+    if (!r[0]) return r[1];
+    try numberLines(cmdopt, cmdArgs[1..$]);
+    catch (Exception exc)
+    {
         stderr.writeln("Error: ", exc.msg);
         return 1;
     }
@@ -100,20 +99,27 @@ int main(string[] cmdArgs) {
     return 0;
 }
 
-void numberLines(in NumberLinesOptions cmdopt, in string[] inputFiles) {
+void numberLines(in NumberLinesOptions cmdopt, in string[] inputFiles)
+{
     import std.range;
     
     long lineNum = cmdopt.startNum;
     bool headerWritten = false;
-    foreach (filename; (inputFiles.length > 0) ? inputFiles : ["-"]) {
+    foreach (filename; (inputFiles.length > 0) ? inputFiles : ["-"])
+    {
         auto inputStream = (filename == "-") ? stdin : filename.File();
-        foreach (fileLineNum, line; inputStream.byLine(KeepTerminator.yes).enumerate(1)) {
-            if (cmdopt.hasHeader && fileLineNum == 1) {
-                if (!headerWritten) {
+        foreach (fileLineNum, line; inputStream.byLine(KeepTerminator.yes).enumerate(1))
+        {
+            if (cmdopt.hasHeader && fileLineNum == 1)
+            {
+                if (!headerWritten)
+                {
                     write(cmdopt.headerString, cmdopt.delim, line);
                     headerWritten = true;
                 }
-            } else {
+            }
+            else
+            {
                 write(lineNum, cmdopt.delim, line);
                 lineNum++;
             }

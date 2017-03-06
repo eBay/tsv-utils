@@ -67,7 +67,8 @@ EOS";
 /** 
 Container for command line options. 
  */
-struct Csv2tsvOptions {
+struct Csv2tsvOptions
+{
     bool helpVerbose = false;          // --help-verbose
     bool hasHeader = false;            // --header
     char csvQuoteChar = '"';           // --q|quote
@@ -75,11 +76,13 @@ struct Csv2tsvOptions {
     char tsvDelimChar = '\t';          // --t|tsv-delim
     string tsvDelimReplacement = " ";  // --r|replacement
 
-    auto processArgs (ref string[] cmdArgs) {
+    auto processArgs (ref string[] cmdArgs)
+    {
         import std.algorithm : canFind;
         import std.getopt;
         
-        try {
+        try
+        {
             auto r = getopt(
                 cmdArgs,
                 "help-verbose",  "     Print full help.", &helpVerbose,
@@ -92,40 +95,50 @@ struct Csv2tsvOptions {
                 "r|replacement", "STR  Replacement for newline and TSV field delimiters found in CSV input. Default: Space.", &tsvDelimReplacement,
                 );
 
-            if (r.helpWanted) {
+            if (r.helpWanted)
+            {
                 defaultGetoptPrinter(helpText, r.options);
                 return tuple(false, 0);
-            } else if (helpVerbose) {
+            }
+            else if (helpVerbose)
+            {
                 defaultGetoptPrinter(helpTextVerbose, r.options);
                 return tuple(false, 0);
             }
 
             /* Consistency checks. */
-            if (csvQuoteChar == '\n' || csvQuoteChar == '\r') {
+            if (csvQuoteChar == '\n' || csvQuoteChar == '\r')
+            {
                 throw new Exception ("CSV quote character cannot be newline (--q|quote).");
             }
 
-            if (csvQuoteChar == csvDelimChar) {
+            if (csvQuoteChar == csvDelimChar)
+            {
                 throw new Exception("CSV quote and CSV field delimiter characters must be different (--q|quote, --c|csv-delim).");
             }
 
-            if (csvQuoteChar == tsvDelimChar) {
+            if (csvQuoteChar == tsvDelimChar)
+            {
                 throw new Exception("CSV quote and TSV field delimiter characters must be different (--q|quote, --t|tsv-delim).");
             }
                                     
-            if (csvDelimChar == '\n' || csvDelimChar == '\r') {
+            if (csvDelimChar == '\n' || csvDelimChar == '\r')
+            {
                 throw new Exception ("CSV field delimiter cannot be newline (--c|csv-delim).");
             }
                                     
-            if (tsvDelimChar == '\n' || tsvDelimChar == '\r') {
+            if (tsvDelimChar == '\n' || tsvDelimChar == '\r')
+            {
                 throw new Exception ("TSV field delimiter cannot be newline (--t|tsv-delimiter).");
             }
 
-            if (canFind!(c => (c == '\n' || c == '\r' || c == tsvDelimChar))(tsvDelimReplacement)) {
+            if (canFind!(c => (c == '\n' || c == '\r' || c == tsvDelimChar))(tsvDelimReplacement))
+            {
                 throw new Exception ("Replacement character cannot contain newlines or TSV field delimiters (--r|replacement).");
             }
-
-        } catch (Exception exc) {
+        }
+        catch (Exception exc)
+        {
             stderr.writeln("Error processing command line arguments: ", exc.msg);
             return tuple(false, 1);
         }
@@ -138,16 +151,14 @@ version(unittest)
 }
 else
 {
-    int main(string[] cmdArgs) {
+    int main(string[] cmdArgs)
+    {
         Csv2tsvOptions cmdopt;
         auto r = cmdopt.processArgs(cmdArgs);
-        if (!r[0]) {
-            return r[1];
-        }
-        try {
-            csv2tsvFiles(cmdopt, cmdArgs[1..$]);
-        }
-        catch (Exception exc) {
+        if (!r[0]) return r[1];
+        try csv2tsvFiles(cmdopt, cmdArgs[1..$]);
+        catch (Exception exc)
+        {
             writeln(); 
             stdin.flush();
             stderr.writeln("Error: ", exc.msg);
@@ -165,7 +176,8 @@ alias NullableSizeT = Nullable!(size_t, size_t.max);
 csv2tsvFiles reads multiple files and standard input and writes the results to standard
 output. 
  */
-void csv2tsvFiles(in Csv2tsvOptions cmdopt, in string[] inputFiles) {
+void csv2tsvFiles(in Csv2tsvOptions cmdopt, in string[] inputFiles)
+{
     import std.algorithm : joiner;
     import std.array;
 
@@ -174,17 +186,20 @@ void csv2tsvFiles(in Csv2tsvOptions cmdopt, in string[] inputFiles) {
     auto stdoutWriter = stdout.lockingTextWriter;
     bool firstFile = true;
             
-    foreach (filename; (inputFiles.length > 0) ? inputFiles : ["-"]) {
+    foreach (filename; (inputFiles.length > 0) ? inputFiles : ["-"])
+    {
         auto ubyteChunkedStream = (filename == "-") ?
             stdin.byChunk(stdinRawBuf) : filename.File.byChunk(fileRawBuf);
         auto ubyteStream = ubyteChunkedStream.joiner;
 
-        if (firstFile || !cmdopt.hasHeader) {
+        if (firstFile || !cmdopt.hasHeader)
+        {
             csv2tsv(ubyteStream, stdoutWriter, filename, 0,
                     cmdopt.csvQuoteChar, cmdopt.csvDelimChar,
                     cmdopt.tsvDelimChar, cmdopt.tsvDelimReplacement);
         }
-        else {
+        else
+        {
             /* Don't write the header on subsequent files. Write the first
              * record to a null sink instead.
              */
@@ -268,51 +283,69 @@ InputLoop: while (!inputStream.empty)
         char nextChar = inputStream.front;
         inputStream.popFront;
         
-        if (nextChar == '\r') {
+        if (nextChar == '\r')
+        {
             /* Collapse newline cases to '\n'. */
-            if (!inputStream.empty && inputStream.front == '\n') {
+            if (!inputStream.empty && inputStream.front == '\n')
+            {
                 inputStream.popFront;
             }
             nextChar = '\n';
         }
         
-        final switch (currState) {
+        final switch (currState)
+        {
         case State.FieldEnd:
             /* Start of input, or after consuming a field terminator. */
             ++fieldNum;
-            if (nextChar == csvQuote) {
+            if (nextChar == csvQuote)
+            {
                 currState = State.QuotedField;
                 break;
-            } else {
+            }
+            else
+            {
                 currState = State.NonQuotedField;
                 goto case State.NonQuotedField;
             }
             
         case State.NonQuotedField:
-            if (nextChar == csvDelim) {
+            if (nextChar == csvDelim)
+            {
                 outputChar(tsvDelim); 
                 currState = State.FieldEnd;
-            } else if (nextChar == tsvDelim) {
+            }
+            else if (nextChar == tsvDelim)
+            {
                 outputString(tsvDelimReplacement); 
-            } else if (nextChar == '\n') {
+            }
+            else if (nextChar == '\n')
+            {
                 outputChar('\n');
                 ++recordNum;
                 fieldNum = 0;
                 currState = State.FieldEnd;
-                if (!maxRecords.isNull && recordNum > maxRecords) {
+                if (!maxRecords.isNull && recordNum > maxRecords)
+                {
                     break InputLoop;
                 }
-            } else {
+            }
+            else
+            {
                 outputChar(nextChar);
             }
             break;
 
         case State.QuotedField:
-            if (nextChar == csvQuote) {
+            if (nextChar == csvQuote)
+            {
                 /* Quote in a quoted field. Need to look at the next character.*/
-                if (!inputStream.empty) {
+                if (!inputStream.empty)
+                {
                     currState = State.QuoteInQuotedField;
-                } else {
+                }
+                else
+                {
                     /* End of input. A rare case: Quoted field on last line with no
                      * following trailing newline. Reset the state to avoid triggering
                      * an invalid quoted field exception, plus adding additional newline.
@@ -320,33 +353,46 @@ InputLoop: while (!inputStream.empty)
                     currState = State.FieldEnd; 
                 }
             }
-            else if (nextChar ==  '\n') {
+            else if (nextChar ==  '\n')
+            {
                 /* Newline in a quoted field. */
                 outputString(tsvDelimReplacement); 
-            } else if (nextChar == tsvDelim) {
+            }
+            else if (nextChar == tsvDelim)
+            {
                 outputString(tsvDelimReplacement); 
-            } else {
+            }
+            else
+            {
                 outputChar(nextChar);
             }
             break;
 
         case State.QuoteInQuotedField:
             /* Just processed a quote in a quoted field. */
-            if (nextChar == csvQuote) {
+            if (nextChar == csvQuote)
+            {
                 outputChar(csvQuote);
                 currState = State.QuotedField;
-            } else if (nextChar == csvDelim) {
+            }
+            else if (nextChar == csvDelim)
+            {
                 outputChar(tsvDelim);
                 currState = State.FieldEnd;
-            } else if (nextChar == '\n') {
+            }
+            else if (nextChar == '\n')
+            {
                 outputChar('\n');
                 ++recordNum;
                 fieldNum = 0;
                 currState = State.FieldEnd;
-                if (!maxRecords.isNull && recordNum > maxRecords) {
+                if (!maxRecords.isNull && recordNum > maxRecords)
+                {
                     break InputLoop;
                 }
-            } else {
+            }
+            else
+            {
                 throw new Exception(
                     format("Invalid CSV. Improperly terminated quoted field. File: %s, Line: %d",
                            (filename == "-") ? "Standard Input" : filename,
@@ -356,19 +402,20 @@ InputLoop: while (!inputStream.empty)
         }
     }
     
-    if (currState == State.QuotedField) {
+    if (currState == State.QuotedField)
+    {
         throw new Exception(
             format("Invalid CSV. Improperly terminated quoted field. File: %s, Line: %d",
                    (filename == "-") ? "Standard Input" : filename,
                    currFileLineNumber + recordNum));
     }
-    if (fieldNum > 0) {
-        outputChar('\n');
-    }
+
+    if (fieldNum > 0) outputChar('\n');    // Last line w/o terminating newline.
     assert(outputBuffer.data.length == 0);
 }
 
-unittest {
+unittest
+{
     /* Unit tests for the csv2tsv function.
      *
      * These unit tests exercise different CSV combinations and escaping cases. The CSV
@@ -584,7 +631,8 @@ unittest {
                        tsv21_y, tsv22_y, tsv23_y, tsv24_y, tsv25_y, tsv26_y, tsv27_y, tsv28_y, tsv29_y, tsv30_y,
                        tsv31_y, tsv32_y];
     
-    foreach (i, csva, csvb, tsv, tsv_x, tsv_y; lockstep(csvSet1a, csvSet1b, tsvSet1, tsvSet1_x, tsvSet1_y)) {
+    foreach (i, csva, csvb, tsv, tsv_x, tsv_y; lockstep(csvSet1a, csvSet1b, tsvSet1, tsvSet1_x, tsvSet1_y))
+    {
         import std.conv;
 
         /* Byte streams for csv2tsv. Consumed by csv2tsv, so need to be reset when re-used. */
@@ -640,7 +688,8 @@ unittest {
     }
 }
 
-unittest {
+unittest
+{
     /* Unit tests for 'maxRecords' feature of the csv2tsv function.
      */
 

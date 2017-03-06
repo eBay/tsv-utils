@@ -42,22 +42,28 @@ The caller needs to use or copy the output buffer while the fields are still val
 is normally until reading the next input line. The program below illustrates the basic use
 case. It reads stdin and outputs fields [3, 0, 2], in that order.
 
-    int main(string[] args) {
+    int main(string[] args)
+    {
         import tsvutil;
         import std.algorithm, std.array, std.range, std.stdio;
         size_t[] fieldIndicies = [3, 0, 2];
         auto fieldReordering = new InputFieldReordering!char(fieldIndicies);
-        foreach (line; stdin.byLine) {
+        foreach (line; stdin.byLine)
+        {
             fieldReordering.initNewLine;
-            foreach(fieldIndex, fieldValue; line.splitter('\t').enumerate) {
+            foreach(fieldIndex, fieldValue; line.splitter('\t').enumerate)
+            {
                 fieldReordering.processNextField(fieldIndex, fieldValue);
-                if (fieldReordering.allFieldsFilled)
-                    break;
+                if (fieldReordering.allFieldsFilled) break;
             }
             if (fieldReordering.allFieldsFilled)
+            {
                 writeln(fieldReordering.outputFields.join('\t'));
+            }
             else 
+            {
                 writeln("Error: Insufficient number of field on the line.");
+            }
         }
         return 0;
     }
@@ -83,7 +89,6 @@ class InputFieldReordering(C, EnablePartialLines partialLinesOk = EnablePartialL
      *
      * During processing of an a line, an array slice, mapStack, is used to track how
      * much of the fromToMap remains to be processed.
-     *
      */
     import std.range;
     import std.typecons : Tuple;
@@ -94,23 +99,28 @@ class InputFieldReordering(C, EnablePartialLines partialLinesOk = EnablePartialL
     private TupleFromTo[] fromToMap;
     private TupleFromTo[] mapStack;
 
-    final this(const ref size_t[] inputFieldIndicies, size_t start = 0) pure nothrow @safe {
+    final this(const ref size_t[] inputFieldIndicies, size_t start = 0) pure nothrow @safe
+    {
         import std.algorithm : sort;
 
         outputFieldsBuf = new C[][](inputFieldIndicies.length);
         fromToMap.reserve(inputFieldIndicies.length);
 
         foreach (to, from; inputFieldIndicies.enumerate(start))
+        {
             fromToMap ~= TupleFromTo(from, to);
+        }
 
         sort(fromToMap);
         initNewLine;
     }
 
     /** initNewLine initializes the object for a new line. */
-    final void initNewLine() pure nothrow @safe {
+    final void initNewLine() pure nothrow @safe
+    {
         mapStack = fromToMap;
-        static if (partialLinesOk) {
+        static if (partialLinesOk)
+        {
             import std.algorithm : each;
             outputFieldsBuf.each!((ref s) => s.length = 0);
         }
@@ -119,9 +129,11 @@ class InputFieldReordering(C, EnablePartialLines partialLinesOk = EnablePartialL
     /** processNextField maps an input field to the correct locations in the outputFields
      * array. It should be called once for each field on the line, in the order found.
      */
-    final size_t processNextField(size_t fieldIndex, C[] fieldValue) pure nothrow @safe @nogc {
+    final size_t processNextField(size_t fieldIndex, C[] fieldValue) pure nothrow @safe @nogc
+    {
         size_t numFilled = 0;
-        while (!mapStack.empty && fieldIndex == mapStack.front.from) {
+        while (!mapStack.empty && fieldIndex == mapStack.front.from)
+        {
             outputFieldsBuf[mapStack.front.to] = fieldValue;
             mapStack.popFront;
             numFilled++;
@@ -130,20 +142,23 @@ class InputFieldReordering(C, EnablePartialLines partialLinesOk = EnablePartialL
     }
 
     /** allFieldsFilled returned true if all fields expected have been processed. */
-    final bool allFieldsFilled() const pure nothrow @safe @nogc {
+    final bool allFieldsFilled() const pure nothrow @safe @nogc
+    {
         return mapStack.empty;
     }
 
     /** outputFields is the assembled output fields. Unless partial lines are enabled,
      * it is only valid after allFieldsFilled is true.
      */
-    final C[][] outputFields() pure nothrow @safe @nogc {
+    final C[][] outputFields() pure nothrow @safe @nogc
+    {
         return outputFieldsBuf[];
     }
 }
 
 /* Tests using different character types. */
-unittest {
+unittest
+{
     import std.conv;
     
     auto inputLines = [["r1f0", "r1f1", "r1f2",   "r1f3"],
@@ -165,12 +180,14 @@ unittest {
     auto wcharIFR = new InputFieldReordering!wchar(fields_2_0);
     auto dcharIFR = new InputFieldReordering!dchar(fields_2_0);
 
-    foreach (lineIndex, line; inputLines) {
+    foreach (lineIndex, line; inputLines)
+    {
         charIFR.initNewLine;
         wcharIFR.initNewLine;
         dcharIFR.initNewLine;
 
-        foreach (fieldIndex, fieldValue; line) {
+        foreach (fieldIndex, fieldValue; line)
+        {
             charIFR.processNextField(fieldIndex, to!(char[])(fieldValue));
             wcharIFR.processNextField(fieldIndex, to!(wchar[])(fieldValue));
             dcharIFR.processNextField(fieldIndex, to!(dchar[])(fieldValue));
@@ -190,7 +207,8 @@ unittest {
 }
 
 /* Test of partial line support. */
-unittest {
+unittest
+{
     import std.conv;
     
     auto inputLines = [["r1f0", "r1f1", "r1f2",   "r1f3"],
@@ -211,9 +229,11 @@ unittest {
 
     auto charIFR  = new InputFieldReordering!(char, EnablePartialLines.yes)(fields_2_0);
 
-    foreach (lineIndex, line; inputLines) {
+    foreach (lineIndex, line; inputLines)
+    {
         charIFR.initNewLine;
-        foreach (fieldIndex, fieldValue; line) {
+        foreach (fieldIndex, fieldValue; line)
+        {
             charIFR.processNextField(fieldIndex, to!(char[])(fieldValue));
             assert(charIFR.outputFields == charExpectedBylineByfield_2_0[lineIndex][fieldIndex]);
         }
@@ -221,7 +241,8 @@ unittest {
 }
 
 /* Field combination tests. */
-unittest {
+unittest
+{
     import std.conv;
     import std.stdio;
     
@@ -285,7 +306,8 @@ unittest {
     auto ifr_3210 = new InputFieldReordering!char(fields_3210);
     auto ifr_03001 = new InputFieldReordering!char(fields_03001);
 
-    foreach (lineIndex, line; inputLines) {
+    foreach (lineIndex, line; inputLines)
+    {
         ifr_0.initNewLine;
         ifr_3.initNewLine;
         ifr_01.initNewLine;
@@ -296,7 +318,8 @@ unittest {
         ifr_3210.initNewLine;
         ifr_03001.initNewLine;
 
-        foreach (fieldIndex, fieldValue; line) {
+        foreach (fieldIndex, fieldValue; line)
+        {
             ifr_0.processNextField(fieldIndex, to!(char[])(fieldValue));
             ifr_3.processNextField(fieldIndex, to!(char[])(fieldValue));
             ifr_01.processNextField(fieldIndex, to!(char[])(fieldValue));

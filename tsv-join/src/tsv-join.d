@@ -55,7 +55,8 @@ EOS";
 
 /** Container for command line options.
  */
-struct TsvJoinOptions {
+struct TsvJoinOptions
+{
     string filterFile;               // --filter
     size_t[] keyFields;              // --key-fields
     size_t[] dataFields;             // --data-fields
@@ -80,18 +81,21 @@ struct TsvJoinOptions {
      * values calculated. In addition, field indices have been converted to zero-based.
      * If the whole line is the key, the individual fields lists will be cleared.
      */ 
-    auto processArgs (ref string[] cmdArgs) {
+    auto processArgs (ref string[] cmdArgs)
+    {
         import std.algorithm : any, each;
         import std.getopt;
 
         /* Handler for --write-all. Special handler so two values can be set. */
-        void writeAllHandler(string option, string value) {
+        void writeAllHandler(string option, string value)
+        {
             debug stderr.writeln("[writeAllHandler] |", option, "|  |", value, "|");
             writeAll = true;
             writeAllValue = value;
         }
         
-        try {
+        try
+        {
             arraySep = ",";    // Use comma to separate values in command line options
             auto r = getopt(
                 cmdArgs,
@@ -111,17 +115,22 @@ struct TsvJoinOptions {
                                    "          Allow duplicate keys with different append values (last entry wins).", &allowDupliateKeys, 
                 );
 
-            if (r.helpWanted) {
+            if (r.helpWanted)
+            {
                 defaultGetoptPrinter(helpText, r.options);
                 return tuple(false, 0);
-            } else if (helpVerbose) {
+            }
+            else if (helpVerbose)
+            {
                 defaultGetoptPrinter(helpTextVerbose, r.options);
                 return tuple(false, 0);
             }
 
             consistencyValidations(cmdArgs);
             derivations();
-        } catch (Exception exc) {
+        }
+        catch (Exception exc)
+        {
             stderr.writeln("Error processing command line arguments: ", exc.msg);
             return tuple(false, 1);
         }
@@ -131,28 +140,43 @@ struct TsvJoinOptions {
     /* This routine does validations not handled by getopt, usually because they
      * involve interactions between multiple parameters.
      */
-    private void consistencyValidations(ref string[] processedCmdArgs) {
+    private void consistencyValidations(ref string[] processedCmdArgs)
+    {
         import std.algorithm : any;
 
         if (filterFile.length == 0)
+        {
             throw new Exception("Required option --filter-file was not supplied.");
+        }
         else if (filterFile == "-" && processedCmdArgs.length == 1)
+        {
             throw new Exception("A data file is required when standard input is used for the filter file (--f|filter-file -).");
+        }
 
         if (writeAll && appendFields.length == 0)
+        {
             throw new Exception("Use --a|append-fields when using --w|write-all.");
+        }
 
         if (writeAll && appendFields.length == 1 && appendFields[0] == 0)
+        {
             throw new Exception("Cannot use '--a|append-fields 0' (whole line) when using --w|write-all.");
+        }
 
         if (appendFields.length > 0 && exclude)
+        {
             throw new Exception("--e|exclude cannot be used with --a|append-fields.");
+        }
 
         if (appendHeaderPrefix.length > 0 && !hasHeader)
+        {
             throw new Exception("Use --header when using --p|prefix.");
+        }
 
         if (dataFields.length > 0 && keyFields.length != dataFields.length)
+        {
             throw new Exception("Different number of --k|key-fields and --d|data-fields.");
+        }
 
         if (keyFields.length == 1 && dataFields.length == 1 &&
             ((keyFields[0] == 0 && dataFields[0] != 0) || (keyFields[0] != 0 && dataFields[0] == 0)))
@@ -170,28 +194,33 @@ struct TsvJoinOptions {
     }
 
     /* Post-processing derivations. */
-    void derivations() {
+    void derivations()
+    {
         import std.algorithm : each;
         import std.range; 
 
         // Convert 'full-line' field indexes (index zero) to boolean flags.
-        if (keyFields.length == 0) {
+        if (keyFields.length == 0)
+        {
             assert(dataFields.length == 0);
             keyIsFullLine = true;
             dataIsFullLine = true;
         }
-        else if (keyFields.length == 1 && keyFields[0] == 0) {
+        else if (keyFields.length == 1 && keyFields[0] == 0)
+        {
             keyIsFullLine = true;
             keyFields.popFront;
             dataIsFullLine = true;
             
-            if (dataFields.length == 1) {
+            if (dataFields.length == 1)
+            {
                 assert(dataFields[0] == 0);
                 dataFields.popFront;
             }
         }
 
-        if (appendFields.length == 1 && appendFields[0] == 0) {
+        if (appendFields.length == 1 && appendFields[0] == 0)
+        {
             appendFullLine = true;
             appendFields.popFront; 
         }
@@ -210,26 +239,24 @@ struct TsvJoinOptions {
 /** 
 Main program.
  */
-int main(string[] cmdArgs) {
+int main(string[] cmdArgs)
+{
     TsvJoinOptions cmdopt;
-        auto r = cmdopt.processArgs(cmdArgs);
-    if (!r[0]) {
-        return r[1];
-    }
-    try {
-        tsvJoin(cmdopt, cmdArgs[1..$]);
-    }
-    catch (Exception exc) {
+    auto r = cmdopt.processArgs(cmdArgs);
+    if (!r[0]) return r[1];
+    try tsvJoin(cmdopt, cmdArgs[1..$]);
+    catch (Exception exc)
+    {
         stderr.writeln("Error: ", exc.msg);
         return 1;
     }
-
     return 0;
 }
 
 /** tsvJoin does the primary work of the tsv-join program.
  */
-void tsvJoin(in TsvJoinOptions cmdopt, in string[] inputFiles) {
+void tsvJoin(in TsvJoinOptions cmdopt, in string[] inputFiles)
+{
     import tsvutil : InputFieldReordering;
     import std.algorithm : splitter;
     import std.array : join;
@@ -274,14 +301,16 @@ void tsvJoin(in TsvJoinOptions cmdopt, in string[] inputFiles) {
     /* The append values for unmatched records. */
     char[] appendFieldsUnmatchedValue;
 
-    if (cmdopt.writeAll) {
+    if (cmdopt.writeAll)
+    {
         assert(cmdopt.appendFields.length > 0);  // Checked in consistencyValidations
 
         // reserve space for n values and n-1 delimiters
         appendFieldsUnmatchedValue.reserve(cmdopt.appendFields.length * (cmdopt.writeAllValue.length + 1) - 1);
 
         appendFieldsUnmatchedValue ~= cmdopt.writeAllValue; 
-        for (size_t i = 1; i < cmdopt.appendFields.length; ++i) {
+        for (size_t i = 1; i < cmdopt.appendFields.length; ++i)
+        {
             appendFieldsUnmatchedValue ~= cmdopt.delim;
             appendFieldsUnmatchedValue ~= cmdopt.writeAllValue;
         }
@@ -291,22 +320,27 @@ void tsvJoin(in TsvJoinOptions cmdopt, in string[] inputFiles) {
     {
         bool needPerFieldProcessing = (numKeyFields > 0) || (numAppendFields > 0);
         auto filterStream = (cmdopt.filterFile == "-") ? stdin : cmdopt.filterFile.File;
-        foreach (lineNum, line; filterStream.byLine.enumerate(1)) {
+        foreach (lineNum, line; filterStream.byLine.enumerate(1))
+        {
             debug writeln("[filter line] |", line, "|");
-            if (needPerFieldProcessing) {
+            if (needPerFieldProcessing)
+            {
                 filterKeysReordering.initNewLine;
                 appendFieldsReordering.initNewLine;
                 
-                foreach (fieldIndex, fieldValue; line.splitter(cmdopt.delim).enumerate) {
+                foreach (fieldIndex, fieldValue; line.splitter(cmdopt.delim).enumerate)
+                {
                     filterKeysReordering.processNextField(fieldIndex,fieldValue);
                     appendFieldsReordering.processNextField(fieldIndex,fieldValue);
                     
-                    if (filterKeysReordering.allFieldsFilled && appendFieldsReordering.allFieldsFilled) {
+                    if (filterKeysReordering.allFieldsFilled && appendFieldsReordering.allFieldsFilled)
+                    {
                         break;
                     }
                 }
                 // Processed all fields in the line.
-                if (!filterKeysReordering.allFieldsFilled || !appendFieldsReordering.allFieldsFilled) {
+                if (!filterKeysReordering.allFieldsFilled || !appendFieldsReordering.allFieldsFilled)
+                {
                     throw new Exception(
                         format("Not enough fields in line. File: %s, Line: %s",
                                (cmdopt.filterFile == "-") ? "Standard Input" : cmdopt.filterFile, lineNum));
@@ -320,23 +354,29 @@ void tsvJoin(in TsvJoinOptions cmdopt, in string[] inputFiles) {
             
             debug writeln("  --> [key]:[append] => [", key, "]:[", appendValues, "]"); 
 
-            if (lineNum == 1 && cmdopt.hasHeader) {
-                if (cmdopt.appendHeaderPrefix.length == 0) {
+            if (lineNum == 1 && cmdopt.hasHeader)
+            {
+                if (cmdopt.appendHeaderPrefix.length == 0)
+                {
                     appendFieldsHeader = appendValues;
-                } else {
-                    foreach (fieldIndex, fieldValue; appendValues.splitter(cmdopt.delim).enumerate) {
-                        if (fieldIndex > 0) {
-                            appendFieldsHeader ~= cmdopt.delim;
-                        }
+                }
+                else
+                {
+                    foreach (fieldIndex, fieldValue; appendValues.splitter(cmdopt.delim).enumerate)
+                    {
+                        if (fieldIndex > 0) appendFieldsHeader ~= cmdopt.delim;
                         appendFieldsHeader ~= cmdopt.appendHeaderPrefix;
                         appendFieldsHeader ~= fieldValue;
                     }
                 }
             }
-            else {
-                if (isAppending && !cmdopt.allowDupliateKeys) {
+            else
+            {
+                if (isAppending && !cmdopt.allowDupliateKeys)
+                {
                     string* currAppendValues = (key in filterHash);
-                    if (currAppendValues !is null && *currAppendValues != appendValues) {
+                    if (currAppendValues !is null && *currAppendValues != appendValues)
+                    {
                         throw new Exception(
                             format("Duplicate keys with different append values (use --z|allow-duplicate-keys to ignore)\n   [key 1][values]: [%s][%s]\n   [key 2][values]: [%s][%s]",
                                    key, *currAppendValues, key, appendValues));
@@ -352,22 +392,25 @@ void tsvJoin(in TsvJoinOptions cmdopt, in string[] inputFiles) {
     /* Now process each input file, one line at a time. */
 
     bool headerWritten = false;
-    foreach (filename; (inputFiles.length > 0) ? inputFiles : ["-"]) {
+    foreach (filename; (inputFiles.length > 0) ? inputFiles : ["-"])
+    {
         auto inputStream = (filename == "-") ? stdin : filename.File();
-        foreach (lineNum, line; inputStream.byLine.enumerate(1)) {
+        foreach (lineNum, line; inputStream.byLine.enumerate(1))
+        {
             debug writeln("[input line] |", line, "|"); 
-            if (cmdopt.hasHeader && lineNum == 1) {
+            if (cmdopt.hasHeader && lineNum == 1)
+            {
                 /* Header line processing. */
-                if (!headerWritten) {
+                if (!headerWritten)
+                {
                     write(line);
-                    if (isAppending) {
-                        write(cmdopt.delim, appendFieldsHeader);
-                    }
+                    if (isAppending) write(cmdopt.delim, appendFieldsHeader);
                     writeln();
                     headerWritten = true;
                 }
             }
-            else {
+            else
+            {
                 /* Regular line (not a header line). 
                  * 
                  * Next block checks if the input line matches a hash entry. Two cases:
@@ -377,20 +420,21 @@ void tsvJoin(in TsvJoinOptions cmdopt, in string[] inputFiles) {
                  * At the end of the appendFields will contain the result of hash lookup.
                  */
                 string* appendFields;
-                if (cmdopt.keyIsFullLine) {
+                if (cmdopt.keyIsFullLine)
+                {
                     appendFields = (line in filterHash);
                 }
-                else {
+                else
+                {
                     dataKeysReordering.initNewLine;
-                    foreach (fieldIndex, fieldValue; line.splitter(cmdopt.delim).enumerate) {
+                    foreach (fieldIndex, fieldValue; line.splitter(cmdopt.delim).enumerate)
+                    {
                         dataKeysReordering.processNextField(fieldIndex, fieldValue);
-
-                        if (dataKeysReordering.allFieldsFilled) {
-                            break;
-                        }
+                        if (dataKeysReordering.allFieldsFilled) break;
                     }
                     // Processed all fields in the line.
-                    if (!dataKeysReordering.allFieldsFilled) {
+                    if (!dataKeysReordering.allFieldsFilled)
+                    {
                         throw new Exception(
                             format("Not enough fields in line. File: %s, Line: %s",
                                    (filename == "-") ? "Standard Input" : filename, lineNum));
@@ -400,11 +444,10 @@ void tsvJoin(in TsvJoinOptions cmdopt, in string[] inputFiles) {
 
                 bool matched = (appendFields !is null);
                 debug writeln("   --> matched? ", matched); 
-                if (cmdopt.writeAll || (matched && !cmdopt.exclude) || (!matched && cmdopt.exclude)) {
+                if (cmdopt.writeAll || (matched && !cmdopt.exclude) || (!matched && cmdopt.exclude))
+                {
                     write(line);
-                    if (isAppending) {
-                        write(cmdopt.delim, matched ? *appendFields : appendFieldsUnmatchedValue);
-                    }
+                    if (isAppending) write(cmdopt.delim, matched ? *appendFields : appendFieldsUnmatchedValue);
                     writeln();
                 }
             }
