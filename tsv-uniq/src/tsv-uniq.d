@@ -55,7 +55,8 @@ EOS";
 /** 
 Container for command line options. 
  */
-struct TsvUniqOptions {
+struct TsvUniqOptions
+{
     enum defaultEquivHeader = "equiv_id";
     enum defaultEquivStartID = 1;
     
@@ -77,11 +78,13 @@ struct TsvUniqOptions {
      * values calculated. In addition, field indices have been converted to zero-based.
      * If the whole line is the key, the individual fields list will be cleared.
      */ 
-    auto processArgs (ref string[] cmdArgs) {
+    auto processArgs (ref string[] cmdArgs)
+    {
         import std.algorithm : any, each;
         import std.getopt;
         
-        try {
+        try
+        {
             arraySep = ",";    // Use comma to separate values in command line options
             auto r = getopt(
                 cmdArgs,
@@ -97,40 +100,51 @@ struct TsvUniqOptions {
                 "d|delimiter",   "CHR       Field delimiter. Default: TAB. (Single byte UTF-8 characters only.)", &delim,
                 );
             
-            if (r.helpWanted) {
+            if (r.helpWanted)
+            {
                 defaultGetoptPrinter(helpText, r.options);
                 return tuple(false, 0);
-            } else if (helpVerbose) {
+            }
+            else if (helpVerbose)
+            {
                 defaultGetoptPrinter(helpTextVerbose, r.options);
                 return tuple(false, 0);
             }
 
             /* Consistency checks */
-            if (!equivMode) {
-                if (equivHeader != defaultEquivHeader) {
+            if (!equivMode)
+            {
+                if (equivHeader != defaultEquivHeader)
+                {
                     throw new Exception("--equiv-header requires --e|equiv");
                 }
-                else if (equivStartID != defaultEquivStartID) {
+                else if (equivStartID != defaultEquivStartID)
+                {
                     throw new Exception("--equiv-start requires --e|equiv");
                 }
             }
 
-            if (fields.length > 1 && fields.any!(x => x == 0)) {
+            if (fields.length > 1 && fields.any!(x => x == 0))
+            {
                 throw new Exception("Whole line as key (--f|field 0) cannot be combined with multiple fields.");
             }
 
             /* Derivations */
-            if (fields.length == 0) {
+            if (fields.length == 0)
+            {
                 keyIsFullLine = true;
             }
-            else if (fields.length == 1 && fields[0] == 0) {
+            else if (fields.length == 1 && fields[0] == 0)
+            {
                 keyIsFullLine = true;
                 fields.length = 0;
             }
 
             fields.each!((ref x) => --x);  // Convert to 1-based indexing.
             
-        } catch (Exception exc) {
+        }
+        catch (Exception exc)
+        {
             stderr.writeln("Error processing command line arguments: ", exc.msg);
             return tuple(false, 1);
         }
@@ -138,24 +152,22 @@ struct TsvUniqOptions {
     }
 }
 
-int main(string[] cmdArgs) {
+int main(string[] cmdArgs)
+{
     TsvUniqOptions cmdopt;
     auto r = cmdopt.processArgs(cmdArgs);
-    if (!r[0]) {
-        return r[1];
-    }
-    try {
-        tsvUniq(cmdopt, cmdArgs[1..$]);
-    }
-    catch (Exception exc) {
+    if (!r[0]) return r[1];
+    try tsvUniq(cmdopt, cmdArgs[1..$]);
+    catch (Exception exc)
+    {
         stderr.writeln("Error: ", exc.msg);
         return 1;
     }
-
     return 0;
 }
 
-void tsvUniq(in TsvUniqOptions cmdopt, in string[] inputFiles) {
+void tsvUniq(in TsvUniqOptions cmdopt, in string[] inputFiles)
+{
     import tsvutil : InputFieldReordering;
     import std.algorithm : splitter;
     import std.array : join;
@@ -174,37 +186,42 @@ void tsvUniq(in TsvUniqOptions cmdopt, in string[] inputFiles) {
     size_t numFields = cmdopt.fields.length; 
     long nextEquivID = cmdopt.equivStartID;
     bool headerWritten = false;
-    foreach (filename; (inputFiles.length > 0) ? inputFiles : ["-"]) {
+    foreach (filename; (inputFiles.length > 0) ? inputFiles : ["-"])
+    {
         auto inputStream = (filename == "-") ? stdin : filename.File();
-        foreach (lineNum, line; inputStream.byLine.enumerate(1)) {
-            if (cmdopt.hasHeader && lineNum == 1) {
+        foreach (lineNum, line; inputStream.byLine.enumerate(1))
+        {
+            if (cmdopt.hasHeader && lineNum == 1)
+            {
                 /* Header line. */
-                if (!headerWritten) {
+                if (!headerWritten)
+                {
                     write(line);
-                    if (cmdopt.equivMode) {
-                        write(cmdopt.delim, cmdopt.equivHeader);
-                    }
+                    if (cmdopt.equivMode) write(cmdopt.delim, cmdopt.equivHeader);
                     writeln();
                     headerWritten = true;
                 }
             }
-            else {
+            else
+            {
                 /* Regular line (not header). Start by finding the key. */
                 typeof(line) key;
-                if (cmdopt.keyIsFullLine) {
+                if (cmdopt.keyIsFullLine)
+                {
                     key = line;
                 }
-                else {
+                else
+                {
                     /* Copy the key fields to a new buffer. */
                     keyFieldsReordering.initNewLine;
-                    foreach (fieldIndex, fieldValue; line.splitter(cmdopt.delim).enumerate) {
+                    foreach (fieldIndex, fieldValue; line.splitter(cmdopt.delim).enumerate)
+                    {
                         keyFieldsReordering.processNextField(fieldIndex, fieldValue);
-                        if (keyFieldsReordering.allFieldsFilled) {
-                            break;
-                        }
+                        if (keyFieldsReordering.allFieldsFilled) break;
                     }
 
-                    if (!keyFieldsReordering.allFieldsFilled) {
+                    if (!keyFieldsReordering.allFieldsFilled)
+                    {
                         throw new Exception(
                             format("Not enough fields in line. File: %s, Line: %s",
                                    (filename == "-") ? "Standard Input" : filename, lineNum));
@@ -213,29 +230,28 @@ void tsvUniq(in TsvUniqOptions cmdopt, in string[] inputFiles) {
                     key = keyFieldsReordering.outputFields.join(cmdopt.delim);
                 }
 
-                if (cmdopt.ignoreCase) {
-                    key = key.toLower;
-                }
+                if (cmdopt.ignoreCase) key = key.toLower;
 
                 bool isUniq;
                 long currEquivID;
                 long* priorEquivID = (key in equivHash);
-                if (priorEquivID is null) {
+                if (priorEquivID is null)
+                {
                     isUniq = true;
                     currEquivID = nextEquivID;
                     equivHash[key.to!string] = nextEquivID;
                     nextEquivID++;
                 }
-                else {
+                else
+                {
                     isUniq = false;
                     currEquivID = *priorEquivID;
                 }
 
-                if (isUniq || cmdopt.equivMode) {
+                if (isUniq || cmdopt.equivMode)
+                {
                     write(line);
-                    if (cmdopt.equivMode) {
-                        write(cmdopt.delim, currEquivID);
-                    }
+                    if (cmdopt.equivMode) write(cmdopt.delim, currEquivID);
                     writeln();
                 }
             }
