@@ -365,7 +365,7 @@ $ tsv-join -f run1.tsv --header --key-fields 1 --append-fields 2 --prefix run1_ 
 
 **Synopsis:** tsv-append [options] [file...]
 
-tsv-append concatenates multiple TSV files, similar to the Unix 'cat' utility. Unlike 'cat', it is header aware ('--H|header'), writing the header from only the first file. It also supports source tracking, adding a column indicating the original file to each row. Results are written to standard output.
+tsv-append concatenates multiple TSV files, similar to the Unix 'cat' utility. Unlike 'cat', it is header-aware ('--H|header'), writing the header from only the first file. It also supports source tracking, adding a column indicating the original file to each row. Results are written to standard output.
 
 Concatenation with header support is useful when preparing data for traditional Unix utilities like 'sort' and 'sed' or applications that read a single file.
 
@@ -519,7 +519,7 @@ $ number-lines --header data*.tsv
 
 **Synopsis:** keep-header [file...] -- program [args]
 
-Execute a command against one or more files in a header aware fashion. The first line of each file is assumed to be a header. The first header is output unchanged. Remaining lines are sent to the given command via standard input, excluding the header lines of subsequent files. Output from the command is appended to the initial header line.
+Execute a command against one or more files in a header-aware fashion. The first line of each file is assumed to be a header. The first header is output unchanged. Remaining lines are sent to the given command via standard input, excluding the header lines of subsequent files. Output from the command is appended to the initial header line.
 
 A double dash (--) delimits the command, similar to how the pipe operator (|) delimits commands. Examples:
 ```

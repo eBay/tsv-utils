@@ -29,12 +29,12 @@ The rest of this section contains a short description of each tool. There is mor
 * [tsv-select](#tsv-select) - Keep a subset of the columns (fields) in the input.
 * [tsv-summarize](#tsv-summarize) - Aggregate field values, summarizing across the entire file or grouped by key.
 * [tsv-join](#tsv-join) - Join lines from multiple files using fields as a key.
-* [tsv-append](#tsv-append) - Concatenate TSV files. Header aware; supports source file tracking.
+* [tsv-append](#tsv-append) - Concatenate TSV files. Header-aware; supports source file tracking.
 * [tsv-uniq](#tsv-uniq) - Filter out duplicate lines using fields as a key.
 * [tsv-sample](#tsv-sample) - Uniform and weighted random sampling or permutation of input lines.
 * [csv2tsv](#csv2tsv) - Convert CSV files to TSV.
 * [number-lines](#number-lines) - Number the input lines.
-* [keep-header](#keep-header) - Run a shell command in a header aware fashion.
+* [keep-header](#keep-header) - Run a shell command in a header-aware fashion.
 * [Useful bash aliases](#useful-bash-aliases)
 
 ### tsv-filter
@@ -106,7 +106,7 @@ See the [tsv-join reference](docs/ToolReference.md#tsv-join-reference) for detai
 
 ### tsv-append
 
-`tsv-append` concatenates multiple TSV files, similar to the Unix `cat` utility. It is header aware, writing the header from only the first file. It also supports source tracking, adding a column indicating the original file to each row.
+`tsv-append` concatenates multiple TSV files, similar to the Unix `cat` utility. It is header-aware, writing the header from only the first file. It also supports source tracking, adding a column indicating the original file to each row.
 
 Concatenation with header support is useful when preparing data for traditional Unix utilities like `sort` and `sed` or applications that read a single file.
 
@@ -153,7 +153,7 @@ See the [number-lines reference](docs/ToolReference.md#tsv-summarize-reference) 
 
 ### keep-header
 
-A convenience utility that runs unix commands in a header aware fashion. It is especially useful with `sort`, which puts the header line wherever it falls in the sort order. Using `keep-header`, the header line retains it position as the first line. For example:
+A convenience utility that runs unix commands in a header-aware fashion. It is especially useful with `sort`, which puts the header line wherever it falls in the sort order. Using `keep-header`, the header line retains it position as the first line. For example:
 ```
 $ keep-header myfile.txt -- sort
 ```
