@@ -12,6 +12,7 @@ This page provides detailed documentation about the different tools as well as e
 * [tsv-sample reference](#tsv-sample-reference)
 * [csv2tsv reference](#csv2tsv-reference)
 * [number-lines reference](#number-lines-reference)
+* [keep-header reference](#keep-header-reference)
 
 ## Common options and behavior
 
@@ -512,4 +513,21 @@ $ number-lines file.tsv
 
 $ # Number lines from multiple files. Treat the first line each file as a header.
 $ number-lines --header data*.tsv
+```
+
+## keep-header reference
+
+**Synopsis:** keep-header [file...] -- program [args]
+
+Execute a command against one or more files in a header aware fashion. The first line of each file is assumed to be a header. The first header is output unchanged. Remaining lines are sent to the given command via standard input, excluding the header lines of subsequent files. Output from the command is appended to the initial header line.
+
+A double dash (--) delimits the command, similar to how the pipe operator (|) delimits commands. Examples:
+```
+$ keep-header file1.txt -- sort
+$ keep-header file1.txt file2.txt -- sort -k1,1nr
+```
+
+These sort the files as usual, but preserve the header as the first line output. Data can also be read from from standard input. Example:
+```
+$ keep-header file1.txt -- sort | keep-header -- uniq
 ```

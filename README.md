@@ -34,6 +34,7 @@ The rest of this section contains a short description of each tool. There is mor
 * [tsv-sample](#tsv-sample) - Uniform and weighted random sampling or permutation of input lines.
 * [csv2tsv](#csv2tsv) - Convert CSV files to TSV.
 * [number-lines](#number-lines) - Number the input lines.
+* [keep-header](#keep-header) - Run a shell command in a header aware fashion.
 * [Useful bash aliases](#useful-bash-aliases)
 
 ### tsv-filter
@@ -149,6 +150,15 @@ $ number-lines myfile.txt
 ```
 
 See the [number-lines reference](docs/ToolReference.md#tsv-summarize-reference) for details.
+
+### keep-header
+
+A convenience utility that runs unix commands in a header aware fashion. It is especially useful with `sort`, which puts the header line wherever it falls in the sort order. Using `keep-header`, the header line retains it position as the first line. For example:
+```
+$ keep-header myfile.txt -- sort
+```
+
+Multiple files can be provided, only the header from the first is retained. The command is executed as specified, so additional command options can be provided. See the [keep-header reference](docs/ToolReference.md#keep-header-reference) for more information.
 
 ### Useful bash aliases
 
