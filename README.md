@@ -158,7 +158,7 @@ A convenience utility that runs unix commands in a header-aware fashion. It is e
 $ keep-header myfile.txt -- sort
 ```
 
-Multiple files can be provided, only the header from the first is retained. The command is executed as specified, so additional command options can be provided. See the [keep-header reference](docs/ToolReference.md#keep-header-reference) for more information.
+It is also useful with `grep` and other filtering commands, where the header should be retained regardless of the search string. Multiple files can be provided, only the header from the first is retained. The command is executed as specified, so additional command options can be provided. See the [keep-header reference](docs/ToolReference.md#keep-header-reference) for more information.
 
 ### Useful bash aliases
 

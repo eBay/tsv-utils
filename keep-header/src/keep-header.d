@@ -24,7 +24,7 @@ operator (|) delimits commands. Examples:
 These sort the files as usual, but preserve the header as the first line
 output. Data can also be read from from standard input. Example:
 
-    $ keep-header file1.txt -- sort | keep-header -- uniq
+    $ cat file1.txt | keep-header -- grep red
 EOS";
 
 int main(string[] args)
