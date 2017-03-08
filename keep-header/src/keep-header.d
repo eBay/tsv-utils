@@ -72,8 +72,10 @@ int main(string[] args)
         bool headerWritten = false;
         foreach (filename; splitArgs[0].length > 1 ? splitArgs[0][1..$] : ["-"])
         {
+            bool isStdin = (filename == "-");
             File inputStream;
-            if (filename == "-") inputStream = stdin;
+
+            if (isStdin) inputStream = stdin;
             else
             {
                 try inputStream = filename.File();
@@ -86,20 +88,30 @@ int main(string[] args)
                 }
             }
 
-            foreach (lineNum, line; inputStream.byLine(KeepTerminator.yes).enumerate(1))
+            auto firstLine = inputStream.readln();
+            
+            if (inputStream.eof && firstLine.length == 0) continue;
+            
+            if (!headerWritten)
             {
-                if (lineNum == 1)
-                {
-                    if (!headerWritten)
-                    {
-                        write(line);
-                        stdout.flush;
-                        headerWritten = true;
-                    }
-                }
-                else
+                write(firstLine);
+                stdout.flush;
+                headerWritten = true;
+            }
+
+            if (isStdin)
+            {
+                foreach (line; inputStream.byLine(KeepTerminator.yes))
                 {
                     pipe.stdin.write(line);
+                }
+            }
+            else
+            {
+                ubyte[1024*1024] readBuffer;
+                foreach (ubyte[] chunk; inputStream.byChunk(readBuffer))
+                {
+                    pipe.stdin.write(cast(char[])chunk);
                 }
             }
             pipe.stdin.flush;
