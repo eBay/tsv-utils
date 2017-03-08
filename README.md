@@ -153,12 +153,14 @@ See the [number-lines reference](docs/ToolReference.md#tsv-summarize-reference) 
 
 ### keep-header
 
-A convenience utility that runs unix commands in a header-aware fashion. It is especially useful with `sort`, which puts the header line wherever it falls in the sort order. Using `keep-header`, the header line retains it position as the first line. For example:
+A convenience utility that runs unix commands in a header-aware fashion. It is especially useful with `sort`, which puts the header line wherever it falls in the sort order. Using `keep-header`, the header line retains its position as the first line. For example:
 ```
 $ keep-header myfile.txt -- sort
 ```
 
-It is also useful with `grep` and other filtering commands, where the header should be retained regardless of the search string. Multiple files can be provided, only the header from the first is retained. The command is executed as specified, so additional command options can be provided. See the [keep-header reference](docs/ToolReference.md#keep-header-reference) for more information.
+It is also useful with `grep`, `awk`, `sed`, similar tools, when the header line should be excluded from the command's action.
+
+Multiple files can be provided, only the header from the first is retained. The command is executed as specified, so additional command options can be provided. See the [keep-header reference](docs/ToolReference.md#keep-header-reference) for more information.
 
 ### Useful bash aliases
 
