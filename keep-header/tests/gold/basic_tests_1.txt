@@ -1,0 +1,97 @@
+Basic tests set 1
+-----------------
+
+====[keep-header input1.csv -- sort]====
+file.row,field1,field2,field3
+input1.txt.1,30,green|blue
+input1.txt.2,20,緑|青
+input1.txt.3,10,绿色|蓝色
+
+====[keep-header input1.csv -- sort -r]====
+file.row,field1,field2,field3
+input1.txt.3,10,绿色|蓝色
+input1.txt.2,20,緑|青
+input1.txt.1,30,green|blue
+
+====[keep-header input1.csv -- sort -t , -k2,2n]====
+file.row,field1,field2,field3
+input1.txt.3,10,绿色|蓝色
+input1.txt.2,20,緑|青
+input1.txt.1,30,green|blue
+
+====[keep-header emptyfile.txt -- sort]====
+
+====[keep-header input1.csv input2.csv -- sort]====
+file.row,field1,field2,field3
+input1.txt.1,30,green|blue
+input1.txt.2,20,緑|青
+input1.txt.3,10,绿色|蓝色
+input2.txt.1,15,green|blue
+input2.txt.2,25,grün|blau
+input2.txt.3,35,vihreä|sininen
+
+====[keep-header emptyfile.txt input1.csv -- sort]====
+file.row,field1,field2,field3
+input1.txt.1,30,green|blue
+input1.txt.2,20,緑|青
+input1.txt.3,10,绿色|蓝色
+
+====[keep-header emptyfile.txt input1.csv input2.csv -- sort]====
+file.row,field1,field2,field3
+input1.txt.1,30,green|blue
+input1.txt.2,20,緑|青
+input1.txt.3,10,绿色|蓝色
+input2.txt.1,15,green|blue
+input2.txt.2,25,grün|blau
+input2.txt.3,35,vihreä|sininen
+
+====[keep-header input1.csv input1.csv -- sort -t , -k2,2n]====
+file.row,field1,field2,field3
+input1.txt.3,10,绿色|蓝色
+input1.txt.3,10,绿色|蓝色
+input1.txt.2,20,緑|青
+input1.txt.2,20,緑|青
+input1.txt.1,30,green|blue
+input1.txt.1,30,green|blue
+
+====[keep-header input_headeronly.csv -- sort]====
+file.row,field1,field2,field3
+
+====[keep-header input_headeronly.csv emptyfile.txt -- sort]====
+file.row,field1,field2,field3
+
+====[keep-header input_headeronly.csv input1.csv -- sort]====
+file.row,field1,field2,field3
+input1.txt.1,30,green|blue
+input1.txt.2,20,緑|青
+input1.txt.3,10,绿色|蓝色
+
+====[keep-header input1.csv input_headeronly.csv -- sort]====
+file.row,field1,field2,field3
+input1.txt.1,30,green|blue
+input1.txt.2,20,緑|青
+input1.txt.3,10,绿色|蓝色
+
+====[keep-header emptyfile.txt input_headeronly.csv input1.csv input2.csv -- sort]====
+file.row,field1,field2,field3
+input1.txt.1,30,green|blue
+input1.txt.2,20,緑|青
+input1.txt.3,10,绿色|蓝色
+input2.txt.1,15,green|blue
+input2.txt.2,25,grün|blau
+input2.txt.3,35,vihreä|sininen
+
+====[cat input1.csv | keep-header -- sort]====
+file.row,field1,field2,field3
+input1.txt.1,30,green|blue
+input1.txt.2,20,緑|青
+input1.txt.3,10,绿色|蓝色
+
+====[cat input1.csv | keep-header input2.csv - -- sort -t , -k2,2n]====
+file.row,field1,field2,field3
+input1.txt.3,10,绿色|蓝色
+input2.txt.1,15,green|blue
+input1.txt.2,20,緑|青
+input2.txt.2,25,grün|blau
+input1.txt.1,30,green|blue
+input2.txt.3,35,vihreä|sininen

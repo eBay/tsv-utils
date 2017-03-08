@@ -1,6 +1,5 @@
 /**
-Command line tool that executes a command, but preserves the header line
-of the first file.
+Command line tool that executes a command while preserving header lines.
 
 Copyright (c) 2017, eBay Software Foundation
 Initially written by Jon Degenhardt
@@ -14,16 +13,16 @@ Execute a command against one or more files in a header aware fashion.
 The first line of each file is assumed to be a header. The first header
 is output unchanged. Remaining lines are sent to the given command via
 standard input, excluding the header lines of subsequent files. Output
-from the command follows the initial header line.
+from the command is appended to the initial header line.
 
-A double dash (--) delimits the command. It will behave similarly to a
-pipe operator (|), except for the header behavior.
+A double dash (--) delimits the command, similar to how the pipe
+operator (|) delimits commands. Examples:
 
-    $ keep-header file1.txt file2.txt -- sort
+    $ keep-header file1.txt -- sort
     $ keep-header file1.txt file2.txt -- sort -k1,1nr
 
-These commands run sort, but keep the header as the first line output.
-Data can also be read from from standard input. Example:
+These sort the files as usual, but preserve the header as the first line
+output. Data can also be read from from standard input. Example:
 
     $ keep-header file1.txt -- sort | keep-header -- uniq
 EOS";
@@ -31,12 +30,13 @@ EOS";
 int main(string[] args)
 {
     import std.algorithm : findSplit, joiner;
+    import std.path : baseName, stripExtension;
     import std.process : pipeProcess, ProcessPipes, Redirect, wait;
     import std.range;
     import std.stdio;
     import std.typecons : tuple; 
 
-    auto programName = (args.length >= 1) ? args[0] : "";
+    auto programName = (args.length > 0) ? args[0].stripExtension.baseName : "Unknown_program_name";
     auto splitArgs = findSplit(args, ["--"]);
 
     if (splitArgs[1].length == 0 || splitArgs[2].length == 0)
@@ -69,12 +69,9 @@ int main(string[] args)
             if (pipeStatus != 0) status = pipeStatus;
         }
         
-        auto files = splitArgs[0].length > 1 ? splitArgs[0][1..$] : ["-"];
-        foreach (fileNum, filename; files.enumerate(1))
+        bool headerWritten = false;
+        foreach (filename; splitArgs[0].length > 1 ? splitArgs[0][1..$] : ["-"])
         {
-            /**** TODO
-             * Need to catch file open failures, terminate the pipe, and exit with status==1.
-             */
             File inputStream;
             if (filename == "-") inputStream = stdin;
             else
@@ -93,10 +90,11 @@ int main(string[] args)
             {
                 if (lineNum == 1)
                 {
-                    if (fileNum == 1)
+                    if (!headerWritten)
                     {
                         write(line);
                         stdout.flush;
+                        headerWritten = true;
                     }
                 }
                 else

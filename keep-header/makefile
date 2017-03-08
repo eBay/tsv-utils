@@ -1,7 +1,5 @@
 include ../makedefs.mk
 include ../makeapp.mk
 
-# No built-in tests yet
-test: ;
+# No built-in unit tests
 unittest: ;
-test-nobuild: ;

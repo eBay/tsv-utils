@@ -1,0 +1,22 @@
+Error test set 1
+----------------
+
+====[keep-header nosuchfile.txt -- sort]====
+[keep-header] Unable to open file: 'nosuchfile.txt'
+Cannot open file `nosuchfile.txt' in mode `rb' (No such file or directory)
+
+====[keep-header input1.csv -- nosuchprogram]====
+[keep-header] Command failed: 'nosuchprogram'
+Executable file not found: nosuchprogram
+
+====[keep-header ]====
+Synopsis: keep-header [file...] -- program [args]
+
+====[keep-header input1.csv]====
+Synopsis: keep-header [file...] -- program [args]
+
+====[keep-header input1.csv --]====
+Synopsis: keep-header [file...] -- program [args]
+
+====[keep-header --]====
+Synopsis: keep-header [file...] -- program [args]
