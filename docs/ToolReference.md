@@ -529,5 +529,8 @@ $ keep-header file1.txt file2.txt -- sort -k1,1nr
 
 These sort the files as usual, but preserve the header as the first line output. Data can also be read from from standard input. Example:
 ```
+$ cat file1.txt | keep-header -- sort
 $ keep-header file1.txt -- sort | keep-header -- uniq
 ```
+
+`keep-header` is especially useful for commands `sort` and `shuf` that reorder lines in the file. It's a simple way to skip the first line when using `sed` or `awk`, or to preserve the header when using `tail`. And it's useful with quite a few tools when processing multiple files sharing a header, as it only preserve that first header.
