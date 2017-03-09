@@ -533,4 +533,6 @@ $ cat file1.txt | keep-header -- sort
 $ keep-header file1.txt -- sort -r | keep-header -- grep red
 ```
 
-`keep-header` is especially useful for commands like `sort` and `shuf` that reorder input lines. It is also useful with filtering commands like `grep`, many `awk` uses, and even `tail`, where the header should be retained without filtering or evaluation. 
+`keep-header` is especially useful for commands like `sort` and `shuf` that reorder input lines. It is also useful with filtering commands like `grep`, many `awk` uses, and even `tail`, where the header should be retained without filtering or evaluation.
+
+`keep-header` works on any file where the first line is delimited by a newline character. This includes all TSV files, and the majority of CSV files. The CSV files it won't work on are those where the header line contains embedded newlines.
