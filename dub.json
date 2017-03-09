@@ -10,6 +10,7 @@
     "dependencies": {
         "tsv-utils-dlang:common": "*",
         "tsv-utils-dlang:csv2tsv": "*",
+        "tsv-utils-dlang:keep-header": "*",
         "tsv-utils-dlang:number-lines": "*",
         "tsv-utils-dlang:tsv-append": "*",
         "tsv-utils-dlang:tsv-filter": "*",
@@ -22,6 +23,7 @@
     "subPackages": [
         "./common/",
         "./csv2tsv/",
+        "./keep-header/",
         "./number-lines/",
         "./tsv-append/",
         "./tsv-filter/",
