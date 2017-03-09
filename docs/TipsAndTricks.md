@@ -74,7 +74,7 @@ This produced the correct results, but took 48 seconds. It is feasible because o
 
 The google ngram files don't have headers, if they did, `grep` as used above would drop them. Use the [keep-header](https://github.com/jondegenhardt/tsv-utils-dlang/blob/keep-header/docs/ToolReference.md#keep-header-reference) tool to preserve the header. For example:
 ```
-$ keep-header file*.tsv -- grep 1850 | tsv-filter -H --str-eq 2:1850
+$ keep-header ngram_with_header_*.tsv -- grep 1850 | tsv-filter -H --str-eq 2:1850
 ```
 
 Using `grep` as a pre-filter won't always be helpful, that will depend on the specific case, but on occasion it can be quite handy.
