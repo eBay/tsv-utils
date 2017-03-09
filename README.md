@@ -175,6 +175,8 @@ tsv-header () { head -n 1 $* | tr $'\t' '\n' | nl ; }
 tsv-sort () { sort -t $'\t' $* ; }
 ```
 
+See also [Sort customizations for TSV files](docs/TipsAndTricks.md#sort-customizations-for-tsv-files) for further enhancements to default sort behavior.
+
 ## Installation
 
 Download a D compiler (http://dlang.org/download.html). These tools have been tested with the DMD and LDC compilers, on Mac OSX and Linux. Use DMD version 2.070 or later, LDC version 1.0.0 or later.
