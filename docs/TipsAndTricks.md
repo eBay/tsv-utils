@@ -156,4 +156,4 @@ $ grep green file.txt | tsv-sort
 $ keep-header file.txt -- tsv-sort
 ```
 
-Remember to use the correct `sort` program name if an updated version has been installed under a different. This may be `gsort` on some systems.
+Remember to use the correct `sort` program name if an updated version has been installed under a different name. This may be `gsort` on some systems.
