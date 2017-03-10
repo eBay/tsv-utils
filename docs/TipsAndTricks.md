@@ -4,10 +4,10 @@ Contents:
 
 * [Useful bash aliases](#useful-bash-aliases)
 * [Sort customizations for TSV files](#sort-customizations-for-tsv-files)
-* [Enable bash-completion](#enable-bash-completion)
 * [Reading data in R](#reading-data-in-R)
 * [A faster way to unique a file](#a-faster-way-to-unique-a-file)
 * [Using grep and tsv-filter together](#using-grep-and-tsv-filter-together)
+* [Enable bash-completion](#enable-bash-completion)
 
 ### Useful bash aliases
 
@@ -28,7 +28,7 @@ $ tsv-header worldcitiespop.tsv
      7	Longitude
 ```
 
-A similar alias can be setup for CSV files. Here are two, the first one takes advantage of a csv-to-tsv converter. The second one uses only standard unix tools. It won't interpret CSV escapes, but many header lines don't use escapes. (Only define one):
+A similar alias can be setup for CSV files. Here are two, the first one takes advantage of a csv-to-tsv converter. The second one uses only standard unix tools. It won't interpret CSV escapes, but many header lines don't use escapes. (Define only one):
 ```
 csv-header () { csv2tsv $* | head -n 1 | tr $'\t' '\n' | nl ; }
 csv-header () { head -n 1 $* | tr ',' '\n' | nl ; }
@@ -78,7 +78,7 @@ $ grep green file.txt | sort --buffer-size=1073741824
 $ keep-header file.txt -- sort --buffer-size=1073741824
 ```
 
-These can be added to the shell script or bash alias described eariler. The revised shell script (file: `tsv-sort`):
+These can be added to the shell script described eariler. The revised shell script (file: `tsv-sort`):
 ```
 #!/bin/sh
 sort  -t $'\t' --buffer-size=1073741824 $*
@@ -91,31 +91,6 @@ $ keep-header file.txt -- tsv-sort
 ```
 
 Remember to use the correct `sort` program name if an updated version has been installed under a different name. This may be `gsort` on some systems.
-
-## Enable bash-completion
-
-Bash command completion is quite handy for command line tools. Command names complete by default, already useful. Adding completion of command options is even better. As an example, with bash completion turned on, enter the command name, then a single dash (-):
-```
-$ tsv-select -
-```
-Now type a TAB (or pair of TABs depending on setup). A list of possible completions is printed and the command line restored for continued entry.
-```
-$ tsv-select -
---delimiter  --fields     --header     --help       --rest
-$ tsv-select --
-```
-Now type 'r', then TAB, and the command will complete up to `$ tsv-select --rest`.
-
-Enabling bash completion is a bit more involved than other packages, but still not too hard. It will often be necessary to install a package. The way to do this is system specific. A good source of instructions can be found at the [bash-completion GitHub repository](https://github.com/scop/bash-completion). Mac users may find the MacPorts [How to use bash-completion](https://trac.macports.org/wiki/howto/bash-completion) guide useful. Procedures for Homebrew are similar, but the details differ a bit.
-
-After enabling bash-completion, add completions for the tsv-utils-dlang package. Completions are available in the `bash_completion/tsv-utils-dlang` file. One way to add them is to 'source' the file from the `~/.bash_completion` file. A line like the following will do this.
-```
-if [ -r ~/tsv-utils-dlang/bash_completion/tsv-utils-dlang ]; then
-    . ~/tsv-utils-dlang/bash_completion/tsv-utils-dlang
-fi
-```
-
-The file can also be added to the bash completions system directory on your system. The location is system specific, see the bash-completion installation instructions for details.
 
 ## Reading data in R
 
@@ -189,3 +164,27 @@ $ keep-header ngram_with_header_*.tsv -- grep 1850 | tsv-filter -H --str-eq 2:18
 
 Using `grep` as a pre-filter won't always be helpful, that will depend on the specific case, but on occasion it can be quite handy.
 
+## Enable bash-completion
+
+Bash command completion is quite handy for command line tools. Command names complete by default, already useful. Adding completion of command options is even better. As an example, with bash completion turned on, enter the command name, then a single dash (-):
+```
+$ tsv-select -
+```
+Now type a TAB (or pair of TABs depending on setup). A list of possible completions is printed and the command line restored for continued entry.
+```
+$ tsv-select -
+--delimiter  --fields     --header     --help       --rest
+$ tsv-select --
+```
+Now type 'r', then TAB, and the command will complete up to `$ tsv-select --rest`.
+
+Enabling bash completion is a bit more involved than other packages, but still not too hard. It will often be necessary to install a package. The way to do this is system specific. A good source of instructions can be found at the [bash-completion GitHub repository](https://github.com/scop/bash-completion). Mac users may find the MacPorts [How to use bash-completion](https://trac.macports.org/wiki/howto/bash-completion) guide useful. Procedures for Homebrew are similar, but the details differ a bit.
+
+After enabling bash-completion, add completions for the tsv-utils-dlang package. Completions are available in the `bash_completion/tsv-utils-dlang` file. One way to add them is to 'source' the file from the `~/.bash_completion` file. A line like the following will do this.
+```
+if [ -r ~/tsv-utils-dlang/bash_completion/tsv-utils-dlang ]; then
+    . ~/tsv-utils-dlang/bash_completion/tsv-utils-dlang
+fi
+```
+
+The file can also be added to the bash completions system directory on your system. The location is system specific, see the bash-completion installation instructions for details.
