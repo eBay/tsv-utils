@@ -35,7 +35,6 @@ The rest of this section contains a short description of each tool. There is mor
 * [csv2tsv](#csv2tsv) - Convert CSV files to TSV.
 * [number-lines](#number-lines) - Number the input lines.
 * [keep-header](#keep-header) - Run a shell command in a header-aware fashion.
-* [Useful bash aliases](#useful-bash-aliases)
 
 ### tsv-filter
 
@@ -161,21 +160,6 @@ $ keep-header myfile.txt -- sort
 It is also useful with `grep`, `awk`, `sed`, similar tools, when the header line should be excluded from the command's action.
 
 Multiple files can be provided, only the header from the first is retained. The command is executed as specified, so additional command options can be provided. See the [keep-header reference](docs/ToolReference.md#keep-header-reference) for more information.
-
-### Useful bash aliases
-
-Any number of convenient utilities can be created using shell facilities. A couple are given below. One of the most useful is `tsv-header`, which shows the field number for each column name in the header. Very useful when using numeric field indexes.
-
-* `tsv-header <file>` - Outputs the column numbers and fields names for the file header (first line).
-* `tsv-sort [options] [file...]` - Runs sort, but with field separator set to TAB. Convenient when sorting on specific fields.
-
-If you using a bash shell, add the definitions below to `.bashrc` or another init file. Similar aliases can be created for shells other than bash.
-```
-tsv-header () { head -n 1 $* | tr $'\t' '\n' | nl ; }
-tsv-sort () { sort -t $'\t' $* ; }
-```
-
-See also [Sort customizations for TSV files](docs/TipsAndTricks.md#sort-customizations-for-tsv-files) for further enhancements to default sort behavior.
 
 ## Installation
 
