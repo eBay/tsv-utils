@@ -105,7 +105,7 @@ fi
 
 The file can also be added to the bash completions system directory on your system. The location is system specific, see the bash-completion installation instructions for details.
 
-## Sort for customizations TSV files
+## Sort customizations for TSV files
 
 The typical unix sort utility works fine on TSV files. However, there are few simple tweaks that can improve convenience and performance.
 
@@ -138,19 +138,19 @@ $ grep green file.txt | sort
 $ keep-header file.txt -- sort
 ```
 
-Most of the performance of direct file reads can be obtained by suggesting a buffer size in the sort command. The author has had good results with a 1 MB buffer. The change to the above commands:
+Most of the performance of direct file reads can be regained by suggesting a buffer size in the sort command. The author has had good results with a 1 MB buffer. The change to the above commands:
 ```
 $ grep green file.txt | sort --buffer-size=1073741824
 $ keep-header file.txt -- sort --buffer-size=1073741824
 ```
 
-These can be added to the shell script or bash alias described eariler. The revised shell script (file `tsv-sort`):
+These can be added to the shell script or bash alias described eariler. The revised shell script (file: `tsv-sort`):
 ```
 #!/bin/sh
 sort  -t $'\t' --buffer-size=1073741824 $*
 ```
 
-Now the previous commands are simple again:
+Now the commands are once again simple and have good performance:
 ```
 $ grep green file.txt | tsv-sort
 $ keep-header file.txt -- tsv-sort
