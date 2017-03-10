@@ -3,7 +3,7 @@
 Contents:
 
 * [Useful bash aliases](#useful-bash-aliases)
-* [Sort customizations for TSV files](#sort-customizations-for-tsv-files)
+* [Sort customizations](#sort-customizations)
 * [Reading data in R](#reading-data-in-R)
 * [A faster way to unique a file](#a-faster-way-to-unique-a-file)
 * [Using grep and tsv-filter together](#using-grep-and-tsv-filter-together)
@@ -41,9 +41,9 @@ but-first () { tail -n +2 $* ; }
 
 These aliases can be created in most shells. Non-bash shells may have a different syntax though.
 
-## Sort customizations for TSV files
+## Sort customizations
 
-The typical unix sort utility works fine on TSV files. However, there are few simple tweaks that can improve convenience and performance.
+The typical Unix `sort` utility works fine on TSV files. However, there are few simple tweaks that can improve convenience and performance.
 
 #### Install an updated sort utility (especially on Mac OS X)
 
