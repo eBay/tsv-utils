@@ -130,9 +130,9 @@ sort -t $'\t' $*
 
 Now `tsv-sort` will run with TAB as the delimiter.
 
-#### Set the buffer size for reading from standard input in pipes.
+#### Set the buffer size for reading from standard input
 
-GNU sort uses a small buffer by default when reading from standard input. This causes it to run much more slowly than when reading files directly. On the author's system the delta is about 2x. This will happen when using unix pipelines. The [keep-header](https://github.com/jondegenhardt/tsv-utils-dlang/blob/keep-header/docs/ToolReference.md#keep-header-reference) tool uses a pipe internally, so it is affected also. Examples:
+GNU sort uses a small buffer by default when reading from standard input. This causes it to run much more slowly than when reading files directly. On the author's system the delta is about 2x. This will happen when using unix pipelines. The [keep-header](https://github.com/jondegenhardt/tsv-utils-dlang/blob/keep-header/docs/ToolReference.md#keep-header-reference) tool uses a pipe internally, so it is affected as well. Examples:
 ```
 $ grep green file.txt | sort
 $ keep-header file.txt -- sort
