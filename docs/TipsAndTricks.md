@@ -6,6 +6,7 @@ Contents:
 * [A faster way to unique a file](#a-faster-way-to-unique-a-file)
 * [Using grep and tsv-filter together](#using-grep-and-tsv-filter-together)
 * [Enable bash-completion](#enable-bash-completion)
+* [Sort customizations for TSV files](#sort-customizations-for-tsv-files)
 
 ## Reading data in R
 
@@ -103,3 +104,56 @@ fi
 ```
 
 The file can also be added to the bash completions system directory on your system. The location is system specific, see the bash-completion installation instructions for details.
+
+## Sort customizations for TSV files
+
+The typical unix sort utility works fine on TSV files. However, there are few simple tweaks that can improve convenience and performance.
+
+#### Install an updated sort utility (especially on Mac OS X)
+
+Especially on a Mac, the default `sort` program is rather old. On OS X Sierra, the default `sort` is GNU sort version 5.93 (2005). As of March 2017, the latest GNU sort is version 8.26. It is about 3 times faster than the 2005 version. Use your system's package manager to install the latest GNU coreutils package. (Two popular package managers on the Mac are Homebrew and MacPorts.) Note that in some cases the revised GNU sort routine may be installed under a different name, for example, `gsort`.
+
+#### Specify TAB as a delimiter in a shell command or bash alias
+
+Specifying TAB as the delimiter every invocation is a nuisance. The way to fix this is to create either a `bash` alias or a shell script. Of the two, the shell script is better if you want to call it from another progam like [keep-header](ToolReference.md#keep-header-reference).
+
+The bash alias - Add this to `~/.bashrc` or another init file:
+```
+tsv-sort () { sort -t $'\t' $* ; }
+```
+
+The shell command (preferred). Put this in a file, eg. `tsv-sort`, run `$ chmod a+x tsv-sort`, and add it to the PATH:
+```
+#!/bin/sh
+sort -t $'\t' $*
+```
+
+Now `tsv-sort` will run with TAB as the delimiter.
+
+#### Set the buffer size for reading from standard input
+
+GNU sort uses a small buffer by default when reading from standard input. This causes it to run much more slowly than when reading files directly. On the author's system the delta is about 2x. This will happen when using unix pipelines. The [keep-header](https://github.com/jondegenhardt/tsv-utils-dlang/blob/keep-header/docs/ToolReference.md#keep-header-reference) tool uses a pipe internally, so it is affected as well. Examples:
+```
+$ grep green file.txt | sort
+$ keep-header file.txt -- sort
+```
+
+Most of the performance of direct file reads can be regained by suggesting a buffer size in the sort command. The author has had good results with a 1 MB buffer. The change to the above commands:
+```
+$ grep green file.txt | sort --buffer-size=1073741824
+$ keep-header file.txt -- sort --buffer-size=1073741824
+```
+
+These can be added to the shell script or bash alias described eariler. The revised shell script (file: `tsv-sort`):
+```
+#!/bin/sh
+sort  -t $'\t' --buffer-size=1073741824 $*
+```
+
+Now the commands are once again simple and have good performance:
+```
+$ grep green file.txt | tsv-sort
+$ keep-header file.txt -- tsv-sort
+```
+
+Remember to use the correct `sort` program name if an updated version has been installed under a different name. This may be `gsort` on some systems.
