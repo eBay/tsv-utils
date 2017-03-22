@@ -1,0 +1,10 @@
+sudo: false
+os:
+ - linux
+ - osx
+language: d
+d:
+ - ldc
+ - dmd
+script:
+ - make test unittest_flags="-main -unittest" DCOMPILER=$DC
