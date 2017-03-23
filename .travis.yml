@@ -7,4 +7,8 @@ d:
  - ldc
  - dmd
 script:
- - make test unittest_flags="-main -unittest" DCOMPILER=$DC
+ - dub run -- --compiler=$DC
+ - make test-nobuild
+ - dub clean
+ - make clean
+ - make test DCOMPILER=$DC
