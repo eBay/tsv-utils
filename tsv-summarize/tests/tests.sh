@@ -31,7 +31,7 @@ echo "Basic tests set 1" > ${basic_tests_1}
 echo "-----------------" >> ${basic_tests_1}
 
 ## One test for each operator. Make sure it is hooked up to the command line args properly
-runtest ${prog} "--header --float-precision 2 --retain 1 --first 1 --last 1 --min 3 --max 3 --range 3 --sum 3 --median 3 --mad 3 --var 3 --stdev 3 --mode 1 --mode-count 1 --values 1 --unique-values 1 input_5field_a.tsv" ${basic_tests_1}
+runtest ${prog} "--header --float-precision 2 --retain 1 --first 1 --last 1 --min 3 --max 3 --range 3 --sum 3 --median 3 --quantile 3:0.5 --mad 3 --var 3 --stdev 3 --mode 1 --mode-count 1 --values 1 --unique-values 1 input_5field_a.tsv" ${basic_tests_1}
 
 runtest ${prog} "--header --missing-count 1 --not-missing-count 1 input_1field_a.tsv" ${basic_tests_1}
 
@@ -111,3 +111,9 @@ runtest ${prog} "-d ß --count input_5field_a.tsv" ${error_tests_1}
 runtest ${prog} "-v abc --count input_5field_a.tsv" ${error_tests_1}
 runtest ${prog} "-v ß --count input_5field_a.tsv" ${error_tests_1}
 runtest ${prog} "--count --exclude-missing --replace-missing XYZ input_5field_a.tsv" ${error_tests_1}
+runtest ${prog} "--quantile 3 input_5field_a.tsv" ${error_tests_1}
+runtest ${prog} "--quantile 3:2 input_5field_a.tsv" ${error_tests_1}
+runtest ${prog} "--quantile 3:0.5,2 input_5field_a.tsv" ${error_tests_1}
+runtest ${prog} "--quantile 0:0.5 input_5field_a.tsv" ${error_tests_1}
+runtest ${prog} "--quantile 3,4:0.75:q3 input_5field_a.tsv" ${error_tests_1}
+runtest ${prog} "--quantile 3:0.25,0.75:q1q3 input_5field_a.tsv" ${error_tests_1}

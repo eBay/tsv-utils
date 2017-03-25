@@ -82,11 +82,18 @@ fields (though not when a custom header is specified). Example:
 
   --median 2,3,4
 
+The quantile operator requires one or more probabilities after the fields:
+
+  --quantile 2:0.25                // Quantile 1 of field 2
+  --quantile 2,3,4:0.25,0.5,0.75   // Q1, Median, Q3 of fields 2, 3, 4
+
 Summarization operators available are:
-  count       min        mean       stddev        unique-values
-  retain      max        median     mode          unique-count
-  first       range      mad        mode-count    missing-count
-  last        sum        var        values        not-missing-count
+  count       range        mad            values
+  retain      sum          var            unique-values
+  first       mean         stddev         unique-count
+  last        median       mode           missing-count
+  min         quantile     mode-count     not-missing-count
+  max
 
 Numeric values are printed to 12 significant digits by default. This can be
 changed using the '--p|float-precision' option. If six or less it sets the
@@ -176,6 +183,7 @@ struct TsvSummarizeOptions {
                 "sum",                "n[,n...][:STR]  Sum of the values. (Numeric fields only.)", &operatorOptionHandler!SumOperator,
                 "mean",               "n[,n...][:STR]  Mean (average). (Numeric fields only.)", &operatorOptionHandler!MeanOperator,
                 "median",             "n[,n...][:STR]  Median value. (Numeric fields only. Reads all values into memory.)", &operatorOptionHandler!MedianOperator,
+                "quantile",           "n[,n...]:p[,p...][:STR]  Quantiles. One or more fields, then one or more 0.0-1.0 probabilities. (Numeric fields only. Reads all values into memory.)", &quantileOperatorOptionHandler,
                 "mad",                "n[,n...][:STR]  Median absolute deviation from the median. Raw value, not scaled. (Numeric fields only. Reads all values into memory.)", &operatorOptionHandler!MadOperator,
                 "var",                "n[,n...][:STR]  Variance. (Sample variance, numeric fields only).", &operatorOptionHandler!VarianceOperator,
                 "stdev",              "n[,n...][:STR]  Standard deviation. (Sample st.dev, numeric fields only).", &operatorOptionHandler!StDevOperator,
@@ -263,6 +271,84 @@ struct TsvSummarizeOptions {
         }
     }
 
+    /* QuantileOperator has a different syntax and needs a custom command option handler. */
+    private void quantileOperatorOptionHandler(string option, string optionVal)
+    {
+        auto formatErrorMsg(string option, string optionVal)
+        {
+            return format(
+                "Invalid option value: '--%s %s'. Expected: '--%s <field>[,<field>]:<prob>[,<prob>]' or '--%s <field>:<prob>:<header>' where <field> is a field number, <prob> is a number between 0.0 and 1.0, and <header> a string.",
+                option, optionVal, option, option);
+        }
+
+        auto split1 = findSplit(optionVal, ":");
+        
+        if (split1[0].empty || (!split1[1].empty && split1[2].empty))
+            throw new Exception(formatErrorMsg(option, optionVal));
+
+        auto split2 = findSplit(split1[2], ":");
+
+        if (split2[0].empty || (!split2[1].empty && split2[2].empty))
+            throw new Exception(formatErrorMsg(option, optionVal));
+
+        auto fieldStr = split1[0];
+        auto probStr = split2[0];
+        auto header = split2[2];
+
+        if (!header.empty && (fieldStr.canFind(",") || probStr.canFind(",")))
+             throw new Exception(format("Invalid option: '--%s %s'. Cannot specify a custom header when using multiple fields or multiple probabilities.",
+                                        option, optionVal));
+
+        size_t[] fieldIndices;
+        double[] probs;
+
+        foreach (str; fieldStr.splitter(','))
+        {
+            size_t fieldNum;
+
+            try fieldNum = str.to!size_t;
+            catch (Exception exc) 
+                throw new Exception(formatErrorMsg(option, optionVal));
+
+            if (fieldNum == 0)
+                throw new Exception(
+                    format("Invalid option: '--%s %s'. Zero is not a valid field index.", option, optionVal));
+
+            fieldIndices ~= (fieldNum - 1);
+        }
+
+        foreach (str; probStr.splitter(','))
+        {
+            double p;
+
+            try p = str.to!double;
+            catch (Exception exc) 
+                throw new Exception(formatErrorMsg(option, optionVal));
+
+            if (!(p >= 0.0 && p <= 1.0))
+                throw new Exception(
+                    format("Invalid option: '--%s %s'. Probability '%g' is not in the interval [0.0,1.0].",
+                           option, optionVal, p));
+            
+            probs ~= p;
+        }
+
+        assert (fieldIndices.length > 0);
+        assert (probs.length > 0);
+        assert (header.empty || (fieldIndices.length == 1 && probs.length == 1));
+
+        foreach (fieldIndex; fieldIndices)
+        {
+            foreach (p; probs)
+            {
+                auto op = new QuantileOperator(fieldIndex, globalMissingPolicy, p);
+                if (!header.empty) op.setCustomHeader(header);
+                operators.insertBack(op);
+            }
+            if (fieldIndex >= endFieldIndex) endFieldIndex = fieldIndex + 1;
+        }
+    }
+    
     private void countOptionHandler()
     {
         operators.insertBack(new CountOperator());
@@ -474,7 +560,7 @@ struct SummarizerPrintOptions
     auto formatNumber(T)(T n) const
         if (isFloatingPoint!T || isIntegral!T)
     {
-        import tsvutil : formatNumber;
+        import tsv_numerics : formatNumber;
         return formatNumber!T(n, floatPrecision);
     }
 }
@@ -1546,6 +1632,10 @@ class MissingFieldPolicy
  *    Calculators, saving the values.
  *  - Calculators retrieve the saved values during the calculation phase. The calculator's
  *    ProcessNextField method is typically a no-op.
+ *  - Calculators cannot make assumptions about the order of the saved values. This is
+ *    pragmatic concession to median and quantile calculations, which need to sort the data,
+ *    at least partially. Rather than generate sorted copied, the current algorithms
+ *    sort the data in place.
  *
  * One concession to duplicate storage is that text and numeric versions of the same
  * field might be stored. The reason is because it's important to convert text to numbers
@@ -1647,9 +1737,19 @@ class UniqueKeyValuesLists
         return findNumericFieldValues(index).getArray;
     }
     
+    final double[] numericValuesSorted(size_t index)
+    {
+        return findNumericFieldValues(index).getSortedArray;
+    }
+    
     final string[] textValues(size_t index)
     {
         return findTextFieldValues(index).getArray;
+    }
+
+    final string[] textValuesSorted(size_t index)
+    {
+        return findTextFieldValues(index).getSortedArray;
     }
 
     final double numericValuesMedian(size_t index)
@@ -1663,6 +1763,7 @@ class UniqueKeyValuesLists
         private size_t _fieldIndex;
         private Appender!(ValueType[]) _values;
         private bool _haveMedian = false;
+        private bool _isSorted = false;
         private ValueType _medianValue;
         
         this(size_t fieldIndex)
@@ -1689,11 +1790,13 @@ class UniqueKeyValuesLists
             {
                 _values.put(field.to!ValueType);
                 _haveMedian = false;
+                _isSorted = false;
             }
             else if (missingPolicy.replaceMissing)
             {
                 _values.put(missingPolicy.missingReplacement.to!ValueType);
                 _haveMedian = false;
+                _isSorted = false;
             }
         }
         
@@ -1708,10 +1811,22 @@ class UniqueKeyValuesLists
             return _values.data;
         }
 
+        final ValueType[] getSortedArray()
+        {
+            if (!_isSorted)
+            {
+                import std.algorithm : sort;
+                sort(_values.data);
+                _isSorted = true;
+            }
+            return _values.data;
+        }
+
         final ValueType median()
         {
             if (!_haveMedian)
             {
+                import tsv_numerics : rangeMedian;
                 _medianValue = _values.data.rangeMedian();
                 _haveMedian = true;
             }
@@ -1719,131 +1834,6 @@ class UniqueKeyValuesLists
             return _medianValue;
         }
     }
-}
-
-/* Finds the median. Modifies the range via topN or sort in the process.
- * 
- * Note: topN is the preferred algorithm, but the version prior to Phobos 2.073
- * is pathologically slow on certain data sets. Use topN in 2.073 and later,
- * sort in earlier versions.
- * 
- * See: https://issues.dlang.org/show_bug.cgi?id=16517
- *      https://github.com/dlang/phobos/pull/4815
- *      http://forum.dlang.org/post/ujuugklmbibuheptdwcn@forum.dlang.org
- */
-static if (__VERSION__ >= 2073)
-{
-    version = rangeMedianViaTopN;
-}
-else
-{
-    version = rangeMedianViaSort;
-}
-
-auto rangeMedian (Range) (Range r)
-    if (isRandomAccessRange!Range && hasLength!Range && hasSlicing!Range)
-{
-    version(rangeMedianViaSort)
-    {
-        version(rangeMedianViaTopN)
-        {
-            assert(0, "Both rangeMedianViaSort and rangeMedianViaTopN assigned as versions. Assign only one.");
-        }
-    }
-    else version(rangeMedianViaTopN)
-    {
-    }
-    else
-    {
-        static assert(0, "A version of rangeMedianViaSort or rangeMedianViaTopN must be assigned.");
-    }
-
-    import std.traits : isFloatingPoint;
-    
-    ElementType!Range median;
-
-    if (r.length > 0)
-    {
-        size_t medianIndex = r.length / 2;
-        
-        version(rangeMedianViaSort)
-        {
-            import std.algorithm : sort;
-            sort(r);
-            median = r[medianIndex];
-            
-            static if (isFloatingPoint!(ElementType!Range))
-            {
-                if (r.length % 2 == 0)
-                {
-                    /* Even number of values. Split the difference. */
-                    median = (median + r[medianIndex - 1]) / 2.0;
-                }
-            }
-        }
-        else version(rangeMedianViaTopN)
-        {
-            import std.algorithm : maxElement, topN;
-            topN(r, medianIndex);
-            median = r[medianIndex];
-            
-            static if (isFloatingPoint!(ElementType!Range))
-            {
-                if (r.length % 2 == 0)
-                {
-                    /* Even number of values. Split the difference. */
-                    if (r[medianIndex - 1] < median)
-                    {
-                        median = (median + r[0..medianIndex].maxElement) / 2.0;
-                    }
-                }
-            }
-        }
-        else
-        {
-            static assert(0, "A version of rangeMedianViaSort or rangeMedianViaTopN must be assigned.");
-        }
-    }
-    
-    return median;
-}
-
-/* rangeMedian unit tests. */
-unittest
-{
-    import std.math : isNaN;
-    import std.algorithm : all, permutations;
-
-    // Median of empty range is (type).init. Zero for int, nan for floats/doubles
-    assert(rangeMedian(new int[0]) == int.init);
-    assert(rangeMedian(new double[0]).isNaN && double.init.isNaN);
-    assert(rangeMedian(new string[0]) == "");
-    
-    assert(rangeMedian([3]) == 3);
-    assert(rangeMedian([3.0]) == 3.0);
-    assert(rangeMedian([3.5]) == 3.5);
-    assert(rangeMedian(["aaa"]) == "aaa");
-    
-    /* Even number of elements: Split the difference for floating point, but not other types. */
-    assert(rangeMedian([3, 4]) == 4);
-    assert(rangeMedian([3.0, 4.0]) == 3.5);
-    
-    assert(rangeMedian([3, 6, 12]) == 6);
-    assert(rangeMedian([3.0, 6.5, 12.5]) == 6.5);
-    
-    // Do the rest with permutations
-    assert([4, 7].permutations.all!(x => (x.rangeMedian == 7)));
-    assert([4.0, 7.0].permutations.all!(x => (x.rangeMedian == 5.5)));
-    assert(["aaa", "bbb"].permutations.all!(x => (x.rangeMedian == "bbb")));
-    
-    assert([4, 7, 19].permutations.all!(x => (x.rangeMedian == 7)));
-    assert([4.5, 7.5, 19.5].permutations.all!(x => (x.rangeMedian == 7.5)));
-    assert(["aaa", "bbb", "ccc"].permutations.all!(x => (x.rangeMedian == "bbb")));
-
-    assert([4.5, 7.5, 19.5, 21.0].permutations.all!(x => (x.rangeMedian == 13.5)));
-    assert([4.5, 7.5, 19.5, 20.5, 36.0].permutations.all!(x => (x.rangeMedian == 19.5)));
-    assert([4.5, 7.5, 19.5, 24.0, 24.5, 25.0].permutations.all!(x => (x.rangeMedian == 21.75)));
-    assert([1.5, 3.25, 3.55, 4.5, 24.5, 25.0, 25.6].permutations.all!(x => (x.rangeMedian == 4.5)));
 }
 
 /* SingleFieldOperator is a base class for single field operators, the most common
@@ -2013,6 +2003,13 @@ version(unittest)
      * Then run the operator is tested against each column, a total of six calls. Headers
      * are automatically checked. Additional entries can be used to extend coverage.
      *
+     * A non-default MissingFieldPolicy can be provide as an optional last argument.
+     * Operator tests should include exclusion and replacement variations. See operator
+     * unit tests for details.
+     *
+     * The testSingleFieldOperatorBase adds an additional capability - Custom operator
+     * init arguments. Currently this is used only by the quantile operator.
+     *
      * These tests do not check unique key behavior (group-by). Operators don't have info
      * about unique keys, and interact with them only indirectly, via Calculators.
      */
@@ -2020,6 +2017,15 @@ version(unittest)
         (const char[][][] splitFile, size_t fieldIndex, string headerSuffix,
          const char[][] expectedValues,
          MissingFieldPolicy missingPolicy = new MissingFieldPolicy)
+    {
+        testSingleFieldOperatorBase!OperatorClass(splitFile, fieldIndex, headerSuffix, expectedValues, missingPolicy);
+    }
+    
+    void testSingleFieldOperatorBase(OperatorClass : SingleFieldOperator, T...)
+        (const char[][][] splitFile, size_t fieldIndex, string headerSuffix,
+         const char[][] expectedValues,
+         MissingFieldPolicy missingPolicy,
+         T extraOpInitArgs)
     {
         import std.format : format;
         import std.range : appender;
@@ -2092,7 +2098,7 @@ version(unittest)
 
             if (hasCustomHeader) assert(hasOutputHeader);
 
-            auto op = new OperatorClass(fieldIndex, missingPolicy);
+            auto op = new OperatorClass(fieldIndex, missingPolicy, extraOpInitArgs);
             
             if (hasCustomHeader)
             {
@@ -3041,6 +3047,101 @@ unittest // MedianOperator
                                           new MissingFieldPolicy(false, "0"));  // Replace missing
 }
 
+/* QuantileOperator produces the value representing the data at a cummulative probability.
+ * This is a numeric operation.
+ *
+ * As an example, quantiles might be produced for the 0.25, 0.5, and 0.75 probabilities
+ * (alternately, the 25th, 50th, and 75th percentile ranks, the 50th percentile being the
+ * median). Data is sorted is ascending order. This operator takes one percentile, but it
+ * is common to generate multiple quantile ranks for the same field when summarizing.
+ *
+ * All the field's values are stored in memory as part of this calculation. This is
+ * handled by unique key value lists.
+ */
+class QuantileOperator : SingleFieldOperator
+{
+    private double _prob;
+    
+    this(size_t fieldIndex, MissingFieldPolicy missingPolicy, double probability)
+    {
+        assert(0.0 <= probability && probability <= 1.0);
+        import std.format : format;
+
+        string header = (probability == 0.0) ? "pct0" : format("pct%02g", probability * 100.0);
+        super(header, fieldIndex, missingPolicy);
+        _prob = probability;
+        setSaveFieldValuesNumeric();
+    }
+
+    final override SingleFieldCalculator makeCalculator()
+    {
+        return new QuantileCalculator(fieldIndex);
+    }
+
+    class QuantileCalculator : SingleFieldCalculator
+    {
+        this(size_t fieldIndex)
+        {
+            super(fieldIndex);
+        }
+
+        final override QuantileOperator getOperator()
+        {
+            return this.outer;
+        }
+        
+        /* Work is done by saving the field values. */
+        final override void processNextField(const char[] nextField)
+        { }
+        
+        final string calculate(UniqueKeyValuesLists valuesLists, const ref SummarizerPrintOptions printOptions)
+        {
+            import tsv_numerics : quantile;
+            return printOptions.formatNumber(
+                quantile(this.outer._prob, valuesLists.numericValuesSorted(fieldIndex)));
+        }
+    }
+}
+
+unittest // QuantileOperator
+{
+    auto col1File = [["10"], ["9.5"], ["7.5"]];
+    auto col2File = [["20", "-30"], ["21", "-29"], ["22", "-31"]];
+    auto col3File = [["9009", "9", "-4.5"], ["9", "0", "-1.5"], ["4509", "-3", "12"]];
+
+    auto defaultMissing = new MissingFieldPolicy;
+
+    /* Same as the median tests. */
+    testSingleFieldOperatorBase!QuantileOperator(col1File, 0, "pct50", ["nan", "10", "9.75", "9.5"], defaultMissing, 0.50);
+    testSingleFieldOperatorBase!QuantileOperator(col2File, 0, "pct50", ["nan", "20", "20.5", "21"], defaultMissing, 0.50);
+    testSingleFieldOperatorBase!QuantileOperator(col2File, 1, "pct50", ["nan", "-30", "-29.5", "-30"], defaultMissing, 0.50);
+    testSingleFieldOperatorBase!QuantileOperator(col3File, 0, "pct50", ["nan", "9009", "4509", "4509"], defaultMissing, 0.50);
+    testSingleFieldOperatorBase!QuantileOperator(col3File, 1, "pct50", ["nan", "9", "4.5", "0"], defaultMissing, 0.50);
+    testSingleFieldOperatorBase!QuantileOperator(col3File, 2, "pct50", ["nan", "-4.5", "-3", "-1.5"], defaultMissing, 0.50);
+
+    /* The extremes (0, 1), are min and max. */
+    testSingleFieldOperatorBase!QuantileOperator(col1File, 0, "pct0", ["nan", "10", "9.5", "7.5"], defaultMissing, 0.0);
+    testSingleFieldOperatorBase!QuantileOperator(col2File, 0, "pct0", ["nan", "20", "20", "20"], defaultMissing, 0.0);
+    testSingleFieldOperatorBase!QuantileOperator(col2File, 1, "pct0", ["nan", "-30", "-30", "-31"], defaultMissing, 0.0);
+    testSingleFieldOperatorBase!QuantileOperator(col3File, 0, "pct0", ["nan", "9009", "9", "9"], defaultMissing, 0.0);
+    testSingleFieldOperatorBase!QuantileOperator(col3File, 1, "pct0", ["nan", "9", "0", "-3"], defaultMissing, 0.0);
+    testSingleFieldOperatorBase!QuantileOperator(col3File, 2, "pct0", ["nan", "-4.5", "-4.5", "-4.5"], defaultMissing, 0.0);
+
+    testSingleFieldOperatorBase!QuantileOperator(col1File, 0, "pct100", ["nan", "10", "10", "10"], defaultMissing, 1.0);
+    testSingleFieldOperatorBase!QuantileOperator(col2File, 0, "pct100", ["nan", "20", "21", "22"], defaultMissing, 1.0);
+    testSingleFieldOperatorBase!QuantileOperator(col2File, 1, "pct100", ["nan", "-30", "-29", "-29"], defaultMissing, 1.0);
+    testSingleFieldOperatorBase!QuantileOperator(col3File, 0, "pct100", ["nan", "9009", "9009", "9009"], defaultMissing, 1.0);
+    testSingleFieldOperatorBase!QuantileOperator(col3File, 1, "pct100", ["nan", "9", "9", "9"], defaultMissing, 1.0);
+    testSingleFieldOperatorBase!QuantileOperator(col3File, 2, "pct100", ["nan", "-4.5", "-1.5", "12"], defaultMissing, 1.0);
+
+    /* For missing policies, re-use the median tests. */
+    auto col1misFile = [[""], ["10"], [""], ["9.5"], ["7.5"]];
+    testSingleFieldOperatorBase!QuantileOperator(col1misFile, 0, "pct50", ["nan", "nan", "10", "10", "9.75", "9.5"],
+                                                 new MissingFieldPolicy(true, ""), 0.5);  // Exclude missing
+    testSingleFieldOperatorBase!QuantileOperator(col1misFile, 0, "pct50", ["nan", "0", "5", "0", "4.75", "7.5"],
+                                                 new MissingFieldPolicy(false, "0"), 0.5);  // Replace missing
+}
+
 /* MadOperator produces the median absolute deviation from the median. This is a numeric
  * operation.
  *
@@ -3081,6 +3182,8 @@ class MadOperator : SingleFieldOperator
         final string calculate(UniqueKeyValuesLists valuesLists, const ref SummarizerPrintOptions printOptions)
         {
             import std.math : abs;
+            import tsv_numerics : rangeMedian;
+            
             auto median = valuesLists.numericValuesMedian(fieldIndex);
             auto values = valuesLists.numericValues(fieldIndex);
             auto medianDevs = new double[values.length];

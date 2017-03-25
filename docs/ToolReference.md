@@ -254,12 +254,20 @@ Operators can be specified multiple times. They can also take multiple fields (t
 --median 2,3,4
 ```
 
+The quantile operator requires one or more probabilities after the fields:
+```
+--quantile 2:0.25                // Quantile 1 of field 2
+--quantile 2,3,4:0.25,0.5,0.75   // Q1, Median, Q3 of fields 2, 3, 4
+```
+
 Summarization operators available are:
 ```
-   count      min        mean       stddev        unique-values
-   retain     max        median     mode          unique-count
-   first      range      mad        mode-count    missing-count
-   last       sum        var        values        not-missing-count
+   count       range        mad            values
+   retain      sum          var            unique-values
+   first       mean         stddev         unique-count
+   last        median       mode           missing-count
+   min         quantile     mode-count     not-missing-count
+   max
 ```
 
 Numeric values are printed to 12 significant digits by default. This can be changed using the '--p|float-precision' option. If six or less it sets the number of significant digits after the decimal point. If greater than six it sets the total number of significant digits.
@@ -294,6 +302,7 @@ Missing values are not treated specially by default, this can be changed using t
 * `--sum n[,n...][:STR]` - Sum of the values. (Numeric fields only.)
 * `--mean n[,n...][:STR]` - Mean (average). (Numeric fields only.)
 * `--median n[,n...][:STR]` - Median value. (Numeric fields only. Reads all values into memory.)
+* `--quantile n[,n...]:p[,p...][:STR]` - Quantiles. One or more fields, then one or more 0.0-1.0 probabilities. (Numeric fields only. Reads all values into memory.)
 * `--mad n[,n...][:STR]` - Median absolute deviation from the median. Raw value, not scaled. (Numeric fields only. Reads all values into memory.)
 * `--var n[,n...][:STR]` - Variance. (Sample variance, numeric fields only).
 * `--stdev n[,n...][:STR]` - Standard deviation. (Sample st.dev, numeric fields only).
