@@ -270,7 +270,7 @@ struct TsvSummarizeOptions {
         auto formatErrorMsg(string option, string optionVal)
         {
             return format(
-                "Invalid option value: '--%s %s'. Expected: '--%s <field>[,<field>]:<prob>[,<prob>]' or '--%s <field>:<prob>:<header>'\nwhere <field> is a field number, <prob> is a number between 0.0 and 1.0, and <header> a string.",
+                "Invalid option value: '--%s %s'. Expected: '--%s <field>[,<field>]:<prob>[,<prob>]' or '--%s <field>:<prob>:<header>' where <field> is a field number, <prob> is a number between 0.0 and 1.0, and <header> a string.",
                 option, optionVal, option, option);
         }
 
@@ -1996,6 +1996,13 @@ version(unittest)
      * Then run the operator is tested against each column, a total of six calls. Headers
      * are automatically checked. Additional entries can be used to extend coverage.
      *
+     * A non-default MissingFieldPolicy can be provide as an optional last argument.
+     * Operator tests should include exclusion and replacement variations. See operator
+     * unit tests for details.
+     *
+     * The testSingleFieldOperatorBase adds an additional capability - Custom operator
+     * init arguments. Currently this is used only by the quantile operator.
+     *
      * These tests do not check unique key behavior (group-by). Operators don't have info
      * about unique keys, and interact with them only indirectly, via Calculators.
      */
@@ -2003,6 +2010,15 @@ version(unittest)
         (const char[][][] splitFile, size_t fieldIndex, string headerSuffix,
          const char[][] expectedValues,
          MissingFieldPolicy missingPolicy = new MissingFieldPolicy)
+    {
+        testSingleFieldOperatorBase!OperatorClass(splitFile, fieldIndex, headerSuffix, expectedValues, missingPolicy);
+    }
+    
+    void testSingleFieldOperatorBase(OperatorClass : SingleFieldOperator, T...)
+        (const char[][][] splitFile, size_t fieldIndex, string headerSuffix,
+         const char[][] expectedValues,
+         MissingFieldPolicy missingPolicy,
+         T extraOpInitArgs)
     {
         import std.format : format;
         import std.range : appender;
@@ -2075,7 +2091,7 @@ version(unittest)
 
             if (hasCustomHeader) assert(hasOutputHeader);
 
-            auto op = new OperatorClass(fieldIndex, missingPolicy);
+            auto op = new OperatorClass(fieldIndex, missingPolicy, extraOpInitArgs);
             
             if (hasCustomHeader)
             {
@@ -3043,18 +3059,9 @@ class QuantileOperator : SingleFieldOperator
     {
         assert(0.0 <= probability && probability <= 1.0);
         import std.format : format;
-        import core.stdc.math : modf;
 
-        double pct = probability * 100.0;
-        double intPart;
-        size_t i = 0;
-        while (modf(pct, &intPart) > 0.0 && i < 4)
-        {
-            pct *= 10.0;
-            i++;
-        }
-        
-        super(format("pct%02d", pct.to!size_t), fieldIndex, missingPolicy);
+        string header = (probability == 0.0) ? "pct0" : format("pct%02g", probability * 100.0);
+        super(header, fieldIndex, missingPolicy);
         _prob = probability;
         setSaveFieldValuesNumeric();
     }
@@ -3087,6 +3094,45 @@ class QuantileOperator : SingleFieldOperator
                 quantile(this.outer._prob, valuesLists.numericValuesSorted(fieldIndex)));
         }
     }
+}
+
+unittest // QuantileOperator
+{
+    auto col1File = [["10"], ["9.5"], ["7.5"]];
+    auto col2File = [["20", "-30"], ["21", "-29"], ["22", "-31"]];
+    auto col3File = [["9009", "9", "-4.5"], ["9", "0", "-1.5"], ["4509", "-3", "12"]];
+
+    auto defaultMissing = new MissingFieldPolicy;
+
+    /* Same as the median tests. */
+    testSingleFieldOperatorBase!QuantileOperator(col1File, 0, "pct50", ["nan", "10", "9.75", "9.5"], defaultMissing, 0.50);
+    testSingleFieldOperatorBase!QuantileOperator(col2File, 0, "pct50", ["nan", "20", "20.5", "21"], defaultMissing, 0.50);
+    testSingleFieldOperatorBase!QuantileOperator(col2File, 1, "pct50", ["nan", "-30", "-29.5", "-30"], defaultMissing, 0.50);
+    testSingleFieldOperatorBase!QuantileOperator(col3File, 0, "pct50", ["nan", "9009", "4509", "4509"], defaultMissing, 0.50);
+    testSingleFieldOperatorBase!QuantileOperator(col3File, 1, "pct50", ["nan", "9", "4.5", "0"], defaultMissing, 0.50);
+    testSingleFieldOperatorBase!QuantileOperator(col3File, 2, "pct50", ["nan", "-4.5", "-3", "-1.5"], defaultMissing, 0.50);
+
+    /* The extremes (0, 1), are min and max. */
+    testSingleFieldOperatorBase!QuantileOperator(col1File, 0, "pct0", ["nan", "10", "9.5", "7.5"], defaultMissing, 0.0);
+    testSingleFieldOperatorBase!QuantileOperator(col2File, 0, "pct0", ["nan", "20", "20", "20"], defaultMissing, 0.0);
+    testSingleFieldOperatorBase!QuantileOperator(col2File, 1, "pct0", ["nan", "-30", "-30", "-31"], defaultMissing, 0.0);
+    testSingleFieldOperatorBase!QuantileOperator(col3File, 0, "pct0", ["nan", "9009", "9", "9"], defaultMissing, 0.0);
+    testSingleFieldOperatorBase!QuantileOperator(col3File, 1, "pct0", ["nan", "9", "0", "-3"], defaultMissing, 0.0);
+    testSingleFieldOperatorBase!QuantileOperator(col3File, 2, "pct0", ["nan", "-4.5", "-4.5", "-4.5"], defaultMissing, 0.0);
+
+    testSingleFieldOperatorBase!QuantileOperator(col1File, 0, "pct100", ["nan", "10", "10", "10"], defaultMissing, 1.0);
+    testSingleFieldOperatorBase!QuantileOperator(col2File, 0, "pct100", ["nan", "20", "21", "22"], defaultMissing, 1.0);
+    testSingleFieldOperatorBase!QuantileOperator(col2File, 1, "pct100", ["nan", "-30", "-29", "-29"], defaultMissing, 1.0);
+    testSingleFieldOperatorBase!QuantileOperator(col3File, 0, "pct100", ["nan", "9009", "9009", "9009"], defaultMissing, 1.0);
+    testSingleFieldOperatorBase!QuantileOperator(col3File, 1, "pct100", ["nan", "9", "9", "9"], defaultMissing, 1.0);
+    testSingleFieldOperatorBase!QuantileOperator(col3File, 2, "pct100", ["nan", "-4.5", "-1.5", "12"], defaultMissing, 1.0);
+
+    /* For missing policies, re-use the median tests. */
+    auto col1misFile = [[""], ["10"], [""], ["9.5"], ["7.5"]];
+    testSingleFieldOperatorBase!QuantileOperator(col1misFile, 0, "pct50", ["nan", "nan", "10", "10", "9.75", "9.5"],
+                                                 new MissingFieldPolicy(true, ""), 0.5);  // Exclude missing
+    testSingleFieldOperatorBase!QuantileOperator(col1misFile, 0, "pct50", ["nan", "0", "5", "0", "4.75", "7.5"],
+                                                 new MissingFieldPolicy(false, "0"), 0.5);  // Replace missing
 }
 
 /* MadOperator produces the median absolute deviation from the median. This is a numeric
