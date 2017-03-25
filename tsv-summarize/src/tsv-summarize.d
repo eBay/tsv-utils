@@ -82,11 +82,18 @@ fields (though not when a custom header is specified). Example:
 
   --median 2,3,4
 
+The quantile operator requires one or more probabilities after the fields:
+
+  --quantile 2:0.25                // Quantile 1 of field 2
+  --quantile 2,3,4:0.25,0.5,0.75   // Q1, Median, Q3 of fields 2, 3, 4
+
 Summarization operators available are:
-  count       min        mean       stddev        unique-values
-  retain      max        median     mode          unique-count
-  first       range      mad        mode-count    missing-count
-  last        sum        var        values        not-missing-count
+  count       range        mad            values
+  retain      sum          var            unique-values
+  first       mean         stddev         unique-count
+  last        median       mode           missing-count
+  min         quantile     mode-count     not-missing-count
+  max
 
 Numeric values are printed to 12 significant digits by default. This can be
 changed using the '--p|float-precision' option. If six or less it sets the
