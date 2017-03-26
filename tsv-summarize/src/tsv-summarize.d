@@ -11,11 +11,10 @@ module tsv_summarize;
 
 import std.algorithm : all, any, canFind, each, find, findSplit, map, joiner, splitter;
 import std.array : join;
-import std.conv;
-import std.format;
+import std.conv : to;
+import std.format : format;
 import std.range;
 import std.stdio;
-import std.traits;
 import std.typecons : tuple;
 import std.container : DList;
 
@@ -2028,7 +2027,7 @@ version(unittest)
          T extraOpInitArgs)
     {
         import std.format : format;
-        import std.range : appender;
+        import std.array : appender;
         import std.string : chomp;
         import std.traits : EnumMembers;
 
@@ -2269,7 +2268,7 @@ version(unittest)
         (const char[][][] splitFile, string defaultHeader, const char[][] expectedValues)
     {
         import std.format : format;
-        import std.range : appender;
+        import std.array : appender;
         import std.string : chomp;
         import std.traits : EnumMembers;
 
