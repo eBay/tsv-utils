@@ -1633,7 +1633,7 @@ class MissingFieldPolicy
  *    ProcessNextField method is typically a no-op.
  *  - Calculators cannot make assumptions about the order of the saved values. This is
  *    pragmatic concession to median and quantile calculations, which need to sort the data,
- *    at least partially. Rather than generate sorted copied, the current algorithms
+ *    at least partially. Rather than generate sorted copies, the current algorithms
  *    sort the data in place.
  *
  * One concession to duplicate storage is that text and numeric versions of the same
