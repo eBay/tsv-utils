@@ -23,7 +23,7 @@ Six tasks were used as benchmarks. Two forms of row filtering: numeric compariso
 
 Tests were conducted on a MacBook Pro, 16 GB RAM, 4 cores, and flash storage. All tools were updated to current versions, and several of the specialty toolkits were built from current source code. Run-time was measured using the `time` facility. Each benchmark was run three times and the fastest run recorded.
 
-Specialty toolkit times have been anonymized in the tables below. The intent of this study is to gauge performance of the D tools, not create a general comparison between toolkits. However, the specific tools and command lines are given, enabling tests to be reproduce. (The csv-to-tsv times are shown, see [CSV to TSV Conversion](#csv-to-tsv-conversion) for rationale.) See [Other toolkits](../README.md#other-toolkits) in the README for links to the tools, and [details](#details) for version info and test file info. Python tools were not benchmarked, this would be a useful addition. Tools that run in in-memory environments like R were excluded.
+Specialty toolkit times have been anonymized in the tables below. The intent of this study is to gauge performance of the D tools, not create a shootout between toolkits. However, the specific tools and command lines are given, enabling tests to be reproduce. (The csv-to-tsv times are shown, see [CSV to TSV Conversion](#csv-to-tsv-conversion) for rationale.) See [Other toolkits](../README.md#other-toolkits) in the README for links to the tools, and [Details](#details) for version info and test file info. Python tools were not benchmarked, this would be a useful addition. Tools that run in in-memory environments like R were excluded.
 
 The worst performers were the Unix tools shipped with the Mac (`cut`, etc). It's worth installing the GNU coreutils package if you use command line tools on the Mac. (MacPorts and Homebrew can install these tools.)
 
@@ -181,8 +181,22 @@ $ xsv fmt -t '\t' TREE_GRM_ESTN_14mil.csv >> /dev/null
 * Test files:
   * hepmass_all_train.tsv - 7 million lines, 4.8 GB. The HEPMASS training set from the UCI Machine Learning repository, available [here](http://archive.ics.uci.edu/ml/datasets/HEPMASS).
   * TREE_GRM_ESTN_14mil.[csv|tsv] - 14 million lines, 2.7 GB. From the Forest Inventory and Analysis Database, U.S. Department of Agriculture. The first 14 million lines from the TREE.csv file, available [here](https://apps.fs.usda.gov/fia/datamart/CSV/datamart_csv.html).
-* Tools: Latest versions available as of 3/3/2017. Several built from latest source. Versions: tsv-utils-dlang 1.1.1; GNU cut (GNU coreutils) 8.26; GNU Awk 4.1.4; mawk 1.3.4 (Michael Brennan awk); OS X awk 20070501; Miller (mlr) 5.0.0; csvtk v0.5.0; xsv 0.10.3; GNU datamash 1.1.1.
-* Compilers: LDC 1.1 (D compiler, Phobos 2.071.2); Apple clang 8.0.0 (C/C++); Rust 1.15.1; Go 1.8.
+* Tools: Latest versions available as of 3/3/2017. Several built from latest source. Versions:
+  * OS X awk 20070501
+  * GNU Awk 4.1.4 (aka. gawk)
+  * mawk 1.3.4 (Michael Brennan awk)
+  * OS X cut (from OS X Sierra, no version info)
+  * GNU cut (GNU coreutils) 8.26
+  * GNU datamash 1.1.1.
+  * csvtk v0.5.0
+  * Miller (mlr) 5.0.0;
+  * tsv-utils-dlang 1.1.1
+  * xsv 0.10.3
+* Compilers:
+  * LDC 1.1 (D compiler, Phobos 2.071.2)
+  * Apple clang 8.0.0 (C/C++)
+  * Go 1.8.
+  * Rust 1.15.1
 
 ## DMD vs LDC
 
