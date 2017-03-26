@@ -38,9 +38,9 @@ version(unittest)
      */
     string makeUnittestTempDir(string toolDirName)
     {
-        import std.conv;
+        import std.conv : to;
         import std.file : exists, mkdir, tempDir;
-        import std.format;
+        import std.format : format;
         import std.path : buildPath;
         import std.range;
 
@@ -80,7 +80,7 @@ version(unittest)
     bool writeUnittestTsvFile(string filepath, string[][] tsvData, char delimiter = '\t')
     {
         import std.algorithm : each, joiner, map;
-        import std.conv;
+        import std.conv : to;
         import std.format: format;
         import std.stdio : File;
         
@@ -105,7 +105,7 @@ version(unittest)
     string tsvDataToString(string[][] tsvData, char delimiter = '\t')
     {
         import std.algorithm : joiner, map;
-        import std.conv;
+        import std.conv : to;
         
         return tsvData
             .map!(row => row.joiner(delimiter.to!string).to!string ~ "\n")
