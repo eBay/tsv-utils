@@ -323,7 +323,7 @@ T getFieldValue(T, C)(const C[] line, size_t fieldIndex, C delim, string filenam
     pure @safe
     if (isSomeChar!C)
 {
-    import std.conv;
+    import std.conv : ConvException, to;
     import std.format : format;
     import tsvutil : getTsvFieldValue;
 
@@ -382,7 +382,7 @@ version(unittest)
     /* Unit test helper functions. */
 
     import unittest_utils;   // tsv unit test helpers, from common/src/.
-    import std.conv;
+    import std.conv : to;
 
     void testTsvSample(string[] cmdArgs, string[][] expected)
     {
