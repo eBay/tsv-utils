@@ -207,10 +207,10 @@ _tsv_summarize()
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
-    opts="--help --help-verbose --group-by --header --write-header --delimiter --values-delimiter --float-precision --exclude-missing --replace-missing --count --count-header --retain --first --last --min --max --range --sum --mean --median --mad --var --stdev --mode --mode-count --unique-count --missing-count --not-missing-count --values --unique-values"
+    opts="--help --help-verbose --group-by --header --write-header --delimiter --values-delimiter --float-precision --exclude-missing --replace-missing --count --count-header --retain --first --last --min --max --range --sum --mean --median --quantile --mad --var --stdev --mode --mode-count --unique-count --missing-count --not-missing-count --values --unique-values"
 
     case $prev in
-          -h|--help|--help-verbose|-g|--group-by|-d|--delimiter|-v|--values-delimiter|-p|--float-precision|-x|--exclude-missing|-r|--replace-missing|--count-header|--retain|--first|--last|--min|--max|--range|--sum|--mean|--median|--mad|--var|--stdev|--mode|--mode-count|--unique-count|--missing-count|--not-missing-count|--values|--unique-values)
+          -h|--help|--help-verbose|-g|--group-by|-d|--delimiter|-v|--values-delimiter|-p|--float-precision|-x|--exclude-missing|-r|--replace-missing|--count-header|--retain|--first|--last|--min|--max|--range|--sum|--mean|--median|--quantile|--mad|--var|--stdev|--mode|--mode-count|--unique-count|--missing-count|--not-missing-count|--values|--unique-values)
           return
           ;;
     esac
