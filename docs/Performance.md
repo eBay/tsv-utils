@@ -23,7 +23,7 @@ Six tasks were used as benchmarks. Two forms of row filtering: numeric compariso
 
 Tests were conducted on a MacBook Pro, 16 GB RAM, 4 cores, and flash storage. All tools were updated to current versions, and several of the specialty toolkits were built from current source code. Run-time was measured using the `time` facility. Each benchmark was run three times and the fastest run recorded.
 
-Specialty toolkit times have been anonymized in the tables below. The intent of this study is to gauge performance of the D tools, not create a shootout between toolkits. However, the specific tools and command lines are given, enabling tests to be reproduce. (The csv-to-tsv times are shown, see [CSV to TSV Conversion](#csv-to-tsv-conversion) for rationale.) See [Other toolkits](../README.md#other-toolkits) in the README for links to the tools, and [Details](#details) for version info and test file info. Python tools were not benchmarked, this would be a useful addition. Tools that run in in-memory environments like R were excluded.
+Specialty toolkit times have been anonymized in the tables below. The intent of this study is to gauge performance of the D tools, not create a shootout between toolkits. However, the specific tools and command lines are given, enabling tests to be reproduced. (The csv-to-tsv times are shown, see [CSV to TSV conversion](#csv-to-tsv-conversion) for rationale.) See [Other toolkits](../README.md#other-toolkits) in the README for links to the tools, and [Details](#details) for version info and test file info. Python tools were not benchmarked, this would be a useful addition. Tools that run in in-memory environments like R were excluded.
 
 The worst performers were the Unix tools shipped with the Mac (`cut`, etc). It's worth installing the GNU coreutils package if you use command line tools on the Mac. (MacPorts and Homebrew can install these tools.)
 
@@ -63,7 +63,7 @@ Command lines:
 $ [awk|mawk|gawk] -F $'\t' -v OFS='\t' '{ if ($4 > 0.000025 && $16 > 0.3) print $0 }' hepmass_all_train.tsv >> /dev/null
 $ tsv-filter -H --gt 4:0.000025 --gt 16:0.3 hepmass_all_train.tsv >> /dev/null
 ```
-*Note: Only one specialty toolkit supports this feature, so the its command line is not shown.*
+*Note: Only one specialty toolkit supports this feature, so its command line is not shown.*
 
 ### Regular expression filter benchmark
 
@@ -166,7 +166,7 @@ This test converted a CSV file to TSV format. The file used was 14 million rows,
 | csvtk       |          36.26 |
 | xsv         |          40.40 |
 
-_Note: The speciality toolkits are named for this test. That is because previous versions of this report named the fastest toolkit, and each was at one point the fastest._
+_Note: Speciality toolkits times are shown for this test. That is because previous versions of this report gave the fastest toolkit time. Each tool was at one point the fastest, so these times were previously reported._
 
 Command lines:
 ```
@@ -183,7 +183,7 @@ $ xsv fmt -t '\t' TREE_GRM_ESTN_14mil.csv >> /dev/null
   * TREE_GRM_ESTN_14mil.[csv|tsv] - 14 million lines, 2.7 GB. From the Forest Inventory and Analysis Database, U.S. Department of Agriculture. The first 14 million lines from the TREE.csv file, available [here](https://apps.fs.usda.gov/fia/datamart/CSV/datamart_csv.html).
 * Tools: Latest versions available as of 3/3/2017. Several built from latest source. Versions:
   * OS X awk 20070501
-  * GNU Awk 4.1.4 (aka. gawk)
+  * GNU Awk 4.1.4 (gawk)
   * mawk 1.3.4 (Michael Brennan awk)
   * OS X cut (from OS X Sierra, no version info)
   * GNU cut (GNU coreutils) 8.26
