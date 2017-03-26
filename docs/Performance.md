@@ -23,7 +23,7 @@ Six tasks were used as benchmarks. Two forms of row filtering: numeric compariso
 
 Tests were conducted on a MacBook Pro, 16 GB RAM, 4 cores, and flash storage. All tools were updated to current versions, and several of the specialty toolkits were built from current source code. Run-time was measured using the `time` facility. Each benchmark was run three times and the fastest run recorded.
 
-The specialty toolkits are anonymized in the tables below. The purpose of these benchmarks is to gauge performance of the D tools, not make comparisons between other toolkits. (The exception is the csv-to-tsv benchmark. Each tool has had the best time in a prior version of this report and was therefore identified.) Links and info for these toolkits can be found in [Other toolkits](../README.md#other-toolkits) in the README. Python tools were not benchmarked, this would be a useful addition. Tools that run in in-memory environments like R were excluded.
+Specialty toolkit times have been anonymized in the tables below. The intent of this study is to gauge performance of the D tools, not create a shootout between toolkits. However, the specific tools and command lines are given, enabling tests to be reproduced. (The csv-to-tsv times are shown, see [CSV to TSV conversion](#csv-to-tsv-conversion) for rationale.) See [Other toolkits](../README.md#other-toolkits) in the README for links to the tools, and [Details](#details) for version info and test file info. Python tools were not benchmarked, this would be a useful addition. Tools that run in in-memory environments like R were excluded.
 
 The worst performers were the Unix tools shipped with the Mac (`cut`, etc). It's worth installing the GNU coreutils package if you use command line tools on the Mac. (MacPorts and Homebrew can install these tools.)
 
@@ -58,6 +58,13 @@ This operation filters rows from a TSV file based on a numeric comparison (less 
 | Toolkit 1             |          53.11 |
 | awk (Mac built-in)    |         286.57 |
 
+Command lines:
+```
+$ [awk|mawk|gawk] -F $'\t' -v OFS='\t' '{ if ($4 > 0.000025 && $16 > 0.3) print $0 }' hepmass_all_train.tsv >> /dev/null
+$ tsv-filter -H --gt 4:0.000025 --gt 16:0.3 hepmass_all_train.tsv >> /dev/null
+```
+*Note: Only one specialty toolkit supports this feature, so its command line is not shown.*
+
 ### Regular expression filter benchmark
 
 This operation filters rows from a TSV file based on a regular comparison against a field. The regular expression used was '[RD].*(ION[0-2])', it was matched against a text field. The input file was 14 million rows, 49 columns, 2.7 GB. The filter matched 150K rows. Other regular expressions were tried, results were similar.
@@ -71,6 +78,15 @@ This operation filters rows from a TSV file based on a regular comparison agains
 | Toolkit 2             |          42.72 |
 | awk (Mac built-in)    |         113.55 |
 | Toolkit 3             |         125.31 |
+
+Command lines:
+```
+$ [awk|gawk|mawk] -F $'\t' -v OFS='\t' '$10 ~ /[RD].*(ION[0-2])/' TREE_GRM_ESTN_14mil.tsv >> /dev/null
+$ cat TREE_GRM_ESTN_14mil.tsv | csvtk grep -t -l -f 10 -r -p '[RD].*(ION[0-2])' >> /dev/null
+$ mlr --tsvlite --rs lf filter '$COMPONENT =~ "[RD].*(ION[0-2])"' TREE_GRM_ESTN_14mil.tsv >> /dev/null
+$ xsv search -s COMPONENT '[RD].*(ION[0-2])' TREE_GRM_ESTN_14mil.tsv >> /dev/null
+$ tsv-filter -H --regex 10:'[RD].*(ION[0-2])' TREE_GRM_ESTN_14mil.tsv >> /dev/null
+```
 
 ### Column selection benchmark
 
@@ -90,6 +106,16 @@ This is the traditional Unix `cut` operation. Surprisingly, the `cut` implementa
 
 _Note: GNU cut is faster than tsv-select on small files, e.g. 250 MB. See [Relative performance of the tools](#relative-performance-of-the-tools) for an example._
 
+Command lines:
+```
+$ [awk|gawk|mawk] -F $'\t' -v OFS='\t' '{ print $1,$8,$19 }' hepmass_all_train.tsv >> /dev/null
+$ csvtk cut -t -l -f 1,8,19 hepmass_all_train.tsv >> /dev/null
+$ cut -f 1,8,19 hepmass_all_train.tsv >> /dev/null
+$ mlr --tsvlite --rs lf cut -f label,f6,f17 hepmass_all_train.tsv >> /dev/null
+$ tsv-select -f 1,8,19 hepmass_all_train.tsv >> /dev/null
+$ xsv select 1,8,19 hepmass_all_train.tsv >> /dev/null
+```
+
 ### Join two files
 
 This test was done taking a 7 million line, 29 column numeric data file, splitting it into two files, one containing columns 1-15, the second columns 16-29. Each line contained a unique row key shared by both files. The rows of each file were randomized. The join task reassembles the original file based on the shared row key. The original file is 4.8 GB, each half is 2.4 GB.
@@ -100,6 +126,14 @@ This test was done taking a 7 million line, 29 column numeric data file, splitti
 | Toolkit 1    |         104.06 |
 | Toolkit 2    |         194.80 |
 | Toolkit 3    |         266.42 |
+
+Command lines:
+```
+$ csvtk join -t -l -f 1 hepmass_left.shuf.tsv hepmass_right.shuf.tsv >> /dev/null
+$ mlr --tsvlite --rs lf join -u -j line -f hepmass_left.shuf.tsv hepmass_right.shuf.tsv >> /dev/null
+$ tsv-join -H -f hepmass_right.shuf.tsv -k 1 hepmass_left.shuf.tsv -a 2,3,4,5,6,7,8,9,10,11,12,13,14,15 >> /dev/null
+$ xsv join 1 -d $'\t' hepmass_left.shuf.tsv 1 hepmass_right.shuf.tsv >> /dev/null
+```
 
 ### Summary statistics
 
@@ -113,6 +147,15 @@ This test generates a set of summary statistics from the columns in a TSV file. 
 | Toolkit 3         |          62.97 |
 | Toolkit 4         |          67.17 |
 
+Command lines:
+```
+$ csvtk stat2 -t -l -f 3,5,20 hepmass_all_train.tsv >> /dev/null
+$ cat hepmass_all_train.tsv | datamash -H count 3 sum 3,5,20 min 3,5,20 max 3,5,20 mean 3,5,20 sstdev 3,5,20 >> /dev/null
+$ mlr --tsvlite --rs lf stats1 -f f1,f3,f18 -a count,sum,min,max,mean,stddev hepmass_all_train.tsv >> /dev/null
+$ tsv-summarize -H --count --sum 3,5,20 --min 3,5,20 --max 3,5,20 --mean 3,5,20 --stdev 3,5,20 hepmass_all_train.tsv >> /dev/null
+$ xsv stats -s 3,5,20 hepmass_all_train.tsv >> /dev/null
+```
+
 ### CSV to TSV conversion
 
 This test converted a CSV file to TSV format. The file used was 14 million rows, 49 columns, 2.7 GB. This is the most competitive of the benchmarks, each of the tools having been the fastest in a previous version of this report. The D tool, `csv2tsv`, was third fastest until buffered writes were used in version 1.1.1.
@@ -123,12 +166,37 @@ This test converted a CSV file to TSV format. The file used was 14 million rows,
 | csvtk       |          36.26 |
 | xsv         |          40.40 |
 
+_Note: Speciality toolkits times are shown for this test. That is because previous versions of this report gave the fastest toolkit time. Each tool was at one point the fastest, so these times were previously reported._
+
+Command lines:
+```
+$ csvtk csv2tab TREE_GRM_ESTN_14mil.csv >> /dev/null
+$ csv2tsv TREE_GRM_ESTN_14mil.csv >> /dev/null
+$ xsv fmt -t '\t' TREE_GRM_ESTN_14mil.csv >> /dev/null
+```
+
 ### Details
 
 * Machine: MacBook Pro, 2.8 GHz, 16 GB RAM, 4 cores, 500 GB flash storage, OS X Sierra.
-* Test files: The 7 million line, 4.8 GB file is the HEPMASS training set from the UCI Machine Learning repository, available [here](http://archive.ics.uci.edu/ml/datasets/HEPMASS). The 2.7 GB, 14 million row file is from the Forest Inventory and Analysis Database, U.S. Department of Agriculture. The first 14 million lines from the TREE.csv file, available [here](https://apps.fs.usda.gov/fia/datamart/CSV/datamart_csv.html).
-* Tools: Latest versions available as of 3/3/2017. Several built from latest source. Versions: tsv-utils-dlang 1.1.1; GNU cut (GNU coreutils) 8.26; GNU Awk 4.1.4; mawk 1.3.4 (Michael Brennan awk); OS X awk 20070501; Miller (mlr) 5.0.0; csvtk v0.5.0; xsv 0.10.3; GNU datamash 1.1.1.
-* Compilers: LDC 1.1 (D compiler, Phobos 2.071.2); Apple clang 8.0.0 (C/C++); Rust 1.15.1; Go 1.8.
+* Test files:
+  * hepmass_all_train.tsv - 7 million lines, 4.8 GB. The HEPMASS training set from the UCI Machine Learning repository, available [here](http://archive.ics.uci.edu/ml/datasets/HEPMASS).
+  * TREE_GRM_ESTN_14mil.[csv|tsv] - 14 million lines, 2.7 GB. From the Forest Inventory and Analysis Database, U.S. Department of Agriculture. The first 14 million lines from the TREE.csv file, available [here](https://apps.fs.usda.gov/fia/datamart/CSV/datamart_csv.html).
+* Tools: Latest versions available as of 3/3/2017. Several built from latest source. Versions:
+  * OS X awk 20070501
+  * GNU Awk 4.1.4 (gawk)
+  * mawk 1.3.4 (Michael Brennan awk)
+  * OS X cut (from OS X Sierra, no version info)
+  * GNU cut (GNU coreutils) 8.26
+  * GNU datamash 1.1.1.
+  * csvtk v0.5.0
+  * Miller (mlr) 5.0.0;
+  * tsv-utils-dlang 1.1.1
+  * xsv 0.10.3
+* Compilers:
+  * LDC 1.1 (D compiler, Phobos 2.071.2)
+  * Apple clang 8.0.0 (C/C++)
+  * Go 1.8.
+  * Rust 1.15.1
 
 ## DMD vs LDC
 
