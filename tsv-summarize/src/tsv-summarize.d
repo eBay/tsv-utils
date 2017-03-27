@@ -11,11 +11,10 @@ module tsv_summarize;
 
 import std.algorithm : all, any, canFind, each, find, findSplit, map, joiner, splitter;
 import std.array : join;
-import std.conv;
-import std.format;
+import std.conv : to;
+import std.format : format;
 import std.range;
 import std.stdio;
-import std.traits;
 import std.typecons : tuple;
 import std.container : DList;
 
@@ -1634,7 +1633,7 @@ class MissingFieldPolicy
  *    ProcessNextField method is typically a no-op.
  *  - Calculators cannot make assumptions about the order of the saved values. This is
  *    pragmatic concession to median and quantile calculations, which need to sort the data,
- *    at least partially. Rather than generate sorted copied, the current algorithms
+ *    at least partially. Rather than generate sorted copies, the current algorithms
  *    sort the data in place.
  *
  * One concession to duplicate storage is that text and numeric versions of the same
@@ -2028,7 +2027,7 @@ version(unittest)
          T extraOpInitArgs)
     {
         import std.format : format;
-        import std.range : appender;
+        import std.array : appender;
         import std.string : chomp;
         import std.traits : EnumMembers;
 
@@ -2269,7 +2268,7 @@ version(unittest)
         (const char[][][] splitFile, string defaultHeader, const char[][] expectedValues)
     {
         import std.format : format;
-        import std.range : appender;
+        import std.array : appender;
         import std.string : chomp;
         import std.traits : EnumMembers;
 

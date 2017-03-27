@@ -40,8 +40,8 @@ auto formatNumber(T, size_t readablePrecisionMax = 6)(T num, const size_t floatP
 {
     alias UT = Unqual!T;
 
-    import std.conv;
-    import std.format;
+    import std.conv : to;
+    import std.format : format;
     
     static if (isIntegral!T)
     {
@@ -138,8 +138,8 @@ auto formatNumber(T, size_t readablePrecisionMax = 6)(T num, const size_t floatP
 
 unittest  // formatNumber unit tests
 {
-    import std.conv;
-    import std.format;
+    import std.conv : to;
+    import std.format : format;
 
     /* Integers */
     assert(formatNumber(0) == "0");
@@ -586,7 +586,7 @@ body
 {
     import core.stdc.math : modf;
     import std.algorithm : max, min;
-    import std.conv;
+    import std.conv : to;
     import std.math : ceil, lrint;
     
     /* Note: In the implementation below, 'h1' is the 1-based index into the data vector.
@@ -837,8 +837,8 @@ unittest
 
     void compareResults(const double[] actual, const double[] expected, string dataset, QuantileInterpolation method)
     {
-        import std.conv;
-        import std.format;
+        import std.conv : to;
+        import std.format : format;
         import std.math : approxEqual, isNaN;
         import std.range : lockstep;
         

@@ -261,7 +261,7 @@ void tsvJoin(in TsvJoinOptions cmdopt, in string[] inputFiles)
     import std.algorithm : splitter;
     import std.array : join;
     import std.range;
-    import std.conv; 
+    import std.conv : to; 
 
     /* State, variables, and convenience derivations.
      *

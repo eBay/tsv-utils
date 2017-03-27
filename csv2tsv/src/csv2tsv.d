@@ -12,7 +12,7 @@ License: Boost Licence 1.0 (http://boost.org/LICENSE_1_0.txt)
 import std.stdio;
 import std.format : format;
 import std.range;
-import std.traits;
+import std.traits : Unqual;
 import std.typecons : Nullable, tuple;
 
 auto helpText = q"EOS
@@ -179,7 +179,6 @@ output.
 void csv2tsvFiles(in Csv2tsvOptions cmdopt, in string[] inputFiles)
 {
     import std.algorithm : joiner;
-    import std.array;
 
     ubyte[1024 * 1024] fileRawBuf;
     ubyte[] stdinRawBuf = fileRawBuf[0..1024];
@@ -633,7 +632,7 @@ unittest
     
     foreach (i, csva, csvb, tsv, tsv_x, tsv_y; lockstep(csvSet1a, csvSet1b, tsvSet1, tsvSet1_x, tsvSet1_y))
     {
-        import std.conv;
+        import std.conv : to;
 
         /* Byte streams for csv2tsv. Consumed by csv2tsv, so need to be reset when re-used. */
         ubyte[] csvInputA = cast(ubyte[])csva;  

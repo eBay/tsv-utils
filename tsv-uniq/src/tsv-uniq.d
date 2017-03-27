@@ -171,7 +171,7 @@ void tsvUniq(in TsvUniqOptions cmdopt, in string[] inputFiles)
     import tsvutil : InputFieldReordering;
     import std.algorithm : splitter;
     import std.array : join;
-    import std.conv; 
+    import std.conv : to; 
     import std.range;
     import std.uni : toLower;
 

@@ -156,7 +156,7 @@ class InputFieldReordering(C, EnablePartialLines partialLinesOk = EnablePartialL
 /* Tests using different character types. */
 unittest
 {
-    import std.conv;
+    import std.conv : to;
     
     auto inputLines = [["r1f0", "r1f1", "r1f2",   "r1f3"],
                        ["r2f0", "abc",  "ÀBCßßZ", "ghi"],
@@ -206,7 +206,7 @@ unittest
 /* Test of partial line support. */
 unittest
 {
-    import std.conv;
+    import std.conv : to;
     
     auto inputLines = [["r1f0", "r1f1", "r1f2",   "r1f3"],
                        ["r2f0", "abc",  "ÀBCßßZ", "ghi"],
@@ -240,7 +240,7 @@ unittest
 /* Field combination tests. */
 unittest
 {
-    import std.conv;
+    import std.conv : to;
     import std.stdio;
     
     auto inputLines = [["00", "01", "02", "03"],
@@ -360,7 +360,7 @@ T getTsvFieldValue(T, C)(const C[] line, size_t fieldIndex, C delim) pure @safe
     if (isSomeChar!C)
 {
     import std.algorithm : splitter;
-    import std.conv;
+    import std.conv : to;
     import std.format : format;
     import std.range;
     
@@ -406,7 +406,7 @@ T getTsvFieldValue(T, C)(const C[] line, size_t fieldIndex, C delim) pure @safe
 
 unittest
 {
-    import std.conv;
+    import std.conv : ConvException, to;
     import std.exception;
 
     /* Common cases. */
