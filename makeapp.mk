@@ -75,18 +75,23 @@ test-codecov: apptest-codecov unittest-codecov
 .PHONY: unittest-codecov
 unittest-codecov:
 	@echo '---> Running $(notdir $(basename $(CURDIR))) unit tests with code coverage.'
+	-rm ./*.lst
 	$(DCOMPILER) $(imports) $(common_srcs) $(unittest_codecov_flags) $(app_src)
 	-rm ./__main.lst
 	@echo '---> Unit tests completed successfully (code coverage on).'
 
 .PHONY: apptest-codecov
 apptest-codecov: $(app_codecov)
-# Note: The 'find' command below deletes code coverage files for utility files from
-# common that were on the build command line but not used by the module being tested.
+# Notes:
+# * The app code coverage tests are setup to aggregate with prior files. Files from
+#   prior runs need to be deleted first. That's what the first 'find' does.
+# * Code coverage output is not material for files on the build line, but not used.
+#   Normally utilities from common. The second 'find' deletes these.
 	-@if [ -d $(testsdir)/latest_debug ]; then echo 'Deleting prior test files.';  rm $(testsdir)/latest_debug/*; fi
 	@if [ ! -d $(testsdir)/latest_debug ]; then mkdir $(testsdir)/latest_debug; fi
+	find $(testsdir) -maxdepth 1 -name '*.lst' -exec rm {} \;
 	cd $(testsdir) && ./tests.sh $(app_codecov) latest_debug
-	cd $(testsdir) && find . -name '*.lst' -exec sh -c 'tail -n 1 -- $$0 | grep -q "has no code"' {} \; -exec rm {} \;
+	find $(testsdir) -maxdepth 1 -name '*.lst' -exec sh -c 'tail -n 1 -- $$0 | grep -q "has no code"' {} \; -exec rm {} \;
 	@if diff -q $(testsdir)/latest_debug $(testsdir)/gold ; \
 	then echo '---> $(app) command line tests passed (code coverage on).'; exit 0; \
 	else echo '---> $(app) command line tests failed (code coverage on).'; \

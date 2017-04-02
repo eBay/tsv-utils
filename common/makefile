@@ -26,6 +26,7 @@ test-codecov: unittest-codecov
 .PHONY: unittest-codecov
 unittest-codecov:
 	@echo '---> Running $(notdir $(basename $(CURDIR))) unit tests with code coverage.'
+	-rm ./*.lst
 	$(DCOMPILER) $(common_srcs) $(unittest_codecov_flags) $(CURDIR)/src/tsvutil.d
 	$(DCOMPILER) $(common_srcs) $(unittest_codecov_flags) $(CURDIR)/src/getopt_inorder.d
 	$(DCOMPILER) $(common_srcs) $(unittest_codecov_flags) $(CURDIR)/src/tsv_numerics.d
