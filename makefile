@@ -2,14 +2,12 @@ appdirs = csv2tsv keep-header number-lines tsv-append tsv-filter tsv-join tsv-sa
 subdirs = common $(appdirs)
 
 help:
-	@echo 'Note: Commands that run builds use the DMD compiler by default.'
-	@echo '      Add DCOMPILER=ldc2 or DCOMPILER=<path> to change the compiler.'
 	@echo 'Commands:'
 	@echo '========='
 	@echo 'release      - Release mode build.'
 	@echo 'debug        - Debug build. (Apps are written with a .dbg extension.)'
 	@echo 'codecov      - Code coverage build. (Apps are written with a .cov extension.)'
-	@echo '               Note: This doesn't generate reports, just builds the apps.'
+	@echo '               Note: This does not generate reports, just builds the apps.'
 	@echo 'clean        - Removes executable and other build artifacts.'
 	@echo 'test         - Runs all tests. Unit tests, and release and debug executable tests.'
 	@echo 'unittest     - Runs unit tests.'
@@ -20,6 +18,9 @@ help:
 	@echo 'test-codecov - Runs unit tests and debug app tests with code coverage reports turned on.'
 	@echo 'apptest-codecov  - Runs debug app tests with code coverage reports on.'
 	@echo 'unittest-codecov - Runs unit tests with code coverage reports on.'
+	@echo ''
+	@echo 'Note: Commands that run builds use the DMD compiler by default.'
+	@echo '      Add DCOMPILER=ldc2 or DCOMPILER=<path> to change the compiler.'
 
 release: make_subdirs
 debug: make_subdirs
