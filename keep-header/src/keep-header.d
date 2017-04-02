@@ -34,8 +34,15 @@ int main(string[] args)
     import std.process : pipeProcess, ProcessPipes, Redirect, wait;
     import std.range;
     import std.stdio;
-    import std.typecons : tuple; 
+    import std.typecons : tuple;
 
+    /* When running in DMD code coverage mode, turn on report merging. */
+    version(D_Coverage) version(DigitalMars)
+    {
+        import core.runtime : dmd_coverSetMerge;
+        dmd_coverSetMerge(true);
+    }
+    
     auto programName = (args.length > 0) ? args[0].stripExtension.baseName : "Unknown_program_name";
     auto splitArgs = findSplit(args, ["--"]);
 

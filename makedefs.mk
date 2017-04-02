@@ -26,3 +26,5 @@ endif
 debug_flags = -od$(objdir) $(DFLAGS)
 release_flags = $(release_flags_base) -od$(objdir) $(DFLAGS)
 unittest_flags = $(DFLAGS) -unittest -main -run
+codecov_flags = -od$(objdir) $(DFLAGS) -cov
+unittest_codecov_flags = -od$(objdir) $(DFLAGS) -cov -unittest -main -run

@@ -122,6 +122,13 @@ Main program.
  */
 int main(string[] cmdArgs)
 {
+    /* When running in DMD code coverage mode, turn on report merging. */
+    version(D_Coverage) version(DigitalMars)
+    {
+        import core.runtime : dmd_coverSetMerge;
+        dmd_coverSetMerge(true);
+    }
+    
     TsvSelectOptions cmdopt;
     auto r = cmdopt.processArgs(cmdArgs);
     if (!r[0]) return r[1];

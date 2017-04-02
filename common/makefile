@@ -2,15 +2,33 @@ include ../makedefs.mk
 
 release: ;
 debug: ;
-clean: ;
+codecov: ;
+clean:
+	-rm ./*.lst
+
 test: unittest
-test-release: ;
-test-nobuild: ;
 
 .PHONY: unittest
 unittest:
 	@echo '---> Running $(notdir $(basename $(CURDIR))) unit tests'
-	$(DCOMPILER) $(common_srcs) $(unittest_flags) src/tsvutil.d
-	$(DCOMPILER) $(common_srcs) $(unittest_flags) src/getopt_inorder.d
-	$(DCOMPILER) $(common_srcs) $(unittest_flags) src/tsv_numerics.d
+	$(DCOMPILER) $(common_srcs) $(unittest_flags) $(CURDIR)/src/tsvutil.d
+	$(DCOMPILER) $(common_srcs) $(unittest_flags) $(CURDIR)/src/getopt_inorder.d
+	$(DCOMPILER) $(common_srcs) $(unittest_flags) $(CURDIR)/src/tsv_numerics.d
 	@echo '---> Unit tests completed successfully.'
+
+test-debug: ;
+test-release: ;
+test-nobuild: ;
+
+.PHONY: test-codecov
+test-codecov: unittest-codecov
+
+.PHONY: unittest-codecov
+unittest-codecov:
+	@echo '---> Running $(notdir $(basename $(CURDIR))) unit tests with code coverage.'
+	$(DCOMPILER) $(common_srcs) $(unittest_codecov_flags) $(CURDIR)/src/tsvutil.d
+	$(DCOMPILER) $(common_srcs) $(unittest_codecov_flags) $(CURDIR)/src/getopt_inorder.d
+	$(DCOMPILER) $(common_srcs) $(unittest_codecov_flags) $(CURDIR)/src/tsv_numerics.d
+	@echo '---> Unit tests completed successfully (code coverage on).'
+
+apptest-codecov: ;

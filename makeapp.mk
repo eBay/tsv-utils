@@ -1,24 +1,31 @@
 app ?= $(notdir $(basename $(CURDIR)))
 common_srcs ?= $(common_srcdir)/tsvutil.d $(common_srcdir)/tsv_numerics.d $(common_srcdir)/getopt_inorder.d $(common_srcdir)/unittest_utils.d
-app_src ?= src/$(app).d
+app_src ?= $(CURDIR)/src/$(app).d
 srcs ?= $(app_src) $(common_srcs)
 imports ?= -I$(common_srcdir)
 
-app_debug = $(project_bindir)/$(app).dbg
 app_release = $(project_bindir)/$(app)
+app_debug = $(project_bindir)/$(app).dbg
+app_codecov = $(project_bindir)/$(app).cov
 
 release: $(app_release)
 debug: $(app_debug)
+codecov: $(app_codecov)
 
 $(app_release): $(srcs)
 	$(DCOMPILER) $(release_flags) -of$(app_release) $(imports) $(srcs)
 $(app_debug): $(srcs)
 	$(DCOMPILER) $(debug_flags) -of$(app_debug) $(imports) $(srcs)
+$(app_codecov): $(srcs)
+	$(DCOMPILER) $(codecov_flags) -of$(app_codecov) $(imports) $(srcs)
 
 clean:
 	-rm $(app_debug)
 	-rm $(app_release)
+	-rm $(app_codecov)
 	-rm $(objdir)/*.o
+	-rm ./*.lst
+	-rm $(testsdir)/*.lst
 
 .PHONY: test
 test: unittest test-debug test-release
@@ -62,3 +69,22 @@ test-nobuild:
 	exit 1; \
 	fi
 
+.PHONY: test-codecov
+test-codecov: apptest-codecov unittest-codecov
+
+.PHONY: unittest-codecov
+unittest-codecov:
+	@echo '---> Running $(notdir $(basename $(CURDIR))) unit tests with code coverage.'
+	$(DCOMPILER) $(imports) $(common_srcs) $(unittest_codecov_flags) $(app_src)
+	@echo '---> Unit tests completed successfully (code coverage on).'
+
+.PHONY: apptest-codecov
+apptest-codecov: $(app_codecov)
+	-@if [ -d $(testsdir)/latest_debug ]; then echo 'Deleting prior test files.';  rm $(testsdir)/latest_debug/*; fi
+	@if [ ! -d $(testsdir)/latest_debug ]; then mkdir $(testsdir)/latest_debug; fi
+	cd $(testsdir) && ./tests.sh $(app_codecov) latest_debug
+	@if diff -q $(testsdir)/latest_debug $(testsdir)/gold ; \
+	then echo '---> $(app) command line tests passed (code coverage on).'; exit 0; \
+	else echo '---> $(app) command line tests failed (code coverage on).'; \
+	exit 1; \
+	fi
