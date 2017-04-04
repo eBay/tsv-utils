@@ -1,5 +1,8 @@
 appdirs = csv2tsv keep-header number-lines tsv-append tsv-filter tsv-join tsv-sample tsv-select tsv-summarize tsv-uniq
 subdirs = common $(appdirs)
+buildtools_dir = buildtools
+
+all: release
 
 help:
 	@echo 'Commands:'
@@ -25,12 +28,18 @@ help:
 release: make_subdirs
 debug: make_subdirs
 clean: make_subdirs
+	-rm ./*.lst
+
 test: make_subdirs
 unittest: make_subdirs
 test-debug: make_subdirs
 test-release: make_subdirs
 test-nobuild: make_appdirs
-test-codecov: make_subdirs
+
+.PHONY: test-codecov
+test-codecov: make_subdirs buildtools
+	$(buildtools_dir)/aggregate-codecov $(CURDIR) $(subdirs:%=%/*.lst)
+
 apptest-codecov: make_appdirs
 unittest-codecov: make_subdirs
 
@@ -44,3 +53,8 @@ $(subdirs):
 	@echo ''
 	@echo 'make -C $@ $(MAKEFLAGS) $(MAKECMDGOALS)'
 	@$(MAKE) -C $@ $(MAKEFLAGS) $(MAKECMDGOALS) 
+
+buildtools:
+	@echo ''
+	@echo 'make -C $(buildtools_dir) $(MAKEFLAGS)'
+	@$(MAKE) -C $(buildtools_dir) $(MAKEFLAGS)

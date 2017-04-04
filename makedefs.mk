@@ -14,6 +14,7 @@ DFLAGS =
 project_dir ?= $(realpath ..)
 common_srcdir = $(project_dir)/common/src
 project_bindir = $(project_dir)/bin
+buildtools_dir = $(project_dir)/buildtools
 objdir = obj
 bindir = bin
 testsdir = tests

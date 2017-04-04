@@ -70,7 +70,9 @@ test-nobuild:
 	fi
 
 .PHONY: test-codecov
-test-codecov: apptest-codecov unittest-codecov
+test-codecov: apptest-codecov unittest-codecov buildtools
+	@echo 'Aggregating code coverage reports for $(notdir $(basename $(CURDIR)))'
+	$(buildtools_dir)/aggregate-codecov $(CURDIR) $(testsdir)/*.lst
 
 .PHONY: unittest-codecov
 unittest-codecov:
@@ -85,8 +87,8 @@ apptest-codecov: $(app_codecov)
 # Notes:
 # * The app code coverage tests are setup to aggregate with prior files. Files from
 #   prior runs need to be deleted first. That's what the first 'find' does.
-# * Code coverage output is not material for files on the build line, but not used.
-#   Normally utilities from common. The second 'find' deletes these.
+# * Code coverage output is not useful for files on the compiler line, but not used by the.
+#   app being built. Typically utilities from common. The second 'find' deletes these.
 	-@if [ -d $(testsdir)/latest_debug ]; then echo 'Deleting prior test files.';  rm $(testsdir)/latest_debug/*; fi
 	@if [ ! -d $(testsdir)/latest_debug ]; then mkdir $(testsdir)/latest_debug; fi
 	find $(testsdir) -maxdepth 1 -name '*.lst' -exec rm {} \;
@@ -97,3 +99,8 @@ apptest-codecov: $(app_codecov)
 	else echo '---> $(app) command line tests failed (code coverage on).'; \
 	exit 1; \
 	fi
+
+buildtools:
+	@echo ''
+	@echo 'make -C $(buildtools_dir) $(MAKEFLAGS)'
+	@$(MAKE) -C $(buildtools_dir) $(MAKEFLAGS)
