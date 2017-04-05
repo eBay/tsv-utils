@@ -12,4 +12,7 @@ script:
  - dub clean
  - make clean
  - make test DCOMPILER=$DC
- - if [[ "$TRAVIS_OS_NAME" == "linux" && "$DC" == "dmd"]]; then make test-codecov; fi
+ - if [[ "$TRAVIS_OS_NAME" == "linux" && "$DC" == "dmd" ]]; then make test-codecov; fi
+after_success:
+ - if [[ "$TRAVIS_OS_NAME" == "linux" && "$DC" == "dmd" ]]; then bash <(curl -s https://codecov.io/bash); fi
+ 
