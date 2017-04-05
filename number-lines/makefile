@@ -3,3 +3,4 @@ include ../makeapp.mk
 
 # No built-in unit tests
 unittest: ;
+unittest-codecov: ;
