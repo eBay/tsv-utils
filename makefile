@@ -39,6 +39,7 @@ test-nobuild: make_appdirs
 .PHONY: test-codecov
 test-codecov: make_subdirs buildtools
 	$(buildtools_dir)/aggregate-codecov $(CURDIR) $(subdirs:%=%/*.lst)
+	$(buildtools_dir)/codecov-to-relative-paths $(CURDIR)/*.lst
 
 apptest-codecov: make_appdirs
 unittest-codecov: make_subdirs
