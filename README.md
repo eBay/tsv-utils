@@ -17,7 +17,12 @@ Information on the D programming language is available at: http://dlang.org/.
 * [About the code](docs/AboutTheCode.md)
 * [Tips and tricks](docs/TipsAndTricks.md)
 
-Please file an issue if you have problems or questions.
+Please file an [issue](https://github.com/eBay/tsv-utils-dlang/issues) if you have problems or questions.
+
+[![Travis](https://img.shields.io/travis/eBay/tsv-utils-dlang.svg)](https://travis-ci.org/eBay/tsv-utils-dlang)
+[![Codecov](https://img.shields.io/codecov/c/github/eBay/tsv-utils-dlang.svg)](https://codecov.io/gh/eBay/tsv-utils-dlang)
+[![GitHub release](https://img.shields.io/github/release/eBay/tsv-utils-dlang.svg)](https://github.com/eBay/tsv-utils-dlang/releases)
+[![DUB](https://img.shields.io/dub/v/tsv-utils-dlang.svg)](https://code.dlang.org/packages/tsv-utils-dlang)
 
 ## Tools overview
 
