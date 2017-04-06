@@ -6,7 +6,7 @@ Contents:
 * [Code structure](#code-structure)
 * [Coding philosophy](#coding-philosophy)
 * [Building and makefile](#building-and-makefile)
-* [Unit tests](#unit-tests)
+* [Unit tests and code coverage reports](#unit-tests-and-code-coverage-reports)
 
 ## Code structure
 
@@ -51,14 +51,15 @@ A useful aspect of D is that is additional optimization can be made as the need 
 
 ### Make setup
 
-The makefile setup is very simplistic. It works reasonably in this case because the tools are small and have a very simple code structure, but it is not a setup that will scale to more complex programs. `make` can be run from the top level directory or from the individual tool directories. Available commands:
+The makefile setup is very simplistic. It works reasonably in this case because the tools are small and have a very simple code structure, but it is not a setup that will scale to more complex programs. `make` can be run from the top level directory or from the individual tool directories. Available commands include:
 
 * `make release` (default) - This builds the tools in release mode. Executables go in the bin directory.
 * `make debug` - Makes debug versions of the tools (with a `.dbg` extension).
 * `make clean` - Deletes executables and intermediate files.
-* `make test` - Makes debug versions of the tools and runs all tests.
-* `make test-release` - Makes release versions of the tools and runs all tests.
+* `make test` - Run unit tests and command line tests against debug and release executables.
 * `make test-nobuild` - Runs tests against the current app builds. This is useful when using DUB to build.
+* `make test-codecov` - Runs unit tests and debug app tests with code coverage reports turned on.
+* `make help` - Shows all the make commands.
 
 Builds can be customized by changing the settings in `makedefs.mk`. The most basic customization is the compiler choice, this controlled by the `DCOMPILER` variable.
 
@@ -72,10 +73,12 @@ $ dub test tsv-utils-dlang:common
 $ make test-nobuild
 ```
 
-## Unit tests
+## Unit tests and code coverage reports
 
 D has an excellent facility for adding unit tests right with the code. The `common` utility functions and the more recent tools take advantage of built-in unit tests. However, the earlier tools do not, and instead use more traditional invocation of the command line executables and diffs the output against a "gold" result set. The more recent tools use both built-in unit tests ad tests against the executable. This includes `csv2tsv`, `tsv-summarize`, `tsv-append`, and `tsv-sample`. The built-in unit tests are much nicer, and also the advantage of being naturally cross-platform. The command line executable tests assume a Unix shell.
 
 Tests for the command line executables are in the `tests` directory of each tool. Overall the tests cover a fair number of cases and are quite useful checks when modifying the code. They may also be helpful as an examples of command line tool invocations. See the `tests.sh` file in each `test` directory, and the `test` makefile target in `makeapp.mk`.
 
 The unit test built into the common code (`common/src/tsvutil.d`) illustrates a useful interaction with templates: it is quite easy and natural to unit test template instantiations that might not occur naturally in the application being written along with the template.
+
+D also has code coverage reports supported by the compiler. The `-cov` compiler flag creates an executable recording code coverage. Most common is to run coverage as part of unit tests, but reports can also be generated when running an application normally. This project generates code coverage reports using both methods and aggregates the reports (use `make test-codecov`). See the D language [Code Coverage Analysis](https://dlang.org/code_coverage.html) page for more info.
