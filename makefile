@@ -61,19 +61,19 @@ make_appdirs: $(appdirs)
 
 $(subdirs):
 	@echo ''
-	@echo 'make -C $@ $(MAKEFLAGS) $(MAKECMDGOALS)'
-	@$(MAKE) -C $@ $(MAKEFLAGS) $(MAKECMDGOALS) 
+	@echo 'make -C $@ $(MAKECMDGOALS)'
+	@$(MAKE) -C $@ $(MAKECMDGOALS) 
 
 buildtools:
 	@echo ''
-	@echo 'make -C $(buildtools_dir) $(MAKEFLAGS)'
-	@$(MAKE) -C $(buildtools_dir) $(MAKEFLAGS)
+	@echo 'make -C $(buildtools_dir)'
+	@$(MAKE) -C $(buildtools_dir)
 
 .PHONY: package
 package: 
-	@$(MAKE) -C $(CURDIR) $(MAKEFLAGS) clean
-	@$(MAKE) -C $(CURDIR) $(MAKEFLAGS) release
-	@$(MAKE) -C $(CURDIR) $(MAKEFLAGS) test-nobuild
+	@$(MAKE) -C $(CURDIR) clean
+	@$(MAKE) -C $(CURDIR) release
+	@$(MAKE) -C $(CURDIR) test-nobuild
 	-rm -r $(PKG_DIR)
 	mkdir $(PKG_DIR)
 	cp -pr $(CURDIR)/bin $(PKG_DIR)
