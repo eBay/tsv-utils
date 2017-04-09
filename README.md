@@ -1,10 +1,6 @@
 # Command line utilities for tabular data files
 
-This is a set of command line utilities for working with tab-separated value files. They were originally developed in Perl and used for day-to-day work in a large scale data mining environment. One of the tools was re-written in D as an exercise exploring the language. Significant performance gains and agreeable programmer characteristics soon led to writing the other utilities in D as well.
-
-The tools have been made available in the hope they will benefit others needing similar tools or who are considering D as a programming language.
-
-Information on the D programming language is available at: http://dlang.org/.
+This is a set of command line utilities for working with tab-separated value files. They were originally developed in Perl and used for day-to-day work in a large scale data mining environment. One of the tools was re-written in D as an exercise exploring the language. Significant performance gains and agreeable programmer characteristics soon led to writing the other utilities in D as well. Information on the D programming language is available at: http://dlang.org/.
 
 **In this README:**
 * [Tools overview](#tools-overview)
@@ -168,6 +164,12 @@ Multiple files can be provided, only the header from the first is retained. The 
 
 ## Installation
 
+### Prebuilt binaries
+
+Prebuilt binaries are available for Linux and Mac, these can be found on the [Github releases](https://github.com/eBay/tsv-utils-dlang/releases) page. Download and unpack the tar.gz file. Executables are in the `bin` directory. Add this directory or specific tools to the path. 
+
+### Build from source files
+
 Download a D compiler (http://dlang.org/download.html). These tools have been tested with the DMD and LDC compilers, on Mac OSX and Linux. Use DMD version 2.070 or later, LDC version 1.0.0 or later.
 
 Clone this repository, select a compiler, and run `make` from the top level directory:
@@ -179,8 +181,8 @@ $ make         # For LDC: make DCOMPILER=ldc2
 
 Executables are written to `tsv-utils-dlang/bin`, place this directory or the executables in the PATH. The compiler defaults to DMD, this can be changed on the make command line (e.g. `make DCOMPILER=ldc2`). DMD is the reference compiler, but LDC produces faster executables. (For some tools LDC is quite a bit faster than DMD.)
 
-DUB, the D Package Manager, can also be used to install and build the executables. It is also possible to run
-build commands manually, see [BuildCommands](docs/BuildCommands.md) file for details.
+The makefile supports other typical development tasks such as unit tests and code coverage reports. See [Building and makefile](docs/AboutTheCode.md#building-and-makefile) for more details.
+
 
 ### Install using DUB
 
@@ -198,12 +200,17 @@ $ cd tsv-utils-dlang
 $ dub run      # For LDC: dub run -- --compiler=ldc2
 ```
 
-See [Building and makefile](docs/AboutTheCode.md#building-and-makefile) for more information.
+See [Building and makefile](docs/AboutTheCode.md#building-and-makefile) for more information about the DUB setup.
+
+### Setup customization
+
+There are a number of simple ways to ways to improve the utility of these tools, these are listed on the [Tips and tricks](docs/TipsAndTricks.md) page. [Bash aliases](docs/TipsAndTricks.md#useful-bash-aliases), [sort customization](docs/TipsAndTricks.md#sort-customizations), and [bash completion](docs/TipsAndTricks.md#enabele-bash-completion) are especially useful.
 
 ## Other toolkits
 
 There are a number of toolkits that have similar or related functionality. Several are listed below. Those handling CSV files handle TSV files as well:
 
+* [clarkgrubb/data-tools](https://github.com/clarkgrubb/data-tools) - A variety of tools, especially rich in format converters. Written in Python, Ruby, and C.
 * [csvkit](https://github.com/wireservice/csvkit) - CSV tools, written in Python.
 * [csvtk](https://github.com/shenwei356/csvtk) - CSV tools, written in Go.
 * [GNU datamash](https://www.gnu.org/software/datamash/) - Performs numeric, textual and statistical operations on TSV files. Written in C.
