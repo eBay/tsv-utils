@@ -1,0 +1,25 @@
+# Compiled Object files
+*.o
+
+# Compiled Static libraries
+*.a
+
+# DUB build artifacts
+.dub/
+dub.selections.json
+
+# Code coverage files
+*.lst
+
+# Temporary test files
+latest_debug/
+latest_release/
+
+# Build artifacts
+bin/
+obj/
+dub_build
+buildtools/aggregate-codecov
+buildtools/codecov-to-relative-paths
+tsv-utils-dlang-*.tar.gz
+
