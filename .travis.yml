@@ -1,18 +1,33 @@
 sudo: false
 os:
- - linux
- - osx
+- linux
+- osx
 language: d
 d:
- - ldc
- - dmd
+- ldc
+- dmd
 script:
- - dub run -- --compiler=$DC
- - make test-nobuild
- - dub clean
- - make clean
- - make test DCOMPILER=$DC
- - if [[ "$TRAVIS_OS_NAME" == "osx" && "$DC" == "dmd" ]]; then make test-codecov; fi
+- dub run -- --compiler=$DC
+- make test-nobuild
+- dub clean
+- make clean
+- make test DCOMPILER=$DC
+- if [[ "$TRAVIS_OS_NAME" == "osx" && "$DC" == "dmd" ]]; then make test-codecov; fi
 after_success:
- - if [[ "$TRAVIS_OS_NAME" == "osx" && "$DC" == "dmd" ]]; then bash <(curl -s https://codecov.io/bash)  || echo "Codecov did not collect coverage reports"; fi
- 
+- if [[ "$TRAVIS_OS_NAME" == "osx" && "$DC" == "dmd" ]]; then bash <(curl -s https://codecov.io/bash)  ||
+  echo "Codecov did not collect coverage reports"; fi
+before_deploy:
+- if [[ -z "$TRAVIS_TAG" || "$TRAVIS_TAG" == "" ]]; then export USE_VERSION="v~dev";
+  else export USE_VERSION="$TRAVIS_TAG"; fi
+- make package DCOMPILER=$DC OS=$TRAVIS_OS_NAME APP_VERSION=$USE_VERSION
+deploy:
+  provider: releases
+  api_key:
+    secure: RQ4efkF5nDo27E9u+fYSOUAtL/6/wSCt7oX1CbJAvpwrPt5ZADmRKNyeiC6zNABoJjWEMvpueIshKIHN21VTGMu/L2b7wkm8tziCMnOytKfqWHENiCoaYmtoh9AI2lob5heaO7MQ3+zJGlo8jI2CW6h+BjETIjxthtw05CMYzXt0mCFEnYt3wog9zDsXwTFw9SEM6mmoBozEwIqSHZsFRD/d6/MUifa8LpZFe0ImJjsHeLAWCa2c26XhzmeZUTWDe5BUgoy4Kg+aRm/oGFHure2/SUV4oQzwIhtLF+dgOrk0px8RErvQaAzVE4J+moWc7cIQEjlQT7TxNIcwX5Z8xchEp0PNn4Z245sJyB0aNahZq0sfHQ2xkKa2xBLBZVI1dfHtJbUNc3ulcmmcFr/IXb9rmvYfkc//tvVnzLQlZSZP198S/56m4HramdS8VO5odszoJ2ns56bPVdGypzVVKKrrqFgWYHLkRBmD3Q7l9yamHtrZ0HB0gOClTxRS+ygHk9+y5mEQj2SgwCqjctyKV2RxmVWWI14YoLvgnmXD01hNwpp3aB/PI9GFeZpZuHnqdF7clc/ESGt5e2YJPPsEX5IT4sI4AMeoEfOGOXTdcxH2GB9tmJCwolmdBc6ql0KAZ+Uu3Iu/edbNyvoGTCymsk21eTdyVDNbR0nB17qhgbo=
+  file_glob: true
+  file: ./*.tar.gz
+  skip_cleanup: true
+  on:
+    tags: true
+    repo: eBay/tsv-utils-dlang
+    condition: "$DC = ldc2"
