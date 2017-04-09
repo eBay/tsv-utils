@@ -1,6 +1,6 @@
 # Command line utilities for tabular data files
 
-This is a set of command line utilities for working with tab-separated value files. They were originally developed in Perl and used for day-to-day work in a large scale data mining environment. One of the tools was re-written in D as an exercise exploring the language. Significant performance gains and agreeable programmer characteristics soon led to writing the other utilities in D as well. Information on the D programming language is available at: http://dlang.org/.
+This is a set of command line utilities for working with tab-separated value files. They were originally developed in Perl and used for day-to-day work in a large scale data mining environment. One of the tools was re-written in D as an exercise exploring the language. Significant performance gains and agreeable programmer characteristics soon led to writing additional utilities in D. Information on the D programming language is available at: http://dlang.org/.
 
 **In this README:**
 * [Tools overview](#tools-overview)
@@ -164,9 +164,11 @@ Multiple files can be provided, only the header from the first is retained. The 
 
 ## Installation
 
+There are several ways to obtain the tools: prebuilt binaries, building from source code, and using the DUB package manager. The tools have been tested on Linux and Mac OS X. They have not been tested on Windows, but there are no obvious impediments.
+
 ### Prebuilt binaries
 
-Prebuilt binaries are available for Linux and Mac, these can be found on the [Github releases](https://github.com/eBay/tsv-utils-dlang/releases) page. Download and unpack the tar.gz file. Executables are in the `bin` directory. Add this directory or specific tools to the path. 
+Prebuilt binaries are available for Linux and Mac, these can be found on the [Github releases](https://github.com/eBay/tsv-utils-dlang/releases) page. Download and unpack the tar.gz file. Executables are in the `bin` directory. Add the 'bin' directory or individual tools to the PATH environment variable.
 
 ### Build from source files
 
