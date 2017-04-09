@@ -2,6 +2,14 @@ appdirs = csv2tsv keep-header number-lines tsv-append tsv-filter tsv-join tsv-sa
 subdirs = common $(appdirs)
 buildtools_dir = buildtools
 
+# Package variables
+OS ?= UnkOS
+ARCH ?= x86_64
+APP_VERSION ?= v~dev
+PKG_ROOT_DIR ?= $(notdir $(basename $(CURDIR)))
+PKG_DIR = $(PKG_ROOT_DIR)-$(APP_VERSION)_$(OS)-$(ARCH)_$(DCOMPILER)
+TAR_FILE ?= $(PKG_DIR).tar.gz
+
 all: release
 
 help:
@@ -21,6 +29,7 @@ help:
 	@echo 'test-codecov - Runs unit tests and debug app tests with code coverage reports turned on.'
 	@echo 'apptest-codecov  - Runs debug app tests with code coverage reports on.'
 	@echo 'unittest-codecov - Runs unit tests with code coverage reports on.'
+	@echo 'package      - Creates a release package. Used with travis-ci.'
 	@echo ''
 	@echo 'Note: Commands that run builds use the DMD compiler by default.'
 	@echo '      Add DCOMPILER=ldc2 or DCOMPILER=<path> to change the compiler.'
@@ -59,3 +68,15 @@ buildtools:
 	@echo ''
 	@echo 'make -C $(buildtools_dir) $(MAKEFLAGS)'
 	@$(MAKE) -C $(buildtools_dir) $(MAKEFLAGS)
+
+.PHONY: package
+package: 
+	@$(MAKE) -C $(CURDIR) $(MAKEFLAGS) clean
+	@$(MAKE) -C $(CURDIR) $(MAKEFLAGS) release
+	@$(MAKE) -C $(CURDIR) $(MAKEFLAGS) test-nobuild
+	-rm -r $(PKG_DIR)
+	mkdir $(PKG_DIR)
+	cp -pr $(CURDIR)/bin $(PKG_DIR)
+	cp -pr $(CURDIR)/bash_completion $(PKG_DIR)
+	tar -czf $(TAR_FILE) $(PKG_DIR)
+	-rm -r $(PKG_DIR)
