@@ -102,5 +102,5 @@ apptest-codecov: $(app_codecov)
 
 buildtools:
 	@echo ''
-	@echo 'make -C $(buildtools_dir) $(MAKEFLAGS)'
-	@$(MAKE) -C $(buildtools_dir) $(MAKEFLAGS)
+	@echo 'make -C $(buildtools_dir)'
+	@$(MAKE) -C $(buildtools_dir)
