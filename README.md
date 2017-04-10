@@ -164,7 +164,7 @@ Multiple files can be provided, only the header from the first is retained. The 
 
 ## Installation
 
-There are several ways to obtain the tools: prebuilt binaries, building from source code, and using the DUB package manager. The tools have been tested on Linux and Mac OS X. They have not been tested on Windows, but there are no obvious impediments.
+There are several ways to obtain the tools: prebuilt binaries; building from source code; and the DUB package manager. The tools have been tested on Linux and Mac OS X. They have not been tested on Windows, but there are no obvious impediments to running on Windows as well.
 
 ### Prebuilt binaries
 
