@@ -1,3 +1,6 @@
+Copyright (c) 2015-2017, eBay Software Foundation
+Initially written by Jon Degenhardt
+
 This package contains binary executables from the eBay/tsv-utils-dlang
 open-source project (https://github.com/eBay/tsv-utils-dlang).
 
