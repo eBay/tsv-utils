@@ -1,4 +1,4 @@
-# TSV-Utils: About the code
+# TSV-Utils Toolkit: About the code
 
 Some further details about the code used in the tsv-utils-dlang tools.
 

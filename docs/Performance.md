@@ -1,4 +1,4 @@
-# TSV-Utils: Performance Benchmarks
+# TSV-Utils Toolkit: Performance Benchmarks
 
 * [Summary](#summary)
 * [Comparative Benchmarks](#comparative-benchmarks)

@@ -1,4 +1,6 @@
-# Build commands
+# Tsv-Utils Toolkit: Build commands
+
+*Note: This file is no longer being updated. However, should it be necessary to run build commands manually, the information here should be a good starting point.* 
 
 Using the make system if make runs on your system. Simply running `make` from the top-level will build the release executables. DUB is also a good way to build, see the install section of the readme file. However, if these are not options, the individual build commands are easy enough to run manually. The commands below are the same issued by the make system. Replace ${DCOMPILER} with the compiler being used, e.g. `dmd` or `ldc2`. If using `dmd`, performance can be improved further by adding the `-inline` switch to the compiler line. 
 
