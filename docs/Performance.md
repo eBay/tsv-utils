@@ -7,9 +7,9 @@
 
 ## Summary
 
-Performance is a key motivation for writing tools like this in D rather an interpreted language like Python or Perl. It is also a consideration in choosing between D and C/C++.
+Performance is a key motivation for writing tools like the tsv utilities in D rather an interpreted language like Python or Perl. It is also a consideration in choosing between D and C/C++.
 
-To gauge D's performance, benchmarks were run using these tools and a number of similar tools written in native compiled programming languages. Included were traditional Unix tools as well as several specialized toolkits. Programming languages involved were C, Go, and Rust.
+To gauge D's performance, benchmarks were run using the tsv-utils-dlang tools and a number of similar tools written in native compiled programming languages. Included were traditional Unix tools as well as several specialized toolkits. Programming languages involved were C, Go, and Rust.
 
 The D programs performed extremely well on these benchmarks, exceeding the author's expectations. They were the fastest on all six benchmarks run, often by significant margins. This is impressive given that very little low-level programming was done. High level language constructs were used throughout, including the simplest forms of file I/O (no manual buffer management), GC (no manual memory management), built-in associative arrays and other facilities from the standard library, liberal use of functional programming constructs, etc. Performance tuning was done to identify poorly performing constructs, and templates were used in several places to improve performance, but nothing extensive. See [Coding philosophy](AboutTheCode.md#coding-philosophy) for the rationale behind these choices, as well as descriptions of the performance optimizations that were done.
 
@@ -23,28 +23,28 @@ Six tasks were used as benchmarks. Two forms of row filtering: numeric compariso
 
 Tests were conducted on a MacBook Pro, 16 GB RAM, 4 cores, and flash storage. All tools were updated to current versions, and several of the specialty toolkits were built from current source code. Run-time was measured using the `time` facility. Each benchmark was run three times and the fastest run recorded.
 
-Specialty toolkit times have been anonymized in the tables below. The intent of this study is to gauge performance of the D tools, not create a shootout between toolkits. However, the specific tools and command lines are given, enabling tests to be reproduced. (The csv-to-tsv times are shown, see [CSV to TSV conversion](#csv-to-tsv-conversion) for rationale.) See [Other toolkits](../README.md#other-toolkits) in the README for links to the tools, and [Details](#details) for version info and test file info. Python tools were not benchmarked, this would be a useful addition. Tools that run in in-memory environments like R were excluded.
+Specialty toolkit times have been anonymized in the tables below. The intent of this study is to gauge performance of the D tools, not create a shootout between toolkits. However, the specific tools and command lines are given, enabling tests to be reproduced. (The csv-to-tsv times are shown, see [CSV to TSV conversion](#csv-to-tsv-conversion) for rationale.) See [Other toolkits](OtherToolkits.md) for links to the tools, and [Details](#details) for version info, compilers, and test file details. Python tools were not benchmarked, this would be a useful addition. Tools that run in in-memory environments like R were excluded.
 
 The worst performers were the Unix tools shipped with the Mac (`cut`, etc). It's worth installing the GNU coreutils package if you use command line tools on the Mac. (MacPorts and Homebrew can install these tools.)
 
 ### Top four in each benchmark
 
-This table shows fastest times for each benchmark. Times are in seconds. Complete results for each benchmark are in the succeeding sections.
+This table shows fastest times for each benchmark. Times are in seconds. Complete results for each benchmark are in the succeeding sections. The tools from tsv-utils-dlang were the fastest on each test.
 
-| Benchmark              |     Tool/Time | Tool/Time | Tool/Time | Tool/Time |
-| ---------------------- | ------------: | --------: | --------: | --------: |
-| **Numeric row filter** |    tsv-filter |      mawk |   GNU awk | Toolkit 1 |
-| (4.8 GB, 7M lines)     |          4.34 |     11.71 |     22.02 |     53.11 |
-| **Regex row filter**   |    tsv-filter |   GNU awk |      mawk | Toolkit 1 |
-| (2.7 GB, 14M lines)    |          7.11 |     15.41 |     16.58 |     28.59 |
-| **Column selection**   |    tsv-select |      mawk |   GNU cut | Toolkit 1 |
-| (4.8 GB, 7M lines)     |          4.09 |      9.38 |     12.27 |     19.12 |
-| **Join two files**     |      tsv-join | Toolkit 1 | Toolkit 2 | Toolkit 3 |
-| (4.8 GB, 7M lines)     |         20.78 |    104.06 |    194.80 |    266.42 |
-| **Summary statistics** | tsv-summarize | Toolkit 1 | Toolkit 2 | Toolkit 3 |
-| (4.8 GB, 7M lines)     |         15.83 |     40.27 |     48.10 |     62.97 |
-| **CSV-to-TSV**         |       csv2tsv |     csvtk |       xsv |           |
-| (2.7 GB, 14M lines)    |         27.41 |     36.26 |     40.40 |           |
+| Benchmark              |       Tool/Time | Tool/Time | Tool/Time | Tool/Time |
+| ---------------------- | --------------: | --------: | --------: | --------: |
+| **Numeric row filter** |    _tsv-filter_ |      mawk |   GNU awk | Toolkit 1 |
+| (4.8 GB, 7M lines)     |            4.34 |     11.71 |     22.02 |     53.11 |
+| **Regex row filter**   |    _tsv-filter_ |   GNU awk |      mawk | Toolkit 1 |
+| (2.7 GB, 14M lines)    |            7.11 |     15.41 |     16.58 |     28.59 |
+| **Column selection**   |    _tsv-select_ |      mawk |   GNU cut | Toolkit 1 |
+| (4.8 GB, 7M lines)     |            4.09 |      9.38 |     12.27 |     19.12 |
+| **Join two files**     |      _tsv-join_ | Toolkit 1 | Toolkit 2 | Toolkit 3 |
+| (4.8 GB, 7M lines)     |           20.78 |    104.06 |    194.80 |    266.42 |
+| **Summary statistics** | _tsv-summarize_ | Toolkit 1 | Toolkit 2 | Toolkit 3 |
+| (4.8 GB, 7M lines)     |           15.83 |     40.27 |     48.10 |     62.97 |
+| **CSV-to-TSV**         |       _csv2tsv_ |     csvtk |       xsv |           |
+| (2.7 GB, 14M lines)    |           27.41 |     36.26 |     40.40 |           |
 
 ### Numeric filter benchmark
 

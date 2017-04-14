@@ -5,13 +5,13 @@ This is a set of command line utilities for working with tab-separated value fil
 **In this README:**
 * [Tools overview](#tools-overview)
 * [Installation](#installation)
-* [Other toolkits](#other-toolkits)
 
 **More details:**
 * [Tool reference](docs/ToolReference.md)
 * [Performance benchmarks](docs/Performance.md)
 * [About the code](docs/AboutTheCode.md)
 * [Tips and tricks](docs/TipsAndTricks.md)
+* [Other toolkits](docs/OtherToolkits.md)
 
 Please file an [issue](https://github.com/eBay/tsv-utils-dlang/issues) if you have problems or questions.
 
@@ -207,24 +207,3 @@ See [Building and makefile](docs/AboutTheCode.md#building-and-makefile) for more
 ### Setup customization
 
 There are a number of simple ways to ways to improve the utility of these tools, these are listed on the [Tips and tricks](docs/TipsAndTricks.md) page. [Bash aliases](docs/TipsAndTricks.md#useful-bash-aliases), [sort customization](docs/TipsAndTricks.md#sort-customizations), and [bash completion](docs/TipsAndTricks.md#enabele-bash-completion) are especially useful.
-
-## Other toolkits
-
-There are a number of toolkits that have similar or related functionality. Several are listed below. Those handling CSV files handle TSV files as well:
-
-* [clarkgrubb/data-tools](https://github.com/clarkgrubb/data-tools) - A variety of tools, especially rich in format converters. Written in Python, Ruby, and C.
-* [csvkit](https://github.com/wireservice/csvkit) - CSV tools, written in Python.
-* [csvtk](https://github.com/shenwei356/csvtk) - CSV tools, written in Go.
-* [GNU datamash](https://www.gnu.org/software/datamash/) - Performs numeric, textual and statistical operations on TSV files. Written in C.
-* [dplyr](https://github.com/hadley/dplyr) - Tools for tabular data in R storage formats. Runs in an R environment, code is in C++.
-* [miller](https://github.com/johnkerl/miller) - CSV and JSON tools, written in C.
-* [tsvutils](https://github.com/brendano/tsvutils) - TSV tools, especially rich in format converters. Written in Python.
-* [xsv](https://github.com/BurntSushi/xsv) - CSV tools, written in Rust.
-
-The different toolkits are certainly worth investigating if you work with tabular data files. Several have quite extensive feature sets. Each toolkit has its own strengths, your workflow and preferences are likely to fit some toolkits better than others.
-
-File format is perhaps the most important dimension. CSV files cannot be processed reliably by traditional unix tools, so CSV toolkits naturally extend further into this space. However, this tends to increase complexity of the tools when working with TSV files.
-
-Tradeoffs between file formats is its own topic. The [tsvutils README](https://github.com/brendano/tsvutils#the-philosophy-of-tsvutils) (Brendan O'Conner) has a nice discussion of the rationale for using TSV files. Note that many numeric CSV data sets use comma as a separator, but don't use CSV escapes. Such data sets can be processed reliabily by Unix tools and this toolset by setting the delimiter character.
-
-An even broader list of tools can be found here: [Structured text tools](https://github.com/dbohdan/structured-text-tools).
