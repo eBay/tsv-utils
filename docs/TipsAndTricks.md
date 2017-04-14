@@ -1,4 +1,4 @@
-# Tsv-Utils Toolkit: Tips and Tricks
+# Tips and Tricks
 
 Contents:
 
