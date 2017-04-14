@@ -29,7 +29,7 @@ The worst performers were the Unix tools shipped with the Mac (`cut`, etc). It's
 
 ### Top four in each benchmark
 
-This table shows fastest times for each benchmark. Times are in seconds. Complete results for each benchmark are in the succeeding sections. The tools from this package (tsv-utils-dlang) recorded the fastest times on each benchmark.
+This table shows fastest times for each benchmark. Times are in seconds. Complete results for each benchmark are in the succeeding sections. The tools from tsv-utils-dlang were the fastest on each test.
 
 | Benchmark              |       Tool/Time | Tool/Time | Tool/Time | Tool/Time |
 | ---------------------- | --------------: | --------: | --------: | --------: |
