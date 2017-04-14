@@ -31,20 +31,20 @@ The worst performers were the Unix tools shipped with the Mac (`cut`, etc). It's
 
 This table shows fastest times for each benchmark. Times are in seconds. Complete results for each benchmark are in the succeeding sections.
 
-| Benchmark              |         Tool/Time | Tool/Time | Tool/Time | Tool/Time |
-| ---------------------- | ----------------: | --------: | --------: | --------: |
-| **Numeric row filter** |    **tsv-filter** |      mawk |   GNU awk | Toolkit 1 |
-| (4.8 GB, 7M lines)     |              4.34 |     11.71 |     22.02 |     53.11 |
-| **Regex row filter**   |    **tsv-filter** |   GNU awk |      mawk | Toolkit 1 |
-| (2.7 GB, 14M lines)    |              7.11 |     15.41 |     16.58 |     28.59 |
-| **Column selection**   |    **tsv-select** |      mawk |   GNU cut | Toolkit 1 |
-| (4.8 GB, 7M lines)     |              4.09 |      9.38 |     12.27 |     19.12 |
-| **Join two files**     |      **tsv-join** | Toolkit 1 | Toolkit 2 | Toolkit 3 |
-| (4.8 GB, 7M lines)     |             20.78 |    104.06 |    194.80 |    266.42 |
-| **Summary statistics** | **tsv-summarize** | Toolkit 1 | Toolkit 2 | Toolkit 3 |
-| (4.8 GB, 7M lines)     |             15.83 |     40.27 |     48.10 |     62.97 |
-| **CSV-to-TSV**         |       **csv2tsv** |     csvtk |       xsv |           |
-| (2.7 GB, 14M lines)    |             27.41 |     36.26 |     40.40 |           |
+| Benchmark              |           Tool/Time | Tool/Time | Tool/Time | Tool/Time |
+| ---------------------- | ------------------: | --------: | --------: | --------: |
+| **Numeric row filter** |    **_tsv-filter_** |      mawk |   GNU awk | Toolkit 1 |
+| (4.8 GB, 7M lines)     |                4.34 |     11.71 |     22.02 |     53.11 |
+| **Regex row filter**   |    **_tsv-filter_** |   GNU awk |      mawk | Toolkit 1 |
+| (2.7 GB, 14M lines)    |                7.11 |     15.41 |     16.58 |     28.59 |
+| **Column selection**   |    **_tsv-select_** |      mawk |   GNU cut | Toolkit 1 |
+| (4.8 GB, 7M lines)     |                4.09 |      9.38 |     12.27 |     19.12 |
+| **Join two files**     |      **_tsv-join_** | Toolkit 1 | Toolkit 2 | Toolkit 3 |
+| (4.8 GB, 7M lines)     |               20.78 |    104.06 |    194.80 |    266.42 |
+| **Summary statistics** | **_tsv-summarize_** | Toolkit 1 | Toolkit 2 | Toolkit 3 |
+| (4.8 GB, 7M lines)     |               15.83 |     40.27 |     48.10 |     62.97 |
+| **CSV-to-TSV**         |       **_csv2tsv_** |     csvtk |       xsv |           |
+| (2.7 GB, 14M lines)    |               27.41 |     36.26 |     40.40 |           |
 
 ### Numeric filter benchmark
 
