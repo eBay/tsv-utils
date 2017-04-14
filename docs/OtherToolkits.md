@@ -1,4 +1,4 @@
-# TSV-Utils-Dlang: Other toolkits
+# TSV-Utils: Other toolkits
 
 There are a number of open-source toolkits with functionality similar to those in tsv-utils-dlang. A number of the richer toolkits are listed below. Those handling CSV files handle TSV files as well:
 

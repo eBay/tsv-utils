@@ -1,4 +1,4 @@
-# TSV-Utils-Dlang: Performance Benchmarks
+# TSV-Utils: Performance Benchmarks
 
 * [Summary](#summary)
 * [Comparative Benchmarks](#comparative-benchmarks)

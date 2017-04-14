@@ -1,4 +1,4 @@
-# TSV-Utils-Dlang: Command line utilities for tabular data files
+# TSV-Utils: Command line utilities for tabular data files
 
 This is a set of command line utilities for working with tab-separated value files. They were originally developed in Perl and used for day-to-day work in a large scale data mining environment. One of the tools was re-written in D as an exercise exploring the language. Significant performance gains and agreeable programmer characteristics soon led to writing additional utilities in D. Information on the D programming language is available at: http://dlang.org/.
 
