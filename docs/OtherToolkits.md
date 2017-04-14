@@ -1,6 +1,6 @@
-# Other toolkits
+# Tsv-utils: Other toolkits
 
-There are a number of open-source toolkits with functionality similar to Tsv-Utils. A number of the more extensive toolkits are listed below. Those handling CSV files handle TSV files as well:
+There are a number of open-source toolkits with functionality similar to Tsv-utils. A number of the richer toolkits are listed below. Those handling CSV files handle TSV files as well:
 
 * [clarkgrubb/data-tools](https://github.com/clarkgrubb/data-tools) - A variety of tools, especially rich in format converters. Written in Python, Ruby, and C.
 * [csvkit](https://github.com/wireservice/csvkit) - CSV tools, written in Python.

@@ -1,4 +1,4 @@
-# Performance Benchmarks
+# Tsv-utils: Performance Benchmarks
 
 * [Summary](#summary)
 * [Comparative Benchmarks](#comparative-benchmarks)
@@ -7,7 +7,7 @@
 
 ## Summary
 
-Performance is a key motivation for writing tools like Tsv-Utils in D rather an interpreted language like Python or Perl. It is also a consideration in choosing between D and C/C++.
+Performance is a key motivation for writing tools like Tsv-utils in D rather an interpreted language like Python or Perl. It is also a consideration in choosing between D and C/C++.
 
 To gauge D's performance, benchmarks were run using the Tsv-Utils tools and a number of similar tools written in native compiled programming languages. Included were traditional Unix tools as well as several specialized toolkits. Programming languages involved were C, Go, and Rust.
 
