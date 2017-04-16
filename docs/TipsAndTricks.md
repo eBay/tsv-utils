@@ -66,7 +66,7 @@ $ tsv-sort worldcitiespop.tsv -k2,2
 
 #### Set the buffer size for reading from standard input
 
-GNU sort uses a small buffer by default when reading from standard input. This causes it to run much more slowly than when reading files directly. On the author's system the delta is about 2x. This will happen when using unix pipelines. The [keep-header](https://github.com/jondegenhardt/tsv-utils-dlang/blob/keep-header/docs/ToolReference.md#keep-header-reference) tool uses a pipe internally, so it is affected as well. Examples:
+GNU sort uses a small buffer by default when reading from standard input. This causes it to run much more slowly than when reading files directly. On the author's system the delta is about 2x. This will happen when using unix pipelines. The [keep-header](ToolReference.md#keep-header-reference) tool uses a pipe internally, so it is affected as well. Examples:
 ```
 $ grep green file.txt | sort
 $ keep-header file.txt -- sort
@@ -157,7 +157,7 @@ $ grep $'^[^\t]*\t1850\t' ngram_*.tsv
 
 This produced the correct results, but took 48 seconds. It is feasible because only string comparisons are needed. It wouldn't work if numeric comparisons were also involved.
 
-The google ngram files don't have headers, if they did, `grep` as used above would drop them. Use the [keep-header](https://github.com/jondegenhardt/tsv-utils-dlang/blob/keep-header/docs/ToolReference.md#keep-header-reference) tool to preserve the header. For example:
+The google ngram files don't have headers, if they did, `grep` as used above would drop them. Use the [keep-header](ToolReference.md#keep-header-reference) tool to preserve the header. For example:
 ```
 $ keep-header ngram_with_header_*.tsv -- grep 1850 | tsv-filter -H --str-eq 2:1850
 ```
