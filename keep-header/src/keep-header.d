@@ -25,6 +25,11 @@ These sort the files as usual, but preserve the header as the first line
 output. Data can also be read from from standard input. Example:
 
     $ cat file1.txt | keep-header -- grep red
+
+Options:
+
+-V      --version   Print version information and exit.
+-h         --help   This help information.
 EOS";
 
 int main(string[] args)
@@ -56,7 +61,8 @@ int main(string[] args)
             stderr.writeln();
             stderr.writeln(helpText);
         }
-        else if (cmdArgs.length > 0 && (cmdArgs[0] == "-V" || cmdArgs[0] == "--version"))
+        else if (cmdArgs.length > 0 &&
+                 (cmdArgs[0] == "-V" || cmdArgs[0] == "--V" ||  cmdArgs[0] == "--version"))
         {
             import tsvutils_version;
             stderr.writeln();

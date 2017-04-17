@@ -65,6 +65,22 @@ cat input1.txt | ${prog} -- input2.txt - one-line-file.txt >> ${basic_tests_1} 2
 echo "" >> ${basic_tests_1}; echo "====[cat input1.txt | number-lines --header -- input2.txt - one-line-file.txt]====" >> ${basic_tests_1}
 cat input1.txt | ${prog} --header -- input2.txt - one-line-file.txt >> ${basic_tests_1} 2>&1
 
+## Help and Version printing
+
+echo "" >> ${basic_tests_1}
+echo "Help and Version printing 1" >> ${basic_tests_1}
+echo "-----------------" >> ${basic_tests_1}
+echo "" >> ${basic_tests_1}
+
+echo "====[number-lines --help | grep -c Synopsis]====" >> ${basic_tests_1}
+${prog} --help 2>&1 | grep -c Synopsis >> ${basic_tests_1} 2>&1
+
+echo "====[number-lines --version | grep -c 'number-lines (eBay/tsv-utils-dlang)']====" >> ${basic_tests_1}
+${prog} --version 2>&1 | grep -c 'number-lines (eBay/tsv-utils-dlang)' >> ${basic_tests_1} 2>&1
+
+echo "====[number-lines -V | grep -c 'number-lines (eBay/tsv-utils-dlang)']====" >> ${basic_tests_1}
+${prog} -V 2>&1 | grep -c 'number-lines (eBay/tsv-utils-dlang)' >> ${basic_tests_1} 2>&1
+
 ## Error cases
 
 error_tests_1=${odir}/error_tests_1.txt

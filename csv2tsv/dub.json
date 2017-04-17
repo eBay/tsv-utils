@@ -12,7 +12,9 @@
             "targetName": "csv2tsv",
             "targetPath": "../bin/",
             "mainSourceFile": "src/csv2tsv.d",
-            "dependencies": { }
+            "dependencies": {
+                "tsv-utils-dlang:common": "*"
+            }
         },
         {
             "name" : "unittest",

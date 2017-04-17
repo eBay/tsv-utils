@@ -290,3 +290,13 @@ line	The first line
 7	Previous line blank
 8		
 9	Previous line a single tab
+
+Help and Version printing 1
+-----------------
+
+====[number-lines --help | grep -c Synopsis]====
+1
+====[number-lines --version | grep -c 'number-lines (eBay/tsv-utils-dlang)']====
+1
+====[number-lines -V | grep -c 'number-lines (eBay/tsv-utils-dlang)']====
+1

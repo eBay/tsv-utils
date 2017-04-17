@@ -567,3 +567,13 @@ f1	f2	f3	f4	f5
 16	pqr	uvw	9998	8887
 5	ßßß	SSS	 76	771
 15	7	xyz	9999	8888
+
+Help and Version printing 1
+-----------------
+
+====[tsv-uniq --help | grep -c Synopsis]====
+1
+====[tsv-uniq --version | grep -c 'tsv-uniq (eBay/tsv-utils-dlang)']====
+1
+====[tsv-uniq -V | grep -c 'tsv-uniq (eBay/tsv-utils-dlang)']====
+1

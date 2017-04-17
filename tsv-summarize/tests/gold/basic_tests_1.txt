@@ -186,3 +186,13 @@ size|10|small|XYZ|small|8|10
 
 ====[tsv-summarize --count empty_file.tsv --replace-missing XYZ]====
 0
+
+Help and Version printing 1
+-----------------
+
+====[tsv-summarize --help | grep -c Synopsis]====
+1
+====[tsv-summarize --version | grep -c 'tsv-summarize (eBay/tsv-utils-dlang)']====
+1
+====[tsv-summarize -V | grep -c 'tsv-summarize (eBay/tsv-utils-dlang)']====
+1

@@ -587,3 +587,13 @@ field2
 field1	field2	field3
 11567	12567	13567
 21567	22567	23567
+
+Help and Version printing 1
+-----------------
+
+====[tsv-select --help | grep -c Synopsis]====
+1
+====[tsv-select --version | grep -c 'tsv-select (eBay/tsv-utils-dlang)']====
+1
+====[tsv-select -V | grep -c 'tsv-select (eBay/tsv-utils-dlang)']====
+1

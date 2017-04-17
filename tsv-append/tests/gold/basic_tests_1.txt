@@ -268,3 +268,13 @@ standard-input	abc	def	ghi
 3x5	123	456	789
 3x5	xy1	xy2	xy3
 3x5	pqx	pqy	pqz
+
+Help and Version printing 1
+-----------------
+
+====[tsv-append --help | grep -c Synopsis]====
+1
+====[tsv-append --version | grep -c 'tsv-append (eBay/tsv-utils-dlang)']====
+1
+====[tsv-append -V | grep -c 'tsv-append (eBay/tsv-utils-dlang)']====
+1

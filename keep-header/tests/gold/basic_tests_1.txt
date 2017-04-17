@@ -170,3 +170,17 @@ file.row,field1,field2,field3
 input1.txt.1,30,green|blue
 input1.txt.2,20,緑|青
 input1.txt.3,10,绿色|蓝色
+
+Help and Version printing 1
+-----------------
+
+====[keep-header --help | grep -c Synopsis]====
+1
+====[keep-header -h | grep -c Synopsis]====
+1
+====[keep-header --version | grep -c 'keep-header (eBay/tsv-utils-dlang)']====
+1
+====[keep-header --V | grep -c 'keep-header (eBay/tsv-utils-dlang)']====
+1
+====[keep-header -V | grep -c 'keep-header (eBay/tsv-utils-dlang)']====
+1

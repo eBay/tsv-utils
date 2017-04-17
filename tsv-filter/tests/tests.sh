@@ -231,6 +231,23 @@ cat input_3x2.tsv | ${prog} --header --ge 2:23 >> ${basic_tests_1} 2>&1
 echo "" >> ${basic_tests_1}; echo "====[cat input_3x2.tsv | tsv-filter --header --ge 2:23 -- input_3x3.tsv - input_3x1.tsv]====" >> ${basic_tests_1}
 cat input_3x2.tsv | ${prog} --header --ge 2:23 -- input_3x3.tsv - input_3x1.tsv >> ${basic_tests_1} 2>&1
 
+## Help and Version printing
+
+echo "" >> ${basic_tests_1}
+echo "Help and Version printing 1" >> ${basic_tests_1}
+echo "-----------------" >> ${basic_tests_1}
+echo "" >> ${basic_tests_1}
+
+echo "====[tsv-filter --help | grep -c Synopsis]====" >> ${basic_tests_1}
+${prog} --help 2>&1 | grep -c Synopsis >> ${basic_tests_1} 2>&1
+
+echo "====[tsv-filter --version | grep -c 'tsv-filter (eBay/tsv-utils-dlang)']====" >> ${basic_tests_1}
+${prog} --version 2>&1 | grep -c 'tsv-filter (eBay/tsv-utils-dlang)' >> ${basic_tests_1} 2>&1
+
+echo "====[tsv-filter -V | grep -c 'tsv-filter (eBay/tsv-utils-dlang)']====" >> ${basic_tests_1}
+${prog} -V 2>&1 | grep -c 'tsv-filter (eBay/tsv-utils-dlang)' >> ${basic_tests_1} 2>&1
+
+
 ## Error cases
 
 error_tests_1=${odir}/error_tests_1.txt

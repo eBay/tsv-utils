@@ -75,6 +75,28 @@ cat input1.csv oneblankline.txt | ${prog} -- cat >> ${basic_tests_1} 2>&1
 echo "" >> ${basic_tests_1}; echo "====[cat oneblankline.txt | keep-header - input1.csv -- cat]====" >> ${basic_tests_1}
 cat oneblankline.txt | ${prog} input1.csv - -- cat >> ${basic_tests_1} 2>&1
 
+## Help and Version printing
+
+echo "" >> ${basic_tests_1}
+echo "Help and Version printing 1" >> ${basic_tests_1}
+echo "-----------------" >> ${basic_tests_1}
+echo "" >> ${basic_tests_1}
+
+echo "====[keep-header --help | grep -c Synopsis]====" >> ${basic_tests_1}
+${prog} --help 2>&1 | grep -c Synopsis >> ${basic_tests_1} 2>&1
+
+echo "====[keep-header -h | grep -c Synopsis]====" >> ${basic_tests_1}
+${prog} -h 2>&1 | grep -c Synopsis >> ${basic_tests_1} 2>&1
+
+echo "====[keep-header --version | grep -c 'keep-header (eBay/tsv-utils-dlang)']====" >> ${basic_tests_1}
+${prog} --version 2>&1 | grep -c 'keep-header (eBay/tsv-utils-dlang)' >> ${basic_tests_1} 2>&1
+
+echo "====[keep-header --V | grep -c 'keep-header (eBay/tsv-utils-dlang)']====" >> ${basic_tests_1}
+${prog} --V 2>&1 | grep -c 'keep-header (eBay/tsv-utils-dlang)' >> ${basic_tests_1} 2>&1
+
+echo "====[keep-header -V | grep -c 'keep-header (eBay/tsv-utils-dlang)']====" >> ${basic_tests_1}
+${prog} -V 2>&1 | grep -c 'keep-header (eBay/tsv-utils-dlang)' >> ${basic_tests_1} 2>&1
+
 ## Error cases
 
 error_tests_1=${odir}/error_tests_1.txt
