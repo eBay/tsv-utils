@@ -23,10 +23,10 @@ _csv2tsv()
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
-    opts="--help --help-verbose --header --quote --csv-delim --tsv-delim --replacement"
+    opts="--help --help-verbose --version --header --quote --csv-delim --tsv-delim --replacement"
 
     case $prev in
-         -h|--help|--help-verbose|-q|--quote|-c|--csv-delim|-t|--tsv-delim|-r|--replacement)
+         -h|--help|--help-verbose|-V|--version|-q|--quote|-c|--csv-delim|-t|--tsv-delim|-r|--replacement)
           return
           ;;
     esac
@@ -52,10 +52,10 @@ _number_lines()
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
-    opts="--help --header --header-string --start-number --delimiter"
+    opts="--help --version --header --header-string --start-number --delimiter"
 
     case $prev in
-         -h|--help|-s|--header-string|-n|--start-number|-d|--delimiter)
+         -h|--help|-V|--version|-s|--header-string|-n|--start-number|-d|--delimiter)
           return
           ;;
     esac
@@ -76,10 +76,10 @@ _tsv_append()
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
-    opts="--help --help-verbose --header --track-source --file --delimiter"
+    opts="--help --help-verbose --version --header --track-source --file --delimiter"
 
     case $prev in
-         -h|--help|--help-verbose|-f|--file|-d|--delimiter)
+         -h|--help|--help-verbose|-V|--version|-f|--file|-d|--delimiter)
           return
           ;;
     esac
@@ -100,10 +100,10 @@ _tsv_filter()
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
-    opts="--help --help-verbose --help-options --header --or --invert --delimiter --empty --not-empty --blank --not-blank --is-numeric --is-finite --is-nan --is-infinity --le --lt --ge --gt --eq --ne --str-le --str-lt --str-ge --str-gt --str-eq --istr-eq --str-ne --istr-ne --str-in-fld --istr-in-fld --str-not-in-fld --istr-not-in-fld --regex --iregex --not-regex --not-iregex --ff-le --ff-lt --ff-ge --ff-gt --ff-eq --ff-ne --ff-str-eq --ff-istr-eq --ff-str-ne --ff-istr-ne --ff-absdiff-le --ff-absdiff-gt ff-reldiff-le --ff-reldiff-gt"
+    opts="--help --help-verbose --help-options --version --header --or --invert --delimiter --empty --not-empty --blank --not-blank --is-numeric --is-finite --is-nan --is-infinity --le --lt --ge --gt --eq --ne --str-le --str-lt --str-ge --str-gt --str-eq --istr-eq --str-ne --istr-ne --str-in-fld --istr-in-fld --str-not-in-fld --istr-not-in-fld --regex --iregex --not-regex --not-iregex --ff-le --ff-lt --ff-ge --ff-gt --ff-eq --ff-ne --ff-str-eq --ff-istr-eq --ff-str-ne --ff-istr-ne --ff-absdiff-le --ff-absdiff-gt ff-reldiff-le --ff-reldiff-gt"
 
     case $prev in
-         -h|--help|--help-verbose|--help-options|--header|-d|--delimiter|--le|--lt|--ge|--gt|--eq|--ne|--str-le|--str-lt|--str-ge|--str-gt|--str-eq|--istr-eq|--str-ne|--istr-ne|--str-in-fld|--istr-in-fld|--str-not-in-fld|--istr-not-in-fld|--regex|--iregex|--not-regex|--not-iregex|--ff-le|--ff-lt|--ff-ge|--ff-gt|--ff-eq|--ff-ne|--ff-str-eq|--ff-istr-eq|--ff-str-ne|--ff-istr-ne|--ff-absdiff-le|--ff-absdiff-gt|ff-reldiff-le|--ff-reldiff-gt)
+         -h|--help|--help-verbose|--help-options|-V|--version|--header|-d|--delimiter|--le|--lt|--ge|--gt|--eq|--ne|--str-le|--str-lt|--str-ge|--str-gt|--str-eq|--istr-eq|--str-ne|--istr-ne|--str-in-fld|--istr-in-fld|--str-not-in-fld|--istr-not-in-fld|--regex|--iregex|--not-regex|--not-iregex|--ff-le|--ff-lt|--ff-ge|--ff-gt|--ff-eq|--ff-ne|--ff-str-eq|--ff-istr-eq|--ff-str-ne|--ff-istr-ne|--ff-absdiff-le|--ff-absdiff-gt|ff-reldiff-le|--ff-reldiff-gt)
          
           return
           ;;
@@ -125,10 +125,10 @@ _tsv_join()
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
-    opts="--help --help-verbose --filter-file --key-fields --data-fields --append-fields --header --prefix --write-all --exclude --delimiter --allow-duplicate-keys"
+    opts="--help --help-verbose --version --filter-file --key-fields --data-fields --append-fields --header --prefix --write-all --exclude --delimiter --allow-duplicate-keys"
 
     case $prev in
-         -h|--help|--help-verbose|-k|--key-fields|-d|--data-fields|-a|--append-fields|-p|--prefix|-w|--write-all|--delimiter)
+         -h|--help|--help-verbose|-V|--version|-k|--key-fields|-d|--data-fields|-a|--append-fields|-p|--prefix|-w|--write-all|--delimiter)
           return
           ;;
 
@@ -155,10 +155,10 @@ _tsv_sample()
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
-    opts="--help --help-verbose --header --num --field --print-random --static-seed --seed-value --delimiter"
+    opts="--help --help-verbose --version --header --num --field --print-random --static-seed --seed-value --delimiter"
 
     case $prev in
-         -h|--help|--help-verbose|-n|--num|-f|--field|-v|--seed-value|-d|--delimiter)
+         -h|--help|--help-verbose|-V|--version|-n|--num|-f|--field|-v|--seed-value|-d|--delimiter)
           return
           ;;
     esac
@@ -179,10 +179,10 @@ _tsv_select()
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
-    opts="--help --header --fields --rest --delimiter"
+    opts="--help --version --header --fields --rest --delimiter"
 
     case $prev in
-        -h|--help|-f|--fields|-d|--delimiter)
+        -h|--help|-V|--version|-f|--fields|-d|--delimiter)
             return
             ;;
         -r|--rest)
@@ -207,10 +207,10 @@ _tsv_summarize()
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
-    opts="--help --help-verbose --group-by --header --write-header --delimiter --values-delimiter --float-precision --exclude-missing --replace-missing --count --count-header --retain --first --last --min --max --range --sum --mean --median --quantile --mad --var --stdev --mode --mode-count --unique-count --missing-count --not-missing-count --values --unique-values"
+    opts="--help --help-verbose --version --group-by --header --write-header --delimiter --values-delimiter --float-precision --exclude-missing --replace-missing --count --count-header --retain --first --last --min --max --range --sum --mean --median --quantile --mad --var --stdev --mode --mode-count --unique-count --missing-count --not-missing-count --values --unique-values"
 
     case $prev in
-          -h|--help|--help-verbose|-g|--group-by|-d|--delimiter|-v|--values-delimiter|-p|--float-precision|-x|--exclude-missing|-r|--replace-missing|--count-header|--retain|--first|--last|--min|--max|--range|--sum|--mean|--median|--quantile|--mad|--var|--stdev|--mode|--mode-count|--unique-count|--missing-count|--not-missing-count|--values|--unique-values)
+          -h|--help|--help-verbose|-V|--version|-g|--group-by|-d|--delimiter|-v|--values-delimiter|-p|--float-precision|-x|--exclude-missing|-r|--replace-missing|--count-header|--retain|--first|--last|--min|--max|--range|--sum|--mean|--median|--quantile|--mad|--var|--stdev|--mode|--mode-count|--unique-count|--missing-count|--not-missing-count|--values|--unique-values)
           return
           ;;
     esac
@@ -231,10 +231,10 @@ _tsv_uniq()
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
-    opts="--help --help-verbose --header --fields --ignore-case --equiv --equiv-header --equiv-start --delimiter"
+    opts="--help --help-verbose --version --header --fields --ignore-case --equiv --equiv-header --equiv-start --delimiter"
 
     case $prev in
-         -h|--help|--help-verbose|-f|--fields|--equiv-header|--equiv-start|-d|--delimiter)
+         -h|--help|--help-verbose|-V|--version|-f|--fields|--equiv-header|--equiv-start|-d|--delimiter)
           return
           ;;
     esac
