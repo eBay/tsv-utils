@@ -18,7 +18,7 @@
         },
         {
             "name" : "unittest",
-            "targetType" : "library"
+            "targetType" : "none"
         }
     ],
     "buildTypes": {

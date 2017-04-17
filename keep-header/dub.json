@@ -12,7 +12,9 @@
             "targetName": "keep-header",
             "targetPath": "../bin/",
             "mainSourceFile": "src/keep-header.d",
-            "dependencies": { }
+            "dependencies": {
+                "tsv-utils-dlang:common": "*"
+            }
         },
         {
             "name": "unittest",

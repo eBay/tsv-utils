@@ -12,7 +12,9 @@
             "targetName": "number-lines",
             "targetPath": "../bin/",
             "mainSourceFile": "src/number-lines.d",
-            "dependencies": { }
+            "dependencies": {
+                "tsv-utils-dlang:common": "*"
+            }
         },
         {
             "name": "unittest",
