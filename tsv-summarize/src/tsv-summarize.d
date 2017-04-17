@@ -147,6 +147,7 @@ struct TsvSummarizeOptions {
     bool excludeMissing = false;       // --x|exclude-missing
     string missingValueReplacement;    // --r|replace-missing
     bool helpVerbose = false;          // --help-verbose
+    bool versionWanted = false;        // --V|version
     DList!Operator operators;          // Operators, in the order specified.
     size_t endFieldIndex = 0;          // Derived value. Max field index used plus one.
     MissingFieldPolicy globalMissingPolicy = new MissingFieldPolicy;   // Derived value.
@@ -169,10 +170,17 @@ struct TsvSummarizeOptions {
             auto r = getoptInorder(
                 cmdArgs,
                 "help-verbose",       "                Print full help.", &helpVerbose,
+                
+                std.getopt.config.caseSensitive,
+                "V|version",          "                Print version information and exit.", &versionWanted,
+                std.getopt.config.caseInsensitive,
+                
                 "g|group-by",         "n[,n...]        Fields to use as key.", &keyFields,
+                
                 std.getopt.config.caseSensitive,
                 "H|header",           "                Treat the first line of each file as a header.", &hasHeader,
                 std.getopt.config.caseInsensitive,
+                
                 "w|write-header",     "                Write an output header even if there is no input header.", &writeHeader,
                 "d|delimiter",        "CHR             Field delimiter. Default: TAB. (Single byte UTF-8 characters only.)", &inputFieldDelimiter,
                 "v|values-delimiter", "CHR             Values delimiter. Default: vertical bar (|). (Single byte UTF-8 characters only.)", &valuesDelimiter,
@@ -211,6 +219,12 @@ struct TsvSummarizeOptions {
             else if (helpVerbose)
             {
                 defaultGetoptPrinter(helpTextVerbose, r.options);
+                return tuple(false, 0);
+            }
+            else if (versionWanted)
+            {
+                import tsvutils_version;
+                writeln(tsvutilsVersionNotice("tsv-summarize"));
                 return tuple(false, 0);
             }
 

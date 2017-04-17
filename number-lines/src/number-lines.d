@@ -39,10 +39,11 @@ struct NumberLinesOptions
 {
     enum defaultHeaderString = "line";
     
-    bool hasHeader = false;       // --header
-    string headerString = "";     // --header-string
-    long startNum = 1;            // --start-num
-    char delim = '\t';            // --delimiter
+    bool hasHeader = false;       // --H|header
+    string headerString = "";     // --s|header-string
+    long startNum = 1;            // --n|start-num
+    char delim = '\t';            // --d|delimiter
+    bool versionWanted = false;   // --V|version
 
     /* Returns a tuple. First value is true if command line arguments were successfully
      * processed and execution should continue, or false if an error occurred or the user
@@ -62,12 +63,21 @@ struct NumberLinesOptions
                 std.getopt.config.caseInsensitive,
                 "s|header-string", "STR  String to use in the header row. Implies --header. Default: 'line'", &headerString,
                 "n|start-number",  "NUM  Number to use for the first line. Default: 1", &startNum,
-                "d|delimiter",     "CHR  Character appended to line number, preceding the rest of the line. Default: TAB (Single byte UTF-8 characters only.)", &delim
+                "d|delimiter",     "CHR  Character appended to line number, preceding the rest of the line. Default: TAB (Single byte UTF-8 characters only.)", &delim,
+                std.getopt.config.caseSensitive,
+                "V|version",       "     Print version information and exit.", &versionWanted,
+                std.getopt.config.caseInsensitive,
             );
 
             if (r.helpWanted)
             {
                 defaultGetoptPrinter(helpText, r.options);
+                return tuple(false, 0);
+            }
+            else if (versionWanted)
+            {
+                import tsvutils_version;
+                writeln(tsvutilsVersionNotice("number-lines"));
                 return tuple(false, 0);
             }
 

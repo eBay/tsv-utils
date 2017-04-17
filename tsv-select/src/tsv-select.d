@@ -56,6 +56,7 @@ struct TsvSelectOptions
     char delim = '\t';          // --d|delimiter
     size_t[] fields;            // --f|fields
     RestOptionVal rest;         // --rest none|first|last
+    bool versionWanted = false; // --V|version
 
     /** Process command line arguments (getopt cover).
      * 
@@ -83,12 +84,21 @@ struct TsvSelectOptions
                 std.getopt.config.caseInsensitive,
                 "f|fields",    "n[,n...]         (Required) Fields to extract. Fields are output in the order listed.", &fields,
                 "r|rest",      "none|first|last  Location for remaining fields. Default: none", &rest,
-                "d|delimiter", "CHR              Character to use as field delimiter. Default: TAB. (Single byte UTF-8 characters only.)", &delim
+                "d|delimiter", "CHR              Character to use as field delimiter. Default: TAB. (Single byte UTF-8 characters only.)", &delim,
+                std.getopt.config.caseSensitive,
+                "V|version",   "                 Print version information and exit.", &versionWanted,
+                std.getopt.config.caseInsensitive,
                 );
             
             if (r.helpWanted)
             {
                 defaultGetoptPrinter(helpText, r.options);
+                return tuple(false, 0);
+            }
+            else if (versionWanted)
+            {
+                import tsvutils_version;
+                writeln(tsvutilsVersionNotice("tsv-select"));
                 return tuple(false, 0);
             }
         

@@ -68,6 +68,7 @@ struct TsvJoinOptions
     bool exclude = false;            // --exclude
     char delim = '\t';               // --delimiter
     bool helpVerbose = false;        // --help-verbose
+    bool versionWanted = false;      // --V|version
     bool allowDupliateKeys = false;  // --allow-duplicate-keys
     bool keyIsFullLine = false;      // Derived: --key-fields 0
     bool dataIsFullLine = false;     // Derived: --data-fields 0
@@ -112,7 +113,10 @@ struct TsvJoinOptions
                 "e|exclude",       "          Exclude matching records.", &exclude,
                 "delimiter",       "CHR       Field delimiter. Default: TAB. (Single byte UTF-8 characters only.)", &delim,
                 "z|allow-duplicate-keys",
-                                   "          Allow duplicate keys with different append values (last entry wins).", &allowDupliateKeys, 
+                                   "          Allow duplicate keys with different append values (last entry wins).", &allowDupliateKeys,
+                std.getopt.config.caseSensitive,
+                "V|version",       "          Print version information and exit.", &versionWanted,
+                std.getopt.config.caseInsensitive,
                 );
 
             if (r.helpWanted)
@@ -123,6 +127,12 @@ struct TsvJoinOptions
             else if (helpVerbose)
             {
                 defaultGetoptPrinter(helpTextVerbose, r.options);
+                return tuple(false, 0);
+            }
+            else if (versionWanted)
+            {
+                import tsvutils_version;
+                writeln(tsvutilsVersionNotice("tsv-join"));
                 return tuple(false, 0);
             }
 

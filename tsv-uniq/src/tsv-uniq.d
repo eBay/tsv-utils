@@ -61,6 +61,7 @@ struct TsvUniqOptions
     enum defaultEquivStartID = 1;
     
     bool helpVerbose = false;                 // --help-verbose
+    bool versionWanted = false;               // --V|version
     size_t[] fields;                          // --fields
     bool hasHeader = false;                   // --header
     bool equivMode = false;                   // --equiv
@@ -90,6 +91,7 @@ struct TsvUniqOptions
                 cmdArgs,
                 "help-verbose",  "          Print full help.", &helpVerbose,
                 std.getopt.config.caseSensitive,
+                "V|version",     "          Print version information and exit.", &versionWanted,
                 "H|header",      "          Treat the first line of each file as a header.", &hasHeader,
                 std.getopt.config.caseInsensitive,
                 "f|fields",      "n[,n...]  Fields to use as the key. Default: 0 (entire line).", &fields,
@@ -108,6 +110,12 @@ struct TsvUniqOptions
             else if (helpVerbose)
             {
                 defaultGetoptPrinter(helpTextVerbose, r.options);
+                return tuple(false, 0);
+            }
+            else if (versionWanted)
+            {
+                import tsvutils_version;
+                writeln(tsvutilsVersionNotice("tsv-uniq"));
                 return tuple(false, 0);
             }
 

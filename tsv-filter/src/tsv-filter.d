@@ -58,6 +58,7 @@ individual fields. Use '--help-verbose' for a more detailed description.
 Global options:
   --help-verbose      Print full help.
   --help-options      Print the options list by itself.
+  --V|version         Print version information and exit.
   --H|header          Treat the first line of each file as a header.
   --or                Evaluate tests as an OR rather than an AND clause.
   --v|invert          Invert the filter, printing lines that do not match.
@@ -594,6 +595,7 @@ struct TsvFilterOptions
     char delim = '\t';               // --delimiter
     bool helpVerbose = false;        // --help-verbose
     bool helpOptions = false;        // --help-options
+    bool versionWanted = false;      // --V|version
 
     /* Returns a tuple. First value is true if command line arguments were successfully
      * processed and execution should continue, or false if an error occurred or the user
@@ -673,10 +675,13 @@ struct TsvFilterOptions
                 "help-verbose",    "     Print full help.", &helpVerbose,
                 "help-options",    "     Print the options list by itself.", &helpOptions,
                  std.getopt.config.caseSensitive,
+                "V|version",       "     Print version information and exit.", &versionWanted,
                 "H|header",        "     Treat the first line of each file as a header.", &hasHeader,
                 std.getopt.config.caseInsensitive,
-                "or",              "     Evaluate tests as an OR rather than an AND.", &disjunct, 
+                "or",              "     Evaluate tests as an OR rather than an AND.", &disjunct,
+                std.getopt.config.caseSensitive,
                 "v|invert",        "     Invert the filter, printing lines that do not match.", &invert,
+                std.getopt.config.caseInsensitive,
                 "d|delimiter",     "CHR  Field delimiter. Default: TAB. (Single byte UTF-8 characters only.)", &delim,
                 
                 "empty",           "FIELD       True if field is empty.", &handlerFldEmpty,
@@ -747,6 +752,12 @@ struct TsvFilterOptions
             else if (helpOptions)
             {
                 defaultGetoptPrinter(helpTextOptions, r.options);
+                return tuple(false, 0);
+            }
+            else if (versionWanted)
+            {
+                import tsvutils_version;
+                writeln(tsvutilsVersionNotice("tsv-filter"));
                 return tuple(false, 0);
             }
         }

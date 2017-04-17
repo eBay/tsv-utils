@@ -106,6 +106,7 @@ struct TsvSampleOptions
     bool staticSeed = false;     // --s|static-seed
     uint seedValue = 0;          // --v|seed-value
     char delim = '\t';           // --d|delimiter
+    bool versionWanted = false;  // --V|version
     bool hasWeightField = false; // Derived.
     
     auto processArgs(ref string[] cmdArgs)
@@ -128,8 +129,16 @@ struct TsvSampleOptions
                 "f|field",         "NUM  Field containing weights. All lines get equal weight if not provided or zero.", &weightField,
                 "p|print-random",  "     Output the random values that were assigned.", &printRandom,
                 "s|static-seed",   "     Use the same random seed every run.", &staticSeed,
+                
+                std.getopt.config.caseSensitive,
                 "v|seed-value",    "NUM  Sets the initial random seed. Use a non-zero, 32 bit positive integer. Zero is a no-op.", &seedValue,
+                std.getopt.config.caseInsensitive,
+                
                 "d|delimiter",     "CHR  Field delimiter.", &delim,
+                
+                std.getopt.config.caseSensitive,
+                "V|version",       "     Print version information and exit.", &versionWanted,
+                std.getopt.config.caseInsensitive,
                 );
 
             if (r.helpWanted)
@@ -140,6 +149,12 @@ struct TsvSampleOptions
             else if (helpVerbose)
             {
                 defaultGetoptPrinter(helpTextVerbose, r.options);
+                return tuple(false, 0);
+            }
+            else if (versionWanted)
+            {
+                import tsvutils_version;
+                writeln(tsvutilsVersionNotice("tsv-sample"));
                 return tuple(false, 0);
             }
 

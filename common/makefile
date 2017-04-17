@@ -14,6 +14,7 @@ unittest:
 	$(DCOMPILER) $(common_srcs) $(unittest_flags) $(CURDIR)/src/tsvutil.d
 	$(DCOMPILER) $(common_srcs) $(unittest_flags) $(CURDIR)/src/getopt_inorder.d
 	$(DCOMPILER) $(common_srcs) $(unittest_flags) $(CURDIR)/src/tsv_numerics.d
+	$(DCOMPILER) $(common_srcs) $(unittest_flags) $(CURDIR)/src/tsvutils_version.d
 	@echo '---> Unit tests completed successfully.'
 
 test-debug: ;

@@ -56,6 +56,12 @@ int main(string[] args)
             stderr.writeln();
             stderr.writeln(helpText);
         }
+        else if (cmdArgs.length > 0 && (cmdArgs[0] == "-V" || cmdArgs[0] == "--version"))
+        {
+            import tsvutils_version;
+            stderr.writeln();
+            stderr.writeln(tsvutilsVersionNotice("keep-header"));
+        }
         return 0;
     }
 
