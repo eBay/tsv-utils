@@ -338,3 +338,13 @@ random_weight@title@weight
 
 ====[cat input3x10.tsv tsv-sample -H -p -f 3 -n 10 -- - input3x25.tsv | wc -l | tr -d ' ']====
 11
+
+Help and Version printing 1
+-----------------
+
+====[tsv-sample --help | grep -c Synopsis]====
+1
+====[tsv-sample --version | grep -c 'tsv-sample (eBay/tsv-utils-dlang)']====
+1
+====[tsv-sample -V | grep -c 'tsv-sample (eBay/tsv-utils-dlang)']====
+1

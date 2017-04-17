@@ -115,6 +115,22 @@ runtest ${prog} "--header -f 1 input_header1.tsv" ${basic_tests_1}
 runtest ${prog} "-H -f 2 input_header1.tsv input_header2.tsv input_header3.tsv input_header4.tsv" ${basic_tests_1}
 runtest ${prog} "-H -f 1,2,3 input_header3.tsv input_header3.tsv input_header1.tsv" ${basic_tests_1}
 
+## Help and Version printing
+
+echo "" >> ${basic_tests_1}
+echo "Help and Version printing 1" >> ${basic_tests_1}
+echo "-----------------" >> ${basic_tests_1}
+echo "" >> ${basic_tests_1}
+
+echo "====[tsv-select --help | grep -c Synopsis]====" >> ${basic_tests_1}
+${prog} --help 2>&1 | grep -c Synopsis >> ${basic_tests_1} 2>&1
+
+echo "====[tsv-select --version | grep -c 'tsv-select (eBay/tsv-utils-dlang)']====" >> ${basic_tests_1}
+${prog} --version 2>&1 | grep -c 'tsv-select (eBay/tsv-utils-dlang)' >> ${basic_tests_1} 2>&1
+
+echo "====[tsv-select -V | grep -c 'tsv-select (eBay/tsv-utils-dlang)']====" >> ${basic_tests_1}
+${prog} -V 2>&1 | grep -c 'tsv-select (eBay/tsv-utils-dlang)' >> ${basic_tests_1} 2>&1
+
 ## Error cases
 
 error_tests_1=${odir}/error_tests_1.txt

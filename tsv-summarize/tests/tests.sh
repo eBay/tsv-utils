@@ -87,6 +87,22 @@ runtest ${prog} "--values 1 input_1field_a.tsv --replace-missing XYZ" ${basic_te
 runtest ${prog} "--count empty_file.tsv --exclude-missing" ${basic_tests_1}
 runtest ${prog} "--count empty_file.tsv --replace-missing XYZ" ${basic_tests_1}
 
+## Help and Version printing
+
+echo "" >> ${basic_tests_1}
+echo "Help and Version printing 1" >> ${basic_tests_1}
+echo "-----------------" >> ${basic_tests_1}
+echo "" >> ${basic_tests_1}
+
+echo "====[tsv-summarize --help | grep -c Synopsis]====" >> ${basic_tests_1}
+${prog} --help 2>&1 | grep -c Synopsis >> ${basic_tests_1} 2>&1
+
+echo "====[tsv-summarize --version | grep -c 'tsv-summarize (eBay/tsv-utils-dlang)']====" >> ${basic_tests_1}
+${prog} --version 2>&1 | grep -c 'tsv-summarize (eBay/tsv-utils-dlang)' >> ${basic_tests_1} 2>&1
+
+echo "====[tsv-summarize -V | grep -c 'tsv-summarize (eBay/tsv-utils-dlang)']====" >> ${basic_tests_1}
+${prog} -V 2>&1 | grep -c 'tsv-summarize (eBay/tsv-utils-dlang)' >> ${basic_tests_1} 2>&1
+
 ## Error cases
 
 error_tests_1=${odir}/error_tests_1.txt

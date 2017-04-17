@@ -39,6 +39,22 @@ runtest ${prog} "input_unicode.csv" ${basic_tests_1}
 echo "" >> ${basic_tests_1}; echo "====[cat header3.csv | csv2tsv --header -- header1.csv header2.csv - header4.csv header5.csv]====" >> ${basic_tests_1}
 cat header3.csv | ${prog} --header -- header1.csv header2.csv - header4.csv header5.csv >> ${basic_tests_1} 2>&1
 
+## Help and Version printing
+
+echo "" >> ${basic_tests_1}
+echo "Help and Version printing 1" >> ${basic_tests_1}
+echo "-----------------" >> ${basic_tests_1}
+echo "" >> ${basic_tests_1}
+
+echo "====[csv2tsv --help | grep -c Synopsis]====" >> ${basic_tests_1}
+${prog} --help 2>&1 | grep -c Synopsis >> ${basic_tests_1} 2>&1
+
+echo "====[csv2tsv --version | grep -c 'csv2tsv (eBay/tsv-utils-dlang)']====" >> ${basic_tests_1}
+${prog} --version 2>&1 | grep -c 'csv2tsv (eBay/tsv-utils-dlang)' >> ${basic_tests_1} 2>&1
+
+echo "====[csv2tsv -V | grep -c 'csv2tsv (eBay/tsv-utils-dlang)']====" >> ${basic_tests_1}
+${prog} -V 2>&1 | grep -c 'csv2tsv (eBay/tsv-utils-dlang)' >> ${basic_tests_1} 2>&1
+
 ## Error cases
 
 error_tests_1=${odir}/error_tests_1.txt

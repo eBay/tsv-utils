@@ -70,11 +70,12 @@ Container for command line options.
 struct Csv2tsvOptions
 {
     bool helpVerbose = false;          // --help-verbose
-    bool hasHeader = false;            // --header
+    bool hasHeader = false;            // --H|header
     char csvQuoteChar = '"';           // --q|quote
     char csvDelimChar = ',';           // --c|csv-delim
     char tsvDelimChar = '\t';          // --t|tsv-delim
     string tsvDelimReplacement = " ";  // --r|replacement
+    bool versionWanted = false;        // --V|version
 
     auto processArgs (ref string[] cmdArgs)
     {
@@ -93,6 +94,9 @@ struct Csv2tsvOptions
                 "c|csv-delim",   "CHR  Field delimiter in CSV data. Default: comma (,).", &csvDelimChar,
                 "t|tsv-delim",   "CHR  Field delimiter in TSV data. Default: TAB", &tsvDelimChar,
                 "r|replacement", "STR  Replacement for newline and TSV field delimiters found in CSV input. Default: Space.", &tsvDelimReplacement,
+                std.getopt.config.caseSensitive,
+                "V|version",     "     Print version information and exit.", &versionWanted,
+                std.getopt.config.caseInsensitive,
                 );
 
             if (r.helpWanted)
@@ -103,6 +107,12 @@ struct Csv2tsvOptions
             else if (helpVerbose)
             {
                 defaultGetoptPrinter(helpTextVerbose, r.options);
+                return tuple(false, 0);
+            }
+            else if (versionWanted)
+            {
+                import tsvutils_version;
+                writeln(tsvutilsVersionNotice("csv2tsv"));
                 return tuple(false, 0);
             }
 

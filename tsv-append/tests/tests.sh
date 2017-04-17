@@ -76,6 +76,22 @@ cat input3x2.tsv | ${prog} -H input3x5.tsv -- - >> ${basic_tests_1} 2>&1
 echo "" >> ${basic_tests_1}; echo "====[cat input3x2.tsv | tsv-append -H -f standard-input=- -f 3x5=input3x5.tsv ]====" >> ${basic_tests_1}
 cat input3x2.tsv | ${prog} -H -f standard-input=- -f 3x5=input3x5.tsv >> ${basic_tests_1} 2>&1
 
+## Help and Version printing
+
+echo "" >> ${basic_tests_1}
+echo "Help and Version printing 1" >> ${basic_tests_1}
+echo "-----------------" >> ${basic_tests_1}
+echo "" >> ${basic_tests_1}
+
+echo "====[tsv-append --help | grep -c Synopsis]====" >> ${basic_tests_1}
+${prog} --help 2>&1 | grep -c Synopsis >> ${basic_tests_1} 2>&1
+
+echo "====[tsv-append --version | grep -c 'tsv-append (eBay/tsv-utils-dlang)']====" >> ${basic_tests_1}
+${prog} --version 2>&1 | grep -c 'tsv-append (eBay/tsv-utils-dlang)' >> ${basic_tests_1} 2>&1
+
+echo "====[tsv-append -V | grep -c 'tsv-append (eBay/tsv-utils-dlang)']====" >> ${basic_tests_1}
+${prog} -V 2>&1 | grep -c 'tsv-append (eBay/tsv-utils-dlang)' >> ${basic_tests_1} 2>&1
+
 ## Error cases
 
 error_tests_1=${odir}/error_tests_1.txt

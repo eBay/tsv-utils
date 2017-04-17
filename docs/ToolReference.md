@@ -23,10 +23,10 @@ Information in this section applies to all the tools.
 Multi-letter options are specified with a double dash. Single letter options can be specified with a single dash or double dash. For example:
 
 ```
-$ tsv-uniq -h      # Valid
-$ tsv-uniq --h     # Valid
-$ tsv-uniq --help  # Valid
-$ tsv-uniq -help   # Invalid.
+$ tsv-select -f 1,2         # Valid
+$ tsv-select --f 1,2        # Valid
+$ tsv-select --fields 1,2   # Valid
+$ tsv-select -fields 1,2    # Invalid.
 ```
 
 ### Help (-h, --help, --help-verbose)
@@ -70,6 +70,7 @@ Filter lines of tab-delimited files via comparison tests against fields. Multipl
 * `--help` - Print help.
 * `--help-verbose` - Print detailed help.
 * `--help-options` - Print the options list by itself.
+* `--V|version` - Print version information and exit.
 * `--H|header` - Treat the first line of each file as a header.
 * `--d|delimiter CHR` - Field delimiter. Default: TAB. (Single byte UTF-8 characters only.)
 * `--or` - Evaluate tests as an OR rather than an AND. This applies globally.
@@ -193,6 +194,7 @@ tsv-select reads files or standard input and writes specified fields to standard
 
 **Options:**
 * `--h|help` - Print help.
+* `--V|version` - Print version information and exit.
 * `--H|header` - Treat the first line of each file as a header. 
 * `--f|fields n[,n...]` - (Required) Fields to extract. Fields are output in the order listed.
 * `--r|rest none|first|last` - Location for remaining fields. Default: none
@@ -281,6 +283,7 @@ Missing values are not treated specially by default, this can be changed using t
 **Options:**
 * `--h|help` - Print help.
 * `--help-verbose` - Print detailed help.
+* `--V|version` - Print version information and exit.
 * `--g|group-by n[,n...]` - Fields to use as key.
 * `--H|header` - Treat the first line of each file as a header.
 * `--w|write-header` - Write an output header even if there is no input header.
@@ -323,6 +326,7 @@ tsv-join matches input lines against lines from a 'filter' file. The match is ba
 **Options:**
 * `--h|help` - Print help.
 * `--h|help-verbose` - Print detailed help.
+* `--V|version` - Print version information and exit.
 * `--f|filter-file FILE` - (Required) File with records to use as a filter.
 * `--k|key-fields n[,n...]` - Fields to use as join key. Default: 0 (entire line).
 * `--d|data-fields n[,n...]` - Data record fields to use as join key, if different than --key-fields.
@@ -397,6 +401,7 @@ Example: Source tracking with custom values:
 **Options:**
 * `--h|help` - Print help.
 * `--help-verbose` - Print detailed help.
+* `--V|version` - Print version information and exit.
 * `--H|header` - Treat the first line of each file as a header.
 * `--t|track-source` - Track the source file. Adds an column with the source name.
 * `--s|source-header STR` - Use STR as the header for the source column. Implies --H|header and --t|track-source. Default: 'file'
@@ -414,6 +419,7 @@ The alternate to 'uniq' mode is 'equiv-class' identification. In this mode, all 
 **Options:**
 * `-h|help` - Print help.
 * `--help-verbose` - Print detailed help.
+* `--V|version` - Print version information and exit.
 * `--H|header` - Treat the first line of each file as a header.
 * `--f|fields n[,n...]` - Fields to use as the key. Default: 0 (entire line).
 * `--i|ignore-case` - Ignore case when comparing keys.
@@ -460,6 +466,7 @@ Each run produces a different randomization. This can be changed using `--s|stat
 **Options:**
 
 * `--help-verbose` - Print more detailed help.
+* `--V|version` - Print version information and exit.
 * `--H|header` - Treat the first line of each file as a header.
 * `--n|num NUM` - Number of lines to output. All lines are output if not provided or zero.
 * `--f|field NUM` - Field containing weights. All lines get equal weight if not provided or zero.
@@ -496,6 +503,7 @@ UTF-8 input is assumed. Convert other encodings prior to invoking this tool.
 **Options:**
 * `--h|help` - Print help.
 * `--help-verbose` - Print detailed help.
+* `--V|version` - Print version information and exit.
 * `--H|header` - Treat the first line of each file as a header. Only the header of the first file is output.
 * `--q|quote CHR` - Quoting character in CSV data. Default: double-quote (")
 * `--c|csv-delim CHR` - Field delimiter in CSV data. Default: comma (,).
@@ -510,6 +518,7 @@ number-lines reads from files or standard input and writes each line to standard
 
 **Options:**
 * `--h|help` - Print help.
+* `--V|version` - Print version information and exit.
 * `--H|header` - Treat the first line of each file as a header. The first input file's header is output, subsequent file headers are discarded.
 * `--s|header-string STR` - String to use as the header for the line number field. Implies --header. Default: 'line'.
 * `--n|start-number NUM` - Number to use for the first line. Default: 1.
@@ -550,3 +559,7 @@ $ keep-header file1.txt -- /bin/sh -c '(sort -r | grep red)'
 `keep-header` is especially useful for commands like `sort` and `shuf` that reorder input lines. It is also useful with filtering commands like `grep`, many `awk` uses, and even `tail`, where the header should be retained without filtering or evaluation.
 
 `keep-header` works on any file where the first line is delimited by a newline character. This includes all TSV files and the majority of CSV files. It won't work on CSV files having embedded newlines in the header.
+
+**Options:**
+* `--h|help` - Print help.
+* `--V|version` - Print version information and exit.

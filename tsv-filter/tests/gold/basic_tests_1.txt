@@ -1230,3 +1230,13 @@ f1	f2	f3
 3x2-r1	2001	3001
 3x2-r2	2002	3002
 3x1-r1	201	301
+
+Help and Version printing 1
+-----------------
+
+====[tsv-filter --help | grep -c Synopsis]====
+1
+====[tsv-filter --version | grep -c 'tsv-filter (eBay/tsv-utils-dlang)']====
+1
+====[tsv-filter -V | grep -c 'tsv-filter (eBay/tsv-utils-dlang)']====
+1

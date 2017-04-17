@@ -144,6 +144,22 @@ runtest ${prog} "--delimiter : --header -k 1 -d 5 -f input_2x3_colon.tsv input_5
 runtest ${prog} "--delimiter : --header -k 1,2 -d 5,3 -a 1 -f input_2x3_colon.tsv input_5x4_colon.tsv" ${basic_tests_1}
 runtest ${prog} "--delimiter : --header -d 1,2 -k 5,3 -a 2 -f input_5x4_colon.tsv input_2x3_colon.tsv" ${basic_tests_1}
 
+## Help and Version printing
+
+echo "" >> ${basic_tests_1}
+echo "Help and Version printing 1" >> ${basic_tests_1}
+echo "-----------------" >> ${basic_tests_1}
+echo "" >> ${basic_tests_1}
+
+echo "====[tsv-join --help | grep -c Synopsis]====" >> ${basic_tests_1}
+${prog} --help 2>&1 | grep -c Synopsis >> ${basic_tests_1} 2>&1
+
+echo "====[tsv-join --version | grep -c 'tsv-join (eBay/tsv-utils-dlang)']====" >> ${basic_tests_1}
+${prog} --version 2>&1 | grep -c 'tsv-join (eBay/tsv-utils-dlang)' >> ${basic_tests_1} 2>&1
+
+echo "====[tsv-join -V | grep -c 'tsv-join (eBay/tsv-utils-dlang)']====" >> ${basic_tests_1}
+${prog} -V 2>&1 | grep -c 'tsv-join (eBay/tsv-utils-dlang)' >> ${basic_tests_1} 2>&1
+
 ## Error cases
 
 error_tests_1=${odir}/error_tests_1.txt

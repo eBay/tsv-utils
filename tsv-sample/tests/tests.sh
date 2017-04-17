@@ -75,6 +75,22 @@ cat input3x10.tsv | ${prog} -H -p -f 3 -- - input3x25.tsv | wc -l | tr -d ' ' >>
 echo "" >> ${basic_tests_1}; echo "====[cat input3x10.tsv tsv-sample -H -p -f 3 -n 10 -- - input3x25.tsv | wc -l | tr -d ' ']====" >> ${basic_tests_1}
 cat input3x10.tsv | ${prog} -H -p -f 3 -n 10 -- - input3x25.tsv | wc -l | tr -d ' ' >> ${basic_tests_1} 2>&1
 
+## Help and Version printing
+
+echo "" >> ${basic_tests_1}
+echo "Help and Version printing 1" >> ${basic_tests_1}
+echo "-----------------" >> ${basic_tests_1}
+echo "" >> ${basic_tests_1}
+
+echo "====[tsv-sample --help | grep -c Synopsis]====" >> ${basic_tests_1}
+${prog} --help 2>&1 | grep -c Synopsis >> ${basic_tests_1} 2>&1
+
+echo "====[tsv-sample --version | grep -c 'tsv-sample (eBay/tsv-utils-dlang)']====" >> ${basic_tests_1}
+${prog} --version 2>&1 | grep -c 'tsv-sample (eBay/tsv-utils-dlang)' >> ${basic_tests_1} 2>&1
+
+echo "====[tsv-sample -V | grep -c 'tsv-sample (eBay/tsv-utils-dlang)']====" >> ${basic_tests_1}
+${prog} -V 2>&1 | grep -c 'tsv-sample (eBay/tsv-utils-dlang)' >> ${basic_tests_1} 2>&1
+
 ## Error cases
 
 error_tests_1=${odir}/error_tests_1.txt

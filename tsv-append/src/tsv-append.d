@@ -99,6 +99,7 @@ struct TsvAppendOptions
     bool trackSource = false;          // --t|track-source
     bool hasHeader = false;            // --H|header
     char delim = '\t';                 // --d|delimiter
+    bool versionWanted = false;        // --V|version
 
     /* fileOptionHandler processes the '--f|file source=file' option. */
     private void fileOptionHandler(string option, string optionVal)
@@ -147,6 +148,9 @@ struct TsvAppendOptions
                 "s|source-header", "STR       Use STR as the header for the source column. Implies --H|header and --t|track-source. Default: 'file'", &sourceHeader,
                 "f|file",          "STR=FILE  Read file FILE, using STR as the 'source' value. Implies --t|track-source.", &fileOptionHandler, 
                 "d|delimiter",     "CHR       Field delimiter. Default: TAB. (Single byte UTF-8 characters only.)", &delim,
+                std.getopt.config.caseSensitive,
+                "V|version",       "          Print version information and exit.", &versionWanted,
+                std.getopt.config.caseInsensitive,
                 );
             
             if (r.helpWanted)
@@ -157,6 +161,12 @@ struct TsvAppendOptions
             else if (helpVerbose)
             {
                 defaultGetoptPrinter(helpTextVerbose, r.options);
+                return tuple(false, 0);
+            }
+            else if (versionWanted)
+            {
+                import tsvutils_version;
+                writeln(tsvutilsVersionNotice("tsv-append"));
                 return tuple(false, 0);
             }
 
