@@ -206,4 +206,4 @@ See [Building and makefile](docs/AboutTheCode.md#building-and-makefile) for more
 
 ### Setup customization
 
-There are a number of simple ways to ways to improve the utility of these tools, these are listed on the [Tips and tricks](docs/TipsAndTricks.md) page. [Bash aliases](docs/TipsAndTricks.md#useful-bash-aliases), [sort customization](docs/TipsAndTricks.md#sort-customizations), and [bash completion](docs/TipsAndTricks.md#enabele-bash-completion) are especially useful.
+There are a number of simple ways to ways to improve the utility of these tools, these are listed on the [Tips and tricks](docs/TipsAndTricks.md) page. [Bash aliases](docs/TipsAndTricks.md#useful-bash-aliases), [sort command customization](docs/TipsAndTricks.md#sort-command-customization), and [bash completion](docs/TipsAndTricks.md#enabele-bash-completion) are especially useful.
