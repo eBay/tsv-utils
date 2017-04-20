@@ -133,7 +133,7 @@ For more info, see the [tsv-uniq reference](ToolReference.md#tsv-uniq-reference)
 
 Much of the time this won't matter, as `tsv-filter` can process gigabyte files in a couple seconds. However, when working with much larger files or slow I/O devices, the wait may be longer. In these cases, it may be possible to speed things up using `grep` as a first pass filter. This will work if there is a string, preferably several characters long, that is found on every line expected in the output, but winnows out a fair number of non-matching lines.
 
-An example, using a number of files from the [Google Books Ngram Viewer data-sets](http://storage.googleapis.com/books/ngrams/books/datasetsv2.html). In these files, each line holds stats for an ngram, field 2 is the year the stats apply to. In this test, `ngram_*.tsv` consists of 1.4 billion lines, 27.5 GB of data in 39 files. To get the lines for the year 1850, this command would be run:
+An example, using a number of files from the [Google Books Ngram Viewer data-sets](https://storage.googleapis.com/books/ngrams/books/datasetsv2.html). In these files, each line holds stats for an ngram, field 2 is the year the stats apply to. In this test, `ngram_*.tsv` consists of 1.4 billion lines, 27.5 GB of data in 39 files. To get the lines for the year 1850, this command would be run:
 ```
 $ tsv-filter --str-eq 2:1850 ngram_*.tsv
 ```
