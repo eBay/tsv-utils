@@ -181,7 +181,7 @@ $ xsv fmt -t '\t' TREE_GRM_ESTN_14mil.csv >> /dev/null
 * Test files:
   * hepmass_all_train.tsv - 7 million lines, 4.8 GB. The HEPMASS training set from the UCI Machine Learning repository, available [here](https://archive.ics.uci.edu/ml/datasets/HEPMASS).
   * TREE_GRM_ESTN_14mil.[csv|tsv] - 14 million lines, 2.7 GB. From the Forest Inventory and Analysis Database, U.S. Department of Agriculture. The first 14 million lines from the TREE.csv file, available [here](https://apps.fs.usda.gov/fia/datamart/CSV/datamart_csv.html).
-* Tools: Latest versions available as of 3/3/2017. Several built from latest source. Versions:
+* Tools and version info (latest versions as of 3/3/2017). Several built from current source:
   * OS X awk; version 20070501; written in C.
   * [GNU Awk](https://www.gnu.org/software/gawk/) version 4.1.4 (gawk); written in C.
   * [mawk](http://invisible-island.net/mawk/mawk.html) version 1.3.4 (Michael Brennan awk); written in C.
@@ -190,7 +190,7 @@ $ xsv fmt -t '\t' TREE_GRM_ESTN_14mil.csv >> /dev/null
   * [GNU datamash](https://www.gnu.org/software/datamash/) version 1.1.1; written in C.
   * [csvtk](https://github.com/shenwei356/csvtk) version v0.5.0; written in Go.
   * [Miller](https://github.com/johnkerl/miller) (mlr) version 5.0.0; written in C.
-  * tsv-utils-dlang version 1.1.1 (this toolkit); written in D.
+  * [tsv-utils-dlang](https://github.com/eBay/tsv-utils-dlang) version v1.1.1 (this toolkit); written in D.
   * [xsv](https://github.com/BurntSushi/xsv) version 0.10.3; written in Rust.
 * Compilers:
   * LDC 1.1 (D compiler, Phobos 2.071.2)
