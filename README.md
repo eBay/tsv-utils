@@ -1,6 +1,6 @@
 # Command line utilities for tabular data files
 
-This is a set of command line utilities for working with tab-separated value files. They were originally developed in Perl and used for day-to-day work in a large scale data mining environment. One of the tools was re-written in D as an exercise exploring the language. Significant performance gains and agreeable programmer characteristics soon led to writing additional utilities in D. Information on the D programming language is available at: http://dlang.org/.
+This is a set of command line utilities for working with tab-separated value files. They were originally developed in Perl and used for day-to-day work in a large scale data mining environment. One of the tools was re-written in D as an exercise exploring the language. Significant performance gains and agreeable programmer characteristics soon led to writing additional utilities in D. Information on the D programming language is available at: https://dlang.org/.
 
 **In this README:**
 * [Tools overview](#tools-overview)
@@ -110,7 +110,7 @@ See the [tsv-join reference](docs/ToolReference.md#tsv-join-reference) for detai
 
 Concatenation with header support is useful when preparing data for traditional Unix utilities like `sort` and `sed` or applications that read a single file.
 
-Source tracking is useful when creating long/narrow form tabular data. This format is used by many statistics and data mining packages. (See [Wide & Long Data - Stanford University](http://stanford.edu/~ejdemyr/r-tutorials/wide-and-long/) or Hadley Wickham's [Tidy data](http://vita.had.co.nz/papers/tidy-data.html) for more info.)
+Source tracking is useful when creating long/narrow form tabular data. This format is used by many statistics and data mining packages. (See [Wide & Long Data - Stanford University](https://stanford.edu/~ejdemyr/r-tutorials/wide-and-long/) or Hadley Wickham's [Tidy data](http://vita.had.co.nz/papers/tidy-data.html) for more info.)
 
 In this scenario, files have been used to capture related data sets, the difference between data sets being a condition represented by the file. For example, results from different variants of an experiment might each be recorded in their own files. Retaining the source file as an output column preserves the condition represented by the file. The source values default to the file names, but this can be customized.
 
@@ -172,7 +172,7 @@ Prebuilt binaries are available for Linux and Mac, these can be found on the [Gi
 
 ### Build from source files
 
-Download a D compiler (http://dlang.org/download.html). These tools have been tested with the DMD and LDC compilers, on Mac OSX and Linux. Use DMD version 2.070 or later, LDC version 1.0.0 or later.
+Download a D compiler (https://dlang.org/download.html). These tools have been tested with the DMD and LDC compilers, on Mac OSX and Linux. Use DMD version 2.070 or later, LDC version 1.0.0 or later.
 
 Clone this repository, select a compiler, and run `make` from the top level directory:
 ```
@@ -206,4 +206,4 @@ See [Building and makefile](docs/AboutTheCode.md#building-and-makefile) for more
 
 ### Setup customization
 
-There are a number of simple ways to ways to improve the utility of these tools, these are listed on the [Tips and tricks](docs/TipsAndTricks.md) page. [Bash aliases](docs/TipsAndTricks.md#useful-bash-aliases), [sort customization](docs/TipsAndTricks.md#sort-customizations), and [bash completion](docs/TipsAndTricks.md#enabele-bash-completion) are especially useful.
+There are a number of simple ways to ways to improve the utility of these tools, these are listed on the [Tips and tricks](docs/TipsAndTricks.md) page. [Bash aliases](docs/TipsAndTricks.md#useful-bash-aliases), [sort command customization](docs/TipsAndTricks.md#sort-command-customization), and [bash completion](docs/TipsAndTricks.md#enabele-bash-completion) are especially useful.

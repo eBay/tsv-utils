@@ -9,11 +9,11 @@
 
 Performance is a key motivation for writing tools like the tsv utilities in D rather an interpreted language like Python or Perl. It is also a consideration in choosing between D and C/C++.
 
-To gauge D's performance, benchmarks were run using the tsv-utils-dlang tools and a number of similar tools written in native compiled programming languages. Included were traditional Unix tools as well as several specialized toolkits. Programming languages involved were C, Go, and Rust.
+To gauge D's performance, benchmarks were run comparing the tsv utilities written in D to a number of similar tools written in other native compiled programming languages. Included were traditional Unix tools as well as several specialized toolkits. Programming languages involved were C, Go, and Rust.
 
-The D programs performed extremely well on these benchmarks, exceeding the author's expectations. They were the fastest on all six benchmarks run, often by significant margins. This is impressive given that very little low-level programming was done. High level language constructs were used throughout, including the simplest forms of file I/O (no manual buffer management), GC (no manual memory management), built-in associative arrays and other facilities from the standard library, liberal use of functional programming constructs, etc. Performance tuning was done to identify poorly performing constructs, and templates were used in several places to improve performance, but nothing extensive. See [Coding philosophy](AboutTheCode.md#coding-philosophy) for the rationale behind these choices, as well as descriptions of the performance optimizations that were done.
+The D programs performed extremely well, exceeding the author's expectations. Six benchmarks were run, the D tools were the fastest on each, often by significant margins. This is impressive given that very little low-level programming was done. High level language constructs were used throughout, including the simplest forms of file I/O (no manual buffer management), GC (no manual memory management), built-in associative arrays and other facilities from the standard library, liberal use of functional programming constructs, etc. Performance tuning was done to identify poorly performing constructs, and templates were used in several places to improve performance, but nothing extensive. See [Coding philosophy](AboutTheCode.md#coding-philosophy) for the rationale behind these choices, as well as descriptions of the performance optimizations that were done.
 
-As with most benchmarks, there are important caveats. The tools used for comparison are not exact equivalents, and in many cases have different design goals and capabilities likely to impact performance. Tasks performed are highly I/O dependent and follow similar computational patterns, so the results may not transfer to other applications.
+As with most benchmarks, there are caveats. The tools used for comparison are not exact equivalents, and in many cases have different design goals and capabilities likely to impact performance. Tasks performed are highly I/O dependent and follow similar computational patterns, so the results may not transfer to other applications.
 
 Despite limitations of the benchmarks, this is certainly a good result. The benchmarks engage a fair range of programming constructs, and the comparison basis includes nine distinct implementations and several long tenured Unix tools. As a practical matter, performance of the tools has changed the author's personal work habits, as calculations that used to take 15-20 seconds are now instantaneous, and calculations that took minutes often finish in 10 seconds or so.
 
@@ -179,19 +179,19 @@ $ xsv fmt -t '\t' TREE_GRM_ESTN_14mil.csv >> /dev/null
 
 * Machine: MacBook Pro, 2.8 GHz, 16 GB RAM, 4 cores, 500 GB flash storage, OS X Sierra.
 * Test files:
-  * hepmass_all_train.tsv - 7 million lines, 4.8 GB. The HEPMASS training set from the UCI Machine Learning repository, available [here](http://archive.ics.uci.edu/ml/datasets/HEPMASS).
+  * hepmass_all_train.tsv - 7 million lines, 4.8 GB. The HEPMASS training set from the UCI Machine Learning repository, available [here](https://archive.ics.uci.edu/ml/datasets/HEPMASS).
   * TREE_GRM_ESTN_14mil.[csv|tsv] - 14 million lines, 2.7 GB. From the Forest Inventory and Analysis Database, U.S. Department of Agriculture. The first 14 million lines from the TREE.csv file, available [here](https://apps.fs.usda.gov/fia/datamart/CSV/datamart_csv.html).
-* Tools: Latest versions available as of 3/3/2017. Several built from latest source. Versions:
-  * OS X awk 20070501
-  * GNU Awk 4.1.4 (gawk)
-  * mawk 1.3.4 (Michael Brennan awk)
-  * OS X cut (from OS X Sierra, no version info)
-  * GNU cut (GNU coreutils) 8.26
-  * GNU datamash 1.1.1.
-  * csvtk v0.5.0
-  * Miller (mlr) 5.0.0;
-  * tsv-utils-dlang 1.1.1
-  * xsv 0.10.3
+* Tools and version info (latest versions as of 3/3/2017). Several built from current source:
+  * OS X awk; version 20070501; written in C.
+  * [GNU Awk](https://www.gnu.org/software/gawk/) version 4.1.4 (gawk); written in C.
+  * [mawk](http://invisible-island.net/mawk/mawk.html) version 1.3.4 (Michael Brennan awk); written in C.
+  * OS X cut (from OS X Sierra, no version info); written in C.
+  * GNU cut ([GNU coreutils](https://www.gnu.org/software/coreutils/coreutils.html)) version 8.26; written in C.
+  * [GNU datamash](https://www.gnu.org/software/datamash/) version 1.1.1; written in C.
+  * [csvtk](https://github.com/shenwei356/csvtk) version v0.5.0; written in Go.
+  * [Miller](https://github.com/johnkerl/miller) (mlr) version 5.0.0; written in C.
+  * [tsv-utils-dlang](https://github.com/eBay/tsv-utils-dlang) version v1.1.1 (this toolkit); written in D.
+  * [xsv](https://github.com/BurntSushi/xsv) version 0.10.3; written in Rust.
 * Compilers:
   * LDC 1.1 (D compiler, Phobos 2.071.2)
   * Apple clang 8.0.0 (C/C++)
