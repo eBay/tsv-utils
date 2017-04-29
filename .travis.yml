@@ -13,6 +13,7 @@ script:
 - dub clean
 - make clean
 - make test DCOMPILER=$DC
+- if [[ "$TRAVIS_OS_NAME" == "linux" && "$DC" == "ldc2" ]]; then make clean; make test DCOMPILER=$DC DFLAGS=-static; fi
 - if [[ "$TRAVIS_OS_NAME" == "osx" && "$DC" == "dmd" ]]; then make test-codecov; fi
 after_success:
 - if [[ "$TRAVIS_OS_NAME" == "osx" && "$DC" == "dmd" ]]; then bash <(curl -s https://codecov.io/bash)  ||
@@ -20,7 +21,8 @@ after_success:
 before_deploy:
 - if [[ -z "$TRAVIS_TAG" || "$TRAVIS_TAG" == "" ]]; then export USE_VERSION="v~dev";
   else export USE_VERSION="$TRAVIS_TAG"; fi
-- make package DCOMPILER=$DC OS=$TRAVIS_OS_NAME APP_VERSION=$USE_VERSION
+- if [[ "$TRAVIS_OS_NAME" == "linux" && "$DC" == "ldc2" ]]; then export DFLAGS_STATIC=-static; fi
+- make package DCOMPILER=$DC OS=$TRAVIS_OS_NAME APP_VERSION=$USE_VERSION DFLAGS=$DFLAGS_STATIC
 deploy:
   provider: releases
   api_key:
