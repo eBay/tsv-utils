@@ -1,4 +1,4 @@
-_Visit the [Readme](../README.md)_
+_Visit the [main page](../README.md)_
 
 # Other open-source tools
 
