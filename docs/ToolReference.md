@@ -156,7 +156,7 @@ $ tsv-filter --header --ff-eq 3:4 data.tsv
 
 Regular expressions:
 
-Official regular expression syntax defined by [D regex library](<http://dlang.org/phobos/std_regex.html>), however, basic syntax is quite standard. Forms commonly used with other tools usually work as expected. This includes unicode character classes. A good general reference is available at [Regular-Expressions.info](http://www.regular-expressions.info/).
+Official regular expression syntax is defined by [D regex library](<http://dlang.org/phobos/std_regex.html>), however, basic syntax is quite standard. Forms commonly used with other tools usually work as expected. This includes unicode character classes. A good general reference is available at [Regular-Expressions.info](http://www.regular-expressions.info/).
 
 ```
 $ # Field 2 has a sequence with two a's, one or more digits, then 2 a's.
