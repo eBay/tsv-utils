@@ -1,3 +1,5 @@
+_Visit the [Readme](../README.md)_
+
 # Build commands
 
 *Note: This file is no longer being updated. However, should it be necessary to run build commands manually, the information here should be a good starting point.* 

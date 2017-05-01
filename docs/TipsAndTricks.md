@@ -1,3 +1,5 @@
+_Visit the [Readme](../README.md)_
+
 # Tips and Tricks
 
 Contents:

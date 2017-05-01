@@ -1,3 +1,5 @@
+_Visit the [Readme](../README.md)_
+
 # Tool reference
 
 This page provides detailed documentation about the different tools as well as examples. Material for the individual tools is also available via the `--help` option.
