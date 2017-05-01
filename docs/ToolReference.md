@@ -1,6 +1,4 @@
-Visit the tsv utilities [Readme](../README.md).
-
----
+_Visit the [Readme](../README.md)._
 
 # Tool reference
 
