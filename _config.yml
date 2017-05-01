@@ -1,4 +1,4 @@
-theme: jekyll-theme-cayman
+theme: jekyll-theme-slate
 title: ["eBay's TSV utilities toolkit"]
 description: ["Command line tools for tabular data files written in the D programming language."]
 encoding: utf-8
