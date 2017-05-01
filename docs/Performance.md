@@ -1,3 +1,5 @@
+_Visit the [Readme](../README.md)_
+
 # Performance Benchmarks
 
 * [Summary](#summary)
