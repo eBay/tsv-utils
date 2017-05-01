@@ -1,6 +1,6 @@
 # Command line utilities for tabular data files
 
-This is a set of command line utilities for working with tab-separated value files. They were originally developed in Perl and used for day-to-day work in a large scale data mining environment. One of the tools was re-written in D as an exercise exploring the language. Significant performance gains and agreeable programmer characteristics soon led to writing additional utilities in D. Information on the D programming language is available at: https://dlang.org/.
+This is a set of command line utilities for working with tab-separated value files. They were originally developed in Perl and used for day-to-day work in a large scale data mining environment. One of the tools was re-written in D as an exercise exploring the language. Significant performance gains and agreeable programmer characteristics soon led to writing additional utilities in D. Information on the D programming language is available at [dlang.org](https://dlang.org/).
 
 **In this README:**
 * [Tools overview](#tools-overview)
@@ -13,7 +13,7 @@ This is a set of command line utilities for working with tab-separated value fil
 * [Tips and tricks](docs/TipsAndTricks.md)
 * [Other toolkits](docs/OtherToolkits.md)
 
-Please file an [issue](https://github.com/eBay/tsv-utils-dlang/issues) if you have problems or questions.
+File an [issue](https://github.com/eBay/tsv-utils-dlang/issues) if you have problems, questions or suggestions.
 
 [![Travis](https://img.shields.io/travis/eBay/tsv-utils-dlang.svg)](https://travis-ci.org/eBay/tsv-utils-dlang)
 [![Codecov](https://img.shields.io/codecov/c/github/eBay/tsv-utils-dlang.svg)](https://codecov.io/gh/eBay/tsv-utils-dlang)
@@ -144,7 +144,7 @@ CSV files come in different formats. See the [csv2tsv reference](docs/ToolRefere
 
 ### number-lines
 
-A simpler version of the Unix 'nl' program. It prepends a line number to each line read from files or standard input. This tool was written primarily as an example of a simple command line tool. The code structure it uses is the same as followed by all the other tools. Example:
+A simpler version of the Unix `nl` program. It prepends a line number to each line read from files or standard input. This tool was written primarily as an example of a simple command line tool. The code structure it uses is the same as followed by all the other tools. Example:
 ```
 $ number-lines myfile.txt
 ```
@@ -168,11 +168,11 @@ There are several ways to obtain the tools: prebuilt binaries; building from sou
 
 ### Prebuilt binaries
 
-Prebuilt binaries are available for Linux and Mac, these can be found on the [Github releases](https://github.com/eBay/tsv-utils-dlang/releases) page. Download and unpack the tar.gz file. Executables are in the `bin` directory. Add the 'bin' directory or individual tools to the PATH environment variable.
+Prebuilt binaries are available for Linux and Mac, these can be found on the [Github releases](https://github.com/eBay/tsv-utils-dlang/releases) page. Download and unpack the tar.gz file. Executables are in the `bin` directory. Add the `bin` directory or individual tools to the `PATH` environment variable.
 
 ### Build from source files
 
-Download a D compiler (https://dlang.org/download.html). These tools have been tested with the DMD and LDC compilers, on Mac OSX and Linux. Use DMD version 2.070 or later, LDC version 1.0.0 or later.
+[Download a D compiler](https://dlang.org/download.html). These tools have been tested with the DMD and LDC compilers, on Mac OSX and Linux. Use DMD version 2.070 or later, LDC version 1.0.0 or later.
 
 Clone this repository, select a compiler, and run `make` from the top level directory:
 ```

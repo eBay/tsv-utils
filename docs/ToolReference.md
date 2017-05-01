@@ -29,9 +29,9 @@ $ tsv-select --fields 1,2   # Valid
 $ tsv-select -fields 1,2    # Invalid.
 ```
 
-### Help (-h, --help, --help-verbose)
+### Help (`-h`, `--help`, `--help-verbose`)
 
-All tools print help if given the `-h` or `--help` option. Many of the tools provide more details with the `--help-verbose` option.
+All tools print help if given the `-h` or `--help` option. Many provide more detail via the `--help-verbose` option.
 
 ### Field indices
 
@@ -41,19 +41,19 @@ Field indices are one-upped integers, following Unix conventions. Some tools use
 
 These tools assume data is utf-8 encoded.
 
-### File format and alternate delimiters (--delimiter)
+### File format and alternate delimiters (`--delimiter`)
 
 Any character can be used as a delimiter, TAB is the default. However, there is no escaping for including the delimiter character or newlines within a field. This differs from CSV file format which provides an escaping mechanism. In practice the lack of an escaping mechanism is not a meaningful limitation for data oriented files.
 
 Aside from a header line, all lines are expected to have data. There is no comment mechanism and no special handling for blank lines. Tools taking field indices as arguments expect the specified fields to be available on every line.
 
-### Headers (-H, --header)
+### Headers (`-H`, `--header`)
 
 Most tools handle the first line of files as a header when given the `-H` or `--header` option. For example, `tsv-filter` passes the header through without filtering it. When `--header` is used, all files and stdin are assumed to have header lines. Only one header line is written to stdout. If multiple files are being processed, header lines from subsequent files are discarded.
 
 ### Multiple files and standard input
 
-Tools can read from any number of files and from standard input. As per typical Unix behavior, a single dash represents standard input when included in a list of files. Terminate non-file arguments with a double dash (--) when using a single dash in this fashion. Example:
+Tools can read from any number of files and from standard input. As per typical Unix behavior, a single dash represents standard input when included in a list of files. Terminate non-file arguments with a double dash (\--) when using a single dash in this fashion. Example:
 ```
 $ head -n 1000 file-c.tsv | tsv-filter --eq 2:1000 -- file-a.tsv file-b.tsv - > out.tsv
 ```
@@ -156,7 +156,7 @@ $ tsv-filter --header --ff-eq 3:4 data.tsv
 
 Regular expressions:
 
-Official regular expression syntax defined by D (<http://dlang.org/phobos/std_regex.html>), however, basic syntax is rather standard, and forms commonly used with other tools usually work as expected. This includes unicode character classes.
+Official regular expression syntax is defined by the [D regex library](<http://dlang.org/phobos/std_regex.html>), however, basic syntax is quite standard. Forms commonly used with other tools usually work as expected. This includes unicode character classes. A good general reference is available at [Regular-Expressions.info](http://www.regular-expressions.info/).
 
 ```
 $ # Field 2 has a sequence with two a's, one or more digits, then 2 a's.
@@ -190,7 +190,7 @@ The above tests work because `tsv-filter` short-circuits evaluation, only runnin
 
 **Synopsis:** tsv-select -f n[,n...] [options] [file...]
 
-tsv-select reads files or standard input and writes specified fields to standard output in the order listed. Similar to 'cut' with the ability to reorder fields. Fields can be listed more than once, and fields not listed can be output using the `--rest` option. When working with multiple files, the `--header` option can be used to retain only the header from the first file.
+tsv-select reads files or standard input and writes specified fields to standard output in the order listed. Similar to `cut` with the ability to reorder fields. Fields can be listed more than once, and fields not listed can be output using the `--rest` option. When working with multiple files, the `--header` option can be used to retain only the header from the first file.
 
 **Options:**
 * `--h|help` - Print help.
@@ -272,13 +272,13 @@ Summarization operators available are:
    max
 ```
 
-Numeric values are printed to 12 significant digits by default. This can be changed using the '--p|float-precision' option. If six or less it sets the number of significant digits after the decimal point. If greater than six it sets the total number of significant digits.
+Numeric values are printed to 12 significant digits by default. This can be changed using the `--p|float-precision` option. If six or less it sets the number of significant digits after the decimal point. If greater than six it sets the total number of significant digits.
 
 Calculations hold onto the minimum data needed while reading data. A few operations like median keep all data values in memory. These operations will start to encounter performance issues as available memory becomes scarce. The size that can be handled effectively is machine dependent, but often quite large files can be handled.
 
 Operations requiring numeric entries will signal an error and terminate processing if a non-numeric entry is found.
 
-Missing values are not treated specially by default, this can be changed using the '--x|exclude-missing' or '--r|replace-missing' option. The former turns off processing for missing values, the latter uses a replacement value.
+Missing values are not treated specially by default, this can be changed using the `--x|exclude-missing` or `--r|replace-missing` option. The former turns off processing for missing values, the latter uses a replacement value.
 
 **Options:**
 * `--h|help` - Print help.
@@ -288,7 +288,7 @@ Missing values are not treated specially by default, this can be changed using t
 * `--H|header` - Treat the first line of each file as a header.
 * `--w|write-header` - Write an output header even if there is no input header.
 * `--d|delimiter CHR` - Field delimiter. Default: TAB. (Single byte UTF-8 characters only.)
-* `--v|values-delimiter CHR` - Values delimiter. Default: vertical bar (|). (Single byte UTF-8 characters only.)
+* `--v|values-delimiter CHR` - Values delimiter. Default: vertical bar (\|). (Single byte UTF-8 characters only.)
 * `--p|float-precision NUM` - 'Precision' to use printing floating point numbers. Affects the number of digits printed and exponent use. Default: 12
 * `--x|exclude-missing` - Exclude missing (empty) fields from calculations.
 * `--r|replace-missing STR` - Replace missing (empty) fields with STR in calculations.
@@ -312,10 +312,10 @@ Missing values are not treated specially by default, this can be changed using t
 * `--mode n[,n...][:STR]` - Mode. The most frequent value. (Reads all unique values into memory.)
 * `--mode-count n[,n...][:STR]` - Count of the most frequent value. (Reads all unique values into memory.)
 * `--unique-count n[,n...][:STR]` - Number of unique values. (Reads all unique values into memory).
-* `--missing-count n[,n...][:STR]` - Number of missing (empty) fields. Not affected by the '--x|exclude-missing' or '--r|replace-missing' options.
-* `--not-missing-count n[,n...][:STR]` - Number of filled (non-empty) fields. Not affected by '--r|replace-missing'.
-* `--values n[,n...][:STR]` - All the values, separated by --v|values-delimiter. (Reads all values into memory.)
-* `--unique-values n[,n...][:STR]` - All the unique values, separated by --v|values-delimiter. (Reads all unique values into memory.)
+* `--missing-count n[,n...][:STR]` - Number of missing (empty) fields. Not affected by the `--x|exclude-missing` or `--r|replace-missing` options.
+* `--not-missing-count n[,n...][:STR]` - Number of filled (non-empty) fields. Not affected by `--r|replace-missing`.
+* `--values n[,n...][:STR]` - All the values, separated by `--v|values-delimiter`. (Reads all values into memory.)
+* `--unique-values n[,n...][:STR]` - All the unique values, separated by `--v|values-delimiter`. (Reads all unique values into memory.)
 
 ## tsv-join reference
 
@@ -329,11 +329,11 @@ tsv-join matches input lines against lines from a 'filter' file. The match is ba
 * `--V|version` - Print version information and exit.
 * `--f|filter-file FILE` - (Required) File with records to use as a filter.
 * `--k|key-fields n[,n...]` - Fields to use as join key. Default: 0 (entire line).
-* `--d|data-fields n[,n...]` - Data record fields to use as join key, if different than --key-fields.
+* `--d|data-fields n[,n...]` - Data record fields to use as join key, if different than `--key-fields`.
 * `--a|append-fields n[,n...]` - Filter fields to append to matched records.
 * `--H|header` - Treat the first line of each file as a header.
-* `--p|prefix STR` - String to use as a prefix for --append-fields when writing a header line.
-* `--w|write-all STR` - Output all data records. STR is the --append-fields value when writing unmatched records. This is an outer join.
+* `--p|prefix STR` - String to use as a prefix for `--append-fields` when writing a header line.
+* `--w|write-all STR` - Output all data records. STR is the `--append-fields` value when writing unmatched records. This is an outer join.
 * `--e|exclude` - Exclude matching records. This is an anti-join.
 * `--delimiter CHR` - Field delimiter. Default: TAB. (Single byte UTF-8 characters only.)
 * `--z|allow-duplicate-keys` - Allow duplicate keys with different append values (last entry wins). Default behavior is that this is an error.
@@ -378,13 +378,13 @@ $ tsv-join -f run1.tsv --header --key-fields 1 --append-fields 2 --prefix run1_ 
 
 **Synopsis:** tsv-append [options] [file...]
 
-tsv-append concatenates multiple TSV files, similar to the Unix 'cat' utility. Unlike 'cat', it is header-aware ('--H|header'), writing the header from only the first file. It also supports source tracking, adding a column indicating the original file to each row. Results are written to standard output.
+tsv-append concatenates multiple TSV files, similar to the Unix `cat` utility. Unlike `cat`, it is header-aware (`--H|header`), writing the header from only the first file. It also supports source tracking, adding a column indicating the original file to each row. Results are written to standard output.
 
-Concatenation with header support is useful when preparing data for traditional Unix utilities like 'sort' and 'sed' or applications that read a single file.
+Concatenation with header support is useful when preparing data for traditional Unix utilities like `sort` and `sed` or applications that read a single file.
 
 Source tracking is useful when creating long/narrow form tabular data, a format used by many statistics and data mining packages. In this scenario, files have been used to capture related data sets, the difference between data sets being a condition represented by the file. For example, results from different variants of an experiment might each be recorded in their own files. Retaining the source file as an output column preserves the condition represented by the file.
 
-The file-name (without extension) is used as the source value. This can customized using the --f|file option.
+The file-name (without extension) is used as the source value. This can customized using the `--f|file` option.
 
 Example: Header processing:
 
@@ -404,13 +404,13 @@ Example: Source tracking with custom values:
 * `--V|version` - Print version information and exit.
 * `--H|header` - Treat the first line of each file as a header.
 * `--t|track-source` - Track the source file. Adds an column with the source name.
-* `--s|source-header STR` - Use STR as the header for the source column. Implies --H|header and --t|track-source. Default: 'file'
-* `--f|file STR=FILE` - Read file FILE, using STR as the 'source' value. Implies --t|track-source.
+* `--s|source-header STR` - Use STR as the header for the source column. Implies `--H|header` and `--t|track-source`. Default: 'file'
+* `--f|file STR=FILE` - Read file FILE, using STR as the 'source' value. Implies `--t|track-source`.
 * `--d|delimiter CHR` - Field delimiter. Default: TAB. (Single byte UTF-8 characters only.)
 
 ## tsv-uniq reference
 
-tsv-uniq identifies equivalent lines in tab-separated value files. Input is read line by line, recording a key based on one or more of the fields. Two lines are equivalent if they have the same key. When operating in 'uniq' mode, the first time a key is seen the line is written to standard output, but subsequent lines are discarded. This is similar to the Unix 'uniq' program, but based on individual fields and without requiring sorted data.
+tsv-uniq identifies equivalent lines in tab-separated value files. Input is read line by line, recording a key based on one or more of the fields. Two lines are equivalent if they have the same key. When operating in 'uniq' mode, the first time a key is seen the line is written to standard output, but subsequent lines are discarded. This is similar to the Unix `uniq` program, but based on individual fields and without requiring sorted data.
 
 The alternate to 'uniq' mode is 'equiv-class' identification. In this mode, all lines are written to standard output, but with a new field added marking equivalent entries with an ID. The ID is simply a one-upped counter.
 
@@ -424,7 +424,7 @@ The alternate to 'uniq' mode is 'equiv-class' identification. In this mode, all 
 * `--f|fields n[,n...]` - Fields to use as the key. Default: 0 (entire line).
 * `--i|ignore-case` - Ignore case when comparing keys.
 * `--e|equiv` - Output equiv class IDs rather than uniq'ing entries.
-* `--equiv-header STR` - Use STR as the equiv-id field header. Applies when using '--header --equiv'. Default: 'equiv_id'.
+* `--equiv-header STR` - Use STR as the equiv-id field header. Applies when using `--header --equiv`. Default: 'equiv_id'.
 * `--equiv-start INT` - Use INT as the first equiv-id. Default: 1.
 * `--d|delimiter CHR` - Field delimiter. Default: TAB. (Single byte UTF-8 characters only.)
 
@@ -514,13 +514,13 @@ UTF-8 input is assumed. Convert other encodings prior to invoking this tool.
 
 **Synopsis:** number-lines [options] [file...]
 
-number-lines reads from files or standard input and writes each line to standard output preceded by a line number. It is a simplified version of the Unix 'nl' program. It supports one feature 'nl' does not: the ability to treat the first line of files as a header. This is useful when working with tab-separated-value files. If header processing used, a header line is written for the first file, and the header lines are dropped from any subsequent files.
+number-lines reads from files or standard input and writes each line to standard output preceded by a line number. It is a simplified version of the Unix `nl` program. It supports one feature `nl` does not: the ability to treat the first line of files as a header. This is useful when working with tab-separated-value files. If header processing used, a header line is written for the first file, and the header lines are dropped from any subsequent files.
 
 **Options:**
 * `--h|help` - Print help.
 * `--V|version` - Print version information and exit.
 * `--H|header` - Treat the first line of each file as a header. The first input file's header is output, subsequent file headers are discarded.
-* `--s|header-string STR` - String to use as the header for the line number field. Implies --header. Default: 'line'.
+* `--s|header-string STR` - String to use as the header for the line number field. Implies `--header`. Default: 'line'.
 * `--n|start-number NUM` - Number to use for the first line. Default: 1.
 * `--d|delimiter CHR` - Character appended to line number, preceding the rest of the line. Default: TAB (Single byte UTF-8 characters only.)
 
@@ -535,9 +535,9 @@ $ number-lines --header data*.tsv
 
 ## keep-header reference
 
-**Synopsis:** keep-header [file...] -- program [args]
+**Synopsis:** keep-header [file...] \-- program [args]
 
-Execute a command against one or more files in a header-aware fashion. The first line of each file is assumed to be a header. The first header is output unchanged. Remaining lines are sent to the given command via standard input, excluding the header lines of subsequent files. Output from the command is appended to the initial header line. A double dash (--) delimits the command, similar to how the pipe operator (|) delimits commands.
+Execute a command against one or more files in a header-aware fashion. The first line of each file is assumed to be a header. The first header is output unchanged. Remaining lines are sent to the given command via standard input, excluding the header lines of subsequent files. Output from the command is appended to the initial header line. A double dash (\--) delimits the command, similar to how the pipe operator (\|) delimits commands.
 
 The following commands sort files in the usual way, except for retaining a single header line:
 ```
