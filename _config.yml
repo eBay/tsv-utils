@@ -1,6 +1,6 @@
 theme: jekyll-theme-cayman
-title: ["eBay TSV Utilities"]
-description: ["Command line utilities for tabular data files written in the D programming language."]
+title: ["eBay's TSV utilities toolkit"]
+description: ["Command line tools for tabular data files written in the D programming language."]
 encoding: utf-8
 markdown: kramdown
 kramdown:
