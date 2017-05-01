@@ -1,1 +1,6 @@
 theme: jekyll-theme-slate
+encoding: utf-8
+markdown: kramdown
+kramdown:
+  smart_quotes: apos,apos,quot,quot
+  
