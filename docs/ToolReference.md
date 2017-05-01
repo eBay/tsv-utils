@@ -31,7 +31,7 @@ $ tsv-select -fields 1,2    # Invalid.
 
 ### Help (`-h`, `--help`, `--help-verbose`)
 
-All tools print help if given the `-h` or `--help` option. Many of the tools provide more details with the `--help-verbose` option.
+All tools print help if given the `-h` or `--help` option. Many provide more detail via the `--help-verbose` option.
 
 ### Field indices
 
@@ -156,7 +156,7 @@ $ tsv-filter --header --ff-eq 3:4 data.tsv
 
 Regular expressions:
 
-Official regular expression syntax defined by D (<http://dlang.org/phobos/std_regex.html>), however, basic syntax is rather standard, and forms commonly used with other tools usually work as expected. This includes unicode character classes.
+Official regular expression syntax defined by [D regex library](<http://dlang.org/phobos/std_regex.html>), however, basic syntax is quite standard. Forms commonly used with other tools usually work as expected. This includes unicode character classes. A good general reference is available at [Regular-Expressions.info](http://www.regular-expressions.info/).
 
 ```
 $ # Field 2 has a sequence with two a's, one or more digits, then 2 a's.
