@@ -8,7 +8,7 @@ Error processing command line arguments: Required option --f|fields was not supp
 Error processing command line arguments: Required option --f|fields was not supplied.
 
 ====[tsv-select input1.tsv --fields last]====
-Error processing command line arguments: [--f|fields] Unexpected 'l' when converting from type string to type ulong
+Error processing command line arguments: [--f|fields] Unexpected 'l' when converting from type string to type long
 
 ====[tsv-select -f 0 input1.tsv]====
 Error processing command line arguments: [--f|fields] Field numbers must be greater than zero: '0'
@@ -40,10 +40,10 @@ Error processing command line arguments: [--f|fields] Incomplete ranges are not 
 Error processing command line arguments: [--f|fields] Incomplete ranges are not supported: '3-'
 
 ====[tsv-select -f input1.tsv]====
-Error processing command line arguments: [--f|fields] Unexpected 'i' when converting from type string to type ulong
+Error processing command line arguments: [--f|fields] Unexpected 'i' when converting from type string to type long
 
 ====[tsv-select -f 1, input1.tsv]====
 Error processing command line arguments: [--f|fields] Empty field number.
 
 ====[tsv-select -f 1.1 input1.tsv]====
-Error processing command line arguments: [--f|fields] Unexpected '.' when converting from type string to type ulong
+Error processing command line arguments: [--f|fields] Unexpected '.' when converting from type string to type long

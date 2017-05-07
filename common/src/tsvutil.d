@@ -512,14 +512,30 @@ intended for display. Error conditions include:
 No other behaviors are enforced. Repeated values are accepted. If zero is allowed, other
 field numbers can be entered as well. Additional restrictions need to be applied by the
 caller.
+
+Notes:
+  - The data type determines the max field number that can be entered. Enabling conversion
+    to zero restricts to the signed version of the data type.
+  - Use 'import std.typecons : Yes, No' to use the convertToZeroBasedIndex and
+    allowFieldNumZero template parameters.
 */
+
+/** [Yes|No].convertToZeroBasedIndex parameter controls whether field numbers are
+ *  converted to zero-based indices by makeFieldListOptionHander and parseFieldList.
+ */
+alias ConvertToZeroBasedIndex = Flag!"convertToZeroBasedIndex";
+
+/** [Yes|No].allowFieldNumZero parameter controls whether zero is a valid field. This is
+ *  used by makeFieldListOptionHander and parseFieldList.
+ */
+alias AllowFieldNumZero = Flag!"allowFieldNumZero";
+
+alias OptionHandlerDelegate = void delegate(string option, string value);
 
 /**
 makeFieldListOptionHandler creates a std.getopt option hander for processing field lists
 entered on the command line. A field list is as defined by parseFieldList.
 */
-alias OptionHandlerDelegate = void delegate(string option, string value);
-
 OptionHandlerDelegate makeFieldListOptionHandler(
     T,
     ConvertToZeroBasedIndex convertToZero = No.convertToZeroBasedIndex,
@@ -701,10 +717,6 @@ unittest
 /**
 parseFieldList lazily generates a range of fields numbers from a 'field-list' string.
 */
-
-alias ConvertToZeroBasedIndex = Flag!"convertToZeroBasedIndex";
-alias AllowFieldNumZero = Flag!"allowFieldNumZero";
-
 auto parseFieldList(T = size_t,
                     ConvertToZeroBasedIndex convertToZero = No.convertToZeroBasedIndex,
                     AllowFieldNumZero allowZero = No.allowFieldNumZero)

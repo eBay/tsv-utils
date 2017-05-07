@@ -77,7 +77,8 @@ struct TsvSelectOptions
     {
         import std.algorithm : any, each;
         import std.getopt;
-        import tsvutil : makeFieldListOptionHandler;
+        import std.typecons : Yes, No;
+        import tsvutil :  makeFieldListOptionHandler;
 
         try
         {
@@ -87,7 +88,10 @@ struct TsvSelectOptions
                 std.getopt.config.caseSensitive,
                 "H|header",    "                 Treat the first line of each file as a header.", &hasHeader,
                 std.getopt.config.caseInsensitive,
-                "f|fields",    "<field-list>     (Required) Fields to extract. Fields are output in the order listed.", fields.makeFieldListOptionHandler,
+
+                "f|fields",    "<field-list>     (Required) Fields to extract. Fields are output in the order listed.",
+                fields.makeFieldListOptionHandler!(size_t, Yes.convertToZeroBasedIndex),
+
                 "r|rest",      "none|first|last  Location for remaining fields. Default: none", &rest,
                 "d|delimiter", "CHR              Character to use as field delimiter. Default: TAB. (Single byte UTF-8 characters only.)", &delim,
                 std.getopt.config.caseSensitive,
@@ -112,16 +116,6 @@ struct TsvSelectOptions
             {
                 throw new Exception("Required option --f|fields was not supplied.");
             }
-
-            if (fields.length > 0 && fields.any!(x => x == 0))
-            {
-                throw new Exception("Zero is not a valid field number (--f|fields).");
-            }
-
-            /* Derivations */
-            fields.each!((ref x) => --x);  // Convert to 1-based indexing. Using 'ref' in the lambda allows the actual
-                                           // field value to be modified. Otherwise a copy would be passed.
-
         }
         catch (Exception exc)
         {

@@ -190,7 +190,7 @@ The above tests work because `tsv-filter` short-circuits evaluation, only runnin
 
 ## tsv-select reference
 
-**Synopsis:** tsv-select -f n[,n...] [options] [file...]
+**Synopsis:** tsv-select -f <field-list> [options] [file...]
 
 tsv-select reads files or standard input and writes specified fields to standard output in the order listed. Similar to `cut` with the ability to reorder fields.
 
