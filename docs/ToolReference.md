@@ -268,15 +268,16 @@ Most operators take custom headers in a similarly way, generally following:
 --<operator-name> FIELD[:header]
 ```
 
-Operators can be specified multiple times. They can also take multiple fields (though not when a custom header is specified). Example:
+Operators can be specified multiple times. They can also take multiple fields (though not when a custom header is specified). Examples:
 ```
 --median 2,3,4
+--median 1,5-8
 ```
 
 The quantile operator requires one or more probabilities after the fields:
 ```
---quantile 2:0.25                // Quantile 1 of field 2
---quantile 2,3,4:0.25,0.5,0.75   // Q1, Median, Q3 of fields 2, 3, 4
+--quantile 2:0.25              # Quantile 1 of field 2
+--quantile 2-4:0.25,0.5,0.75   # Q1, Median, Q3 of fields 2, 3, 4
 ```
 
 Summarization operators available are:
@@ -301,7 +302,7 @@ Missing values are not treated specially by default, this can be changed using t
 * `--h|help` - Print help.
 * `--help-verbose` - Print detailed help.
 * `--V|version` - Print version information and exit.
-* `--g|group-by n[,n...]` - Fields to use as key.
+* `--g|group-by <field-list>` - Fields to use as key.
 * `--H|header` - Treat the first line of each file as a header.
 * `--w|write-header` - Write an output header even if there is no input header.
 * `--d|delimiter CHR` - Field delimiter. Default: TAB. (Single byte UTF-8 characters only.)
@@ -313,26 +314,26 @@ Missing values are not treated specially by default, this can be changed using t
 **Operators:**
 * `--count` - Count occurrences of each unique key.
 * `--count-header STR` - Count occurrences of each unique key, use header STR.
-* `--retain n[,n...]` - Retain one copy of the field.
-* `--first n[,n...][:STR]` - First value seen.
-* `--last n[,n...][:STR]`- Last value seen.
-* `--min n[,n...][:STR]` - Min value. (Numeric fields only.)
-* `--max n[,n...][:STR]` - Max value. (Numeric fields only.)
-* `--range n[,n...][:STR]` - Difference between min and max values. (Numeric fields only.)
-* `--sum n[,n...][:STR]` - Sum of the values. (Numeric fields only.)
-* `--mean n[,n...][:STR]` - Mean (average). (Numeric fields only.)
-* `--median n[,n...][:STR]` - Median value. (Numeric fields only. Reads all values into memory.)
-* `--quantile n[,n...]:p[,p...][:STR]` - Quantiles. One or more fields, then one or more 0.0-1.0 probabilities. (Numeric fields only. Reads all values into memory.)
-* `--mad n[,n...][:STR]` - Median absolute deviation from the median. Raw value, not scaled. (Numeric fields only. Reads all values into memory.)
-* `--var n[,n...][:STR]` - Variance. (Sample variance, numeric fields only).
-* `--stdev n[,n...][:STR]` - Standard deviation. (Sample st.dev, numeric fields only).
-* `--mode n[,n...][:STR]` - Mode. The most frequent value. (Reads all unique values into memory.)
-* `--mode-count n[,n...][:STR]` - Count of the most frequent value. (Reads all unique values into memory.)
-* `--unique-count n[,n...][:STR]` - Number of unique values. (Reads all unique values into memory).
-* `--missing-count n[,n...][:STR]` - Number of missing (empty) fields. Not affected by the `--x|exclude-missing` or `--r|replace-missing` options.
-* `--not-missing-count n[,n...][:STR]` - Number of filled (non-empty) fields. Not affected by `--r|replace-missing`.
-* `--values n[,n...][:STR]` - All the values, separated by `--v|values-delimiter`. (Reads all values into memory.)
-* `--unique-values n[,n...][:STR]` - All the unique values, separated by `--v|values-delimiter`. (Reads all unique values into memory.)
+* `--retain <field-list>` - Retain one copy of the field.
+* `--first <field-list>[:STR]` - First value seen.
+* `--last <field-list>[:STR]`- Last value seen.
+* `--min <field-list>[:STR]` - Min value. (Numeric fields only.)
+* `--max <field-list>[:STR]` - Max value. (Numeric fields only.)
+* `--range <field-list>[:STR]` - Difference between min and max values. (Numeric fields only.)
+* `--sum <field-list>[:STR]` - Sum of the values. (Numeric fields only.)
+* `--mean <field-list>[:STR]` - Mean (average). (Numeric fields only.)
+* `--median <field-list>[:STR]` - Median value. (Numeric fields only. Reads all values into memory.)
+* `--quantile <field-list>:p[,p...][:STR]` - Quantiles. One or more fields, then one or more 0.0-1.0 probabilities. (Numeric fields only. Reads all values into memory.)
+* `--mad <field-list>[:STR]` - Median absolute deviation from the median. Raw value, not scaled. (Numeric fields only. Reads all values into memory.)
+* `--var <field-list>[:STR]` - Variance. (Sample variance, numeric fields only).
+* `--stdev <field-list>[:STR]` - Standard deviation. (Sample st.dev, numeric fields only).
+* `--mode <field-list>[:STR]` - Mode. The most frequent value. (Reads all unique values into memory.)
+* `--mode-count <field-list>[:STR]` - Count of the most frequent value. (Reads all unique values into memory.)
+* `--unique-count <field-list>[:STR]` - Number of unique values. (Reads all unique values into memory).
+* `--missing-count <field-list>[:STR]` - Number of missing (empty) fields. Not affected by the `--x|exclude-missing` or `--r|replace-missing` options.
+* `--not-missing-count <field-list>[:STR]` - Number of filled (non-empty) fields. Not affected by `--r|replace-missing`.
+* `--values <field-list>[:STR]` - All the values, separated by `--v|values-delimiter`. (Reads all values into memory.)
+* `--unique-values <field-list>[:STR]` - All the unique values, separated by `--v|values-delimiter`. (Reads all unique values into memory.)
 
 ## tsv-join reference
 

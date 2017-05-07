@@ -85,14 +85,15 @@ Most operators take custom headers in a similarly way, generally following:
   --<operator-name> FIELD[:header]
 
 Operators can be specified multiple times. They can also take multiple
-fields (though not when a custom header is specified). Example:
+fields (though not when a custom header is specified). Examples:
 
   --median 2,3,4
+  --median 2-5,7-11
 
 The quantile operator requires one or more probabilities after the fields:
 
   --quantile 2:0.25                // Quantile 1 of field 2
-  --quantile 2,3,4:0.25,0.5,0.75   // Q1, Median, Q3 of fields 2, 3, 4
+  --quantile 2-4:0.25,0.5,0.75     // Q1, Median, Q3 of fields 2, 3, 4
 
 Summarization operators available are:
   count       range        mad            values
@@ -193,25 +194,25 @@ struct TsvSummarizeOptions {
                 "count",              "              Count occurrences of each unique key.", &countOptionHandler,
                 "count-header",       "STR           Count occurrences of each unique key, use header STR.", &countHeaderOptionHandler,
                 "retain",             "<field-list>  Retain one copy of the field.", &operatorOptionHandler!RetainOperator,
-                "first",              "<field-list>|NUM:STR  First value seen.", &operatorOptionHandler!FirstOperator,
-                "last",               "<field-list>|NUM:STR  Last value seen.", &operatorOptionHandler!LastOperator,
-                "min",                "<field-list>|NUM:STR  Min value. (Numeric fields only.)", &operatorOptionHandler!MinOperator,
-                "max",                "<field-list>|NUM:STR  Max value. (Numeric fields only.)", &operatorOptionHandler!MaxOperator,
-                "range",              "<field-list>|NUM:STR  Difference between min and max values. (Numeric fields only.)", &operatorOptionHandler!RangeOperator,
-                "sum",                "<field-list>|NUM:STR  Sum of the values. (Numeric fields only.)", &operatorOptionHandler!SumOperator,
-                "mean",               "<field-list>|NUM:STR  Mean (average). (Numeric fields only.)", &operatorOptionHandler!MeanOperator,
-                "median",             "<field-list>|NUM:STR  Median value. (Numeric fields only. Reads all values into memory.)", &operatorOptionHandler!MedianOperator,
-                "quantile",           "n[,n...]:p[,p...][:STR]  Quantiles. One or more fields, then one or more 0.0-1.0 probabilities. (Numeric fields only. Reads all values into memory.)", &quantileOperatorOptionHandler,
-                "mad",                "<field-list>|NUM:STR  Median absolute deviation from the median. Raw value, not scaled. (Numeric fields only. Reads all values into memory.)", &operatorOptionHandler!MadOperator,
-                "var",                "<field-list>|NUM:STR  Variance. (Sample variance, numeric fields only).", &operatorOptionHandler!VarianceOperator,
-                "stdev",              "<field-list>|NUM:STR  Standard deviation. (Sample st.dev, numeric fields only).", &operatorOptionHandler!StDevOperator,
-                "mode",               "<field-list>|NUM:STR  Mode. The most frequent value. (Reads all unique values into memory.)", &operatorOptionHandler!ModeOperator,
-                "mode-count",         "<field-list>|NUM:STR  Count of the most frequent value. (Reads all unique values into memory.)", &operatorOptionHandler!ModeCountOperator,
-                "unique-count",       "<field-list>|NUM:STR  Number of unique values. (Reads all unique values into memory.)", &operatorOptionHandler!UniqueCountOperator,
-                "missing-count",      "<field-list>|NUM:STR  Number of missing (empty) fields. Not affected by '--x|exclude-missing' or '--r|replace-missing'.", &operatorOptionHandler!MissingCountOperator,
-                "not-missing-count",  "<field-list>|NUM:STR  Number of filled (non-empty) fields. Not affected by '--r|replace-missing'.", &operatorOptionHandler!NotMissingCountOperator,
-                "values",             "<field-list>|NUM:STR  All the values, separated by --v|values-delimiter. (Reads all values into memory.)", &operatorOptionHandler!ValuesOperator,
-                "unique-values",      "<field-list>|NUM:STR  All the unique values, separated by --v|values-delimiter. (Reads all unique values into memory.)", &operatorOptionHandler!UniqueValuesOperator,
+                "first",              "<field-list>[:STR]  First value seen.", &operatorOptionHandler!FirstOperator,
+                "last",               "<field-list>[:STR]  Last value seen.", &operatorOptionHandler!LastOperator,
+                "min",                "<field-list>[:STR]  Min value. (Numeric fields only.)", &operatorOptionHandler!MinOperator,
+                "max",                "<field-list>[:STR]  Max value. (Numeric fields only.)", &operatorOptionHandler!MaxOperator,
+                "range",              "<field-list>[:STR]  Difference between min and max values. (Numeric fields only.)", &operatorOptionHandler!RangeOperator,
+                "sum",                "<field-list>[:STR]  Sum of the values. (Numeric fields only.)", &operatorOptionHandler!SumOperator,
+                "mean",               "<field-list>[:STR]  Mean (average). (Numeric fields only.)", &operatorOptionHandler!MeanOperator,
+                "median",             "<field-list>[:STR]  Median value. (Numeric fields only. Reads all values into memory.)", &operatorOptionHandler!MedianOperator,
+                "quantile",           "<field-list>:p[,p...][:STR]  Quantiles. One or more fields, then one or more 0.0-1.0 probabilities. (Numeric fields only. Reads all values into memory.)", &quantileOperatorOptionHandler,
+                "mad",                "<field-list>[:STR]  Median absolute deviation from the median. Raw value, not scaled. (Numeric fields only. Reads all values into memory.)", &operatorOptionHandler!MadOperator,
+                "var",                "<field-list>[:STR]  Variance. (Sample variance, numeric fields only).", &operatorOptionHandler!VarianceOperator,
+                "stdev",              "<field-list>[:STR]  Standard deviation. (Sample st.dev, numeric fields only).", &operatorOptionHandler!StDevOperator,
+                "mode",               "<field-list>[:STR]  Mode. The most frequent value. (Reads all unique values into memory.)", &operatorOptionHandler!ModeOperator,
+                "mode-count",         "<field-list>[:STR]  Count of the most frequent value. (Reads all unique values into memory.)", &operatorOptionHandler!ModeCountOperator,
+                "unique-count",       "<field-list>[:STR]  Number of unique values. (Reads all unique values into memory.)", &operatorOptionHandler!UniqueCountOperator,
+                "missing-count",      "<field-list>[:STR]  Number of missing (empty) fields. Not affected by '--x|exclude-missing' or '--r|replace-missing'.", &operatorOptionHandler!MissingCountOperator,
+                "not-missing-count",  "<field-list>[:STR]  Number of filled (non-empty) fields. Not affected by '--r|replace-missing'.", &operatorOptionHandler!NotMissingCountOperator,
+                "values",             "<field-list>[:STR]  All the values, separated by --v|values-delimiter. (Reads all values into memory.)", &operatorOptionHandler!ValuesOperator,
+                "unique-values",      "<field-list>[:STR]  All the unique values, separated by --v|values-delimiter. (Reads all unique values into memory.)", &operatorOptionHandler!UniqueValuesOperator,
                 );
 
             if (r.helpWanted)
@@ -306,7 +307,7 @@ struct TsvSummarizeOptions {
         auto formatErrorMsg(string option, string optionVal)
         {
             return format(
-                "Invalid option value: '--%s %s'. Expected: '--%s <field>[,<field>]:<prob>[,<prob>]' or '--%s <field>:<prob>:<header>' where <field> is a field number, <prob> is a number between 0.0 and 1.0, and <header> a string.",
+                "Invalid option value: '--%s %s'. Expected: '--%s <field-list>:<prob>[,<prob>]' or '--%s <field>:<prob>:<header>' where <prob> is a number between 0.0 and 1.0.",
                 option, optionVal, option, option);
         }
 
@@ -1019,63 +1020,77 @@ unittest
                     ["c", "c|c|c", "a|bc|bc", "2b||3"],
                     ["",  "",      "bc",      ""]]
         );
-    testSummarizer(["unittest-sk-5", "-H", "--group-by", "1", "--values", "3,2,1"],
+    testSummarizer(["unittest-sk-5", "-H", "--group-by", "1", "--values", "1-3"],
+                   file1,
+                   [["fld1", "fld1_values", "fld2_values", "fld3_values"],
+                    ["a", "a|a",   "a|c",     "3|2b"],
+                    ["c", "c|c|c", "a|bc|bc", "2b||3"],
+                    ["",  "",      "bc",      ""]]
+        );
+    testSummarizer(["unittest-sk-6", "-H", "--group-by", "1", "--values", "3,2,1"],
                    file1,
                    [["fld1", "fld3_values", "fld2_values", "fld1_values"],
                     ["a", "3|2b",  "a|c",     "a|a"],
                     ["c", "2b||3", "a|bc|bc", "c|c|c"],
                     ["",  "",      "bc",      ""]]
         );
-    testSummarizer(["unittest-sk-6", "-H", "--group-by", "2", "--values", "1"],
+    testSummarizer(["unittest-sk-7", "-H", "--group-by", "1", "--values", "3-1"],
+                   file1,
+                   [["fld1", "fld3_values", "fld2_values", "fld1_values"],
+                    ["a", "3|2b",  "a|c",     "a|a"],
+                    ["c", "2b||3", "a|bc|bc", "c|c|c"],
+                    ["",  "",      "bc",      ""]]
+        );
+    testSummarizer(["unittest-sk-8", "-H", "--group-by", "2", "--values", "1"],
                    file1,
                    [["fld2", "fld1_values"],
                     ["a",  "a|c"],
                     ["bc", "c||c"],
                     ["c",  "a"]]
         );
-    testSummarizer(["unittest-sk-7", "-H", "--group-by", "2", "--values", "2"],
+    testSummarizer(["unittest-sk-9", "-H", "--group-by", "2", "--values", "2"],
                    file1,
                    [["fld2", "fld2_values"],
                     ["a",  "a|a"],
                     ["bc", "bc|bc|bc"],
                     ["c",  "c"]]
         );
-    testSummarizer(["unittest-sk-8", "-H", "--group-by", "2", "--values", "3"],
+    testSummarizer(["unittest-sk-10", "-H", "--group-by", "2", "--values", "3"],
                    file1,
                    [["fld2", "fld3_values"],
                     ["a",  "3|2b"],
                     ["bc", "||3"],
                     ["c",  "2b"]]
         );
-    testSummarizer(["unittest-sk-9", "-H", "--group-by", "2", "--values", "1,3"],
+    testSummarizer(["unittest-sk-11", "-H", "--group-by", "2", "--values", "1,3"],
                    file1,
                    [["fld2", "fld1_values", "fld3_values"],
                     ["a",  "a|c",  "3|2b"],
                     ["bc", "c||c", "||3"],
                     ["c",  "a",    "2b"]]
         );
-    testSummarizer(["unittest-sk-10", "-H", "--group-by", "2", "--values", "3,1"],
+    testSummarizer(["unittest-sk-12", "-H", "--group-by", "2", "--values", "3,1"],
                    file1,
                    [["fld2", "fld3_values", "fld1_values"],
                     ["a",  "3|2b", "a|c"],
                     ["bc", "||3",  "c||c"],
                     ["c",  "2b",   "a"]]
         );
-    testSummarizer(["unittest-sk-11", "-H", "--group-by", "3", "--values", "1"],
+    testSummarizer(["unittest-sk-13", "-H", "--group-by", "3", "--values", "1"],
                    file1,
                    [["fld3", "fld1_values"],
                     ["3",  "a|c"],
                     ["2b", "c|a"],
                     ["",   "c|"]]
         );
-    testSummarizer(["unittest-sk-12", "-H", "--group-by", "3", "--values", "2"],
+    testSummarizer(["unittest-sk-14", "-H", "--group-by", "3", "--values", "2"],
                    file1,
                    [["fld3", "fld2_values"],
                     ["3",  "a|bc"],
                     ["2b", "a|c"],
                     ["",   "bc|bc"]]
         );
-    testSummarizer(["unittest-sk-13", "-H", "--group-by", "3", "--values", "1,2"],
+    testSummarizer(["unittest-sk-15", "-H", "--group-by", "3", "--values", "1,2"],
                    file1,
                    [["fld3", "fld1_values", "fld2_values"],
                     ["3",  "a|c", "a|bc"],
@@ -1130,7 +1145,16 @@ unittest
                     ["2b", "c",  "a"],
                     ["3",  "bc", "c"]]
         );
-    testSummarizer(["unittest-mk-6", "-H", "--group-by", "2,1,3", "--values", "2"],
+    testSummarizer(["unittest-mk-6", "-H", "--group-by", "3-2", "--values", "1"],
+                   file1,
+                   [["fld3", "fld2", "fld1_values"],
+                    ["3",  "a",  "a"],
+                    ["2b", "a",  "c"],
+                    ["",   "bc", "c|"],
+                    ["2b", "c",  "a"],
+                    ["3",  "bc", "c"]]
+        );
+    testSummarizer(["unittest-mk-7", "-H", "--group-by", "2,1,3", "--values", "2"],
                    file1,
                    [["fld2", "fld1", "fld3", "fld2_values"],
                     ["a",  "a", "3",  "a"],
@@ -1328,6 +1352,16 @@ unittest
                     ["",  "",   "bc", "",   "",  "bc"],
                     ["c", "3",  "bc", "3",  "c", "bc"]]
         );
+    testSummarizer(["unittest-hdr-9", "--write-header", "--group-by", "1,3-2", "--values", "3", "--values", "1:ValsField1", "--values", "2:ValsField2"],
+                   file1[1..$],
+                   [["field1", "field3", "field2", "field3_values", "ValsField1", "ValsField2"],
+                    ["a", "3",  "a",  "3",  "a", "a"],
+                    ["c", "2b", "a",  "2b", "c", "a"],
+                    ["c", "",   "bc", "",   "c", "bc"],
+                    ["a", "2b", "c",  "2b", "a", "c"],
+                    ["",  "",   "bc", "",   "",  "bc"],
+                    ["c", "3",  "bc", "3",  "c", "bc"]]
+        );
 
     /* Alternate file widths and lengths.
      */
@@ -1505,7 +1539,7 @@ unittest
                    [["fld1_values", "fld2_values"],
                     ["a|c|c|a||c", "a|a|bc|c|bc|bc"]]
         );
-    testSummarizer(["unittest-delim-2", "-H", "--values", "1,2", "--values-delimiter", "$"],
+    testSummarizer(["unittest-delim-2", "-H", "--values", "1-2", "--values-delimiter", "$"],
                    file1,
                    [["fld1_values", "fld2_values"],
                     ["a$c$c$a$$c", "a$a$bc$c$bc$bc"]]
