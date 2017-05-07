@@ -538,6 +538,7 @@ OptionHandlerDelegate makeFieldListOptionHandler(
 
 unittest
 {
+    import std.exception : assertThrown, assertNotThrown;
     import std.getopt;
 
     {
@@ -655,6 +656,39 @@ unittest
         getopt(args,
                "f|fields", fields.makeFieldListOptionHandler!(short, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero));
         assert(fields == [-1]);
+    }
+
+    {
+        /* Error cases. */
+        size_t[] fields;
+        auto args = ["program", "-f", "0"];
+        assertThrown(getopt(args, "f|fields", fields.makeFieldListOptionHandler));
+
+        args = ["program", "-f", "-1"];
+        assertThrown(getopt(args, "f|fields", fields.makeFieldListOptionHandler));
+
+        args = ["program", "-f", "--fields", "1"];
+        assertThrown(getopt(args, "f|fields", fields.makeFieldListOptionHandler));
+
+        args = ["program", "-f", "a"];
+        assertThrown(getopt(args, "f|fields", fields.makeFieldListOptionHandler));
+
+        args = ["program", "-f", "1.5"];
+        assertThrown(getopt(args, "f|fields", fields.makeFieldListOptionHandler));
+
+        args = ["program", "-f", "2-"];
+        assertThrown(getopt(args, "f|fields", fields.makeFieldListOptionHandler));
+
+        args = ["program", "-f", "3,5,-7"];
+        assertThrown(getopt(args, "f|fields", fields.makeFieldListOptionHandler));
+
+        args = ["program", "-f", "3,5,"];
+        assertThrown(getopt(args, "f|fields", fields.makeFieldListOptionHandler));
+
+        args = ["program", "-f", "-1"];
+        assertThrown(getopt(args,
+                            "f|fields", fields.makeFieldListOptionHandler!(
+                                size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero)));
     }
 }
 
