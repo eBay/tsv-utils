@@ -23,7 +23,6 @@ Information in this section applies to all the tools.
 ### Specifying options
 
 Multi-letter options are specified with a double dash. Single letter options can be specified with a single dash or double dash. For example:
-
 ```
 $ tsv-select -f 1,2         # Valid
 $ tsv-select --f 1,2        # Valid
@@ -35,9 +34,24 @@ $ tsv-select -fields 1,2    # Invalid.
 
 All tools print help if given the `-h` or `--help` option. Many provide more detail via the `--help-verbose` option.
 
-### Field indices
+### Field numbers and field-lists.
 
-Field indices are one-upped integers, following Unix conventions. Some tools use zero to represent the entire line (`tsv-join`, `tsv-uniq`).
+Field numbers are one-upped integers, following Unix conventions. Some tools use zero to represent the entire line (`tsv-join`, `tsv-uniq`).
+
+In many cases multiple fields can be entered as a "field-list". A field-list is a comma separated list of field numbers or field ranges. For example:
+
+```
+$ tsv-select -f 3          # Field 3
+$ tsv-select -f 3,5        # Fields 3 and 5
+$ tsv-select -f 3-5        # Fields 3, 4, 5
+$ tsv-select -f 1,3-5      # Fields 1, 3, 4, 5
+```
+
+Most tools process or output fields in the order listed, and repeated use is usually fine:
+```
+$ tsv-select -f 5-1       # Fields 5, 4, 3, 2, 1
+$ tsv-select -f 1-3,2,1   # Fields 1, 2, 3, 2, 1
+```
 
 ### UTF-8 input
 
@@ -167,7 +181,8 @@ $ tsv-filter --regex '2:aa[0-9]+aa' data.tsv
 $ # Same thing, except the field starts and ends with the two a's.
 $ tsv-filter --regex '2:^aa[0-9]+aa$' data.tsv
 
-$ # Field 2 is a sequence of "word" characters with two or more embedded whitespace sequences
+$ # Field 2 is a sequence of "word" characters with two or more embedded
+$ # whitespace sequences (match against entire field)
 $ tsv-filter --regex '2:^\w+\s+(\w+\s+)+\w+$' data.tsv
 
 $ # Field 2 containing at least one cyrillic character.
@@ -182,7 +197,7 @@ Numeric tests like `--gt` (greater-than) assume field values can be interpreted 
 $ # Ensure field 2 is a number before testing for greater-than 10.
 $ tsv-filter --is-numeric 2 --gt 2:10 data.tsv
 
-$ # Ensure field 2 is a number, not NaN or infinity before testing for greater-than 10.
+$ # Ensure field 2 is a number, not NaN or infinity before greater-than test.
 $ tsv-filter --is-finite 2 --gt 2:10 data.tsv
 ```
 
@@ -190,15 +205,17 @@ The above tests work because `tsv-filter` short-circuits evaluation, only runnin
 
 ## tsv-select reference
 
-**Synopsis:** tsv-select -f n[,n...] [options] [file...]
+**Synopsis:** tsv-select -f <field-list> [options] [file...]
 
-tsv-select reads files or standard input and writes specified fields to standard output in the order listed. Similar to `cut` with the ability to reorder fields. Fields can be listed more than once, and fields not listed can be output using the `--rest` option. When working with multiple files, the `--header` option can be used to retain only the header from the first file.
+tsv-select reads files or standard input and writes specified fields to standard output in the order listed. Similar to `cut` with the ability to reorder fields.
+
+Fields numbers start with one. They are comma separated, and ranges can be used. Fields can be listed more than once, and fields not listed can be output using the `--rest` option. When working with multiple files, the `--header` option can be used to retain only the header from the first file.
 
 **Options:**
 * `--h|help` - Print help.
 * `--V|version` - Print version information and exit.
-* `--H|header` - Treat the first line of each file as a header. 
-* `--f|fields n[,n...]` - (Required) Fields to extract. Fields are output in the order listed.
+* `--H|header` - Treat the first line of each file as a header.
+* `--f|fields <field-list>` - (Required) Fields to extract. Fields are output in the order listed.
 * `--r|rest none|first|last` - Location for remaining fields. Default: none
 * `--d|delimiter CHR` - Character to use as field delimiter. Default: TAB. (Single byte UTF-8 characters only.)
 
@@ -212,6 +229,19 @@ $ tsv-select -f 1 --rest first data.tsv
 
 $ # Move fields 7 and 3 to the start of the line
 $ tsv-select -f 7,3 --rest last data.tsv
+
+$ # Output a range of fields
+$ tsv-select -f 3-30 data.tsv
+
+$ # Output fields in reverse order
+$ tsv-select -f 30-3 data.tsv
+
+$ # Multiple files with header lines. Keep only one header.
+$ tsv-select data*.tsv -H --fields 1,2,4-7,14
+
+$ # Files using comma as the separator ('simple csv')
+$ # (Note: Does not handle CSV escapes.)
+$ tsv-select -d , --fields 5,1,2 data.csv
 ```
 ## tsv-summarize reference
 
@@ -253,15 +283,16 @@ Most operators take custom headers in a similarly way, generally following:
 --<operator-name> FIELD[:header]
 ```
 
-Operators can be specified multiple times. They can also take multiple fields (though not when a custom header is specified). Example:
+Operators can be specified multiple times. They can also take multiple fields (though not when a custom header is specified). Examples:
 ```
 --median 2,3,4
+--median 1,5-8
 ```
 
 The quantile operator requires one or more probabilities after the fields:
 ```
---quantile 2:0.25                // Quantile 1 of field 2
---quantile 2,3,4:0.25,0.5,0.75   // Q1, Median, Q3 of fields 2, 3, 4
+--quantile 2:0.25              # Quantile 1 of field 2
+--quantile 2-4:0.25,0.5,0.75   # Q1, Median, Q3 of fields 2, 3, 4
 ```
 
 Summarization operators available are:
@@ -286,7 +317,7 @@ Missing values are not treated specially by default, this can be changed using t
 * `--h|help` - Print help.
 * `--help-verbose` - Print detailed help.
 * `--V|version` - Print version information and exit.
-* `--g|group-by n[,n...]` - Fields to use as key.
+* `--g|group-by <field-list>` - Fields to use as key.
 * `--H|header` - Treat the first line of each file as a header.
 * `--w|write-header` - Write an output header even if there is no input header.
 * `--d|delimiter CHR` - Field delimiter. Default: TAB. (Single byte UTF-8 characters only.)
@@ -298,26 +329,26 @@ Missing values are not treated specially by default, this can be changed using t
 **Operators:**
 * `--count` - Count occurrences of each unique key.
 * `--count-header STR` - Count occurrences of each unique key, use header STR.
-* `--retain n[,n...]` - Retain one copy of the field.
-* `--first n[,n...][:STR]` - First value seen.
-* `--last n[,n...][:STR]`- Last value seen.
-* `--min n[,n...][:STR]` - Min value. (Numeric fields only.)
-* `--max n[,n...][:STR]` - Max value. (Numeric fields only.)
-* `--range n[,n...][:STR]` - Difference between min and max values. (Numeric fields only.)
-* `--sum n[,n...][:STR]` - Sum of the values. (Numeric fields only.)
-* `--mean n[,n...][:STR]` - Mean (average). (Numeric fields only.)
-* `--median n[,n...][:STR]` - Median value. (Numeric fields only. Reads all values into memory.)
-* `--quantile n[,n...]:p[,p...][:STR]` - Quantiles. One or more fields, then one or more 0.0-1.0 probabilities. (Numeric fields only. Reads all values into memory.)
-* `--mad n[,n...][:STR]` - Median absolute deviation from the median. Raw value, not scaled. (Numeric fields only. Reads all values into memory.)
-* `--var n[,n...][:STR]` - Variance. (Sample variance, numeric fields only).
-* `--stdev n[,n...][:STR]` - Standard deviation. (Sample st.dev, numeric fields only).
-* `--mode n[,n...][:STR]` - Mode. The most frequent value. (Reads all unique values into memory.)
-* `--mode-count n[,n...][:STR]` - Count of the most frequent value. (Reads all unique values into memory.)
-* `--unique-count n[,n...][:STR]` - Number of unique values. (Reads all unique values into memory).
-* `--missing-count n[,n...][:STR]` - Number of missing (empty) fields. Not affected by the `--x|exclude-missing` or `--r|replace-missing` options.
-* `--not-missing-count n[,n...][:STR]` - Number of filled (non-empty) fields. Not affected by `--r|replace-missing`.
-* `--values n[,n...][:STR]` - All the values, separated by `--v|values-delimiter`. (Reads all values into memory.)
-* `--unique-values n[,n...][:STR]` - All the unique values, separated by `--v|values-delimiter`. (Reads all unique values into memory.)
+* `--retain <field-list>` - Retain one copy of the field.
+* `--first <field-list>[:STR]` - First value seen.
+* `--last <field-list>[:STR]`- Last value seen.
+* `--min <field-list>[:STR]` - Min value. (Numeric fields only.)
+* `--max <field-list>[:STR]` - Max value. (Numeric fields only.)
+* `--range <field-list>[:STR]` - Difference between min and max values. (Numeric fields only.)
+* `--sum <field-list>[:STR]` - Sum of the values. (Numeric fields only.)
+* `--mean <field-list>[:STR]` - Mean (average). (Numeric fields only.)
+* `--median <field-list>[:STR]` - Median value. (Numeric fields only. Reads all values into memory.)
+* `--quantile <field-list>:p[,p...][:STR]` - Quantiles. One or more fields, then one or more 0.0-1.0 probabilities. (Numeric fields only. Reads all values into memory.)
+* `--mad <field-list>[:STR]` - Median absolute deviation from the median. Raw value, not scaled. (Numeric fields only. Reads all values into memory.)
+* `--var <field-list>[:STR]` - Variance. (Sample variance, numeric fields only).
+* `--stdev <field-list>[:STR]` - Standard deviation. (Sample st.dev, numeric fields only).
+* `--mode <field-list>[:STR]` - Mode. The most frequent value. (Reads all unique values into memory.)
+* `--mode-count <field-list>[:STR]` - Count of the most frequent value. (Reads all unique values into memory.)
+* `--unique-count <field-list>[:STR]` - Number of unique values. (Reads all unique values into memory).
+* `--missing-count <field-list>[:STR]` - Number of missing (empty) fields. Not affected by the `--x|exclude-missing` or `--r|replace-missing` options.
+* `--not-missing-count <field-list>[:STR]` - Number of filled (non-empty) fields. Not affected by `--r|replace-missing`.
+* `--values <field-list>[:STR]` - All the values, separated by `--v|values-delimiter`. (Reads all values into memory.)
+* `--unique-values <field-list>[:STR]` - All the unique values, separated by `--v|values-delimiter`. (Reads all unique values into memory.)
 
 ## tsv-join reference
 
@@ -330,9 +361,9 @@ tsv-join matches input lines against lines from a 'filter' file. The match is ba
 * `--h|help-verbose` - Print detailed help.
 * `--V|version` - Print version information and exit.
 * `--f|filter-file FILE` - (Required) File with records to use as a filter.
-* `--k|key-fields n[,n...]` - Fields to use as join key. Default: 0 (entire line).
-* `--d|data-fields n[,n...]` - Data record fields to use as join key, if different than `--key-fields`.
-* `--a|append-fields n[,n...]` - Filter fields to append to matched records.
+* `--k|key-fields <field-list>` - Fields to use as join key. Default: 0 (entire line).
+* `--d|data-fields <field-list>` - Data record fields to use as join key, if different than `--key-fields`.
+* `--a|append-fields <field-list>` - Filter fields to append to matched records.
 * `--H|header` - Treat the first line of each file as a header.
 * `--p|prefix STR` - String to use as a prefix for `--append-fields` when writing a header line.
 * `--w|write-all STR` - Output all data records. STR is the `--append-fields` value when writing unmatched records. This is an outer join.
@@ -361,9 +392,9 @@ Same as previous, except use field 4 & 5 from the data files.
 $ tsv-join -f filter.tsv --key-fields 2,3 --data-fields 4,5 data1.tsv data2.tsv data3.tsv
 ```
 
-Append a field from the filter file to matched records.
+Append fields from the filter file to matched records.
 ```
-$ tsv-join -f filter.tsv --key-fields 1 --append-fields 2 data.tsv
+$ tsv-join -f filter.tsv --key-fields 1 --append-fields 2-5 data.tsv
 ```
 
 Write out all records from the data file, but when there is no match, write the 'append fields' as NULL. This is an outer join.
@@ -423,7 +454,7 @@ The alternate to 'uniq' mode is 'equiv-class' identification. In this mode, all 
 * `--help-verbose` - Print detailed help.
 * `--V|version` - Print version information and exit.
 * `--H|header` - Treat the first line of each file as a header.
-* `--f|fields n[,n...]` - Fields to use as the key. Default: 0 (entire line).
+* `--f|fields <field-list>` - Fields to use as the key. Default: 0 (entire line).
 * `--i|ignore-case` - Ignore case when comparing keys.
 * `--e|equiv` - Output equiv class IDs rather than uniq'ing entries.
 * `--equiv-header STR` - Use STR as the equiv-id field header. Applies when using `--header --equiv`. Default: 'equiv_id'.
@@ -443,6 +474,9 @@ $ tsv-unique -f 1 data.tsv
 
 $ # Unique a file based on two fields
 $ tsv-uniq -f 1,2 data.tsv
+
+$ # Unique a file based on the first four fields
+$ tsv-uniq -f 1-4 data.tsv
 
 $ # Output all the lines, generating an ID for each unique entry
 $ tsv-uniq -f 1,2 --equiv data.tsv
@@ -477,7 +511,7 @@ Each run produces a different randomization. This can be changed using `--s|stat
 * `--v|seed-value NUM` - Sets the initial random seed. Use a non-zero, 32 bit positive integer. Zero is a no-op.
 * `--d|delimiter CHR` - Field delimiter.
 * `--h|help` - This help information.
- 
+
 ## csv2tsv reference
 
 **Synopsis:** csv2tsv [options] [file...]
@@ -531,7 +565,8 @@ number-lines reads from files or standard input and writes each line to standard
 $ # Number lines in a file
 $ number-lines file.tsv
 
-$ # Number lines from multiple files. Treat the first line each file as a header.
+$ # Number lines from multiple files. Treat the first line of each file
+$ # as a header.
 $ number-lines --header data*.tsv
 ```
 

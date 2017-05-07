@@ -27,10 +27,12 @@ import std.typecons : tuple, Tuple;
 
 // 'Heredoc' style help text. When printed it is followed by a getopt formatted option list.
 auto helpText = q"EOS
-Synopsis: tsv-select -f n[,n...] [options] [file...]
+Synopsis: tsv-select -f <field-list> [options] [file...]
 
 tsv-select reads files or standard input and writes specified fields to standard
 output in the order listed. Similar to 'cut' with the ability to reorder fields.
+
+Fields numbers start with one. They are comma separated, and ranges can be used.
 Fields can be listed more than once, and fields not listed can be output using
 the --rest option. Multiple files with header lines can be managed with the
 --header option, which retains the header of the first file and drops the rest.
@@ -38,14 +40,16 @@ the --rest option. Multiple files with header lines can be managed with the
 Examples:
 
    tsv-select -f 4,2,9 file1.tsv file2.tsv
+   tsv-select -f 1,4-7,11 file1.tsv
+   tsv-select -f 1,7-4,11 file1.tsv
    tsv-select --delimiter ' ' -f 2,4,6 --rest last file1.txt
    cat file*.tsv | tsv-select -f 3,2,1
 
 Options:
 EOS";
 
-/** 
-Container for command line options. 
+/**
+Container for command line options.
  */
 struct TsvSelectOptions
 {
@@ -59,7 +63,7 @@ struct TsvSelectOptions
     bool versionWanted = false; // --V|version
 
     /** Process command line arguments (getopt cover).
-     * 
+     *
      * processArgs calls getopt to process command line arguments. It does any additional
      * validation and parameter derivations needed. A tuple is returned. First value is
      * true if command line arguments were successfully processed and execution should
@@ -68,12 +72,14 @@ struct TsvSelectOptions
      *
      * Returning true (execution continues) means args have been validated and derived
      * values calculated. In addition, field indices have been converted to zero-based.
-     */ 
+     */
     auto processArgs (ref string[] cmdArgs)
     {
         import std.algorithm : any, each;
         import std.getopt;
-        
+        import std.typecons : Yes, No;
+        import tsvutil :  makeFieldListOptionHandler;
+
         try
         {
             arraySep = ",";    // Use comma to separate values in command line options
@@ -82,14 +88,17 @@ struct TsvSelectOptions
                 std.getopt.config.caseSensitive,
                 "H|header",    "                 Treat the first line of each file as a header.", &hasHeader,
                 std.getopt.config.caseInsensitive,
-                "f|fields",    "n[,n...]         (Required) Fields to extract. Fields are output in the order listed.", &fields,
+
+                "f|fields",    "<field-list>     (Required) Fields to extract. Fields are output in the order listed.",
+                fields.makeFieldListOptionHandler!(size_t, Yes.convertToZeroBasedIndex),
+
                 "r|rest",      "none|first|last  Location for remaining fields. Default: none", &rest,
                 "d|delimiter", "CHR              Character to use as field delimiter. Default: TAB. (Single byte UTF-8 characters only.)", &delim,
                 std.getopt.config.caseSensitive,
                 "V|version",   "                 Print version information and exit.", &versionWanted,
                 std.getopt.config.caseInsensitive,
                 );
-            
+
             if (r.helpWanted)
             {
                 defaultGetoptPrinter(helpText, r.options);
@@ -101,22 +110,12 @@ struct TsvSelectOptions
                 writeln(tsvutilsVersionNotice("tsv-select"));
                 return tuple(false, 0);
             }
-        
+
             /* Consistency checks */
             if (fields.length == 0)
             {
                 throw new Exception("Required option --f|fields was not supplied.");
             }
-        
-            if (fields.length > 0 && fields.any!(x => x == 0))
-            {
-                throw new Exception("Zero is not a valid field number (--f|fields).");
-            }
-
-            /* Derivations */
-            fields.each!((ref x) => --x);  // Convert to 1-based indexing. Using 'ref' in the lambda allows the actual
-                                           // field value to be modified. Otherwise a copy would be passed.
-            
         }
         catch (Exception exc)
         {
@@ -138,7 +137,7 @@ int main(string[] cmdArgs)
         import core.runtime : dmd_coverSetMerge;
         dmd_coverSetMerge(true);
     }
-    
+
     TsvSelectOptions cmdopt;
     auto r = cmdopt.processArgs(cmdArgs);
     if (!r[0]) return r[1];
@@ -153,10 +152,10 @@ int main(string[] cmdArgs)
         case TsvSelectOptions.RestOptionVal.none:
             tsvSelect!(CTERestLocation.none)(cmdopt, cmdArgs[1..$]);
             break;
-        case TsvSelectOptions.RestOptionVal.first: 
+        case TsvSelectOptions.RestOptionVal.first:
             tsvSelect!(CTERestLocation.first)(cmdopt, cmdArgs[1..$]);
             break;
-        case TsvSelectOptions.RestOptionVal.last: 
+        case TsvSelectOptions.RestOptionVal.last:
             tsvSelect!(CTERestLocation.last)(cmdopt, cmdArgs[1..$]);
             break;
         default:
@@ -187,7 +186,7 @@ enum CTERestLocation { none, first, last };
 
 /**
 tsvSelect does the primary work of the tsv-select program.
- 
+
 Input is read line by line, extracting the listed fields and writing them out in the order
 specified. An exception is thrown on error.
 
@@ -204,7 +203,7 @@ void tsvSelect(CTERestLocation cteRest)(in TsvSelectOptions cmdopt, in string[] 
     import std.format: format;
     import std.range;
 
-    // Ensure the correct template instantiation was called. 
+    // Ensure the correct template instantiation was called.
     static if (cteRest == CTERestLocation.none)
         assert(cmdopt.rest == TsvSelectOptions.RestOptionVal.none);
     else static if (cteRest == CTERestLocation.first)

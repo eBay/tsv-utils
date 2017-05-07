@@ -39,11 +39,20 @@ runtest ${prog} "-f 3,1,4 input1.tsv" ${basic_tests_1}
 runtest ${prog} "-f 4,3,2,1 input1.tsv" ${basic_tests_1}
 runtest ${prog} "-f 4,1 --rest none input1.tsv" ${basic_tests_1}
 runtest ${prog} "-f 3,2 -r none input1.tsv" ${basic_tests_1}
+runtest ${prog} "-f 2,2 -r none input1.tsv" ${basic_tests_1}
+
+# Field ranges
+runtest ${prog} "-f 2-3 input1.tsv" ${basic_tests_1}
+runtest ${prog} "-f 4-1 input1.tsv" ${basic_tests_1}
+runtest ${prog} "-f 2-2 input1.tsv" ${basic_tests_1}
+runtest ${prog} "-f 2-3,1 input1.tsv" ${basic_tests_1}
+runtest ${prog} "-f 2-3,1,4-3 input1.tsv" ${basic_tests_1}
 
 # --rest first
 runtest ${prog} "--fields 1 --rest first input1.tsv" ${basic_tests_1}
 runtest ${prog} "-f 3 --rest first input1.tsv" ${basic_tests_1}
 runtest ${prog} "-f 2,3 --rest first input1.tsv" ${basic_tests_1}
+runtest ${prog} "-f 2-3 --rest first input1.tsv" ${basic_tests_1}
 runtest ${prog} "-f 4,3 -r first input1.tsv" ${basic_tests_1}
 runtest ${prog} "-f 3,1,4 -r first input1.tsv" ${basic_tests_1}
 runtest ${prog} "-f 4,3,2,1 -r first input1.tsv" ${basic_tests_1}
@@ -143,7 +152,7 @@ runtest ${prog} "input1.tsv --rest last" ${error_tests_1}
 
 # Disable this test until Phobos 2.071 is available on all compilers
 # 2.071 changed the error message in a minor way.
-#runtest ${prog} "input1.tsv --fields last" ${error_tests_1}
+runtest ${prog} "input1.tsv --fields last" ${error_tests_1}
 
 runtest ${prog} "-f 0 input1.tsv" ${error_tests_1}
 runtest ${prog} "input1.tsv -f 2 --rest elsewhere" ${error_tests_1}
@@ -151,5 +160,12 @@ runtest ${prog} "-f 1 nosuchfile.tsv" ${error_tests_1}
 runtest ${prog} "-f 1,4 input_3plus_fields.tsv" ${error_tests_1}
 runtest ${prog} "-d ß -f 1 input1.tsv" ${error_tests_1}
 runtest ${prog} "-f 1 --nosuchparam input1.tsv" ${error_tests_1}
+
+runtest ${prog} "-f 0-1 input1.tsv" ${error_tests_1}
+runtest ${prog} "-f 2- input1.tsv" ${error_tests_1}
+runtest ${prog} "-f 1,3- input1.tsv" ${error_tests_1}
+runtest ${prog} "-f input1.tsv" ${error_tests_1}
+runtest ${prog} "-f 1, input1.tsv" ${error_tests_1}
+runtest ${prog} "-f 1.1 input1.tsv" ${error_tests_1}
 
 exit $?

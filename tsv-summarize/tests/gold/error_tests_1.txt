@@ -5,34 +5,55 @@ Error test set 1
 Error: Cannot open file `no_such_file.tsv' in mode `rb' (No such file or directory)
 
 ====[tsv-summarize --unique-count 0 input_5field_a.tsv]====
-Error processing command line arguments: Invalid option: '--unique-count 0'. Zero is not a valid field index.
+Error processing command line arguments: [--unique-count] Field numbers must be greater than zero: '0'
 
 ====[tsv-summarize --unique-count 2, input_5field_a.tsv]====
-Error processing command line arguments: Invalid option value: '--unique-count 2,'. Expected: '--unique-count <field>[,<field>]' or '--unique-count <field>:<header>' where <field> is a number and <header> a string.
+Error processing command line arguments: [--unique-count] Empty field number.
 
 ====[tsv-summarize --unique-count 2: input_5field_a.tsv]====
-Error processing command line arguments: Invalid option value: '--unique-count 2:'. Expected: '--unique-count <field>[,<field>]' or '--unique-count <field>:<header>' where <field> is a number and <header> a string.
+Error processing command line arguments: Invalid option value: '--unique-count 2:'. Expected: '--unique-count <field-list>' or '--unique-count <field>:<header>'.
+
+====[tsv-summarize --unique-count 2,3:my_header input_5field_a.tsv]====
+Error processing command line arguments: [--unique-count] Invalid option: '--unique-count 2,3:my_header'. Cannot specify a custom header when using multiple fields.
+
+====[tsv-summarize --unique-count 2-5:my_header input_5field_a.tsv]====
+Error processing command line arguments: [--unique-count] Invalid option: '--unique-count 2-5:my_header'. Cannot specify a custom header when using multiple fields.
+
+====[tsv-summarize --retain 2:my_header input_5field_a.tsv]====
+Error processing command line arguments: [--retain] Invalid option: '--retain 2:my_header'. Operator does not support custom headers.
 
 ====[tsv-summarize --unique-count x input_5field_a.tsv]====
-Error processing command line arguments: Invalid option value: '--unique-count x'. Expected: '--unique-count <field>[,<field>]' or '--unique-count <field>:<header>' where <field> is a number and <header> a string.
+Error processing command line arguments: [--unique-count] Unexpected 'x' when converting from type string to type long
 
 ====[tsv-summarize --unique-count 2 input_5field_a.tsv input_1field_a.tsv]====
 Error: Not enough fields in line. File: input_1field_a.tsv, Line: 1
 
-====[tsv-summarize --group-by 0 input_5field_a.tsv]====
+====[tsv-summarize --group-by 1 input_5field_a.tsv]====
 Error processing command line arguments: At least one summary operator is required.
 
+====[tsv-summarize --group-by 0 --count input_5field_a.tsv]====
+Error processing command line arguments: [--g|group-by] Field numbers must be greater than zero: '0'
+
+====[tsv-summarize --group-by 0 input_5field_a.tsv]====
+Error processing command line arguments: [--g|group-by] Field numbers must be greater than zero: '0'
+
 ====[tsv-summarize --group-by 2, input_5field_a.tsv]====
-Error processing command line arguments: Unexpected end of input when converting from type string to type ulong
+Error processing command line arguments: [--g|group-by] Empty field number.
 
 ====[tsv-summarize --group-by 2: input_5field_a.tsv]====
-Error processing command line arguments: Unexpected ':' when converting from type string to type ulong
+Error processing command line arguments: [--g|group-by] Unexpected ':' when converting from type string to type long
 
 ====[tsv-summarize --group-by x input_5field_a.tsv]====
-Error processing command line arguments: Unexpected 'x' when converting from type string to type ulong
+Error processing command line arguments: [--g|group-by] Unexpected 'x' when converting from type string to type long
 
 ====[tsv-summarize --group-by 2 --unique-count 1 input_5field_a.tsv input_1field_a.tsv]====
 Error: Not enough fields in line. File: input_1field_a.tsv, Line: 1
+
+====[tsv-summarize --group-by 1- input_5field_a.tsv]====
+Error processing command line arguments: [--g|group-by] Incomplete ranges are not supported: '1-'
+
+====[tsv-summarize --group-by 3-0 input_5field_a.tsv]====
+Error processing command line arguments: [--g|group-by] Field numbers must be greater than zero: '0'
 
 ====[tsv-summarize --header --max 1 input_1field_a.tsv]====
 Error: Could not process line or field: no digits seen
@@ -54,7 +75,7 @@ Error processing command line arguments: Invalid UTF-8 sequence (at index 1)
 Error processing command line arguments: Cannot use both '--x|exclude-missing' and '--r|replace-missing'.
 
 ====[tsv-summarize --quantile 3 input_5field_a.tsv]====
-Error processing command line arguments: Invalid option value: '--quantile 3'. Expected: '--quantile <field>[,<field>]:<prob>[,<prob>]' or '--quantile <field>:<prob>:<header>' where <field> is a field number, <prob> is a number between 0.0 and 1.0, and <header> a string.
+Error processing command line arguments: Invalid option value: '--quantile 3'. Expected: '--quantile <field-list>:<prob>[,<prob>]' or '--quantile <field>:<prob>:<header>' where <prob> is a number between 0.0 and 1.0.
 
 ====[tsv-summarize --quantile 3:2 input_5field_a.tsv]====
 Error processing command line arguments: Invalid option: '--quantile 3:2'. Probability '2' is not in the interval [0.0,1.0].
@@ -63,10 +84,28 @@ Error processing command line arguments: Invalid option: '--quantile 3:2'. Proba
 Error processing command line arguments: Invalid option: '--quantile 3:0.5,2'. Probability '2' is not in the interval [0.0,1.0].
 
 ====[tsv-summarize --quantile 0:0.5 input_5field_a.tsv]====
-Error processing command line arguments: Invalid option: '--quantile 0:0.5'. Zero is not a valid field index.
+Error processing command line arguments: [--quantile] Field numbers must be greater than zero: '0'
 
 ====[tsv-summarize --quantile 3,4:0.75:q3 input_5field_a.tsv]====
 Error processing command line arguments: Invalid option: '--quantile 3,4:0.75:q3'. Cannot specify a custom header when using multiple fields or multiple probabilities.
 
 ====[tsv-summarize --quantile 3:0.25,0.75:q1q3 input_5field_a.tsv]====
 Error processing command line arguments: Invalid option: '--quantile 3:0.25,0.75:q1q3'. Cannot specify a custom header when using multiple fields or multiple probabilities.
+
+====[tsv-summarize --quantile 3, input_5field_a.tsv]====
+Error processing command line arguments: Invalid option value: '--quantile 3,'. Expected: '--quantile <field-list>:<prob>[,<prob>]' or '--quantile <field>:<prob>:<header>' where <prob> is a number between 0.0 and 1.0.
+
+====[tsv-summarize --quantile 3- input_5field_a.tsv]====
+Error processing command line arguments: Invalid option value: '--quantile 3-'. Expected: '--quantile <field-list>:<prob>[,<prob>]' or '--quantile <field>:<prob>:<header>' where <prob> is a number between 0.0 and 1.0.
+
+====[tsv-summarize --quantile 0:0.25 input_5field_a.tsv]====
+Error processing command line arguments: [--quantile] Field numbers must be greater than zero: '0'
+
+====[tsv-summarize --quantile 1.5:0.25 input_5field_a.tsv]====
+Error processing command line arguments: [--quantile] Unexpected '.' when converting from type string to type long
+
+====[tsv-summarize --quantile 1-:0.25 input_5field_a.tsv]====
+Error processing command line arguments: [--quantile] Incomplete ranges are not supported: '1-'
+
+====[tsv-summarize --quantile -2:0.25 input_5field_a.tsv]====
+Error processing command line arguments: Missing value for argument --quantile.
