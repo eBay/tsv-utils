@@ -167,7 +167,8 @@ $ tsv-filter --regex '2:aa[0-9]+aa' data.tsv
 $ # Same thing, except the field starts and ends with the two a's.
 $ tsv-filter --regex '2:^aa[0-9]+aa$' data.tsv
 
-$ # Field 2 is a sequence of "word" characters with two or more embedded whitespace sequences
+$ # Field 2 is a sequence of "word" characters with two or more embedded
+$ # whitespace sequences (match against entire field)
 $ tsv-filter --regex '2:^\w+\s+(\w+\s+)+\w+$' data.tsv
 
 $ # Field 2 containing at least one cyrillic character.
@@ -182,7 +183,7 @@ Numeric tests like `--gt` (greater-than) assume field values can be interpreted 
 $ # Ensure field 2 is a number before testing for greater-than 10.
 $ tsv-filter --is-numeric 2 --gt 2:10 data.tsv
 
-$ # Ensure field 2 is a number, not NaN or infinity before testing for greater-than 10.
+$ # Ensure field 2 is a number, not NaN or infinity before greater-than test.
 $ tsv-filter --is-finite 2 --gt 2:10 data.tsv
 ```
 
@@ -547,7 +548,8 @@ number-lines reads from files or standard input and writes each line to standard
 $ # Number lines in a file
 $ number-lines file.tsv
 
-$ # Number lines from multiple files. Treat the first line each file as a header.
+$ # Number lines from multiple files. Treat the first line of each file
+$ # as a header.
 $ number-lines --header data*.tsv
 ```
 
