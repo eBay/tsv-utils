@@ -2,48 +2,48 @@ Error test set 1
 ----------------
 
 ====[tsv-select input1.tsv]====
-Error processing command line arguments: Required option --f|fields was not supplied.
+[tsv-select] Error processing command line arguments: Required option --f|fields was not supplied.
 
 ====[tsv-select input1.tsv --rest last]====
-Error processing command line arguments: Required option --f|fields was not supplied.
+[tsv-select] Error processing command line arguments: Required option --f|fields was not supplied.
 
 ====[tsv-select input1.tsv --fields last]====
-Error processing command line arguments: [--f|fields] Unexpected 'l' when converting from type string to type long
+[tsv-select] Error processing command line arguments: [--f|fields] Unexpected 'l' when converting from type string to type long
 
 ====[tsv-select -f 0 input1.tsv]====
-Error processing command line arguments: [--f|fields] Field numbers must be greater than zero: '0'
+[tsv-select] Error processing command line arguments: [--f|fields] Field numbers must be greater than zero: '0'
 
 ====[tsv-select input1.tsv -f 2 --rest elsewhere]====
-Error processing command line arguments: RestOptionVal does not have a member named 'elsewhere'
+[tsv-select] Error processing command line arguments: RestOptionVal does not have a member named 'elsewhere'
 
 ====[tsv-select -f 1 nosuchfile.tsv]====
-Error: Cannot open file `nosuchfile.tsv' in mode `rb' (No such file or directory)
+Error [tsv-select]: Cannot open file `nosuchfile.tsv' in mode `rb' (No such file or directory)
 
 ====[tsv-select -f 1,4 input_3plus_fields.tsv]====
-Error: Not enough fields in line. File: input_3plus_fields.tsv,  Line: 3
+Error [tsv-select]: Not enough fields in line. File: input_3plus_fields.tsv,  Line: 3
 1	101
 2	5734
 
 ====[tsv-select -d ß -f 1 input1.tsv]====
-Error processing command line arguments: Invalid UTF-8 sequence (at index 1)
+[tsv-select] Error processing command line arguments: Invalid UTF-8 sequence (at index 1)
 
 ====[tsv-select -f 1 --nosuchparam input1.tsv]====
-Error processing command line arguments: Unrecognized option --nosuchparam
+[tsv-select] Error processing command line arguments: Unrecognized option --nosuchparam
 
 ====[tsv-select -f 0-1 input1.tsv]====
-Error processing command line arguments: [--f|fields] Field numbers must be greater than zero: '0'
+[tsv-select] Error processing command line arguments: [--f|fields] Field numbers must be greater than zero: '0'
 
 ====[tsv-select -f 2- input1.tsv]====
-Error processing command line arguments: [--f|fields] Incomplete ranges are not supported: '2-'
+[tsv-select] Error processing command line arguments: [--f|fields] Incomplete ranges are not supported: '2-'
 
 ====[tsv-select -f 1,3- input1.tsv]====
-Error processing command line arguments: [--f|fields] Incomplete ranges are not supported: '3-'
+[tsv-select] Error processing command line arguments: [--f|fields] Incomplete ranges are not supported: '3-'
 
 ====[tsv-select -f input1.tsv]====
-Error processing command line arguments: [--f|fields] Unexpected 'i' when converting from type string to type long
+[tsv-select] Error processing command line arguments: [--f|fields] Unexpected 'i' when converting from type string to type long
 
 ====[tsv-select -f 1, input1.tsv]====
-Error processing command line arguments: [--f|fields] Empty field number.
+[tsv-select] Error processing command line arguments: [--f|fields] Empty field number.
 
 ====[tsv-select -f 1.1 input1.tsv]====
-Error processing command line arguments: [--f|fields] Unexpected '.' when converting from type string to type long
+[tsv-select] Error processing command line arguments: [--f|fields] Unexpected '.' when converting from type string to type long

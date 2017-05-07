@@ -4,94 +4,94 @@ Error test set 1
 ===Duplicate keys===
 
 ====[tsv-join --header -f input1.tsv -k 2 -a 0 input2.tsv]====
-Error: Duplicate keys with different append values (use --z|allow-duplicate-keys to ignore)
+Error [tsv-join]: Duplicate keys with different append values (use --z|allow-duplicate-keys to ignore)
    [key 1][values]: [ggg][1	ggg	UUU	101	15]
    [key 2][values]: [ggg][5	ggg	CCC	5734	52]
 
 ====[tsv-join --header -f input1.tsv -k 2 -a 4 input2.tsv]====
-Error: Duplicate keys with different append values (use --z|allow-duplicate-keys to ignore)
+Error [tsv-join]: Duplicate keys with different append values (use --z|allow-duplicate-keys to ignore)
    [key 1][values]: [ggg][101]
    [key 2][values]: [ggg][5734]
 
 ===Invalid field indicies===
 
 ====[tsv-join --header -f input1.tsv -k 6 input2.tsv]====
-Error: Not enough fields in line. File: input1.tsv, Line: 1
+Error [tsv-join]: Not enough fields in line. File: input1.tsv, Line: 1
 
 ====[tsv-join --header -f input1.tsv -k 4 -a 6 input2.tsv]====
-Error: Not enough fields in line. File: input1.tsv, Line: 1
+Error [tsv-join]: Not enough fields in line. File: input1.tsv, Line: 1
 
 ====[tsv-join --header -f input1.tsv -k 4 -d 6 input2.tsv]====
-Error: Not enough fields in line. File: input2.tsv, Line: 2
+Error [tsv-join]: Not enough fields in line. File: input2.tsv, Line: 2
 f1	f2	f3	f4	f5
 
 ===Missing filter file===
 
 ====[tsv-join --header -k 2 input2.tsv]====
-Error processing command line arguments: Required option --filter-file was not supplied.
+[tsv-join] Error processing command line arguments: Required option --filter-file was not supplied.
 
 ===Invalid Whole line and individual field combos===
 
 ====[tsv-join --header -f input1.tsv -k 2,0 input2.tsv]====
-Error processing command line arguments: Field 0 (whole line) cannot be combined with individual fields (non-zero).
+[tsv-join] Error processing command line arguments: Field 0 (whole line) cannot be combined with individual fields (non-zero).
 
 ====[tsv-join --header -f input1.tsv -k 0,2 input2.tsv]====
-Error processing command line arguments: Field 0 (whole line) cannot be combined with individual fields (non-zero).
+[tsv-join] Error processing command line arguments: Field 0 (whole line) cannot be combined with individual fields (non-zero).
 
 ====[tsv-join --header -f input1.tsv -k 2,3 -d 0,2 input2.tsv]====
-Error processing command line arguments: Field 0 (whole line) cannot be combined with individual fields (non-zero).
+[tsv-join] Error processing command line arguments: Field 0 (whole line) cannot be combined with individual fields (non-zero).
 
 ====[tsv-join --header -f input1.tsv -k 2,3 -d 2,0 input2.tsv]====
-Error processing command line arguments: Field 0 (whole line) cannot be combined with individual fields (non-zero).
+[tsv-join] Error processing command line arguments: Field 0 (whole line) cannot be combined with individual fields (non-zero).
 
 ====[tsv-join --header -f input1.tsv -k 2 -d 0 input2.tsv]====
-Error processing command line arguments: If either --k|key-field or --d|data-field is zero both must be zero.
+[tsv-join] Error processing command line arguments: If either --k|key-field or --d|data-field is zero both must be zero.
 
 ====[tsv-join --header -f input1.tsv -k 0 -d 2 input2.tsv]====
-Error processing command line arguments: If either --k|key-field or --d|data-field is zero both must be zero.
+[tsv-join] Error processing command line arguments: If either --k|key-field or --d|data-field is zero both must be zero.
 
 ===Different number of filter and data keys===
 
 ====[tsv-join --header -f input1.tsv -k 2 -d 2,3 input2.tsv]====
-Error processing command line arguments: Different number of --k|key-fields and --d|data-fields.
+[tsv-join] Error processing command line arguments: Different number of --k|key-fields and --d|data-fields.
 
 ====[tsv-join --header -f input1.tsv -k 2,3 -d 2 input2.tsv]====
-Error processing command line arguments: Different number of --k|key-fields and --d|data-fields.
+[tsv-join] Error processing command line arguments: Different number of --k|key-fields and --d|data-fields.
 
 ===Header prefix without header===
 
 ====[tsv-join --prefix -f input1.tsv -k 2 input1_ input2.tsv]====
-Error processing command line arguments: Use --header when using --p|prefix.
+[tsv-join] Error processing command line arguments: Use --header when using --p|prefix.
 
 ===Exclude with an append field===
 
 ====[tsv-join --header --exclude -a 3 -f input1.tsv -k 6 input2.tsv]====
-Error processing command line arguments: --e|exclude cannot be used with --a|append-fields.
+[tsv-join] Error processing command line arguments: --e|exclude cannot be used with --a|append-fields.
 
 ===Invalid write-all combinations===
 
 ====[tsv-join --header --write-all MISSING -f input1.tsv -k 2,3 input2.tsv]====
-Error processing command line arguments: Use --a|append-fields when using --w|write-all.
+[tsv-join] Error processing command line arguments: Use --a|append-fields when using --w|write-all.
 
 ====[tsv-join --header --write-all MISSING -a 0 -f input1.tsv -k 2,3 input2.tsv]====
-Error processing command line arguments: Cannot use '--a|append-fields 0' (whole line) when using --w|write-all.
+[tsv-join] Error processing command line arguments: Cannot use '--a|append-fields 0' (whole line) when using --w|write-all.
 
 ====[tsv-join --header --write-all MISSING -a 1 --exclude  -f input1.tsv -k 2,3 input2.tsv]====
-Error processing command line arguments: --e|exclude cannot be used with --a|append-fields.
+[tsv-join] Error processing command line arguments: --e|exclude cannot be used with --a|append-fields.
 
 ===Invalid field ranges===
 
 ====[tsv-join --header -f input1.tsv -k 2,x input2.tsv]====
-Error processing command line arguments: [--k|key-fields] Unexpected 'x' when converting from type string to type ulong
+[tsv-join] Error processing command line arguments: [--k|key-fields] Unexpected 'x' when converting from type string to type ulong
 
 ====[tsv-join --header -f input1.tsv -k 2,3 -d 2,1.5 input2.tsv]====
-Error processing command line arguments: [--d|data-fields] Unexpected '.' when converting from type string to type ulong
+[tsv-join] Error processing command line arguments: [--d|data-fields] Unexpected '.' when converting from type string to type ulong
 
 ====[tsv-join --header -f input1.tsv -k 2 -a 1- input2.tsv]====
-Error processing command line arguments: [--a|append-fields] Incomplete ranges are not supported: '1-'
+[tsv-join] Error processing command line arguments: [--a|append-fields] Incomplete ranges are not supported: '1-'
 
 ====[tsv-join --header -f input1.tsv -k 2,,4 input2.tsv]====
-Error processing command line arguments: [--k|key-fields] Empty field number.
+[tsv-join] Error processing command line arguments: [--k|key-fields] Empty field number.
 
 ====[tsv-join --header -f input1.tsv -k input2.tsv]====
-Error processing command line arguments: [--k|key-fields] Unexpected 'i' when converting from type string to type ulong
+[tsv-join] Error processing command line arguments: [--k|key-fields] Unexpected 'i' when converting from type string to type ulong

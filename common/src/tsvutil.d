@@ -996,6 +996,7 @@ unittest // parseFieldRange
     assertThrown("0".parseFieldRange!(size_t, Yes.convertToZeroBasedIndex));
     assertThrown("0-3".parseFieldRange!(size_t, Yes.convertToZeroBasedIndex));
     assertThrown("-2-4".parseFieldRange!(size_t, Yes.convertToZeroBasedIndex));
+    assertThrown("2--4".parseFieldRange!(size_t, Yes.convertToZeroBasedIndex));
 
     assertThrown("".parseFieldRange!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero));
     assertThrown(" ".parseFieldRange!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero));
