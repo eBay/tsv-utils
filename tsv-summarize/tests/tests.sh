@@ -114,8 +114,13 @@ runtest ${prog} "--count no_such_file.tsv" ${error_tests_1}
 runtest ${prog} "--unique-count 0 input_5field_a.tsv" ${error_tests_1}
 runtest ${prog} "--unique-count 2, input_5field_a.tsv" ${error_tests_1}
 runtest ${prog} "--unique-count 2: input_5field_a.tsv" ${error_tests_1}
+runtest ${prog} "--unique-count 2,3:my_header input_5field_a.tsv" ${error_tests_1}
+runtest ${prog} "--unique-count 2-5:my_header input_5field_a.tsv" ${error_tests_1}
+runtest ${prog} "--retain 2:my_header input_5field_a.tsv" ${error_tests_1}
 runtest ${prog} "--unique-count x input_5field_a.tsv" ${error_tests_1}
 runtest ${prog} "--unique-count 2 input_5field_a.tsv input_1field_a.tsv" ${error_tests_1}
+runtest ${prog} "--group-by 1 input_5field_a.tsv" ${error_tests_1}
+runtest ${prog} "--group-by 0 --count input_5field_a.tsv" ${error_tests_1}
 runtest ${prog} "--group-by 0 input_5field_a.tsv" ${error_tests_1}
 runtest ${prog} "--group-by 2, input_5field_a.tsv" ${error_tests_1}
 runtest ${prog} "--group-by 2: input_5field_a.tsv" ${error_tests_1}
