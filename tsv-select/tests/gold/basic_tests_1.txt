@@ -122,6 +122,72 @@ f4-empty	sss
  	 
 Z	0.0
 
+====[tsv-select -f 2,2 -r none input1.tsv]====
+f2	f2
+ggg	ggg
+f1-empty	f1-empty
+ßßß	ßßß
+sss	sss
+ÀBC	ÀBC
+	
+ 	 
+0.0	0.0
+
+====[tsv-select -f 2-3 input1.tsv]====
+f2	f3
+ggg	UUU
+f1-empty	CCC
+ßßß	SSS
+sss	f4-empty
+ÀBC	
+	
+ 	 
+0.0	Z
+
+====[tsv-select -f 4-1 input1.tsv]====
+f4	f3	f2	f1
+101	UUU	ggg	1
+5734	CCC	f1-empty	
+ 7	SSS	ßßß	3
+	f4-empty	sss	4
+1367		ÀBC	5
+f23-empty			6
+f23-space	 	 	7
+1931	Z	0.0	8
+
+====[tsv-select -f 2-2 input1.tsv]====
+f2
+ggg
+f1-empty
+ßßß
+sss
+ÀBC
+
+ 
+0.0
+
+====[tsv-select -f 2-3,1 input1.tsv]====
+f2	f3	f1
+ggg	UUU	1
+f1-empty	CCC	
+ßßß	SSS	3
+sss	f4-empty	4
+ÀBC		5
+		6
+ 	 	7
+0.0	Z	8
+
+====[tsv-select -f 2-3,1,4-3 input1.tsv]====
+f2	f3	f1	f4	f3
+ggg	UUU	1	101	UUU
+f1-empty	CCC		5734	CCC
+ßßß	SSS	3	 7	SSS
+sss	f4-empty	4		f4-empty
+ÀBC		5	1367	
+		6	f23-empty	
+ 	 	7	f23-space	 
+0.0	Z	8	1931	Z
+
 ====[tsv-select --fields 1 --rest first input1.tsv]====
 f2	f3	f4	f1
 ggg	UUU	101	1
@@ -145,6 +211,17 @@ f1	f2	f4	f3
 8	0.0	1931	Z
 
 ====[tsv-select -f 2,3 --rest first input1.tsv]====
+f1	f4	f2	f3
+1	101	ggg	UUU
+	5734	f1-empty	CCC
+3	 7	ßßß	SSS
+4		sss	f4-empty
+5	1367	ÀBC	
+6	f23-empty		
+7	f23-space	 	 
+8	1931	0.0	Z
+
+====[tsv-select -f 2-3 --rest first input1.tsv]====
 f1	f4	f2	f3
 1	101	ggg	UUU
 	5734	f1-empty	CCC

@@ -192,13 +192,15 @@ The above tests work because `tsv-filter` short-circuits evaluation, only runnin
 
 **Synopsis:** tsv-select -f n[,n...] [options] [file...]
 
-tsv-select reads files or standard input and writes specified fields to standard output in the order listed. Similar to `cut` with the ability to reorder fields. Fields can be listed more than once, and fields not listed can be output using the `--rest` option. When working with multiple files, the `--header` option can be used to retain only the header from the first file.
+tsv-select reads files or standard input and writes specified fields to standard output in the order listed. Similar to `cut` with the ability to reorder fields.
+
+Fields numbers start with one. They are comma separated, and ranges can be used. Fields can be listed more than once, and fields not listed can be output using the `--rest` option. When working with multiple files, the `--header` option can be used to retain only the header from the first file.
 
 **Options:**
 * `--h|help` - Print help.
 * `--V|version` - Print version information and exit.
-* `--H|header` - Treat the first line of each file as a header. 
-* `--f|fields n[,n...]` - (Required) Fields to extract. Fields are output in the order listed.
+* `--H|header` - Treat the first line of each file as a header.
+* `--f|fields <field-list>` - (Required) Fields to extract. Fields are output in the order listed.
 * `--r|rest none|first|last` - Location for remaining fields. Default: none
 * `--d|delimiter CHR` - Character to use as field delimiter. Default: TAB. (Single byte UTF-8 characters only.)
 
@@ -212,6 +214,19 @@ $ tsv-select -f 1 --rest first data.tsv
 
 $ # Move fields 7 and 3 to the start of the line
 $ tsv-select -f 7,3 --rest last data.tsv
+
+$ # Output a range of fields
+$ tsv-select -f 3-30 data.tsv
+
+$ # Output fields in reverse order
+$ tsv-select -f 30-3 data.tsv
+
+$ # Multiple files with header lines. Keep only one header.
+$ tsv-select data*.tsv -H --fields 1,2,4-7,14
+
+$ # Files using comma as the separator ('simple csv')
+$ # (Note: Does not handle CSV escapes.)
+$ tsv-select -d , --fields 5,1,2 data.csv
 ```
 ## tsv-summarize reference
 
@@ -477,7 +492,7 @@ Each run produces a different randomization. This can be changed using `--s|stat
 * `--v|seed-value NUM` - Sets the initial random seed. Use a non-zero, 32 bit positive integer. Zero is a no-op.
 * `--d|delimiter CHR` - Field delimiter.
 * `--h|help` - This help information.
- 
+
 ## csv2tsv reference
 
 **Synopsis:** csv2tsv [options] [file...]

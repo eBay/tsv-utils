@@ -530,7 +530,13 @@ OptionHandlerDelegate makeFieldListOptionHandler(
     void fieldListOptionHandler(ref T[] fieldArray, string option, string value)
     {
         import std.algorithm : each;
-        value.parseFieldList!(T, convertToZero, allowZero).each!(x => fieldArray ~= x);
+        try value.parseFieldList!(T, convertToZero, allowZero).each!(x => fieldArray ~= x);
+        catch (Exception exc)
+        {
+            import std.format : format;
+            exc.msg = format("[--%s] %s", option, exc.msg);
+            throw exc;
+        }
     }
 
     return (option, value) => fieldListOptionHandler(fieldsArray, option, value);
@@ -841,15 +847,16 @@ private auto parseFieldRange(T = size_t,
     if (fieldRange.length == 0) throw new Exception("Empty field number.");
 
     auto rangeSplit = findSplit(fieldRange, "-");
-    S start = rangeSplit[0].to!S;
-    S last = rangeSplit[1].empty ? start : rangeSplit[2].to!S;
-    Signed!T increment = (start <= last) ? 1 : -1;
 
     if (!rangeSplit[1].empty && (rangeSplit[0].empty || rangeSplit[2].empty))
     {
         // Range starts or ends with a dash.
         throw new Exception(format("Incomplete ranges are not supported: '%s'", fieldRange));
     }
+
+    S start = rangeSplit[0].to!S;
+    S last = rangeSplit[1].empty ? start : rangeSplit[2].to!S;
+    Signed!T increment = (start <= last) ? 1 : -1;
 
     static if (allowZero)
     {
