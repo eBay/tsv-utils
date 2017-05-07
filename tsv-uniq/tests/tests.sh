@@ -34,6 +34,7 @@ runtest ${prog} "--header input1.tsv" ${basic_tests_1}
 runtest ${prog} "-f 0 input1.tsv" ${basic_tests_1}
 runtest ${prog} "--header -f 0 input1.tsv" ${basic_tests_1}
 runtest ${prog} "--header -f 1,2,3,4,5 input1.tsv" ${basic_tests_1}
+runtest ${prog} "--header -f 1-5 input1.tsv" ${basic_tests_1}
 runtest ${prog} "--header --ignore-case input1.tsv" ${basic_tests_1}
 runtest ${prog} "--ignore-case --equiv input1.tsv" ${basic_tests_1}
 runtest ${prog} "--header --equiv --ignore-case input1.tsv" ${basic_tests_1}
@@ -45,6 +46,7 @@ runtest ${prog} "input1.tsv --fields 1" ${basic_tests_1}
 runtest ${prog} "input1.tsv --header -f 2" ${basic_tests_1}
 runtest ${prog} "input1.tsv --header -f 3,4" ${basic_tests_1}
 runtest ${prog} "input1.tsv --header -f 4,3" ${basic_tests_1}
+runtest ${prog} "input1.tsv --header -f 4-3" ${basic_tests_1}
 runtest ${prog} "input1.tsv --header -f 3,4 --ignore-case" ${basic_tests_1}
 runtest ${prog} "input1.tsv --header -f 5" ${basic_tests_1}
 runtest ${prog} "input1.tsv --header -f 3,4 --equiv --ignore-case" ${basic_tests_1}
@@ -99,12 +101,17 @@ runtest ${prog} "-f 1,0 input1.tsv" ${error_tests_1}
 
 # Disable this test until Phobos 2.071 is available on all compilers
 # 2.071 changed the error message in a minor way.
-#runtest ${prog} "-f 1,g input1.tsv" ${error_tests_1}
+runtest ${prog} "-f 1,g input1.tsv" ${error_tests_1}
+
+runtest ${prog} "-f 1-g input1.tsv" ${error_tests_1}
+runtest ${prog} "-f 0-2 input1.tsv" ${error_tests_1}
+runtest ${prog} "-f 1- input1.tsv" ${error_tests_1}
 
 runtest ${prog} "-d abc -f 2 input1.tsv" ${error_tests_1}
 runtest ${prog} "-d ß -f 1 input1.tsv" ${error_tests_1}
 runtest ${prog} "-f 2 --equiv-start 10 input1.tsv" ${error_tests_1}
 runtest ${prog} "-f 2 --equiv-header abc input1.tsv" ${error_tests_1}
 runtest ${prog} "-f 2,30 input1.tsv" ${error_tests_1}
+runtest ${prog} "-f 2-30 input1.tsv" ${error_tests_1}
 
 exit $?

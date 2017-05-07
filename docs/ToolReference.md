@@ -23,7 +23,6 @@ Information in this section applies to all the tools.
 ### Specifying options
 
 Multi-letter options are specified with a double dash. Single letter options can be specified with a single dash or double dash. For example:
-
 ```
 $ tsv-select -f 1,2         # Valid
 $ tsv-select --f 1,2        # Valid
@@ -35,9 +34,24 @@ $ tsv-select -fields 1,2    # Invalid.
 
 All tools print help if given the `-h` or `--help` option. Many provide more detail via the `--help-verbose` option.
 
-### Field indices
+### Field numbers and field-lists.
 
-Field indices are one-upped integers, following Unix conventions. Some tools use zero to represent the entire line (`tsv-join`, `tsv-uniq`).
+Field numbers are one-upped integers, following Unix conventions. Some tools use zero to represent the entire line (`tsv-join`, `tsv-uniq`).
+
+In many cases multiple fields can be entered as a "field-list". A field-list is a comma separated list of field numbers or field ranges. For example:
+
+```
+$ tsv-select -f 3          # Field 3
+$ tsv-select -f 3,5        # Fields 3 and 5
+$ tsv-select -f 3-5        # Fields 3, 4, 5
+$ tsv-select -f 1,3-5      # Fields 1, 3, 4, 5
+```
+
+Most tools process or output fields in the order listed, and repeated use is usually fine:
+```
+$ tsv-select -f 5-1       # Fields 5, 4, 3, 2, 1
+$ tsv-select -f 1-3,2,1   # Fields 1, 2, 3, 2, 1
+```
 
 ### UTF-8 input
 
@@ -440,7 +454,7 @@ The alternate to 'uniq' mode is 'equiv-class' identification. In this mode, all 
 * `--help-verbose` - Print detailed help.
 * `--V|version` - Print version information and exit.
 * `--H|header` - Treat the first line of each file as a header.
-* `--f|fields n[,n...]` - Fields to use as the key. Default: 0 (entire line).
+* `--f|fields <field-list>` - Fields to use as the key. Default: 0 (entire line).
 * `--i|ignore-case` - Ignore case when comparing keys.
 * `--e|equiv` - Output equiv class IDs rather than uniq'ing entries.
 * `--equiv-header STR` - Use STR as the equiv-id field header. Applies when using `--header --equiv`. Default: 'equiv_id'.
@@ -460,6 +474,9 @@ $ tsv-unique -f 1 data.tsv
 
 $ # Unique a file based on two fields
 $ tsv-uniq -f 1,2 data.tsv
+
+$ # Unique a file based on the first four fields
+$ tsv-uniq -f 1-4 data.tsv
 
 $ # Output all the lines, generating an ID for each unique entry
 $ tsv-uniq -f 1,2 --equiv data.tsv

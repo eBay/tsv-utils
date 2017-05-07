@@ -52,14 +52,14 @@ equivalent entries with an ID. The ID is simply a one-upped counter. Example:
 Options:
 EOS";
 
-/** 
-Container for command line options. 
+/**
+Container for command line options.
  */
 struct TsvUniqOptions
 {
     enum defaultEquivHeader = "equiv_id";
     enum defaultEquivStartID = 1;
-    
+
     bool helpVerbose = false;                 // --help-verbose
     bool versionWanted = false;               // --V|version
     size_t[] fields;                          // --fields
@@ -78,30 +78,35 @@ struct TsvUniqOptions
      * Returning true (execution continues) means args have been validated and derived
      * values calculated. In addition, field indices have been converted to zero-based.
      * If the whole line is the key, the individual fields list will be cleared.
-     */ 
+     */
     auto processArgs (ref string[] cmdArgs)
     {
         import std.algorithm : any, each;
         import std.getopt;
-        
+        import std.typecons : Yes, No;
+        import tsvutil :  makeFieldListOptionHandler;
+
         try
         {
             arraySep = ",";    // Use comma to separate values in command line options
             auto r = getopt(
                 cmdArgs,
-                "help-verbose",  "          Print full help.", &helpVerbose,
+                "help-verbose",  "              Print full help.", &helpVerbose,
                 std.getopt.config.caseSensitive,
-                "V|version",     "          Print version information and exit.", &versionWanted,
-                "H|header",      "          Treat the first line of each file as a header.", &hasHeader,
+                "V|version",     "              Print version information and exit.", &versionWanted,
+                "H|header",      "              Treat the first line of each file as a header.", &hasHeader,
                 std.getopt.config.caseInsensitive,
-                "f|fields",      "n[,n...]  Fields to use as the key. Default: 0 (entire line).", &fields,
-                "i|ignore-case", "          Ignore case when comparing keys.", &ignoreCase,
-                "e|equiv",       "          Output equiv class IDs rather than uniq'ing entries.", &equivMode,
-                "equiv-header",  "STR       Use STR as the equiv-id field header. Applies when using '--header --equiv'. Default: 'equiv_id'.", &equivHeader,
-                "equiv-start",   "INT       Use INT as the first equiv-id. Default: 1.", &equivStartID,
-                "d|delimiter",   "CHR       Field delimiter. Default: TAB. (Single byte UTF-8 characters only.)", &delim,
+
+                "f|fields",      "<field-list>  Fields to use as the key. Default: 0 (entire line).",
+                fields.makeFieldListOptionHandler!(size_t, No.convertToZeroBasedIndex,Yes.allowFieldNumZero),
+
+                "i|ignore-case", "              Ignore case when comparing keys.", &ignoreCase,
+                "e|equiv",       "              Output equiv class IDs rather than uniq'ing entries.", &equivMode,
+                "equiv-header",  "STR           Use STR as the equiv-id field header. Applies when using '--header --equiv'. Default: 'equiv_id'.", &equivHeader,
+                "equiv-start",   "INT           Use INT as the first equiv-id. Default: 1.", &equivStartID,
+                "d|delimiter",   "CHR           Field delimiter. Default: TAB. (Single byte UTF-8 characters only.)", &delim,
                 );
-            
+
             if (r.helpWanted)
             {
                 defaultGetoptPrinter(helpText, r.options);
@@ -149,7 +154,7 @@ struct TsvUniqOptions
             }
 
             fields.each!((ref x) => --x);  // Convert to 1-based indexing.
-            
+
         }
         catch (Exception exc)
         {
@@ -168,7 +173,7 @@ int main(string[] cmdArgs)
         import core.runtime : dmd_coverSetMerge;
         dmd_coverSetMerge(true);
     }
-    
+
     TsvUniqOptions cmdopt;
     auto r = cmdopt.processArgs(cmdArgs);
     if (!r[0]) return r[1];
@@ -186,19 +191,19 @@ void tsvUniq(in TsvUniqOptions cmdopt, in string[] inputFiles)
     import tsvutil : InputFieldReordering;
     import std.algorithm : splitter;
     import std.array : join;
-    import std.conv : to; 
+    import std.conv : to;
     import std.range;
     import std.uni : toLower;
 
     /* InputFieldReordering maps the key fields from an input line to a separate buffer. */
-    auto keyFieldsReordering = new InputFieldReordering!char(cmdopt.fields);  
+    auto keyFieldsReordering = new InputFieldReordering!char(cmdopt.fields);
 
     /* The master hash. The key is the specified fields concatenated together (including
      * separators). The value is the equiv-id.
      */
     long[string] equivHash;
 
-    size_t numFields = cmdopt.fields.length; 
+    size_t numFields = cmdopt.fields.length;
     long nextEquivID = cmdopt.equivStartID;
     bool headerWritten = false;
     foreach (filename; (inputFiles.length > 0) ? inputFiles : ["-"])
