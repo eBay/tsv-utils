@@ -473,7 +473,15 @@ unittest
 }
 
 /**
-parseFieldList lazily generates a range of fields numbers from a 'field-list' string.
+Fieldlists - A field-list is a string entered on the command line identifying one or more
+field numbers. They are used by the majority of the tsv utility applications. There are
+two helper functions, makeFieldListOptionHandler and parseFieldList. Most applications
+will use makeFieldListOptionHandler, it creates a delegate that can be passed to
+std.getopt to process the command option. Actual processing of the option text is done by
+parseFieldList. It can be called directly when the text of the option value contains more
+than just the field number.
+
+Syntax and behavior:
 
 A 'field-list' is a list of numeric field numbers entered on the command line. Fields are
 1-upped integers representing locations in an input line, in the traditional meaning of
@@ -499,8 +507,159 @@ intended for display. Error conditions include:
   - String that does not parse as a valid integer
   - Negative integers, or zero if zero is disallowed.
   - An incomplete range
+  - Zero used as part of a range.
 
-This routine does not enforce any other behaviors. Notably, repeated values are fine.
+No other behaviors are enforced. Repeated values are accepted. If zero is allowed, other
+field numbers can be entered as well. Additional restrictions need to be applied by the
+caller.
+*/
+
+/**
+makeFieldListOptionHandler creates a std.getopt option hander for processing field lists
+entered on the command line. A field list is as defined by parseFieldList.
+*/
+alias OptionHandlerDelegate = void delegate(string option, string value);
+
+OptionHandlerDelegate makeFieldListOptionHandler(
+    T,
+    ConvertToZeroBasedIndex convertToZero = No.convertToZeroBasedIndex,
+    AllowFieldNumZero allowZero = No.allowFieldNumZero)
+    (ref T[] fieldsArray)
+    if (isIntegral!T && (!allowZero || !convertToZero || !isUnsigned!T))
+{
+    void fieldListOptionHandler(ref T[] fieldArray, string option, string value)
+    {
+        import std.algorithm : each;
+        value.parseFieldList!(T, convertToZero, allowZero).each!(x => fieldArray ~= x);
+    }
+
+    return (option, value) => fieldListOptionHandler(fieldsArray, option, value);
+}
+
+unittest
+{
+    import std.getopt;
+
+    {
+        size_t[] fields;
+        auto args = ["program", "--fields", "1", "--fields", "2,4,7-9,23-21"];
+        getopt(args, "f|fields", fields.makeFieldListOptionHandler);
+        assert(fields == [1, 2, 4, 7, 8, 9, 23, 22, 21]);
+    }
+    {
+        size_t[] fields;
+        auto args = ["program", "--fields", "1", "--fields", "2,4,7-9,23-21"];
+        getopt(args,
+               "f|fields", fields.makeFieldListOptionHandler!(size_t, Yes.convertToZeroBasedIndex));
+        assert(fields == [0, 1, 3, 6, 7, 8, 22, 21, 20]);
+    }
+    {
+        size_t[] fields;
+        auto args = ["program", "-f", "0"];
+        getopt(args,
+               "f|fields", fields.makeFieldListOptionHandler!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero));
+        assert(fields == [0]);
+    }
+    {
+        size_t[] fields;
+        auto args = ["program", "-f", "0", "-f", "1,0", "-f", "0,1"];
+        getopt(args,
+               "f|fields", fields.makeFieldListOptionHandler!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero));
+        assert(fields == [0, 1, 0, 0, 1]);
+    }
+    {
+        size_t[] ints;
+        size_t[] fields;
+        auto args = ["program", "--ints", "1,2,3", "--fields", "1", "--ints", "4,5,6", "--fields", "2,4,7-9,23-21"];
+        std.getopt.arraySep = ",";
+        getopt(args,
+               "i|ints", "Built-in list of integers.", &ints,
+               "f|fields", "Field-list style integers.", fields.makeFieldListOptionHandler);
+        assert(ints == [1, 2, 3, 4, 5, 6]);
+        assert(fields == [1, 2, 4, 7, 8, 9, 23, 22, 21]);
+    }
+
+    /* Basic cases involved unsinged types smaller than size_t. */
+    {
+        uint[] fields;
+        auto args = ["program", "-f", "0", "-f", "1,0", "-f", "0,1", "-f", "55-58"];
+        getopt(args,
+               "f|fields", fields.makeFieldListOptionHandler!(uint, No.convertToZeroBasedIndex, Yes.allowFieldNumZero));
+        assert(fields == [0, 1, 0, 0, 1, 55, 56, 57, 58]);
+    }
+    {
+        ushort[] fields;
+        auto args = ["program", "-f", "0", "-f", "1,0", "-f", "0,1", "-f", "55-58"];
+        getopt(args,
+               "f|fields", fields.makeFieldListOptionHandler!(ushort, No.convertToZeroBasedIndex, Yes.allowFieldNumZero));
+        assert(fields == [0, 1, 0, 0, 1, 55, 56, 57, 58]);
+    }
+
+    /* Basic cases involving unsigned types. */
+    {
+        long[] fields;
+        auto args = ["program", "--fields", "1", "--fields", "2,4,7-9,23-21"];
+        getopt(args, "f|fields", fields.makeFieldListOptionHandler);
+        assert(fields == [1, 2, 4, 7, 8, 9, 23, 22, 21]);
+    }
+    {
+        long[] fields;
+        auto args = ["program", "--fields", "1", "--fields", "2,4,7-9,23-21"];
+        getopt(args,
+               "f|fields", fields.makeFieldListOptionHandler!(long, Yes.convertToZeroBasedIndex));
+        assert(fields == [0, 1, 3, 6, 7, 8, 22, 21, 20]);
+    }
+    {
+        long[] fields;
+        auto args = ["program", "-f", "0"];
+        getopt(args,
+               "f|fields", fields.makeFieldListOptionHandler!(long, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero));
+        assert(fields == [-1]);
+    }
+    {
+        int[] fields;
+        auto args = ["program", "--fields", "1", "--fields", "2,4,7-9,23-21"];
+        getopt(args, "f|fields", fields.makeFieldListOptionHandler);
+        assert(fields == [1, 2, 4, 7, 8, 9, 23, 22, 21]);
+    }
+    {
+        int[] fields;
+        auto args = ["program", "--fields", "1", "--fields", "2,4,7-9,23-21"];
+        getopt(args,
+               "f|fields", fields.makeFieldListOptionHandler!(int, Yes.convertToZeroBasedIndex));
+        assert(fields == [0, 1, 3, 6, 7, 8, 22, 21, 20]);
+    }
+    {
+        int[] fields;
+        auto args = ["program", "-f", "0"];
+        getopt(args,
+               "f|fields", fields.makeFieldListOptionHandler!(int, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero));
+        assert(fields == [-1]);
+    }
+    {
+        short[] fields;
+        auto args = ["program", "--fields", "1", "--fields", "2,4,7-9,23-21"];
+        getopt(args, "f|fields", fields.makeFieldListOptionHandler);
+        assert(fields == [1, 2, 4, 7, 8, 9, 23, 22, 21]);
+    }
+    {
+        short[] fields;
+        auto args = ["program", "--fields", "1", "--fields", "2,4,7-9,23-21"];
+        getopt(args,
+               "f|fields", fields.makeFieldListOptionHandler!(short, Yes.convertToZeroBasedIndex));
+        assert(fields == [0, 1, 3, 6, 7, 8, 22, 21, 20]);
+    }
+    {
+        short[] fields;
+        auto args = ["program", "-f", "0"];
+        getopt(args,
+               "f|fields", fields.makeFieldListOptionHandler!(short, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero));
+        assert(fields == [-1]);
+    }
+}
+
+/**
+parseFieldList lazily generates a range of fields numbers from a 'field-list' string.
 */
 
 alias ConvertToZeroBasedIndex = Flag!"convertToZeroBasedIndex";
@@ -517,7 +676,7 @@ auto parseFieldList(T = size_t,
     auto _splitFieldList = fieldList.splitter(delim);
     auto _currFieldParse =
         (_splitFieldList.empty ? "" : _splitFieldList.front)
-        .parseFieldRange!(convertToZero, allowZero);
+        .parseFieldRange!(T, convertToZero, allowZero);
 
     if (!_splitFieldList.empty) _splitFieldList.popFront;
 
@@ -542,7 +701,7 @@ auto parseFieldList(T = size_t,
             _currFieldParse.popFront;
             if (_currFieldParse.empty && !_splitFieldList.empty)
             {
-                _currFieldParse = _splitFieldList.front.parseFieldRange!(convertToZero, allowZero);
+                _currFieldParse = _splitFieldList.front.parseFieldRange!(T, convertToZero, allowZero);
                 _splitFieldList.popFront;
             }
         }
@@ -623,60 +782,34 @@ unittest
     assertThrown("0-2,6-0".parseFieldList!(int, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero).each);
 }
 
-/**
-makeFieldListOptionHandler creates a std.getopt option hander for processing field lists
-entered on the command line. A field list is as defined by parseFieldList.
-*/
-
-alias OptionHandlerDelegate = void delegate(string option, string value);
-
-OptionHandlerDelegate makeFieldListOptionHandler(
-    T,
-    ConvertToZeroBasedIndex convertToZero = No.convertToZeroBasedIndex,
-    AllowFieldNumZero allowZero = No.allowFieldNumZero)
-    (ref T[] fieldsArray)
-    if (isIntegral!T && (!allowZero || !convertToZero || !isUnsigned!T))
-{
-    void fieldListOptionHandler(ref size_t[] fieldArray, string option, string value)
-    {
-        import std.algorithm : each;
-        value.parseFieldList!(T, convertToZero, allowZero).each!(x => fieldArray ~= x);
-    }
-
-    return (option, value) => fieldListOptionHandler(fieldsArray, option, value);
-}
-
-unittest
-{
-    import std.getopt;
-
-    size_t[] fields;
-    auto args = ["program", "--fields", "1", "--fields", "2,4,7-9,23-21"];
-    getopt(args, "f|fields", fields.makeFieldListOptionHandler);
-    assert(fields == [1, 2, 4, 7, 8, 9, 23, 22, 21]);
-
-    // TODO - More unit tests
-}
-
 /* parseFieldRange parses a single number or number range. E.g. '5' or '5-8'. These are
  * the values in a field-list separated by a comma or other delimiter. It returns a range
  * that iterates over all the values in the range.
  */
-private auto parseFieldRange(ConvertToZeroBasedIndex convertToZero = No.convertToZeroBasedIndex,
+private auto parseFieldRange(T = size_t,
+                             ConvertToZeroBasedIndex convertToZero = No.convertToZeroBasedIndex,
                              AllowFieldNumZero allowZero = No.allowFieldNumZero)
     (string fieldRange)
+    if (isIntegral!T && (!allowZero || !convertToZero || !isUnsigned!T))
 {
     import std.algorithm : findSplit;
     import std.conv : to;
     import std.format : format;
     import std.range : iota;
+    import std.traits : Signed;
+
+    /* Pick the largest compatible integral type for the IOTA range. This must be the
+     * signed type if convertToZero is true, as a reverse order range may end at -1.
+     */
+    static if (convertToZero) alias S = Signed!T;
+    else alias S = T;
 
     if (fieldRange.length == 0) throw new Exception("Empty field number.");
 
     auto rangeSplit = findSplit(fieldRange, "-");
-    long start = rangeSplit[0].to!long;
-    long last = rangeSplit[1].empty ? start : rangeSplit[2].to!long;
-    int increment = (start <= last) ? 1 : -1;
+    S start = rangeSplit[0].to!S;
+    S last = rangeSplit[1].empty ? start : rangeSplit[2].to!S;
+    Signed!T increment = (start <= last) ? 1 : -1;
 
     if (!rangeSplit[1].empty && (rangeSplit[0].empty || rangeSplit[2].empty))
     {
@@ -732,24 +865,53 @@ unittest // parseFieldRange
     assert("10-1".parseFieldRange.equal([10,  9, 8, 7, 6, 5, 4, 3, 2, 1]));
 
     /* Convert to zero-based indices */
-    assert(parseFieldRange!(Yes.convertToZeroBasedIndex)("1").equal([0]));
-    assert("2".parseFieldRange!(Yes.convertToZeroBasedIndex).equal([1]));
-    assert("3-4".parseFieldRange!(Yes.convertToZeroBasedIndex).equal([2, 3]));
-    assert("3-5".parseFieldRange!(Yes.convertToZeroBasedIndex).equal([2, 3, 4]));
-    assert("4-3".parseFieldRange!(Yes.convertToZeroBasedIndex).equal([3, 2]));
-    assert("10-1".parseFieldRange!(Yes.convertToZeroBasedIndex).equal([9, 8, 7, 6, 5, 4, 3, 2, 1, 0]));
+    assert(parseFieldRange!(size_t, Yes.convertToZeroBasedIndex)("1").equal([0]));
+    assert("2".parseFieldRange!(size_t, Yes.convertToZeroBasedIndex).equal([1]));
+    assert("3-4".parseFieldRange!(size_t, Yes.convertToZeroBasedIndex).equal([2, 3]));
+    assert("3-5".parseFieldRange!(size_t, Yes.convertToZeroBasedIndex).equal([2, 3, 4]));
+    assert("4-3".parseFieldRange!(size_t, Yes.convertToZeroBasedIndex).equal([3, 2]));
+    assert("10-1".parseFieldRange!(size_t, Yes.convertToZeroBasedIndex).equal([9, 8, 7, 6, 5, 4, 3, 2, 1, 0]));
 
     /* Allow zero. */
-    assert("0".parseFieldRange!(No.convertToZeroBasedIndex, Yes.allowFieldNumZero).equal([0]));
-    assert(parseFieldRange!(No.convertToZeroBasedIndex, Yes.allowFieldNumZero)("1").equal([1]));
-    assert("3-4".parseFieldRange!(No.convertToZeroBasedIndex, Yes.allowFieldNumZero).equal([3, 4]));
-    assert("10-1".parseFieldRange!(No.convertToZeroBasedIndex, Yes.allowFieldNumZero).equal([10,  9, 8, 7, 6, 5, 4, 3, 2, 1]));
+    assert("0".parseFieldRange!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero).equal([0]));
+    assert(parseFieldRange!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero)("1").equal([1]));
+    assert("3-4".parseFieldRange!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero).equal([3, 4]));
+    assert("10-1".parseFieldRange!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero).equal([10,  9, 8, 7, 6, 5, 4, 3, 2, 1]));
 
     /* Allow zero, convert to zero-based index. */
-    assert("0".parseFieldRange!(Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero).equal([-1]));
-    assert(parseFieldRange!(Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero)("1").equal([0]));
-    assert("3-4".parseFieldRange!(Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero).equal([2, 3]));
-    assert("10-1".parseFieldRange!(Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero).equal([9, 8, 7, 6, 5, 4, 3, 2, 1, 0]));
+    assert("0".parseFieldRange!(long, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero).equal([-1]));
+    assert(parseFieldRange!(long, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero)("1").equal([0]));
+    assert("3-4".parseFieldRange!(long, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero).equal([2, 3]));
+    assert("10-1".parseFieldRange!(long, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero).equal([9, 8, 7, 6, 5, 4, 3, 2, 1, 0]));
+
+    /* Alternate integer types. */
+    assert("2".parseFieldRange!uint.equal([2]));
+    assert("3-5".parseFieldRange!uint.equal([3, 4, 5]));
+    assert("10-1".parseFieldRange!uint.equal([10,  9, 8, 7, 6, 5, 4, 3, 2, 1]));
+    assert("2".parseFieldRange!int.equal([2]));
+    assert("3-5".parseFieldRange!int.equal([3, 4, 5]));
+    assert("10-1".parseFieldRange!int.equal([10,  9, 8, 7, 6, 5, 4, 3, 2, 1]));
+    assert("2".parseFieldRange!ushort.equal([2]));
+    assert("3-5".parseFieldRange!ushort.equal([3, 4, 5]));
+    assert("10-1".parseFieldRange!ushort.equal([10,  9, 8, 7, 6, 5, 4, 3, 2, 1]));
+    assert("2".parseFieldRange!short.equal([2]));
+    assert("3-5".parseFieldRange!short.equal([3, 4, 5]));
+    assert("10-1".parseFieldRange!short.equal([10,  9, 8, 7, 6, 5, 4, 3, 2, 1]));
+
+    assert("0".parseFieldRange!(long, No.convertToZeroBasedIndex, Yes.allowFieldNumZero).equal([0]));
+    assert("0".parseFieldRange!(uint, No.convertToZeroBasedIndex, Yes.allowFieldNumZero).equal([0]));
+    assert("0".parseFieldRange!(int, No.convertToZeroBasedIndex, Yes.allowFieldNumZero).equal([0]));
+    assert("0".parseFieldRange!(ushort, No.convertToZeroBasedIndex, Yes.allowFieldNumZero).equal([0]));
+    assert("0".parseFieldRange!(short, No.convertToZeroBasedIndex, Yes.allowFieldNumZero).equal([0]));
+    assert("0".parseFieldRange!(int, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero).equal([-1]));
+    assert("0".parseFieldRange!(short, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero).equal([-1]));
+
+    /* Max field value cases. */
+    assert("65535".parseFieldRange!ushort.equal([65535]));   // ushort max
+    assert("65533-65535".parseFieldRange!ushort.equal([65533, 65534, 65535]));
+    assert("32767".parseFieldRange!short.equal([32767]));    // short max
+    assert("32765-32767".parseFieldRange!short.equal([32765, 32766, 32767]));
+    assert("32767".parseFieldRange!(short, Yes.convertToZeroBasedIndex).equal([32766]));
 
     /* Error cases. */
     assertThrown("".parseFieldRange);
@@ -772,31 +934,40 @@ unittest // parseFieldRange
     assertThrown("1_000".parseFieldRange);
     assertThrown(".".parseFieldRange);
 
-    assertThrown("".parseFieldRange!(Yes.convertToZeroBasedIndex));
-    assertThrown(" ".parseFieldRange!(Yes.convertToZeroBasedIndex));
-    assertThrown("-".parseFieldRange!(Yes.convertToZeroBasedIndex));
-    assertThrown("1-".parseFieldRange!(Yes.convertToZeroBasedIndex));
-    assertThrown("-2".parseFieldRange!(Yes.convertToZeroBasedIndex));
-    assertThrown("-1".parseFieldRange!(Yes.convertToZeroBasedIndex));
-    assertThrown("0".parseFieldRange!(Yes.convertToZeroBasedIndex));
-    assertThrown("0-3".parseFieldRange!(Yes.convertToZeroBasedIndex));
-    assertThrown("-2-4".parseFieldRange!(Yes.convertToZeroBasedIndex));
+    assertThrown("".parseFieldRange!(size_t, Yes.convertToZeroBasedIndex));
+    assertThrown(" ".parseFieldRange!(size_t, Yes.convertToZeroBasedIndex));
+    assertThrown("-".parseFieldRange!(size_t, Yes.convertToZeroBasedIndex));
+    assertThrown("1-".parseFieldRange!(size_t, Yes.convertToZeroBasedIndex));
+    assertThrown("-2".parseFieldRange!(size_t, Yes.convertToZeroBasedIndex));
+    assertThrown("-1".parseFieldRange!(size_t, Yes.convertToZeroBasedIndex));
+    assertThrown("0".parseFieldRange!(size_t, Yes.convertToZeroBasedIndex));
+    assertThrown("0-3".parseFieldRange!(size_t, Yes.convertToZeroBasedIndex));
+    assertThrown("-2-4".parseFieldRange!(size_t, Yes.convertToZeroBasedIndex));
 
-    assertThrown("".parseFieldRange!(No.convertToZeroBasedIndex, Yes.allowFieldNumZero));
-    assertThrown(" ".parseFieldRange!(No.convertToZeroBasedIndex, Yes.allowFieldNumZero));
-    assertThrown("-".parseFieldRange!(No.convertToZeroBasedIndex, Yes.allowFieldNumZero));
-    assertThrown("1-".parseFieldRange!(No.convertToZeroBasedIndex, Yes.allowFieldNumZero));
-    assertThrown("-2".parseFieldRange!(No.convertToZeroBasedIndex, Yes.allowFieldNumZero));
-    assertThrown("-1".parseFieldRange!(No.convertToZeroBasedIndex, Yes.allowFieldNumZero));
-    assertThrown("0-3".parseFieldRange!(No.convertToZeroBasedIndex, Yes.allowFieldNumZero));
-    assertThrown("-2-4".parseFieldRange!(No.convertToZeroBasedIndex, Yes.allowFieldNumZero));
+    assertThrown("".parseFieldRange!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero));
+    assertThrown(" ".parseFieldRange!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero));
+    assertThrown("-".parseFieldRange!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero));
+    assertThrown("1-".parseFieldRange!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero));
+    assertThrown("-2".parseFieldRange!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero));
+    assertThrown("-1".parseFieldRange!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero));
+    assertThrown("0-3".parseFieldRange!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero));
+    assertThrown("-2-4".parseFieldRange!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero));
 
-    assertThrown("".parseFieldRange!(Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero));
-    assertThrown(" ".parseFieldRange!(Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero));
-    assertThrown("-".parseFieldRange!(Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero));
-    assertThrown("1-".parseFieldRange!(Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero));
-    assertThrown("-2".parseFieldRange!(Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero));
-    assertThrown("-1".parseFieldRange!(Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero));
-    assertThrown("0-3".parseFieldRange!(Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero));
-    assertThrown("-2-4".parseFieldRange!(Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero));
+    assertThrown("".parseFieldRange!(long, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero));
+    assertThrown(" ".parseFieldRange!(long, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero));
+    assertThrown("-".parseFieldRange!(long, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero));
+    assertThrown("1-".parseFieldRange!(long, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero));
+    assertThrown("-2".parseFieldRange!(long, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero));
+    assertThrown("-1".parseFieldRange!(long, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero));
+    assertThrown("0-3".parseFieldRange!(long, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero));
+    assertThrown("-2-4".parseFieldRange!(long, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero));
+
+    /* Value out of range cases. */
+    assertThrown("65536".parseFieldRange!ushort);   // One more than ushort max.
+    assertThrown("65535-65536".parseFieldRange!ushort);
+    assertThrown("32768".parseFieldRange!short);    // One more than short max.
+    assertThrown("32765-32768".parseFieldRange!short);
+    // Convert to zero limits signed range.
+    assertThrown("32768".parseFieldRange!(ushort, Yes.convertToZeroBasedIndex));
+    assert("32767".parseFieldRange!(ushort, Yes.convertToZeroBasedIndex).equal([32766]));
 }
