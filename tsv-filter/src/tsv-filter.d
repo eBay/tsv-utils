@@ -11,7 +11,7 @@ License: Boost Licence 1.0 (http://boost.org/LICENSE_1_0.txt)
 */
 module tsv_filter;
 
-import std.algorithm : canFind, equal, findSplit, max, min; 
+import std.algorithm : canFind, equal, findSplit, max, min;
 import std.conv : to;
 import std.format : format;
 import std.math : abs, isFinite, isInfinity, isNaN;
@@ -36,14 +36,14 @@ int main(string[] cmdArgs)
         import core.runtime : dmd_coverSetMerge;
         dmd_coverSetMerge(true);
     }
-    
+
     TsvFilterOptions cmdopt;
     auto r = cmdopt.processArgs(cmdArgs);
     if (!r[0]) return r[1];
     try tsvFilter(cmdopt, cmdArgs[1..$]);
     catch (Exception exc)
     {
-        stderr.writeln("Error: ", exc.msg);
+        stderr.writefln("Error [%s]: %s", cmdopt.programName, exc.msg);
         return 1;
     }
     return 0;
@@ -71,7 +71,7 @@ Operators:
 
 * Test if a field is numeric, finite, NaN, or infinity
   Syntax:  --is-numeric|is-finite|is-nan|is-infinity FIELD
-  Example: --is-numeric 5 --gt 5:100  // Ensure field 5 is numeric before --gt test. 
+  Example: --is-numeric 5 --gt 5:100  // Ensure field 5 is numeric before --gt test.
 
 * Compare a field to a number (integer or float)
   Syntax:  --eq|ne|lt|le|gt|ge  FIELD:NUM
@@ -170,7 +170,7 @@ alias FieldsPredicate = bool delegate(const char[][] fields);
  * - FieldVsNumberPredicate - Test based on a field index (used to get the field value)
  *   and a fixed numeric value. For example, field 2 less than 100 (--lt 2:100).
  * - FieldVsStringPredicate - Test based on a field and a string. (e.g. --str-eq 2:abc)
- * - FieldVsIStringPredicate - Case-insensitive test based on a field and a string. 
+ * - FieldVsIStringPredicate - Case-insensitive test based on a field and a string.
  *   (e.g. --istr-eq 2:abc)
  * - FieldVsRegexPredicate - Test based on a field and a regex. (e.g. --regex '2:ab*c')
  * - FieldVsFieldPredicate - Test based on two fields. (e.g. --ff-le 2:4).
@@ -179,7 +179,7 @@ alias FieldsPredicate = bool delegate(const char[][] fields);
  * runs the test. For example, a function testing if a field is less than a specific
  * value would pull the specified field from the fields array, convert the string to
  * a number, then run the less-than test.
- */ 
+ */
 alias FieldUnaryPredicate    = bool function(const char[][] fields, size_t index);
 alias FieldVsNumberPredicate = bool function(const char[][] fields, size_t index, double value);
 alias FieldVsStringPredicate = bool function(const char[][] fields, size_t index, string value);
@@ -288,19 +288,19 @@ auto RelDiff(double v1, double v2) { return (v1 - v2).abs / min(v1.abs, v2.abs);
 
 bool ffAbsDiffLE(const char[][] fields, size_t index1, size_t index2, double value)
 {
-    return AbsDiff(fields[index1].to!double, fields[index2].to!double) <= value; 
+    return AbsDiff(fields[index1].to!double, fields[index2].to!double) <= value;
 }
 bool ffAbsDiffGT(const char[][] fields, size_t index1, size_t index2, double value)
 {
-    return AbsDiff(fields[index1].to!double, fields[index2].to!double) > value; 
+    return AbsDiff(fields[index1].to!double, fields[index2].to!double) > value;
 }
 bool ffRelDiffLE(const char[][] fields, size_t index1, size_t index2, double value)
 {
-    return RelDiff(fields[index1].to!double, fields[index2].to!double) <= value; 
+    return RelDiff(fields[index1].to!double, fields[index2].to!double) <= value;
 }
 bool ffRelDiffGT(const char[][] fields, size_t index1, size_t index2, double value)
 {
-    return RelDiff(fields[index1].to!double, fields[index2].to!double) > value; 
+    return RelDiff(fields[index1].to!double, fields[index2].to!double) > value;
 }
 
 /* Command line option handlers - There is a command line option handler for each
@@ -377,7 +377,7 @@ void fieldVsNumberOptionHandler(
     }
     size_t zeroBasedIndex = field - 1;
     tests ~= makeFieldVsNumberDelegate(fn, zeroBasedIndex, value);
-    maxFieldIndex = (zeroBasedIndex > maxFieldIndex) ? zeroBasedIndex : maxFieldIndex; 
+    maxFieldIndex = (zeroBasedIndex > maxFieldIndex) ? zeroBasedIndex : maxFieldIndex;
 }
 
 void fieldVsStringOptionHandler(
@@ -411,7 +411,7 @@ void fieldVsStringOptionHandler(
     }
     size_t zeroBasedIndex = field - 1;
     tests ~= makeFieldVsStringDelegate(fn, zeroBasedIndex, value);
-    maxFieldIndex = (zeroBasedIndex > maxFieldIndex) ? zeroBasedIndex : maxFieldIndex; 
+    maxFieldIndex = (zeroBasedIndex > maxFieldIndex) ? zeroBasedIndex : maxFieldIndex;
 }
 
 /* The fieldVsIStringOptionHandler lower-cases the command line argument, assuming the
@@ -448,7 +448,7 @@ void fieldVsIStringOptionHandler(
     }
     size_t zeroBasedIndex = field - 1;
     tests ~= makeFieldVsIStringDelegate(fn, zeroBasedIndex, value.to!dstring.toLower);
-    maxFieldIndex = (zeroBasedIndex > maxFieldIndex) ? zeroBasedIndex : maxFieldIndex; 
+    maxFieldIndex = (zeroBasedIndex > maxFieldIndex) ? zeroBasedIndex : maxFieldIndex;
 }
 
 void fieldVsRegexOptionHandler(
@@ -484,7 +484,7 @@ void fieldVsRegexOptionHandler(
     }
     size_t zeroBasedIndex = field - 1;
     tests ~= makeFieldVsRegexDelegate(fn, zeroBasedIndex, value);
-    maxFieldIndex = (zeroBasedIndex > maxFieldIndex) ? zeroBasedIndex : maxFieldIndex; 
+    maxFieldIndex = (zeroBasedIndex > maxFieldIndex) ? zeroBasedIndex : maxFieldIndex;
 }
 
 void fieldVsFieldOptionHandler(
@@ -516,13 +516,13 @@ void fieldVsFieldOptionHandler(
         throw new Exception(
             format("Invalid option: '--%s %s'. Zero is not a valid field index.", option, optionVal));
     }
-    
+
     if (field1 == field2)
     {
         throw new Exception(
             format("Invalid option: '--%s %s'. Field1 and field2 must be different fields", option, optionVal));
     }
-    
+
     size_t zeroBasedIndex1 = field1 - 1;
     size_t zeroBasedIndex2 = field2 - 1;
     tests ~= makeFieldVsFieldDelegate(fn, zeroBasedIndex1, zeroBasedIndex2);
@@ -575,7 +575,7 @@ void fieldFieldNumOptionHandler(
         throw new Exception(
             format("Invalid option: '--%s %s'. Field1 and field2 must be different fields", option, optionVal));
     }
-        
+
     size_t zeroBasedIndex1 = field1 - 1;
     size_t zeroBasedIndex2 = field2 - 1;
     tests ~= makeFieldFieldNumDelegate(fn, zeroBasedIndex1, zeroBasedIndex2, value);
@@ -587,6 +587,7 @@ void fieldFieldNumOptionHandler(
  */
 struct TsvFilterOptions
 {
+    string programName;
     FieldsPredicate[] tests;         // Derived from tests
     size_t maxFieldIndex;            // Derived from tests
     bool hasHeader = false;          // --H|header
@@ -603,12 +604,15 @@ struct TsvFilterOptions
      *
      * Returning true (execution continues) means args have been validated and the
      * tests array has been established.
-     */ 
+     */
     auto processArgs (ref string[] cmdArgs)
     {
         import std.getopt;
+        import std.path : baseName, stripExtension;
         import getopt_inorder;
-        
+
+        programName = (cmdArgs.length > 0) ? cmdArgs[0].stripExtension.baseName : "Unknown_program_name";
+
         /* Command option handlers - One handler for each option. These conform to the
          * getopt required handler signature, and separate knowledge the specific command
          * option text from the option processing.
@@ -622,14 +626,14 @@ struct TsvFilterOptions
         void handlerFldIsFinite(string option, string value)   { fieldUnaryOptionHandler(tests, maxFieldIndex, &fldIsFinite, option, value); }
         void handlerFldIsNaN(string option, string value)      { fieldUnaryOptionHandler(tests, maxFieldIndex, &fldIsNaN, option, value); }
         void handlerFldIsInfinity(string option, string value) { fieldUnaryOptionHandler(tests, maxFieldIndex, &fldIsInfinity, option, value); }
-        
+
         void handlerNumLE(string option, string value) { fieldVsNumberOptionHandler(tests, maxFieldIndex, &numLE, option, value); }
         void handlerNumLT(string option, string value) { fieldVsNumberOptionHandler(tests, maxFieldIndex, &numLT, option, value); }
         void handlerNumGE(string option, string value) { fieldVsNumberOptionHandler(tests, maxFieldIndex, &numGE, option, value); }
         void handlerNumGT(string option, string value) { fieldVsNumberOptionHandler(tests, maxFieldIndex, &numGT, option, value); }
         void handlerNumEQ(string option, string value) { fieldVsNumberOptionHandler(tests, maxFieldIndex, &numEQ, option, value); }
         void handlerNumNE(string option, string value) { fieldVsNumberOptionHandler(tests, maxFieldIndex, &numNE, option, value); }
-        
+
         void handlerStrLE(string option, string value) { fieldVsStringOptionHandler(tests, maxFieldIndex, &strLE, option, value); }
         void handlerStrLT(string option, string value) { fieldVsStringOptionHandler(tests, maxFieldIndex, &strLT, option, value); }
         void handlerStrGE(string option, string value) { fieldVsStringOptionHandler(tests, maxFieldIndex, &strGE, option, value); }
@@ -644,19 +648,19 @@ struct TsvFilterOptions
         void handlerIStrNE(string option, string value)       { fieldVsIStringOptionHandler(tests, maxFieldIndex, &istrNE,       option, value); }
         void handlerIStrInFld(string option, string value)    { fieldVsIStringOptionHandler(tests, maxFieldIndex, &istrInFld,    option, value); }
         void handlerIStrNotInFld(string option, string value) { fieldVsIStringOptionHandler(tests, maxFieldIndex, &istrNotInFld, option, value); }
-        
+
         void handlerRegexMatch(string option, string value)     { fieldVsRegexOptionHandler(tests, maxFieldIndex, &regexMatch,    option, value, true); }
         void handlerRegexNotMatch(string option, string value)  { fieldVsRegexOptionHandler(tests, maxFieldIndex, &regexNotMatch, option, value, true); }
         void handlerIRegexMatch(string option, string value)    { fieldVsRegexOptionHandler(tests, maxFieldIndex, &regexMatch,    option, value, false); }
         void handlerIRegexNotMatch(string option, string value) { fieldVsRegexOptionHandler(tests, maxFieldIndex, &regexNotMatch, option, value, false); }
-        
+
         void handlerFFLE(string option, string value) { fieldVsFieldOptionHandler(tests, maxFieldIndex, &ffLE, option, value); }
         void handlerFFLT(string option, string value) { fieldVsFieldOptionHandler(tests, maxFieldIndex, &ffLT, option, value); }
         void handlerFFGE(string option, string value) { fieldVsFieldOptionHandler(tests, maxFieldIndex, &ffGE, option, value); }
         void handlerFFGT(string option, string value) { fieldVsFieldOptionHandler(tests, maxFieldIndex, &ffGT, option, value); }
         void handlerFFEQ(string option, string value) { fieldVsFieldOptionHandler(tests, maxFieldIndex, &ffEQ, option, value); }
         void handlerFFNE(string option, string value) { fieldVsFieldOptionHandler(tests, maxFieldIndex, &ffNE, option, value); }
-        
+
         void handlerFFStrEQ(string option, string value)  { fieldVsFieldOptionHandler(tests, maxFieldIndex, &ffStrEQ,  option, value); }
         void handlerFFStrNE(string option, string value)  { fieldVsFieldOptionHandler(tests, maxFieldIndex, &ffStrNE,  option, value); }
         void handlerFFIStrEQ(string option, string value) { fieldVsFieldOptionHandler(tests, maxFieldIndex, &ffIStrEQ, option, value); }
@@ -683,7 +687,7 @@ struct TsvFilterOptions
                 "v|invert",        "     Invert the filter, printing lines that do not match.", &invert,
                 std.getopt.config.caseInsensitive,
                 "d|delimiter",     "CHR  Field delimiter. Default: TAB. (Single byte UTF-8 characters only.)", &delim,
-                
+
                 "empty",           "FIELD       True if field is empty.", &handlerFldEmpty,
                 "not-empty",       "FIELD       True if field is not empty.", &handlerFldNotEmpty,
                 "blank",           "FIELD       True if field is empty or all whitespace.", &handlerFldBlank,
@@ -693,14 +697,14 @@ struct TsvFilterOptions
                 "is-finite",       "FIELD       True if field is interpretable as a number and is not NaN or infinity.", &handlerFldIsFinite,
                 "is-nan",          "FIELD       True if field is NaN.", &handlerFldIsNaN,
                 "is-infinity",     "FIELD       True if field is infinity.", &handlerFldIsInfinity,
-                
+
                 "le",              "FIELD:NUM   FIELD <= NUM (numeric).", &handlerNumLE,
                 "lt",              "FIELD:NUM   FIELD <  NUM (numeric).", &handlerNumLT,
                 "ge",              "FIELD:NUM   FIELD >= NUM (numeric).", &handlerNumGE,
                 "gt",              "FIELD:NUM   FIELD >  NUM (numeric).", &handlerNumGT,
                 "eq",              "FIELD:NUM   FIELD == NUM (numeric).", &handlerNumEQ,
                 "ne",              "FIELD:NUM   FIELD != NUM (numeric).", &handlerNumNE,
-                
+
                 "str-le",          "FIELD:STR   FIELD <= STR (string).", &handlerStrLE,
                 "str-lt",          "FIELD:STR   FIELD <  STR (string).", &handlerStrLT,
                 "str-ge",          "FIELD:STR   FIELD >= STR (string).", &handlerStrGE,
@@ -714,17 +718,17 @@ struct TsvFilterOptions
                 "str-not-in-fld",  "FIELD:STR   FIELD does not contain STR (substring search).", &handlerStrNotInFld,
                 "istr-not-in-fld", "FIELD:STR   FIELD does not contain STR (substring search, case-insensitive).", &handlerIStrNotInFld,
 
-                "regex",           "FIELD:REGEX   FIELD matches regular expression.", &handlerRegexMatch, 
-                "iregex",          "FIELD:REGEX   FIELD matches regular expression, case-insensitive.", &handlerIRegexMatch, 
-                "not-regex",       "FIELD:REGEX   FIELD does not match regular expression.", &handlerRegexNotMatch, 
-                "not-iregex",      "FIELD:REGEX   FIELD does not match regular expression, case-insensitive.", &handlerIRegexNotMatch, 
-                
+                "regex",           "FIELD:REGEX   FIELD matches regular expression.", &handlerRegexMatch,
+                "iregex",          "FIELD:REGEX   FIELD matches regular expression, case-insensitive.", &handlerIRegexMatch,
+                "not-regex",       "FIELD:REGEX   FIELD does not match regular expression.", &handlerRegexNotMatch,
+                "not-iregex",      "FIELD:REGEX   FIELD does not match regular expression, case-insensitive.", &handlerIRegexNotMatch,
+
                 "ff-le",           "FIELD1:FIELD2   FIELD1 <= FIELD2 (numeric).", &handlerFFLE,
                 "ff-lt",           "FIELD1:FIELD2   FIELD1 <  FIELD2 (numeric).", &handlerFFLT,
                 "ff-ge",           "FIELD1:FIELD2   FIELD1 >= FIELD2 (numeric).", &handlerFFGE,
                 "ff-gt",           "FIELD1:FIELD2   FIELD1 >  FIELD2 (numeric).", &handlerFFGT,
                 "ff-eq",           "FIELD1:FIELD2   FIELD1 == FIELD2 (numeric).", &handlerFFEQ,
-                "ff-ne",           "FIELD1:FIELD2   FIELD1 != FIELD2 (numeric).", &handlerFFNE,                
+                "ff-ne",           "FIELD1:FIELD2   FIELD1 != FIELD2 (numeric).", &handlerFFNE,
                 "ff-str-eq",       "FIELD1:FIELD2   FIELD1 == FIELD2 (string).", &handlerFFStrEQ,
                 "ff-istr-eq",      "FIELD1:FIELD2   FIELD1 == FIELD2 (string, case-insensitive).", &handlerFFIStrEQ,
                 "ff-str-ne",       "FIELD1:FIELD2   FIELD1 != FIELD2 (string).", &handlerFFStrNE,
@@ -741,7 +745,7 @@ struct TsvFilterOptions
              */
             if (r.helpWanted)
             {
-                stdout.write(helpText); 
+                stdout.write(helpText);
                 return tuple(false, 0);
             }
             else if (helpVerbose)
@@ -763,7 +767,7 @@ struct TsvFilterOptions
         }
         catch (Exception exc)
         {
-            stderr.writeln("Error processing command line arguments: ", exc.msg);
+            stderr.writefln("[%s] Error processing command line arguments: %s", programName, exc.msg);
             return tuple(false, 1);
         }
         return tuple(true, 0);
@@ -804,7 +808,7 @@ void tsvFilter(in TsvFilterOptions cmdopt, in string[] inputFiles)
                     fieldIndex++;
                     lineFields[fieldIndex] = fieldValue;
                 }
-                
+
                 if (fieldIndex == -1)
                 {
                     assert(line.length == 0);
@@ -823,13 +827,13 @@ void tsvFilter(in TsvFilterOptions cmdopt, in string[] inputFiles)
                         format("Not enough fields in line. File: %s, Line: %s",
                                (filename == "-") ? "Standard Input" : filename, lineNum));
                 }
-                
+
                 /* Run the tests. Tests will fail (throw) if a field cannot be converted
                  * to the expected type.
                  */
                 try
                 {
-                    bool passed = cmdopt.disjunct ? 
+                    bool passed = cmdopt.disjunct ?
                         cmdopt.tests.any!(x => x(lineFields)) :
                         cmdopt.tests.all!(x => x(lineFields));
                     if (cmdopt.invert) passed = !passed;

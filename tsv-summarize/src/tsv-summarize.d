@@ -39,7 +39,7 @@ else
         try tsvSummarize(cmdopt, cmdArgs[1..$]);
         catch (Exception exc)
         {
-            stderr.writeln("Error: ", exc.msg);
+            stderr.writefln("Error [%s]: %s", cmdopt.programName, exc.msg);
             return 1;
         }
         return 0;
@@ -138,6 +138,8 @@ EOS";
  * process the command line.
  */
 struct TsvSummarizeOptions {
+    string programName;
+
     /* Options set directly by on the command line.. */
     size_t[] keyFields;                // -g, --group-by
     bool hasHeader = false;            // --header
@@ -163,9 +165,12 @@ struct TsvSummarizeOptions {
     auto processArgs (ref string[] cmdArgs) {
         import std.algorithm : any, each;
         import std.getopt;
-        import getopt_inorder;
+        import std.path : baseName, stripExtension;
         import std.typecons : Yes, No;
+        import getopt_inorder;
         import tsvutil :  makeFieldListOptionHandler;
+
+        programName = (cmdArgs.length > 0) ? cmdArgs[0].stripExtension.baseName : "Unknown_program_name";
 
         try
         {
@@ -237,7 +242,7 @@ struct TsvSummarizeOptions {
         }
         catch (Exception exc)
         {
-            stderr.writeln("Error processing command line arguments: ", exc.msg);
+            stderr.writefln("[%s] Error processing command line arguments: %s", programName, exc.msg);
             return tuple(false, 1);
         }
         return tuple(true, 0);

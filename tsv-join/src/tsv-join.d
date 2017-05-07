@@ -63,6 +63,7 @@ EOS";
  */
 struct TsvJoinOptions
 {
+    string programName;
     string filterFile;               // --filter
     size_t[] keyFields;              // --key-fields
     size_t[] dataFields;             // --data-fields
@@ -92,8 +93,11 @@ struct TsvJoinOptions
     {
         import std.algorithm : any, each;
         import std.getopt;
+        import std.path : baseName, stripExtension;
         import std.typecons : Yes, No;
         import tsvutil :  makeFieldListOptionHandler;
+
+        programName = (cmdArgs.length > 0) ? cmdArgs[0].stripExtension.baseName : "Unknown_program_name";
 
         /* Handler for --write-all. Special handler so two values can be set. */
         void writeAllHandler(string option, string value)
@@ -156,7 +160,7 @@ struct TsvJoinOptions
         }
         catch (Exception exc)
         {
-            stderr.writeln("Error processing command line arguments: ", exc.msg);
+            stderr.writefln("[%s] Error processing command line arguments: %s", programName, exc.msg);
             return tuple(false, 1);
         }
         return tuple(true, 0);
@@ -279,7 +283,7 @@ int main(string[] cmdArgs)
     try tsvJoin(cmdopt, cmdArgs[1..$]);
     catch (Exception exc)
     {
-        stderr.writeln("Error: ", exc.msg);
+        stderr.writefln("Error [%s]: %s", cmdopt.programName, exc.msg);
         return 1;
     }
     return 0;

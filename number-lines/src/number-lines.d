@@ -32,13 +32,14 @@ Examples:
 Options:
 EOS";
 
-/** 
-Container for command line options. 
+/**
+Container for command line options.
  */
 struct NumberLinesOptions
 {
     enum defaultHeaderString = "line";
-    
+
+    string programName;
     bool hasHeader = false;       // --H|header
     string headerString = "";     // --s|header-string
     long startNum = 1;            // --n|start-num
@@ -48,12 +49,15 @@ struct NumberLinesOptions
     /* Returns a tuple. First value is true if command line arguments were successfully
      * processed and execution should continue, or false if an error occurred or the user
      * asked for help. If false, the second value is the appropriate exit code (0 or 1).
-     */ 
+     */
     auto processArgs (ref string[] cmdArgs)
     {
         import std.algorithm : any, each;
         import std.getopt;
-        
+        import std.path : baseName, stripExtension;
+
+        programName = (cmdArgs.length > 0) ? cmdArgs[0].stripExtension.baseName : "Unknown_program_name";
+
         try
         {
             auto r = getopt(
@@ -87,11 +91,11 @@ struct NumberLinesOptions
         }
         catch (Exception exc)
         {
-            stderr.writeln("Error processing command line arguments: ", exc.msg);
+            stderr.writefln("[%s] Error processing command line arguments: %s", programName, exc.msg);
             return tuple(false, 1);
         }
         return tuple(true, 0);
-    }           
+    }
 }
 
 int main(string[] cmdArgs)
@@ -102,14 +106,14 @@ int main(string[] cmdArgs)
         import core.runtime : dmd_coverSetMerge;
         dmd_coverSetMerge(true);
     }
-    
+
     NumberLinesOptions cmdopt;
     auto r = cmdopt.processArgs(cmdArgs);
     if (!r[0]) return r[1];
     try numberLines(cmdopt, cmdArgs[1..$]);
     catch (Exception exc)
     {
-        stderr.writeln("Error: ", exc.msg);
+        stderr.writefln("Error [%s]: %s", cmdopt.programName, exc.msg);
         return 1;
     }
 
@@ -119,7 +123,7 @@ int main(string[] cmdArgs)
 void numberLines(in NumberLinesOptions cmdopt, in string[] inputFiles)
 {
     import std.range;
-    
+
     long lineNum = cmdopt.startNum;
     bool headerWritten = false;
     foreach (filename; (inputFiles.length > 0) ? inputFiles : ["-"])

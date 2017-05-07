@@ -64,11 +64,12 @@ UTF-8 input is assumed. Convert other encodings prior to invoking this tool.
 Options:
 EOS";
 
-/** 
-Container for command line options. 
+/**
+Container for command line options.
  */
 struct Csv2tsvOptions
 {
+    string programName;
     bool helpVerbose = false;          // --help-verbose
     bool hasHeader = false;            // --H|header
     char csvQuoteChar = '"';           // --q|quote
@@ -81,7 +82,10 @@ struct Csv2tsvOptions
     {
         import std.algorithm : canFind;
         import std.getopt;
-        
+        import std.path : baseName, stripExtension;
+
+        programName = (cmdArgs.length > 0) ? cmdArgs[0].stripExtension.baseName : "Unknown_program_name";
+
         try
         {
             auto r = getopt(
@@ -131,12 +135,12 @@ struct Csv2tsvOptions
             {
                 throw new Exception("CSV quote and TSV field delimiter characters must be different (--q|quote, --t|tsv-delim).");
             }
-                                    
+
             if (csvDelimChar == '\n' || csvDelimChar == '\r')
             {
                 throw new Exception ("CSV field delimiter cannot be newline (--c|csv-delim).");
             }
-                                    
+
             if (tsvDelimChar == '\n' || tsvDelimChar == '\r')
             {
                 throw new Exception ("TSV field delimiter cannot be newline (--t|tsv-delimiter).");
@@ -149,7 +153,7 @@ struct Csv2tsvOptions
         }
         catch (Exception exc)
         {
-            stderr.writeln("Error processing command line arguments: ", exc.msg);
+            stderr.writefln("[%s] Error processing command line arguments: %s", programName, exc.msg);
             return tuple(false, 1);
         }
         return tuple(true, 0);
@@ -169,19 +173,19 @@ else
             import core.runtime : dmd_coverSetMerge;
             dmd_coverSetMerge(true);
         }
-    
+
         Csv2tsvOptions cmdopt;
         auto r = cmdopt.processArgs(cmdArgs);
         if (!r[0]) return r[1];
         try csv2tsvFiles(cmdopt, cmdArgs[1..$]);
         catch (Exception exc)
         {
-            writeln(); 
+            writeln();
             stdin.flush();
-            stderr.writeln("Error: ", exc.msg);
+            stderr.writefln("Error [%s]: %s", cmdopt.programName, exc.msg);
             return 1;
         }
-        
+
         return 0;
     }
 }
@@ -191,7 +195,7 @@ alias NullableSizeT = Nullable!(size_t, size_t.max);
 
 /**
 csv2tsvFiles reads multiple files and standard input and writes the results to standard
-output. 
+output.
  */
 void csv2tsvFiles(in Csv2tsvOptions cmdopt, in string[] inputFiles)
 {
@@ -201,7 +205,7 @@ void csv2tsvFiles(in Csv2tsvOptions cmdopt, in string[] inputFiles)
     ubyte[] stdinRawBuf = fileRawBuf[0..1024];
     auto stdoutWriter = stdout.lockingTextWriter;
     bool firstFile = true;
-            
+
     foreach (filename; (inputFiles.length > 0) ? inputFiles : ["-"])
     {
         auto ubyteChunkedStream = (filename == "-") ?
@@ -253,7 +257,7 @@ Params:
 
 Throws: Exception on finding inconsistent CSV. Exception text includes the filename and
         line number where the error was identified.
- */ 
+ */
 void csv2tsv(InputRange, OutputRange)
     (ref InputRange inputStream, ref OutputRange outputStream,
      string filename = "(none)", size_t currFileLineNumber = 0,
@@ -298,7 +302,7 @@ InputLoop: while (!inputStream.empty)
     {
         char nextChar = inputStream.front;
         inputStream.popFront;
-        
+
         if (nextChar == '\r')
         {
             /* Collapse newline cases to '\n'. */
@@ -308,7 +312,7 @@ InputLoop: while (!inputStream.empty)
             }
             nextChar = '\n';
         }
-        
+
         final switch (currState)
         {
         case State.FieldEnd:
@@ -324,16 +328,16 @@ InputLoop: while (!inputStream.empty)
                 currState = State.NonQuotedField;
                 goto case State.NonQuotedField;
             }
-            
+
         case State.NonQuotedField:
             if (nextChar == csvDelim)
             {
-                outputChar(tsvDelim); 
+                outputChar(tsvDelim);
                 currState = State.FieldEnd;
             }
             else if (nextChar == tsvDelim)
             {
-                outputString(tsvDelimReplacement); 
+                outputString(tsvDelimReplacement);
             }
             else if (nextChar == '\n')
             {
@@ -366,17 +370,17 @@ InputLoop: while (!inputStream.empty)
                      * following trailing newline. Reset the state to avoid triggering
                      * an invalid quoted field exception, plus adding additional newline.
                      */
-                    currState = State.FieldEnd; 
+                    currState = State.FieldEnd;
                 }
             }
             else if (nextChar ==  '\n')
             {
                 /* Newline in a quoted field. */
-                outputString(tsvDelimReplacement); 
+                outputString(tsvDelimReplacement);
             }
             else if (nextChar == tsvDelim)
             {
-                outputString(tsvDelimReplacement); 
+                outputString(tsvDelimReplacement);
             }
             else
             {
@@ -417,7 +421,7 @@ InputLoop: while (!inputStream.empty)
             break;
         }
     }
-    
+
     if (currState == State.QuotedField)
     {
         throw new Exception(
@@ -545,7 +549,7 @@ unittest
     auto tsv27 = "#^#\n";
     auto tsv28 = "^#^\n";
     auto tsv29 = "$\n";
-    auto tsv30 = "$\t$\n$\t$$\t$$\n^#$\t$#^\t#$^\t^$#\n";    
+    auto tsv30 = "$\t$\n$\t$$\t$$\n^#$\t$#^\t#$^\t^$#\n";
     auto tsv31 = "1-1\n2-1\t2-2\n3-1\t3-2\t3-3\n\n\t5-2\n\t\t6-3\n";
     auto tsv32 = "\t1-2\t1-3\n2-1\t2-2\t\n3-1\t\t3-3\n";
 
@@ -626,12 +630,12 @@ unittest
                      csv11a, csv12a, csv13a, csv14a, csv15a, csv16a, csv17a, csv18a, csv19a, csv20a,
                      csv21a, csv22a, csv23a, csv24a, csv25a, csv26a, csv27a, csv28a, csv29a, csv30a,
                      csv31a, csv32a];
-    
+
     auto csvSet1b = [csv1b, csv2b, csv3b, csv4b, csv5b, csv6b, csv7b, csv8b, csv9b, csv10b,
                      csv11b, csv12b, csv13b, csv14b, csv15b, csv16b, csv17b, csv18b, csv19b, csv20b,
                      csv21b, csv22b, csv23b, csv24b, csv25b, csv26b, csv27b, csv28b, csv29b, csv30b,
                      csv31b, csv32b];
-    
+
     auto tsvSet1  = [tsv1, tsv2, tsv3, tsv4, tsv5, tsv6, tsv7, tsv8, tsv9, tsv10,
                      tsv11, tsv12, tsv13, tsv14, tsv15, tsv16, tsv17, tsv18, tsv19, tsv20,
                      tsv21, tsv22, tsv23, tsv24, tsv25, tsv26, tsv27, tsv28, tsv29, tsv30,
@@ -646,15 +650,15 @@ unittest
                        tsv11_y, tsv12_y, tsv13_y, tsv14_y, tsv15_y, tsv16_y, tsv17_y, tsv18_y, tsv19_y, tsv20_y,
                        tsv21_y, tsv22_y, tsv23_y, tsv24_y, tsv25_y, tsv26_y, tsv27_y, tsv28_y, tsv29_y, tsv30_y,
                        tsv31_y, tsv32_y];
-    
+
     foreach (i, csva, csvb, tsv, tsv_x, tsv_y; lockstep(csvSet1a, csvSet1b, tsvSet1, tsvSet1_x, tsvSet1_y))
     {
         import std.conv : to;
 
         /* Byte streams for csv2tsv. Consumed by csv2tsv, so need to be reset when re-used. */
-        ubyte[] csvInputA = cast(ubyte[])csva;  
+        ubyte[] csvInputA = cast(ubyte[])csva;
         ubyte[] csvInputB = cast(ubyte[])csvb;
-        
+
         /* CSV Set A vs TSV expected. */
         auto tsvResultA = appender!(char[])();
         csv2tsv(csvInputA, tsvResultA, "csvInputA_defaultTSV", i);
@@ -731,7 +735,7 @@ unittest
     auto csv18 = "\"a\",\"aa\"\n\"b\",\"bb\"\n";
     auto csv19 = "\"a\",\"aa\"\n\"b\",\"bb\"\n\"c\",\"cc\"";
     auto csv20 = "\"a\",\"aa\"\n\"b\",\"bb\"\n\"c\",\"cc\"\n";
-    
+
     /* TSV with max 1 record. */
     auto tsv1_max1 = "";
     auto tsv2_max1 = "\t\n";
@@ -754,7 +758,7 @@ unittest
     auto tsv18_max1 = "a\taa\n";
     auto tsv19_max1 = "a\taa\n";
     auto tsv20_max1 = "a\taa\n";
-    
+
     /* Remaining TSV converted after first call. */
     auto tsv1_max1_rest = "";
     auto tsv2_max1_rest = "";
@@ -777,7 +781,7 @@ unittest
     auto tsv18_max1_rest = "b\tbb\n";
     auto tsv19_max1_rest = "b\tbb\nc\tcc\n";
     auto tsv20_max1_rest = "b\tbb\nc\tcc\n";
-    
+
     /* TSV with max 2 records. */
     auto tsv1_max2 = "";
     auto tsv2_max2 = "\t\n";
@@ -800,7 +804,7 @@ unittest
     auto tsv18_max2 = "a\taa\nb\tbb\n";
     auto tsv19_max2 = "a\taa\nb\tbb\n";
     auto tsv20_max2 = "a\taa\nb\tbb\n";
-    
+
     /* Remaining TSV converted after first call. */
     auto tsv1_max2_rest = "";
     auto tsv2_max2_rest = "";
@@ -823,7 +827,7 @@ unittest
     auto tsv18_max2_rest = "";
     auto tsv19_max2_rest = "c\tcc\n";
     auto tsv20_max2_rest = "c\tcc\n";
-    
+
     auto csvSet1 =
         [csv1, csv2, csv3, csv4, csv5, csv6, csv7,
          csv8, csv9, csv10, csv11, csv12, csv13, csv14,
