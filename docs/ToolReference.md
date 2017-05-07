@@ -345,9 +345,9 @@ tsv-join matches input lines against lines from a 'filter' file. The match is ba
 * `--h|help-verbose` - Print detailed help.
 * `--V|version` - Print version information and exit.
 * `--f|filter-file FILE` - (Required) File with records to use as a filter.
-* `--k|key-fields n[,n...]` - Fields to use as join key. Default: 0 (entire line).
-* `--d|data-fields n[,n...]` - Data record fields to use as join key, if different than `--key-fields`.
-* `--a|append-fields n[,n...]` - Filter fields to append to matched records.
+* `--k|key-fields <field-list>` - Fields to use as join key. Default: 0 (entire line).
+* `--d|data-fields <field-list>` - Data record fields to use as join key, if different than `--key-fields`.
+* `--a|append-fields <field-list>` - Filter fields to append to matched records.
 * `--H|header` - Treat the first line of each file as a header.
 * `--p|prefix STR` - String to use as a prefix for `--append-fields` when writing a header line.
 * `--w|write-all STR` - Output all data records. STR is the `--append-fields` value when writing unmatched records. This is an outer join.
@@ -376,9 +376,9 @@ Same as previous, except use field 4 & 5 from the data files.
 $ tsv-join -f filter.tsv --key-fields 2,3 --data-fields 4,5 data1.tsv data2.tsv data3.tsv
 ```
 
-Append a field from the filter file to matched records.
+Append fields from the filter file to matched records.
 ```
-$ tsv-join -f filter.tsv --key-fields 1 --append-fields 2 data.tsv
+$ tsv-join -f filter.tsv --key-fields 1 --append-fields 2-5 data.tsv
 ```
 
 Write out all records from the data file, but when there is no match, write the 'append fields' as NULL. This is an outer join.

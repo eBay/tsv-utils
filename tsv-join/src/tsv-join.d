@@ -1,5 +1,5 @@
 /**
-Command line tool that joins tab-separated value files based on a common key. 
+Command line tool that joins tab-separated value files based on a common key.
 
 This tool joins lines from tab-delimited files based on a common key. One file, the 'filter'
 file, contains the records (lines) being matched. The other input files are searched for
@@ -9,7 +9,7 @@ fields from the 'filter' file. In database parlance this is a 'hash semi-join'.
 Copyright (c) 2015-2017, eBay Software Foundation
 Initially written by Jon Degenhardt
 
-License: Boost Licence 1.0 (http://boost.org/LICENSE_1_0.txt) 
+License: Boost Licence 1.0 (http://boost.org/LICENSE_1_0.txt)
 */
 module tsv_join;
 
@@ -22,7 +22,7 @@ Synopsis: tsv-join --filter-file file [options] file [file...]
 
 tsv-join matches input lines against lines from a 'filter' file. The match is
 based on fields or the entire line. Use '--help-verbose' for more details.
- 
+
 Options:
 EOS";
 
@@ -49,6 +49,12 @@ tsv-join can also work as a simple filter, this is the default behavior. Example
 This outputs all lines from data.tsv found in filter.tsv. --key-fields can still
 be used to define the match key. The --exclude option can be used to exclude
 matched lines rather than keep them.
+
+Multiple fields can be specified as keys and append fields. Field numbers start
+at one, zero represents the whole line. Fields are comma separated and ranges
+can be used. Example:
+
+  tsv-join -f filter.tsv -k 1,2 --append-fields 3-7 data.tsv
 
 Options:
 EOS";
@@ -81,11 +87,13 @@ struct TsvJoinOptions
      * Returning true (execution continues) means args have been validated and derived
      * values calculated. In addition, field indices have been converted to zero-based.
      * If the whole line is the key, the individual fields lists will be cleared.
-     */ 
+     */
     auto processArgs (ref string[] cmdArgs)
     {
         import std.algorithm : any, each;
         import std.getopt;
+        import std.typecons : Yes, No;
+        import tsvutil :  makeFieldListOptionHandler;
 
         /* Handler for --write-all. Special handler so two values can be set. */
         void writeAllHandler(string option, string value)
@@ -94,28 +102,35 @@ struct TsvJoinOptions
             writeAll = true;
             writeAllValue = value;
         }
-        
+
         try
         {
             arraySep = ",";    // Use comma to separate values in command line options
             auto r = getopt(
                 cmdArgs,
-                "help-verbose",    "          Print full help.", &helpVerbose,
-                "f|filter-file",   "FILE      (Required) File with records to use as a filter.", &filterFile,
-                "k|key-fields",    "n[,n...]  Fields to use as join key. Default: 0 (entire line).", &keyFields,
-                "d|data-fields",   "n[,n...]  Data record fields to use as join key, if different than --key-fields.", &dataFields,
-                "a|append-fields", "n[,n...]  Filter fields to append to matched records.", &appendFields,
+                "help-verbose",    "              Print full help.", &helpVerbose,
+                "f|filter-file",   "FILE          (Required) File with records to use as a filter.", &filterFile,
+
+                "k|key-fields",    "<field-list>  Fields to use as join key. Default: 0 (entire line).",
+                keyFields.makeFieldListOptionHandler!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero),
+
+                "d|data-fields",   "<field-list>  Data record fields to use as join key, if different than --key-fields.",
+                dataFields.makeFieldListOptionHandler!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero),
+
+                "a|append-fields", "<field-list>  Filter fields to append to matched records.",
+                appendFields.makeFieldListOptionHandler!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero),
+
                 std.getopt.config.caseSensitive,
-                "H|header",        "          Treat the first line of each file as a header.", &hasHeader,
+                "H|header",        "              Treat the first line of each file as a header.", &hasHeader,
                 std.getopt.config.caseInsensitive,
-                "p|prefix",        "STR       String to use as a prefix for --append-fields when writing a header line.", &appendHeaderPrefix,
-                "w|write-all",     "STR       Output all data records. STR is the --append-fields value when writing unmatched records.", &writeAllHandler,
-                "e|exclude",       "          Exclude matching records.", &exclude,
-                "delimiter",       "CHR       Field delimiter. Default: TAB. (Single byte UTF-8 characters only.)", &delim,
+                "p|prefix",        "STR           String to use as a prefix for --append-fields when writing a header line.", &appendHeaderPrefix,
+                "w|write-all",     "STR           Output all data records. STR is the --append-fields value when writing unmatched records.", &writeAllHandler,
+                "e|exclude",       "              Exclude matching records.", &exclude,
+                "delimiter",       "CHR           Field delimiter. Default: TAB. (Single byte UTF-8 characters only.)", &delim,
                 "z|allow-duplicate-keys",
-                                   "          Allow duplicate keys with different append values (last entry wins).", &allowDupliateKeys,
+                                   "              Allow duplicate keys with different append values (last entry wins).", &allowDupliateKeys,
                 std.getopt.config.caseSensitive,
-                "V|version",       "          Print version information and exit.", &versionWanted,
+                "V|version",       "              Print version information and exit.", &versionWanted,
                 std.getopt.config.caseInsensitive,
                 );
 
@@ -207,7 +222,7 @@ struct TsvJoinOptions
     void derivations()
     {
         import std.algorithm : each;
-        import std.range; 
+        import std.range;
 
         // Convert 'full-line' field indexes (index zero) to boolean flags.
         if (keyFields.length == 0)
@@ -221,7 +236,7 @@ struct TsvJoinOptions
             keyIsFullLine = true;
             keyFields.popFront;
             dataIsFullLine = true;
-            
+
             if (dataFields.length == 1)
             {
                 assert(dataFields[0] == 0);
@@ -232,13 +247,13 @@ struct TsvJoinOptions
         if (appendFields.length == 1 && appendFields[0] == 0)
         {
             appendFullLine = true;
-            appendFields.popFront; 
+            appendFields.popFront;
         }
 
         assert(!(keyIsFullLine && keyFields.length > 0));
         assert(!(dataIsFullLine && dataFields.length > 0));
         assert(!(appendFullLine && appendFields.length > 0));
-        
+
         // Switch to zero-based field indexes.
         keyFields.each!((ref a) => --a);
         dataFields.each!((ref a) => --a);
@@ -246,7 +261,7 @@ struct TsvJoinOptions
     }
 }
 
-/** 
+/**
 Main program.
  */
 int main(string[] cmdArgs)
@@ -257,7 +272,7 @@ int main(string[] cmdArgs)
         import core.runtime : dmd_coverSetMerge;
         dmd_coverSetMerge(true);
     }
-    
+
     TsvJoinOptions cmdopt;
     auto r = cmdopt.processArgs(cmdArgs);
     if (!r[0]) return r[1];
@@ -278,7 +293,7 @@ void tsvJoin(in TsvJoinOptions cmdopt, in string[] inputFiles)
     import std.algorithm : splitter;
     import std.array : join;
     import std.range;
-    import std.conv : to; 
+    import std.conv : to;
 
     /* State, variables, and convenience derivations.
      *
@@ -325,7 +340,7 @@ void tsvJoin(in TsvJoinOptions cmdopt, in string[] inputFiles)
         // reserve space for n values and n-1 delimiters
         appendFieldsUnmatchedValue.reserve(cmdopt.appendFields.length * (cmdopt.writeAllValue.length + 1) - 1);
 
-        appendFieldsUnmatchedValue ~= cmdopt.writeAllValue; 
+        appendFieldsUnmatchedValue ~= cmdopt.writeAllValue;
         for (size_t i = 1; i < cmdopt.appendFields.length; ++i)
         {
             appendFieldsUnmatchedValue ~= cmdopt.delim;
@@ -344,12 +359,12 @@ void tsvJoin(in TsvJoinOptions cmdopt, in string[] inputFiles)
             {
                 filterKeysReordering.initNewLine;
                 appendFieldsReordering.initNewLine;
-                
+
                 foreach (fieldIndex, fieldValue; line.splitter(cmdopt.delim).enumerate)
                 {
                     filterKeysReordering.processNextField(fieldIndex,fieldValue);
                     appendFieldsReordering.processNextField(fieldIndex,fieldValue);
-                    
+
                     if (filterKeysReordering.allFieldsFilled && appendFieldsReordering.allFieldsFilled)
                     {
                         break;
@@ -365,11 +380,11 @@ void tsvJoin(in TsvJoinOptions cmdopt, in string[] inputFiles)
             }
 
             string key = cmdopt.keyIsFullLine ?
-                line.to!string : filterKeysReordering.outputFields.join(cmdopt.delim).to!string; 
+                line.to!string : filterKeysReordering.outputFields.join(cmdopt.delim).to!string;
             string appendValues = cmdopt.appendFullLine ?
                 line.to!string : appendFieldsReordering.outputFields.join(cmdopt.delim).to!string;
-            
-            debug writeln("  --> [key]:[append] => [", key, "]:[", appendValues, "]"); 
+
+            debug writeln("  --> [key]:[append] => [", key, "]:[", appendValues, "]");
 
             if (lineNum == 1 && cmdopt.hasHeader)
             {
@@ -414,7 +429,7 @@ void tsvJoin(in TsvJoinOptions cmdopt, in string[] inputFiles)
         auto inputStream = (filename == "-") ? stdin : filename.File();
         foreach (lineNum, line; inputStream.byLine.enumerate(1))
         {
-            debug writeln("[input line] |", line, "|"); 
+            debug writeln("[input line] |", line, "|");
             if (cmdopt.hasHeader && lineNum == 1)
             {
                 /* Header line processing. */
@@ -428,8 +443,8 @@ void tsvJoin(in TsvJoinOptions cmdopt, in string[] inputFiles)
             }
             else
             {
-                /* Regular line (not a header line). 
-                 * 
+                /* Regular line (not a header line).
+                 *
                  * Next block checks if the input line matches a hash entry. Two cases:
                  *   a) The whole line is the key. Simply look it up in the hash.
                  *   b) Individual fields are used as the key - Assemble key and look it up.
@@ -456,11 +471,11 @@ void tsvJoin(in TsvJoinOptions cmdopt, in string[] inputFiles)
                             format("Not enough fields in line. File: %s, Line: %s",
                                    (filename == "-") ? "Standard Input" : filename, lineNum));
                     }
-                    appendFields = (dataKeysReordering.outputFields.join(cmdopt.delim) in filterHash); 
+                    appendFields = (dataKeysReordering.outputFields.join(cmdopt.delim) in filterHash);
                 }
 
                 bool matched = (appendFields !is null);
-                debug writeln("   --> matched? ", matched); 
+                debug writeln("   --> matched? ", matched);
                 if (cmdopt.writeAll || (matched && !cmdopt.exclude) || (!matched && cmdopt.exclude))
                 {
                     write(line);

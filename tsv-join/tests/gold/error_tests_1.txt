@@ -78,3 +78,20 @@ Error processing command line arguments: Cannot use '--a|append-fields 0' (whole
 
 ====[tsv-join --header --write-all MISSING -a 1 --exclude  -f input1.tsv -k 2,3 input2.tsv]====
 Error processing command line arguments: --e|exclude cannot be used with --a|append-fields.
+
+===Invalid field ranges===
+
+====[tsv-join --header -f input1.tsv -k 2,x input2.tsv]====
+Error processing command line arguments: [--k|key-fields] Unexpected 'x' when converting from type string to type ulong
+
+====[tsv-join --header -f input1.tsv -k 2,3 -d 2,1.5 input2.tsv]====
+Error processing command line arguments: [--d|data-fields] Unexpected '.' when converting from type string to type ulong
+
+====[tsv-join --header -f input1.tsv -k 2 -a 1- input2.tsv]====
+Error processing command line arguments: [--a|append-fields] Incomplete ranges are not supported: '1-'
+
+====[tsv-join --header -f input1.tsv -k 2,,4 input2.tsv]====
+Error processing command line arguments: [--k|key-fields] Empty field number.
+
+====[tsv-join --header -f input1.tsv -k input2.tsv]====
+Error processing command line arguments: [--k|key-fields] Unexpected 'i' when converting from type string to type ulong
