@@ -29,7 +29,7 @@ Specialty toolkit times have been anonymized in the tables below. The intent of 
 
 Two specific considerations to keep in mind when comparing individual tools:
 * Tools accepting CSV data need to handle escape characters. This is computationally more expensive than a strict delimited format like TSV. Even when tools have a "TSV mode", supporting CSV as well makes optimizing the TSV case challenging.
-* Handling arbitrary expression trees (ala Awk) is more computation complex than the handling a single conjunctive or disjunctive expression list as `tsv-filter` does.
+* Handling arbitrary expression trees (ala `Awk`) is more computation complex than the handling a single conjunctive or disjunctive expression list as `tsv-filter` does.
 
 The worst performers were the Unix tools shipped with the Mac (`cut`, etc). It's worth installing the GNU coreutils package if you use command line tools on the Mac. (MacPorts and Homebrew can install these tools.)
 
