@@ -143,6 +143,16 @@ $ tsv-join -H -f hepmass_right.shuf.tsv -k 1 hepmass_left.shuf.tsv -a 2,3,4,5,6,
 $ xsv join 1 -d $'\t' hepmass_left.shuf.tsv 1 hepmass_right.shuf.tsv >> /dev/null
 ```
 
+Creating the left and right data files:
+```
+$ number-lines -s line hepmass_all_train.tsv > hepmass_numbered.tsv
+$ tsv-select -f 1-16 hepmass_numbered.tsv | tsv-sample -H > hepmass_left.shuf.tsv
+$ tsv-select -f 1,17-30 hepmass_numbered.tsv | tsv-sample -H > hepmass_right.shuf.tsv
+$ rm hepmass_numbered.tsv
+```
+
+*Note: The `tsv-select` call above uses field range notation introduced in version 1.1.11. List each field individually if using an earlier version. The Unix `nl`, `cut`, and `shuf` can also be used. The header line must be handled specially if `nl` or `shuf` are used.* 
+
 ### Summary statistics
 
 This test generates a set of summary statistics from the columns in a TSV file. The specific calculations were based on summary statistics available in the different available tools that had high overlap. The sets were not identical, but were close enough for rough comparison. Roughly, the count, sum, min, max, mean, and standard deviation of three fields from a 7 million row, 4.8 GB data file.
