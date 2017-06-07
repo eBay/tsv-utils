@@ -27,11 +27,13 @@ Tests were conducted on a MacBook Pro, 16 GB RAM, 4 cores, and flash storage. Al
 
 Specialty toolkit times have been anonymized in the tables below. The intent of this study is to gauge performance of the D tools, not create a shootout between toolkits. However, the specific tools and command lines are given, enabling tests to be reproduced. (The csv-to-tsv times are shown, see [CSV to TSV conversion](#csv-to-tsv-conversion) for rationale.) See [Other toolkits](OtherToolkits.md) for links to the tools, and [Details](#details) for version info, compilers, and test file details. Python tools were not benchmarked, this would be a useful addition. Tools that run in in-memory environments like R were excluded.
 
-Two specific considerations to keep in mind when comparing individual tools:
-* Tools accepting CSV data need to handle escape characters. This is computationally more expensive than a strict delimited format like TSV. Even when tools have a "TSV mode", supporting CSV as well makes optimizing the TSV case challenging.
-* Handling arbitrary expression trees (ala `Awk`) is more computation complex than the handling a single conjunctive or disjunctive expression list as `tsv-filter` does.
-
 The worst performers were the Unix tools shipped with the Mac (`cut`, etc). It's worth installing the GNU coreutils package if you use command line tools on the Mac. (MacPorts and Homebrew can install these tools.)
+
+Specific considerations to keep in mind when comparing individual tools:
+* Tools accepting CSV data must handle escape characters. This is computationally more expensive than a strict delimited format like TSV. Supporting both CSV and TSV makes optimizing the TSV case challenging.
+* Some CSV implementations support embedded newlines, others do not. Supporting embedded newlines is more challenging as fast library utilities for finding line boundaries cannot be used.
+* Handling arbitrary expression trees (ala `Awk`) is more computationally complex than the handling a single conjunctive or disjunctive expression list as `tsv-filter` does.
+* Some tools use multi-threading, others do not. (The D tools do not.) This is a design tradeoff. Running multiple threads can improve run-times of individual tools, but may reduce overall throughput when several tools are chained in a command pipeline.
 
 ### Top four in each benchmark
 
