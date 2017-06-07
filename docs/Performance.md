@@ -31,9 +31,9 @@ The worst performers were the Unix tools shipped with the Mac (`cut`, etc). It's
 
 Specific considerations to keep in mind when comparing individual tools:
 * Tools accepting CSV data must handle escape characters. This is computationally more expensive than a strict delimited format like TSV. Supporting both CSV and TSV makes optimizing the TSV case challenging.
-* Some CSV implementations support embedded newlines, others do not. Supporting embedded newlines is more challenging as fast library utilities for finding line boundaries cannot be used.
+* Some CSV implementations support embedded newlines, others do not. Embedded newline support is more challenging because highly optimized "readline" routines cannot be used to find record boundaries.
 * Handling arbitrary expression trees (ala `Awk`) is more computationally complex than the handling a single conjunctive or disjunctive expression list as `tsv-filter` does.
-* Some tools use multi-threading, others do not. (The D tools do not.) This is a design tradeoff. Running multiple threads can improve run-times of individual tools, but may reduce overall throughput when several tools are chained in a command pipeline.
+* Some tools use multi-threading, others do not. (The D tools do not.) This is a design tradeoff. Running multiple threads can improve run-times of individual tools. However, this may reduce overall throughput when several tools are chained in a command pipeline.
 
 ### Top four in each benchmark
 
