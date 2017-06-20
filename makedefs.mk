@@ -4,12 +4,12 @@
 # 'common_srcs' variable, and includes the makeapp.mk include. See the app makefiles for
 # examples. The 'common' subdirectory makefile also includes this, but has it's own
 # makefile targets.
-# 
+#
 # This makefile can be customized by setting the DCOMPILER and DFLAGS variable. These
 # can also be set on the make command line.
 
 DCOMPILER = dmd
-DFLAGS = 
+DFLAGS =
 
 project_dir ?= $(realpath ..)
 common_srcdir = $(project_dir)/common/src
@@ -19,8 +19,15 @@ objdir = obj
 bindir = bin
 testsdir = tests
 
-release_flags_base = -release -O -boundscheck=off
-ifeq ($(DCOMPILER),dmd)
+OS_NAME := $(shell uname -s)
+
+FLTO_OPTION =
+ifeq ($(OS_NAME),Darwin)
+	FLTO_OPTION = -flto=full
+endif
+
+release_flags_base = -release -O3 -boundscheck=off -singleobj $(FLTO_OPTION)
+ifeq ($(notdir $(basename $(DCOMPILER))),dmd)
 	release_flags_base = -release -O -boundscheck=off -inline
 endif
 
