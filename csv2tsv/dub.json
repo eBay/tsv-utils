@@ -25,7 +25,7 @@
         "debug": { "buildOptions": ["debugMode", "optimize"] },
         "release": { "buildOptions": ["releaseMode", "optimize", "inline"],
                      "dflags": ["-boundscheck=off"],
-                     "dflags-ldc": ["-flto=full"] },
+                     "dflags-osx-ldc": ["-flto=full"] },
         "unittest" : { "buildOptions": ["unittests"] }
     }
 }
