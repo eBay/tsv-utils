@@ -5,7 +5,7 @@ os:
 osx_image: xcode8.2
 language: d
 d:
-- ldc
+- ldc-1.2.0
 - dmd
 script:
 - dub run -- --compiler=$DC
