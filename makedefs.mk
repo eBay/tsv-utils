@@ -23,7 +23,7 @@ OS_NAME := $(shell uname -s)
 
 FLTO_OPTION =
 ifeq ($(OS_NAME),Darwin)
-	FLTO_OPTION = -flto=full
+	FLTO_OPTION = -flto=thin
 endif
 
 release_flags_base = -release -O3 -boundscheck=off -singleobj $(FLTO_OPTION)
