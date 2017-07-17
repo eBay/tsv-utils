@@ -520,7 +520,7 @@ csv2tsv converts CSV (comma-separated) text to TSV (tab-separated) format. Recor
 
 Both formats represent tabular data, each record on its own line, fields separated by a delimiter character. The key difference is that CSV uses escape sequences to represent newlines and field separators in the data, whereas TSV disallows these characters in the data. The most common field delimiters are comma for CSV and tab for TSV, but any character can be used.
 
-Conversion to TSV is done by removing CSV escape syntax, changing field delimiters, and replacing newlines and field delimiters in the data. By default, newlines and field delimiters in the data are replaced by spaces. Most details are customizable.
+Conversion to TSV is done by removing CSV escape syntax, changing field delimiters, and replacing newlines and tabs in the data. By default, newlines and tabs in the data are replaced by spaces. Most details are customizable.
 
 There is no single spec for CSV, any number of variants can be found. The escape syntax is common enough: fields containing newlines or field delimiters are placed in double quotes. Inside a quoted field, a double quote is represented by a pair of double quotes. As with field separators, the quoting character is customizable.
 
