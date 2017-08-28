@@ -12,29 +12,6 @@ import std.range;
 import std.stdio;
 import std.typecons : Flag, Yes, No, tuple;
 
-/* About print length calculations: This programs aligns data assuming fixed width
- * characters. Input data is assumed to be utf-8. In utf-8, many characters are
- * represented with multiple bytes. Unicode also includes "combining characters",
- * characters that modify the print representation of an adjacent character. Both
- * must be accounted for when calculating print length. This program does this by
- * counting the "graphemes" in a string. A string's grapheme length is used as
- * proxy for it's expected print length. This is typically calculated as:
- *
- *     import std.uni : byGrapheme;
- *     import std.range : walkLength;
- *     size_t graphemeLength = myUtf8String.byGrapheme.walkLength;
- *
- * Ascii characters have a grapheme length of one. In this program, it means the
- * print width of numbers and spaces can be equated to the utf-8 string length.
- * Normal text data must calculate the grapheme length. The grapheme length
- * calculation is relatively expensive, so it is cached when possible.
- *
- * This technique works well for europian character sets, but does not work as
- * well for ideographic characters. These are usually printed using a double-width
- * character glyph in common mono-spaced fonts. This is a limitation in the
- * current program.
- */
-
 version(unittest)
 {
     // When running unit tests, use main from -main compiler switch.
@@ -114,10 +91,10 @@ struct TsvPrettyOptions
     size_t floatPrecision = 9;          // --p|float-precision num (max precision when formatting floats)
     bool replaceEmpty = false;          // --e|replace-empty
     string emptyReplacement = "";       // --E|empty-replacement
-    size_t emptyReplacementGraphemeLength = 0;    // Derived
+    size_t emptyReplacementPrintWidth = 0;    // Derived
     char delim = '\t';                  // --d|delimiter
     size_t spaceBetweenFields = 2;      // --s|space-between-fields num
-    size_t maxFieldGraphemeWidth = 16;  // --m|max-width num; Max width for variable width fields.
+    size_t maxFieldPrintWidth = 16;     // --m|max-width num; Max width for variable width fields.
     bool versionWanted = false;         // --V|version
 
     /* Returns a tuple. First value is true if command line arguments were successfully
@@ -161,7 +138,7 @@ struct TsvPrettyOptions
                 std.getopt.config.caseInsensitive,
                 "d|delimiter",            "CHR    Field delimiter. Default: TAB. (Single byte UTF-8 characters only.)", &delim,
                 "s|space-between-fields", "NUM    Spaces between each field (Default: 2)", &spaceBetweenFields,
-                "m|max-field-width",      "NUM    Max field width (for variable width fields). Default: 16", &maxFieldGraphemeWidth,
+                "m|max-field-width",      "NUM    Max field width (for variable width fields). Default: 16", &maxFieldPrintWidth,
                 std.getopt.config.caseSensitive,
                 "V|version",              "       Print version information and exit.", &versionWanted,
                 std.getopt.config.caseInsensitive,
@@ -190,8 +167,7 @@ struct TsvPrettyOptions
 
             if (emptyReplacement.length != 0)
             {
-                import std.uni : byGrapheme;
-                emptyReplacementGraphemeLength = emptyReplacement.byGrapheme.walkLength;
+                emptyReplacementPrintWidth = emptyReplacement.monospacePrintWidth;
             }
         }
         catch (Exception exc)
@@ -420,16 +396,16 @@ struct FieldFormat
 private:
     size_t _fieldIndex;                  // Zero-based index in the line
     string _header = "";                 // Original field header
-    size_t _headerGraphemeLength = 0;
+    size_t _headerPrintWidth = 0;
     FieldType _type = FieldType.unknown;
     FieldAlignment _alignment = FieldAlignment.left;
     size_t _startPosition = 0;
-    size_t _graphemeWidth = 1;                   // Avoid zero width field
+    size_t _printWidth = 0;
     size_t _floatPrecision = 0;
 
     /* These are used while doing initial type and print format detection. */
-    size_t _minRawGraphemeWidth = 0;
-    size_t _maxRawGraphemeWidth = 0;
+    size_t _minRawPrintWidth = 0;
+    size_t _maxRawPrintWidth = 0;
     size_t _maxDigitsBeforeDecimal = 0;
     size_t _maxDigitsAfterDecimal = 0;
 
@@ -442,10 +418,9 @@ public:
     void setHeader(const char[] header) @safe
     {
         import std.conv : to;
-        import std.uni : byGrapheme;
 
         _header = header.to!string;
-        _headerGraphemeLength = _header.byGrapheme.walkLength;
+        _headerPrintWidth = _header.monospacePrintWidth;
     }
 
     size_t startPosition() nothrow pure @safe @property
@@ -455,7 +430,7 @@ public:
 
     size_t endPosition() nothrow pure @safe @property
     {
-        return _startPosition + _graphemeWidth;
+        return _startPosition + _printWidth;
     }
 
     /* writeHeader writes the field header or underline characters to the output stream.
@@ -479,12 +454,12 @@ public:
 
         if (_alignment == FieldAlignment.right)
         {
-            put(outputStream, repeat(" ", _graphemeWidth - _headerGraphemeLength));
+            put(outputStream, repeat(" ", _printWidth - _headerPrintWidth));
         }
 
         static if (writeUnderline)
         {
-            put(outputStream, repeat("-", _headerGraphemeLength));
+            put(outputStream, repeat("-", _headerPrintWidth));
         }
         else
         {
@@ -493,7 +468,7 @@ public:
 
         if (_alignment == FieldAlignment.left)
         {
-            put(outputStream, repeat(" ", _graphemeWidth - _headerGraphemeLength));
+            put(outputStream, repeat(" ", _printWidth - _headerPrintWidth));
         }
     }
 
@@ -524,7 +499,6 @@ public:
     {
         import std.algorithm : find, max, min;
         import std.conv : to, ConvException;
-        import std.uni : byGrapheme;
 
         /* Create the print version of the string. Either the raw value or a formatted
          * version of a float. Need to track whether it's an unformatted float, these
@@ -559,21 +533,21 @@ public:
          * field width minus the value width. The field width needs to be adjusted if
          * prior fields on the line ran long.
          */
-        size_t printValueGraphemeLength = printValue.byGrapheme.walkLength;
+        size_t printValuePrintWidth = printValue.monospacePrintWidth;
         size_t targetWidth;
         if (currPosition == _startPosition)
         {
-            targetWidth = _graphemeWidth;
+            targetWidth = _printWidth;
         }
         else
         {
             size_t startGap = currPosition - _startPosition;
-            targetWidth = max(printValueGraphemeLength,
-                              startGap < _graphemeWidth ? _graphemeWidth - startGap : 0);
+            targetWidth = max(printValuePrintWidth,
+                              startGap < _printWidth ? _printWidth - startGap : 0);
         }
 
-        size_t numSpacesNeeded = (printValueGraphemeLength < targetWidth) ?
-            targetWidth - printValueGraphemeLength : 0;
+        size_t numSpacesNeeded = (printValuePrintWidth < targetWidth) ?
+            targetWidth - printValuePrintWidth : 0;
 
         /* Split the needed spaces into leading and trailing spaces. If the field is
          * left-aligned all spaces are trailing. If right aligned, then spaces are leading,
@@ -612,7 +586,7 @@ public:
         put(outputStream, printValue);
         put(outputStream, repeat(' ', trailingSpaces));
 
-        return printValueGraphemeLength + numSpacesNeeded;
+        return printValuePrintWidth + numSpacesNeeded;
     }
 
     /* updateForFieldValue updates type and format given a new field value.
@@ -623,25 +597,24 @@ public:
         import std.algorithm : findSplit, max, min;
         import std.conv : to, ConvException;
         import std.string : isNumeric;
-        import std.uni : byGrapheme;
         import tsv_numerics : formatNumber;
 
-        size_t fieldValueGraphemeLength = fieldValue.byGrapheme.walkLength;
-        size_t fieldValueGraphemeLengthWithEmpty =
-            (fieldValueGraphemeLength == 0 && options.replaceEmpty) ?
-            options.emptyReplacementGraphemeLength :
-            fieldValueGraphemeLength;
+        size_t fieldValuePrintWidth = fieldValue.monospacePrintWidth;
+        size_t fieldValuePrintWidthWithEmpty =
+            (fieldValuePrintWidth == 0 && options.replaceEmpty) ?
+            options.emptyReplacementPrintWidth :
+            fieldValuePrintWidth;
 
-        _maxRawGraphemeWidth = max(_maxRawGraphemeWidth, fieldValueGraphemeLengthWithEmpty);
-        _minRawGraphemeWidth = (_minRawGraphemeWidth == 0) ?
-            fieldValueGraphemeLengthWithEmpty :
-            min(_minRawGraphemeWidth, fieldValueGraphemeLengthWithEmpty);
+        _maxRawPrintWidth = max(_maxRawPrintWidth, fieldValuePrintWidthWithEmpty);
+        _minRawPrintWidth = (_minRawPrintWidth == 0) ?
+            fieldValuePrintWidthWithEmpty :
+            min(_minRawPrintWidth, fieldValuePrintWidthWithEmpty);
 
         if (_type == FieldType.text)
         {
             /* Already text, can't become anything else. */
         }
-        else if (fieldValueGraphemeLength == 0)
+        else if (fieldValuePrintWidth == 0)
         {
             /* Don't let an empty field override a numeric field type. */
         }
@@ -735,17 +708,53 @@ public:
             size_t precision = min(options.floatPrecision, _maxDigitsAfterDecimal);
             size_t maxValueWidth = _maxDigitsBeforeDecimal + precision + 1;
             if (precision > 0) maxValueWidth++;  // Account for the decimal point.
-            _graphemeWidth = max(1, _headerGraphemeLength, min(options.maxFieldGraphemeWidth, maxValueWidth));
+            _printWidth = max(1, _headerPrintWidth, min(options.maxFieldPrintWidth, maxValueWidth));
             _floatPrecision = precision;
         }
         else
         {
-            _graphemeWidth = max(1, _headerGraphemeLength, _minRawGraphemeWidth, min(options.maxFieldGraphemeWidth, _maxRawGraphemeWidth));
+            _printWidth = max(1, _headerPrintWidth, _minRawPrintWidth,
+                              min(options.maxFieldPrintWidth, _maxRawPrintWidth));
             _floatPrecision = 0;
         }
 
-        debug writefln("[finalizeFormatting] %s", this);
+       debug  writefln("[finalizeFormatting] %s", this);
 
-        return _startPosition + _graphemeWidth;
+        return _startPosition + _printWidth;
     }
+}
+
+/* Print length calculations: This programs aligns data assuming fixed width
+ * characters. Input data is assumed to be utf-8. In utf-8, many characters are
+ * represented with multiple bytes. Unicode also includes "combining characters",
+ * characters that modify the print representation of an adjacent character. A
+ * string's grapheme length can be calculated as:
+ *
+ *     import std.uni : byGrapheme;
+ *     import std.range : walkLength;
+ *     size_t graphemeLength = myUtf8String.byGrapheme.walkLength;
+ *
+ * The grapheme length is a good measure of the number of user percieved characters
+ * printed. For europian character sets this is a good measure of print width.
+ * However, this is still not correct, as many asian characters are printed as a
+ * double-width by many monospace fonts. This program uses a hack to get a better
+ * approximation: It checks the first code point in a grapheme is a CJK character.
+ * (The first code point is normally the "grapheme-base", the others are typically
+ * combining characters.) If the first character is CJK, a print width of two is
+ * assumed. This is hardly foolproof, and should not be used if higher accuracy is
+ * needed. However, it does do well enough to properly handle many common alignments.
+ */
+
+size_t monospacePrintWidth(const char[] str) @safe
+{
+    bool isCJK(dchar c)
+    {
+        return c >= '\u3000' && c <= '\u9fff';
+    }
+
+    import std.uni : byGrapheme;
+
+    size_t width = 0;
+    foreach (g; str.byGrapheme) width += isCJK(g[0]) ? 2 : 1;
+    return width;
 }
