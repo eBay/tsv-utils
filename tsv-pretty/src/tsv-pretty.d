@@ -1,5 +1,6 @@
 /**
-Command line tool that prints TSV data aligned for easier reading.
+Command line tool that prints TSV data aligned for easier reading on consoles
+and traditional command-line environments.
 
 Copyright (c) 2017, eBay Software Foundation
 Initially written by Jon Degenhardt
@@ -43,10 +44,10 @@ else
 auto helpTextVerbose = q"EOS
 Synopsis: tsv-pretty [options] [file...]
 
-tsv-pretty outputs TSV data in a format intended to be more human readable.
-This is done primarily by lining up data into fixed-width columns. Text is
-left aligned, numbers are right aligned. Floating points numbers are aligned on
-the decimal point when feasible.
+tsv-pretty outputs TSV data in a format intended to be more human readable when
+working on the command line. This is done primarily by lining up data into
+fixed-width columns. Text is left aligned, numbers are right aligned. Floating
+points numbers are aligned on the decimal point when feasible.
 
 tsv-pretty starts by reading an initial set of lines (defaults to 1000) to
 determine field widths and data types. Lines are written as they are recieved
@@ -64,6 +65,14 @@ options that change this:
 * Missing values - A substitute value can be used, this is often less
   confusing than spaces. Use the '--e|replace-empty' or
   '--E|empty-replacement <string>' options.
+
+Limitations: This program assumes fixed width fonts, as commonly found in
+command-line environments. Alignment will be off when variable width fonts
+are used. However, even fixed width fonts can be tricky for certain character
+sets. Notably, ideographic characters common in asian languages use double-
+width characters in many fixed-width fonts. This program estimates print
+length assuming CJK characters are rendered double-width. This works well in
+many cases, but incorrect alignment can still occur.
 
 Options:
 EOS";
@@ -94,7 +103,7 @@ struct TsvPrettyOptions
     size_t emptyReplacementPrintWidth = 0;    // Derived
     char delim = '\t';                  // --d|delimiter
     size_t spaceBetweenFields = 2;      // --s|space-between-fields num
-    size_t maxFieldPrintWidth = 16;     // --m|max-width num; Max width for variable width fields.
+    size_t maxFieldPrintWidth = 24;     // --m|max-width num; Max width for variable width fields.
     bool versionWanted = false;         // --V|version
 
     /* Returns a tuple. First value is true if command line arguments were successfully
