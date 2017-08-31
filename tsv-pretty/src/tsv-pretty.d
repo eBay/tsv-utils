@@ -103,7 +103,7 @@ struct TsvPrettyOptions
     size_t emptyReplacementPrintWidth = 0;    // Derived
     char delim = '\t';                  // --d|delimiter
     size_t spaceBetweenFields = 2;      // --s|space-between-fields num
-    size_t maxFieldPrintWidth = 24;     // --m|max-width num; Max width for variable width fields.
+    size_t maxFieldPrintWidth = 24;     // --m|max-text-width num; Max width for variable width text fields.
     bool versionWanted = false;         // --V|version
 
     /* Returns a tuple. First value is true if command line arguments were successfully
@@ -147,7 +147,7 @@ struct TsvPrettyOptions
                 std.getopt.config.caseInsensitive,
                 "d|delimiter",            "CHR    Field delimiter. Default: TAB. (Single byte UTF-8 characters only.)", &delim,
                 "s|space-between-fields", "NUM    Spaces between each field (Default: 2)", &spaceBetweenFields,
-                "m|max-field-width",      "NUM    Max field width (for variable width fields). Default: 16", &maxFieldPrintWidth,
+                "m|max-text-width",       "NUM     Max reserved field width for variable width text fields. Default: 24", &maxFieldPrintWidth,
                 std.getopt.config.caseSensitive,
                 "V|version",              "       Print version information and exit.", &versionWanted,
                 std.getopt.config.caseInsensitive,
@@ -246,10 +246,11 @@ public:
             _fieldVector[fieldIndex].setHeader(header);
         }
 
-        if (!stillCaching)
+        if (stillCaching && _options.lookahead == 0)
         {
             finalizeFieldFormatting();
             outputHeader(outputStream);
+            _stillCaching = false;
         }
     }
 
@@ -397,6 +398,24 @@ private:
     }
 }
 
+/** FieldFormat holds all the formatting info needed to format data values in a specific
+ * column. e.g. Field 1 may be text, field 2 may be a float, etc. This is calculated
+ * during the caching phase. Each FieldFormat instance is part of a vector representing
+ * the full row, so each includes the start position on the line and similar data.
+ *
+ * APIs used during the caching phase to gather field value samples
+ * - this - Initial construction. Takes the field index.
+ * - setHeader - Used to set the header text.
+ * - updateForFieldValue - Used to add the next field value sample.
+ * - finalizeFormatting - Used at the end of caching to finalize the format choices.
+ *
+ * APIs used after caching is finished (after finalizeFormatting):
+ * - startPosition - Returns the expected start position for the field.
+ * - endPosition - Returns the expected end position for the field.
+ * - writeHeader - Outputs the header, properly aligned.
+ * - writeFieldValue - Outputs the current field value, properly aligned.
+ */
+
 enum FieldType { unknown, text, integer, floatingPoint };
 enum FieldAlignment { left, right };
 
@@ -424,6 +443,7 @@ public:
         _fieldIndex = fieldIndex;
     }
 
+    /* setHeader is called to set the header text. */
     void setHeader(const char[] header) @safe
     {
         import std.conv : to;
@@ -481,22 +501,29 @@ public:
         }
     }
 
+private:
+    /* Formatting floats - A simple approach is taken. Floats with a readable number of trailing
+     * digits are printed as fixed point (%f). Floats with a longer number of digits are printed
+     * as variable length, including use of exponential notion (%g). Calculating the length
+     * requires knowing which was used.
+     */
     enum defaultReadablePrecisionMax = 6;
-
-    auto formatFloatingPoint(double value, size_t readablePrecisionMax = defaultReadablePrecisionMax)
-    {
-        import std.format : format;
-
-        return (_floatPrecision <= readablePrecisionMax) ?
-            format("%.*f", _floatPrecision, value) :
-            format("%.*g", _floatPrecision, value);
-    }
 
     bool formattedFloatsAreFixedPoint(size_t readablePrecisionMax = defaultReadablePrecisionMax)
     {
         return _floatPrecision <= readablePrecisionMax;
     }
 
+    auto formatFloatingPoint(double value)
+    {
+        import std.format : format;
+
+        return formattedFloatsAreFixedPoint() ?
+            format("%.*f", _floatPrecision, value) :
+            format("%.*g", _floatPrecision, value);
+    }
+
+public:
     size_t writeFieldValue(OutputRange!char outputStream, size_t currPosition,
                            const char[] fieldValue, in ref TsvPrettyOptions options)
     in
@@ -539,8 +566,8 @@ public:
         if (printValue.length == 0 && options.replaceEmpty) printValue = options.emptyReplacement;
 
         /* Calculate the number of spaces to be included with the value. Basically, the
-         * field width minus the value width. The field width needs to be adjusted if
-         * prior fields on the line ran long.
+         * expected field width minus the value's print width. The expected field width
+         * needs to be adjusted if the prior field on the line ran long.
          */
         size_t printValuePrintWidth = printValue.monospacePrintWidth;
         size_t targetWidth;
@@ -600,7 +627,7 @@ public:
 
     /* updateForFieldValue updates type and format given a new field value.
      */
-    void updateForFieldValue(size_t readablePrecisionMax = 6)
+    void updateForFieldValue(size_t readablePrecisionMax = defaultReadablePrecisionMax)
         (const char[] fieldValue, in ref TsvPrettyOptions options)
     {
         import std.algorithm : findSplit, max, min;
@@ -715,10 +742,15 @@ public:
         if (_type == FieldType.floatingPoint)
         {
             size_t precision = min(options.floatPrecision, _maxDigitsAfterDecimal);
-            size_t maxValueWidth = _maxDigitsBeforeDecimal + precision + 1;
+            size_t maxValueWidth = _maxDigitsBeforeDecimal + precision;
             if (precision > 0) maxValueWidth++;  // Account for the decimal point.
-            _printWidth = max(1, _headerPrintWidth, min(options.maxFieldPrintWidth, maxValueWidth));
+            _printWidth = max(1, _headerPrintWidth, maxValueWidth);
             _floatPrecision = precision;
+        }
+        else if (_type == FieldType.integer)
+        {
+            _printWidth = max(1, _headerPrintWidth, _minRawPrintWidth, _maxRawPrintWidth);
+            _floatPrecision = 0;
         }
         else
         {
@@ -737,7 +769,8 @@ public:
  * characters. Input data is assumed to be utf-8. In utf-8, many characters are
  * represented with multiple bytes. Unicode also includes "combining characters",
  * characters that modify the print representation of an adjacent character. A
- * string's grapheme length can be calculated as:
+ * grapheme is a base character plus any adjacent combining characters. A string's
+ * grapheme length can be calculated as:
  *
  *     import std.uni : byGrapheme;
  *     import std.range : walkLength;
@@ -748,10 +781,10 @@ public:
  * However, this is still not correct, as many asian characters are printed as a
  * double-width by many monospace fonts. This program uses a hack to get a better
  * approximation: It checks the first code point in a grapheme is a CJK character.
- * (The first code point is normally the "grapheme-base", the others are typically
- * combining characters.) If the first character is CJK, a print width of two is
- * assumed. This is hardly foolproof, and should not be used if higher accuracy is
- * needed. However, it does do well enough to properly handle many common alignments.
+ * (The first code point is normally the "grapheme-base".) If the first character is
+ * CJK, a print width of two is assumed. This is hardly foolproof, and should not be
+ * used if higher accuracy is needed. However, it does do well enough to properly
+ * handle many common alignments, and is much better than doing nothing.
  */
 
 size_t monospacePrintWidth(const char[] str) @safe
