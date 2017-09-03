@@ -92,7 +92,9 @@ struct TsvPrettyOptions
 {
     string programName;
     bool helpVerbose = false;           // --help-verbose
-    bool hasHeader = false;             // --H|header
+    bool hasHeader = false;             // --H|header (Note: Default false assumed by validation code)
+    bool autoDetectHeader = true;       // Derived (Note: Default true assumed by validation code)
+    bool noHeader = false;              // --x|no-header (Note: Default false assumed by validation code)
     size_t lookahead = 1000;            // --l|lookahead
     size_t repeatHeader = 0;            // --r|repeat-header num (zero means no repeat)
     bool underlineHeader = false;       // --u|underline-header
@@ -127,16 +129,14 @@ struct TsvPrettyOptions
             arraySep = ",";    // Use comma to separate values in command line options
             auto r = getopt(
                 cmdArgs,
-                "help-verbose",    "          Print full help.", &helpVerbose,
+                "help-verbose",           "       Print full help.", &helpVerbose,
                 std.getopt.config.caseSensitive,
-                "H|header",        "          Treat the first line of each file as a header.", &hasHeader,
+                "H|header",               "       Treat the first line of each file as a header.", &hasHeader,
                 std.getopt.config.caseInsensitive,
-
+                "x|no-header",            "       Assume no header. Turns off automatic header detection.", &noHeader,
                 "l|lookahead",            "NUM    Lines to read to interpret data before generating output. Default: 1000)", &lookahead,
 
-                /* Not implemented yet.
-                 * "r|repeat-header",        "NUM    Lines to print before repeating the header. Default: No repeating", &repeatHeader,
-                 */
+                "r|repeat-header",        "NUM    (Not implemented) Lines to print before repeating the header. Default: No repeating", &repeatHeader,
 
                 "u|underline-header",     "       Underline the header.", &underlineHeader,
                 "f|format-floats",        "       Format floats for better readability. Default: No", &formatFloats,
@@ -171,6 +171,10 @@ struct TsvPrettyOptions
             }
 
             /* Validation and derivations. */
+            if (noHeader && hasHeader) throw new Exception("Cannot specify both --H|header and --x|no-header.");
+
+            if (noHeader || hasHeader) autoDetectHeader = false;
+
             if (emptyReplacement.length != 0) replaceEmpty = true;
             else if (replaceEmpty) emptyReplacement = "--";
 
@@ -468,36 +472,34 @@ public:
      */
     void writeHeader(Flag!"writeUnderline" writeUnderline = No.writeUnderline)
         (OutputRange!char outputStream, in ref TsvPrettyOptions options)
-    in
-    {
-        assert(_header.length > 0);   // writeHeader should only be called if there is a header.
-    }
-    body
     {
         import std.range : repeat;
 
-        if (_fieldIndex > 0)
+        if (_headerPrintWidth > 0)
         {
-            put(outputStream, repeat(" ", options.spaceBetweenFields));
-        }
+            if (_fieldIndex > 0)
+            {
+                put(outputStream, repeat(" ", options.spaceBetweenFields));
+            }
 
-        if (_alignment == FieldAlignment.right)
-        {
-            put(outputStream, repeat(" ", _printWidth - _headerPrintWidth));
-        }
+            if (_alignment == FieldAlignment.right)
+            {
+                put(outputStream, repeat(" ", _printWidth - _headerPrintWidth));
+            }
 
-        static if (writeUnderline)
-        {
-            put(outputStream, repeat("-", _headerPrintWidth));
-        }
-        else
-        {
-            put(outputStream, _header);
-        }
+            static if (writeUnderline)
+            {
+                put(outputStream, repeat("-", _headerPrintWidth));
+            }
+            else
+            {
+                put(outputStream, _header);
+            }
 
-        if (_alignment == FieldAlignment.left)
-        {
-            put(outputStream, repeat(" ", _printWidth - _headerPrintWidth));
+            if (_alignment == FieldAlignment.left)
+            {
+                put(outputStream, repeat(" ", _printWidth - _headerPrintWidth));
+            }
         }
     }
 
@@ -785,6 +787,9 @@ public:
  * CJK, a print width of two is assumed. This is hardly foolproof, and should not be
  * used if higher accuracy is needed. However, it does do well enough to properly
  * handle many common alignments, and is much better than doing nothing.
+ *
+ * Note: A more accurate approach would be to use wcwidth/wcswidth. This is a POSIX
+ * function available on many systems. This could be used when available.
  */
 
 size_t monospacePrintWidth(const char[] str) @safe

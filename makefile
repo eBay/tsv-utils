@@ -1,4 +1,4 @@
-appdirs = csv2tsv keep-header number-lines tsv-append tsv-filter tsv-join tsv-sample tsv-select tsv-summarize tsv-uniq
+appdirs = csv2tsv keep-header number-lines tsv-append tsv-filter tsv-join tsv-pretty tsv-sample tsv-select tsv-summarize tsv-uniq
 subdirs = common $(appdirs)
 buildtools_dir = buildtools
 
@@ -62,7 +62,7 @@ make_appdirs: $(appdirs)
 $(subdirs):
 	@echo ''
 	@echo 'make -C $@ $(MAKECMDGOALS)'
-	@$(MAKE) -C $@ $(MAKECMDGOALS) 
+	@$(MAKE) -C $@ $(MAKECMDGOALS)
 
 buildtools:
 	@echo ''
@@ -70,7 +70,7 @@ buildtools:
 	@$(MAKE) -C $(buildtools_dir)
 
 .PHONY: package
-package: 
+package:
 	@$(MAKE) -C $(CURDIR) clean
 	@$(MAKE) -C $(CURDIR) release
 	@$(MAKE) -C $(CURDIR) test-nobuild
