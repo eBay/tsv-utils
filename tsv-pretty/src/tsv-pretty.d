@@ -175,6 +175,15 @@ struct TsvPrettyOptions
 
             if (noHeader || hasHeader) autoDetectHeader = false;
 
+            /* Zero lookahead has limited utility unless the first line is known to
+             * be a header. Good chance the user will get an unintended behavior.
+             */
+            if (lookahead == 0 && autoDetectHeader)
+            {
+                assert (!noHeader && !hasHeader);
+                throw new Exception("Cannot auto-detect header with zero lookahead. Specify either '--H|header' or '--x|no-header' when using '--l|lookahead 0'.");
+            }
+
             if (emptyReplacement.length != 0) replaceEmpty = true;
             else if (replaceEmpty) emptyReplacement = "--";
 
@@ -200,47 +209,285 @@ struct TsvPrettyOptions
     }
 }
 
-/* tsvPretty is the main control loop. */
+/* Header Auto-Detect algorithm
+ *
+ * Definition: First line is declared a header if any column is identified as numeric
+ * when considering all rows but the first in the lookahead cache, and the first row
+ * cannot be parsed as numeric.
+ *
+ * Multiple files: A decision is made on the header after the first file has been
+ * processed, even if the lookahead cache has not been filled. This is to enable
+ * disposition of first line of subsequent files without additional complications to
+ * the algorithm. In this case, one additional check is made, which is that the first
+ * line of both files is identical.
+ *
+ */
+
 void tsvPretty(in ref TsvPrettyOptions options, string[] files)
 {
     auto tpp = TsvPrettyProcessor(options);
-    bool headerProcessed = false;
     foreach (filename; (files.length > 0) ? files : ["-"])
     {
         auto inputStream = (filename == "-") ? stdin : filename.File();
         foreach (lineNum, line; inputStream.byLine.enumerate(1))
         {
-            if (options.hasHeader && lineNum == 1)
+            if (lineNum == 1)
             {
-                if (!headerProcessed)
-                {
-                    tpp.processHeaderLine(outputRangeObject!(char, char[])(stdout.lockingTextWriter), line);
-                    headerProcessed = true;
-                }
+                tpp.processFileFirstLine(outputRangeObject!(char, char[])(stdout.lockingTextWriter), line);
             }
             else
             {
-                tpp.processDataLine(outputRangeObject!(char, char[])(stdout.lockingTextWriter), line);
+                tpp.processLine(outputRangeObject!(char, char[])(stdout.lockingTextWriter), line);
             }
         }
+        tpp.finish(outputRangeObject!(char, char[])(stdout.lockingTextWriter));
     }
-    tpp.finish(outputRangeObject!(char, char[])(stdout.lockingTextWriter));
 }
 
-/* TsvPrettyProcessor maintains the state of processing and exposes the key operations. */
+/* TsvPrettyProcessor maintains state of processing and exposes operations for
+ * processing individual lines. TsvPrettyProcessor knows that input is file
+ * oriented, but doesn't deal with actual files or reading lines from input.
+ * That is the job of the caller.
+ *
+ * The caller is expected to pass each line to TsvPrettyProcessor in the order
+ * recieved, that is an assumption built-into the its processing.
+ */
+
+/* Processing algorithms:
+ *
+ * === Processing the first line of each file ====
+ * 1) _options.noHeader: Process as a normal data line
+ * 2) _options.hasHeader:
+ *    a) First file: Set-as-header for the line.
+ *       i) _options.lookahead == 0:
+ *          Output lookahead cache (finalizes field formats, outputs header, sets not caching)
+ *       j) _options.lookahead > 0: Nothing
+ *    b) 2nd+ file: Ignore the line (do nothing)
+ * 3) _options.autoDetectHeader
+ *    a) Detected-as-no-header: Process as normal data line
+ *    b) Detected-as-header: Assert: 2nd+ file; Ignore the line (do nothing)
+ *    c) No detection yet
+ *       Assert: Still doing lookahead caching
+ *       Assert: First or second file
+ *       i) First file: Set as candidate header
+ *       j) Second file: Compare to first candidate header
+ *          p) Equal to first candidate header:
+ *             Set detected-as-header
+ *             Set-as-header for the line
+ *          q) !Equal to first candidate header:
+ *             Set detected-as-no-header
+ *             Add-fields-to-line format for first candidate-header
+ *             Process line as data line
+ *       IMPLIES: Header detection can occur prior to lookahead completion.
+ *
+ * === Process data line ===
+ * 1) Not caching: Output data line
+ * 2) Still caching
+ *    Append data line to cache
+ *    if cache is full: output lookahead cache (finalized field formats, outputs header, sets not caching)
+ *
+ * === Finish all processing ===
+ * 1) Not caching: Do nothing (done)
+ * 2) Still caching: Output lookahead cache
+ *
+ * === Output lookahead cache ===
+ * All:
+ *    if _options.autoDetectHeader && not-detected-yet:
+ *       Compare field formats to candidate field formats
+ *       1) Looks-like-header: Set detected-as-header
+ *       2) Look-like-not-header:
+ *          Set detected-as-no-header
+ *          Add-field-to-line-format for candidate header
+ * All:
+ *    Finalize field formatting
+ *
+ * 1) _options.hasHeader || detected-as-header: output header
+ * 2) _options.autoDetectHeader && detected-as-not-header && candidate-header filled in:
+ *    Output candidate header as data line
+ *
+ * All:
+ *    Output data line cache
+ *    Set as not caching
+ *
+ */
 struct TsvPrettyProcessor
 {
     import std.array : appender;
 
-public:
+private:
+    private enum AutoDetectHeaderResult { none, hasHeader, noHeader };
+
+    private TsvPrettyOptions _options;
+    private size_t _fileCount = 0;
+    private bool _stillCaching = true;
+    private string _candidateHeaderLine;
+    private auto _lookaheadCache = appender!(string[])();
+    private FieldFormat[] _fieldVector;
+    private AutoDetectHeaderResult _autoDetectHeaderResult = AutoDetectHeaderResult.none;
+
     this(const TsvPrettyOptions options)
     {
         _options = options;
-        _stillCaching = options.lookahead > 0 || options.hasHeader;
+        if (options.noHeader && options.lookahead == 0) _stillCaching = false;
     }
 
-    void processHeaderLine(OutputRange!char outputStream, const char[] line)
+    invariant
     {
+        assert(_options.hasHeader || _options.noHeader || _options.autoDetectHeader);
+        assert((_options.lookahead == 0 && _lookaheadCache.data.length == 0) ||
+               _lookaheadCache.data.length < _options.lookahead);
+    }
+
+    void processFileFirstLine(OutputRange!char outputStream, const char[] line)
+    {
+        debug writefln("[processFileFirstLine]");
+        import std.conv : to;
+
+        _fileCount++;
+
+        if (_options.noHeader)
+        {
+            processLine(outputStream, line);
+        }
+        else if (_options.hasHeader)
+        {
+            if (_fileCount == 1)
+            {
+                setHeaderLine(line);
+                if (_options.lookahead == 0) outputLookaheadCache(outputStream);
+            }
+        }
+        else
+        {
+            assert(_options.autoDetectHeader);
+
+            final switch (_autoDetectHeaderResult)
+            {
+            case AutoDetectHeaderResult.noHeader:
+                assert(_fileCount > 1);
+                processLine(outputStream, line);
+                break;
+
+            case AutoDetectHeaderResult.hasHeader:
+                assert(_fileCount > 1);
+                break;
+
+            case AutoDetectHeaderResult.none:
+                if (_fileCount == 1)
+                {
+                    assert(_candidateHeaderLine.length == 0);
+                    _candidateHeaderLine = line.to!string;
+                }
+                else if (_fileCount == 2)
+                {
+                    if (_candidateHeaderLine == line)
+                    {
+                        _autoDetectHeaderResult = AutoDetectHeaderResult.hasHeader;
+                        setHeaderLine(_candidateHeaderLine);
+
+                        /* Edge case: First file has only a header line and lookahead set to zero. */
+                        if (_stillCaching && _options.lookahead == 0) outputLookaheadCache(outputStream);
+                    }
+                    else
+                    {
+                        _autoDetectHeaderResult = AutoDetectHeaderResult.noHeader;
+                        updateFieldFormatsForLine(_candidateHeaderLine);
+                        processLine(outputStream, line);
+                    }
+                }
+                break;
+            }
+        }
+    }
+
+    void processLine(OutputRange!char outputStream, const char[] line)
+    {
+        debug writefln("[processLine]");
+        if (_stillCaching) cacheDataLine(outputStream, line);
+        else outputDataLine(outputStream, line);
+    }
+
+    void finish(OutputRange!char outputStream)
+    {
+        debug writefln("[finish]");
+        if (_stillCaching) outputLookaheadCache(outputStream);
+    }
+
+private:
+    void outputLookaheadCache(OutputRange!char outputStream)
+    {
+        debug writefln("[outputLookaheadCache]");
+
+        import std.algorithm : splitter;
+
+        assert(_stillCaching);
+
+        if (_options.autoDetectHeader &&
+            _autoDetectHeaderResult == AutoDetectHeaderResult.none &&
+            _candidateHeaderLine.length != 0)
+        {
+            if (candidateHeaderLooksLikeHeader())
+            {
+                _autoDetectHeaderResult = AutoDetectHeaderResult.hasHeader;
+                setHeaderLine(_candidateHeaderLine);
+            }
+            else
+            {
+                _autoDetectHeaderResult = AutoDetectHeaderResult.noHeader;
+            }
+        }
+
+
+        if (_options.hasHeader ||
+            (_options.autoDetectHeader && _autoDetectHeaderResult == AutoDetectHeaderResult.hasHeader))
+        {
+            finalizeFieldFormatting();
+            outputHeader(outputStream);
+        }
+        else if (_options.autoDetectHeader && _autoDetectHeaderResult == AutoDetectHeaderResult.hasHeader &&
+                 _candidateHeaderLine.length != 0)
+        {
+            updateFieldFormatsForLine(_candidateHeaderLine);
+            finalizeFieldFormatting();
+            outputDataLine(outputStream, _candidateHeaderLine);
+        }
+        else
+        {
+            finalizeFieldFormatting();
+        }
+
+        foreach(line; _lookaheadCache.data) outputDataLine(outputStream, line);
+        _lookaheadCache.clear;
+        _stillCaching = false;
+    }
+
+    bool candidateHeaderLooksLikeHeader()
+    {
+        debug writefln("[candidateHeaderLooksLikeHeader]");
+
+        import std.algorithm : splitter;
+        /* The candidate header is declared as the header if the lookahead cache has at least
+         * one numeric field that is text in the candidate header.
+         */
+        foreach(fieldIndex, fieldValue; _candidateHeaderLine.splitter(_options.delim).enumerate)
+        {
+            auto candidateFieldFormat = FieldFormat(fieldIndex);
+            candidateFieldFormat.updateForFieldValue(fieldValue, _options);
+            if (_fieldVector.length > fieldIndex &&
+                candidateFieldFormat.fieldType == FieldType.text &&
+                (_fieldVector[fieldIndex].fieldType == FieldType.integer ||
+                 _fieldVector[fieldIndex].fieldType == FieldType.floatingPoint))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    void setHeaderLine(const char[] line)
+    {
+        debug writefln("[setHeaderLine]");
         import std.algorithm : splitter;
 
         foreach(fieldIndex, header; line.splitter(_options.delim).enumerate)
@@ -249,53 +496,24 @@ public:
             assert(_fieldVector.length > fieldIndex);
             _fieldVector[fieldIndex].setHeader(header);
         }
-
-        if (stillCaching && _options.lookahead == 0)
-        {
-            finalizeFieldFormatting();
-            outputHeader(outputStream);
-            _stillCaching = false;
-        }
-    }
-
-    void processDataLine(OutputRange!char outputStream, const char[] line)
-    {
-        _dataLineCount++;
-
-        if (stillCaching) cacheDataLine(outputStream, line);
-        else outputDataLine(outputStream, line);
-    }
-
-    void finish(OutputRange!char outputStream)
-    {
-        if (stillCaching)
-        {
-            finalizeFieldFormatting();
-            outputDataLineCache(outputStream);
-            _stillCaching = false;
-        }
-    }
-
-private:
-    TsvPrettyOptions _options;
-    auto _dataLineCache = appender!(string[])();
-    FieldFormat[] _fieldVector;
-    size_t _dataLineCount = 0;
-    bool _stillCaching = true;
-
-    bool stillCaching()
-    {
-        return _stillCaching;
     }
 
     void cacheDataLine(OutputRange!char outputStream, const char[] line)
     {
-        import std.algorithm : splitter;
+        debug writefln("[cacheDataLine]");
         import std.conv : to;
 
-        assert(_dataLineCache.data.length < _options.lookahead);
+        assert(_lookaheadCache.data.length < _options.lookahead);
 
-        _dataLineCache ~= line.to!string;
+        _lookaheadCache ~= line.to!string;
+        updateFieldFormatsForLine(line);
+        if (_lookaheadCache.data.length == _options.lookahead) outputLookaheadCache(outputStream);
+    }
+
+    void updateFieldFormatsForLine(const char[] line)
+    {
+        debug writefln("[updateFieldFormatsForLine]");
+        import std.algorithm : splitter;
 
         foreach(fieldIndex, fieldValue; line.splitter(_options.delim).enumerate)
         {
@@ -304,16 +522,11 @@ private:
             _fieldVector[fieldIndex].updateForFieldValue(fieldValue, _options);
         }
 
-        if (_dataLineCache.data.length == _options.lookahead)
-        {
-            _stillCaching = false;
-            finalizeFieldFormatting();
-            outputDataLineCache(outputStream);
-        }
     }
 
     void finalizeFieldFormatting()
     {
+        debug writefln("[finalizeFieldFormatting]");
         size_t nextFieldStart = 0;
         foreach(ref field; _fieldVector)
         {
@@ -323,50 +536,20 @@ private:
 
     void outputHeader(OutputRange!char outputStream)
     {
-        if (_options.hasHeader)
+        debug writefln("[outputHeader]");
+        foreach(ref field; _fieldVector) field.writeHeader(outputStream, _options);
+        put(outputStream, '\n');
+
+        if (_options.underlineHeader)
         {
-            foreach(ref field; _fieldVector) field.writeHeader(outputStream, _options);
-            put(outputStream, '\n');
-
-            if (_options.underlineHeader)
-            {
-                foreach(ref field; _fieldVector) field.writeHeader!(Yes.writeUnderline)(outputStream, _options);
-                put(outputStream, '\n');
-            }
-        }
-    }
-
-    void outputDataLineCache(OutputRange!char outputStream)
-    {
-        import std.algorithm : splitter;
-
-        outputHeader(outputStream);
-
-        foreach(line; _dataLineCache.data)
-        {
-            size_t nextOutputPosition = 0;
-            foreach(fieldIndex, fieldValue; line.splitter(_options.delim).enumerate)
-            {
-                assert(fieldIndex < _fieldVector.length);  // Ensured by cacheDataLine
-
-                FieldFormat fieldFormat = _fieldVector[fieldIndex];
-                size_t nextFieldStart = fieldFormat.startPosition;
-                size_t spacesNeeded = (nextOutputPosition < nextFieldStart) ?
-                    nextFieldStart - nextOutputPosition :
-                    (fieldIndex == 0) ? 0 : 1;  // Previous field went long. One space between fields
-
-                put(outputStream, repeat(" ", spacesNeeded));
-                nextOutputPosition += spacesNeeded;
-                nextOutputPosition += fieldFormat.writeFieldValue(outputStream, nextOutputPosition, fieldValue, _options);
-            }
+            foreach(ref field; _fieldVector) field.writeHeader!(Yes.writeUnderline)(outputStream, _options);
             put(outputStream, '\n');
         }
-
-        _dataLineCache.clear;
     }
 
     void outputDataLine(OutputRange!char outputStream, const char[] line)
     {
+        debug writefln("[outputDataLine]");
         import std.algorithm : splitter;
 
         size_t nextOutputPosition = 0;
@@ -464,6 +647,11 @@ public:
     size_t endPosition() nothrow pure @safe @property
     {
         return _startPosition + _printWidth;
+    }
+
+    FieldType fieldType() nothrow pure @safe @property
+    {
+        return _type;
     }
 
     /* writeHeader writes the field header or underline characters to the output stream.
@@ -761,7 +949,7 @@ public:
             _floatPrecision = 0;
         }
 
-       debug  writefln("[finalizeFormatting] %s", this);
+        debug writefln("[finalizeFormatting] %s", this);
 
         return _startPosition + _printWidth;
     }
