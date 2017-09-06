@@ -45,7 +45,7 @@ runtest ${prog} "-H -l 7 input_numbers_1.tsv" ${basic_tests_1}
 runtest ${prog} "-H --format-floats input_numbers_1.tsv" ${basic_tests_1}
 runtest ${prog} "-H -f -l 0 input_numbers_1.tsv" ${basic_tests_1}
 runtest ${prog} "-H -f -l 1 input_numbers_1.tsv" ${basic_tests_1}
-runtest ${prog} "-H --float-precision 0 input_numbers_1.tsv" ${basic_tests_1}
+runtest ${prog} "-H --precision 0 input_numbers_1.tsv" ${basic_tests_1}
 runtest ${prog} "-H -p 1 input_numbers_1.tsv" ${basic_tests_1}
 runtest ${prog} "-H -p 0 -l 1 input_numbers_1.tsv" ${basic_tests_1}
 runtest ${prog} "-H -p 1 -l 1 input_numbers_1.tsv" ${basic_tests_1}
@@ -105,7 +105,7 @@ runtest ${prog} "-l 6 input_numbers_1.tsv" ${basic_tests_1}
 runtest ${prog} "-l 7 input_numbers_1.tsv" ${basic_tests_1}
 runtest ${prog} "--format-floats input_numbers_1.tsv" ${basic_tests_1}
 runtest ${prog} "-f -l 1 input_numbers_1.tsv" ${basic_tests_1}
-runtest ${prog} "--float-precision 0 input_numbers_1.tsv" ${basic_tests_1}
+runtest ${prog} "--precision 0 input_numbers_1.tsv" ${basic_tests_1}
 runtest ${prog} "-p 1 input_numbers_1.tsv" ${basic_tests_1}
 runtest ${prog} "-p 0 -l 1 input_numbers_1.tsv" ${basic_tests_1}
 runtest ${prog} "-p 1 -l 1 input_numbers_1.tsv" ${basic_tests_1}
@@ -161,7 +161,7 @@ runtest ${prog} "-x -l 6 input_numbers_noheader_1.tsv" ${basic_tests_1}
 runtest ${prog} "-x -l 7 input_numbers_noheader_1.tsv" ${basic_tests_1}
 runtest ${prog} "-x --format-floats input_numbers_noheader_1.tsv" ${basic_tests_1}
 runtest ${prog} "-x -f -l 1 input_numbers_noheader_1.tsv" ${basic_tests_1}
-runtest ${prog} "-x --float-precision 0 input_numbers_noheader_1.tsv" ${basic_tests_1}
+runtest ${prog} "-x --precision 0 input_numbers_noheader_1.tsv" ${basic_tests_1}
 runtest ${prog} "-x -p 1 input_numbers_noheader_1.tsv" ${basic_tests_1}
 runtest ${prog} "-x -p 0 -l 1 input_numbers_noheader_1.tsv" ${basic_tests_1}
 runtest ${prog} "-x -p 1 -l 1 input_numbers_noheader_1.tsv" ${basic_tests_1}
@@ -218,7 +218,7 @@ runtest ${prog} "-l 6 input_numbers_noheader_1.tsv" ${basic_tests_1}
 runtest ${prog} "-l 7 input_numbers_noheader_1.tsv" ${basic_tests_1}
 runtest ${prog} "--format-floats input_numbers_noheader_1.tsv" ${basic_tests_1}
 runtest ${prog} "-f -l 1 input_numbers_noheader_1.tsv" ${basic_tests_1}
-runtest ${prog} "--float-precision 0 input_numbers_noheader_1.tsv" ${basic_tests_1}
+runtest ${prog} "--precision 0 input_numbers_noheader_1.tsv" ${basic_tests_1}
 runtest ${prog} "-p 1 input_numbers_noheader_1.tsv" ${basic_tests_1}
 runtest ${prog} "-p 0 -l 1 input_numbers_noheader_1.tsv" ${basic_tests_1}
 runtest ${prog} "-p 1 -l 1 input_numbers_noheader_1.tsv" ${basic_tests_1}

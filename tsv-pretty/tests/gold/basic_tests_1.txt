@@ -109,7 +109,7 @@ One  Two  Three  Four  Five
 100    5  10001    -1  -9999.0
 101    6  100001 -0.03 -9999.3
 
-====[tsv-pretty -H --float-precision 0 input_numbers_1.tsv]====
+====[tsv-pretty -H --precision 0 input_numbers_1.tsv]====
 One  Two   Three  Four   Five
   1    1   10000     0     -1
   1    2      87     1     -0
@@ -568,7 +568,7 @@ One  Two  Three  Four  Five
 100    5  10001    -1  -9999.0
 101    6  100001 -0.03 -9999.3
 
-====[tsv-pretty --float-precision 0 input_numbers_1.tsv]====
+====[tsv-pretty --precision 0 input_numbers_1.tsv]====
 One  Two   Three  Four   Five
   1    1   10000     0     -1
   1    2      87     1     -0
@@ -983,7 +983,7 @@ Numeric file tests (with no header)
 100 5 10001  -1 -9999.0
 101 6 100001 -0.03 -9999.3
 
-====[tsv-pretty -x --float-precision 0 input_numbers_noheader_1.tsv]====
+====[tsv-pretty -x --precision 0 input_numbers_noheader_1.tsv]====
   1  1   10000   0     -1
   1  2      87   1     -0
   0  3       0   1  -9999
@@ -1359,7 +1359,7 @@ Numeric file tests: Auto-detect with no header
 99.830 5  10001 -1 -9999.0
 101.200 6 100001 -0.03 -9999.3
 
-====[tsv-pretty --float-precision 0 input_numbers_noheader_1.tsv]====
+====[tsv-pretty --precision 0 input_numbers_noheader_1.tsv]====
   1  2      87   1     -0
   0  3       0   1  -9999
   0  4    9999   0  -9999

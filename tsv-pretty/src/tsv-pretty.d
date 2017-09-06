@@ -58,8 +58,8 @@ By default, the text of the input values is not changed. There are a couple
 options that change this:
 
 * Floating point number formatting - Floats can be reformatted using the
-  '--f|format-floats' or '--p|float-precision NUM' options. Both print floats
-  favoring a fixed  precision over exponential notation for smaller numbers.
+  '--f|format-floats' or '--p|precision NUM' options. Both print floats
+  favoring a fixed precision over exponential notation for smaller numbers.
   The main difference is that '--f|format-floats' uses a default precision.
 
 * Missing values - A substitute value can be used, this is often less
@@ -99,7 +99,7 @@ struct TsvPrettyOptions
     size_t repeatHeader = 0;            // --r|repeat-header num (zero means no repeat)
     bool underlineHeader = false;       // --u|underline-header
     bool formatFloats = false;          // --f|format-floats
-    size_t floatPrecision = 9;          // --p|float-precision num (max precision when formatting floats)
+    size_t floatPrecision = 9;          // --p|precision num (max precision when formatting floats)
     bool replaceEmpty = false;          // --e|replace-empty
     string emptyReplacement = "";       // --E|empty-replacement
     size_t emptyReplacementPrintWidth = 0;    // Derived
@@ -140,7 +140,7 @@ struct TsvPrettyOptions
 
                 "u|underline-header",     "       Underline the header.", &underlineHeader,
                 "f|format-floats",        "       Format floats for better readability. Default: No", &formatFloats,
-                "p|float-precision",      "NUM    Floating point precision. Implies --format-floats", &floatPrecisionOptionHandler,
+                "p|precision",            "NUM    Floating point precision. Implies --format-floats", &floatPrecisionOptionHandler,
                 std.getopt.config.caseSensitive,
                 "e|replace-empty",        "       Replace empty fields with '--'.", &replaceEmpty,
                 "E|empty-replacement",    "STR    Replace empty fields with a string.", &emptyReplacement,
@@ -200,7 +200,7 @@ struct TsvPrettyOptions
         return tuple(true, 0);
     }
 
-    /* Option handler for --p|float-precision. It also sets --f|format-floats. */
+    /* Option handler for --p|precision. It also sets --f|format-floats. */
     private void floatPrecisionOptionHandler(string option, string optionVal)
     {
         import std.conv : to;
