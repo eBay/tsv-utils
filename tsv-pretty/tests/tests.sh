@@ -391,3 +391,14 @@ runtest ${prog} "-f input_mixed_1.tsv" ${basic_tests_1}
 runtest ${prog} "-p 0 input_mixed_1.tsv" ${basic_tests_1}
 runtest ${prog} "-p 1 input_mixed_1.tsv" ${basic_tests_1}
 runtest ${prog} "-p 2 input_mixed_1.tsv" ${basic_tests_1}
+
+echo "" >> ${basic_tests_1}
+echo "Header operations" >> ${basic_tests_1}
+echo "-----------------" >> ${basic_tests_1}
+
+runtest ${prog} "--underline-header -H input_mixed_1.tsv" ${basic_tests_1}
+runtest ${prog} "--header --underline-header --lookahead 0 input_mixed_1.tsv" ${basic_tests_1}
+runtest ${prog} "--underline-header input_mixed_1.tsv" ${basic_tests_1}
+runtest ${prog} "-u --lookahead 1 input_mixed_1.tsv" ${basic_tests_1}
+runtest ${prog} "-H -u input_unicode.tsv" ${basic_tests_1}
+runtest ${prog} "-u input_unicode.tsv" ${basic_tests_1}

@@ -2681,3 +2681,82 @@ I1  T1     F1  T2                    F2  Mixed
                       -5900  foobarbaz                   0.00  --text--     -31.00  1001     
 678900000000000021198012416  abcdefghijklmnopqrstuvwxyz -0.00  x              0.52  ABCDEFGHI
                          17  cat                         5.31  ABCDE         22.10  101      
+
+Header operations
+-----------------
+
+====[tsv-pretty --underline-header -H input_mixed_1.tsv]====
+      I1  T1                                   F1  T2                      F2  Mixed    
+      --  --                                   --  --                      --  -----    
+       3  A                            .1          HelloWorld    -1.28098e-05  15       
+      89  B                           0.008        23rd          18.23         23.0     
+     222  foo                       135.6          thirty      3311.235        19.1     
+       4  foobar                    -23.72         ten            0.0821       ABC      
+   -5900  foobarbaz                   8.03556e-09  --text--     -31.002        1001     
+6789e+23  abcdefghijklmnopqrstuvwxyz -6.758191e-14 x              0.518        ABCDEFGHI
+      17  cat                         5.31         ABCDE         22.1          101      
+
+====[tsv-pretty --header --underline-header --lookahead 0 input_mixed_1.tsv]====
+I1  T1  F1  T2  F2  Mixed
+--  --  --  --  --  -----
+3   A   .1  HelloWorld -1.28098e-05 15
+89  B   0.008 23rd 18.23 23.0
+222 foo 135.6 thirty 3311.235 19.1
+4   foobar -23.72 ten 0.0821 ABC
+-5900 foobarbaz 8.03556e-09 --text-- -31.002 1001
+6789e+23 abcdefghijklmnopqrstuvwxyz -6.758191e-14 x 0.518 ABCDEFGHI
+17  cat 5.31 ABCDE 22.1 101
+
+====[tsv-pretty --underline-header input_mixed_1.tsv]====
+      I1  T1                                   F1  T2                      F2  Mixed    
+      --  --                                   --  --                      --  -----    
+       3  A                            .1          HelloWorld    -1.28098e-05  15       
+      89  B                           0.008        23rd          18.23         23.0     
+     222  foo                       135.6          thirty      3311.235        19.1     
+       4  foobar                    -23.72         ten            0.0821       ABC      
+   -5900  foobarbaz                   8.03556e-09  --text--     -31.002        1001     
+6789e+23  abcdefghijklmnopqrstuvwxyz -6.758191e-14 x              0.518        ABCDEFGHI
+      17  cat                         5.31         ABCDE         22.1          101      
+
+====[tsv-pretty -u --lookahead 1 input_mixed_1.tsv]====
+I1  T1  F1  T2                    F2  Mixed
+--  --  --  --                    --  -----
+ 3  A   .1  HelloWorld  -1.28098e-05     15
+89  B   0.008 23rd      18.23          23.0
+222 foo 135.6 thirty    3311.235       19.1
+ 4  foobar -23.72 ten    0.0821         ABC
+-5900 foobarbaz 8.03556e-09 --text-- -31.002 1001
+6789e+23 abcdefghijklmnopqrstuvwxyz -6.758191e-14 x 0.518 ABCDEFGHI
+17  cat 5.31 ABCDE      22.1            101
+
+====[tsv-pretty -H -u input_unicode.tsv]====
+Language               Text 1             Text 2              Text 3          Text 4                 Text 5                    Text 6             Text 7          Number
+--------               ------             ------              ------          ------                 ------                    ------             ------          ------
+English                snow storm         soccer player       town hall       sleep quietly          black leather jacket      bongo drums        10 years ago     1.234
+Chinese (Simplified)   雪风暴             足球运动员          市政厅          安静地睡觉             黑色皮夹克                bongo鼓            10年前           2.345
+Chinese (Traditional)  雪風暴             足球運動員          市政廳          安靜地睡覺             黑色皮夾克                bongo鼓            10年前           3.456
+French                 Tempête de neige   joueur de foot      mairie          Dormez tranquillement  Veste en cuir noir        Bongo drums        Il ya 10 ans     4.567
+Georgian               თოვლის ქარიშხალი   ფეხბურთის მოთამაშე  მუნიციპალიტეტი  მშვიდი მშვიდად         შავი ტყავის ქურთუკი       ბოგოოს დასარტყამი  10 წლის წინ      5.678
+German                 Schneesturm        Fußballspieler      Rathaus         Schlafe ruhig          Schwarze Lederjacke       Bongo-Trommeln     vor 10 Jahren    6.789
+Greek                  Χιονοθύελλα        ποδοσφαιριστής      Δημαρχείο       Κοιμάται ήσυχα         Μαύρο δερμάτινο μπουφάν   Bongo τύμπανα      10 ΧΡΟΝΙΑ πριν   7.891
+Hebrew                 סופת שלגים         שחקן כדורגל         עירייה          לישון בשקט             מעיל עור שחור             תופים של בונגו     לפני 10 שנים     8.901
+Japanese               吹雪               サッカー選手        町役場          静かに眠る             ブラックレザージャケット  ボンゴドラム       10年前           9.012
+Russian                Снежная буря       футболист           ратуша          Спать спокойно         Черный кожаный пиджак     Бонго-барабаны     10 лет назад     0.123
+Spanish                Tormenta de nieve  jugador de fútbol   Ayuntamiento    Dormir tranquilamente  chaqueta de cuero negro   Tambores bongos    Hace 10 años     1.567
+Vietnamese             Bão tuyết          cầuthủ bóng đá      Thị trấn        Ngủ yên                Áo khoác da màu đen       Trống bongo        10 năm trước     2.678
+
+====[tsv-pretty -u input_unicode.tsv]====
+Language               Text 1             Text 2              Text 3          Text 4                 Text 5                    Text 6             Text 7          Number
+--------               ------             ------              ------          ------                 ------                    ------             ------          ------
+English                snow storm         soccer player       town hall       sleep quietly          black leather jacket      bongo drums        10 years ago     1.234
+Chinese (Simplified)   雪风暴             足球运动员          市政厅          安静地睡觉             黑色皮夹克                bongo鼓            10年前           2.345
+Chinese (Traditional)  雪風暴             足球運動員          市政廳          安靜地睡覺             黑色皮夾克                bongo鼓            10年前           3.456
+French                 Tempête de neige   joueur de foot      mairie          Dormez tranquillement  Veste en cuir noir        Bongo drums        Il ya 10 ans     4.567
+Georgian               თოვლის ქარიშხალი   ფეხბურთის მოთამაშე  მუნიციპალიტეტი  მშვიდი მშვიდად         შავი ტყავის ქურთუკი       ბოგოოს დასარტყამი  10 წლის წინ      5.678
+German                 Schneesturm        Fußballspieler      Rathaus         Schlafe ruhig          Schwarze Lederjacke       Bongo-Trommeln     vor 10 Jahren    6.789
+Greek                  Χιονοθύελλα        ποδοσφαιριστής      Δημαρχείο       Κοιμάται ήσυχα         Μαύρο δερμάτινο μπουφάν   Bongo τύμπανα      10 ΧΡΟΝΙΑ πριν   7.891
+Hebrew                 סופת שלגים         שחקן כדורגל         עירייה          לישון בשקט             מעיל עור שחור             תופים של בונגו     לפני 10 שנים     8.901
+Japanese               吹雪               サッカー選手        町役場          静かに眠る             ブラックレザージャケット  ボンゴドラム       10年前           9.012
+Russian                Снежная буря       футболист           ратуша          Спать спокойно         Черный кожаный пиджак     Бонго-барабаны     10 лет назад     0.123
+Spanish                Tormenta de nieve  jugador de fútbol   Ayuntamiento    Dormir tranquilamente  chaqueta de cuero negro   Tambores bongos    Hace 10 años     1.567
+Vietnamese             Bão tuyết          cầuthủ bóng đá      Thị trấn        Ngủ yên                Áo khoác da màu đen       Trống bongo        10 năm trước     2.678
