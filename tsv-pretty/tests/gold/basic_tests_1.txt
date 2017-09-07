@@ -2760,3 +2760,20 @@ Japanese               吹雪               サッカー選手        町役場 
 Russian                Снежная буря       футболист           ратуша          Спать спокойно         Черный кожаный пиджак     Бонго-барабаны     10 лет назад     0.123
 Spanish                Tormenta de nieve  jugador de fútbol   Ayuntamiento    Dormir tranquilamente  chaqueta de cuero negro   Tambores bongos    Hace 10 años     1.567
 Vietnamese             Bão tuyết          cầuthủ bóng đá      Thị trấn        Ngủ yên                Áo khoác da màu đen       Trống bongo        10 năm trước     2.678
+
+Help and version options
+------------------------
+
+Help and Version printing 1
+-----------------
+
+====[tsv-pretty --help | grep -c Synopsis]====
+1
+====[tsv-pretty -h | grep -c Synopsis]====
+1
+====[tsv-pretty --help-verbose | grep -c Synopsis]====
+1
+====[tsv-pretty --version | grep -c 'tsv-pretty (eBay/tsv-utils-dlang)']====
+1
+====[tsv-pretty -V | grep -c 'tsv-pretty (eBay/tsv-utils-dlang)']====
+1

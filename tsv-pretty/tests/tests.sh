@@ -402,3 +402,26 @@ runtest ${prog} "--underline-header input_mixed_1.tsv" ${basic_tests_1}
 runtest ${prog} "-u --lookahead 1 input_mixed_1.tsv" ${basic_tests_1}
 runtest ${prog} "-H -u input_unicode.tsv" ${basic_tests_1}
 runtest ${prog} "-u input_unicode.tsv" ${basic_tests_1}
+
+echo "" >> ${basic_tests_1}
+echo "Help and version options" >> ${basic_tests_1}
+echo "------------------------" >> ${basic_tests_1}
+echo "" >> ${basic_tests_1}
+echo "Help and Version printing 1" >> ${basic_tests_1}
+echo "-----------------" >> ${basic_tests_1}
+echo "" >> ${basic_tests_1}
+
+echo "====[tsv-pretty --help | grep -c Synopsis]====" >> ${basic_tests_1}
+${prog} --help 2>&1 | grep -c Synopsis >> ${basic_tests_1} 2>&1
+
+echo "====[tsv-pretty -h | grep -c Synopsis]====" >> ${basic_tests_1}
+${prog} --help 2>&1 | grep -c Synopsis >> ${basic_tests_1} 2>&1
+
+echo "====[tsv-pretty --help-verbose | grep -c Synopsis]====" >> ${basic_tests_1}
+${prog} --help 2>&1 | grep -c Synopsis >> ${basic_tests_1} 2>&1
+
+echo "====[tsv-pretty --version | grep -c 'tsv-pretty (eBay/tsv-utils-dlang)']====" >> ${basic_tests_1}
+${prog} --version 2>&1 | grep -c 'tsv-pretty (eBay/tsv-utils-dlang)' >> ${basic_tests_1} 2>&1
+
+echo "====[tsv-pretty -V | grep -c 'tsv-pretty (eBay/tsv-utils-dlang)']====" >> ${basic_tests_1}
+${prog} -V 2>&1 | grep -c 'tsv-pretty (eBay/tsv-utils-dlang)' >> ${basic_tests_1} 2>&1
