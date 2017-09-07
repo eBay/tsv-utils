@@ -425,3 +425,20 @@ ${prog} --version 2>&1 | grep -c 'tsv-pretty (eBay/tsv-utils-dlang)' >> ${basic_
 
 echo "====[tsv-pretty -V | grep -c 'tsv-pretty (eBay/tsv-utils-dlang)']====" >> ${basic_tests_1}
 ${prog} -V 2>&1 | grep -c 'tsv-pretty (eBay/tsv-utils-dlang)' >> ${basic_tests_1} 2>&1
+
+## Error cases
+
+error_tests_1=${odir}/error_tests_1.txt
+
+echo "Error test set 1" > ${error_tests_1}
+echo "----------------" >> ${error_tests_1}
+
+runtest ${prog} "no_such_file.tsv" ${error_tests_1}
+runtest ${prog} "--no-such-param input_unicode.tsv" ${error_tests_1}
+runtest ${prog} "-d ß input_unicode.tsv" ${error_tests_1}
+runtest ${prog} "--precision -1 input_unicode.tsv" ${error_tests_1}
+runtest ${prog} "--lookahead -1 input_unicode.tsv" ${error_tests_1}
+runtest ${prog} "--lookahead 1.5 input_unicode.tsv" ${error_tests_1}
+runtest ${prog} "--space-between-fields 1.5 input_unicode.tsv" ${error_tests_1}
+runtest ${prog} "--max-text-width -1 input_unicode.tsv" ${error_tests_1}
+runtest ${prog} "--lookahead 0 input_unicode.tsv" ${error_tests_1}
