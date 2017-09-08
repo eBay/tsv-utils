@@ -1304,6 +1304,7 @@ Numeric file tests: Auto-detect with no header
 101.2	6	100001	-0.03	-9999.3
 
 ====[tsv-pretty input_numbers_noheader_1.tsv]====
+  1.0    1   10000   0        -1  
   1.034  2      87   1         -.5
   0.200  3       0    .9   -9999  
   0.030  4    9999    .09  -9999. 
@@ -1311,20 +1312,23 @@ Numeric file tests: Auto-detect with no header
 101.2    6  100001  -0.03  -9999.3
 
 ====[tsv-pretty -l 1 input_numbers_noheader_1.tsv]====
-1.034  2  87  1  -.5
-0.200  3   0  .9 -9999
-0.030  4  9999 .09 -9999.
-99.83  5  10001 -1 -9999.0
+1.0    1  10000  0  -1  
+1.034  2     87  1   -.5
+0.200  3      0  .9 -9999
+0.030  4   9999  .09 -9999.
+99.83  5  10001  -1 -9999.0
 101.2  6  100001 -0.03 -9999.3
 
 ====[tsv-pretty -l 2 input_numbers_noheader_1.tsv]====
-1.034  2  87  1        -.5
-0.200  3   0   .9  -9999  
-0.030  4  9999 .09 -9999. 
-99.83  5  10001 -1 -9999.0
+1.0    1  10000  0       -1  
+1.034  2     87  1        -.5
+0.200  3      0   .9  -9999  
+0.030  4   9999  .09  -9999. 
+99.83  5  10001  -1   -9999.0
 101.2  6  100001 -0.03 -9999.3
 
 ====[tsv-pretty -l 5 input_numbers_noheader_1.tsv]====
+  1.0    1   10000   0        -1  
   1.034  2      87   1         -.5
   0.200  3       0    .9   -9999  
   0.030  4    9999    .09  -9999. 
@@ -1332,6 +1336,7 @@ Numeric file tests: Auto-detect with no header
 101.2    6  100001  -0.03  -9999.3
 
 ====[tsv-pretty -l 6 input_numbers_noheader_1.tsv]====
+  1.0    1   10000   0        -1  
   1.034  2      87   1         -.5
   0.200  3       0    .9   -9999  
   0.030  4    9999    .09  -9999. 
@@ -1339,6 +1344,7 @@ Numeric file tests: Auto-detect with no header
 101.2    6  100001  -0.03  -9999.3
 
 ====[tsv-pretty -l 7 input_numbers_noheader_1.tsv]====
+  1.0    1   10000   0        -1  
   1.034  2      87   1         -.5
   0.200  3       0    .9   -9999  
   0.030  4    9999    .09  -9999. 
@@ -1346,6 +1352,7 @@ Numeric file tests: Auto-detect with no header
 101.2    6  100001  -0.03  -9999.3
 
 ====[tsv-pretty --format-floats input_numbers_noheader_1.tsv]====
+  1.000  1   10000   0.00     -1.0
   1.034  2      87   1.00     -0.5
   0.200  3       0   0.90  -9999.0
   0.030  4    9999   0.09  -9999.0
@@ -1353,13 +1360,15 @@ Numeric file tests: Auto-detect with no header
 101.200  6  100001  -0.03  -9999.3
 
 ====[tsv-pretty -f -l 1 input_numbers_noheader_1.tsv]====
-1.034  2  87  1  -0.5
-0.200  3   0  .9 -9999.0
-0.030  4  9999 .09 -9999.0
-99.830 5  10001 -1 -9999.0
+1.000  1  10000  0  -1.0
+1.034  2     87  1  -0.5
+0.200  3      0  .9 -9999.0
+0.030  4   9999  .09 -9999.0
+99.830 5  10001  -1 -9999.0
 101.200 6 100001 -0.03 -9999.3
 
 ====[tsv-pretty --precision 0 input_numbers_noheader_1.tsv]====
+  1  1   10000   0     -1
   1  2      87   1     -0
   0  3       0   1  -9999
   0  4    9999   0  -9999
@@ -1367,6 +1376,7 @@ Numeric file tests: Auto-detect with no header
 101  6  100001  -0  -9999
 
 ====[tsv-pretty -p 1 input_numbers_noheader_1.tsv]====
+  1.0  1   10000   0.0     -1.0
   1.0  2      87   1.0     -0.5
   0.2  3       0   0.9  -9999.0
   0.0  4    9999   0.1  -9999.0
@@ -1374,17 +1384,19 @@ Numeric file tests: Auto-detect with no header
 101.2  6  100001  -0.0  -9999.3
 
 ====[tsv-pretty -p 0 -l 1 input_numbers_noheader_1.tsv]====
-1  2  87  1  -0
-0  3   0  .9 -9999
-0  4  9999 .09 -9999
-100 5 10001 -1 -9999
+1  1  10000  0  -1
+1  2     87  1  -0
+0  3      0  .9 -9999
+0  4   9999  .09 -9999
+100 5 10001  -1 -9999
 101 6 100001 -0.03 -9999
 
 ====[tsv-pretty -p 1 -l 1 input_numbers_noheader_1.tsv]====
-1  2  87  1  -0.5
-0  3   0  .9 -9999.0
-0  4  9999 .09 -9999.0
-100 5 10001 -1 -9999.0
+1  1  10000  0  -1.0
+1  2     87  1  -0.5
+0  3      0  .9 -9999.0
+0  4   9999  .09 -9999.0
+100 5 10001  -1 -9999.0
 101 6 100001 -0.03 -9999.3
 
 ===[cat input_numbers_noheader_2.tsv]===
@@ -1396,6 +1408,7 @@ Numeric file tests: Auto-detect with no header
 11136	62738536115	-14.3216	7.54845e+14	9357.003	0.55
 
 ====[tsv-pretty input_numbers_noheader_2.tsv]====
+  -34   9877623145     -3.067743          -78201.4200908        0          
     9           13     32                   -678.003        45339.220776301     0.0 
   105            3     47.885               -423.72          1003.004792   
  9007          427   7003.2288643            NaN              nan          
@@ -1403,20 +1416,23 @@ Numeric file tests: Auto-detect with no header
 11136  62738536115    -14.3216                 7.54845e+14   9357.003           0.55
 
 ====[tsv-pretty -l 1 input_numbers_noheader_2.tsv]====
-9  13  32  -678.003  45339.220776301  0.0
-105 3  47.885 -423.72 1003.004792   
-9007 427 7003.2288643 NaN nan       
-22 7317 91567.821252734 -5238937176.3217 0.004316 1234.5
-11136 62738536115 -14.3216 7.54845e+14 9357.003 0.55
+-34  9877623145  -3.067743  -78201.4200908      0          
+  9          13  32           -678.003      45339.220776301  0.0
+105           3  47.885       -423.72        1003.004792   
+9007        427  7003.2288643  NaN            nan          
+ 22        7317  91567.821252734 -5238937176.3217 0.004316   1234.5
+11136 62738536115 -14.3216     7.54845e+14   9357.003        0.55
 
 ====[tsv-pretty -l 2 input_numbers_noheader_2.tsv]====
-  9  13  32      -678.003  45339.220776301  0.0
-105   3  47.885  -423.72    1003.004792   
-9007 427 7003.2288643 NaN    nan          
- 22  7317 91567.821252734 -5238937176.3217 0.004316 1234.5
-11136 62738536115 -14.3216 7.54845e+14 9357.003 0.55
+-34  9877623145  -3.067743  -78201.4200908      0          
+  9          13  32           -678.003      45339.220776301  0.0
+105           3  47.885       -423.72        1003.004792   
+9007        427  7003.2288643  NaN            nan          
+ 22        7317  91567.821252734 -5238937176.3217 0.004316   1234.5
+11136 62738536115 -14.3216     7.54845e+14   9357.003        0.55
 
 ====[tsv-pretty -l 5 input_numbers_noheader_2.tsv]====
+  -34   9877623145     -3.067743          -78201.4200908        0          
     9           13     32                   -678.003        45339.220776301     0.0 
   105            3     47.885               -423.72          1003.004792   
  9007          427   7003.2288643            NaN              nan          
@@ -1424,6 +1440,7 @@ Numeric file tests: Auto-detect with no header
 11136  62738536115    -14.3216                 7.54845e+14   9357.003           0.55
 
 ====[tsv-pretty -l 6 input_numbers_noheader_2.tsv]====
+  -34   9877623145     -3.067743          -78201.4200908        0          
     9           13     32                   -678.003        45339.220776301     0.0 
   105            3     47.885               -423.72          1003.004792   
  9007          427   7003.2288643            NaN              nan          
@@ -1431,6 +1448,7 @@ Numeric file tests: Auto-detect with no header
 11136  62738536115    -14.3216                 7.54845e+14   9357.003           0.55
 
 ====[tsv-pretty -l 7 input_numbers_noheader_2.tsv]====
+  -34   9877623145     -3.067743          -78201.4200908        0          
     9           13     32                   -678.003        45339.220776301     0.0 
   105            3     47.885               -423.72          1003.004792   
  9007          427   7003.2288643            NaN              nan          
@@ -1438,20 +1456,23 @@ Numeric file tests: Auto-detect with no header
 11136  62738536115    -14.3216                 7.54845e+14   9357.003           0.55
 
 ====[tsv-pretty -f input_numbers_noheader_2.tsv]====
-    9           13     32.00000             -678.003        45339.220776     0.00
-  105            3     47.88500             -423.72          1003.004792
- 9007          427   7003.22886              nan                     nan
-   22         7317  91567.82125            -5.23893718e+09      0.004316  1234.50
-11136  62738536115    -14.32160                7.54845e+14   9357.003000     0.55
+  -34   9877623145     -3.067743           -78201.4201           0.000000
+    9           13     32.000000             -678.003        45339.220776     0.00
+  105            3     47.885000             -423.72          1003.004792
+ 9007          427   7003.228864              nan                     nan
+   22         7317  91567.821253            -5.23893718e+09      0.004316  1234.50
+11136  62738536115    -14.321600                7.54845e+14   9357.003000     0.55
 
 ====[tsv-pretty -f -l 1 input_numbers_noheader_2.tsv]====
-9  13  32  -678.003  45339.2208  0
-105 3  47.885 -423.720 1003.0048
-9007 427 7003.2288643 nan   nan
-22 7317 91567.821252734 -5238937176.322 0.0043 1234
-11136 62738536115 -14.3216 754845000000000.000 9357.0030 1
+-34  9877623145  -3.067743  -78201.4201      0.0000
+  9          13  32.000000    -678.0030  45339.2208  0
+105           3  47.885000    -423.7200   1003.0048
+9007        427  7003.228864        nan         nan
+ 22        7317  91567.821253 -5238937176.3217 0.0043 1234
+11136 62738536115 -14.321600 754845000000000.0000 9357.0030 1
 
 ====[tsv-pretty -p 0 input_numbers_noheader_2.tsv]====
+  -34   9877623145     -3           -78201      0
     9           13     32             -678  45339     0
   105            3     48             -424   1003
  9007          427   7003              nan    nan
@@ -1459,6 +1480,7 @@ Numeric file tests: Auto-detect with no header
 11136  62738536115    -14  754845000000000   9357     1
 
 ====[tsv-pretty -p 1 input_numbers_noheader_2.tsv]====
+  -34   9877623145     -3.1           -78201.4      0.0
     9           13     32.0             -678.0  45339.2     0.0
   105            3     47.9             -423.7   1003.0
  9007          427   7003.2                nan      nan
@@ -1466,18 +1488,20 @@ Numeric file tests: Auto-detect with no header
 11136  62738536115    -14.3  754845000000000.0   9357.0     0.6
 
 ====[tsv-pretty -p 0 -l 1 input_numbers_noheader_2.tsv]====
-9  13  32  -678  45339  0
-105 3  47.885 -424 1003
-9007 427 7003.2288643 nan nan
-22 7317 91567.821252734 -5238937176 0 1234
-11136 62738536115 -14.3216 754845000000000 9357 1
+-34  9877623145  -3  -78201      0
+  9          13  32    -678  45339  0
+105           3  48    -424   1003
+9007        427  7003   nan    nan
+ 22        7317  91568 -5238937176 0 1234
+11136 62738536115 -14 754845000000000 9357 1
 
 ====[tsv-pretty -p 1 -l 1 input_numbers_noheader_2.tsv]====
-9  13  32  -678  45339.2  0
-105 3  47.885 -424 1003.0
-9007 427 7003.2288643 nan nan
-22 7317 91567.821252734 -5238937176 0.0 1234
-11136 62738536115 -14.3216 754845000000000 9357.0 1
+-34  9877623145  -3.1  -78201.4      0.0
+  9          13  32.0    -678.0  45339.2  0
+105           3  47.9    -423.7   1003.0
+9007        427  7003.2     nan      nan
+ 22        7317  91567.8 -5238937176.3 0.0 1234
+11136 62738536115 -14.3 754845000000000.0 9357.0 1
 
 ===[cat input_numbers_noheader_3.tsv]===
 1.0
@@ -1488,6 +1512,7 @@ Numeric file tests: Auto-detect with no header
 101.2
 
 ====[tsv-pretty input_numbers_noheader_3.tsv]====
+  1.0  
   1.034
   0.200
   0.030
@@ -1495,6 +1520,7 @@ Numeric file tests: Auto-detect with no header
 101.2  
 
 ====[tsv-pretty -l 1 input_numbers_noheader_3.tsv]====
+1.0  
 1.034
 0.200
 0.030
@@ -1502,6 +1528,7 @@ Numeric file tests: Auto-detect with no header
 101.2
 
 ====[tsv-pretty -l 2 input_numbers_noheader_3.tsv]====
+1.0  
 1.034
 0.200
 0.030
@@ -1509,6 +1536,7 @@ Numeric file tests: Auto-detect with no header
 101.2
 
 ====[tsv-pretty -l 5 input_numbers_noheader_3.tsv]====
+  1.0  
   1.034
   0.200
   0.030
@@ -1516,6 +1544,7 @@ Numeric file tests: Auto-detect with no header
 101.2  
 
 ====[tsv-pretty -l 6 input_numbers_noheader_3.tsv]====
+  1.0  
   1.034
   0.200
   0.030
@@ -1523,6 +1552,7 @@ Numeric file tests: Auto-detect with no header
 101.2  
 
 ====[tsv-pretty -l 7 input_numbers_noheader_3.tsv]====
+  1.0  
   1.034
   0.200
   0.030
@@ -1530,6 +1560,7 @@ Numeric file tests: Auto-detect with no header
 101.2  
 
 ====[tsv-pretty -f input_numbers_noheader_3.tsv]====
+  1.000
   1.034
   0.200
   0.030
@@ -1537,6 +1568,7 @@ Numeric file tests: Auto-detect with no header
 101.200
 
 ====[tsv-pretty -f -l 1 input_numbers_noheader_3.tsv]====
+1.000
 1.034
 0.200
 0.030
@@ -1545,12 +1577,14 @@ Numeric file tests: Auto-detect with no header
 
 ====[tsv-pretty -p 0 input_numbers_noheader_3.tsv]====
   1
+  1
   0
   0
 100
 101
 
 ====[tsv-pretty -p 1 input_numbers_noheader_3.tsv]====
+  1.0
   1.0
   0.2
   0.0
@@ -1565,60 +1599,70 @@ Numeric file tests: Auto-detect with no header
 10000
 
 ====[tsv-pretty input_numbers_noheader_4.tsv]====
+    0
    10
   100
  1000
 10000
 
 ====[tsv-pretty -l 1 input_numbers_noheader_4.tsv]====
+ 0
 10
 100
 1000
 10000
 
 ====[tsv-pretty -l 2 input_numbers_noheader_4.tsv]====
+  0
  10
 100
 1000
 10000
 
 ====[tsv-pretty -l 5 input_numbers_noheader_4.tsv]====
+    0
    10
   100
  1000
 10000
 
 ====[tsv-pretty -l 6 input_numbers_noheader_4.tsv]====
+    0
    10
   100
  1000
 10000
 
 ====[tsv-pretty -l 7 input_numbers_noheader_4.tsv]====
+    0
    10
   100
  1000
 10000
 
 ====[tsv-pretty -f input_numbers_noheader_4.tsv]====
+    0
    10
   100
  1000
 10000
 
 ====[tsv-pretty -f -l 1 input_numbers_noheader_4.tsv]====
+ 0
 10
 100
 1000
 10000
 
 ====[tsv-pretty -p 0 input_numbers_noheader_4.tsv]====
+    0
    10
   100
  1000
 10000
 
 ====[tsv-pretty -p 1 input_numbers_noheader_4.tsv]====
+    0
    10
   100
  1000
@@ -2116,195 +2160,217 @@ ccc	ab cd	cc cc cc cc cc		e
 the	last	row	d	e
 
 ====[tsv-pretty input_text_1.tsv]====
-a    b      c                dd   e
-bb          cc               d  
-ccc  ab cd  cc cc cc cc cc        e
-     cd ab  c                d  
-            ccc ccc ccc ccc  ddd  e
+f1   field 2  field-3-longer-header  x    y
+a    b        c                      dd   e
+bb            cc                     d  
+ccc  ab cd    cc cc cc cc cc              e
+     cd ab    c                      d  
+              ccc ccc ccc ccc        ddd  e
 
-the  last   row              d    e
+the  last     row                    d    e
 
 ====[tsv-pretty -l 1 input_text_1.tsv]====
-a  b  c  dd  e
-bb    cc d 
-ccc ab cd cc cc cc cc cc  e
-   cd ab c d
-      ccc ccc ccc ccc ddd e
+f1  field 2  field-3-longer-header  x   y
+a   b        c                      dd  e
+bb           cc                     d 
+ccc ab cd    cc cc cc cc cc             e
+    cd ab    c                      d 
+             ccc ccc ccc ccc        ddd e
 
-the last row d e
+the last     row                    d   e
 
 ====[tsv-pretty -l 7 input_text_1.tsv]====
-a    b      c                dd   e
-bb          cc               d  
-ccc  ab cd  cc cc cc cc cc        e
-     cd ab  c                d  
-            ccc ccc ccc ccc  ddd  e
+f1   field 2  field-3-longer-header  x    y
+a    b        c                      dd   e
+bb            cc                     d  
+ccc  ab cd    cc cc cc cc cc              e
+     cd ab    c                      d  
+              ccc ccc ccc ccc        ddd  e
 
-the  last   row              d    e
+the  last     row                    d    e
 
 ====[tsv-pretty -l 8 input_text_1.tsv]====
-a    b      c                dd   e
-bb          cc               d  
-ccc  ab cd  cc cc cc cc cc        e
-     cd ab  c                d  
-            ccc ccc ccc ccc  ddd  e
+f1   field 2  field-3-longer-header  x    y
+a    b        c                      dd   e
+bb            cc                     d  
+ccc  ab cd    cc cc cc cc cc              e
+     cd ab    c                      d  
+              ccc ccc ccc ccc        ddd  e
 
-the  last   row              d    e
+the  last     row                    d    e
 
 ====[tsv-pretty -l 9 input_text_1.tsv]====
-a    b      c                dd   e
-bb          cc               d  
-ccc  ab cd  cc cc cc cc cc        e
-     cd ab  c                d  
-            ccc ccc ccc ccc  ddd  e
+f1   field 2  field-3-longer-header  x    y
+a    b        c                      dd   e
+bb            cc                     d  
+ccc  ab cd    cc cc cc cc cc              e
+     cd ab    c                      d  
+              ccc ccc ccc ccc        ddd  e
 
-the  last   row              d    e
+the  last     row                    d    e
 
 ====[tsv-pretty -l 1 input_text_1.tsv]====
-a  b  c  dd  e
-bb    cc d 
-ccc ab cd cc cc cc cc cc  e
-   cd ab c d
-      ccc ccc ccc ccc ddd e
+f1  field 2  field-3-longer-header  x   y
+a   b        c                      dd  e
+bb           cc                     d 
+ccc ab cd    cc cc cc cc cc             e
+    cd ab    c                      d 
+             ccc ccc ccc ccc        ddd e
 
-the last row d e
+the last     row                    d   e
 
 ====[tsv-pretty -l 7 input_text_1.tsv]====
-a    b      c                dd   e
-bb          cc               d  
-ccc  ab cd  cc cc cc cc cc        e
-     cd ab  c                d  
-            ccc ccc ccc ccc  ddd  e
+f1   field 2  field-3-longer-header  x    y
+a    b        c                      dd   e
+bb            cc                     d  
+ccc  ab cd    cc cc cc cc cc              e
+     cd ab    c                      d  
+              ccc ccc ccc ccc        ddd  e
 
-the  last   row              d    e
+the  last     row                    d    e
 
 ====[tsv-pretty -l 8 input_text_1.tsv]====
-a    b      c                dd   e
-bb          cc               d  
-ccc  ab cd  cc cc cc cc cc        e
-     cd ab  c                d  
-            ccc ccc ccc ccc  ddd  e
+f1   field 2  field-3-longer-header  x    y
+a    b        c                      dd   e
+bb            cc                     d  
+ccc  ab cd    cc cc cc cc cc              e
+     cd ab    c                      d  
+              ccc ccc ccc ccc        ddd  e
 
-the  last   row              d    e
+the  last     row                    d    e
 
 ====[tsv-pretty --max-text-width 0 input_text_1.tsv]====
-a    b     c  dd e
-bb         cc d
-ccc  ab cd cc cc cc cc cc  e
-     cd ab c  d
-           ccc ccc ccc ccc ddd e
+f1  field 2 field-3-longer-header x y
+a   b     c  dd e
+bb        cc d
+ccc ab cd cc cc cc cc cc  e
+    cd ab c  d
+          ccc ccc ccc ccc ddd e
 
-the  last  row d e
+the last  row d e
 
 ====[tsv-pretty -m 1 input_text_1.tsv]====
-a    b     c  dd e
-bb         cc d
-ccc  ab cd cc cc cc cc cc  e
-     cd ab c  d
-           ccc ccc ccc ccc ddd e
+f1  field 2 field-3-longer-header x y
+a   b     c  dd e
+bb        cc d
+ccc ab cd cc cc cc cc cc  e
+    cd ab c  d
+          ccc ccc ccc ccc ddd e
 
-the  last  row d e
+the last  row d e
 
 ====[tsv-pretty -m 2 input_text_1.tsv]====
-a    b     c   dd  e
-bb         cc  d 
-ccc  ab cd cc cc cc cc cc  e
-     cd ab c   d 
-           ccc ccc ccc ccc ddd e
+f1  field 2 field-3-longer-header x y
+a   b     c   dd  e
+bb        cc  d 
+ccc ab cd cc cc cc cc cc  e
+    cd ab c   d 
+          ccc ccc ccc ccc ddd e
 
-the  last  row d   e
+the last  row d   e
 
 ====[tsv-pretty -m 0 input_text_1.tsv]====
-a    b     c  dd e
-bb         cc d
-ccc  ab cd cc cc cc cc cc  e
-     cd ab c  d
-           ccc ccc ccc ccc ddd e
+f1  field 2 field-3-longer-header x y
+a   b     c  dd e
+bb        cc d
+ccc ab cd cc cc cc cc cc  e
+    cd ab c  d
+          ccc ccc ccc ccc ddd e
 
-the  last  row d e
+the last  row d e
 
 ====[tsv-pretty -l 1 -m 2 input_text_1.tsv]====
-a  b  c  dd  e
-bb    cc d 
+f1  field 2 field-3-longer-header x y
+a   b   c   dd  e
+bb      cc  d 
 ccc ab cd cc cc cc cc cc  e
-   cd ab c d
-      ccc ccc ccc ccc ddd e
+    cd ab c d 
+        ccc ccc ccc ccc ddd e
 
-the last row d e
+the last row d  e
 
 ====[tsv-pretty --space-between-fields 1 input_text_1.tsv]====
-a   b     c               dd  e
-bb        cc              d  
-ccc ab cd cc cc cc cc cc      e
-    cd ab c               d  
-          ccc ccc ccc ccc ddd e
+f1  field 2 field-3-longer-header x   y
+a   b       c                     dd  e
+bb          cc                    d  
+ccc ab cd   cc cc cc cc cc            e
+    cd ab   c                     d  
+            ccc ccc ccc ccc       ddd e
 
-the last  row             d   e
+the last    row                   d   e
 
 ====[tsv-pretty -s 2 input_text_1.tsv]====
-a    b      c                dd   e
-bb          cc               d  
-ccc  ab cd  cc cc cc cc cc        e
-     cd ab  c                d  
-            ccc ccc ccc ccc  ddd  e
+f1   field 2  field-3-longer-header  x    y
+a    b        c                      dd   e
+bb            cc                     d  
+ccc  ab cd    cc cc cc cc cc              e
+     cd ab    c                      d  
+              ccc ccc ccc ccc        ddd  e
 
-the  last   row              d    e
+the  last     row                    d    e
 
 ====[tsv-pretty -s 3 input_text_1.tsv]====
-a     b       c                 dd    e
-bb            cc                d  
-ccc   ab cd   cc cc cc cc cc          e
-      cd ab   c                 d  
-              ccc ccc ccc ccc   ddd   e
+f1    field 2   field-3-longer-header   x     y
+a     b         c                       dd    e
+bb              cc                      d  
+ccc   ab cd     cc cc cc cc cc                e
+      cd ab     c                       d  
+                ccc ccc ccc ccc         ddd   e
 
-the   last    row               d     e
+the   last      row                     d     e
 
 ====[tsv-pretty -s 1 input_text_1.tsv]====
-a   b     c               dd  e
-bb        cc              d  
-ccc ab cd cc cc cc cc cc      e
-    cd ab c               d  
-          ccc ccc ccc ccc ddd e
+f1  field 2 field-3-longer-header x   y
+a   b       c                     dd  e
+bb          cc                    d  
+ccc ab cd   cc cc cc cc cc            e
+    cd ab   c                     d  
+            ccc ccc ccc ccc       ddd e
 
-the last  row             d   e
+the last    row                   d   e
 
 ====[tsv-pretty -s 2 input_text_1.tsv]====
-a    b      c                dd   e
-bb          cc               d  
-ccc  ab cd  cc cc cc cc cc        e
-     cd ab  c                d  
-            ccc ccc ccc ccc  ddd  e
+f1   field 2  field-3-longer-header  x    y
+a    b        c                      dd   e
+bb            cc                     d  
+ccc  ab cd    cc cc cc cc cc              e
+     cd ab    c                      d  
+              ccc ccc ccc ccc        ddd  e
 
-the  last   row              d    e
+the  last     row                    d    e
 
 ====[tsv-pretty -s 3 input_text_1.tsv]====
-a     b       c                 dd    e
-bb            cc                d  
-ccc   ab cd   cc cc cc cc cc          e
-      cd ab   c                 d  
-              ccc ccc ccc ccc   ddd   e
+f1    field 2   field-3-longer-header   x     y
+a     b         c                       dd    e
+bb              cc                      d  
+ccc   ab cd     cc cc cc cc cc                e
+      cd ab     c                       d  
+                ccc ccc ccc ccc         ddd   e
 
-the   last    row               d     e
+the   last      row                     d     e
 
 ====[tsv-pretty -s 1 -m 1 input_text_1.tsv]====
-a   b    c dd e
-bb       cc d
+f1 field 2 field-3-longer-header x y
+a  b    c dd e
+bb      cc d
 ccc ab cd cc cc cc cc cc  e
-    cd ab c d
-         ccc ccc ccc ccc ddd e
+   cd ab c d
+        ccc ccc ccc ccc ddd e
 
 the last row d e
 
 ====[tsv-pretty -s 1 -m 1 input_text_1.tsv]====
-a   b    c dd e
-bb       cc d
+f1 field 2 field-3-longer-header x y
+a  b    c dd e
+bb      cc d
 ccc ab cd cc cc cc cc cc  e
-    cd ab c d
-         ccc ccc ccc ccc ddd e
+   cd ab c d
+        ccc ccc ccc ccc ddd e
 
 the last row d e
 
 ====[tsv-pretty -s 1 -m 1 -l 1 input_text_1.tsv]====
+f1 field 2 field-3-longer-header x y
 a b c dd e
 bb  cc d
 ccc ab cd cc cc cc cc cc  e
@@ -2314,67 +2380,74 @@ ccc ab cd cc cc cc cc cc  e
 the last row d e
 
 ====[tsv-pretty --replace-empty input_text_1.tsv]====
-a    b      c                dd   e
-bb   --     cc               d  
-ccc  ab cd  cc cc cc cc cc   --   e
---   cd ab  c                d  
---   --     ccc ccc ccc ccc  ddd  e
+f1   field 2  field-3-longer-header  x    y
+a    b        c                      dd   e
+bb   --       cc                     d  
+ccc  ab cd    cc cc cc cc cc         --   e
+--   cd ab    c                      d  
+--   --       ccc ccc ccc ccc        ddd  e
 
-the  last   row              d    e
+the  last     row                    d    e
 
 ====[tsv-pretty -e input_text_1.tsv]====
-a    b      c                dd   e
-bb   --     cc               d  
-ccc  ab cd  cc cc cc cc cc   --   e
---   cd ab  c                d  
---   --     ccc ccc ccc ccc  ddd  e
+f1   field 2  field-3-longer-header  x    y
+a    b        c                      dd   e
+bb   --       cc                     d  
+ccc  ab cd    cc cc cc cc cc         --   e
+--   cd ab    c                      d  
+--   --       ccc ccc ccc ccc        ddd  e
 
-the  last   row              d    e
+the  last     row                    d    e
 
 ====[tsv-pretty -e -l 1 input_text_1.tsv]====
-a  b  c  dd  e
-bb -- cc d 
-ccc ab cd cc cc cc cc cc -- e
--- cd ab c d
--- -- ccc ccc ccc ccc ddd e
+f1  field 2  field-3-longer-header  x   y
+a   b        c                      dd  e
+bb  --       cc                     d 
+ccc ab cd    cc cc cc cc cc         --  e
+--  cd ab    c                      d 
+--  --       ccc ccc ccc ccc        ddd e
 
-the last row d e
+the last     row                    d   e
 
 ====[tsv-pretty --empty-replacement ^ input_text_1.tsv]====
-a    b      c                dd   e
-bb   ^      cc               d  
-ccc  ab cd  cc cc cc cc cc   ^    e
-^    cd ab  c                d  
-^    ^      ccc ccc ccc ccc  ddd  e
+f1   field 2  field-3-longer-header  x    y
+a    b        c                      dd   e
+bb   ^        cc                     d  
+ccc  ab cd    cc cc cc cc cc         ^    e
+^    cd ab    c                      d  
+^    ^        ccc ccc ccc ccc        ddd  e
 
-the  last   row              d    e
+the  last     row                    d    e
 
 ====[tsv-pretty -E ^^^ input_text_1.tsv]====
-a    b      c                dd   e
-bb   ^^^    cc               d  
-ccc  ab cd  cc cc cc cc cc   ^^^  e
-^^^  cd ab  c                d  
-^^^  ^^^    ccc ccc ccc ccc  ddd  e
+f1   field 2  field-3-longer-header  x    y
+a    b        c                      dd   e
+bb   ^^^      cc                     d  
+ccc  ab cd    cc cc cc cc cc         ^^^  e
+^^^  cd ab    c                      d  
+^^^  ^^^      ccc ccc ccc ccc        ddd  e
 
-the  last   row              d    e
+the  last     row                    d    e
 
 ====[tsv-pretty -E ^ -l 1 input_text_1.tsv]====
-a  b  c  dd  e
-bb ^  cc d 
-ccc ab cd cc cc cc cc cc ^ e
-^  cd ab c d
-^  ^  ccc ccc ccc ccc ddd e
+f1  field 2  field-3-longer-header  x   y
+a   b        c                      dd  e
+bb  ^        cc                     d 
+ccc ab cd    cc cc cc cc cc         ^   e
+^   cd ab    c                      d 
+^   ^        ccc ccc ccc ccc        ddd e
 
-the last row d e
+the last     row                    d   e
 
 ====[tsv-pretty -E ^^^ -l 1 input_text_1.tsv]====
-a  b  c  dd  e
-bb ^^^ cc d
-ccc ab cd cc cc cc cc cc ^^^ e
-^^^ cd ab c d
-^^^ ^^^ ccc ccc ccc ccc ddd e
+f1  field 2  field-3-longer-header  x   y
+a   b        c                      dd  e
+bb  ^^^      cc                     d 
+ccc ab cd    cc cc cc cc cc         ^^^ e
+^^^ cd ab    c                      d 
+^^^ ^^^      ccc ccc ccc ccc        ddd e
 
-the last row d e
+the last     row                    d   e
 
 ===[cat input_unicode.tsv]===
 Language	Text 1	Text 2	Text 3	Text 4	Text 5	Text 6	Text 7	Number

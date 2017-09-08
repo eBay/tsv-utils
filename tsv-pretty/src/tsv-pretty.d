@@ -444,7 +444,7 @@ private:
             finalizeFieldFormatting();
             outputHeader(outputStream);
         }
-        else if (_options.autoDetectHeader && _autoDetectHeaderResult == AutoDetectHeaderResult.hasHeader &&
+        else if (_options.autoDetectHeader && _autoDetectHeaderResult == AutoDetectHeaderResult.noHeader &&
                  _candidateHeaderLine.length != 0)
         {
             updateFieldFormatsForLine(_candidateHeaderLine);
