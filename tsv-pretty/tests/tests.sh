@@ -404,6 +404,16 @@ runtest ${prog} "-H -u input_unicode.tsv" ${basic_tests_1}
 runtest ${prog} "-u input_unicode.tsv" ${basic_tests_1}
 
 echo "" >> ${basic_tests_1}
+echo "Alternate delimiters" >> ${basic_tests_1}
+echo "--------------------" >> ${basic_tests_1}
+
+runcmd "cat input_comma_delim.tsv" ${basic_tests_1}
+runtest ${prog} "input_comma_delim.tsv" ${basic_tests_1}
+runtest ${prog} "--delimiter , input_comma_delim.tsv" ${basic_tests_1}
+runtest ${prog} "--header -d , input_comma_delim.tsv" ${basic_tests_1}
+runtest ${prog} "--no-header -d , input_comma_delim.tsv" ${basic_tests_1}
+
+echo "" >> ${basic_tests_1}
 echo "Help and version options" >> ${basic_tests_1}
 echo "------------------------" >> ${basic_tests_1}
 echo "" >> ${basic_tests_1}
