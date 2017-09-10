@@ -416,8 +416,8 @@ runtest ${prog} "-H -u input_unicode.tsv" ${basic_tests_4}
 runtest ${prog} "-u input_unicode.tsv" ${basic_tests_4}
 
 echo "" >>  ${basic_tests_4}
-echo "Multiple files" >> ${basic_tests_4}
-echo "--------------" >> ${basic_tests_4}
+echo "Multiple files: Same headers" >> ${basic_tests_4}
+echo "----------------------------" >> ${basic_tests_4}
 
 runcmd "cat input_5x1.tsv" ${basic_tests_4}
 
@@ -440,6 +440,8 @@ runtest ${prog} "-u --header input_5x2.tsv input_5x2.tsv" ${basic_tests_4}
 runtest ${prog} "-u --no-header input_5x2.tsv input_5x2.tsv" ${basic_tests_4}
 runtest ${prog} "-u --header input_5x2.tsv input_5x2.tsv input_5x2.tsv" ${basic_tests_4}
 runtest ${prog} "-u --no-header input_5x2.tsv input_5x2.tsv input_5x2.tsv" ${basic_tests_4}
+runtest ${prog} "-u emptyfile.tsv input_5x2.tsv input_5x2.tsv" ${basic_tests_4}
+runtest ${prog} "-u emptyfile.tsv emptyfile.tsv input_5x2.tsv input_5x2.tsv" ${basic_tests_4}
 
 runcmd "cat input_5x3.tsv" ${basic_tests_4}
 runcmd "cat input_5x5.tsv" ${basic_tests_4}
@@ -455,6 +457,48 @@ runtest ${prog} "-u -l 3 input_5x2.tsv input_5x3.tsv input_5x5.tsv" ${basic_test
 runtest ${prog} "-u -l 4 input_5x2.tsv input_5x3.tsv input_5x5.tsv" ${basic_tests_4}
 runtest ${prog} "-u -l 6 input_5x2.tsv input_5x3.tsv input_5x5.tsv" ${basic_tests_4}
 runtest ${prog} "-u -l 7 input_5x2.tsv input_5x3.tsv input_5x5.tsv" ${basic_tests_4}
+
+echo "" >>  ${basic_tests_4}
+echo "Multiple files: No headers" >> ${basic_tests_4}
+echo "--------------------------" >> ${basic_tests_4}
+
+runcmd "cat input_5x1_noheader.tsv" ${basic_tests_4}
+
+runtest ${prog} "input_5x1_noheader.tsv" ${basic_tests_4}
+runtest ${prog} "-u input_5x1_noheader.tsv input_5x1_noheader.tsv" ${basic_tests_4}
+runtest ${prog} "-u --header input_5x1_noheader.tsv input_5x1_noheader.tsv" ${basic_tests_4}
+runtest ${prog} "-u --no-header input_5x1_noheader.tsv input_5x1_noheader.tsv" ${basic_tests_4}
+runtest ${prog} "-u --header input_5x1_noheader.tsv input_5x1_noheader.tsv input_5x1_noheader.tsv" ${basic_tests_4}
+runtest ${prog} "-u --no-header input_5x1_noheader.tsv input_5x1_noheader.tsv input_5x1_noheader.tsv" ${basic_tests_4}
+
+runcmd "cat input_5x2_noheader.tsv" ${basic_tests_4}
+
+runtest ${prog} "input_5x2_noheader.tsv" ${basic_tests_4}
+runtest ${prog} "-u input_5x2_noheader.tsv input_5x2_noheader.tsv" ${basic_tests_4}
+runtest ${prog} "-u --header input_5x2_noheader.tsv input_5x2_noheader.tsv" ${basic_tests_4}
+runtest ${prog} "-u --no-header input_5x2_noheader.tsv input_5x2_noheader.tsv" ${basic_tests_4}
+
+runcmd "cat input_5x4_noheader.tsv" ${basic_tests_4}
+
+runtest ${prog} "-u input_5x2_noheader.tsv input_5x4_noheader.tsv" ${basic_tests_4}
+runtest ${prog} "-u input_5x1.tsv input_5x2_noheader.tsv input_5x4_noheader.tsv" ${basic_tests_4}
+
+runtest ${prog} "-u input_5x1_noheader.tsv input_5x2_noheader.tsv input_5x4_noheader.tsv" ${basic_tests_4}
+runtest ${prog} "-u -l 1 input_5x1_noheader.tsv input_5x2_noheader.tsv input_5x4_noheader.tsv" ${basic_tests_4}
+runtest ${prog} "-u -l 2 input_5x1_noheader.tsv input_5x2_noheader.tsv input_5x4_noheader.tsv" ${basic_tests_4}
+runtest ${prog} "-u -l 3 input_5x1_noheader.tsv input_5x2_noheader.tsv input_5x4_noheader.tsv" ${basic_tests_4}
+runtest ${prog} "-u -l 4 input_5x1_noheader.tsv input_5x2_noheader.tsv input_5x4_noheader.tsv" ${basic_tests_4}
+runtest ${prog} "-u -l 5 input_5x1_noheader.tsv input_5x2_noheader.tsv input_5x4_noheader.tsv" ${basic_tests_4}
+runtest ${prog} "-u -l 6 input_5x1_noheader.tsv input_5x2_noheader.tsv input_5x4_noheader.tsv" ${basic_tests_4}
+runtest ${prog} "-u -l 7 input_5x1_noheader.tsv input_5x2_noheader.tsv input_5x4_noheader.tsv" ${basic_tests_4}
+
+runcmd "cat input_5x1_alltext.tsv" ${basic_tests_4}
+runtest ${prog} "-u input_5x2_noheader.tsv input_5x1_alltext.tsv input_5x2_noheader.tsv" ${basic_tests_4}
+runtest ${prog} "-u input_5x2_noheader.tsv input_5x2_noheader.tsv input_5x1_alltext.tsv input_5x2_noheader.tsv" ${basic_tests_4}
+
+runtest ${prog} "-u input_5x2_noheader.tsv emptyfile.tsv input_5x4_noheader.tsv" ${basic_tests_4}
+runtest ${prog} "-u emptyfile.tsv input_5x2_noheader.tsv input_5x4_noheader.tsv" ${basic_tests_4}
+runtest ${prog} "-u emptyfile.tsv emptyfile.tsv input_5x2_noheader.tsv input_5x4_noheader.tsv" ${basic_tests_4}
 
 ###
 ### Use file ${basic_tests_5}
