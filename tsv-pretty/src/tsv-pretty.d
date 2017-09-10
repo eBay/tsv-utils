@@ -240,8 +240,8 @@ void tsvPretty(in ref TsvPrettyOptions options, string[] files)
                 tpp.processLine(outputRangeObject!(char, char[])(stdout.lockingTextWriter), line);
             }
         }
-        tpp.finish(outputRangeObject!(char, char[])(stdout.lockingTextWriter));
     }
+    tpp.finish(outputRangeObject!(char, char[])(stdout.lockingTextWriter));
 }
 
 /* TsvPrettyProcessor maintains state of processing and exposes operations for
@@ -364,15 +364,18 @@ private:
             final switch (_autoDetectHeaderResult)
             {
             case AutoDetectHeaderResult.noHeader:
+                debug writefln("[processFileFirstLine] AutoDetectHeaderResult.no Header; file: %d", _fileCount);
                 assert(_fileCount > 1);
                 processLine(outputStream, line);
                 break;
 
             case AutoDetectHeaderResult.hasHeader:
+                debug writefln("[processFileFirstLine] AutoDetectHeaderResult.hasHeader; file: %d", _fileCount);
                 assert(_fileCount > 1);
                 break;
 
             case AutoDetectHeaderResult.none:
+                debug writefln("[processFileFirstLine] AutoDetectHeaderResult.none; file: %d", _fileCount);
                 if (_fileCount == 1)
                 {
                     assert(_candidateHeaderLine.length == 0);
@@ -416,10 +419,9 @@ private:
 private:
     void outputLookaheadCache(OutputRange!char outputStream)
     {
-        debug writefln("[outputLookaheadCache]");
-
         import std.algorithm : splitter;
 
+        debug writefln("[outputLookaheadCache]");
         assert(_stillCaching);
 
         if (_options.autoDetectHeader &&
@@ -950,7 +952,6 @@ public:
         }
 
         debug writefln("[finalizeFormatting] %s", this);
-
         return _startPosition + _printWidth;
     }
 }
