@@ -550,3 +550,4 @@ runtest ${prog} "--lookahead 1.5 input_unicode.tsv" ${error_tests_1}
 runtest ${prog} "--space-between-fields 1.5 input_unicode.tsv" ${error_tests_1}
 runtest ${prog} "--max-text-width -1 input_unicode.tsv" ${error_tests_1}
 runtest ${prog} "--lookahead 0 input_unicode.tsv" ${error_tests_1}
+runtest ${prog} "invalid_unicode.tsv" ${error_tests_1}

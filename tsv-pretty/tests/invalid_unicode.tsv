@@ -1,0 +1,5 @@
+Column-1	Column-2	Column-3
+white	Weiß	白
+invalid-utf-8	Wei�X	白
+black	schwarz	黒
+this	line	valid

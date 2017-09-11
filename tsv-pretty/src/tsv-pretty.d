@@ -991,6 +991,8 @@ size_t monospacePrintWidth(const char[] str) @safe
     import std.uni : byGrapheme;
 
     size_t width = 0;
-    foreach (g; str.byGrapheme) width += isCJK(g[0]) ? 2 : 1;
+    try foreach (g; str.byGrapheme) width += isCJK(g[0]) ? 2 : 1;
+    catch (Exception) width = str.length;  // Invalid utf-8 sequence. Catch avoids program failure.
+
     return width;
 }
