@@ -1,4 +1,4 @@
-Header operations
+Header underlines
 -----------------
 
 ====[tsv-pretty --underline-header -H input_mixed_1.tsv]====
@@ -76,6 +76,91 @@ Japanese               吹雪               サッカー選手        町役場 
 Russian                Снежная буря       футболист           ратуша          Спать спокойно         Черный кожаный пиджак     Бонго-барабаны     10 лет назад     0.123
 Spanish                Tormenta de nieve  jugador de fútbol   Ayuntamiento    Dormir tranquilamente  chaqueta de cuero negro   Tambores bongos    Hace 10 años     1.567
 Vietnamese             Bão tuyết          cầuthủ bóng đá      Thị trấn        Ngủ yên                Áo khoác da màu đen       Trống bongo        10 năm trước     2.678
+
+Repeating headers
+-----------------
+
+===[cat input_5x5.tsv]===
+Text-1	Num-1	Mix-1	Mix-2	Mix-3
+ab.cd	55	5x5-f3	27	abcd
+cde.fgi	67	r2-f3	890	hg-90
+pqr	88.5	r3-f3	p-q-r	x-y-z
+rst	98.5	r4-f3	r-s-t-u	100
+
+====[tsv-pretty --repeat-header 2 input_5x5.tsv]====
+Text-1   Num-1  Mix-1   Mix-2    Mix-3
+ab.cd     55    5x5-f3  27       abcd
+cde.fgi   67    r2-f3   890      hg-90
+
+Text-1   Num-1  Mix-1   Mix-2    Mix-3
+pqr       88.5  r3-f3   p-q-r    x-y-z
+rst       98.5  r4-f3   r-s-t-u  100
+
+====[tsv-pretty -r 1 input_5x5.tsv]====
+Text-1   Num-1  Mix-1   Mix-2    Mix-3
+ab.cd     55    5x5-f3  27       abcd
+
+Text-1   Num-1  Mix-1   Mix-2    Mix-3
+cde.fgi   67    r2-f3   890      hg-90
+
+Text-1   Num-1  Mix-1   Mix-2    Mix-3
+pqr       88.5  r3-f3   p-q-r    x-y-z
+
+Text-1   Num-1  Mix-1   Mix-2    Mix-3
+rst       98.5  r4-f3   r-s-t-u  100
+
+====[tsv-pretty -r 0 input_5x5.tsv]====
+Text-1   Num-1  Mix-1   Mix-2    Mix-3
+ab.cd     55    5x5-f3  27       abcd
+cde.fgi   67    r2-f3   890      hg-90
+pqr       88.5  r3-f3   p-q-r    x-y-z
+rst       98.5  r4-f3   r-s-t-u  100
+
+====[tsv-pretty -r 20 input_5x5.tsv]====
+Text-1   Num-1  Mix-1   Mix-2    Mix-3
+ab.cd     55    5x5-f3  27       abcd
+cde.fgi   67    r2-f3   890      hg-90
+pqr       88.5  r3-f3   p-q-r    x-y-z
+rst       98.5  r4-f3   r-s-t-u  100
+
+====[tsv-pretty -r 5 -H -u input_5x5.tsv input_5x5.tsv input_5x5.tsv]====
+Text-1   Num-1  Mix-1   Mix-2    Mix-3
+------   -----  -----   -----    -----
+ab.cd     55    5x5-f3  27       abcd
+cde.fgi   67    r2-f3   890      hg-90
+pqr       88.5  r3-f3   p-q-r    x-y-z
+rst       98.5  r4-f3   r-s-t-u  100
+ab.cd     55    5x5-f3  27       abcd
+
+Text-1   Num-1  Mix-1   Mix-2    Mix-3
+------   -----  -----   -----    -----
+cde.fgi   67    r2-f3   890      hg-90
+pqr       88.5  r3-f3   p-q-r    x-y-z
+rst       98.5  r4-f3   r-s-t-u  100
+ab.cd     55    5x5-f3  27       abcd
+cde.fgi   67    r2-f3   890      hg-90
+
+Text-1   Num-1  Mix-1   Mix-2    Mix-3
+------   -----  -----   -----    -----
+pqr       88.5  r3-f3   p-q-r    x-y-z
+rst       98.5  r4-f3   r-s-t-u  100
+
+====[tsv-pretty -r 5 --no-header -u input_5x5.tsv input_5x5.tsv input_5x5.tsv]====
+Text-1   Num-1  Mix-1   Mix-2    Mix-3
+ab.cd    55     5x5-f3  27       abcd
+cde.fgi  67     r2-f3   890      hg-90
+pqr      88.5   r3-f3   p-q-r    x-y-z
+rst      98.5   r4-f3   r-s-t-u  100
+Text-1   Num-1  Mix-1   Mix-2    Mix-3
+ab.cd    55     5x5-f3  27       abcd
+cde.fgi  67     r2-f3   890      hg-90
+pqr      88.5   r3-f3   p-q-r    x-y-z
+rst      98.5   r4-f3   r-s-t-u  100
+Text-1   Num-1  Mix-1   Mix-2    Mix-3
+ab.cd    55     5x5-f3  27       abcd
+cde.fgi  67     r2-f3   890      hg-90
+pqr      88.5   r3-f3   p-q-r    x-y-z
+rst      98.5   r4-f3   r-s-t-u  100
 
 Multiple files: Same headers
 ----------------------------

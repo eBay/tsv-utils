@@ -319,6 +319,7 @@ private:
 
     private TsvPrettyOptions _options;
     private size_t _fileCount = 0;
+    private size_t _dataLineOutputCount = 0;
     private bool _stillCaching = true;
     private string _candidateHeaderLine;
     private auto _lookaheadCache = appender!(string[])();
@@ -553,6 +554,18 @@ private:
     {
         debug writefln("[outputDataLine]");
         import std.algorithm : splitter;
+
+        /* Repeating header option. */
+        if (_options.repeatHeader != 0 && _dataLineOutputCount != 0 &&
+            (_options.hasHeader || (_options.autoDetectHeader &&
+                                    _autoDetectHeaderResult == AutoDetectHeaderResult.hasHeader)) &&
+            _dataLineOutputCount % _options.repeatHeader == 0)
+        {
+            put(outputStream, '\n');
+            outputHeader(outputStream);
+        }
+
+        _dataLineOutputCount++;
 
         size_t nextOutputPosition = 0;
         foreach(fieldIndex, fieldValue; line.splitter(_options.delim).enumerate)

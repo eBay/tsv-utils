@@ -405,7 +405,7 @@ runtest ${prog} "-p 2 input_mixed_1.tsv" ${basic_tests_3}
 ###
 basic_tests_4=${odir}/basic_tests_4.txt
 
-echo "Header operations" > ${basic_tests_4}
+echo "Header underlines" > ${basic_tests_4}
 echo "-----------------" >> ${basic_tests_4}
 
 runtest ${prog} "--underline-header -H input_mixed_1.tsv" ${basic_tests_4}
@@ -414,6 +414,19 @@ runtest ${prog} "--underline-header input_mixed_1.tsv" ${basic_tests_4}
 runtest ${prog} "-u --lookahead 1 input_mixed_1.tsv" ${basic_tests_4}
 runtest ${prog} "-H -u input_unicode.tsv" ${basic_tests_4}
 runtest ${prog} "-u input_unicode.tsv" ${basic_tests_4}
+
+echo "" >>  ${basic_tests_4}
+echo "Repeating headers" >> ${basic_tests_4}
+echo "-----------------" >> ${basic_tests_4}
+
+runcmd "cat input_5x5.tsv" ${basic_tests_4}
+
+runtest ${prog} "--repeat-header 2 input_5x5.tsv" ${basic_tests_4}
+runtest ${prog} "-r 1 input_5x5.tsv" ${basic_tests_4}
+runtest ${prog} "-r 0 input_5x5.tsv" ${basic_tests_4}
+runtest ${prog} "-r 20 input_5x5.tsv" ${basic_tests_4}
+runtest ${prog} "-r 5 -H -u input_5x5.tsv input_5x5.tsv input_5x5.tsv" ${basic_tests_4}
+runtest ${prog} "-r 5 --no-header -u input_5x5.tsv input_5x5.tsv input_5x5.tsv" ${basic_tests_4}
 
 echo "" >>  ${basic_tests_4}
 echo "Multiple files: Same headers" >> ${basic_tests_4}
