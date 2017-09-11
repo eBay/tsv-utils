@@ -781,7 +781,8 @@ public:
          * left-aligned all spaces are trailing. If right aligned, then spaces are leading,
          * unless the field is a float with a variable number of trailing digits. In the
          * latter case, trailing spaces are used to align the decimal point, the rest are
-         * leading.
+         * leading. Trailing spaces are not actually printed. That is handled by the caller.
+         * This avoids adding trailing spaces at the end of a line.
          */
         size_t leadingSpaces = 0;
         size_t trailingSpaces = 0;
@@ -812,9 +813,8 @@ public:
 
         put(outputStream, repeat(' ', leadingSpaces));
         put(outputStream, printValue);
-        put(outputStream, repeat(' ', trailingSpaces));
 
-        return printValuePrintWidth + numSpacesNeeded;
+        return printValuePrintWidth + leadingSpaces;
     }
 
     /* updateForFieldValue updates type and format given a new field value.

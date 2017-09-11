@@ -4,13 +4,13 @@ Header operations
 ====[tsv-pretty --underline-header -H input_mixed_1.tsv]====
       I1  T1                                   F1  T2                      F2  Mixed    
       --  --                                   --  --                      --  -----    
-       3  A                            .1          HelloWorld    -1.28098e-05  15       
-      89  B                           0.008        23rd          18.23         23.0     
-     222  foo                       135.6          thirty      3311.235        19.1     
-       4  foobar                    -23.72         ten            0.0821       ABC      
-   -5900  foobarbaz                   8.03556e-09  --text--     -31.002        1001     
+       3  A                            .1          HelloWorld    -1.28098e-05  15
+      89  B                           0.008        23rd          18.23         23.0
+     222  foo                       135.6          thirty      3311.235        19.1
+       4  foobar                    -23.72         ten            0.0821       ABC
+   -5900  foobarbaz                   8.03556e-09  --text--     -31.002        1001
 6789e+23  abcdefghijklmnopqrstuvwxyz -6.758191e-14 x              0.518        ABCDEFGHI
-      17  cat                         5.31         ABCDE         22.1          101      
+      17  cat                         5.31         ABCDE         22.1          101
 
 ====[tsv-pretty --header --underline-header --lookahead 0 input_mixed_1.tsv]====
 I1  T1  F1  T2  F2  Mixed
@@ -26,13 +26,13 @@ I1  T1  F1  T2  F2  Mixed
 ====[tsv-pretty --underline-header input_mixed_1.tsv]====
       I1  T1                                   F1  T2                      F2  Mixed    
       --  --                                   --  --                      --  -----    
-       3  A                            .1          HelloWorld    -1.28098e-05  15       
-      89  B                           0.008        23rd          18.23         23.0     
-     222  foo                       135.6          thirty      3311.235        19.1     
-       4  foobar                    -23.72         ten            0.0821       ABC      
-   -5900  foobarbaz                   8.03556e-09  --text--     -31.002        1001     
+       3  A                            .1          HelloWorld    -1.28098e-05  15
+      89  B                           0.008        23rd          18.23         23.0
+     222  foo                       135.6          thirty      3311.235        19.1
+       4  foobar                    -23.72         ten            0.0821       ABC
+   -5900  foobarbaz                   8.03556e-09  --text--     -31.002        1001
 6789e+23  abcdefghijklmnopqrstuvwxyz -6.758191e-14 x              0.518        ABCDEFGHI
-      17  cat                         5.31         ABCDE         22.1          101      
+      17  cat                         5.31         ABCDE         22.1          101
 
 ====[tsv-pretty -u --lookahead 1 input_mixed_1.tsv]====
 I1  T1  F1  T2                    F2  Mixed
@@ -120,64 +120,64 @@ ABC	22	14	.	ab
 
 ====[tsv-pretty input_5x2.tsv]====
 Text-1  Num-1  Mix-1  Mix-2  Mix-3
-ABC        22     14  .      ab   
+ABC        22     14  .      ab
 
 ====[tsv-pretty input_5x2.tsv input_5x2.tsv]====
 Text-1  Num-1  Mix-1  Mix-2  Mix-3
-ABC        22     14  .      ab   
-ABC        22     14  .      ab   
+ABC        22     14  .      ab
+ABC        22     14  .      ab
 
 ====[tsv-pretty -u input_5x2.tsv input_5x2.tsv]====
 Text-1  Num-1  Mix-1  Mix-2  Mix-3
 ------  -----  -----  -----  -----
-ABC        22     14  .      ab   
-ABC        22     14  .      ab   
+ABC        22     14  .      ab
+ABC        22     14  .      ab
 
 ====[tsv-pretty -u input_5x2.tsv input_5x2.tsv input_5x2.tsv]====
 Text-1  Num-1  Mix-1  Mix-2  Mix-3
 ------  -----  -----  -----  -----
-ABC        22     14  .      ab   
-ABC        22     14  .      ab   
-ABC        22     14  .      ab   
+ABC        22     14  .      ab
+ABC        22     14  .      ab
+ABC        22     14  .      ab
 
 ====[tsv-pretty -u --header input_5x2.tsv input_5x2.tsv]====
 Text-1  Num-1  Mix-1  Mix-2  Mix-3
 ------  -----  -----  -----  -----
-ABC        22     14  .      ab   
-ABC        22     14  .      ab   
+ABC        22     14  .      ab
+ABC        22     14  .      ab
 
 ====[tsv-pretty -u --no-header input_5x2.tsv input_5x2.tsv]====
 Text-1  Num-1  Mix-1  Mix-2  Mix-3
-ABC     22     14     .      ab   
+ABC     22     14     .      ab
 Text-1  Num-1  Mix-1  Mix-2  Mix-3
-ABC     22     14     .      ab   
+ABC     22     14     .      ab
 
 ====[tsv-pretty -u --header input_5x2.tsv input_5x2.tsv input_5x2.tsv]====
 Text-1  Num-1  Mix-1  Mix-2  Mix-3
 ------  -----  -----  -----  -----
-ABC        22     14  .      ab   
-ABC        22     14  .      ab   
-ABC        22     14  .      ab   
+ABC        22     14  .      ab
+ABC        22     14  .      ab
+ABC        22     14  .      ab
 
 ====[tsv-pretty -u --no-header input_5x2.tsv input_5x2.tsv input_5x2.tsv]====
 Text-1  Num-1  Mix-1  Mix-2  Mix-3
-ABC     22     14     .      ab   
+ABC     22     14     .      ab
 Text-1  Num-1  Mix-1  Mix-2  Mix-3
-ABC     22     14     .      ab   
+ABC     22     14     .      ab
 Text-1  Num-1  Mix-1  Mix-2  Mix-3
-ABC     22     14     .      ab   
+ABC     22     14     .      ab
 
 ====[tsv-pretty -u emptyfile.tsv input_5x2.tsv input_5x2.tsv]====
 Text-1  Num-1  Mix-1  Mix-2  Mix-3
 ------  -----  -----  -----  -----
-ABC        22     14  .      ab   
-ABC        22     14  .      ab   
+ABC        22     14  .      ab
+ABC        22     14  .      ab
 
 ====[tsv-pretty -u emptyfile.tsv emptyfile.tsv input_5x2.tsv input_5x2.tsv]====
 Text-1  Num-1  Mix-1  Mix-2  Mix-3
 ------  -----  -----  -----  -----
-ABC        22     14  .      ab   
-ABC        22     14  .      ab   
+ABC        22     14  .      ab
+ABC        22     14  .      ab
 
 ===[cat input_5x3.tsv]===
 Text-1	Num-1	Mix-1	Mix-2	Mix-3
@@ -194,119 +194,119 @@ rst	98.5	r4-f3	r-s-t-u	100
 ====[tsv-pretty -u input_5x2.tsv input_5x3.tsv]====
 Text-1    Num-1  Mix-1   Mix-2  Mix-3
 ------    -----  -----   -----  -----
-ABC          22  14      .      ab   
-DEF        2233  0.0     e      nan  
-GHIJKLM  223344  1.4e07  17     ghi  
+ABC          22  14      .      ab
+DEF        2233  0.0     e      nan
+GHIJKLM  223344  1.4e07  17     ghi
 
 ====[tsv-pretty -u input_5x2.tsv input_5x3.tsv input_5x5.tsv]====
 Text-1      Num-1  Mix-1   Mix-2    Mix-3
 ------      -----  -----   -----    -----
-ABC          22    14      .        ab   
-DEF        2233    0.0     e        nan  
-GHIJKLM  223344    1.4e07  17       ghi  
-ab.cd        55    5x5-f3  27       abcd 
+ABC          22    14      .        ab
+DEF        2233    0.0     e        nan
+GHIJKLM  223344    1.4e07  17       ghi
+ab.cd        55    5x5-f3  27       abcd
 cde.fgi      67    r2-f3   890      hg-90
 pqr          88.5  r3-f3   p-q-r    x-y-z
-rst          98.5  r4-f3   r-s-t-u  100  
+rst          98.5  r4-f3   r-s-t-u  100
 
 ====[tsv-pretty -u input_5x1.tsv input_5x2.tsv input_5x3.tsv input_5x5.tsv]====
 Text-1      Num-1  Mix-1   Mix-2    Mix-3
 ------      -----  -----   -----    -----
-ABC          22    14      .        ab   
-DEF        2233    0.0     e        nan  
-GHIJKLM  223344    1.4e07  17       ghi  
-ab.cd        55    5x5-f3  27       abcd 
+ABC          22    14      .        ab
+DEF        2233    0.0     e        nan
+GHIJKLM  223344    1.4e07  17       ghi
+ab.cd        55    5x5-f3  27       abcd
 cde.fgi      67    r2-f3   890      hg-90
 pqr          88.5  r3-f3   p-q-r    x-y-z
-rst          98.5  r4-f3   r-s-t-u  100  
+rst          98.5  r4-f3   r-s-t-u  100
 
 ====[tsv-pretty -u -l 1 input_5x1.tsv input_5x2.tsv input_5x3.tsv input_5x5.tsv]====
 Text-1  Num-1  Mix-1  Mix-2  Mix-3
 ------  -----  -----  -----  -----
-ABC        22     14  .      ab   
-DEF      2233    0.0  e      nan  
-GHIJKLM 223344 1.4e07 17     ghi  
-ab.cd      55  5x5-f3 27     abcd 
+ABC        22     14  .      ab
+DEF      2233    0.0  e      nan
+GHIJKLM 223344 1.4e07 17     ghi
+ab.cd      55  5x5-f3 27     abcd
 cde.fgi    67  r2-f3  890    hg-90
 pqr      88.5  r3-f3  p-q-r  x-y-z
-rst      98.5  r4-f3  r-s-t-u 100 
+rst      98.5  r4-f3  r-s-t-u 100
 
 ====[tsv-pretty -u -l 2 input_5x1.tsv input_5x2.tsv input_5x3.tsv input_5x5.tsv]====
 Text-1  Num-1  Mix-1  Mix-2  Mix-3
 ------  -----  -----  -----  -----
-ABC        22   14    .      ab   
-DEF      2233    0.0  e      nan  
-GHIJKLM 223344 1.4e07 17     ghi  
-ab.cd      55  5x5-f3 27     abcd 
+ABC        22   14    .      ab
+DEF      2233    0.0  e      nan
+GHIJKLM 223344 1.4e07 17     ghi
+ab.cd      55  5x5-f3 27     abcd
 cde.fgi    67  r2-f3  890    hg-90
 pqr      88.5  r3-f3  p-q-r  x-y-z
-rst      98.5  r4-f3  r-s-t-u 100 
+rst      98.5  r4-f3  r-s-t-u 100
 
 ====[tsv-pretty -u -l 1 input_5x2.tsv input_5x3.tsv input_5x5.tsv]====
 Text-1  Num-1  Mix-1  Mix-2  Mix-3
 ------  -----  -----  -----  -----
-ABC        22     14  .      ab   
-DEF      2233    0.0  e      nan  
-GHIJKLM 223344 1.4e07 17     ghi  
-ab.cd      55  5x5-f3 27     abcd 
+ABC        22     14  .      ab
+DEF      2233    0.0  e      nan
+GHIJKLM 223344 1.4e07 17     ghi
+ab.cd      55  5x5-f3 27     abcd
 cde.fgi    67  r2-f3  890    hg-90
 pqr      88.5  r3-f3  p-q-r  x-y-z
-rst      98.5  r4-f3  r-s-t-u 100 
+rst      98.5  r4-f3  r-s-t-u 100
 
 ====[tsv-pretty -u -l 2 input_5x2.tsv input_5x3.tsv input_5x5.tsv]====
 Text-1  Num-1  Mix-1  Mix-2  Mix-3
 ------  -----  -----  -----  -----
-ABC        22   14    .      ab   
-DEF      2233    0.0  e      nan  
-GHIJKLM 223344 1.4e07 17     ghi  
-ab.cd      55  5x5-f3 27     abcd 
+ABC        22   14    .      ab
+DEF      2233    0.0  e      nan
+GHIJKLM 223344 1.4e07 17     ghi
+ab.cd      55  5x5-f3 27     abcd
 cde.fgi    67  r2-f3  890    hg-90
 pqr      88.5  r3-f3  p-q-r  x-y-z
-rst      98.5  r4-f3  r-s-t-u 100 
+rst      98.5  r4-f3  r-s-t-u 100
 
 ====[tsv-pretty -u -l 3 input_5x2.tsv input_5x3.tsv input_5x5.tsv]====
 Text-1    Num-1  Mix-1   Mix-2  Mix-3
 ------    -----  -----   -----  -----
-ABC          22  14      .      ab   
-DEF        2233  0.0     e      nan  
-GHIJKLM  223344  1.4e07  17     ghi  
-ab.cd        55  5x5-f3  27     abcd 
+ABC          22  14      .      ab
+DEF        2233  0.0     e      nan
+GHIJKLM  223344  1.4e07  17     ghi
+ab.cd        55  5x5-f3  27     abcd
 cde.fgi      67  r2-f3   890    hg-90
 pqr        88.5  r3-f3   p-q-r  x-y-z
-rst        98.5  r4-f3   r-s-t-u 100 
+rst        98.5  r4-f3   r-s-t-u 100
 
 ====[tsv-pretty -u -l 4 input_5x2.tsv input_5x3.tsv input_5x5.tsv]====
 Text-1    Num-1  Mix-1   Mix-2  Mix-3
 ------    -----  -----   -----  -----
-ABC          22  14      .      ab   
-DEF        2233  0.0     e      nan  
-GHIJKLM  223344  1.4e07  17     ghi  
-ab.cd        55  5x5-f3  27     abcd 
+ABC          22  14      .      ab
+DEF        2233  0.0     e      nan
+GHIJKLM  223344  1.4e07  17     ghi
+ab.cd        55  5x5-f3  27     abcd
 cde.fgi      67  r2-f3   890    hg-90
 pqr        88.5  r3-f3   p-q-r  x-y-z
-rst        98.5  r4-f3   r-s-t-u 100 
+rst        98.5  r4-f3   r-s-t-u 100
 
 ====[tsv-pretty -u -l 6 input_5x2.tsv input_5x3.tsv input_5x5.tsv]====
 Text-1      Num-1  Mix-1   Mix-2  Mix-3
 ------      -----  -----   -----  -----
-ABC          22    14      .      ab   
-DEF        2233    0.0     e      nan  
-GHIJKLM  223344    1.4e07  17     ghi  
-ab.cd        55    5x5-f3  27     abcd 
+ABC          22    14      .      ab
+DEF        2233    0.0     e      nan
+GHIJKLM  223344    1.4e07  17     ghi
+ab.cd        55    5x5-f3  27     abcd
 cde.fgi      67    r2-f3   890    hg-90
 pqr          88.5  r3-f3   p-q-r  x-y-z
-rst          98.5  r4-f3   r-s-t-u 100 
+rst          98.5  r4-f3   r-s-t-u 100
 
 ====[tsv-pretty -u -l 7 input_5x2.tsv input_5x3.tsv input_5x5.tsv]====
 Text-1      Num-1  Mix-1   Mix-2    Mix-3
 ------      -----  -----   -----    -----
-ABC          22    14      .        ab   
-DEF        2233    0.0     e        nan  
-GHIJKLM  223344    1.4e07  17       ghi  
-ab.cd        55    5x5-f3  27       abcd 
+ABC          22    14      .        ab
+DEF        2233    0.0     e        nan
+GHIJKLM  223344    1.4e07  17       ghi
+ab.cd        55    5x5-f3  27       abcd
 cde.fgi      67    r2-f3   890      hg-90
 pqr          88.5  r3-f3   p-q-r    x-y-z
-rst          98.5  r4-f3   r-s-t-u  100  
+rst          98.5  r4-f3   r-s-t-u  100
 
 Multiple files: No headers
 --------------------------
@@ -371,33 +371,33 @@ pqr	88.5	r3-f3	p-q-r	x-y-z
 rst	98.5	r4-f3	r-s-t-u	100
 
 ====[tsv-pretty -u input_5x2_noheader.tsv input_5x4_noheader.tsv]====
-DEF        2233    0.0     e        nan  
-GHIJKLM  223344    1.4e07  17       ghi  
-ab.cd        55    5x5-f3  27       abcd 
+DEF        2233    0.0     e        nan
+GHIJKLM  223344    1.4e07  17       ghi
+ab.cd        55    5x5-f3  27       abcd
 cde.fgi      67    r2-f3   890      hg-90
 pqr          88.5  r3-f3   p-q-r    x-y-z
-rst          98.5  r4-f3   r-s-t-u  100  
+rst          98.5  r4-f3   r-s-t-u  100
 
 ====[tsv-pretty -u input_5x1.tsv input_5x2_noheader.tsv input_5x4_noheader.tsv]====
 Text-1   Num-1   Mix-1   Mix-2    Mix-3
-DEF      2233    0.0     e        nan  
-GHIJKLM  223344  1.4e07  17       ghi  
-ab.cd    55      5x5-f3  27       abcd 
+DEF      2233    0.0     e        nan
+GHIJKLM  223344  1.4e07  17       ghi
+ab.cd    55      5x5-f3  27       abcd
 cde.fgi  67      r2-f3   890      hg-90
 pqr      88.5    r3-f3   p-q-r    x-y-z
-rst      98.5    r4-f3   r-s-t-u  100  
+rst      98.5    r4-f3   r-s-t-u  100
 
 ====[tsv-pretty -u input_5x1_noheader.tsv input_5x2_noheader.tsv input_5x4_noheader.tsv]====
-ABC          22    14      .        ab   
-DEF        2233    0.0     e        nan  
-GHIJKLM  223344    1.4e07  17       ghi  
-ab.cd        55    5x5-f3  27       abcd 
+ABC          22    14      .        ab
+DEF        2233    0.0     e        nan
+GHIJKLM  223344    1.4e07  17       ghi
+ab.cd        55    5x5-f3  27       abcd
 cde.fgi      67    r2-f3   890      hg-90
 pqr          88.5  r3-f3   p-q-r    x-y-z
-rst          98.5  r4-f3   r-s-t-u  100  
+rst          98.5  r4-f3   r-s-t-u  100
 
 ====[tsv-pretty -u -l 1 input_5x1_noheader.tsv input_5x2_noheader.tsv input_5x4_noheader.tsv]====
-ABC    22  14    .  ab 
+ABC    22  14    .  ab
 DEF  2233   0.0  e  nan
 GHIJKLM 223344 1.4e07 17 ghi
 ab.cd  55  5x5-f3 27 abcd
@@ -406,7 +406,7 @@ pqr  88.5  r3-f3 p-q-r x-y-z
 rst  98.5  r4-f3 r-s-t-u 100
 
 ====[tsv-pretty -u -l 2 input_5x1_noheader.tsv input_5x2_noheader.tsv input_5x4_noheader.tsv]====
-ABC          22  14      .   ab 
+ABC          22  14      .   ab
 DEF        2233  0.0     e   nan
 GHIJKLM  223344  1.4e07  17  ghi
 ab.cd        55  5x5-f3  27  abcd
@@ -415,59 +415,59 @@ pqr        88.5  r3-f3   p-q-r x-y-z
 rst        98.5  r4-f3   r-s-t-u 100
 
 ====[tsv-pretty -u -l 3 input_5x1_noheader.tsv input_5x2_noheader.tsv input_5x4_noheader.tsv]====
-ABC          22  14      .   ab  
-DEF        2233  0.0     e   nan 
-GHIJKLM  223344  1.4e07  17  ghi 
+ABC          22  14      .   ab
+DEF        2233  0.0     e   nan
+GHIJKLM  223344  1.4e07  17  ghi
 ab.cd        55  5x5-f3  27  abcd
 cde.fgi      67  r2-f3   890 hg-90
 pqr        88.5  r3-f3   p-q-r x-y-z
 rst        98.5  r4-f3   r-s-t-u 100
 
 ====[tsv-pretty -u -l 4 input_5x1_noheader.tsv input_5x2_noheader.tsv input_5x4_noheader.tsv]====
-ABC          22  14      .    ab   
-DEF        2233  0.0     e    nan  
-GHIJKLM  223344  1.4e07  17   ghi  
-ab.cd        55  5x5-f3  27   abcd 
+ABC          22  14      .    ab
+DEF        2233  0.0     e    nan
+GHIJKLM  223344  1.4e07  17   ghi
+ab.cd        55  5x5-f3  27   abcd
 cde.fgi      67  r2-f3   890  hg-90
 pqr        88.5  r3-f3   p-q-r x-y-z
 rst        98.5  r4-f3   r-s-t-u 100
 
 ====[tsv-pretty -u -l 5 input_5x1_noheader.tsv input_5x2_noheader.tsv input_5x4_noheader.tsv]====
-ABC          22    14      .      ab   
-DEF        2233    0.0     e      nan  
-GHIJKLM  223344    1.4e07  17     ghi  
-ab.cd        55    5x5-f3  27     abcd 
+ABC          22    14      .      ab
+DEF        2233    0.0     e      nan
+GHIJKLM  223344    1.4e07  17     ghi
+ab.cd        55    5x5-f3  27     abcd
 cde.fgi      67    r2-f3   890    hg-90
 pqr          88.5  r3-f3   p-q-r  x-y-z
-rst          98.5  r4-f3   r-s-t-u 100 
+rst          98.5  r4-f3   r-s-t-u 100
 
 ====[tsv-pretty -u -l 6 input_5x1_noheader.tsv input_5x2_noheader.tsv input_5x4_noheader.tsv]====
-ABC          22    14      .        ab   
-DEF        2233    0.0     e        nan  
-GHIJKLM  223344    1.4e07  17       ghi  
-ab.cd        55    5x5-f3  27       abcd 
+ABC          22    14      .        ab
+DEF        2233    0.0     e        nan
+GHIJKLM  223344    1.4e07  17       ghi
+ab.cd        55    5x5-f3  27       abcd
 cde.fgi      67    r2-f3   890      hg-90
 pqr          88.5  r3-f3   p-q-r    x-y-z
-rst          98.5  r4-f3   r-s-t-u  100  
+rst          98.5  r4-f3   r-s-t-u  100
 
 ====[tsv-pretty -u -l 7 input_5x1_noheader.tsv input_5x2_noheader.tsv input_5x4_noheader.tsv]====
-ABC          22    14      .        ab   
-DEF        2233    0.0     e        nan  
-GHIJKLM  223344    1.4e07  17       ghi  
-ab.cd        55    5x5-f3  27       abcd 
+ABC          22    14      .        ab
+DEF        2233    0.0     e        nan
+GHIJKLM  223344    1.4e07  17       ghi
+ab.cd        55    5x5-f3  27       abcd
 cde.fgi      67    r2-f3   890      hg-90
 pqr          88.5  r3-f3   p-q-r    x-y-z
-rst          98.5  r4-f3   r-s-t-u  100  
+rst          98.5  r4-f3   r-s-t-u  100
 
 ===[cat input_5x1_alltext.tsv]===
 abc	d	ef	g	hijk
 
 ====[tsv-pretty -u input_5x2_noheader.tsv input_5x1_alltext.tsv input_5x2_noheader.tsv]====
-DEF      2233    0.0     e   nan 
-GHIJKLM  223344  1.4e07  17  ghi 
+DEF      2233    0.0     e   nan
+GHIJKLM  223344  1.4e07  17  ghi
 abc      d       ef      g   hijk
-DEF      2233    0.0     e   nan 
-GHIJKLM  223344  1.4e07  17  ghi 
+DEF      2233    0.0     e   nan
+GHIJKLM  223344  1.4e07  17  ghi
 
 ====[tsv-pretty -u input_5x2_noheader.tsv input_5x2_noheader.tsv input_5x1_alltext.tsv input_5x2_noheader.tsv]====
 DEF        2233  0.0      e  nan
@@ -477,25 +477,25 @@ GHIJKLM  223344  1.4e07  17  ghi
 GHIJKLM  223344  1.4e07  17  ghi
 
 ====[tsv-pretty -u input_5x2_noheader.tsv emptyfile.tsv input_5x4_noheader.tsv]====
-DEF        2233    0.0     e        nan  
-GHIJKLM  223344    1.4e07  17       ghi  
-ab.cd        55    5x5-f3  27       abcd 
+DEF        2233    0.0     e        nan
+GHIJKLM  223344    1.4e07  17       ghi
+ab.cd        55    5x5-f3  27       abcd
 cde.fgi      67    r2-f3   890      hg-90
 pqr          88.5  r3-f3   p-q-r    x-y-z
-rst          98.5  r4-f3   r-s-t-u  100  
+rst          98.5  r4-f3   r-s-t-u  100
 
 ====[tsv-pretty -u emptyfile.tsv input_5x2_noheader.tsv input_5x4_noheader.tsv]====
-DEF        2233    0.0     e        nan  
-GHIJKLM  223344    1.4e07  17       ghi  
-ab.cd        55    5x5-f3  27       abcd 
+DEF        2233    0.0     e        nan
+GHIJKLM  223344    1.4e07  17       ghi
+ab.cd        55    5x5-f3  27       abcd
 cde.fgi      67    r2-f3   890      hg-90
 pqr          88.5  r3-f3   p-q-r    x-y-z
-rst          98.5  r4-f3   r-s-t-u  100  
+rst          98.5  r4-f3   r-s-t-u  100
 
 ====[tsv-pretty -u emptyfile.tsv emptyfile.tsv input_5x2_noheader.tsv input_5x4_noheader.tsv]====
-DEF        2233    0.0     e        nan  
-GHIJKLM  223344    1.4e07  17       ghi  
-ab.cd        55    5x5-f3  27       abcd 
+DEF        2233    0.0     e        nan
+GHIJKLM  223344    1.4e07  17       ghi
+ab.cd        55    5x5-f3  27       abcd
 cde.fgi      67    r2-f3   890      hg-90
 pqr          88.5  r3-f3   p-q-r    x-y-z
-rst          98.5  r4-f3   r-s-t-u  100  
+rst          98.5  r4-f3   r-s-t-u  100

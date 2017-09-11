@@ -9,32 +9,32 @@ A到Z," PQR",3.0,4.00
 A〜Z,$@#,3.00,4.0
 
 ====[tsv-pretty input_comma_delim.tsv]====
-F1,Field Two,3,Four 
-A to Z,def,3,4      
-A-to-Z,DEF,3.,4.    
+F1,Field Two,3,Four
+A to Z,def,3,4
+A-to-Z,DEF,3.,4.
 A到Z," PQR",3.0,4.00
-A〜Z,$@#,3.00,4.0   
+A〜Z,$@#,3.00,4.0
 
 ====[tsv-pretty --delimiter , input_comma_delim.tsv]====
 F1      Field Two     3  Four
-A to Z  def        3     4   
-A-to-Z  DEF        3.    4.  
+A to Z  def        3     4
+A-to-Z  DEF        3.    4.
 A到Z    " PQR"     3.0   4.00
-A〜Z    $@#        3.00  4.0 
+A〜Z    $@#        3.00  4.0
 
 ====[tsv-pretty --header -d , input_comma_delim.tsv]====
 F1      Field Two     3  Four
-A to Z  def        3     4   
-A-to-Z  DEF        3.    4.  
+A to Z  def        3     4
+A-to-Z  DEF        3.    4.
 A到Z    " PQR"     3.0   4.00
-A〜Z    $@#        3.00  4.0 
+A〜Z    $@#        3.00  4.0
 
 ====[tsv-pretty --no-header -d , input_comma_delim.tsv]====
 F1      Field Two  3     Four
-A to Z  def        3     4   
-A-to-Z  DEF        3.    4.  
+A to Z  def        3     4
+A-to-Z  DEF        3.    4.
 A到Z    " PQR"     3.0   4.00
-A〜Z    $@#        3.00  4.0 
+A〜Z    $@#        3.00  4.0
 
 Help and version options
 ------------------------
