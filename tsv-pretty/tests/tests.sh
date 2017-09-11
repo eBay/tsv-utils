@@ -539,13 +539,30 @@ echo "====[tsv-pretty -h | grep -c Synopsis]====" >> ${basic_tests_5}
 ${prog} --help 2>&1 | grep -c Synopsis >> ${basic_tests_5} 2>&1
 
 echo "====[tsv-pretty --help-verbose | grep -c Synopsis]====" >> ${basic_tests_5}
-${prog} --help 2>&1 | grep -c Synopsis >> ${basic_tests_5} 2>&1
+${prog} --help-verbose 2>&1 | grep -c Synopsis >> ${basic_tests_5} 2>&1
+
+echo "====[tsv-pretty --help-verbose | grep -c Limitations]====" >> ${basic_tests_5}
+${prog} --help-verbose 2>&1 | grep -c Synopsis >> ${basic_tests_5} 2>&1
 
 echo "====[tsv-pretty --version | grep -c 'tsv-pretty (eBay/tsv-utils-dlang)']====" >> ${basic_tests_5}
 ${prog} --version 2>&1 | grep -c 'tsv-pretty (eBay/tsv-utils-dlang)' >> ${basic_tests_5} 2>&1
 
 echo "====[tsv-pretty -V | grep -c 'tsv-pretty (eBay/tsv-utils-dlang)']====" >> ${basic_tests_5}
 ${prog} -V 2>&1 | grep -c 'tsv-pretty (eBay/tsv-utils-dlang)' >> ${basic_tests_5} 2>&1
+
+echo "" >> ${basic_tests_5}
+echo "Standard input" >> ${basic_tests_5}
+echo "--------------" >> ${basic_tests_5}
+
+## runtest can't create a command lines with standard input. Write them out.
+echo "" >> ${basic_tests_5}; echo "====[cat input_5x5.tsv | tsv-pretty]====" >> ${basic_tests_5}
+cat input_5x5.tsv | ${prog} >> ${basic_tests_5} 2>&1
+
+echo "" >> ${basic_tests_5}; echo "====[cat input_5x5.tsv | tsv-pretty -u -- -]====" >> ${basic_tests_5}
+cat input_5x5.tsv | ${prog} -u -- - >> ${basic_tests_5} 2>&1
+
+echo "" >> ${basic_tests_5}; echo "====[cat input_5x5.tsv | tsv-pretty -u -- input_5x2.tsv -]====" >> ${basic_tests_5}
+cat input_5x5.tsv | ${prog} -u -- input_5x2.tsv - >> ${basic_tests_5} 2>&1
 
 ## Error cases
 
