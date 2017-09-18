@@ -479,7 +479,8 @@ private:
             if (_fieldVector.length > fieldIndex &&
                 candidateFieldFormat.fieldType == FieldType.text &&
                 (_fieldVector[fieldIndex].fieldType == FieldType.integer ||
-                 _fieldVector[fieldIndex].fieldType == FieldType.floatingPoint))
+                 _fieldVector[fieldIndex].fieldType == FieldType.floatingPoint ||
+                 _fieldVector[fieldIndex].fieldType == FieldType.exponent))
             {
                 return true;
             }
@@ -600,6 +601,34 @@ private:
     }
 }
 
+/* Field Formatting and alignment
+ * - Text columns: Values always left-aligned, unchanged.
+ * - Integer columns: Values always right-aligned, unchanged.
+ * - Floating point columns, not formatted
+ *   - Floating point values aligned on decimal point
+ *   - Integer values aligned on decimal point
+ *   - Exponential values right aligned
+ *   - Text values right aligned
+ * - Exponential columns, not formatted:
+ *      Values always right-aligned, unchanged.
+ * - Floating point columns, formatted
+ *   - Floating point value
+ *     - Raw precision <= column precision:
+ *         Zero-pad raw value to precision
+ *     - Raw precision > column precision: Format with %f
+ *   - Integer value: Format with %f
+ *   - Text value: Right align
+ *   - Exponent: Right align
+ * - Exponential columns, formatted
+ *   - Exponential value:
+ *     - Raw precision <= column precision:
+ *          Zero-pad raw value to precision
+ *     - Raw precision > column precision: Format with %e
+ *   - Floating point value: Format with %e
+ *   - Integer value: Format with %e
+ *   - Text value: Right align
+ */
+
 /** FieldFormat holds all the formatting info needed to format data values in a specific
  * column. e.g. Field 1 may be text, field 2 may be a float, etc. This is calculated
  * during the caching phase. Each FieldFormat instance is part of a vector representing
@@ -618,7 +647,7 @@ private:
  * - writeFieldValue - Outputs the current field value, properly aligned.
  */
 
-enum FieldType { unknown, text, integer, floatingPoint };
+enum FieldType { unknown, text, integer, floatingPoint, exponent };
 enum FieldAlignment { left, right };
 
 struct FieldFormat
@@ -631,13 +660,14 @@ private:
     FieldAlignment _alignment = FieldAlignment.left;
     size_t _startPosition = 0;
     size_t _printWidth = 0;
-    size_t _floatPrecision = 0;
+    size_t _precision = 0;          // Number of digits after the decimal point
 
     /* These are used while doing initial type and print format detection. */
     size_t _minRawPrintWidth = 0;
     size_t _maxRawPrintWidth = 0;
     size_t _maxDigitsBeforeDecimal = 0;
     size_t _maxDigitsAfterDecimal = 0;
+    size_t _maxSignificantDigits = 0;  // Digits to include in exponential notation
 
 public:
     this(size_t fieldIndex)
@@ -714,119 +744,106 @@ private:
      */
     enum defaultReadablePrecisionMax = 6;
 
-    bool formattedFloatsAreFixedPoint(size_t readablePrecisionMax = defaultReadablePrecisionMax)
-    {
-        return _floatPrecision <= readablePrecisionMax;
-    }
-
-    auto formatFloatingPoint(double value)
-    {
-        import std.format : format;
-
-        return formattedFloatsAreFixedPoint() ?
-            format("%.*f", _floatPrecision, value) :
-            format("%.*g", _floatPrecision, value);
-    }
 
 public:
+    /* writeFieldValue writes the field value for the current column The caller needs
+     * to generate output at least to the column's start position, but can go beyond
+     * if previous fields have run long.
+     *
+     * The field value is aligned properly in the field. Either left aligned (text) or
+     * right aligned (numeric). Floating point fields are both right aligned and
+     * decimal point aligned. The number of bytes written is returned. Trailing spaces
+     * are not added, the caller must add any necessary trailing spaces prior to
+     * printing the next field.
+     */
     size_t writeFieldValue(OutputRange!char outputStream, size_t currPosition,
                            const char[] fieldValue, in ref TsvPrettyOptions options)
     in
     {
         assert(currPosition >= _startPosition);   // Caller resposible for advancing to field start position.
-        assert(_type == FieldType.text || _type == FieldType.integer || _type == FieldType.floatingPoint);
+        assert(_type == FieldType.text || _type == FieldType.integer ||
+               _type == FieldType.floatingPoint || _type == FieldType.exponent);
     }
     body
     {
         import std.algorithm : find, max, min;
         import std.conv : to, ConvException;
+        import std.format : format;
 
         /* Create the print version of the string. Either the raw value or a formatted
-         * version of a float. Need to track whether it's an unformatted float, these
-         * have to be manually aligned on the decimal point.
+         * version of a float.
          */
         string printValue;
-        bool printValueIsFixedPointFloat = false;
-        if (_type == FieldType.floatingPoint)
-        {
-            if (options.formatFloats)
-            {
-                try
-                {
-                    printValue = formatFloatingPoint(fieldValue.to!double);
-                    printValueIsFixedPointFloat = formattedFloatsAreFixedPoint();
-                }
-                catch (ConvException) printValue = fieldValue.to!string;
-            }
-            else
-            {
-                printValue = fieldValue.to!string;
-            }
-        }
-        else
+        if (!options.formatFloats || _type == FieldType.text || _type == FieldType.integer)
         {
             printValue = fieldValue.to!string;
         }
-
-        if (printValue.length == 0 && options.replaceEmpty) printValue = options.emptyReplacement;
-
-        /* Calculate the number of spaces to be included with the value. Basically, the
-         * expected field width minus the value's print width. The expected field width
-         * needs to be adjusted if the prior field on the line ran long.
-         */
-        size_t printValuePrintWidth = printValue.monospacePrintWidth;
-        size_t targetWidth;
-        if (currPosition == _startPosition)
-        {
-            targetWidth = _printWidth;
-        }
         else
         {
-            size_t startGap = currPosition - _startPosition;
-            targetWidth = max(printValuePrintWidth,
-                              startGap < _printWidth ? _printWidth - startGap : 0);
-        }
+            assert(options.formatFloats);
+            assert(_type == FieldType.exponent || _type == FieldType.floatingPoint);
 
-        size_t numSpacesNeeded = (printValuePrintWidth < targetWidth) ?
-            targetWidth - printValuePrintWidth : 0;
-
-        /* Split the needed spaces into leading and trailing spaces. If the field is
-         * left-aligned all spaces are trailing. If right aligned, then spaces are leading,
-         * unless the field is a float with a variable number of trailing digits. In the
-         * latter case, trailing spaces are used to align the decimal point, the rest are
-         * leading. Trailing spaces are not actually printed. That is handled by the caller.
-         * This avoids adding trailing spaces at the end of a line.
-         */
-        size_t leadingSpaces = 0;
-        size_t trailingSpaces = 0;
-
-        if (numSpacesNeeded > 0)
-        {
-            if (_alignment == FieldAlignment.left)
+            if (_type == FieldType.exponent)
             {
-                trailingSpaces = numSpacesNeeded;
+                printValue = fieldValue.formatExponentValue(_precision);
             }
             else
             {
-                assert(_alignment == FieldAlignment.right);
-
-                if (_type == FieldType.floatingPoint && !printValueIsFixedPointFloat && _floatPrecision > 0)
-                {
-                    size_t decimalAndDigitsLength = printValue.find(".").length;
-                    if (decimalAndDigitsLength <= _floatPrecision + 1)
-                    {
-                        trailingSpaces =
-                            min(numSpacesNeeded, (_floatPrecision + 1) - decimalAndDigitsLength);
-                    }
-                }
-
-                leadingSpaces = numSpacesNeeded - trailingSpaces;
+                printValue = fieldValue.formatFloatingPointValue(_precision);
             }
         }
 
+        if (printValue.length == 0 && options.replaceEmpty) printValue = options.emptyReplacement;
+        size_t printValuePrintWidth = printValue.monospacePrintWidth;
+
+        /* Calculate leading spaces needed for right alignment. */
+        size_t leadingSpaces = 0;
+        if (_alignment == FieldAlignment.right)
+        {
+            /* Target width adjusts the column width to account for overrun by the previous field. */
+            size_t targetWidth;
+            if (currPosition == _startPosition)
+            {
+                targetWidth = _printWidth;
+            }
+            else
+            {
+                size_t startGap = currPosition - _startPosition;
+                targetWidth = max(printValuePrintWidth,
+                                  startGap < _printWidth ? _printWidth - startGap : 0);
+            }
+
+            leadingSpaces = (printValuePrintWidth < targetWidth) ?
+                targetWidth - printValuePrintWidth : 0;
+
+            /* The above calculation assumes the print value is fully right aligned.
+             * This is not correct when raw value floats are being used rather than
+             * formatted floats, as different values will have different precision.
+             * The next adjustment accounts for this, dropping leading spaces as
+             * needed to align the decimal point. Note that text and exponential
+             * values get aligned strictly against right boundaries.
+             */
+            if (leadingSpaces > 0 && _precision > 0 &&
+                _type == FieldType.floatingPoint && !options.formatFloats)
+            {
+                import std.algorithm : canFind, findSplit;
+                import std.string : isNumeric;
+
+                if (printValue.isNumeric && !printValue.canFind!(x => x == 'e' || x == 'E'))
+                {
+                    size_t decimalAndDigitsLength = printValue.find(".").length;
+                    size_t trailingSpaces =
+                        (decimalAndDigitsLength == 0) ? _precision + 1 :
+                        (decimalAndDigitsLength > _precision) ? 0 :
+                        _precision + 1 - decimalAndDigitsLength;
+
+                    leadingSpaces = (leadingSpaces > trailingSpaces) ?
+                        leadingSpaces - trailingSpaces : 0;
+                }
+            }
+        }
         put(outputStream, repeat(' ', leadingSpaces));
         put(outputStream, printValue);
-
         return printValuePrintWidth + leadingSpaces;
     }
 
@@ -835,10 +852,12 @@ public:
     void updateForFieldValue(size_t readablePrecisionMax = defaultReadablePrecisionMax)
         (const char[] fieldValue, in ref TsvPrettyOptions options)
     {
-        import std.algorithm : findSplit, max, min;
+        import std.algorithm : findAmong, findSplit, max, min;
         import std.conv : to, ConvException;
         import std.string : isNumeric;
         import tsv_numerics : formatNumber;
+
+        debug writef("updateForFieldValue(%s)] CurrType: %s", fieldValue, _type);
 
         size_t fieldValuePrintWidth = fieldValue.monospacePrintWidth;
         size_t fieldValuePrintWidthWithEmpty =
@@ -891,7 +910,9 @@ public:
                     try
                     {
                         doubleValue = fieldValue.to!double;
-                        parsesAs = FieldType.floatingPoint;
+                        import std.algorithm : findAmong;
+                        parsesAs = (fieldValue.findAmong("eE").length == 0) ?
+                            FieldType.floatingPoint : FieldType.exponent;
                     }
                     catch (ConvException)
                     {
@@ -906,29 +927,49 @@ public:
                 /* Not parsable as a number (despite isNumeric result). Switch to text type. */
                 _type = FieldType.text;
             }
+            else if (parsesAs == FieldType.exponent)
+            {
+                /* Exponential notion supercedes both vanilla floats and integers. */
+                _type = FieldType.exponent;
+                _maxSignificantDigits = max(_maxSignificantDigits, fieldValue.significantDigits);
+
+                if (auto decimalSplit = fieldValue.findSplit("."))
+                {
+                    auto fromExponent = decimalSplit[2].findAmong("eE");
+                    size_t numDigitsAfterDecimal = decimalSplit[2].length - fromExponent.length;
+                    _maxDigitsBeforeDecimal = max(_maxDigitsBeforeDecimal, decimalSplit[0].length);
+                    _maxDigitsAfterDecimal = max(_maxDigitsAfterDecimal, numDigitsAfterDecimal);
+                }
+                else
+                {
+                    /* Exponent without a decimal point. */
+                    auto fromExponent = fieldValue.findAmong("eE");
+                    assert(fromExponent.length > 0);
+                    size_t numDigits = fieldValue.length - fromExponent.length;
+                    _maxDigitsBeforeDecimal = max(_maxDigitsBeforeDecimal, numDigits);
+                }
+            }
             else if (parsesAs == FieldType.floatingPoint)
             {
                 /* Even if currently integer it becomes a float. */
                 _type = FieldType.floatingPoint;
+                _maxSignificantDigits = max(_maxSignificantDigits, fieldValue.significantDigits);
 
-                /* Use tsv_numerics.formatNumber to get length for formatted printing. It drops
-                 * trailing zeros and decimal point, helping record the max precision needed.
-                 */
-                string printString = options.formatFloats ?
-                    doubleValue.formatNumber!(double, readablePrecisionMax)(options.floatPrecision) :
-                    fieldValue.to!string;
-
-                auto split = printString.findSplit(".");
-                _maxDigitsBeforeDecimal = max(_maxDigitsBeforeDecimal, split[0].length);
-                _maxDigitsAfterDecimal = max(_maxDigitsAfterDecimal, split[2].length);
+                if (auto decimalSplit = fieldValue.findSplit("."))
+                {
+                    _maxDigitsBeforeDecimal = max(_maxDigitsBeforeDecimal, decimalSplit[0].length);
+                    _maxDigitsAfterDecimal = max(_maxDigitsAfterDecimal, decimalSplit[2].length);
+                }
             }
             else
             {
                 assert(parsesAs == FieldType.integer);
                 if (_type != FieldType.floatingPoint) _type = FieldType.integer;
+                _maxSignificantDigits = max(_maxSignificantDigits, fieldValue.significantDigits);
                 _maxDigitsBeforeDecimal = max(_maxDigitsBeforeDecimal, fieldValue.length);
             }
         }
+        debug writefln(" -> %s", _type);
     }
 
     /* finalizeFormatting updates field formatting info based on the current state. It is
@@ -940,7 +981,8 @@ public:
         import std.algorithm : max, min;
         _startPosition = startPosition;
         if (_type == FieldType.unknown) _type = FieldType.text;
-        _alignment = (_type == FieldType.integer || _type == FieldType.floatingPoint) ?
+        _alignment = (_type == FieldType.integer || _type == FieldType.floatingPoint
+                      || _type == FieldType.exponent) ?
             FieldAlignment.right :
             FieldAlignment.left;
 
@@ -950,24 +992,86 @@ public:
             size_t maxValueWidth = _maxDigitsBeforeDecimal + precision;
             if (precision > 0) maxValueWidth++;  // Account for the decimal point.
             _printWidth = max(1, _headerPrintWidth, maxValueWidth);
-            _floatPrecision = precision;
+            _precision = precision;
+        }
+        else if (_type == FieldType.exponent)
+        {
+            _printWidth = max(1, _headerPrintWidth, _maxRawPrintWidth);
+            _precision = (_maxSignificantDigits > 0) ? _maxSignificantDigits - 1 : 0;
         }
         else if (_type == FieldType.integer)
         {
             _printWidth = max(1, _headerPrintWidth, _minRawPrintWidth, _maxRawPrintWidth);
-            _floatPrecision = 0;
+            _precision = 0;
         }
         else
         {
             _printWidth = max(1, _headerPrintWidth, _minRawPrintWidth,
                               min(options.maxFieldPrintWidth, _maxRawPrintWidth));
-            _floatPrecision = 0;
+            _precision = 0;
         }
 
         debug writefln("[finalizeFormatting] %s", this);
         return _startPosition + _printWidth;
     }
 }
+
+auto formatExponentValue(const char[] fieldValue, size_t precision)
+{
+    // TODO - Do this correctly
+    import std.conv : to;
+    import std.format : format;
+    return format("%.*e", precision, fieldValue.to!double);
+}
+
+auto formatFloatingPointValue(const char[] fieldValue, size_t precision)
+{
+    // TODO - Do this correctly
+    import std.conv : to;
+    import std.format : format;
+    return format("%.*f", precision, fieldValue.to!double);
+}
+
+size_t significantDigits(const char[] numericString)
+{
+    import std.algorithm : canFind, find, findAmong, findSplit, stripRight;
+    import std.ascii : isDigit;
+    import std.math : isFinite;
+    import std.string : isNumeric;
+    import std.conv : to;
+    assert (numericString.isNumeric);
+
+    size_t significantDigits = 0;
+    if (numericString.to!double.isFinite)
+    {
+        auto digitsPart = numericString.find!(x => x.isDigit && x != '0');
+        auto exponentPart = digitsPart.findAmong("eE");
+        digitsPart = digitsPart[0 .. $ - exponentPart.length];
+
+        if (digitsPart.canFind('.'))
+        {
+            digitsPart.stripRight('0');
+            significantDigits = digitsPart.length - 1;
+        }
+        else
+        {
+            significantDigits = digitsPart.length;
+        }
+
+        if (significantDigits == 0) significantDigits = 1;
+    }
+
+    return significantDigits;
+}
+
+/* Printing floats without formatting
+ *   - No change to field value string
+ *   - Decimal point is aligned
+ *   - Exponential notion without a decimal point - Exponent aligned on decimal point
+ * Printing floats with formatting
+ *   - Consistent use of exponential notion. If any numbers use it, have all numbers use it.
+ *   - Default to a high precision
+ */
 
 /* Print length calculations: This programs aligns data assuming fixed width
  * characters. Input data is assumed to be utf-8. In utf-8, many characters are
