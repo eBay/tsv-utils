@@ -54,25 +54,29 @@ determine field widths and data types. Lines are written as they are recieved
 after this. This field information is used for the remainder of the output.
 There are a number of options for controlling formatting.
 
-By default, the text of the input values is not changed. There are a couple
-options that change this:
+By default, the only the alignment is changed, the actual values are not
+modified. There are a couple options that may modify the values.
 
-* Floating point number formatting - Floats can be reformatted using the
-  '--f|format-floats' or '--p|precision NUM' options. Both print floats
-  favoring a fixed precision over exponential notation for smaller numbers.
-  The main difference is that '--f|format-floats' uses a default precision.
+* Floating point numbers: The '--f|format-floats' and '--p|precision' options
+  use fixed width precision so floats in the same column print similarly.
+  Precision is determined during the lookahead phase. Max precision defaults
+  to 9. It is often convenient to use a small precision, e.g. 2 or 3.
 
-* Missing values - A substitute value can be used, this is often less
-  confusing than spaces. Use the '--e|replace-empty' or
-  '--E|empty-replacement <string>' options.
+* Missing values: Empty fields can be replaced by a substitute value. This
+  can be less confusing than spaces. This is enabled by the
+  '--e|replace-empty' and '--E|empty-replacement' options.
 
-Limitations: This program assumes fixed width fonts, as commonly found in
-command-line environments. Alignment will be off when variable width fonts
-are used. However, even fixed width fonts can be tricky for certain character
-sets. Notably, ideographic characters common in asian languages use double-
-width characters in many fixed-width fonts. This program estimates print
-length assuming CJK characters are rendered double-width. This works well in
-many cases, but incorrect alignment can still occur.
+Header lines: Headers are detected automatically when possible, this can be
+overridden when automatic detection doesn't work as desired. Headers can also
+be underlined and repeated at regular intervals.
+
+Exponential notion: Support for exponential notion is limited to reformatting
+columns where exponential notion is found in the input. This is enabled by the
+'--f|format-floats' option. Precision is the same as used for floating point.
+
+Fonts: Fixed-width fonts are assumed. Alignment will be off when variable width
+fonts are used. CJK characters are assumed to be double width. This is not
+always correct, but works well in many cases.
 
 Options:
 EOS";
@@ -99,7 +103,7 @@ struct TsvPrettyOptions
     size_t repeatHeader = 0;            // --r|repeat-header num (zero means no repeat)
     bool underlineHeader = false;       // --u|underline-header
     bool formatFloats = false;          // --f|format-floats
-    size_t floatPrecision = 9;          // --p|precision num (max precision when formatting floats)
+    size_t floatPrecision = 9;          // --p|precision num (max precision when formatting floats.)
     bool replaceEmpty = false;          // --e|replace-empty
     string emptyReplacement = "";       // --E|empty-replacement
     size_t emptyReplacementPrintWidth = 0;    // Derived
@@ -134,13 +138,13 @@ struct TsvPrettyOptions
                 "H|header",               "       Treat the first line of each file as a header.", &hasHeader,
                 std.getopt.config.caseInsensitive,
                 "x|no-header",            "       Assume no header. Turns off automatic header detection.", &noHeader,
-                "l|lookahead",            "NUM    Lines to read to interpret data before generating output. Default: 1000)", &lookahead,
+                "l|lookahead",            "NUM    Lines to read to interpret data before generating output. Default: 1000", &lookahead,
 
-                "r|repeat-header",        "NUM    (Not implemented) Lines to print before repeating the header. Default: No repeating", &repeatHeader,
+                "r|repeat-header",        "NUM    Lines to print before repeating the header. Default: No repeating header", &repeatHeader,
 
                 "u|underline-header",     "       Underline the header.", &underlineHeader,
                 "f|format-floats",        "       Format floats for better readability. Default: No", &formatFloats,
-                "p|precision",            "NUM    Floating point precision. Implies --format-floats", &floatPrecisionOptionHandler,
+                "p|precision",            "NUM    Max floating point precision. Implies --format-floats. Default: 9", &floatPrecisionOptionHandler,
                 std.getopt.config.caseSensitive,
                 "e|replace-empty",        "       Replace empty fields with '--'.", &replaceEmpty,
                 "E|empty-replacement",    "STR    Replace empty fields with a string.", &emptyReplacement,
