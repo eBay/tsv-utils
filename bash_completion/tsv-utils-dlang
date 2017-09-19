@@ -30,7 +30,7 @@ _csv2tsv()
           return
           ;;
     esac
-    
+
     if [[ ${cur} == -* ]] ; then
         COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
         return 0
@@ -59,7 +59,7 @@ _number_lines()
           return
           ;;
     esac
-    
+
     if [[ ${cur} == -* ]] ; then
         COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
         return 0
@@ -83,7 +83,7 @@ _tsv_append()
           return
           ;;
     esac
-    
+
     if [[ ${cur} == -* ]] ; then
         COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
         return 0
@@ -104,11 +104,11 @@ _tsv_filter()
 
     case $prev in
          -h|--help|--help-verbose|--help-options|-V|--version|--header|-d|--delimiter|--le|--lt|--ge|--gt|--eq|--ne|--str-le|--str-lt|--str-ge|--str-gt|--str-eq|--istr-eq|--str-ne|--istr-ne|--str-in-fld|--istr-in-fld|--str-not-in-fld|--istr-not-in-fld|--regex|--iregex|--not-regex|--not-iregex|--ff-le|--ff-lt|--ff-ge|--ff-gt|--ff-eq|--ff-ne|--ff-str-eq|--ff-istr-eq|--ff-str-ne|--ff-istr-ne|--ff-absdiff-le|--ff-absdiff-gt|ff-reldiff-le|--ff-reldiff-gt)
-         
+
           return
           ;;
     esac
-    
+
     if [[ ${cur} == -* ]] ; then
         COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
         return 0
@@ -138,7 +138,7 @@ _tsv_join()
              return 0
              ;;
     esac
-    
+
     if [[ ${cur} == -* ]] ; then
         COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
         return 0
@@ -148,6 +148,30 @@ _tsv_join()
     COMPREPLY=( $(compgen -f -X "$xspec" -- ${cur}) $( compgen -d -- "$cur" ) )
 }
 complete -F _tsv_join tsv-join
+
+_tsv_pretty()
+{
+    local cur prev opts
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+    opts="--help --help-verbose --version --header --no-header --lookahead --repeat-header --underline-header --format-floats --precision --replace-empty --empty-replacement --delimiter --space-between-fields --max-text-width"
+
+    case $prev in
+         -h--help|--help-verbose|-V|--version|-l|--lookahead|-r|--repeat-header|-u|--underline-header|-f|--format-floats|-p|--precision|-e|--replace-empty|-E|--empty-replacement|-d|--delimiter|-s|--space-between-fields|-m|--max-text-width)
+          return
+          ;;
+    esac
+
+    if [[ ${cur} == -* ]] ; then
+        COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+        return 0
+    fi
+
+    compopt -o filenames
+    COMPREPLY=( $(compgen -f -X "$xspec" -- ${cur}) $( compgen -d -- "$cur" ) )
+}
+complete -F _tsv_pretty tsv-pretty
 
 _tsv_sample()
 {
@@ -162,7 +186,7 @@ _tsv_sample()
           return
           ;;
     esac
-    
+
     if [[ ${cur} == -* ]] ; then
         COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
         return 0
@@ -190,7 +214,7 @@ _tsv_select()
             return
             ;;
     esac
-    
+
     if [[ ${cur} == -* ]] ; then
         COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
         return 0
@@ -214,7 +238,7 @@ _tsv_summarize()
           return
           ;;
     esac
-    
+
     if [[ ${cur} == -* ]] ; then
         COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
         return 0
@@ -238,7 +262,7 @@ _tsv_uniq()
           return
           ;;
     esac
-    
+
     if [[ ${cur} == -* ]] ; then
         COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
         return 0
@@ -248,4 +272,3 @@ _tsv_uniq()
     COMPREPLY=( $(compgen -f -X "$xspec" -- ${cur}) $( compgen -d -- "$cur" ) )
 }
 complete -F _tsv_uniq tsv-uniq
-
