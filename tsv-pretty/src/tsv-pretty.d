@@ -951,8 +951,8 @@ public:
             }
             else if (parsesAs == FieldType.floatingPoint)
             {
-                /* Even if currently integer it becomes a float. */
-                _type = FieldType.floatingPoint;
+                /* Floating point supercedes integer but not exponential. */
+                if (_type != FieldType.exponent) _type = FieldType.floatingPoint;
                 _maxSignificantDigits = max(_maxSignificantDigits, fieldValue.significantDigits);
 
                 if (auto decimalSplit = fieldValue.findSplit("."))
@@ -996,8 +996,11 @@ public:
         }
         else if (_type == FieldType.exponent)
         {
-            _printWidth = max(1, _headerPrintWidth, _maxRawPrintWidth);
-            _precision = (_maxSignificantDigits > 0) ? _maxSignificantDigits - 1 : 0;
+            size_t maxPrecision = (_maxSignificantDigits > 0) ? _maxSignificantDigits - 1 : 0;
+            _precision = min(options.floatPrecision, maxPrecision);
+
+            size_t maxValuePrintWidth = !options.formatFloats ? _maxRawPrintWidth : _precision + 7;
+            _printWidth = max(1, _headerPrintWidth, maxValuePrintWidth);
         }
         else if (_type == FieldType.integer)
         {
@@ -1016,20 +1019,96 @@ public:
     }
 }
 
-auto formatExponentValue(const char[] fieldValue, size_t precision)
+string formatFloatingPointValue(const char[] value, size_t precision)
 {
-    // TODO - Do this correctly
-    import std.conv : to;
+    import std.algorithm : canFind, find;
+    import std.array : join;
+    import std.conv : to, ConvException;
     import std.format : format;
-    return format("%.*e", precision, fieldValue.to!double);
+    import std.math : isFinite;
+    import std.range : repeat;
+
+    string printValue;
+
+    if (value.canFind!(x => x == 'e' || x == 'E'))
+    {
+        /* Exponential notion. Use the raw value. */
+        printValue = value.to!string;
+    }
+    else
+    {
+        try
+        {
+            double doubleValue = value.to!double;
+            if (doubleValue.isFinite)
+            {
+                size_t numPrecisionDigits = value.precisionDigits;
+                if (numPrecisionDigits >= precision)
+                {
+                    printValue = format("%.*f", precision, doubleValue);
+                }
+                else if (numPrecisionDigits == 0)
+                {
+                    printValue = format("%.*f", numPrecisionDigits, doubleValue) ~ "." ~ repeat("0", precision).join;
+                }
+                else
+                {
+                    printValue = format("%.*f", numPrecisionDigits, doubleValue) ~ repeat("0", precision - numPrecisionDigits).join;
+                }
+            }
+            else printValue = value.to!string;  // NaN or Infinity
+        }
+        catch (ConvException) printValue = value.to!string;
+    }
+    return printValue;
 }
 
-auto formatFloatingPointValue(const char[] fieldValue, size_t precision)
+/* Returns the printed representation of a raw value formatted using exponential
+ * notation and a specific precision. If the value cannot be interpreted as a
+ * double then the a copy of the original value is returned.
+ */
+string formatExponentValue(const char[] value, size_t precision)
 {
-    // TODO - Do this correctly
-    import std.conv : to;
+    import std.algorithm : canFind, find, findSplit;
+    import std.array : join;
+    import std.conv : to, ConvException;
     import std.format : format;
-    return format("%.*f", precision, fieldValue.to!double);
+    import std.math : isFinite;
+    import std.range : repeat;
+
+    string printValue;
+    try
+    {
+        double doubleValue = value.to!double;
+        if (doubleValue.isFinite)
+        {
+            size_t numSignificantDigits = value.significantDigits;
+            size_t numPrecisionDigits = (numSignificantDigits == 0) ? 0 : numSignificantDigits - 1;
+            if (numPrecisionDigits >= precision)
+            {
+                printValue = format("%.*e", precision, doubleValue);
+            }
+            else
+            {
+                string unpaddedPrintValue = format("%.*e", numPrecisionDigits, doubleValue);
+                auto exponentSplit = unpaddedPrintValue.findSplit("e");   // Uses the same exponent case as format call.
+                if (numPrecisionDigits == 0)
+                {
+                    assert(precision != 0);
+                    assert(!exponentSplit[0].canFind("."));
+                    printValue = exponentSplit[0] ~ "." ~ repeat("0", precision).join ~ exponentSplit[1] ~ exponentSplit[2];
+                }
+                else
+                {
+                    printValue = exponentSplit[0] ~ repeat("0", precision - numPrecisionDigits).join ~ exponentSplit[1] ~ exponentSplit[2];
+                }
+            }
+        }
+        else printValue = value.to!string;  // NaN or Infinity
+    }
+    catch (ConvException) printValue = value.to!string;
+
+    return printValue;
 }
 
 size_t significantDigits(const char[] numericString)
@@ -1062,6 +1141,30 @@ size_t significantDigits(const char[] numericString)
     }
 
     return significantDigits;
+}
+
+/* Returns the number of digits used to represent the precision in a numeric.
+ */
+size_t precisionDigits(const char[] numericString)
+{
+    import std.algorithm : canFind, find, findAmong, findSplit, stripRight;
+    import std.ascii : isDigit;
+    import std.math : isFinite;
+    import std.string : isNumeric;
+    import std.conv : to;
+    assert (numericString.isNumeric);
+
+    size_t precisionDigits = 0;
+    if (numericString.to!double.isFinite)
+    {
+        if (auto decimalSplit = numericString.findSplit("."))
+        {
+            auto exponentPart = decimalSplit[2].findAmong("eE");
+            precisionDigits = decimalSplit[2].length - exponentPart.length;
+        }
+    }
+
+    return precisionDigits;
 }
 
 /* Printing floats without formatting
