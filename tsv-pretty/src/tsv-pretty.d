@@ -49,34 +49,34 @@ working on the command line. This is done primarily by lining up data into
 fixed-width columns. Text is left aligned, numbers are right aligned. Floating
 points numbers are aligned on the decimal point when feasible.
 
-tsv-pretty starts by reading an initial set of lines (defaults to 1000) to
-determine field widths and data types. Lines are written as they are recieved
-after this. This field information is used for the remainder of the output.
-There are a number of options for controlling formatting.
+Processing begins by reading the initial set of lines into memory to determine
+the field widths and data types of each column. This look-ahead buffer is used
+for header detection as well. Output begins after this processing is complete.
 
 By default, the only the alignment is changed, the actual values are not
-modified. There are a couple options that may modify the values.
+modified. Several of the formatting options do modify the values.
 
-* Floating point numbers: The '--f|format-floats' and '--p|precision' options
-  use fixed width precision so floats in the same column print similarly.
-  Precision is determined during the lookahead phase. Max precision defaults
-  to 9. It is often convenient to use a small precision, e.g. 2 or 3.
+Features:
 
-* Missing values: Empty fields can be replaced by a substitute value. This
-  can be less confusing than spaces. This is enabled by the
-  '--e|replace-empty' and '--E|empty-replacement' options.
+* Floating point numbers: Floats can be printed in fixed-width precision, using
+  the same precision for all floats in a column. This makes then line up nicely.
+  Precision is determined by values seen during look-ahead processing. The max
+  precision defaults to 9, this can be changed when smaller or larger values are
+  desired. See the '--f|format-floats' and '--p|precision' options.
 
-Header lines: Headers are detected automatically when possible, this can be
-overridden when automatic detection doesn't work as desired. Headers can also
-be underlined and repeated at regular intervals.
+* Header lines: Headers are detected automatically when possible. This can be
+  overridden when automatic detection doesn't work as desired. Headers can be
+  underlined and repeated at regular intervals.
 
-Exponential notion: Support for exponential notion is limited to reformatting
-columns where exponential notion is found in the input. This is enabled by the
-'--f|format-floats' option. Precision is the same as used for floating point.
+* Missing values: A substitute value can be used for empty fields. This is often
+  less confusing than spaces. See '--e|replace-empty' and '--E|empty-replacement'.
 
-Fonts: Fixed-width fonts are assumed. Alignment will be off when variable width
-fonts are used. CJK characters are assumed to be double width. This is not
-always correct, but works well in many cases.
+* Exponential notion: As part float formatting, '--f|format-floats' re-formats
+  columns where exponential notation is found so all the values in the column
+  are displayed using exponential notation with the same precision.
+
+* Fonts: Fixed-width fonts are assumed. CJK characters are assumed to be double
+  width. This is not always correct, but works well in most cases.
 
 Options:
 EOS";
@@ -179,13 +179,13 @@ struct TsvPrettyOptions
 
             if (noHeader || hasHeader) autoDetectHeader = false;
 
-            /* Zero lookahead has limited utility unless the first line is known to
+            /* Zero look-ahead has limited utility unless the first line is known to
              * be a header. Good chance the user will get an unintended behavior.
              */
             if (lookahead == 0 && autoDetectHeader)
             {
                 assert (!noHeader && !hasHeader);
-                throw new Exception("Cannot auto-detect header with zero lookahead. Specify either '--H|header' or '--x|no-header' when using '--l|lookahead 0'.");
+                throw new Exception("Cannot auto-detect header with zero look-ahead. Specify either '--H|header' or '--x|no-header' when using '--l|lookahead 0'.");
             }
 
             if (emptyReplacement.length != 0) replaceEmpty = true;
@@ -213,20 +213,13 @@ struct TsvPrettyOptions
     }
 }
 
-/* Header Auto-Detect algorithm
+/** tsvPretty - Main loop, operating on input files and passing control to a
+ * TSVPrettyProccessor instance. This separates physical I/O sources and sinks
+ * from the underlying processing algorithm, which operates on generic ranges.
  *
- * Definition: First line is declared a header if any column is identified as numeric
- * when considering all rows but the first in the lookahead cache, and the first row
- * cannot be parsed as numeric.
- *
- * Multiple files: A decision is made on the header after the first file has been
- * processed, even if the lookahead cache has not been filled. This is to enable
- * disposition of first line of subsequent files without additional complications to
- * the algorithm. In this case, one additional check is made, which is that the first
- * line of both files is identical.
- *
+ * A lockingTextWriter is created and released on every input line. This has
+ * effect flushing standard output every line, desirable in command line tools.
  */
-
 void tsvPretty(in ref TsvPrettyOptions options, string[] files)
 {
     auto tpp = TsvPrettyProcessor(options);
@@ -248,72 +241,22 @@ void tsvPretty(in ref TsvPrettyOptions options, string[] files)
     tpp.finish(outputRangeObject!(char, char[])(stdout.lockingTextWriter));
 }
 
-/* TsvPrettyProcessor maintains state of processing and exposes operations for
- * processing individual lines. TsvPrettyProcessor knows that input is file
- * oriented, but doesn't deal with actual files or reading lines from input.
- * That is the job of the caller.
+/** TsvPrettyProcessor - Maintains state of processing and exposes operations for
+ * processing individual input lines.
  *
- * The caller is expected to pass each line to TsvPrettyProcessor in the order
- * recieved, that is an assumption built-into the its processing.
+ * TsvPrettyProcessor knows that input is file-based, but doesn't deal with actual
+ * files or reading lines from input. That is the job of the caller. Output is
+ * written to an output range. The caller is expected to pass each line to in the
+ * order received, that is an assumption built-into the its processing.
+ *
+ * In addition to the constructor, there are three API methods:
+ *   * processFileFirstLine - Called to process the first line of each file. This
+ *     enables header processing.
+ *   * processLine - Called to process all lines except for the first line a file.
+ *   * finish - Called at the end of all processing. This is needed in case the
+ *     look-ahead cache is still being filled when input terminates.
  */
 
-/* Processing algorithms:
- *
- * === Processing the first line of each file ====
- * 1) _options.noHeader: Process as a normal data line
- * 2) _options.hasHeader:
- *    a) First file: Set-as-header for the line.
- *       i) _options.lookahead == 0:
- *          Output lookahead cache (finalizes field formats, outputs header, sets not caching)
- *       j) _options.lookahead > 0: Nothing
- *    b) 2nd+ file: Ignore the line (do nothing)
- * 3) _options.autoDetectHeader
- *    a) Detected-as-no-header: Process as normal data line
- *    b) Detected-as-header: Assert: 2nd+ file; Ignore the line (do nothing)
- *    c) No detection yet
- *       Assert: Still doing lookahead caching
- *       Assert: First or second file
- *       i) First file: Set as candidate header
- *       j) Second file: Compare to first candidate header
- *          p) Equal to first candidate header:
- *             Set detected-as-header
- *             Set-as-header for the line
- *          q) !Equal to first candidate header:
- *             Set detected-as-no-header
- *             Add-fields-to-line format for first candidate-header
- *             Process line as data line
- *       IMPLIES: Header detection can occur prior to lookahead completion.
- *
- * === Process data line ===
- * 1) Not caching: Output data line
- * 2) Still caching
- *    Append data line to cache
- *    if cache is full: output lookahead cache (finalized field formats, outputs header, sets not caching)
- *
- * === Finish all processing ===
- * 1) Not caching: Do nothing (done)
- * 2) Still caching: Output lookahead cache
- *
- * === Output lookahead cache ===
- * All:
- *    if _options.autoDetectHeader && not-detected-yet:
- *       Compare field formats to candidate field formats
- *       1) Looks-like-header: Set detected-as-header
- *       2) Look-like-not-header:
- *          Set detected-as-no-header
- *          Add-field-to-line-format for candidate header
- * All:
- *    Finalize field formatting
- *
- * 1) _options.hasHeader || detected-as-header: output header
- * 2) _options.autoDetectHeader && detected-as-not-header && candidate-header filled in:
- *    Output candidate header as data line
- *
- * All:
- *    Output data line cache
- *    Set as not caching
- *
- */
 struct TsvPrettyProcessor
 {
     import std.array : appender;
@@ -345,7 +288,6 @@ private:
 
     void processFileFirstLine(OutputRange!char outputStream, const char[] line)
     {
-        debug writefln("[processFileFirstLine]");
         import std.conv : to;
 
         _fileCount++;
@@ -369,18 +311,15 @@ private:
             final switch (_autoDetectHeaderResult)
             {
             case AutoDetectHeaderResult.noHeader:
-                debug writefln("[processFileFirstLine] AutoDetectHeaderResult.no Header; file: %d", _fileCount);
                 assert(_fileCount > 1);
                 processLine(outputStream, line);
                 break;
 
             case AutoDetectHeaderResult.hasHeader:
-                debug writefln("[processFileFirstLine] AutoDetectHeaderResult.hasHeader; file: %d", _fileCount);
                 assert(_fileCount > 1);
                 break;
 
             case AutoDetectHeaderResult.none:
-                debug writefln("[processFileFirstLine] AutoDetectHeaderResult.none; file: %d", _fileCount);
                 if (_fileCount == 1)
                 {
                     assert(_candidateHeaderLine.length == 0);
@@ -393,7 +332,7 @@ private:
                         _autoDetectHeaderResult = AutoDetectHeaderResult.hasHeader;
                         setHeaderLine(_candidateHeaderLine);
 
-                        /* Edge case: First file has only a header line and lookahead set to zero. */
+                        /* Edge case: First file has only a header line and look-ahead set to zero. */
                         if (_stillCaching && _options.lookahead == 0) outputLookaheadCache(outputStream);
                     }
                     else
@@ -410,23 +349,24 @@ private:
 
     void processLine(OutputRange!char outputStream, const char[] line)
     {
-        debug writefln("[processLine]");
         if (_stillCaching) cacheDataLine(outputStream, line);
         else outputDataLine(outputStream, line);
     }
 
     void finish(OutputRange!char outputStream)
     {
-        debug writefln("[finish]");
         if (_stillCaching) outputLookaheadCache(outputStream);
     }
 
 private:
+    /* outputLookaheadCache finalizes processing of the lookahead cache. This includes
+     * Setting the type and width of each field, finalizing the auto-detect header
+     * decision, and outputing all lines in the cache.
+     */
     void outputLookaheadCache(OutputRange!char outputStream)
     {
         import std.algorithm : splitter;
 
-        debug writefln("[outputLookaheadCache]");
         assert(_stillCaching);
 
         if (_options.autoDetectHeader &&
@@ -470,10 +410,9 @@ private:
 
     bool candidateHeaderLooksLikeHeader()
     {
-        debug writefln("[candidateHeaderLooksLikeHeader]");
-
         import std.algorithm : splitter;
-        /* The candidate header is declared as the header if the lookahead cache has at least
+
+        /* The candidate header is declared as the header if the look-ahead cache has at least
          * one numeric field that is text in the candidate header.
          */
         foreach(fieldIndex, fieldValue; _candidateHeaderLine.splitter(_options.delim).enumerate)
@@ -495,7 +434,6 @@ private:
 
     void setHeaderLine(const char[] line)
     {
-        debug writefln("[setHeaderLine]");
         import std.algorithm : splitter;
 
         foreach(fieldIndex, header; line.splitter(_options.delim).enumerate)
@@ -508,7 +446,6 @@ private:
 
     void cacheDataLine(OutputRange!char outputStream, const char[] line)
     {
-        debug writefln("[cacheDataLine]");
         import std.conv : to;
 
         assert(_lookaheadCache.data.length < _options.lookahead);
@@ -520,7 +457,6 @@ private:
 
     void updateFieldFormatsForLine(const char[] line)
     {
-        debug writefln("[updateFieldFormatsForLine]");
         import std.algorithm : splitter;
 
         foreach(fieldIndex, fieldValue; line.splitter(_options.delim).enumerate)
@@ -534,7 +470,6 @@ private:
 
     void finalizeFieldFormatting()
     {
-        debug writefln("[finalizeFieldFormatting]");
         size_t nextFieldStart = 0;
         foreach(ref field; _fieldVector)
         {
@@ -544,7 +479,6 @@ private:
 
     void outputHeader(OutputRange!char outputStream)
     {
-        debug writefln("[outputHeader]");
         foreach(ref field; _fieldVector) field.writeHeader(outputStream, _options);
         put(outputStream, '\n');
 
@@ -557,7 +491,6 @@ private:
 
     void outputDataLine(OutputRange!char outputStream, const char[] line)
     {
-        debug writefln("[outputDataLine]");
         import std.algorithm : splitter;
 
         /* Repeating header option. */
@@ -604,34 +537,6 @@ private:
         put(outputStream, '\n');
     }
 }
-
-/* Field Formatting and alignment
- * - Text columns: Values always left-aligned, unchanged.
- * - Integer columns: Values always right-aligned, unchanged.
- * - Floating point columns, not formatted
- *   - Floating point values aligned on decimal point
- *   - Integer values aligned on decimal point
- *   - Exponential values right aligned
- *   - Text values right aligned
- * - Exponential columns, not formatted:
- *      Values always right-aligned, unchanged.
- * - Floating point columns, formatted
- *   - Floating point value
- *     - Raw precision <= column precision:
- *         Zero-pad raw value to precision
- *     - Raw precision > column precision: Format with %f
- *   - Integer value: Format with %f
- *   - Text value: Right align
- *   - Exponent: Right align
- * - Exponential columns, formatted
- *   - Exponential value:
- *     - Raw precision <= column precision:
- *          Zero-pad raw value to precision
- *     - Raw precision > column precision: Format with %e
- *   - Floating point value: Format with %e
- *   - Integer value: Format with %e
- *   - Text value: Right align
- */
 
 /** FieldFormat holds all the formatting info needed to format data values in a specific
  * column. e.g. Field 1 may be text, field 2 may be a float, etc. This is calculated
@@ -861,8 +766,6 @@ public:
         import std.string : isNumeric;
         import tsv_numerics : formatNumber;
 
-        debug writef("updateForFieldValue(%s)] CurrType: %s", fieldValue, _type);
-
         size_t fieldValuePrintWidth = fieldValue.monospacePrintWidth;
         size_t fieldValuePrintWidthWithEmpty =
             (fieldValuePrintWidth == 0 && options.replaceEmpty) ?
@@ -933,7 +836,7 @@ public:
             }
             else if (parsesAs == FieldType.exponent)
             {
-                /* Exponential notion supercedes both vanilla floats and integers. */
+                /* Exponential notion supersedes both vanilla floats and integers. */
                 _type = FieldType.exponent;
                 _maxSignificantDigits = max(_maxSignificantDigits, fieldValue.significantDigits);
 
@@ -973,7 +876,6 @@ public:
                 _maxDigitsBeforeDecimal = max(_maxDigitsBeforeDecimal, fieldValue.length);
             }
         }
-        debug writefln(" -> %s", _type);
     }
 
     /* finalizeFormatting updates field formatting info based on the current state. It is
@@ -1018,11 +920,19 @@ public:
             _precision = 0;
         }
 
-        debug writefln("[finalizeFormatting] %s", this);
         return _startPosition + _printWidth;
     }
 }
 
+/** formatFloatingPointValue - Returns the printed representation of a raw value
+ * formatted as a fixed precision floating number. This includes zero padding or
+ * truncation of trailing digits as necessary to meet the desired precision.
+ *
+ * If the value cannot be interpreted as a double then the raw value is returned.
+ * Similarly, values in exponential notion are returned without reformatting.
+ *
+ * This routine is used to format values in columns identified as floating point.
+ */
 string formatFloatingPointValue(const char[] value, size_t precision)
 {
     import std.algorithm : canFind, find;
@@ -1067,9 +977,11 @@ string formatFloatingPointValue(const char[] value, size_t precision)
     return printValue;
 }
 
-/* Returns the printed representation of a raw value formatted using exponential
- * notation and a specific precision. If the value cannot be interpreted as a
- * double then the a copy of the original value is returned.
+/** formatExponentValue - Returns the printed representation of a raw value formatted
+ * using exponential notation and a specific precision. If the value cannot be interpreted
+ * as a double then the a copy of the original value is returned.
+ *
+ * This routine is used to format values in columns identified as having exponent format.
  */
 string formatExponentValue(const char[] value, size_t precision)
 {
@@ -1115,6 +1027,14 @@ string formatExponentValue(const char[] value, size_t precision)
     return printValue;
 }
 
+/** significantDigits - Returns the number of significant digits in a numeric string.
+ *
+ * Significant digits are those needed to represent a number in exponential notation.
+ * Examples:
+ *   22.345 - 5 digits
+ *   10.010 - 4 digits
+ *   0.0032 - 2 digits
+ */
 size_t significantDigits(const char[] numericString)
 {
     import std.algorithm : canFind, find, findAmong, findSplit, stripRight;
@@ -1147,7 +1067,8 @@ size_t significantDigits(const char[] numericString)
     return significantDigits;
 }
 
-/* Returns the number of digits used to represent the precision in a numeric.
+/* precisionDigits - Returns the number of digits to the right of the decimal point in
+ * a numeric string. This routine includes trailing zeros in the count.
  */
 size_t precisionDigits(const char[] numericString)
 {
@@ -1192,9 +1113,9 @@ size_t precisionDigits(const char[] numericString)
  *     size_t graphemeLength = myUtf8String.byGrapheme.walkLength;
  *
  * The grapheme length is a good measure of the number of user percieved characters
- * printed. For europian character sets this is a good measure of print width.
- * However, this is still not correct, as many asian characters are printed as a
- * double-width by many monospace fonts. This program uses a hack to get a better
+ * printed. For European character sets this is a good measure of print width.
+ * However, this is still not correct, as many Asian characters are printed as a
+ * double-width by many mono-space fonts. This program uses a hack to get a better
  * approximation: It checks the first code point in a grapheme is a CJK character.
  * (The first code point is normally the "grapheme-base".) If the first character is
  * CJK, a print width of two is assumed. This is hardly foolproof, and should not be
