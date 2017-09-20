@@ -479,12 +479,26 @@ private:
 
     void outputHeader(OutputRange!char outputStream)
     {
-        foreach(ref field; _fieldVector) field.writeHeader(outputStream, _options);
+        size_t nextOutputPosition = 0;
+        foreach(fieldIndex, ref field; _fieldVector.enumerate)
+        {
+            size_t spacesNeeded = field.startPosition - nextOutputPosition;
+            put(outputStream, repeat(" ", spacesNeeded));
+            nextOutputPosition += spacesNeeded;
+            nextOutputPosition += field.writeHeader(outputStream, _options);
+        }
         put(outputStream, '\n');
 
         if (_options.underlineHeader)
         {
-            foreach(ref field; _fieldVector) field.writeHeader!(Yes.writeUnderline)(outputStream, _options);
+            nextOutputPosition = 0;
+            foreach(fieldIndex, ref field; _fieldVector.enumerate)
+            {
+                size_t spacesNeeded = field.startPosition - nextOutputPosition;
+                put(outputStream, repeat(" ", spacesNeeded));
+                nextOutputPosition += spacesNeeded;
+                nextOutputPosition += field.writeHeader!(Yes.writeUnderline)(outputStream, _options);
+            }
             put(outputStream, '\n');
         }
     }
@@ -608,41 +622,35 @@ public:
         return _type;
     }
 
-    /* writeHeader writes the field header or underline characters to the output stream.
-     * Any previous fields on line should have been written without trailing spaces.
-     * Unlike data values, headers should always be written on the correct offsets.
+    /** writeHeader - Writes the field header or underline characters to the output stream.
+     *
+     * The current output position should have been written up to the field's start position,
+     * including any spaces between fields. Unlike data fields, there is no need to correct
+     * for previous fields that have run long. This routine does not output trailing spaces.
+     * This makes it simpler for lines to avoid unnecessary trailing spaces.
+     *
+     * The print width of the output is returned.
      */
-    void writeHeader(Flag!"writeUnderline" writeUnderline = No.writeUnderline)
+    size_t writeHeader(Flag!"writeUnderline" writeUnderline = No.writeUnderline)
         (OutputRange!char outputStream, in ref TsvPrettyOptions options)
     {
         import std.range : repeat;
 
+        size_t positionsWritten = 0;
         if (_headerPrintWidth > 0)
         {
-            if (_fieldIndex > 0)
-            {
-                put(outputStream, repeat(" ", options.spaceBetweenFields));
-            }
-
             if (_alignment == FieldAlignment.right)
             {
                 put(outputStream, repeat(" ", _printWidth - _headerPrintWidth));
+                positionsWritten += _printWidth - _headerPrintWidth;
             }
 
-            static if (writeUnderline)
-            {
-                put(outputStream, repeat("-", _headerPrintWidth));
-            }
-            else
-            {
-                put(outputStream, _header);
-            }
+            static if (writeUnderline) put(outputStream, repeat("-", _headerPrintWidth));
+            else put(outputStream, _header);
 
-            if (_alignment == FieldAlignment.left)
-            {
-                put(outputStream, repeat(" ", _printWidth - _headerPrintWidth));
-            }
+            positionsWritten += _headerPrintWidth;
         }
+        return positionsWritten;
     }
 
 private:
