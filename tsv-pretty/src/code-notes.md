@@ -46,7 +46,7 @@ The different command line options and processing behavior create a somewhat com
 A) Not caching: Output data line
 B) Still caching
    Append data line to cache
-   if cache is full: output lookahead cache
+   if cache is full: output look-ahead cache
       (finalizes field formats, outputs the header, sets not caching, etc.)
 ```
 
@@ -105,3 +105,20 @@ Format choices are simple when all values in a column are similar. The become mo
   - Floating point value: Format with %e
   - Integer value: Format with %e
   - Text value: Right align
+
+## Print length calculations
+
+This programs aligns data assuming fixed width characters. Input data is assumed to be UTF-8. In UTF-8, many characters are represented with multiple bytes. Unicode also includes "combining characters", characters that modify the print representation of an adjacent character.
+
+In D a printable character is represented as a "grapheme". A grapheme is a base character plus any adjacent combining characters. A grapheme then is one or more characters, and each character represented as one or more bytes in the `string` data type.
+
+The number of graphemes in a string can be calculated as follows:
+```
+import std.uni : byGrapheme;
+import std.range : walkLength;
+size_t graphemeLength = myUtf8String.byGrapheme.walkLength;
+```
+
+The grapheme length is a good measure of the number of user perceived characters printed. For European character sets this is a good measure of print width. However, this is still not correct, as many Asian characters are printed as double-width in many fixed-width fonts. This program uses a hack to get a better approximation: It checks the first code point in a grapheme is a CJK character. (The first code point is normally the "grapheme-base".) If the first character is CJK, a print width of two is assumed. This is hardly foolproof, and should not be used if higher accuracy is needed. However, it does do well enough to properly handle many common alignments, and is much better than doing nothing.
+
+Note: A more accurate approach would be to use an equivalent of wcwidth/wcswidth. This is a POSIX function available on many systems. This could be used when available. The functionality is defined as part of the Unicode standard, and could be derived directly from Unicode tables as well. See [Unicode® Standard Annex #11: East Asian Width](http://unicode.org/reports/tr11/).

@@ -1092,40 +1092,9 @@ size_t precisionDigits(const char[] numericString)
     return precisionDigits;
 }
 
-/* Printing floats without formatting
- *   - No change to field value string
- *   - Decimal point is aligned
- *   - Exponential notion without a decimal point - Exponent aligned on decimal point
- * Printing floats with formatting
- *   - Consistent use of exponential notion. If any numbers use it, have all numbers use it.
- *   - Default to a high precision
+/** monospacePrintWidth - Calculates the expected print width of a string in monospace
+ *  (fixed-width) fonts.
  */
-
-/* Print length calculations: This programs aligns data assuming fixed width
- * characters. Input data is assumed to be utf-8. In utf-8, many characters are
- * represented with multiple bytes. Unicode also includes "combining characters",
- * characters that modify the print representation of an adjacent character. A
- * grapheme is a base character plus any adjacent combining characters. A string's
- * grapheme length can be calculated as:
- *
- *     import std.uni : byGrapheme;
- *     import std.range : walkLength;
- *     size_t graphemeLength = myUtf8String.byGrapheme.walkLength;
- *
- * The grapheme length is a good measure of the number of user percieved characters
- * printed. For European character sets this is a good measure of print width.
- * However, this is still not correct, as many Asian characters are printed as a
- * double-width by many mono-space fonts. This program uses a hack to get a better
- * approximation: It checks the first code point in a grapheme is a CJK character.
- * (The first code point is normally the "grapheme-base".) If the first character is
- * CJK, a print width of two is assumed. This is hardly foolproof, and should not be
- * used if higher accuracy is needed. However, it does do well enough to properly
- * handle many common alignments, and is much better than doing nothing.
- *
- * Note: A more accurate approach would be to use wcwidth/wcswidth. This is a POSIX
- * function available on many systems. This could be used when available.
- */
-
 size_t monospacePrintWidth(const char[] str) @safe
 {
     bool isCJK(dchar c)
