@@ -629,9 +629,13 @@ public:
      * for previous fields that have run long. This routine does not output trailing spaces.
      * This makes it simpler for lines to avoid unnecessary trailing spaces.
      *
+     * Underlines can either be written the full width of the field or the just under the
+     * text of the header. At present this is a template parameter (compile-time).
+     *
      * The print width of the output is returned.
      */
-    size_t writeHeader(Flag!"writeUnderline" writeUnderline = No.writeUnderline)
+    size_t writeHeader (Flag!"writeUnderline" writeUnderline = No.writeUnderline,
+                        Flag!"fullWidthUnderline" fullWidthUnderline = No.fullWidthUnderline)
         (OutputRange!char outputStream, in ref TsvPrettyOptions options)
     {
         import std.range : repeat;
@@ -639,30 +643,38 @@ public:
         size_t positionsWritten = 0;
         if (_headerPrintWidth > 0)
         {
-            if (_alignment == FieldAlignment.right)
+            static if (writeUnderline)
             {
-                put(outputStream, repeat(" ", _printWidth - _headerPrintWidth));
-                positionsWritten += _printWidth - _headerPrintWidth;
+                static if (fullWidthUnderline)
+                {
+                    put(outputStream, repeat("-", _printWidth));
+                    positionsWritten += _printWidth;
+                }
+                else  // Underline beneath the header text only
+                {
+                    if (_alignment == FieldAlignment.right)
+                    {
+                        put(outputStream, repeat(" ", _printWidth - _headerPrintWidth));
+                        positionsWritten += _printWidth - _headerPrintWidth;
+                    }
+                    put(outputStream, repeat("-", _headerPrintWidth));
+                    positionsWritten += _headerPrintWidth;
+                }
             }
-
-            static if (writeUnderline) put(outputStream, repeat("-", _headerPrintWidth));
-            else put(outputStream, _header);
-
-            positionsWritten += _headerPrintWidth;
+            else
+            {
+                if (_alignment == FieldAlignment.right)
+                {
+                    put(outputStream, repeat(" ", _printWidth - _headerPrintWidth));
+                    positionsWritten += _printWidth - _headerPrintWidth;
+                }
+                put(outputStream, _header);
+                positionsWritten += _headerPrintWidth;
+            }
         }
         return positionsWritten;
     }
 
-private:
-    /* Formatting floats - A simple approach is taken. Floats with a readable number of trailing
-     * digits are printed as fixed point (%f). Floats with a longer number of digits are printed
-     * as variable length, including use of exponential notion (%g). Calculating the length
-     * requires knowing which was used.
-     */
-    enum defaultReadablePrecisionMax = 6;
-
-
-public:
     /* writeFieldValue writes the field value for the current column The caller needs
      * to generate output at least to the column's start position, but can go beyond
      * if previous fields have run long.
@@ -764,15 +776,16 @@ public:
         return printValuePrintWidth + leadingSpaces;
     }
 
-    /* updateForFieldValue updates type and format given a new field value.
+    /** updateForFieldValue updates type and format given a new field value.
+     *
+     * This is called during look-ahead caching to register a new sample value for the
+     * column. The key components updates are field type and print width.
      */
-    void updateForFieldValue(size_t readablePrecisionMax = defaultReadablePrecisionMax)
-        (const char[] fieldValue, in ref TsvPrettyOptions options)
+    void updateForFieldValue(const char[] fieldValue, in ref TsvPrettyOptions options)
     {
         import std.algorithm : findAmong, findSplit, max, min;
         import std.conv : to, ConvException;
         import std.string : isNumeric;
-        import tsv_numerics : formatNumber;
 
         size_t fieldValuePrintWidth = fieldValue.monospacePrintWidth;
         size_t fieldValuePrintWidthWithEmpty =
