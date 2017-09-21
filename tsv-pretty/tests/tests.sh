@@ -385,6 +385,12 @@ runtest ${prog} "-H -p 0 input_mixed_1.tsv" ${basic_tests_3}
 runtest ${prog} "-H -p 1 input_mixed_1.tsv" ${basic_tests_3}
 runtest ${prog} "-H -p 2 input_mixed_1.tsv" ${basic_tests_3}
 
+runcmd "cat input_mixed_2.tsv" ${basic_tests_3}
+runtest ${prog} "-H input_mixed_2.tsv" ${basic_tests_3}
+runtest ${prog} "-H -f input_mixed_2.tsv" ${basic_tests_3}
+runtest ${prog} "-H -u input_mixed_2.tsv" ${basic_tests_3}
+runtest ${prog} "-H -l 2 input_mixed_2.tsv" ${basic_tests_3}
+
 echo "" >> ${basic_tests_3}
 echo "Mixed type file tests: Auto-detect header" >> ${basic_tests_3}
 echo "-----------------------------------------" >> ${basic_tests_3}
@@ -399,6 +405,10 @@ runtest ${prog} "-f input_mixed_1.tsv" ${basic_tests_3}
 runtest ${prog} "-p 0 input_mixed_1.tsv" ${basic_tests_3}
 runtest ${prog} "-p 1 input_mixed_1.tsv" ${basic_tests_3}
 runtest ${prog} "-p 2 input_mixed_1.tsv" ${basic_tests_3}
+
+runcmd "cat input_mixed_2.tsv" ${basic_tests_3}
+runtest ${prog} "input_mixed_2.tsv" ${basic_tests_3}
+runtest ${prog} "-u input_mixed_2.tsv" ${basic_tests_3}
 
 ###
 ### Use file ${basic_tests_4}

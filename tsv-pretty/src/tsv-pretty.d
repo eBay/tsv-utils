@@ -109,7 +109,7 @@ struct TsvPrettyOptions
     size_t emptyReplacementPrintWidth = 0;    // Derived
     char delim = '\t';                  // --d|delimiter
     size_t spaceBetweenFields = 2;      // --s|space-between-fields num
-    size_t maxFieldPrintWidth = 24;     // --m|max-text-width num; Max width for variable width text fields.
+    size_t maxFieldPrintWidth = 40;     // --m|max-text-width num; Max width for variable width text fields.
     bool versionWanted = false;         // --V|version
 
     /* Returns a tuple. First value is true if command line arguments were successfully
@@ -151,7 +151,7 @@ struct TsvPrettyOptions
                 std.getopt.config.caseInsensitive,
                 "d|delimiter",            "CHR    Field delimiter. Default: TAB. (Single byte UTF-8 characters only.)", &delim,
                 "s|space-between-fields", "NUM    Spaces between each field (Default: 2)", &spaceBetweenFields,
-                "m|max-text-width",       "NUM     Max reserved field width for variable width text fields. Default: 24", &maxFieldPrintWidth,
+                "m|max-text-width",       "NUM     Max reserved field width for variable width text fields. Default: 40", &maxFieldPrintWidth,
                 std.getopt.config.caseSensitive,
                 "V|version",              "       Print version information and exit.", &versionWanted,
                 std.getopt.config.caseInsensitive,

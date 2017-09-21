@@ -2,15 +2,15 @@ Header underlines
 -----------------
 
 ====[tsv-pretty --underline-header -H input_mixed_1.tsv]====
-      I1  T1                                   F1  T2                    F2  Mixed
-      --  --                                   --  --                    --  -----
-       3  A                                    .1  HelloWorld  -1.28098e-05  15
-      89  B                                 0.008  23rd               18.23  23.0
-     222  foo                               135.6  thirty          3311.235  19.1
-       4  foobar                           -23.72  ten               0.0821  ABC
-   -5900  foobarbaz                   8.03556e-09  --text--         -31.002  1001
-6789e+23  abcdefghijklmnopqrstuvwxyz -6.758191e-14 x                  0.518  ABCDEFGHI
-      17  cat                                5.31  ABCDE               22.1  101
+      I1  T1                                     F1  T2                    F2  Mixed
+      --  --                                     --  --                    --  -----
+       3  A                                      .1  HelloWorld  -1.28098e-05  15
+      89  B                                   0.008  23rd               18.23  23.0
+     222  foo                                 135.6  thirty          3311.235  19.1
+       4  foobar                             -23.72  ten               0.0821  ABC
+   -5900  foobarbaz                     8.03556e-09  --text--         -31.002  1001
+6789e+23  abcdefghijklmnopqrstuvwxyz  -6.758191e-14  x                  0.518  ABCDEFGHI
+      17  cat                                  5.31  ABCDE               22.1  101
 
 ====[tsv-pretty --header --underline-header --lookahead 0 input_mixed_1.tsv]====
 I1  T1  F1  T2  F2  Mixed
@@ -24,15 +24,15 @@ I1  T1  F1  T2  F2  Mixed
 17  cat 5.31 ABCDE 22.1 101
 
 ====[tsv-pretty --underline-header input_mixed_1.tsv]====
-      I1  T1                                   F1  T2                    F2  Mixed
-      --  --                                   --  --                    --  -----
-       3  A                                    .1  HelloWorld  -1.28098e-05  15
-      89  B                                 0.008  23rd               18.23  23.0
-     222  foo                               135.6  thirty          3311.235  19.1
-       4  foobar                           -23.72  ten               0.0821  ABC
-   -5900  foobarbaz                   8.03556e-09  --text--         -31.002  1001
-6789e+23  abcdefghijklmnopqrstuvwxyz -6.758191e-14 x                  0.518  ABCDEFGHI
-      17  cat                                5.31  ABCDE               22.1  101
+      I1  T1                                     F1  T2                    F2  Mixed
+      --  --                                     --  --                    --  -----
+       3  A                                      .1  HelloWorld  -1.28098e-05  15
+      89  B                                   0.008  23rd               18.23  23.0
+     222  foo                                 135.6  thirty          3311.235  19.1
+       4  foobar                             -23.72  ten               0.0821  ABC
+   -5900  foobarbaz                     8.03556e-09  --text--         -31.002  1001
+6789e+23  abcdefghijklmnopqrstuvwxyz  -6.758191e-14  x                  0.518  ABCDEFGHI
+      17  cat                                  5.31  ABCDE               22.1  101
 
 ====[tsv-pretty -u --lookahead 1 input_mixed_1.tsv]====
 I1  T1  F1  T2                    F2  Mixed
