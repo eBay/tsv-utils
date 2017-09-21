@@ -205,7 +205,7 @@ struct TsvPrettyOptions
     }
 
     /* Option handler for --p|precision. It also sets --f|format-floats. */
-    private void floatPrecisionOptionHandler(string option, string optionVal)
+    private void floatPrecisionOptionHandler(string option, string optionVal) @safe pure
     {
         import std.conv : to;
         floatPrecision = optionVal.to!size_t;
@@ -273,7 +273,7 @@ private:
     private FieldFormat[] _fieldVector;
     private AutoDetectHeaderResult _autoDetectHeaderResult = AutoDetectHeaderResult.none;
 
-    this(const TsvPrettyOptions options)
+    this(const TsvPrettyOptions options) @safe pure nothrow @nogc
     {
         _options = options;
         if (options.noHeader && options.lookahead == 0) _stillCaching = false;
@@ -408,7 +408,7 @@ private:
         _stillCaching = false;
     }
 
-    bool candidateHeaderLooksLikeHeader()
+    bool candidateHeaderLooksLikeHeader() @safe
     {
         import std.algorithm : splitter;
 
@@ -432,7 +432,7 @@ private:
         return false;
     }
 
-    void setHeaderLine(const char[] line)
+    void setHeaderLine(const char[] line) @safe
     {
         import std.algorithm : splitter;
 
@@ -455,7 +455,7 @@ private:
         if (_lookaheadCache.data.length == _options.lookahead) outputLookaheadCache(outputStream);
     }
 
-    void updateFieldFormatsForLine(const char[] line)
+    void updateFieldFormatsForLine(const char[] line) @safe
     {
         import std.algorithm : splitter;
 
@@ -468,7 +468,7 @@ private:
 
     }
 
-    void finalizeFieldFormatting()
+    void finalizeFieldFormatting() @safe pure @nogc nothrow
     {
         size_t nextFieldStart = 0;
         foreach(ref field; _fieldVector)
@@ -593,7 +593,7 @@ private:
     size_t _maxSignificantDigits = 0;  // Digits to include in exponential notation
 
 public:
-    this(size_t fieldIndex)
+    this(size_t fieldIndex) @safe pure nothrow @nogc
     {
         _fieldIndex = fieldIndex;
     }
@@ -781,7 +781,7 @@ public:
      * This is called during look-ahead caching to register a new sample value for the
      * column. The key components updates are field type and print width.
      */
-    void updateForFieldValue(const char[] fieldValue, in ref TsvPrettyOptions options)
+    void updateForFieldValue(const char[] fieldValue, in ref TsvPrettyOptions options) @safe
     {
         import std.algorithm : findAmong, findSplit, max, min;
         import std.conv : to, ConvException;
@@ -903,7 +903,7 @@ public:
      * expected to be called after adding field entries via updateForFieldValue(). It
      * returns its new end position.
      */
-    size_t finalizeFormatting (size_t startPosition, in ref TsvPrettyOptions options)
+    size_t finalizeFormatting (size_t startPosition, in ref TsvPrettyOptions options) @safe pure @nogc nothrow
     {
         import std.algorithm : max, min;
         _startPosition = startPosition;
@@ -954,7 +954,7 @@ public:
  *
  * This routine is used to format values in columns identified as floating point.
  */
-string formatFloatingPointValue(const char[] value, size_t precision)
+string formatFloatingPointValue(const char[] value, size_t precision) @safe
 {
     import std.algorithm : canFind, find;
     import std.array : join;
@@ -1004,7 +1004,7 @@ string formatFloatingPointValue(const char[] value, size_t precision)
  *
  * This routine is used to format values in columns identified as having exponent format.
  */
-string formatExponentValue(const char[] value, size_t precision)
+string formatExponentValue(const char[] value, size_t precision) @safe
 {
     import std.algorithm : canFind, find, findSplit;
     import std.array : join;
@@ -1056,7 +1056,7 @@ string formatExponentValue(const char[] value, size_t precision)
  *   10.010 - 4 digits
  *   0.0032 - 2 digits
  */
-size_t significantDigits(const char[] numericString)
+size_t significantDigits(const char[] numericString) @safe pure
 {
     import std.algorithm : canFind, find, findAmong, findSplit, stripRight;
     import std.ascii : isDigit;
@@ -1074,7 +1074,7 @@ size_t significantDigits(const char[] numericString)
 
         if (digitsPart.canFind('.'))
         {
-            digitsPart.stripRight('0');
+            digitsPart = digitsPart.stripRight('0');
             significantDigits = digitsPart.length - 1;
         }
         else
@@ -1088,10 +1088,26 @@ size_t significantDigits(const char[] numericString)
     return significantDigits;
 }
 
+@safe pure unittest
+{
+    assert("0".significantDigits == 1);
+    assert("10".significantDigits == 2);
+    assert("0.0".significantDigits == 1);
+    assert("-10.0".significantDigits == 2);
+    assert("-.01".significantDigits == 1);
+    assert("-.5401".significantDigits == 4);
+    assert("1010.010".significantDigits == 6);
+    assert("0.0003003".significantDigits == 4);
+    assert("6e+06".significantDigits == 1);
+    assert("6.0e+06".significantDigits == 1);
+    assert("6.5e+06".significantDigits == 2);
+    assert("6.005e+06".significantDigits == 4);
+}
+
 /* precisionDigits - Returns the number of digits to the right of the decimal point in
  * a numeric string. This routine includes trailing zeros in the count.
  */
-size_t precisionDigits(const char[] numericString)
+size_t precisionDigits(const char[] numericString) @safe pure
 {
     import std.algorithm : canFind, find, findAmong, findSplit, stripRight;
     import std.ascii : isDigit;
@@ -1113,10 +1129,20 @@ size_t precisionDigits(const char[] numericString)
     return precisionDigits;
 }
 
+@safe pure unittest
+{
+    assert("0".precisionDigits == 0);
+    assert("10".precisionDigits == 0);
+    assert("0.0".precisionDigits == 1);
+    assert("-10.0".precisionDigits == 1);
+    assert("-.01".precisionDigits == 2);
+    assert("-.5401".precisionDigits == 4);
+}
+
 /** monospacePrintWidth - Calculates the expected print width of a string in monospace
  *  (fixed-width) fonts.
  */
-size_t monospacePrintWidth(const char[] str) @safe
+size_t monospacePrintWidth(const char[] str) @safe nothrow
 {
     bool isCJK(dchar c)
     {
@@ -1130,4 +1156,15 @@ size_t monospacePrintWidth(const char[] str) @safe
     catch (Exception) width = str.length;  // Invalid utf-8 sequence. Catch avoids program failure.
 
     return width;
+}
+
+unittest
+{
+    assert("".monospacePrintWidth == 0);
+    assert(" ".monospacePrintWidth == 1);
+    assert("abc".monospacePrintWidth == 3);
+    assert("林檎".monospacePrintWidth == 4);
+    assert("æble".monospacePrintWidth == 4);
+    assert("ვაშლი".monospacePrintWidth == 5);
+    assert("größten".monospacePrintWidth == 7);
 }
