@@ -998,6 +998,36 @@ string formatFloatingPointValue(const char[] value, size_t precision) @safe
     return printValue;
 }
 
+@safe unittest
+{
+    assert("".formatFloatingPointValue(3) == "");
+    assert(" ".formatFloatingPointValue(3) == " ");
+    assert("abc".formatFloatingPointValue(3) == "abc");
+    assert("nan".formatFloatingPointValue(3) == "nan");
+    assert("0".formatFloatingPointValue(0) == "0");
+    assert("1".formatFloatingPointValue(0) == "1");
+    assert("1.".formatFloatingPointValue(0) == "1");
+    assert("1".formatFloatingPointValue(3) == "1.000");
+    assert("1000".formatFloatingPointValue(3) == "1000.000");
+    assert("1000.001".formatFloatingPointValue(5) == "1000.00100");
+    assert("1000.001".formatFloatingPointValue(3) == "1000.001");
+    assert("1000.001".formatFloatingPointValue(2) == "1000.00");
+    assert("1000.006".formatFloatingPointValue(2) == "1000.01");
+    assert("-0.1".formatFloatingPointValue(1) == "-0.1");
+    assert("-0.1".formatFloatingPointValue(3) == "-0.100");
+    assert("-0.001".formatFloatingPointValue(3) == "-0.001");
+    assert("-0.006".formatFloatingPointValue(2) == "-0.01");
+    assert("-0.001".formatFloatingPointValue(1) == "-0.0");
+    assert("-0.001".formatFloatingPointValue(0) == "-0");
+    assert("0e+00".formatFloatingPointValue(0) == "0e+00");
+    assert("0.00e+00".formatFloatingPointValue(0) == "0.00e+00");
+    assert("1e+06".formatFloatingPointValue(1) == "1e+06");
+    assert("1e+06".formatFloatingPointValue(2) == "1e+06");
+    assert("1E-06".formatFloatingPointValue(1) == "1E-06");
+    assert("1.1E+6".formatFloatingPointValue(2) == "1.1E+6");
+    assert("1.1E+100".formatFloatingPointValue(2) == "1.1E+100");
+}
+
 /** formatExponentValue - Returns the printed representation of a raw value formatted
  * using exponential notation and a specific precision. If the value cannot be interpreted
  * as a double then the a copy of the original value is returned.
@@ -1046,6 +1076,34 @@ string formatExponentValue(const char[] value, size_t precision) @safe
     catch (ConvException) printValue = value.to!string;
 
     return printValue;
+}
+
+@safe unittest
+{
+    assert("".formatExponentValue(3) == "");
+    assert(" ".formatExponentValue(3) == " ");
+    assert("abc".formatExponentValue(3) == "abc");
+    assert("nan".formatExponentValue(3) == "nan");
+    assert("0".formatExponentValue(0) == "0e+00");
+    assert("1".formatExponentValue(0) == "1e+00");
+    assert("1.".formatExponentValue(0) == "1e+00");
+    assert("1".formatExponentValue(3) == "1.000e+00");
+    assert("1000".formatExponentValue(3) == "1.000e+03");
+    assert("1000.001".formatExponentValue(5) == "1.00000e+03");
+    assert("1000.001".formatExponentValue(3) == "1.000e+03");
+    assert("1000.001".formatExponentValue(6) == "1.000001e+03");
+    assert("1000.006".formatExponentValue(5) == "1.00001e+03");
+    assert("-0.1".formatExponentValue(1) == "-1.0e-01");
+    assert("-0.1".formatExponentValue(3) == "-1.000e-01");
+    assert("-0.001".formatExponentValue(3) == "-1.000e-03");
+    assert("-0.001".formatExponentValue(1) == "-1.0e-03");
+    assert("-0.001".formatExponentValue(0) == "-1e-03");
+    assert("0e+00".formatExponentValue(0) == "0e+00");
+    assert("0.00e+00".formatExponentValue(0) == "0e+00");
+    assert("1e+06".formatExponentValue(1) == "1.0e+06");
+    assert("1e+06".formatExponentValue(2) == "1.00e+06");
+    assert("1.0001e+06".formatExponentValue(1) == "1.0e+06");
+    assert("1.0001e+06".formatExponentValue(5) == "1.00010e+06");
 }
 
 /** significantDigits - Returns the number of significant digits in a numeric string.
