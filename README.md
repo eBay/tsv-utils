@@ -136,7 +136,7 @@ For uniform random sampling, the GNU `shuf` program is quite good and widely ava
 
 ### tsv-pretty
 
-tsv-pretty prints TSV data in an aligned format for better readability when working on the command-line. Text columns are left aligned, numeric columns are right aligned. Floats aligned on the decimal point and precision can be specified. Header lines are detected automatically. If desired, the header line can be repeated at regular intervals. An example, first printed without formatting, then with `tsv-pretty`:
+tsv-pretty prints TSV data in an aligned format for better readability when working on the command-line. Text columns are left aligned, numeric columns are right aligned. Floats aligned on the decimal point and precision can be specified. Header lines are detected automatically. If desired, the header line can be repeated at regular intervals. An example, first printed without formatting:
 ```
 $ cat sample.tsv
 Color   Count   Ht      Wt
@@ -145,8 +145,9 @@ Canary Yellow   7       106     0.761
 Chartreuse	1139	77.02   6.22
 Fluorescent Orange	422     1141.7  7.921
 Grey	19	140.3	1.03
-
-$ # tsv-pretty, using header underlining and float formatting
+```
+Now with `tsv-pretty`, using header underlining and float formatting:
+```
 $ tsv-pretty -u -f sample.tsv
 Color               Count       Ht     Wt
 -----               -----       --     --
