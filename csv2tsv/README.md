@@ -11,4 +11,4 @@ Using a `csv2tsv` converter is worthwhile even when a CSV file is not believed t
 
 Another useful benefit of the `csv2tsv` converter is that it normalizes newlines. Many programs generate Windows newlines when exporting in CSV format, even on Unix systems.
 
-CSV files come in different formats. See the [csv2tsv reference](docs/ToolReference.md#csv2tsv-reference) for details of how this tool operates and the format variations handled.
+CSV files come in different formats. See the [csv2tsv reference](../docs/ToolReference.md#csv2tsv-reference) for details of how this tool operates and the format variations handled.
