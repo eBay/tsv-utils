@@ -33,6 +33,7 @@ The rest of this section contains a short description of each tool. There is mor
 * [tsv-append](#tsv-append) - Concatenate TSV files. Header-aware; supports source file tracking.
 * [tsv-uniq](#tsv-uniq) - Filter out duplicate lines using fields as a key.
 * [tsv-sample](#tsv-sample) - Uniform and weighted random sampling or permutation of input lines.
+* [tsv-pretty](#tsv-pretty) - Print TSV data aligned for easier reading from the command-line.
 * [csv2tsv](#csv2tsv) - Convert CSV files to TSV.
 * [number-lines](#number-lines) - Number the input lines.
 * [keep-header](#keep-header) - Run a shell command in a header-aware fashion.
@@ -132,6 +133,10 @@ See the [tsv-uniq reference](docs/ToolReference.md#tsv-uniq-reference) for detai
 ### tsv-sample
 
 For uniform random sampling, the GNU `shuf` program is quite good and widely available. For weighted random sampling the choices are limited, especially when working with large files. This is where `tsv-sample` is useful. It implements weighted reservoir sampling, with the weights taken from a field in the input data. Uniform random sampling is supported as well. Performance is good, it works quite well on large files. See the [tsv-sample reference](docs/ToolReference.md#tsv-sample-reference) for details.
+
+### tsv-pretty
+
+tsv-pretty prints TSV data in an aligned format for better readability when working on the command-line. Text columns are left aligned, numeric columns are right aligned. Floats aligned on the decimal point and precision can be specified. Header lines are detecte automatically. If desired, the header line can be repeated at regular intervals. See the [tsv-sample reference](docs/ToolReference.md#tsv-pretty-reference) for details.
 
 ### csv2tsv
 
