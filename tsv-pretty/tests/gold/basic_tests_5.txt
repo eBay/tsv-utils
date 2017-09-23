@@ -1,0 +1,80 @@
+Alternate delimiters
+--------------------
+
+===[cat input_comma_delim.tsv]===
+F1,Field Two,3,Four
+A to Z,def,3,4
+A-to-Z,DEF,3.,4.
+A到Z," PQR",3.0,4.00
+A〜Z,$@#,3.00,4.0
+
+====[tsv-pretty input_comma_delim.tsv]====
+F1,Field Two,3,Four
+A to Z,def,3,4
+A-to-Z,DEF,3.,4.
+A到Z," PQR",3.0,4.00
+A〜Z,$@#,3.00,4.0
+
+====[tsv-pretty --delimiter , input_comma_delim.tsv]====
+F1      Field Two     3  Four
+A to Z  def        3     4
+A-to-Z  DEF        3.    4.
+A到Z    " PQR"     3.0   4.00
+A〜Z    $@#        3.00  4.0
+
+====[tsv-pretty --header -d , input_comma_delim.tsv]====
+F1      Field Two     3  Four
+A to Z  def        3     4
+A-to-Z  DEF        3.    4.
+A到Z    " PQR"     3.0   4.00
+A〜Z    $@#        3.00  4.0
+
+====[tsv-pretty --no-header -d , input_comma_delim.tsv]====
+F1      Field Two  3     Four
+A to Z  def        3     4
+A-to-Z  DEF        3.    4.
+A到Z    " PQR"     3.0   4.00
+A〜Z    $@#        3.00  4.0
+
+Help and version options
+------------------------
+
+====[tsv-pretty --help | grep -c Synopsis]====
+1
+====[tsv-pretty -h | grep -c Synopsis]====
+1
+====[tsv-pretty --help-verbose | grep -c Synopsis]====
+1
+====[tsv-pretty --help-verbose | grep -c Limitations]====
+1
+====[tsv-pretty --version | grep -c 'tsv-pretty (eBay/tsv-utils-dlang)']====
+1
+====[tsv-pretty -V | grep -c 'tsv-pretty (eBay/tsv-utils-dlang)']====
+1
+
+Standard input
+--------------
+
+====[cat input_5x5.tsv | tsv-pretty]====
+Text-1   Num-1  Mix-1   Mix-2    Mix-3
+ab.cd     55    5x5-f3  27       abcd
+cde.fgi   67    r2-f3   890      hg-90
+pqr       88.5  r3-f3   p-q-r    x-y-z
+rst       98.5  r4-f3   r-s-t-u  100
+
+====[cat input_5x5.tsv | tsv-pretty -u -- -]====
+Text-1   Num-1  Mix-1   Mix-2    Mix-3
+------   -----  -----   -----    -----
+ab.cd     55    5x5-f3  27       abcd
+cde.fgi   67    r2-f3   890      hg-90
+pqr       88.5  r3-f3   p-q-r    x-y-z
+rst       98.5  r4-f3   r-s-t-u  100
+
+====[cat input_5x5.tsv | tsv-pretty -u -- input_5x2.tsv -]====
+Text-1   Num-1  Mix-1   Mix-2    Mix-3
+------   -----  -----   -----    -----
+ABC       22    14      .        ab
+ab.cd     55    5x5-f3  27       abcd
+cde.fgi   67    r2-f3   890      hg-90
+pqr       88.5  r3-f3   p-q-r    x-y-z
+rst       98.5  r4-f3   r-s-t-u  100

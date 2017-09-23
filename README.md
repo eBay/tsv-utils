@@ -33,6 +33,7 @@ The rest of this section contains a short description of each tool. There is mor
 * [tsv-append](#tsv-append) - Concatenate TSV files. Header-aware; supports source file tracking.
 * [tsv-uniq](#tsv-uniq) - Filter out duplicate lines using fields as a key.
 * [tsv-sample](#tsv-sample) - Uniform and weighted random sampling or permutation of input lines.
+* [tsv-pretty](#tsv-pretty) - Print TSV data aligned for easier reading from the command-line.
 * [csv2tsv](#csv2tsv) - Convert CSV files to TSV.
 * [number-lines](#number-lines) - Number the input lines.
 * [keep-header](#keep-header) - Run a shell command in a header-aware fashion.
@@ -133,6 +134,31 @@ See the [tsv-uniq reference](docs/ToolReference.md#tsv-uniq-reference) for detai
 
 For uniform random sampling, the GNU `shuf` program is quite good and widely available. For weighted random sampling the choices are limited, especially when working with large files. This is where `tsv-sample` is useful. It implements weighted reservoir sampling, with the weights taken from a field in the input data. Uniform random sampling is supported as well. Performance is good, it works quite well on large files. See the [tsv-sample reference](docs/ToolReference.md#tsv-sample-reference) for details.
 
+### tsv-pretty
+
+tsv-pretty prints TSV data in an aligned format for better readability when working on the command-line. Text columns are left aligned, numeric columns are right aligned. Floats aligned on the decimal point and precision can be specified. Header lines are detected automatically. If desired, the header line can be repeated at regular intervals. An example, first printed without formatting:
+```
+$ cat sample.tsv
+Color   Count   Ht      Wt
+Brown   106     202.2   1.5
+Canary Yellow   7       106     0.761
+Chartreuse	1139	77.02   6.22
+Fluorescent Orange	422     1141.7  7.921
+Grey	19	140.3	1.03
+```
+Now with `tsv-pretty`, using header underlining and float formatting:
+```
+$ tsv-pretty -u -f sample.tsv
+Color               Count       Ht     Wt
+-----               -----       --     --
+Brown                 106   202.20  1.500
+Canary Yellow           7   106.00  0.761
+Chartreuse           1139    77.02  6.220
+Fluorescent Orange    422  1141.70  7.921
+Grey                   19   140.30  1.030
+```
+See the [tsv-pretty reference](docs/ToolReference.md#tsv-pretty-reference) for details.
+
 ### csv2tsv
 
 Sometimes you have a CSV file. This program does what you expect: convert CSV data to TSV. Example:
@@ -149,7 +175,7 @@ A simpler version of the Unix `nl` program. It prepends a line number to each li
 $ number-lines myfile.txt
 ```
 
-See the [number-lines reference](docs/ToolReference.md#tsv-summarize-reference) for details.
+See the [number-lines reference](docs/ToolReference.md#tsv-number-lines-reference) for details.
 
 ### keep-header
 
@@ -206,4 +232,4 @@ See [Building and makefile](docs/AboutTheCode.md#building-and-makefile) for more
 
 ### Setup customization
 
-There are a number of simple ways to ways to improve the utility of these tools, these are listed on the [Tips and tricks](docs/TipsAndTricks.md) page. [Bash aliases](docs/TipsAndTricks.md#useful-bash-aliases), [sort command customization](docs/TipsAndTricks.md#sort-command-customization), and [bash completion](docs/TipsAndTricks.md#enabele-bash-completion) are especially useful.
+There are a number of simple ways to ways to improve the utility of these tools, these are listed on the [Tips and tricks](docs/TipsAndTricks.md) page. [Bash aliases](docs/TipsAndTricks.md#useful-bash-aliases), [sort command customization](docs/TipsAndTricks.md#sort-command-customization), and [bash completion](docs/TipsAndTricks.md#enable-bash-completion) are especially useful.

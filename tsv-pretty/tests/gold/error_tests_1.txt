@@ -1,0 +1,36 @@
+Error test set 1
+----------------
+
+====[tsv-pretty no_such_file.tsv]====
+Error [tsv-pretty]: Cannot open file `no_such_file.tsv' in mode `rb' (No such file or directory)
+
+====[tsv-pretty --no-such-param input_unicode.tsv]====
+[tsv-pretty] Error processing command line arguments: Unrecognized option --no-such-param
+
+====[tsv-pretty -d ß input_unicode.tsv]====
+[tsv-pretty] Error processing command line arguments: Invalid UTF-8 sequence (at index 1)
+
+====[tsv-pretty --precision -1 input_unicode.tsv]====
+[tsv-pretty] Error processing command line arguments: Unexpected '-' when converting from type string to type ulong
+
+====[tsv-pretty --lookahead -1 input_unicode.tsv]====
+[tsv-pretty] Error processing command line arguments: Unexpected '-' when converting from type string to type ulong
+
+====[tsv-pretty --lookahead 1.5 input_unicode.tsv]====
+[tsv-pretty] Error processing command line arguments: Unexpected '.' when converting from type string to type ulong
+
+====[tsv-pretty --space-between-fields 1.5 input_unicode.tsv]====
+[tsv-pretty] Error processing command line arguments: Unexpected '.' when converting from type string to type ulong
+
+====[tsv-pretty --max-text-width -1 input_unicode.tsv]====
+[tsv-pretty] Error processing command line arguments: Unexpected '-' when converting from type string to type ulong
+
+====[tsv-pretty --lookahead 0 input_unicode.tsv]====
+[tsv-pretty] Error processing command line arguments: Cannot auto-detect header with zero look-ahead. Specify either '--H|header' or '--x|no-header' when using '--l|lookahead 0'.
+
+====[tsv-pretty invalid_unicode.tsv]====
+Column-1       Column-2  Column-3
+white          Weiß      白
+invalid-utf-8  Wei�X     白
+black          schwarz   黒
+this           line      valid

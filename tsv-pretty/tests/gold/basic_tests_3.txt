@@ -1,0 +1,305 @@
+Mixed type file tests
+---------------------
+
+===[cat input_mixed_1.tsv]===
+I1	T1	F1	T2	F2	Mixed
+3	A	.1	HelloWorld	-1.28098e-05	15
+89	B	0.008	23rd	18.23	23.0
+222	foo	135.6	thirty	3311.235	19.1
+4	foobar	-23.72	ten	0.0821	ABC
+-5900	foobarbaz	8.03556e-09	--text--	-31.002	1001
+6789e+23	abcdefghijklmnopqrstuvwxyz	-6.758191e-14	x	0.518	ABCDEFGHI
+17	cat	5.31	ABCDE	22.1	101
+
+====[tsv-pretty -x input_mixed_1.tsv]====
+I1        T1                          F1             T2          F2            Mixed
+3         A                           .1             HelloWorld  -1.28098e-05  15
+89        B                           0.008          23rd        18.23         23.0
+222       foo                         135.6          thirty      3311.235      19.1
+4         foobar                      -23.72         ten         0.0821        ABC
+-5900     foobarbaz                   8.03556e-09    --text--    -31.002       1001
+6789e+23  abcdefghijklmnopqrstuvwxyz  -6.758191e-14  x           0.518         ABCDEFGHI
+17        cat                         5.31           ABCDE       22.1          101
+
+====[tsv-pretty -H input_mixed_1.tsv]====
+      I1  T1                                     F1  T2                    F2  Mixed
+       3  A                                      .1  HelloWorld  -1.28098e-05  15
+      89  B                                   0.008  23rd               18.23  23.0
+     222  foo                                 135.6  thirty          3311.235  19.1
+       4  foobar                             -23.72  ten               0.0821  ABC
+   -5900  foobarbaz                     8.03556e-09  --text--         -31.002  1001
+6789e+23  abcdefghijklmnopqrstuvwxyz  -6.758191e-14  x                  0.518  ABCDEFGHI
+      17  cat                                  5.31  ABCDE               22.1  101
+
+====[tsv-pretty -H -l 1 input_mixed_1.tsv]====
+I1  T1  F1  T2                    F2  Mixed
+ 3  A   .1  HelloWorld  -1.28098e-05     15
+89  B   0.008 23rd             18.23   23.0
+222 foo 135.6 thirty        3311.235   19.1
+ 4  foobar -23.72 ten         0.0821    ABC
+-5900 foobarbaz 8.03556e-09 --text-- -31.002 1001
+6789e+23 abcdefghijklmnopqrstuvwxyz -6.758191e-14 x 0.518 ABCDEFGHI
+17  cat 5.31 ABCDE              22.1    101
+
+====[tsv-pretty -H -l 2 input_mixed_1.tsv]====
+I1  T1     F1  T2                    F2  Mixed
+ 3  A    .1    HelloWorld  -1.28098e-05   15
+89  B   0.008  23rd               18.23   23.0
+222 foo 135.6  thirty          3311.235   19.1
+ 4  foobar -23.72 ten            0.0821    ABC
+-5900 foobarbaz 8.03556e-09 --text-- -31.002 1001
+6789e+23 abcdefghijklmnopqrstuvwxyz -6.758191e-14 x 0.518 ABCDEFGHI
+17  cat 5.31   ABCDE               22.1  101
+
+====[tsv-pretty -H -l 3 input_mixed_1.tsv]====
+ I1  T1        F1  T2                    F2  Mixed
+  3  A       .1    HelloWorld  -1.28098e-05   15
+ 89  B      0.008  23rd               18.23   23.0
+222  foo  135.6    thirty          3311.235   19.1
+  4  foobar -23.72 ten               0.0821    ABC
+-5900 foobarbaz 8.03556e-09 --text-- -31.002 1001
+6789e+23 abcdefghijklmnopqrstuvwxyz -6.758191e-14 x 0.518 ABCDEFGHI
+ 17  cat    5.31   ABCDE               22.1  101
+
+====[tsv-pretty -H -l 4 input_mixed_1.tsv]====
+ I1  T1           F1  T2                    F2  Mixed
+  3  A          .1    HelloWorld  -1.28098e-05  15
+ 89  B         0.008  23rd               18.23  23.0
+222  foo     135.6    thirty          3311.235  19.1
+  4  foobar  -23.72   ten               0.0821  ABC
+-5900 foobarbaz 8.03556e-09 --text--   -31.002  1001
+6789e+23 abcdefghijklmnopqrstuvwxyz -6.758191e-14 x 0.518 ABCDEFGHI
+ 17  cat       5.31   ABCDE               22.1  101
+
+====[tsv-pretty -H -f input_mixed_1.tsv]====
+      I1  T1                                     F1  T2                     F2  Mixed
+       3  A                            1.000000e-01  HelloWorld  -1.280980e-05  15
+      89  B                            8.000000e-03  23rd         1.823000e+01  23.0
+     222  foo                          1.356000e+02  thirty       3.311235e+03  19.1
+       4  foobar                      -2.372000e+01  ten          8.210000e-02  ABC
+   -5900  foobarbaz                    8.035560e-09  --text--    -3.100200e+01  1001
+6789e+23  abcdefghijklmnopqrstuvwxyz  -6.758191e-14  x            5.180000e-01  ABCDEFGHI
+      17  cat                          5.310000e+00  ABCDE        2.210000e+01  101
+
+====[tsv-pretty -H -p 0 input_mixed_1.tsv]====
+      I1  T1                               F1  T2               F2  Mixed
+       3  A                             1e-01  HelloWorld   -1e-05  15
+      89  B                             8e-03  23rd          2e+01  23.0
+     222  foo                           1e+02  thirty        3e+03  19.1
+       4  foobar                       -2e+01  ten           8e-02  ABC
+   -5900  foobarbaz                     8e-09  --text--     -3e+01  1001
+6789e+23  abcdefghijklmnopqrstuvwxyz   -7e-14  x             5e-01  ABCDEFGHI
+      17  cat                           5e+00  ABCDE         2e+01  101
+
+====[tsv-pretty -H -p 1 input_mixed_1.tsv]====
+      I1  T1                                F1  T2                F2  Mixed
+       3  A                            1.0e-01  HelloWorld  -1.3e-05  15
+      89  B                            8.0e-03  23rd         1.8e+01  23.0
+     222  foo                          1.4e+02  thirty       3.3e+03  19.1
+       4  foobar                      -2.4e+01  ten          8.2e-02  ABC
+   -5900  foobarbaz                    8.0e-09  --text--    -3.1e+01  1001
+6789e+23  abcdefghijklmnopqrstuvwxyz  -6.8e-14  x            5.2e-01  ABCDEFGHI
+      17  cat                          5.3e+00  ABCDE        2.2e+01  101
+
+====[tsv-pretty -H -p 2 input_mixed_1.tsv]====
+      I1  T1                                 F1  T2                 F2  Mixed
+       3  A                            1.00e-01  HelloWorld  -1.28e-05  15
+      89  B                            8.00e-03  23rd         1.82e+01  23.0
+     222  foo                          1.36e+02  thirty       3.31e+03  19.1
+       4  foobar                      -2.37e+01  ten          8.21e-02  ABC
+   -5900  foobarbaz                    8.04e-09  --text--    -3.10e+01  1001
+6789e+23  abcdefghijklmnopqrstuvwxyz  -6.76e-14  x            5.18e-01  ABCDEFGHI
+      17  cat                          5.31e+00  ABCDE        2.21e+01  101
+
+===[cat input_mixed_2.tsv]===
+Date	Text	Value	Score
+07-17-2003	My hands were black with dirt	1029	17.58
+11-12-1991	two of our young Irish sculptors	14	107.3
+06-21-1983	Ahora, mi amigo Cincunegui se ha empeñado	972	73.83
+03-07-2011	C'était un vieux marin, basané, goudronné	114	0.92
+07-02-1823	Omtrent de werkelijke uitgestrektheid van het gebied	11	3.2
+08-24-1765	Hasta tal punto era desconocida de casi todos	32	123.0
+10-17-2001	Die teils aus groben Wollenstoffen	172	63.38
+04-13-1986	Die Männer traten jetzt näher herzu	46	78.32
+
+====[tsv-pretty -H input_mixed_2.tsv]====
+Date        Text                                      Value   Score
+07-17-2003  My hands were black with dirt              1029   17.58
+11-12-1991  two of our young Irish sculptors             14  107.3
+06-21-1983  Ahora, mi amigo Cincunegui se ha empeñado   972   73.83
+03-07-2011  C'était un vieux marin, basané, goudronné   114    0.92
+07-02-1823  Omtrent de werkelijke uitgestrektheid van het gebied 11 3.2
+08-24-1765  Hasta tal punto era desconocida de casi todos 32 123.0
+10-17-2001  Die teils aus groben Wollenstoffen          172   63.38
+04-13-1986  Die Männer traten jetzt näher herzu          46   78.32
+
+====[tsv-pretty -H -f input_mixed_2.tsv]====
+Date        Text                                      Value   Score
+07-17-2003  My hands were black with dirt              1029   17.58
+11-12-1991  two of our young Irish sculptors             14  107.30
+06-21-1983  Ahora, mi amigo Cincunegui se ha empeñado   972   73.83
+03-07-2011  C'était un vieux marin, basané, goudronné   114    0.92
+07-02-1823  Omtrent de werkelijke uitgestrektheid van het gebied 11 3.20
+08-24-1765  Hasta tal punto era desconocida de casi todos 32 123.00
+10-17-2001  Die teils aus groben Wollenstoffen          172   63.38
+04-13-1986  Die Männer traten jetzt näher herzu          46   78.32
+
+====[tsv-pretty -H -u input_mixed_2.tsv]====
+Date        Text                                      Value   Score
+----        ----                                      -----   -----
+07-17-2003  My hands were black with dirt              1029   17.58
+11-12-1991  two of our young Irish sculptors             14  107.3
+06-21-1983  Ahora, mi amigo Cincunegui se ha empeñado   972   73.83
+03-07-2011  C'était un vieux marin, basané, goudronné   114    0.92
+07-02-1823  Omtrent de werkelijke uitgestrektheid van het gebied 11 3.2
+08-24-1765  Hasta tal punto era desconocida de casi todos 32 123.0
+10-17-2001  Die teils aus groben Wollenstoffen          172   63.38
+04-13-1986  Die Männer traten jetzt näher herzu          46   78.32
+
+====[tsv-pretty -H -l 2 input_mixed_2.tsv]====
+Date        Text                              Value   Score
+07-17-2003  My hands were black with dirt      1029   17.58
+11-12-1991  two of our young Irish sculptors     14  107.3
+06-21-1983  Ahora, mi amigo Cincunegui se ha empeñado 972 73.83
+03-07-2011  C'était un vieux marin, basané, goudronné 114 0.92
+07-02-1823  Omtrent de werkelijke uitgestrektheid van het gebied 11 3.2
+08-24-1765  Hasta tal punto era desconocida de casi todos 32 123.0
+10-17-2001  Die teils aus groben Wollenstoffen  172   63.38
+04-13-1986  Die Männer traten jetzt näher herzu  46   78.32
+
+Mixed type file tests: Auto-detect header
+-----------------------------------------
+
+===[cat input_mixed_1.tsv]===
+I1	T1	F1	T2	F2	Mixed
+3	A	.1	HelloWorld	-1.28098e-05	15
+89	B	0.008	23rd	18.23	23.0
+222	foo	135.6	thirty	3311.235	19.1
+4	foobar	-23.72	ten	0.0821	ABC
+-5900	foobarbaz	8.03556e-09	--text--	-31.002	1001
+6789e+23	abcdefghijklmnopqrstuvwxyz	-6.758191e-14	x	0.518	ABCDEFGHI
+17	cat	5.31	ABCDE	22.1	101
+
+====[tsv-pretty input_mixed_1.tsv]====
+      I1  T1                                     F1  T2                    F2  Mixed
+       3  A                                      .1  HelloWorld  -1.28098e-05  15
+      89  B                                   0.008  23rd               18.23  23.0
+     222  foo                                 135.6  thirty          3311.235  19.1
+       4  foobar                             -23.72  ten               0.0821  ABC
+   -5900  foobarbaz                     8.03556e-09  --text--         -31.002  1001
+6789e+23  abcdefghijklmnopqrstuvwxyz  -6.758191e-14  x                  0.518  ABCDEFGHI
+      17  cat                                  5.31  ABCDE               22.1  101
+
+====[tsv-pretty -l 1 input_mixed_1.tsv]====
+I1  T1  F1  T2                    F2  Mixed
+ 3  A   .1  HelloWorld  -1.28098e-05     15
+89  B   0.008 23rd             18.23   23.0
+222 foo 135.6 thirty        3311.235   19.1
+ 4  foobar -23.72 ten         0.0821    ABC
+-5900 foobarbaz 8.03556e-09 --text-- -31.002 1001
+6789e+23 abcdefghijklmnopqrstuvwxyz -6.758191e-14 x 0.518 ABCDEFGHI
+17  cat 5.31 ABCDE              22.1    101
+
+====[tsv-pretty -l 2 input_mixed_1.tsv]====
+I1  T1     F1  T2                    F2  Mixed
+ 3  A    .1    HelloWorld  -1.28098e-05   15
+89  B   0.008  23rd               18.23   23.0
+222 foo 135.6  thirty          3311.235   19.1
+ 4  foobar -23.72 ten            0.0821    ABC
+-5900 foobarbaz 8.03556e-09 --text-- -31.002 1001
+6789e+23 abcdefghijklmnopqrstuvwxyz -6.758191e-14 x 0.518 ABCDEFGHI
+17  cat 5.31   ABCDE               22.1  101
+
+====[tsv-pretty -l 3 input_mixed_1.tsv]====
+ I1  T1        F1  T2                    F2  Mixed
+  3  A       .1    HelloWorld  -1.28098e-05   15
+ 89  B      0.008  23rd               18.23   23.0
+222  foo  135.6    thirty          3311.235   19.1
+  4  foobar -23.72 ten               0.0821    ABC
+-5900 foobarbaz 8.03556e-09 --text-- -31.002 1001
+6789e+23 abcdefghijklmnopqrstuvwxyz -6.758191e-14 x 0.518 ABCDEFGHI
+ 17  cat    5.31   ABCDE               22.1  101
+
+====[tsv-pretty -l 4 input_mixed_1.tsv]====
+ I1  T1           F1  T2                    F2  Mixed
+  3  A          .1    HelloWorld  -1.28098e-05  15
+ 89  B         0.008  23rd               18.23  23.0
+222  foo     135.6    thirty          3311.235  19.1
+  4  foobar  -23.72   ten               0.0821  ABC
+-5900 foobarbaz 8.03556e-09 --text--   -31.002  1001
+6789e+23 abcdefghijklmnopqrstuvwxyz -6.758191e-14 x 0.518 ABCDEFGHI
+ 17  cat       5.31   ABCDE               22.1  101
+
+====[tsv-pretty -f input_mixed_1.tsv]====
+      I1  T1                                     F1  T2                     F2  Mixed
+       3  A                            1.000000e-01  HelloWorld  -1.280980e-05  15
+      89  B                            8.000000e-03  23rd         1.823000e+01  23.0
+     222  foo                          1.356000e+02  thirty       3.311235e+03  19.1
+       4  foobar                      -2.372000e+01  ten          8.210000e-02  ABC
+   -5900  foobarbaz                    8.035560e-09  --text--    -3.100200e+01  1001
+6789e+23  abcdefghijklmnopqrstuvwxyz  -6.758191e-14  x            5.180000e-01  ABCDEFGHI
+      17  cat                          5.310000e+00  ABCDE        2.210000e+01  101
+
+====[tsv-pretty -p 0 input_mixed_1.tsv]====
+      I1  T1                               F1  T2               F2  Mixed
+       3  A                             1e-01  HelloWorld   -1e-05  15
+      89  B                             8e-03  23rd          2e+01  23.0
+     222  foo                           1e+02  thirty        3e+03  19.1
+       4  foobar                       -2e+01  ten           8e-02  ABC
+   -5900  foobarbaz                     8e-09  --text--     -3e+01  1001
+6789e+23  abcdefghijklmnopqrstuvwxyz   -7e-14  x             5e-01  ABCDEFGHI
+      17  cat                           5e+00  ABCDE         2e+01  101
+
+====[tsv-pretty -p 1 input_mixed_1.tsv]====
+      I1  T1                                F1  T2                F2  Mixed
+       3  A                            1.0e-01  HelloWorld  -1.3e-05  15
+      89  B                            8.0e-03  23rd         1.8e+01  23.0
+     222  foo                          1.4e+02  thirty       3.3e+03  19.1
+       4  foobar                      -2.4e+01  ten          8.2e-02  ABC
+   -5900  foobarbaz                    8.0e-09  --text--    -3.1e+01  1001
+6789e+23  abcdefghijklmnopqrstuvwxyz  -6.8e-14  x            5.2e-01  ABCDEFGHI
+      17  cat                          5.3e+00  ABCDE        2.2e+01  101
+
+====[tsv-pretty -p 2 input_mixed_1.tsv]====
+      I1  T1                                 F1  T2                 F2  Mixed
+       3  A                            1.00e-01  HelloWorld  -1.28e-05  15
+      89  B                            8.00e-03  23rd         1.82e+01  23.0
+     222  foo                          1.36e+02  thirty       3.31e+03  19.1
+       4  foobar                      -2.37e+01  ten          8.21e-02  ABC
+   -5900  foobarbaz                    8.04e-09  --text--    -3.10e+01  1001
+6789e+23  abcdefghijklmnopqrstuvwxyz  -6.76e-14  x            5.18e-01  ABCDEFGHI
+      17  cat                          5.31e+00  ABCDE        2.21e+01  101
+
+===[cat input_mixed_2.tsv]===
+Date	Text	Value	Score
+07-17-2003	My hands were black with dirt	1029	17.58
+11-12-1991	two of our young Irish sculptors	14	107.3
+06-21-1983	Ahora, mi amigo Cincunegui se ha empeñado	972	73.83
+03-07-2011	C'était un vieux marin, basané, goudronné	114	0.92
+07-02-1823	Omtrent de werkelijke uitgestrektheid van het gebied	11	3.2
+08-24-1765	Hasta tal punto era desconocida de casi todos	32	123.0
+10-17-2001	Die teils aus groben Wollenstoffen	172	63.38
+04-13-1986	Die Männer traten jetzt näher herzu	46	78.32
+
+====[tsv-pretty input_mixed_2.tsv]====
+Date        Text                                      Value   Score
+07-17-2003  My hands were black with dirt              1029   17.58
+11-12-1991  two of our young Irish sculptors             14  107.3
+06-21-1983  Ahora, mi amigo Cincunegui se ha empeñado   972   73.83
+03-07-2011  C'était un vieux marin, basané, goudronné   114    0.92
+07-02-1823  Omtrent de werkelijke uitgestrektheid van het gebied 11 3.2
+08-24-1765  Hasta tal punto era desconocida de casi todos 32 123.0
+10-17-2001  Die teils aus groben Wollenstoffen          172   63.38
+04-13-1986  Die Männer traten jetzt näher herzu          46   78.32
+
+====[tsv-pretty -u input_mixed_2.tsv]====
+Date        Text                                      Value   Score
+----        ----                                      -----   -----
+07-17-2003  My hands were black with dirt              1029   17.58
+11-12-1991  two of our young Irish sculptors             14  107.3
+06-21-1983  Ahora, mi amigo Cincunegui se ha empeñado   972   73.83
+03-07-2011  C'était un vieux marin, basané, goudronné   114    0.92
+07-02-1823  Omtrent de werkelijke uitgestrektheid van het gebied 11 3.2
+08-24-1765  Hasta tal punto era desconocida de casi todos 32 123.0
+10-17-2001  Die teils aus groben Wollenstoffen          172   63.38
+04-13-1986  Die Männer traten jetzt näher herzu          46   78.32

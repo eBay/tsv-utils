@@ -1,0 +1,870 @@
+Text file tests
+---------------
+
+===[cat input_text_1.tsv]===
+f1	field 2	field-3-longer-header	x	y
+a	b	c	dd	e
+bb		cc	d
+ccc	ab cd	cc cc cc cc cc		e
+	cd ab	c	d
+		ccc ccc ccc ccc	ddd	e
+
+the	last	row	d	e
+
+====[tsv-pretty -x input_text_1.tsv]====
+f1   field 2  field-3-longer-header  x    y
+a    b        c                      dd   e
+bb            cc                     d
+ccc  ab cd    cc cc cc cc cc              e
+     cd ab    c                      d
+              ccc ccc ccc ccc        ddd  e
+
+the  last     row                    d    e
+
+====[tsv-pretty -H input_text_1.tsv]====
+f1   field 2  field-3-longer-header  x    y
+a    b        c                      dd   e
+bb            cc                     d
+ccc  ab cd    cc cc cc cc cc              e
+     cd ab    c                      d
+              ccc ccc ccc ccc        ddd  e
+
+the  last     row                    d    e
+
+====[tsv-pretty -x -l 0 input_text_1.tsv]====
+f1  field 2  field-3-longer-header  x  y
+a   b        c                      dd e
+bb           cc                     d
+ccc ab cd    cc cc cc cc cc            e
+    cd ab    c                      d
+             ccc ccc ccc ccc        ddd e
+
+the last     row                    d  e
+
+====[tsv-pretty -x -l 1 input_text_1.tsv]====
+f1  field 2  field-3-longer-header  x  y
+a   b        c                      dd e
+bb           cc                     d
+ccc ab cd    cc cc cc cc cc            e
+    cd ab    c                      d
+             ccc ccc ccc ccc        ddd e
+
+the last     row                    d  e
+
+====[tsv-pretty -x -l 7 input_text_1.tsv]====
+f1   field 2  field-3-longer-header  x    y
+a    b        c                      dd   e
+bb            cc                     d
+ccc  ab cd    cc cc cc cc cc              e
+     cd ab    c                      d
+              ccc ccc ccc ccc        ddd  e
+
+the  last     row                    d    e
+
+====[tsv-pretty -x -l 8 input_text_1.tsv]====
+f1   field 2  field-3-longer-header  x    y
+a    b        c                      dd   e
+bb            cc                     d
+ccc  ab cd    cc cc cc cc cc              e
+     cd ab    c                      d
+              ccc ccc ccc ccc        ddd  e
+
+the  last     row                    d    e
+
+====[tsv-pretty -x -l 9 input_text_1.tsv]====
+f1   field 2  field-3-longer-header  x    y
+a    b        c                      dd   e
+bb            cc                     d
+ccc  ab cd    cc cc cc cc cc              e
+     cd ab    c                      d
+              ccc ccc ccc ccc        ddd  e
+
+the  last     row                    d    e
+
+====[tsv-pretty -H -l 1 input_text_1.tsv]====
+f1  field 2  field-3-longer-header  x   y
+a   b        c                      dd  e
+bb           cc                     d
+ccc ab cd    cc cc cc cc cc             e
+    cd ab    c                      d
+             ccc ccc ccc ccc        ddd e
+
+the last     row                    d   e
+
+====[tsv-pretty -H -l 7 input_text_1.tsv]====
+f1   field 2  field-3-longer-header  x    y
+a    b        c                      dd   e
+bb            cc                     d
+ccc  ab cd    cc cc cc cc cc              e
+     cd ab    c                      d
+              ccc ccc ccc ccc        ddd  e
+
+the  last     row                    d    e
+
+====[tsv-pretty -H -l 8 input_text_1.tsv]====
+f1   field 2  field-3-longer-header  x    y
+a    b        c                      dd   e
+bb            cc                     d
+ccc  ab cd    cc cc cc cc cc              e
+     cd ab    c                      d
+              ccc ccc ccc ccc        ddd  e
+
+the  last     row                    d    e
+
+====[tsv-pretty -x --max-text-width 0 input_text_1.tsv]====
+f1   field 2 field-3-longer-header x y
+a    b     c  dd e
+bb         cc d
+ccc  ab cd cc cc cc cc cc  e
+     cd ab c  d
+           ccc ccc ccc ccc ddd e
+
+the  last  row d e
+
+====[tsv-pretty -x -m 1 input_text_1.tsv]====
+f1   field 2 field-3-longer-header x y
+a    b     c  dd e
+bb         cc d
+ccc  ab cd cc cc cc cc cc  e
+     cd ab c  d
+           ccc ccc ccc ccc ddd e
+
+the  last  row d e
+
+====[tsv-pretty -x -m 2 input_text_1.tsv]====
+f1   field 2 field-3-longer-header x y
+a    b     c   dd  e
+bb         cc  d
+ccc  ab cd cc cc cc cc cc  e
+     cd ab c   d
+           ccc ccc ccc ccc ddd e
+
+the  last  row d   e
+
+====[tsv-pretty -H -m 0 input_text_1.tsv]====
+f1   field 2  field-3-longer-header  x  y
+a    b        c                      dd e
+bb            cc                     d
+ccc  ab cd    cc cc cc cc cc            e
+     cd ab    c                      d
+              ccc ccc ccc ccc        ddd e
+
+the  last     row                    d  e
+
+====[tsv-pretty -x -l 0 -m 1 input_text_1.tsv]====
+f1  field 2  field-3-longer-header  x  y
+a   b        c                      dd e
+bb           cc                     d
+ccc ab cd    cc cc cc cc cc            e
+    cd ab    c                      d
+             ccc ccc ccc ccc        ddd e
+
+the last     row                    d  e
+
+====[tsv-pretty -x -l 1 -m 2 input_text_1.tsv]====
+f1  field 2  field-3-longer-header  x  y
+a   b        c                      dd e
+bb           cc                     d
+ccc ab cd    cc cc cc cc cc            e
+    cd ab    c                      d
+             ccc ccc ccc ccc        ddd e
+
+the last     row                    d  e
+
+====[tsv-pretty -x --space-between-fields 1 input_text_1.tsv]====
+f1  field 2 field-3-longer-header x   y
+a   b       c                     dd  e
+bb          cc                    d
+ccc ab cd   cc cc cc cc cc            e
+    cd ab   c                     d
+            ccc ccc ccc ccc       ddd e
+
+the last    row                   d   e
+
+====[tsv-pretty -x -s 2 input_text_1.tsv]====
+f1   field 2  field-3-longer-header  x    y
+a    b        c                      dd   e
+bb            cc                     d
+ccc  ab cd    cc cc cc cc cc              e
+     cd ab    c                      d
+              ccc ccc ccc ccc        ddd  e
+
+the  last     row                    d    e
+
+====[tsv-pretty -x -s 3 input_text_1.tsv]====
+f1    field 2   field-3-longer-header   x     y
+a     b         c                       dd    e
+bb              cc                      d
+ccc   ab cd     cc cc cc cc cc                e
+      cd ab     c                       d
+                ccc ccc ccc ccc         ddd   e
+
+the   last      row                     d     e
+
+====[tsv-pretty -H -s 1 input_text_1.tsv]====
+f1  field 2 field-3-longer-header x   y
+a   b       c                     dd  e
+bb          cc                    d
+ccc ab cd   cc cc cc cc cc            e
+    cd ab   c                     d
+            ccc ccc ccc ccc       ddd e
+
+the last    row                   d   e
+
+====[tsv-pretty -H -s 2 input_text_1.tsv]====
+f1   field 2  field-3-longer-header  x    y
+a    b        c                      dd   e
+bb            cc                     d
+ccc  ab cd    cc cc cc cc cc              e
+     cd ab    c                      d
+              ccc ccc ccc ccc        ddd  e
+
+the  last     row                    d    e
+
+====[tsv-pretty -H -s 3 input_text_1.tsv]====
+f1    field 2   field-3-longer-header   x     y
+a     b         c                       dd    e
+bb              cc                      d
+ccc   ab cd     cc cc cc cc cc                e
+      cd ab     c                       d
+                ccc ccc ccc ccc         ddd   e
+
+the   last      row                     d     e
+
+====[tsv-pretty -H -s 1 -m 1 input_text_1.tsv]====
+f1  field 2 field-3-longer-header x y
+a   b       c                     dd e
+bb          cc                    d
+ccc ab cd   cc cc cc cc cc          e
+    cd ab   c                     d
+            ccc ccc ccc ccc       ddd e
+
+the last    row                   d e
+
+====[tsv-pretty -H -s 1 -m 1 input_text_1.tsv]====
+f1  field 2 field-3-longer-header x y
+a   b       c                     dd e
+bb          cc                    d
+ccc ab cd   cc cc cc cc cc          e
+    cd ab   c                     d
+            ccc ccc ccc ccc       ddd e
+
+the last    row                   d e
+
+====[tsv-pretty -H -s 1 -m 1 -l 1 input_text_1.tsv]====
+f1 field 2 field-3-longer-header x  y
+a  b       c                     dd e
+bb         cc                    d
+ccc ab cd  cc cc cc cc cc           e
+   cd ab   c                     d
+           ccc ccc ccc ccc       ddd e
+
+the last   row                   d  e
+
+====[tsv-pretty -x --replace-empty input_text_1.tsv]====
+f1   field 2  field-3-longer-header  x    y
+a    b        c                      dd   e
+bb   --       cc                     d
+ccc  ab cd    cc cc cc cc cc         --   e
+--   cd ab    c                      d
+--   --       ccc ccc ccc ccc        ddd  e
+
+the  last     row                    d    e
+
+====[tsv-pretty -H -e input_text_1.tsv]====
+f1   field 2  field-3-longer-header  x    y
+a    b        c                      dd   e
+bb   --       cc                     d
+ccc  ab cd    cc cc cc cc cc         --   e
+--   cd ab    c                      d
+--   --       ccc ccc ccc ccc        ddd  e
+
+the  last     row                    d    e
+
+====[tsv-pretty -x -e -l 0 input_text_1.tsv]====
+f1  field 2  field-3-longer-header  x  y
+a   b        c                      dd e
+bb  --       cc                     d
+ccc ab cd    cc cc cc cc cc         -- e
+--  cd ab    c                      d
+--  --       ccc ccc ccc ccc        ddd e
+
+the last     row                    d  e
+
+====[tsv-pretty -x -e -l 1 input_text_1.tsv]====
+f1  field 2  field-3-longer-header  x  y
+a   b        c                      dd e
+bb  --       cc                     d
+ccc ab cd    cc cc cc cc cc         -- e
+--  cd ab    c                      d
+--  --       ccc ccc ccc ccc        ddd e
+
+the last     row                    d  e
+
+====[tsv-pretty -H -e -l 1 input_text_1.tsv]====
+f1  field 2  field-3-longer-header  x   y
+a   b        c                      dd  e
+bb  --       cc                     d
+ccc ab cd    cc cc cc cc cc         --  e
+--  cd ab    c                      d
+--  --       ccc ccc ccc ccc        ddd e
+
+the last     row                    d   e
+
+====[tsv-pretty -x --empty-replacement ^ input_text_1.tsv]====
+f1   field 2  field-3-longer-header  x    y
+a    b        c                      dd   e
+bb   ^        cc                     d
+ccc  ab cd    cc cc cc cc cc         ^    e
+^    cd ab    c                      d
+^    ^        ccc ccc ccc ccc        ddd  e
+
+the  last     row                    d    e
+
+====[tsv-pretty -H -E ^^^ input_text_1.tsv]====
+f1   field 2  field-3-longer-header  x    y
+a    b        c                      dd   e
+bb   ^^^      cc                     d
+ccc  ab cd    cc cc cc cc cc         ^^^  e
+^^^  cd ab    c                      d
+^^^  ^^^      ccc ccc ccc ccc        ddd  e
+
+the  last     row                    d    e
+
+====[tsv-pretty -x -E ^^^ -l 0 input_text_1.tsv]====
+f1  field 2  field-3-longer-header  x  y
+a   b        c                      dd e
+bb  ^^^      cc                     d
+ccc ab cd    cc cc cc cc cc         ^^^ e
+^^^ cd ab    c                      d
+^^^ ^^^      ccc ccc ccc ccc        ddd e
+
+the last     row                    d  e
+
+====[tsv-pretty -x -E ^ -l 1 input_text_1.tsv]====
+f1  field 2  field-3-longer-header  x  y
+a   b        c                      dd e
+bb  ^        cc                     d
+ccc ab cd    cc cc cc cc cc         ^  e
+^   cd ab    c                      d
+^   ^        ccc ccc ccc ccc        ddd e
+
+the last     row                    d  e
+
+====[tsv-pretty -H -E ^ -l 1 input_text_1.tsv]====
+f1  field 2  field-3-longer-header  x   y
+a   b        c                      dd  e
+bb  ^        cc                     d
+ccc ab cd    cc cc cc cc cc         ^   e
+^   cd ab    c                      d
+^   ^        ccc ccc ccc ccc        ddd e
+
+the last     row                    d   e
+
+====[tsv-pretty -H -E ^^^ -l 1 input_text_1.tsv]====
+f1  field 2  field-3-longer-header  x   y
+a   b        c                      dd  e
+bb  ^^^      cc                     d
+ccc ab cd    cc cc cc cc cc         ^^^ e
+^^^ cd ab    c                      d
+^^^ ^^^      ccc ccc ccc ccc        ddd e
+
+the last     row                    d   e
+
+===[cat input_unicode.tsv]===
+Language	Text 1	Text 2	Text 3	Text 4	Text 5	Text 6	Text 7	Number
+English	snow storm	soccer player	town hall	sleep quietly	black leather jacket	bongo drums	10 years ago	1.234
+Chinese (Simplified)	雪风暴	足球运动员	市政厅	安静地睡觉	黑色皮夹克	bongo鼓	10年前	2.345
+Chinese (Traditional)	雪風暴	足球運動員	市政廳	安靜地睡覺	黑色皮夾克	bongo鼓	10年前	3.456
+French	Tempête de neige	joueur de foot	mairie	Dormez tranquillement	Veste en cuir noir	Bongo drums	Il ya 10 ans	4.567
+Georgian	თოვლის ქარიშხალი	ფეხბურთის მოთამაშე	მუნიციპალიტეტი	მშვიდი მშვიდად	შავი ტყავის ქურთუკი	ბოგოოს დასარტყამი	10 წლის წინ	5.678
+German	Schneesturm	Fußballspieler	Rathaus	Schlafe ruhig	Schwarze Lederjacke	Bongo-Trommeln	vor 10 Jahren	6.789
+Greek	Χιονοθύελλα	ποδοσφαιριστής	Δημαρχείο	Κοιμάται ήσυχα	Μαύρο δερμάτινο μπουφάν	Bongo τύμπανα	10 ΧΡΟΝΙΑ πριν	7.891
+Hebrew	סופת שלגים	שחקן כדורגל	עירייה	לישון בשקט	מעיל עור שחור	תופים של בונגו	לפני 10 שנים	8.901
+Japanese	吹雪	サッカー選手	町役場	静かに眠る	ブラックレザージャケット	ボンゴドラム	10年前	9.012
+Russian	Снежная буря	футболист	ратуша	Спать спокойно	Черный кожаный пиджак	Бонго-барабаны	10 лет назад	0.123
+Spanish	Tormenta de nieve	jugador de fútbol	Ayuntamiento	Dormir tranquilamente	chaqueta de cuero negro	Tambores bongos	Hace 10 años	1.567
+Vietnamese	Bão tuyết	cầuthủ bóng đá	Thị trấn	Ngủ yên	Áo khoác da màu đen	Trống bongo	10 năm trước	2.678
+
+====[tsv-pretty -x input_unicode.tsv]====
+Language               Text 1             Text 2              Text 3          Text 4                 Text 5                    Text 6             Text 7          Number
+English                snow storm         soccer player       town hall       sleep quietly          black leather jacket      bongo drums        10 years ago    1.234
+Chinese (Simplified)   雪风暴             足球运动员          市政厅          安静地睡觉             黑色皮夹克                bongo鼓            10年前          2.345
+Chinese (Traditional)  雪風暴             足球運動員          市政廳          安靜地睡覺             黑色皮夾克                bongo鼓            10年前          3.456
+French                 Tempête de neige   joueur de foot      mairie          Dormez tranquillement  Veste en cuir noir        Bongo drums        Il ya 10 ans    4.567
+Georgian               თოვლის ქარიშხალი   ფეხბურთის მოთამაშე  მუნიციპალიტეტი  მშვიდი მშვიდად         შავი ტყავის ქურთუკი       ბოგოოს დასარტყამი  10 წლის წინ     5.678
+German                 Schneesturm        Fußballspieler      Rathaus         Schlafe ruhig          Schwarze Lederjacke       Bongo-Trommeln     vor 10 Jahren   6.789
+Greek                  Χιονοθύελλα        ποδοσφαιριστής      Δημαρχείο       Κοιμάται ήσυχα         Μαύρο δερμάτινο μπουφάν   Bongo τύμπανα      10 ΧΡΟΝΙΑ πριν  7.891
+Hebrew                 סופת שלגים         שחקן כדורגל         עירייה          לישון בשקט             מעיל עור שחור             תופים של בונגו     לפני 10 שנים    8.901
+Japanese               吹雪               サッカー選手        町役場          静かに眠る             ブラックレザージャケット  ボンゴドラム       10年前          9.012
+Russian                Снежная буря       футболист           ратуша          Спать спокойно         Черный кожаный пиджак     Бонго-барабаны     10 лет назад    0.123
+Spanish                Tormenta de nieve  jugador de fútbol   Ayuntamiento    Dormir tranquilamente  chaqueta de cuero negro   Tambores bongos    Hace 10 años    1.567
+Vietnamese             Bão tuyết          cầuthủ bóng đá      Thị trấn        Ngủ yên                Áo khoác da màu đen       Trống bongo        10 năm trước    2.678
+
+====[tsv-pretty -H input_unicode.tsv]====
+Language               Text 1             Text 2              Text 3          Text 4                 Text 5                    Text 6             Text 7          Number
+English                snow storm         soccer player       town hall       sleep quietly          black leather jacket      bongo drums        10 years ago     1.234
+Chinese (Simplified)   雪风暴             足球运动员          市政厅          安静地睡觉             黑色皮夹克                bongo鼓            10年前           2.345
+Chinese (Traditional)  雪風暴             足球運動員          市政廳          安靜地睡覺             黑色皮夾克                bongo鼓            10年前           3.456
+French                 Tempête de neige   joueur de foot      mairie          Dormez tranquillement  Veste en cuir noir        Bongo drums        Il ya 10 ans     4.567
+Georgian               თოვლის ქარიშხალი   ფეხბურთის მოთამაშე  მუნიციპალიტეტი  მშვიდი მშვიდად         შავი ტყავის ქურთუკი       ბოგოოს დასარტყამი  10 წლის წინ      5.678
+German                 Schneesturm        Fußballspieler      Rathaus         Schlafe ruhig          Schwarze Lederjacke       Bongo-Trommeln     vor 10 Jahren    6.789
+Greek                  Χιονοθύελλα        ποδοσφαιριστής      Δημαρχείο       Κοιμάται ήσυχα         Μαύρο δερμάτινο μπουφάν   Bongo τύμπανα      10 ΧΡΟΝΙΑ πριν   7.891
+Hebrew                 סופת שלגים         שחקן כדורגל         עירייה          לישון בשקט             מעיל עור שחור             תופים של בונגו     לפני 10 שנים     8.901
+Japanese               吹雪               サッカー選手        町役場          静かに眠る             ブラックレザージャケット  ボンゴドラム       10年前           9.012
+Russian                Снежная буря       футболист           ратуша          Спать спокойно         Черный кожаный пиджак     Бонго-барабаны     10 лет назад     0.123
+Spanish                Tormenta de nieve  jugador de fútbol   Ayuntamiento    Dormir tranquilamente  chaqueta de cuero negro   Tambores bongos    Hace 10 años     1.567
+Vietnamese             Bão tuyết          cầuthủ bóng đá      Thị trấn        Ngủ yên                Áo khoác da màu đen       Trống bongo        10 năm trước     2.678
+
+====[tsv-pretty -H -l 1 input_unicode.tsv]====
+Language  Text 1      Text 2         Text 3     Text 4         Text 5                Text 6       Text 7        Number
+English   snow storm  soccer player  town hall  sleep quietly  black leather jacket  bongo drums  10 years ago   1.234
+Chinese (Simplified) 雪风暴 足球运动员 市政厅   安静地睡觉     黑色皮夹克            bongo鼓      10年前         2.345
+Chinese (Traditional) 雪風暴 足球運動員 市政廳  安靜地睡覺     黑色皮夾克            bongo鼓      10年前         3.456
+French    Tempête de neige joueur de foot mairie Dormez tranquillement Veste en cuir noir Bongo drums Il ya 10 ans 4.567
+Georgian  თოვლის ქარიშხალი ფეხბურთის მოთამაშე მუნიციპალიტეტი მშვიდი მშვიდად შავი ტყავის ქურთუკი ბოგოოს დასარტყამი 10 წლის წინ 5.678
+German    Schneesturm Fußballspieler Rathaus    Schlafe ruhig  Schwarze Lederjacke   Bongo-Trommeln vor 10 Jahren 6.789
+Greek     Χιονοθύελλα ποδοσφαιριστής Δημαρχείο  Κοιμάται ήσυχα Μαύρο δερμάτινο μπουφάν Bongo τύμπανα 10 ΧΡΟΝΙΑ πριν 7.891
+Hebrew    סופת שלגים  שחקן כדורגל    עירייה     לישון בשקט     מעיל עור שחור         תופים של בונגו לפני 10 שנים 8.901
+Japanese  吹雪        サッカー選手   町役場     静かに眠る     ブラックレザージャケット ボンゴドラム 10年前      9.012
+Russian   Снежная буря футболист     ратуша     Спать спокойно Черный кожаный пиджак Бонго-барабаны 10 лет назад 0.123
+Spanish   Tormenta de nieve jugador de fútbol Ayuntamiento Dormir tranquilamente chaqueta de cuero negro Tambores bongos Hace 10 años 1.567
+Vietnamese Bão tuyết  cầuthủ bóng đá Thị trấn   Ngủ yên        Áo khoác da màu đen   Trống bongo  10 năm trước   2.678
+
+====[tsv-pretty -H -m 10 input_unicode.tsv]====
+Language    Text 1      Text 2      Text 3      Text 4      Text 5      Text 6      Text 7      Number
+English     snow storm  soccer player town hall sleep quietly black leather jacket bongo drums 10 years ago 1.234
+Chinese (Simplified) 雪风暴 足球运动员 市政厅   安静地睡觉  黑色皮夹克  bongo鼓     10年前       2.345
+Chinese (Traditional) 雪風暴 足球運動員 市政廳  安靜地睡覺  黑色皮夾克  bongo鼓     10年前       3.456
+French      Tempête de neige joueur de foot mairie Dormez tranquillement Veste en cuir noir Bongo drums Il ya 10 ans 4.567
+Georgian    თოვლის ქარიშხალი ფეხბურთის მოთამაშე მუნიციპალიტეტი მშვიდი მშვიდად შავი ტყავის ქურთუკი ბოგოოს დასარტყამი 10 წლის წინ 5.678
+German      Schneesturm Fußballspieler Rathaus  Schlafe ruhig Schwarze Lederjacke Bongo-Trommeln vor 10 Jahren 6.789
+Greek       Χιονοθύελλα ποδοσφαιριστής Δημαρχείο Κοιμάται ήσυχα Μαύρο δερμάτινο μπουφάν Bongo τύμπανα 10 ΧΡΟΝΙΑ πριν 7.891
+Hebrew      סופת שלגים  שחקן כדורגל עירייה      לישון בשקט  מעיל עור שחור תופים של בונגו לפני 10 שנים 8.901
+Japanese    吹雪        サッカー選手 町役場     静かに眠る  ブラックレザージャケット ボンゴドラム 10年前 9.012
+Russian     Снежная буря футболист  ратуша      Спать спокойно Черный кожаный пиджак Бонго-барабаны 10 лет назад 0.123
+Spanish     Tormenta de nieve jugador de fútbol Ayuntamiento Dormir tranquilamente chaqueta de cuero negro Tambores bongos Hace 10 años 1.567
+Vietnamese  Bão tuyết   cầuthủ bóng đá Thị trấn Ngủ yên     Áo khoác da màu đen Trống bongo 10 năm trước 2.678
+
+====[tsv-pretty -H -s 3 input_unicode.tsv]====
+Language                Text 1              Text 2               Text 3           Text 4                  Text 5                     Text 6              Text 7           Number
+English                 snow storm          soccer player        town hall        sleep quietly           black leather jacket       bongo drums         10 years ago      1.234
+Chinese (Simplified)    雪风暴              足球运动员           市政厅           安静地睡觉              黑色皮夹克                 bongo鼓             10年前            2.345
+Chinese (Traditional)   雪風暴              足球運動員           市政廳           安靜地睡覺              黑色皮夾克                 bongo鼓             10年前            3.456
+French                  Tempête de neige    joueur de foot       mairie           Dormez tranquillement   Veste en cuir noir         Bongo drums         Il ya 10 ans      4.567
+Georgian                თოვლის ქარიშხალი    ფეხბურთის მოთამაშე   მუნიციპალიტეტი   მშვიდი მშვიდად          შავი ტყავის ქურთუკი        ბოგოოს დასარტყამი   10 წლის წინ       5.678
+German                  Schneesturm         Fußballspieler       Rathaus          Schlafe ruhig           Schwarze Lederjacke        Bongo-Trommeln      vor 10 Jahren     6.789
+Greek                   Χιονοθύελλα         ποδοσφαιριστής       Δημαρχείο        Κοιμάται ήσυχα          Μαύρο δερμάτινο μπουφάν    Bongo τύμπανα       10 ΧΡΟΝΙΑ πριν    7.891
+Hebrew                  סופת שלגים          שחקן כדורגל          עירייה           לישון בשקט              מעיל עור שחור              תופים של בונגו      לפני 10 שנים      8.901
+Japanese                吹雪                サッカー選手         町役場           静かに眠る              ブラックレザージャケット   ボンゴドラム        10年前            9.012
+Russian                 Снежная буря        футболист            ратуша           Спать спокойно          Черный кожаный пиджак      Бонго-барабаны      10 лет назад      0.123
+Spanish                 Tormenta de nieve   jugador de fútbol    Ayuntamiento     Dormir tranquilamente   chaqueta de cuero negro    Tambores bongos     Hace 10 años      1.567
+Vietnamese              Bão tuyết           cầuthủ bóng đá       Thị trấn         Ngủ yên                 Áo khoác da màu đen        Trống bongo         10 năm trước      2.678
+
+====[tsv-pretty -H -p 2 input_unicode.tsv]====
+Language               Text 1             Text 2              Text 3          Text 4                 Text 5                    Text 6             Text 7          Number
+English                snow storm         soccer player       town hall       sleep quietly          black leather jacket      bongo drums        10 years ago      1.23
+Chinese (Simplified)   雪风暴             足球运动员          市政厅          安静地睡觉             黑色皮夹克                bongo鼓            10年前            2.35
+Chinese (Traditional)  雪風暴             足球運動員          市政廳          安靜地睡覺             黑色皮夾克                bongo鼓            10年前            3.46
+French                 Tempête de neige   joueur de foot      mairie          Dormez tranquillement  Veste en cuir noir        Bongo drums        Il ya 10 ans      4.57
+Georgian               თოვლის ქარიშხალი   ფეხბურთის მოთამაშე  მუნიციპალიტეტი  მშვიდი მშვიდად         შავი ტყავის ქურთუკი       ბოგოოს დასარტყამი  10 წლის წინ       5.68
+German                 Schneesturm        Fußballspieler      Rathaus         Schlafe ruhig          Schwarze Lederjacke       Bongo-Trommeln     vor 10 Jahren     6.79
+Greek                  Χιονοθύελλα        ποδοσφαιριστής      Δημαρχείο       Κοιμάται ήσυχα         Μαύρο δερμάτινο μπουφάν   Bongo τύμπανα      10 ΧΡΟΝΙΑ πριν    7.89
+Hebrew                 סופת שלגים         שחקן כדורגל         עירייה          לישון בשקט             מעיל עור שחור             תופים של בונגו     לפני 10 שנים      8.90
+Japanese               吹雪               サッカー選手        町役場          静かに眠る             ブラックレザージャケット  ボンゴドラム       10年前            9.01
+Russian                Снежная буря       футболист           ратуша          Спать спокойно         Черный кожаный пиджак     Бонго-барабаны     10 лет назад      0.12
+Spanish                Tormenta de nieve  jugador de fútbol   Ayuntamiento    Dormir tranquilamente  chaqueta de cuero negro   Tambores bongos    Hace 10 años      1.57
+Vietnamese             Bão tuyết          cầuthủ bóng đá      Thị trấn        Ngủ yên                Áo khoác da màu đen       Trống bongo        10 năm trước      2.68
+
+Text file tests: Auto-detect header
+-----------------------------------
+
+===[cat input_text_1.tsv]===
+f1	field 2	field-3-longer-header	x	y
+a	b	c	dd	e
+bb		cc	d
+ccc	ab cd	cc cc cc cc cc		e
+	cd ab	c	d
+		ccc ccc ccc ccc	ddd	e
+
+the	last	row	d	e
+
+====[tsv-pretty input_text_1.tsv]====
+f1   field 2  field-3-longer-header  x    y
+a    b        c                      dd   e
+bb            cc                     d
+ccc  ab cd    cc cc cc cc cc              e
+     cd ab    c                      d
+              ccc ccc ccc ccc        ddd  e
+
+the  last     row                    d    e
+
+====[tsv-pretty -l 1 input_text_1.tsv]====
+f1  field 2  field-3-longer-header  x   y
+a   b        c                      dd  e
+bb           cc                     d
+ccc ab cd    cc cc cc cc cc             e
+    cd ab    c                      d
+             ccc ccc ccc ccc        ddd e
+
+the last     row                    d   e
+
+====[tsv-pretty -l 7 input_text_1.tsv]====
+f1   field 2  field-3-longer-header  x    y
+a    b        c                      dd   e
+bb            cc                     d
+ccc  ab cd    cc cc cc cc cc              e
+     cd ab    c                      d
+              ccc ccc ccc ccc        ddd  e
+
+the  last     row                    d    e
+
+====[tsv-pretty -l 8 input_text_1.tsv]====
+f1   field 2  field-3-longer-header  x    y
+a    b        c                      dd   e
+bb            cc                     d
+ccc  ab cd    cc cc cc cc cc              e
+     cd ab    c                      d
+              ccc ccc ccc ccc        ddd  e
+
+the  last     row                    d    e
+
+====[tsv-pretty -l 9 input_text_1.tsv]====
+f1   field 2  field-3-longer-header  x    y
+a    b        c                      dd   e
+bb            cc                     d
+ccc  ab cd    cc cc cc cc cc              e
+     cd ab    c                      d
+              ccc ccc ccc ccc        ddd  e
+
+the  last     row                    d    e
+
+====[tsv-pretty -l 1 input_text_1.tsv]====
+f1  field 2  field-3-longer-header  x   y
+a   b        c                      dd  e
+bb           cc                     d
+ccc ab cd    cc cc cc cc cc             e
+    cd ab    c                      d
+             ccc ccc ccc ccc        ddd e
+
+the last     row                    d   e
+
+====[tsv-pretty -l 7 input_text_1.tsv]====
+f1   field 2  field-3-longer-header  x    y
+a    b        c                      dd   e
+bb            cc                     d
+ccc  ab cd    cc cc cc cc cc              e
+     cd ab    c                      d
+              ccc ccc ccc ccc        ddd  e
+
+the  last     row                    d    e
+
+====[tsv-pretty -l 8 input_text_1.tsv]====
+f1   field 2  field-3-longer-header  x    y
+a    b        c                      dd   e
+bb            cc                     d
+ccc  ab cd    cc cc cc cc cc              e
+     cd ab    c                      d
+              ccc ccc ccc ccc        ddd  e
+
+the  last     row                    d    e
+
+====[tsv-pretty --max-text-width 0 input_text_1.tsv]====
+f1  field 2 field-3-longer-header x y
+a   b     c  dd e
+bb        cc d
+ccc ab cd cc cc cc cc cc  e
+    cd ab c  d
+          ccc ccc ccc ccc ddd e
+
+the last  row d e
+
+====[tsv-pretty -m 1 input_text_1.tsv]====
+f1  field 2 field-3-longer-header x y
+a   b     c  dd e
+bb        cc d
+ccc ab cd cc cc cc cc cc  e
+    cd ab c  d
+          ccc ccc ccc ccc ddd e
+
+the last  row d e
+
+====[tsv-pretty -m 2 input_text_1.tsv]====
+f1  field 2 field-3-longer-header x y
+a   b     c   dd  e
+bb        cc  d
+ccc ab cd cc cc cc cc cc  e
+    cd ab c   d
+          ccc ccc ccc ccc ddd e
+
+the last  row d   e
+
+====[tsv-pretty -m 0 input_text_1.tsv]====
+f1  field 2 field-3-longer-header x y
+a   b     c  dd e
+bb        cc d
+ccc ab cd cc cc cc cc cc  e
+    cd ab c  d
+          ccc ccc ccc ccc ddd e
+
+the last  row d e
+
+====[tsv-pretty -l 1 -m 2 input_text_1.tsv]====
+f1  field 2 field-3-longer-header x y
+a   b   c   dd  e
+bb      cc  d
+ccc ab cd cc cc cc cc cc  e
+    cd ab c d
+        ccc ccc ccc ccc ddd e
+
+the last row d  e
+
+====[tsv-pretty --space-between-fields 1 input_text_1.tsv]====
+f1  field 2 field-3-longer-header x   y
+a   b       c                     dd  e
+bb          cc                    d
+ccc ab cd   cc cc cc cc cc            e
+    cd ab   c                     d
+            ccc ccc ccc ccc       ddd e
+
+the last    row                   d   e
+
+====[tsv-pretty -s 2 input_text_1.tsv]====
+f1   field 2  field-3-longer-header  x    y
+a    b        c                      dd   e
+bb            cc                     d
+ccc  ab cd    cc cc cc cc cc              e
+     cd ab    c                      d
+              ccc ccc ccc ccc        ddd  e
+
+the  last     row                    d    e
+
+====[tsv-pretty -s 3 input_text_1.tsv]====
+f1    field 2   field-3-longer-header   x     y
+a     b         c                       dd    e
+bb              cc                      d
+ccc   ab cd     cc cc cc cc cc                e
+      cd ab     c                       d
+                ccc ccc ccc ccc         ddd   e
+
+the   last      row                     d     e
+
+====[tsv-pretty -s 1 input_text_1.tsv]====
+f1  field 2 field-3-longer-header x   y
+a   b       c                     dd  e
+bb          cc                    d
+ccc ab cd   cc cc cc cc cc            e
+    cd ab   c                     d
+            ccc ccc ccc ccc       ddd e
+
+the last    row                   d   e
+
+====[tsv-pretty -s 2 input_text_1.tsv]====
+f1   field 2  field-3-longer-header  x    y
+a    b        c                      dd   e
+bb            cc                     d
+ccc  ab cd    cc cc cc cc cc              e
+     cd ab    c                      d
+              ccc ccc ccc ccc        ddd  e
+
+the  last     row                    d    e
+
+====[tsv-pretty -s 3 input_text_1.tsv]====
+f1    field 2   field-3-longer-header   x     y
+a     b         c                       dd    e
+bb              cc                      d
+ccc   ab cd     cc cc cc cc cc                e
+      cd ab     c                       d
+                ccc ccc ccc ccc         ddd   e
+
+the   last      row                     d     e
+
+====[tsv-pretty -s 1 -m 1 input_text_1.tsv]====
+f1 field 2 field-3-longer-header x y
+a  b    c dd e
+bb      cc d
+ccc ab cd cc cc cc cc cc  e
+   cd ab c d
+        ccc ccc ccc ccc ddd e
+
+the last row d e
+
+====[tsv-pretty -s 1 -m 1 input_text_1.tsv]====
+f1 field 2 field-3-longer-header x y
+a  b    c dd e
+bb      cc d
+ccc ab cd cc cc cc cc cc  e
+   cd ab c d
+        ccc ccc ccc ccc ddd e
+
+the last row d e
+
+====[tsv-pretty -s 1 -m 1 -l 1 input_text_1.tsv]====
+f1 field 2 field-3-longer-header x y
+a b c dd e
+bb  cc d
+ccc ab cd cc cc cc cc cc  e
+  cd ab c d
+    ccc ccc ccc ccc ddd e
+
+the last row d e
+
+====[tsv-pretty --replace-empty input_text_1.tsv]====
+f1   field 2  field-3-longer-header  x    y
+a    b        c                      dd   e
+bb   --       cc                     d
+ccc  ab cd    cc cc cc cc cc         --   e
+--   cd ab    c                      d
+--   --       ccc ccc ccc ccc        ddd  e
+
+the  last     row                    d    e
+
+====[tsv-pretty -e input_text_1.tsv]====
+f1   field 2  field-3-longer-header  x    y
+a    b        c                      dd   e
+bb   --       cc                     d
+ccc  ab cd    cc cc cc cc cc         --   e
+--   cd ab    c                      d
+--   --       ccc ccc ccc ccc        ddd  e
+
+the  last     row                    d    e
+
+====[tsv-pretty -e -l 1 input_text_1.tsv]====
+f1  field 2  field-3-longer-header  x   y
+a   b        c                      dd  e
+bb  --       cc                     d
+ccc ab cd    cc cc cc cc cc         --  e
+--  cd ab    c                      d
+--  --       ccc ccc ccc ccc        ddd e
+
+the last     row                    d   e
+
+====[tsv-pretty --empty-replacement ^ input_text_1.tsv]====
+f1   field 2  field-3-longer-header  x    y
+a    b        c                      dd   e
+bb   ^        cc                     d
+ccc  ab cd    cc cc cc cc cc         ^    e
+^    cd ab    c                      d
+^    ^        ccc ccc ccc ccc        ddd  e
+
+the  last     row                    d    e
+
+====[tsv-pretty -E ^^^ input_text_1.tsv]====
+f1   field 2  field-3-longer-header  x    y
+a    b        c                      dd   e
+bb   ^^^      cc                     d
+ccc  ab cd    cc cc cc cc cc         ^^^  e
+^^^  cd ab    c                      d
+^^^  ^^^      ccc ccc ccc ccc        ddd  e
+
+the  last     row                    d    e
+
+====[tsv-pretty -E ^ -l 1 input_text_1.tsv]====
+f1  field 2  field-3-longer-header  x   y
+a   b        c                      dd  e
+bb  ^        cc                     d
+ccc ab cd    cc cc cc cc cc         ^   e
+^   cd ab    c                      d
+^   ^        ccc ccc ccc ccc        ddd e
+
+the last     row                    d   e
+
+====[tsv-pretty -E ^^^ -l 1 input_text_1.tsv]====
+f1  field 2  field-3-longer-header  x   y
+a   b        c                      dd  e
+bb  ^^^      cc                     d
+ccc ab cd    cc cc cc cc cc         ^^^ e
+^^^ cd ab    c                      d
+^^^ ^^^      ccc ccc ccc ccc        ddd e
+
+the last     row                    d   e
+
+===[cat input_unicode.tsv]===
+Language	Text 1	Text 2	Text 3	Text 4	Text 5	Text 6	Text 7	Number
+English	snow storm	soccer player	town hall	sleep quietly	black leather jacket	bongo drums	10 years ago	1.234
+Chinese (Simplified)	雪风暴	足球运动员	市政厅	安静地睡觉	黑色皮夹克	bongo鼓	10年前	2.345
+Chinese (Traditional)	雪風暴	足球運動員	市政廳	安靜地睡覺	黑色皮夾克	bongo鼓	10年前	3.456
+French	Tempête de neige	joueur de foot	mairie	Dormez tranquillement	Veste en cuir noir	Bongo drums	Il ya 10 ans	4.567
+Georgian	თოვლის ქარიშხალი	ფეხბურთის მოთამაშე	მუნიციპალიტეტი	მშვიდი მშვიდად	შავი ტყავის ქურთუკი	ბოგოოს დასარტყამი	10 წლის წინ	5.678
+German	Schneesturm	Fußballspieler	Rathaus	Schlafe ruhig	Schwarze Lederjacke	Bongo-Trommeln	vor 10 Jahren	6.789
+Greek	Χιονοθύελλα	ποδοσφαιριστής	Δημαρχείο	Κοιμάται ήσυχα	Μαύρο δερμάτινο μπουφάν	Bongo τύμπανα	10 ΧΡΟΝΙΑ πριν	7.891
+Hebrew	סופת שלגים	שחקן כדורגל	עירייה	לישון בשקט	מעיל עור שחור	תופים של בונגו	לפני 10 שנים	8.901
+Japanese	吹雪	サッカー選手	町役場	静かに眠る	ブラックレザージャケット	ボンゴドラム	10年前	9.012
+Russian	Снежная буря	футболист	ратуша	Спать спокойно	Черный кожаный пиджак	Бонго-барабаны	10 лет назад	0.123
+Spanish	Tormenta de nieve	jugador de fútbol	Ayuntamiento	Dormir tranquilamente	chaqueta de cuero negro	Tambores bongos	Hace 10 años	1.567
+Vietnamese	Bão tuyết	cầuthủ bóng đá	Thị trấn	Ngủ yên	Áo khoác da màu đen	Trống bongo	10 năm trước	2.678
+
+====[tsv-pretty input_unicode.tsv]====
+Language               Text 1             Text 2              Text 3          Text 4                 Text 5                    Text 6             Text 7          Number
+English                snow storm         soccer player       town hall       sleep quietly          black leather jacket      bongo drums        10 years ago     1.234
+Chinese (Simplified)   雪风暴             足球运动员          市政厅          安静地睡觉             黑色皮夹克                bongo鼓            10年前           2.345
+Chinese (Traditional)  雪風暴             足球運動員          市政廳          安靜地睡覺             黑色皮夾克                bongo鼓            10年前           3.456
+French                 Tempête de neige   joueur de foot      mairie          Dormez tranquillement  Veste en cuir noir        Bongo drums        Il ya 10 ans     4.567
+Georgian               თოვლის ქარიშხალი   ფეხბურთის მოთამაშე  მუნიციპალიტეტი  მშვიდი მშვიდად         შავი ტყავის ქურთუკი       ბოგოოს დასარტყამი  10 წლის წინ      5.678
+German                 Schneesturm        Fußballspieler      Rathaus         Schlafe ruhig          Schwarze Lederjacke       Bongo-Trommeln     vor 10 Jahren    6.789
+Greek                  Χιονοθύελλα        ποδοσφαιριστής      Δημαρχείο       Κοιμάται ήσυχα         Μαύρο δερμάτινο μπουφάν   Bongo τύμπανα      10 ΧΡΟΝΙΑ πριν   7.891
+Hebrew                 סופת שלגים         שחקן כדורגל         עירייה          לישון בשקט             מעיל עור שחור             תופים של בונגו     לפני 10 שנים     8.901
+Japanese               吹雪               サッカー選手        町役場          静かに眠る             ブラックレザージャケット  ボンゴドラム       10年前           9.012
+Russian                Снежная буря       футболист           ратуша          Спать спокойно         Черный кожаный пиджак     Бонго-барабаны     10 лет назад     0.123
+Spanish                Tormenta de nieve  jugador de fútbol   Ayuntamiento    Dormir tranquilamente  chaqueta de cuero negro   Tambores bongos    Hace 10 años     1.567
+Vietnamese             Bão tuyết          cầuthủ bóng đá      Thị trấn        Ngủ yên                Áo khoác da màu đen       Trống bongo        10 năm trước     2.678
+
+====[tsv-pretty -l 1 input_unicode.tsv]====
+Language  Text 1      Text 2         Text 3     Text 4         Text 5                Text 6       Text 7        Number
+English   snow storm  soccer player  town hall  sleep quietly  black leather jacket  bongo drums  10 years ago   1.234
+Chinese (Simplified) 雪风暴 足球运动员 市政厅   安静地睡觉     黑色皮夹克            bongo鼓      10年前         2.345
+Chinese (Traditional) 雪風暴 足球運動員 市政廳  安靜地睡覺     黑色皮夾克            bongo鼓      10年前         3.456
+French    Tempête de neige joueur de foot mairie Dormez tranquillement Veste en cuir noir Bongo drums Il ya 10 ans 4.567
+Georgian  თოვლის ქარიშხალი ფეხბურთის მოთამაშე მუნიციპალიტეტი მშვიდი მშვიდად შავი ტყავის ქურთუკი ბოგოოს დასარტყამი 10 წლის წინ 5.678
+German    Schneesturm Fußballspieler Rathaus    Schlafe ruhig  Schwarze Lederjacke   Bongo-Trommeln vor 10 Jahren 6.789
+Greek     Χιονοθύελλα ποδοσφαιριστής Δημαρχείο  Κοιμάται ήσυχα Μαύρο δερμάτινο μπουφάν Bongo τύμπανα 10 ΧΡΟΝΙΑ πριν 7.891
+Hebrew    סופת שלגים  שחקן כדורגל    עירייה     לישון בשקט     מעיל עור שחור         תופים של בונגו לפני 10 שנים 8.901
+Japanese  吹雪        サッカー選手   町役場     静かに眠る     ブラックレザージャケット ボンゴドラム 10年前      9.012
+Russian   Снежная буря футболист     ратуша     Спать спокойно Черный кожаный пиджак Бонго-барабаны 10 лет назад 0.123
+Spanish   Tormenta de nieve jugador de fútbol Ayuntamiento Dormir tranquilamente chaqueta de cuero negro Tambores bongos Hace 10 años 1.567
+Vietnamese Bão tuyết  cầuthủ bóng đá Thị trấn   Ngủ yên        Áo khoác da màu đen   Trống bongo  10 năm trước   2.678
+
+====[tsv-pretty -m 10 input_unicode.tsv]====
+Language    Text 1      Text 2      Text 3      Text 4      Text 5      Text 6      Text 7      Number
+English     snow storm  soccer player town hall sleep quietly black leather jacket bongo drums 10 years ago 1.234
+Chinese (Simplified) 雪风暴 足球运动员 市政厅   安静地睡觉  黑色皮夹克  bongo鼓     10年前       2.345
+Chinese (Traditional) 雪風暴 足球運動員 市政廳  安靜地睡覺  黑色皮夾克  bongo鼓     10年前       3.456
+French      Tempête de neige joueur de foot mairie Dormez tranquillement Veste en cuir noir Bongo drums Il ya 10 ans 4.567
+Georgian    თოვლის ქარიშხალი ფეხბურთის მოთამაშე მუნიციპალიტეტი მშვიდი მშვიდად შავი ტყავის ქურთუკი ბოგოოს დასარტყამი 10 წლის წინ 5.678
+German      Schneesturm Fußballspieler Rathaus  Schlafe ruhig Schwarze Lederjacke Bongo-Trommeln vor 10 Jahren 6.789
+Greek       Χιονοθύελλα ποδοσφαιριστής Δημαρχείο Κοιμάται ήσυχα Μαύρο δερμάτινο μπουφάν Bongo τύμπανα 10 ΧΡΟΝΙΑ πριν 7.891
+Hebrew      סופת שלגים  שחקן כדורגל עירייה      לישון בשקט  מעיל עור שחור תופים של בונגו לפני 10 שנים 8.901
+Japanese    吹雪        サッカー選手 町役場     静かに眠る  ブラックレザージャケット ボンゴドラム 10年前 9.012
+Russian     Снежная буря футболист  ратуша      Спать спокойно Черный кожаный пиджак Бонго-барабаны 10 лет назад 0.123
+Spanish     Tormenta de nieve jugador de fútbol Ayuntamiento Dormir tranquilamente chaqueta de cuero negro Tambores bongos Hace 10 años 1.567
+Vietnamese  Bão tuyết   cầuthủ bóng đá Thị trấn Ngủ yên     Áo khoác da màu đen Trống bongo 10 năm trước 2.678
+
+====[tsv-pretty -s 3 input_unicode.tsv]====
+Language                Text 1              Text 2               Text 3           Text 4                  Text 5                     Text 6              Text 7           Number
+English                 snow storm          soccer player        town hall        sleep quietly           black leather jacket       bongo drums         10 years ago      1.234
+Chinese (Simplified)    雪风暴              足球运动员           市政厅           安静地睡觉              黑色皮夹克                 bongo鼓             10年前            2.345
+Chinese (Traditional)   雪風暴              足球運動員           市政廳           安靜地睡覺              黑色皮夾克                 bongo鼓             10年前            3.456
+French                  Tempête de neige    joueur de foot       mairie           Dormez tranquillement   Veste en cuir noir         Bongo drums         Il ya 10 ans      4.567
+Georgian                თოვლის ქარიშხალი    ფეხბურთის მოთამაშე   მუნიციპალიტეტი   მშვიდი მშვიდად          შავი ტყავის ქურთუკი        ბოგოოს დასარტყამი   10 წლის წინ       5.678
+German                  Schneesturm         Fußballspieler       Rathaus          Schlafe ruhig           Schwarze Lederjacke        Bongo-Trommeln      vor 10 Jahren     6.789
+Greek                   Χιονοθύελλα         ποδοσφαιριστής       Δημαρχείο        Κοιμάται ήσυχα          Μαύρο δερμάτινο μπουφάν    Bongo τύμπανα       10 ΧΡΟΝΙΑ πριν    7.891
+Hebrew                  סופת שלגים          שחקן כדורגל          עירייה           לישון בשקט              מעיל עור שחור              תופים של בונגו      לפני 10 שנים      8.901
+Japanese                吹雪                サッカー選手         町役場           静かに眠る              ブラックレザージャケット   ボンゴドラム        10年前            9.012
+Russian                 Снежная буря        футболист            ратуша           Спать спокойно          Черный кожаный пиджак      Бонго-барабаны      10 лет назад      0.123
+Spanish                 Tormenta de nieve   jugador de fútbol    Ayuntamiento     Dormir tranquilamente   chaqueta de cuero negro    Tambores bongos     Hace 10 años      1.567
+Vietnamese              Bão tuyết           cầuthủ bóng đá       Thị trấn         Ngủ yên                 Áo khoác da màu đen        Trống bongo         10 năm trước      2.678
+
+====[tsv-pretty -p 2 input_unicode.tsv]====
+Language               Text 1             Text 2              Text 3          Text 4                 Text 5                    Text 6             Text 7          Number
+English                snow storm         soccer player       town hall       sleep quietly          black leather jacket      bongo drums        10 years ago      1.23
+Chinese (Simplified)   雪风暴             足球运动员          市政厅          安静地睡觉             黑色皮夹克                bongo鼓            10年前            2.35
+Chinese (Traditional)  雪風暴             足球運動員          市政廳          安靜地睡覺             黑色皮夾克                bongo鼓            10年前            3.46
+French                 Tempête de neige   joueur de foot      mairie          Dormez tranquillement  Veste en cuir noir        Bongo drums        Il ya 10 ans      4.57
+Georgian               თოვლის ქარიშხალი   ფეხბურთის მოთამაშე  მუნიციპალიტეტი  მშვიდი მშვიდად         შავი ტყავის ქურთუკი       ბოგოოს დასარტყამი  10 წლის წინ       5.68
+German                 Schneesturm        Fußballspieler      Rathaus         Schlafe ruhig          Schwarze Lederjacke       Bongo-Trommeln     vor 10 Jahren     6.79
+Greek                  Χιονοθύελλα        ποδοσφαιριστής      Δημαρχείο       Κοιμάται ήσυχα         Μαύρο δερμάτινο μπουφάν   Bongo τύμπανα      10 ΧΡΟΝΙΑ πριν    7.89
+Hebrew                 סופת שלגים         שחקן כדורגל         עירייה          לישון בשקט             מעיל עור שחור             תופים של בונגו     לפני 10 שנים      8.90
+Japanese               吹雪               サッカー選手        町役場          静かに眠る             ブラックレザージャケット  ボンゴドラム       10年前            9.01
+Russian                Снежная буря       футболист           ратуша          Спать спокойно         Черный кожаный пиджак     Бонго-барабаны     10 лет назад      0.12
+Spanish                Tormenta de nieve  jugador de fútbol   Ayuntamiento    Dormir tranquilamente  chaqueta de cuero negro   Tambores bongos    Hace 10 años      1.57
+Vietnamese             Bão tuyết          cầuthủ bóng đá      Thị trấn        Ngủ yên                Áo khoác da màu đen       Trống bongo        10 năm trước      2.68

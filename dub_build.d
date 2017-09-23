@@ -3,8 +3,8 @@ This is a simple dub build launcher for tsv-utils-dlang to use with Dub installs
 
 The tsv-utils-dlang package contains multiple executable programs in sub-directories.
 Vanilla Dub does not support building multiple executables, a separate invocations is
-required for each app. However, experienced Dub users may try to install with a 
-standard Dub sequence, for example: 
+required for each app. However, experienced Dub users may try to install with a
+standard Dub sequence, for example:
 
     dub fetch tsv-utils-dlang
     dub run tsv-utils-dlang
@@ -42,13 +42,13 @@ int main(string[] args) {
 
     bool debugBuild = 0;
     string compiler = "";
-        
+
     auto r = getopt(
         args,
         "debug", "Debug build. Release builds are the default.", &debugBuild,
         "compiler", "COMPILER  Compiler to use. Typically dmd, ldc2, gdc. Can be a path.", &compiler
         );
-    
+
     if (r.helpWanted) {
         defaultGetoptPrinter(helpText, r.options);
         return 0;
@@ -56,7 +56,7 @@ int main(string[] args) {
 
     // Note: At present 'common' is a source library and does not need a standalone compilation step.
     auto packageName = "tsv-utils-dlang";
-    auto subPackages = ["csv2tsv", "keep-header", "number-lines", "tsv-append", "tsv-filter", "tsv-join", "tsv-sample", "tsv-select", "tsv-summarize", "tsv-uniq"];
+    auto subPackages = ["csv2tsv", "keep-header", "number-lines", "tsv-append", "tsv-filter", "tsv-join", "tsv-pretty", "tsv-sample", "tsv-select", "tsv-summarize", "tsv-uniq"];
     auto buildCmdArgs = ["dub", "build", "<package>", "--force", "-b"];
     buildCmdArgs ~= debugBuild ? "debug" : "release";
     if (compiler.length > 0) {
@@ -67,11 +67,11 @@ int main(string[] args) {
     auto exePath = args[0].absolutePath;
     auto exeDir = exePath.dirName;
     auto binDir = buildNormalizedPath(exeDir, "bin");
-    writeln(); 
+    writeln();
     writeln("=== Building tsv-utils-dlang executables ===");
     writeln();
     foreach (subPkg; subPackages) {
-        auto subPkgBuildName = packageName ~ ":" ~ subPkg; 
+        auto subPkgBuildName = packageName ~ ":" ~ subPkg;
         buildCmdArgs[2] = subPkgBuildName;
         writeln("Building ", subPkg);
         writeln();
@@ -83,7 +83,7 @@ int main(string[] args) {
             return buildResult.status;
         }
     }
-    
+
     writeln("========================================================");
     writeln("Executables are in: ", binDir);
     writeln("Add this directory or the excecutables to the PATH.");
@@ -91,6 +91,6 @@ int main(string[] args) {
     writeln("To build with a different compiler:");
     writefln("    dub run %s -- --compiler=<compiler>", packageName);
     writeln("========================================================");
-    
+
     return 0;
 }
