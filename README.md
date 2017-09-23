@@ -136,7 +136,7 @@ For uniform random sampling, the GNU `shuf` program is quite good and widely ava
 
 ### tsv-pretty
 
-tsv-pretty prints TSV data in an aligned format for better readability when working on the command-line. Text columns are left aligned, numeric columns are right aligned. Floats aligned on the decimal point and precision can be specified. Header lines are detecte automatically. If desired, the header line can be repeated at regular intervals. See the [tsv-sample reference](docs/ToolReference.md#tsv-pretty-reference) for details.
+tsv-pretty prints TSV data in an aligned format for better readability when working on the command-line. Text columns are left aligned, numeric columns are right aligned. Floats aligned on the decimal point and precision can be specified. Header lines are detecte automatically. If desired, the header line can be repeated at regular intervals. See the [tsv-pretty reference](docs/ToolReference.md#tsv-pretty-reference) for details.
 
 ### csv2tsv
 
@@ -154,7 +154,7 @@ A simpler version of the Unix `nl` program. It prepends a line number to each li
 $ number-lines myfile.txt
 ```
 
-See the [number-lines reference](docs/ToolReference.md#tsv-summarize-reference) for details.
+See the [number-lines reference](docs/ToolReference.md#tsv-number-lines-reference) for details.
 
 ### keep-header
 
@@ -211,4 +211,4 @@ See [Building and makefile](docs/AboutTheCode.md#building-and-makefile) for more
 
 ### Setup customization
 
-There are a number of simple ways to ways to improve the utility of these tools, these are listed on the [Tips and tricks](docs/TipsAndTricks.md) page. [Bash aliases](docs/TipsAndTricks.md#useful-bash-aliases), [sort command customization](docs/TipsAndTricks.md#sort-command-customization), and [bash completion](docs/TipsAndTricks.md#enabele-bash-completion) are especially useful.
+There are a number of simple ways to ways to improve the utility of these tools, these are listed on the [Tips and tricks](docs/TipsAndTricks.md) page. [Bash aliases](docs/TipsAndTricks.md#useful-bash-aliases), [sort command customization](docs/TipsAndTricks.md#sort-command-customization), and [bash completion](docs/TipsAndTricks.md#enable-bash-completion) are especially useful.
