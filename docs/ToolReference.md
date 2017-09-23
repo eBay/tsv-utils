@@ -17,6 +17,8 @@ This page provides detailed documentation about the different tools as well as e
 * [number-lines reference](#number-lines-reference)
 * [keep-header reference](#keep-header-reference)
 
+___
+
 ## Common options and behavior
 
 Information in this section applies to all the tools.
@@ -76,6 +78,8 @@ $ head -n 1000 file-c.tsv | tsv-filter --eq 2:1000 -- file-a.tsv file-b.tsv - > 
 ```
 
 The above passes `file-a.tsv`, `file-b.tsv`, and the first 1000 lines of `file-c.tsv` to `tsv-filter` and write the results to `out.tsv`.
+
+---
 
 ## tsv-filter reference
 
@@ -204,6 +208,8 @@ $ tsv-filter --is-finite 2 --gt 2:10 data.tsv
 
 The above tests work because `tsv-filter` short-circuits evaluation, only running as many tests as necessary to filter each line. Tests are run in the order listed on the command line. In the first example, if `--is-numeric 2` is false, the remaining tests do not get run.
 
+---
+
 ## tsv-select reference
 
 **Synopsis:** tsv-select -f <field-list> [options] [file...]
@@ -244,6 +250,9 @@ $ # Files using comma as the separator ('simple csv')
 $ # (Note: Does not handle CSV escapes.)
 $ tsv-select -d , --fields 5,1,2 data.csv
 ```
+
+---
+
 ## tsv-summarize reference
 
 Synopsis: tsv-summarize [options] file [file...]
@@ -351,6 +360,8 @@ Missing values are not treated specially by default, this can be changed using t
 * `--values <field-list>[:STR]` - All the values, separated by `--v|values-delimiter`. (Reads all values into memory.)
 * `--unique-values <field-list>[:STR]` - All the unique values, separated by `--v|values-delimiter`. (Reads all unique values into memory.)
 
+---
+
 ## tsv-join reference
 
 **Synopsis:** tsv-join --filter-file file [options] file [file...]
@@ -408,6 +419,8 @@ Managing headers: Often it's useful to join a field from one data file to anther
 $ tsv-join -f run1.tsv --header --key-fields 1 --append-fields 2 --prefix run1_ run2.tsv
 ```
 
+---
+
 ## tsv-append reference
 
 **Synopsis:** tsv-append [options] [file...]
@@ -441,6 +454,8 @@ Example: Source tracking with custom values:
 * `--s|source-header STR` - Use STR as the header for the source column. Implies `--H|header` and `--t|track-source`. Default: 'file'
 * `--f|file STR=FILE` - Read file FILE, using STR as the 'source' value. Implies `--t|track-source`.
 * `--d|delimiter CHR` - Field delimiter. Default: TAB. (Single byte UTF-8 characters only.)
+
+---
 
 ## tsv-uniq reference
 
@@ -486,6 +501,8 @@ $ # Generate uniq IDs, but account for headers
 $ tsv-uniq -f 1,2 --equiv --header data.tsv
 ```
 
+---
+
 ## tsv-sample reference
 
 **Synopsis:** tsv-sample [options] [file...]
@@ -512,6 +529,8 @@ Each run produces a different randomization. This can be changed using `--s|stat
 * `--v|seed-value NUM` - Sets the initial random seed. Use a non-zero, 32 bit positive integer. Zero is a no-op.
 * `--d|delimiter CHR` - Field delimiter.
 * `--h|help` - This help information.
+
+---
 
 ## tsv-pretty reference
 
@@ -598,6 +617,8 @@ Fluorescent Orange    422  1141.7  7.9
 Grey                   19   140.3  1.0
 ```
 
+---
+
 ## csv2tsv reference
 
 **Synopsis:** csv2tsv [options] [file...]
@@ -632,6 +653,8 @@ UTF-8 input is assumed. Convert other encodings prior to invoking this tool.
 * `--t|tsv-delim CHR` - Field delimiter in TSV data. Default: TAB
 * `--r|replacement STR` - Replacement for newline and TSV field delimiters found in CSV input. Default: Space.
 
+---
+
 ## number-lines reference
 
 **Synopsis:** number-lines [options] [file...]
@@ -655,6 +678,8 @@ $ # Number lines from multiple files. Treat the first line of each file
 $ # as a header.
 $ number-lines --header data*.tsv
 ```
+
+---
 
 ## keep-header reference
 
