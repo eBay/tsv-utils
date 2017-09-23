@@ -124,7 +124,7 @@ Similar in spirit to the Unix `uniq` tool, `tsv-uniq` filters a dataset so there
 $ tsv-uniq -f 2,3 data.tsv
 ```
 
-`tsv-uniq` operates on the entire line when no fields are specified. This is a useful alternative to the traditional `sort -u` or `sort | uniq` paradigms for identifying unique lines in unsorted files, as it is often quite a bit faster.
+`tsv-uniq` operates on the entire line when no fields are specified. This is a useful alternative to the traditional `sort -u` or `sort | uniq` paradigms for identifying unique lines in unsorted files, as it is quite a bit faster.
 
 As with `tsv-join`, this uses an in-memory lookup table to record unique entries. This ultimately limits the data sizes that can be processed. The author has found that datasets with up to about 10 million unique entries work fine, but performance degrades after that.
 
@@ -174,6 +174,8 @@ A simpler version of the Unix `nl` program. It prepends a line number to each li
 ```
 $ number-lines myfile.txt
 ```
+
+Despite it's original purpose as a code sample, `number-lines` turns out to be quite convenient. It is often useful to add a unique row ID to a file, and this tool does this in a manner that maintains proper TSV formatting.
 
 See the [number-lines reference](docs/ToolReference.md#tsv-number-lines-reference) for details.
 
