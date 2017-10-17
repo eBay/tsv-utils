@@ -213,22 +213,16 @@ Executables are written to `tsv-utils-dlang/bin`, place this directory or the ex
 
 The makefile supports other typical development tasks such as unit tests and code coverage reports. See [Building and makefile](docs/AboutTheCode.md#building-and-makefile) for more details.
 
-
 ### Install using DUB
 
-If you are already a D user you likely use DUB, the D package manager. DUB comes packaged with DMD starting with DMD 2.072. You can install and build using DUB as follows:
+If you are already a D user you likely use DUB, the D package manager. DUB comes packaged with DMD starting with DMD 2.072. You can install and build using DUB as follows (replace `1.1.13` with the current version):
 ```
-$ dub fetch tsv-utils-dlang
-$ dub run tsv-utils-dlang    # For LDC: dub run tsv-utils-dlang -- --compiler=ldc
+$ dub fetch tsv-utils-dlang --cache=local
+$ cd tsv-utils-dlang-1.1.13/tsv-utils-dlang
+$ dub run    # For LDC: dub run -- --compiler=ldc2
 ```
 
-The `dub run` command compiles all the tools. The executables are written to a DUB package repository directory. For example: `~/.dub/packages/tsv-utils-dlang-1.0.8/bin`. Add the executables to the PATH. Installation to a DUB package repository is not always most convenient. As an alternative, clone the repository and run dub from the source directory. This puts the executables in the `tsv-utils-dlang/bin` directory:
-```
-$ git clone https://github.com/eBay/tsv-utils-dlang.git
-$ dub add-local tsv-utils-dlang
-$ cd tsv-utils-dlang
-$ dub run      # For LDC: dub run -- --compiler=ldc2
-```
+The `dub run` command compiles all the tools. The executables are written to `tsv-utils-dlang/bin`. Add this directory or individual executables to the PATH.
 
 See [Building and makefile](docs/AboutTheCode.md#building-and-makefile) for more information about the DUB setup.
 
