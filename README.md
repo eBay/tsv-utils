@@ -130,7 +130,7 @@ See the [tsv-uniq reference](docs/ToolReference.md#tsv-uniq-reference) for detai
 
 ### tsv-sample
 
-`tsv-sample` performs uniform or weighted random sampling of lines of input data. This can be used sub-sample data or fully randomize the order of the data lines.
+`tsv-sample` performs uniform or weighted random sampling on input data lines. This can be used sub-sample data or fully randomize the order of the data lines.
 
 Weighted random sampling is where `tsv-sample` is really useful. For uniform random sampling, the GNU `shuf` program is quite good and widely available. For weighted random sampling the choices are limited, especially when working with large files. `tsv-sample` implements weighted reservoir sampling, with the weights taken from a field in the input data. Performance is good, it works quite well on large files. See the [tsv-sample reference](docs/ToolReference.md#tsv-sample-reference) for details.
 
@@ -166,11 +166,11 @@ See the [tsv-pretty reference](docs/ToolReference.md#tsv-pretty-reference) for d
 $ csv2tsv data.csv > data.tsv
 ```
 
-A strict delimited format like TSV has many advantages for data processing over an escape oriented format like CSV. However, CSV is a very popular data interchange format and the default export format for many database and spreadsheet programs. Converting CSV files to TSV allows them to be processed reliably by both this toolkit and standard Unix utilities like `awk`.
+A strict delimited format like TSV has many advantages for data processing over an escape oriented format like CSV. However, CSV is a very popular data interchange format and the default export format for many database and spreadsheet programs. Converting CSV files to TSV allows them to be processed reliably by both this toolkit and standard Unix utilities like `awk` and `sort`.
 
-Note that many CSV files do not use escapes, and instead are a strict delimited format using comma as the delimiter. Such files can be processed reliably by this toolkit and Unix tools by specifying the delimiter character. However, when there is doubt, using a `csv2tsv` converter adds reliability.
+Note that many CSV files do not use escapes, and in-fact follow a strict delimited format using comma as the delimiter. Such files can be processed reliably by this toolkit and Unix tools by specifying the delimiter character. However, when there is doubt, using a `csv2tsv` converter adds reliability.
 
-The `csv2tsv` converter often has a second benefit: regularizing newlines. CSV files are often exported using Windows newline conventions. `csv2tsv` converts all newline formats to Unix format.
+The `csv2tsv` converter often has a second benefit: regularizing newlines. CSV files are often exported using Windows newline conventions. `csv2tsv` converts all newlines to Unix format.
 
 There are many variations of CSV file format. See the [csv2tsv reference](docs/ToolReference.md#csv2tsv-reference) for details the format variations supported by this tool.
 
