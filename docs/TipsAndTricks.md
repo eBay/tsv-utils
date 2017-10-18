@@ -120,12 +120,12 @@ Run-times for the above commands are show below. Two different files were used, 
 
 | Command                 | File size         | Time (seconds) |
 | ----------------------- | ----------------- | -------------: |
-| `sort data.txt | uniq` | 12 MB; 500K lines |           2.19 |
-| `sort -u data.txt`      | 12 MB; 500K lines |           2.37 |
-| `tsv-uniq data.txt`     | 12 MB; 500K lines |           0.29 |
-| `sort data.txt | uniq` | 127 MB; 5M lines  |          26.13 |
-| `sort -u data.txt`      | 127 MB; 5M lines  |          29.02 |
-| `tsv-uniq data.txt`     | 127 MB; 5M lines  |           3.14 |
+| sort data.txt \| uniq | 12 MB; 500K lines |           2.19 |
+| sort -u data.txt      | 12 MB; 500K lines |           2.37 |
+| tsv-uniq data.txt     | 12 MB; 500K lines |           0.29 |
+| sort data.txt \| uniq | 127 MB; 5M lines  |          26.13 |
+| sort -u data.txt      | 127 MB; 5M lines  |          29.02 |
+| tsv-uniq data.txt     | 127 MB; 5M lines  |           3.14 |
 
 For more info, see the [tsv-uniq reference](ToolReference.md#tsv-uniq-reference).
 
