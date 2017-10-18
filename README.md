@@ -28,12 +28,12 @@ The rest of this section contains a short description of each tool. There is mor
 
 * [tsv-filter](#tsv-filter) - Filter data file rows via numeric and string comparisons.
 * [tsv-select](#tsv-select) - Keep a subset of the columns (fields) in the input.
-* [tsv-summarize](#tsv-summarize) - Aggregate field values, summarizing across the entire file or grouped by key.
+* [tsv-summarize](#tsv-summarize) - Summary statistics on selected fields, against the full data set or grouped by key.
 * [tsv-join](#tsv-join) - Join lines from multiple files using fields as a key.
 * [tsv-append](#tsv-append) - Concatenate TSV files. Header-aware; supports source file tracking.
 * [tsv-uniq](#tsv-uniq) - Filter out duplicate lines using fields as a key.
 * [tsv-sample](#tsv-sample) - Uniform and weighted random sampling or permutation of input lines.
-* [tsv-pretty](#tsv-pretty) - Print TSV data aligned for easier reading from the command-line.
+* [tsv-pretty](#tsv-pretty) - Print TSV data aligned for easier reading on the command-line.
 * [csv2tsv](#csv2tsv) - Convert CSV files to TSV.
 * [number-lines](#number-lines) - Number the input lines.
 * [keep-header](#keep-header) - Run a shell command in a header-aware fashion.
@@ -47,7 +47,7 @@ $ tsv-filter --ge 3:100 --le 3:200 --str-eq 4:red file.tsv
 
 This outputs lines where field 3 satisfies (100 <= fieldval <= 200) and field 4 matches 'red'.
 
-`tsv-filter` is the most widely applicable of the tools, as dataset pruning is a common task. It is stream oriented, so it can handle arbitrarily large files. It is quite fast, faster than other tools the author has tried. This makes it idea for preparing data for applications like R and Pandas. It is also convenient for quickly answering simple questions about a dataset. For example, to count the number of records with a non-zero value in field 3, use the command:
+`tsv-filter` is the most widely applicable of the tools, as dataset pruning is a common task. It is stream oriented, so it can handle arbitrarily large files. It is quite fast, faster than other tools the author has tried. This makes it ideal for preparing data for applications like R and Pandas. It is also convenient for quickly answering simple questions about a dataset. For example, to count the number of records with a non-zero value in field 3, use the command:
 ```
 $ tsv-filter --ne 3:0 file.tsv | wc -l
 ```
@@ -61,13 +61,11 @@ A version of the Unix `cut` utility with the additional ability to re-order the 
 $ tsv-select -f 4,2,9-11 file1.tsv file2.tsv
 ```
 
-Reordering fields and managing headers are useful enhancements over `cut`. However, much of the motivation for writing it was to explore the D programming language and provide a comparison point against other common approaches to this task. Code for `tsv-select` is bit more liberal with comments pointing out D programming constructs than code for the other tools.
-
 See the [tsv-select reference](docs/ToolReference.md#tsv-select-reference) for details.
 
 ### tsv-summarize
 
-`tsv-summarize` runs aggregation operations on fields. For example, generating the sum or median of a field's values. Summarization calculations can be run across the entire input or can be grouped by key fields. As an example, consider the file `data.tsv`:
+`tsv-summarize` performs statistical calculations on fields. For example, generating the sum or median of a field's values. Calculations can be run across the entire input or can be grouped by key fields. Consider the file `data.tsv`:
 ```
 color   weight
 red     6
@@ -76,7 +74,7 @@ blue    15
 red     4
 blue    10
 ```
-Calculation of the sum and mean of the `weight` column are below. The first command runs calculations on all values. The second groups them by color.
+Calculations of the sum and mean of the `weight` column is shown below. The first command runs calculations on all values. The second groups them by color.
 ```
 $ tsv-summarize --header --sum 2 --mean 2 data.tsv
 weight_sum  weight_mean
@@ -132,7 +130,9 @@ See the [tsv-uniq reference](docs/ToolReference.md#tsv-uniq-reference) for detai
 
 ### tsv-sample
 
-For uniform random sampling, the GNU `shuf` program is quite good and widely available. For weighted random sampling the choices are limited, especially when working with large files. This is where `tsv-sample` is useful. It implements weighted reservoir sampling, with the weights taken from a field in the input data. Uniform random sampling is supported as well. Performance is good, it works quite well on large files. See the [tsv-sample reference](docs/ToolReference.md#tsv-sample-reference) for details.
+`tsv-sample` performs uniform or weighted random sampling of lines of input data. This can be used sub-sample data or fully randomize the order of the data lines.
+
+Weighted random sampling is where `tsv-sample` is really useful. For uniform random sampling, the GNU `shuf` program is quite good and widely available. For weighted random sampling the choices are limited, especially when working with large files. `tsv-sample` implements weighted reservoir sampling, with the weights taken from a field in the input data. Performance is good, it works quite well on large files. See the [tsv-sample reference](docs/ToolReference.md#tsv-sample-reference) for details.
 
 ### tsv-pretty
 
@@ -161,12 +161,18 @@ See the [tsv-pretty reference](docs/ToolReference.md#tsv-pretty-reference) for d
 
 ### csv2tsv
 
-Sometimes you have a CSV file. This program does what you expect: convert CSV data to TSV. Example:
+`csv2tsv` does what you expect: convert CSV data to TSV. Example:
 ```
 $ csv2tsv data.csv > data.tsv
 ```
 
-CSV files come in different formats. See the [csv2tsv reference](docs/ToolReference.md#csv2tsv-reference) for details of how this tool operates and the format variations handled.
+A strict delimited format like TSV has many advantages for data processing over an escape oriented format like CSV. However, CSV is a very popular data interchange format and the default export format for many database and spreadsheet programs. Converting CSV files to TSV allows them to be processed reliably by both this toolkit and standard Unix utilities like `awk`.
+
+Note that many CSV files do not use escapes, and instead are a strict delimited format using comma as the delimiter. Such files can be processed reliably by this toolkit and Unix tools by specifying the delimiter character. However, when there is doubt, using a `csv2tsv` converter adds reliability.
+
+The `csv2tsv` converter often has a second benefit: regularizing newlines. CSV files are often exported using Windows newline conventions. `csv2tsv` converts all newline formats to Unix format.
+
+There are many variations of CSV file format. See the [csv2tsv reference](docs/ToolReference.md#csv2tsv-reference) for details the format variations supported by this tool.
 
 ### number-lines
 
@@ -189,6 +195,8 @@ $ keep-header myfile.txt -- sort
 It is also useful with `grep`, `awk`, `sed`, similar tools, when the header line should be excluded from the command's action.
 
 Multiple files can be provided, only the header from the first is retained. The command is executed as specified, so additional command options can be provided. See the [keep-header reference](docs/ToolReference.md#keep-header-reference) for more information.
+
+---
 
 ## Installation
 
