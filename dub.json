@@ -1,6 +1,6 @@
 {
     "name": "tsv-utils-dlang",
-    "description": "Command line utilities for tabular data files.",
+    "description": "eBay's TSV utilities. Command line tools for large, tabular data files.",
     "homepage": "https://github.com/eBay/tsv-utils-dlang",
     "authors": ["Jon Degenhardt"],
     "copyright": "Copyright (c) 2015-2017, eBay Software Foundation",
