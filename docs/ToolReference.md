@@ -208,6 +208,8 @@ $ tsv-filter --is-finite 2 --gt 2:10 data.tsv
 
 The above tests work because `tsv-filter` short-circuits evaluation, only running as many tests as necessary to filter each line. Tests are run in the order listed on the command line. In the first example, if `--is-numeric 2` is false, the remaining tests do not get run.
 
+_**Tip:**_ Bash completion is very helpful when using commands like `tsv-filter` that have many options. See [Enable bash-completion](docs/TipsAndTricks.md#enable-bash-completion) for details.
+
 ---
 
 ## tsv-select reference
@@ -363,6 +365,8 @@ Missing values are not treated specially by default, this can be changed using t
 * `--not-missing-count <field-list>[:STR]` - Number of filled (non-empty) fields. Not affected by `--r|replace-missing`.
 * `--values <field-list>[:STR]` - All the values, separated by `--v|values-delimiter`. (Reads all values into memory.)
 * `--unique-values <field-list>[:STR]` - All the unique values, separated by `--v|values-delimiter`. (Reads all unique values into memory.)
+
+_**Tip:**_ Bash completion is very helpful when using commands like `tsv-filter` that have many options. See [Enable bash-completion](docs/TipsAndTricks.md#enable-bash-completion) for details.
 
 ---
 
