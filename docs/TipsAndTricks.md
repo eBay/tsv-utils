@@ -5,8 +5,8 @@ _Visit the [main page](../README.md)_
 Contents:
 
 * [Useful bash aliases](#useful-bash-aliases)
-* [Customize the Unix sort command](#customize-the-Unix-sort-command)
-* [Reading data in R](#reading-data-in-R)
+* [Customize the Unix sort command](#customize-the-unix-sort-command)
+* [Reading data in R](#reading-data-in-r)
 * [A faster way to unique a file](#a-faster-way-to-unique-a-file)
 * [Using grep and tsv-filter together](#using-grep-and-tsv-filter-together)
 * [Enable bash-completion](#enable-bash-completion)
