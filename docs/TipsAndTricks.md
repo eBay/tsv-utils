@@ -5,8 +5,8 @@ _Visit the [main page](../README.md)_
 Contents:
 
 * [Useful bash aliases](#useful-bash-aliases)
-* [Sort command customization](#sort-command-customization)
-* [Reading data in R](#reading-data-in-R)
+* [Customize the Unix sort command](#customize-the-unix-sort-command)
+* [Reading data in R](#reading-data-in-r)
 * [A faster way to unique a file](#a-faster-way-to-unique-a-file)
 * [Using grep and tsv-filter together](#using-grep-and-tsv-filter-together)
 * [Enable bash-completion](#enable-bash-completion)
@@ -43,7 +43,7 @@ but-first () { tail -n +2 $* ; }
 
 These aliases can be created in most shells. Non-bash shells may have a different syntax though.
 
-## Sort command customization
+## Customize the Unix sort command
 
 The typical Unix `sort` utility works fine on TSV files. However, there are few simple tweaks that can improve convenience and performance.
 
@@ -120,12 +120,12 @@ Run-times for the above commands are show below. Two different files were used, 
 
 | Command                 | File size         | Time (seconds) |
 | ----------------------- | ----------------- | -------------: |
-| `sort data.txt | uniq` | 12 MB; 500K lines |           2.19 |
-| `sort -u data.txt`      | 12 MB; 500K lines |           2.37 |
-| `tsv-uniq data.txt`     | 12 MB; 500K lines |           0.29 |
-| `sort data.txt | uniq` | 127 MB; 5M lines  |          26.13 |
-| `sort -u data.txt`      | 127 MB; 5M lines  |          29.02 |
-| `tsv-uniq data.txt`     | 127 MB; 5M lines  |           3.14 |
+| sort data.txt \| uniq | 12 MB; 500K lines |           2.19 |
+| sort -u data.txt      | 12 MB; 500K lines |           2.37 |
+| tsv-uniq data.txt     | 12 MB; 500K lines |           0.29 |
+| sort data.txt \| uniq | 127 MB; 5M lines  |          26.13 |
+| sort -u data.txt      | 127 MB; 5M lines  |          29.02 |
+| tsv-uniq data.txt     | 127 MB; 5M lines  |           3.14 |
 
 For more info, see the [tsv-uniq reference](ToolReference.md#tsv-uniq-reference).
 
