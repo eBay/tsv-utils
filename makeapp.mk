@@ -12,11 +12,11 @@ release: $(app_release)
 debug: $(app_debug)
 codecov: $(app_codecov)
 
-$(app_release): $(srcs)
+$(app_release): ldc-build-runtime-libs $(srcs)
 	$(DCOMPILER) $(release_flags) -of$(app_release) $(imports) $(srcs)
-$(app_debug): $(srcs)
+$(app_debug):  ldc-build-runtime-libs $(srcs)
 	$(DCOMPILER) $(debug_flags) -of$(app_debug) $(imports) $(srcs)
-$(app_codecov): $(srcs)
+$(app_codecov): ldc-build-runtime-libs $(srcs)
 	$(DCOMPILER) $(codecov_flags) -of$(app_codecov) $(imports) $(srcs)
 
 clean:
@@ -99,6 +99,14 @@ apptest-codecov: $(app_codecov)
 	else echo '---> $(app) command line tests failed (code coverage on).'; \
 	exit 1; \
 	fi
+
+.PHONY: ldc-build-runtime-libs
+ldc-build-runtime-libs: $(ldc_build_runtime_dir)
+
+$(ldc_build_runtime_dir):
+ifdef LDC_BUILD_RUNTIME
+	$(ldc_build_runtime_tool) --dFlags="$(ldc_build_runtime_dflags)" --buildDir $(ldc_build_runtime_dir) BUILD_SHARED_LIBS=OFF
+endif
 
 buildtools:
 	@echo ''

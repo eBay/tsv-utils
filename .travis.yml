@@ -2,10 +2,10 @@ sudo: false
 os:
 - linux
 - osx
-osx_image: xcode8.2
+osx_image: xcode9
 language: d
 d:
-- ldc-1.2.0
+- ldc-1.5.0-beta1
 - dmd
 script:
 - dub run -- --compiler=$DC
@@ -14,6 +14,8 @@ script:
 - make clean
 - make test DCOMPILER=$DC
 - if [[ "$TRAVIS_OS_NAME" == "linux" && "$DC" == "ldc2" ]]; then make clean; make test DCOMPILER=$DC DFLAGS=-static; fi
+- if [[ "$TRAVIS_OS_NAME" == "linux" && "$DC" == "ldc2" ]]; then make clean; make test DCOMPILER=$DC LDC_BUILD_RUNTIME=1 DFLAGS=-static; fi
+- if [[ "$TRAVIS_OS_NAME" == "osx" && "$DC" == "ldc2" ]]; then make clean; make test DCOMPILER=$DC LDC_BUILD_RUNTIME=1; fi
 - if [[ "$TRAVIS_OS_NAME" == "osx" && "$DC" == "dmd" ]]; then make test-codecov; fi
 after_success:
 - if [[ "$TRAVIS_OS_NAME" == "osx" && "$DC" == "dmd" ]]; then bash <(curl -s https://codecov.io/bash)  ||
@@ -22,7 +24,7 @@ before_deploy:
 - if [[ -z "$TRAVIS_TAG" || "$TRAVIS_TAG" == "" ]]; then export USE_VERSION="v~dev";
   else export USE_VERSION="$TRAVIS_TAG"; fi
 - if [[ "$TRAVIS_OS_NAME" == "linux" && "$DC" == "ldc2" ]]; then export DFLAGS_STATIC=-static; fi
-- make package DCOMPILER=$DC OS=$TRAVIS_OS_NAME APP_VERSION=$USE_VERSION DFLAGS=$DFLAGS_STATIC
+- make package DCOMPILER=$DC OS=$TRAVIS_OS_NAME APP_VERSION=$USE_VERSION LDC_BUILD_RUNTIME=1 DFLAGS=$DFLAGS_STATIC
 deploy:
   provider: releases
   api_key:

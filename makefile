@@ -7,7 +7,8 @@ OS ?= UnkOS
 ARCH ?= x86_64
 APP_VERSION ?= v~dev
 PKG_ROOT_DIR ?= $(notdir $(basename $(CURDIR)))
-PKG_DIR = $(PKG_ROOT_DIR)-$(APP_VERSION)_$(OS)-$(ARCH)_$(DCOMPILER)
+DCOMPILER_BASENAME = $(notdir $(basename $(DCOMPILER)))
+PKG_DIR = $(PKG_ROOT_DIR)-$(APP_VERSION)_$(OS)-$(ARCH)_$(DCOMPILER_BASENAME)
 TAR_FILE ?= $(PKG_DIR).tar.gz
 
 all: release
