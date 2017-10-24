@@ -24,7 +24,7 @@ before_deploy:
 - if [[ -z "$TRAVIS_TAG" || "$TRAVIS_TAG" == "" ]]; then export USE_VERSION="v~dev";
   else export USE_VERSION="$TRAVIS_TAG"; fi
 - if [[ "$TRAVIS_OS_NAME" == "linux" && "$DC" == "ldc2" ]]; then export DFLAGS_STATIC=-static; fi
-- make package DCOMPILER=$DC OS=$TRAVIS_OS_NAME APP_VERSION=$USE_VERSION LDC_BUILD_RUNTIME=1 DFLAGS=$DFLAGS_STATIC
+- make package DCOMPILER=$DC OS=$TRAVIS_OS_NAME APP_VERSION=$USE_VERSION LDC_BUILD_RUNTIME=ldc-build-runtime DFLAGS=$DFLAGS_STATIC
 deploy:
   provider: releases
   api_key:
