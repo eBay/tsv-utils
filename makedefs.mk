@@ -82,7 +82,11 @@ ifdef LDC_BUILD_RUNTIME
 		endif
 	endif
 	ifndef LDC_LTO
-		LDC_LTO = thin
+		ifeq ($(OS_NAME),Darwin)
+			LDC_LTO = thin
+		else
+			LDC_LTO = full
+		endif
 	endif
 endif
 
