@@ -14,8 +14,8 @@ script:
 - make clean
 - make test DCOMPILER=$DC
 - if [[ "$TRAVIS_OS_NAME" == "linux" && "$DC" == "ldc2" ]]; then make clean; make test DCOMPILER=$DC DFLAGS=-static; fi
-- if [[ "$TRAVIS_OS_NAME" == "linux" && "$DC" == "ldc2" ]]; then make clean; make test DCOMPILER=$DC LDC_BUILD_RUNTIME=1 DFLAGS=-static; fi
-- if [[ "$TRAVIS_OS_NAME" == "osx" && "$DC" == "ldc2" ]]; then make clean; make test DCOMPILER=$DC LDC_BUILD_RUNTIME=1; fi
+- if [[ "$TRAVIS_OS_NAME" == "linux" && "$DC" == "ldc2" ]]; then make clean; make test DCOMPILER=$DC LDC_BUILD_RUNTIME=ldc-build-runtime DFLAGS=-static; fi
+- if [[ "$TRAVIS_OS_NAME" == "osx" && "$DC" == "ldc2" ]]; then make clean; make test DCOMPILER=$DC LDC_BUILD_RUNTIME=ldc-build-runtime; fi
 - if [[ "$TRAVIS_OS_NAME" == "osx" && "$DC" == "dmd" ]]; then make test-codecov; fi
 after_success:
 - if [[ "$TRAVIS_OS_NAME" == "osx" && "$DC" == "dmd" ]]; then bash <(curl -s https://codecov.io/bash)  ||
