@@ -5,26 +5,55 @@ os:
 osx_image: xcode9
 language: d
 d:
-- ldc-1.5.0-beta1
 - dmd
+- ldc-1.5.0-beta1
+env:
+- LTO=default
+- LTO=runtime
+matrix:
+  exclude:
+  - d: dmd
+    env: LTO=runtime
 script:
-- dub run -- --compiler=$DC
-- make test-nobuild
-- dub clean
-- make clean
-- make test DCOMPILER=$DC
-- if [[ "$TRAVIS_OS_NAME" == "linux" && "$DC" == "ldc2" ]]; then make clean; make test DCOMPILER=$DC DFLAGS=-static; fi
-- if [[ "$TRAVIS_OS_NAME" == "linux" && "$DC" == "ldc2" ]]; then make clean; make test DCOMPILER=$DC LDC_BUILD_RUNTIME=ldc-build-runtime DFLAGS=-static; fi
-- if [[ "$TRAVIS_OS_NAME" == "osx" && "$DC" == "ldc2" ]]; then make clean; make test DCOMPILER=$DC LDC_BUILD_RUNTIME=ldc-build-runtime; fi
-- if [[ "$TRAVIS_OS_NAME" == "osx" && "$DC" == "dmd" ]]; then make test-codecov; fi
+- if [[ "$LTO" == "default" ]]; then
+    dub run -- --compiler=$DC;
+    make test-nobuild;
+    dub clean;
+    make clean;
+    make test DCOMPILER=$DC;
+  fi
+- if [[ "$LTO" == "default" &&  "$DC" == "dmd" && "$TRAVIS_OS_NAME" == "osx" ]]; then
+    make clean;
+    make test-codecov;
+  fi
+- if [[ "$LTO" == "default" && "$TRAVIS_OS_NAME" == "linux" && "$DC" == "ldc2" && ]]; then
+    make clean;
+    make test DCOMPILER=$DC DFLAGS=-static;
+  fi
+- if [[ "$LTO" == "runtime" && "$DC" == "ldc2" && ]]; then
+    make clean;
+    make test DCOMPILER=$DC LDC_BUILD_RUNTIME=1;
+  fi
 after_success:
-- if [[ "$TRAVIS_OS_NAME" == "osx" && "$DC" == "dmd" ]]; then bash <(curl -s https://codecov.io/bash)  ||
-  echo "Codecov did not collect coverage reports"; fi
+- if [[ "$LTO" == "default" &&  "$DC" == "dmd" && "$TRAVIS_OS_NAME" == "osx" ]]; then
+    bash <(curl -s https://codecov.io/bash) || echo "Codecov did not collect coverage reports";
+  fi
 before_deploy:
-- if [[ -z "$TRAVIS_TAG" || "$TRAVIS_TAG" == "" ]]; then export USE_VERSION="v~dev";
-  else export USE_VERSION="$TRAVIS_TAG"; fi
-- if [[ "$TRAVIS_OS_NAME" == "linux" && "$DC" == "ldc2" ]]; then export DFLAGS_STATIC=-static; fi
-- make package DCOMPILER=$DC OS=$TRAVIS_OS_NAME APP_VERSION=$USE_VERSION LDC_BUILD_RUNTIME=ldc-build-runtime DFLAGS=$DFLAGS_STATIC
+- if [[ -z "$TRAVIS_TAG" || "$TRAVIS_TAG" == "" ]]; then
+    export USE_VERSION="v~dev";
+  else
+    export USE_VERSION="$TRAVIS_TAG";
+  fi
+- if [[ "$LTO" == "runtime" ]]; then
+    export LDC_BUILD_RUNTIME_FLAG=1;
+    if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
+      export OS_NAME_SUFFIX=-lto;
+    fi
+  elif [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
+    export DFLAGS_STATIC=-static;
+    export OS_NAME_SUFFIX=-staticlib;
+  fi
+- make package DCOMPILER=$DC OS=${TRAVIS_OS_NAME}${OS_NAME_SUFFIX} APP_VERSION=$USE_VERSION LDC_BUILD_RUNTIME=$LDC_BUILD_RUNTIME_FLAG DFLAGS=$DFLAGS_STATIC
 deploy:
   provider: releases
   api_key:

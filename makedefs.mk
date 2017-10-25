@@ -75,11 +75,6 @@ ldc_build_runtime_tool = $(ldc_build_runtime_tool_name)
 ifdef LDC_BUILD_RUNTIME
 	ifneq ($(LDC_BUILD_RUNTIME),1)
 		ldc_build_runtime_tool=$(LDC_BUILD_RUNTIME)
-	else
-		ldc_bin_dir = $(dir $(realpath $(DCOMPILER)))
-		ifdef ldc_bin_dir
-			ldc_build_runtime_tool = $(ldc_bin_dir)/$(ldc_build_runtime_tool_name)
-		endif
 	endif
 	ifndef LDC_LTO
 		ifeq ($(OS_NAME),Darwin)
