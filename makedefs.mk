@@ -130,6 +130,10 @@ else ifdef ldc_compiler
 		else
 			link_flags_base = -L-L$(ldc_build_runtime_dir)/lib -Xcc=-fuse-ld=gold
 		endif
+	else ifdef LDC_LTO
+		ifneq ($(OS_NAME),Darwin)
+			link_flags_base = -Xcc=-fuse-ld=gold
+		endif
 	endif
 endif
 
