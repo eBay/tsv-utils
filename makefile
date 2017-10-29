@@ -32,8 +32,18 @@ help:
 	@echo 'unittest-codecov - Runs unit tests with code coverage reports on.'
 	@echo 'package      - Creates a release package. Used with travis-ci.'
 	@echo ''
-	@echo 'Note: Commands that run builds use the DMD compiler by default.'
-	@echo '      Add DCOMPILER=ldc2 or DCOMPILER=<path> to change the compiler.'
+	@echo 'Note: DMD is the default compiler. Use the DCOMPILER parameter to switch. For example:'
+	@echo ''
+	@echo '    $$ make DCOMPILER=ldc2'
+	@echo ''
+	@echo 'Parameters:'
+	@echo '==========='
+	@echo 'DCOMPILER - Compiler to use. Defaults to DMD. Value can be a path.'
+	@echo 'DFLAGS - Extra flags to pass to the compiler.'
+	@echo 'LDC_BUILD_RUNTIME - Enables LDC support for using LTO on the runtime libraries. Use'
+	@echo '    the value 1 to turn on. The value can also be a path to the ldc-build-runtime tool.'
+	@echo 'LDC_LTO - Controls the LDC LTO options. See makedefs.mk for details.'
+	@echo ''
 
 release: make_subdirs
 debug: make_subdirs
