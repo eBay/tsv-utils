@@ -194,7 +194,7 @@ ifeq ($(compiler_type),ldc)
 		endif
 	else ifneq ($(LDC_LTO),off)
 		ifneq ($(OS_NAME),Darwin)
-			link_flags_base = -Xcc=-fuse-ld=gold
+			lto_link_flags = -Xcc=-fuse-ld=gold
 		endif
 	endif
 endif
