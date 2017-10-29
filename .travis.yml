@@ -29,7 +29,9 @@ script:
 - if [[ "$LTO" == "default" && "$TRAVIS_OS_NAME" == "linux" && "$DC" == "ldc2" ]]; then
     make clean;
     make test DCOMPILER=$DC;
+    make clean;
     make test DCOMPILER=$DC LDC_LTO=full;
+    make clean;
     make test DCOMPILER=$DC DFLAGS=-static LDC_LTO=off;
   fi
 - if [[ "$LTO" == "runtime" && "$DC" == "ldc2" ]]; then
