@@ -85,10 +85,11 @@ script:
 - if [[ ! -z "$ALLLTO" ]]; then
     if [[ "$ALLLTO" == "default" ]]; then
       make DCOMPILER=$DC LDC_RUNTIME_LTO=1;
+      make clean;
     else
       make DCOMPILER=$DC LDC_RUNTIME_LTO=1 LDC_LTO=$ALLLTO;
+      make clean;
     fi
-    make clean;
   fi
 - if [[ "$DOCKERSPECIAL" == "1" ]]; then
     docker run --rm -ti -v $(pwd):/src dlanguage/ldc make test DCOMPILER=$DC;
