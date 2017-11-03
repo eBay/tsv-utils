@@ -6,7 +6,6 @@
 #   ALLLTO=[default|thin|full] - make test LDC_BUILD_RUNTIME=1 and LTO value
 #   DOCKERSPECIAL - Special dockerized build to run LDC with LTO and -static
 #   DEPLOY - Deploy if a tagged release.
-#       #docker run --rm -ti -v $(pwd):/src dlanguage/ldc make test DCOMPILER=$DC LDC_BUILD_RUNTIME=1 DFLAGS=-static;
 matrix:
   include:
     - os: osx
@@ -92,7 +91,7 @@ script:
     fi
   fi
 - if [[ "$DOCKERSPECIAL" == "1" ]]; then
-    docker run --rm -ti -v $(pwd):/src dlanguage/ldc make test DCOMPILER=$DC
+    docker run --rm -ti -v $(pwd):/src dlanguage/ldc make test DCOMPILER=$DC LDC_BUILD_RUNTIME=1 DFLAGS=-static;
     && sudo chown -R $UID:$GID $(pwd)
     && make test-nobuild
     && make clean;
