@@ -151,7 +151,7 @@ ifeq ($(compiler_type),ldc)
 		ifeq ($(OS_NAME),Darwin)
 			override LDC_LTO = thin
 		else
-			override LDC_LTO = full
+			override LDC_LTO = off
 		endif
 	endif
 
