@@ -22,33 +22,33 @@ matrix:
       language: d
       d: ldc-1.2.0
       env: DUBTEST=1 MAKETEST=1 APPLTO=off
-    - os: osx
-      osx_image: xcode9
-      language: d
-      d: ldc-1.5.0
-      env: DUBTEST=1 MAKETEST=1 APPLTO=off
-    - os: osx
-      osx_image: xcode9
-      language: d
-      d: ldc-1.5.0
-      env: ALLLTO=default DEPLOY=1
     - os: linux
       language: d
       d: ldc-1.2.0
       env: DUBTEST=1 MAKETEST=1
+    - os: osx
+      osx_image: xcode9
+      language: d
+      d: ldc
+      env: DUBTEST=1 MAKETEST=1 APPLTO=off
+    - os: osx
+      osx_image: xcode9
+      language: d
+      d: ldc
+      env: ALLLTO=default DEPLOY=1
     - os: linux
       language: d
-      d: ldc-1.5.0
+      d: ldc
       env: DUBTEST=1 MAKETEST=1 APPLTO=full
     - os: linux
       language: d
-      d: ldc-1.5.0
+      d: ldc
       env: ALLLTO=default
     - os: linux
       dist: trusty
       sudo: required
       language: d
-      d: ldc-1.5.0
+      d: ldc
       services: docker
       env: DOCKERSPECIAL=1 DEPLOY=1
 before_install:
@@ -91,7 +91,7 @@ script:
     fi
   fi
 - if [[ "$DOCKERSPECIAL" == "1" ]]; then
-    docker run --rm -ti -v $(pwd):/src dlanguage/ldc make test DCOMPILER=$DC LDC_BUILD_RUNTIME=1 DFLAGS=-static;
+    docker run --rm -ti -v $(pwd):/src dlanguage/ldc make test DCOMPILER=$DC LDC_BUILD_RUNTIME=1 DFLAGS=-static
     && sudo chown -R $UID:$GID $(pwd)
     && make test-nobuild
     && make clean;
