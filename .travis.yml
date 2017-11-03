@@ -70,10 +70,10 @@ script:
 - if [[ "$MAKETEST" == "1" ]]; then
     make test DCOMPILER=$DC
     && make clean;
-    if [[ "$TRAVIS_OS_NAME" == "linux" && "$DC" == "ldc2" ]]; then
-      make test DCOMPILER=$DC DFLAGS=-static
-      && make clean;
-    fi
+  fi
+- if [[ "$MAKETEST" == "1" && "$TRAVIS_OS_NAME" == "linux" && "$DC" == "ldc2" ]]; then
+    make test DCOMPILER=$DC DFLAGS=-static
+    && make clean;
   fi
 - if [[ "$CODECOV" == "1" ]]; then
     make test-codecov;
