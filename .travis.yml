@@ -40,7 +40,7 @@ matrix:
     - os: linux
       language: d
       d: ldc-1.5.0
-      env: DUBTEST=1 MAKETEST=1 APPLTO=default
+      env: DUBTEST=1 MAKETEST=1 APPLTO=full
     - os: linux
       language: d
       d: ldc-1.5.0
