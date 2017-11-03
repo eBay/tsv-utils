@@ -84,10 +84,10 @@ script:
   fi
 - if [[ ! -z "$ALLLTO" ]]; then
     if [[ "$ALLLTO" == "default" ]]; then
-      make DCOMPILER=$DC LDC_BUILD_RUNTIME=1;
+      make test DCOMPILER=$DC LDC_BUILD_RUNTIME=1;
       make clean;
     else
-      make DCOMPILER=$DC LDC_BUILD_RUNTIME=1 LDC_LTO=$ALLLTO;
+      make test DCOMPILER=$DC LDC_BUILD_RUNTIME=1 LDC_LTO=$ALLLTO;
       make clean;
     fi
   fi
