@@ -92,12 +92,10 @@ script:
     fi
   fi
 - if [[ "$DOCKERSPECIAL" == "1" ]]; then
-    docker run --rm -ti -v $(pwd):/src dlanguage/ldc make test DCOMPILER=$DC;
-    docker_status=$?;
-    echo $docker_status;
-    sudo chown -R $UID:$GID $(pwd);
-    make test-nobuild;
-    make clean;
+    docker run --rm -ti -v $(pwd):/src dlanguage/ldc make test DCOMPILER=$DC
+    && sudo chown -R $UID:$GID $(pwd)
+    && make test-nobuild
+    && make clean
   fi
 after_success:
 - if [[ "$CODECOV" == "1" ]]; then
