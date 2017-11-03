@@ -6,7 +6,7 @@
 # makefile targets.
 #
 # This makefile can be customized by setting the DCOMPILER, DFLAGS, LDC_LTO, and
-# LDC_RUNTIME_LTO variables. These can also be set on the make command line.
+# LDC_BUILD_RUNTIME variables. These can also be set on the make command line.
 #
 # - DCOMPILER - path to the D compiler to use. Should include one of 'dmd', 'ldc', or
 #   'gdc' in the compiler name.
