@@ -95,7 +95,7 @@ script:
     docker run --rm -ti -v $(pwd):/src dlanguage/ldc make test DCOMPILER=$DC
     && sudo chown -R $UID:$GID $(pwd)
     && make test-nobuild
-    && make clean
+    && make clean;
   fi
 after_success:
 - if [[ "$CODECOV" == "1" ]]; then
