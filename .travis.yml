@@ -54,41 +54,41 @@ matrix:
       env: DOCKERSPECIAL=1 DEPLOY=1
 before_install:
   - if [[ "$DOCKERSPECIAL" == "1" ]]; then
-      sudo apt-get -qq update;
-      sudo apt-get -y -o Dpkg::Options::="--force-confnew" install docker-ce;
-      docker pull dlanguage/ldc;
+      sudo apt-get -qq update
+      && sudo apt-get -y -o Dpkg::Options::="--force-confnew" install docker-ce
+      && docker pull dlanguage/ldc;
       export UID=$(id -u);
       export GID=$(id -g);
     fi
 script:
 - if [[ "$DUBTEST" == "1" ]]; then
-    dub run -- --compiler=$DC;
-    make test-nobuild;
-    dub clean;
-    make clean;
+    dub run -- --compiler=$DC
+    && make test-nobuild
+    && dub clean
+    && make clean;
   fi
 - if [[ "$MAKETEST" == "1" ]]; then
-    make test DCOMPILER=$DC;
-    make clean;
+    make test DCOMPILER=$DC
+    && make clean;
     if [[ "$TRAVIS_OS_NAME" == "linux" && "$DC" == "ldc2" ]]; then
-      make test DCOMPILER=$DC DFLAGS=-static;
-      make clean;
+      make test DCOMPILER=$DC DFLAGS=-static
+      && make clean;
     fi
   fi
 - if [[ "$CODECOV" == "1" ]]; then
     make test-codecov;
   fi
 - if [[ ! -z "$APPLTO" ]]; then
-    make DCOMPILER=$DC LDC_LTO=$APPLTO;
-    make clean;
+    make DCOMPILER=$DC LDC_LTO=$APPLTO
+    && make clean;
   fi
 - if [[ ! -z "$ALLLTO" ]]; then
     if [[ "$ALLLTO" == "default" ]]; then
-      make test DCOMPILER=$DC LDC_BUILD_RUNTIME=1;
-      make clean;
+      make test DCOMPILER=$DC LDC_BUILD_RUNTIME=1
+      && make clean;
     else
-      make test DCOMPILER=$DC LDC_BUILD_RUNTIME=1 LDC_LTO=$ALLLTO;
-      make clean;
+      make test DCOMPILER=$DC LDC_BUILD_RUNTIME=1 LDC_LTO=$ALLLTO
+      && make clean;
     fi
   fi
 - if [[ "$DOCKERSPECIAL" == "1" ]]; then
