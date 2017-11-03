@@ -181,7 +181,7 @@ ifeq ($(compiler_type),ldc)
 	endif
 
 	ifeq ($(OS_NAME),Darwin)
-		ldc_build_runtime_dflags = -flto=$(LDC_LTO);-ar=
+		ldc_build_runtime_dflags = -flto=$(LDC_LTO)
 	else
 		ldc_build_runtime_dflags = -flto=$(LDC_LTO)
 	endif
@@ -190,11 +190,11 @@ ifeq ($(compiler_type),ldc)
 		ifeq ($(OS_NAME),Darwin)
 			lto_link_flags = -L-L$(ldc_build_runtime_dir)/lib
 		else
-			lto_link_flags = -L-L$(ldc_build_runtime_dir)/lib -Xcc=-fuse-ld=gold
+			lto_link_flags = -L-L$(ldc_build_runtime_dir)/lib -linker=gold
 		endif
 	else ifneq ($(LDC_LTO),off)
 		ifneq ($(OS_NAME),Darwin)
-			lto_link_flags = -Xcc=-fuse-ld=gold
+			lto_link_flags = -linker=gold
 		endif
 	endif
 endif
