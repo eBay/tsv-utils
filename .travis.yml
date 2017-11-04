@@ -43,7 +43,7 @@ matrix:
     - os: linux
       language: d
       d: ldc
-      env: ALLLTO=default
+      env: APPLTO=thin ALLLTO=default
     - os: linux
       dist: trusty
       sudo: required
@@ -51,14 +51,6 @@ matrix:
       d: ldc
       services: docker
       env: DOCKERSPECIAL=1 DEPLOY=1
-    - os: linux
-      language: d
-      d: ldc
-      env: ALLLTO=thin
-    - os: linux
-      language: d
-      d: ldc
-      env: APPLTO=thin
 before_install:
   - if [[ "$DOCKERSPECIAL" == "1" ]]; then
       sudo apt-get -qq update
@@ -86,7 +78,7 @@ script:
     make test-codecov;
   fi
 - if [[ ! -z "$APPLTO" ]]; then
-    make DCOMPILER=$DC LDC_LTO=$APPLTO
+    make test DCOMPILER=$DC LDC_LTO=$APPLTO
     && make clean;
   fi
 - if [[ ! -z "$ALLLTO" ]]; then
