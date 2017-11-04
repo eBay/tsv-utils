@@ -1,28 +1,117 @@
-sudo: false
-os:
-- linux
-- osx
-osx_image: xcode8.2
-language: d
-d:
-- ldc-1.2.0
-- dmd
+# Tests:
+#   DUBTEST - dub build and test
+#   MAKETEST - make test, plus -static on LDC
+#   CODECOV - Runs code coverage
+#   APPLTO=[default|off|thin|full] - make test with the setting
+#   ALLLTO=[default|thin|full] - make test LDC_BUILD_RUNTIME=1 and LTO value
+#   DOCKERSPECIAL - Special dockerized build to run LDC with LTO and -static
+#   DEPLOY - Deploy if a tagged release.
+matrix:
+  include:
+    - os: osx
+      osx_image: xcode9
+      language: d
+      d: dmd
+      env: DUBTEST=1 MAKETEST=1 CODECOV=1
+    - os: linux
+      language: d
+      d: dmd
+      env: DUBTEST=1 MAKETEST=1
+    - os: osx
+      osx_image: xcode9
+      language: d
+      d: ldc-1.2.0
+      env: DUBTEST=1 MAKETEST=1 APPLTO=off
+    - os: linux
+      language: d
+      d: ldc-1.2.0
+      env: DUBTEST=1 MAKETEST=1
+    - os: osx
+      osx_image: xcode9
+      language: d
+      d: ldc
+      env: DUBTEST=1 MAKETEST=1 APPLTO=off
+    - os: osx
+      osx_image: xcode9
+      language: d
+      d: ldc
+      env: ALLLTO=default DEPLOY=1
+    - os: linux
+      language: d
+      d: ldc
+      env: DUBTEST=1 MAKETEST=1 APPLTO=full
+    - os: linux
+      language: d
+      d: ldc
+      env: APPLTO=thin ALLLTO=default
+    - os: linux
+      dist: trusty
+      sudo: required
+      language: d
+      d: ldc
+      services: docker
+      env: DOCKERSPECIAL=1 DEPLOY=1
+before_install:
+  - if [[ "$DOCKERSPECIAL" == "1" ]]; then
+      sudo apt-get -qq update
+      && sudo apt-get -y -o Dpkg::Options::="--force-confnew" install docker-ce
+      && docker pull dlanguage/ldc;
+      export UID=$(id -u);
+      export GID=$(id -g);
+    fi
 script:
-- dub run -- --compiler=$DC
-- make test-nobuild
-- dub clean
-- make clean
-- make test DCOMPILER=$DC
-- if [[ "$TRAVIS_OS_NAME" == "linux" && "$DC" == "ldc2" ]]; then make clean; make test DCOMPILER=$DC DFLAGS=-static; fi
-- if [[ "$TRAVIS_OS_NAME" == "osx" && "$DC" == "dmd" ]]; then make test-codecov; fi
+- if [[ "$DUBTEST" == "1" ]]; then
+    dub run -- --compiler=$DC
+    && make test-nobuild
+    && dub clean
+    && make clean;
+  fi
+- if [[ "$MAKETEST" == "1" ]]; then
+    make test DCOMPILER=$DC
+    && make clean;
+  fi
+- if [[ "$MAKETEST" == "1" && "$TRAVIS_OS_NAME" == "linux" && "$DC" == "ldc2" ]]; then
+    make test DCOMPILER=$DC DFLAGS=-static
+    && make clean;
+  fi
+- if [[ "$CODECOV" == "1" ]]; then
+    make test-codecov;
+  fi
+- if [[ ! -z "$APPLTO" ]]; then
+    make test DCOMPILER=$DC LDC_LTO=$APPLTO
+    && make clean;
+  fi
+- if [[ ! -z "$ALLLTO" ]]; then
+    if [[ "$ALLLTO" == "default" ]]; then
+      make test DCOMPILER=$DC LDC_BUILD_RUNTIME=1
+      && make clean;
+    else
+      make test DCOMPILER=$DC LDC_BUILD_RUNTIME=1 LDC_LTO=$ALLLTO
+      && make clean;
+    fi
+  fi
+- if [[ "$DOCKERSPECIAL" == "1" ]]; then
+    docker run --rm -ti -v $(pwd):/src dlanguage/ldc:1.5.0 make test DCOMPILER=ldc2 LDC_BUILD_RUNTIME=1 DFLAGS=-static
+    && sudo chown -R $UID:$GID $(pwd)
+    && make test-nobuild
+    && make clean;
+  fi
 after_success:
-- if [[ "$TRAVIS_OS_NAME" == "osx" && "$DC" == "dmd" ]]; then bash <(curl -s https://codecov.io/bash)  ||
-  echo "Codecov did not collect coverage reports"; fi
+- if [[ "$CODECOV" == "1" ]]; then
+    bash <(curl -s https://codecov.io/bash) || echo "Codecov did not collect coverage reports";
+  fi
 before_deploy:
-- if [[ -z "$TRAVIS_TAG" || "$TRAVIS_TAG" == "" ]]; then export USE_VERSION="v~dev";
-  else export USE_VERSION="$TRAVIS_TAG"; fi
-- if [[ "$TRAVIS_OS_NAME" == "linux" && "$DC" == "ldc2" ]]; then export DFLAGS_STATIC=-static; fi
-- make package DCOMPILER=$DC OS=$TRAVIS_OS_NAME APP_VERSION=$USE_VERSION DFLAGS=$DFLAGS_STATIC
+- if [[ -z "$TRAVIS_TAG" || "$TRAVIS_TAG" == "" ]]; then
+    export USE_VERSION="v~dev";
+  else export
+    USE_VERSION="$TRAVIS_TAG";
+  fi
+- if [[ "$DOCKERSPECIAL" == "1" ]]; then
+    docker run --rm -ti -v $(pwd):/src dlanguage/ldc make package DCOMPILER=$DC OS=$TRAVIS_OS_NAME APP_VERSION=$USE_VERSION LDC_BUILD_RUNTIME=1 DFLAGS=-static;
+    sudo chown -R $UID:$GID $(pwd);
+  else
+    make package DCOMPILER=$DC OS=$TRAVIS_OS_NAME APP_VERSION=$USE_VERSION LDC_BUILD_RUNTIME=1;
+  fi
 deploy:
   provider: releases
   api_key:
@@ -33,4 +122,4 @@ deploy:
   on:
     tags: true
     repo: eBay/tsv-utils-dlang
-    condition: "$DC = ldc2"
+    condition: "$DEPLOY = 1"
