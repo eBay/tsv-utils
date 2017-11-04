@@ -51,6 +51,14 @@ matrix:
       d: ldc
       services: docker
       env: DOCKERSPECIAL=1 DEPLOY=1
+    - os: linux
+      language: d
+      d: ldc
+      env: ALLLTO=thin
+    - os: linux
+      language: d
+      d: ldc
+      env: APPLTO=thin
 before_install:
   - if [[ "$DOCKERSPECIAL" == "1" ]]; then
       sudo apt-get -qq update
@@ -91,7 +99,7 @@ script:
     fi
   fi
 - if [[ "$DOCKERSPECIAL" == "1" ]]; then
-    docker run --rm -ti -v $(pwd):/src dlanguage/ldc make test DCOMPILER=$DC LDC_BUILD_RUNTIME=1 DFLAGS=-static
+    docker run --rm -ti -v $(pwd):/src dlanguage/ldc:1.5.0 make test DCOMPILER=ldc2 LDC_BUILD_RUNTIME=1 DFLAGS=-static
     && sudo chown -R $UID:$GID $(pwd)
     && make test-nobuild
     && make clean;
