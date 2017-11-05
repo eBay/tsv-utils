@@ -1,4 +1,4 @@
-enum string tsvutilsVersion = "v1.1.15-beta1";
+enum string tsvutilsVersion = "v1.1.15-beta2";
 
 string tsvutilsVersionNotice (string toolName)
 {
