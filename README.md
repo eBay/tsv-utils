@@ -6,10 +6,11 @@ This is a set of command line utilities for working with tab-separated value fil
 * [Tools overview](#tools-overview)
 * [Installation](#installation)
 
-**More details:**
+**Additional documents:**
 * [Tool reference](docs/ToolReference.md)
 * [Performance benchmarks](docs/Performance.md)
 * [About the code](docs/AboutTheCode.md)
+* [Building with Link Time Optimization](docs/BuildingWithLTO.md)
 * [Tips and tricks](docs/TipsAndTricks.md)
 * [Other toolkits](docs/OtherToolkits.md)
 
@@ -225,6 +226,8 @@ Executables are written to `tsv-utils-dlang/bin`, place this directory or the ex
 
 The makefile supports other typical development tasks such as unit tests and code coverage reports. See [Building and makefile](docs/AboutTheCode.md#building-and-makefile) for more details.
 
+For fastest performance, use LDC with Link Time Optimization enabled (LTO). See [Building with Link Time Optimization](docs/BuildingWithLTO.md) for instructions. The prebuilt binaries are built using LTO, but it must be explicitly enabled when building from source.
+
 ### Install using DUB
 
 If you are already a D user you likely use DUB, the D package manager. DUB comes packaged with DMD starting with DMD 2.072. You can install and build using DUB as follows (replace `1.1.13` with the current version):
@@ -237,6 +240,8 @@ $ dub run    # For LDC: dub run -- --compiler=ldc2
 The `dub run` command compiles all the tools. The executables are written to `tsv-utils-dlang/bin`. Add this directory or individual executables to the PATH.
 
 See [Building and makefile](docs/AboutTheCode.md#building-and-makefile) for more information about the DUB setup.
+
+The applications can be built with Link Time Optimization (LTO) enabled when source code is fetched by DUB. However, the DUB build system does not support this. `make` must be used instead.  [Building with Link Time Optimization](docs/BuildingWithLTO.md).
 
 ### Setup customization
 
