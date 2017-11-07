@@ -109,3 +109,46 @@ The makefile default settings choose between *thin* and *full* LTO builds based 
 The `LDC_LTO=thin|full` parameter can also be combined with `LDC_BUILD_RUNTIME=1` to set the thin/full type when building the D libraries with LTO.
 
 It is also possible to turn off LTO on macOS builds. For this use `LDC_LTO=off`.
+
+### LDC compile/build command line options
+
+The `make` commands shown above display the exact LDC command lines used. The examples below show the command lines for building a simple `helloworld` program with LTO enabled. See the [LDC documentation](https://github.com/ldc-developers/ldc) for additional and up-to-date details.
+
+There are two steps for building with LTO. The first is downloading and building the D library code, the second is to reference the runtime library from the LDC build command.
+
+**Download and build the D library code:**
+
+```
+$ # Build with Thin LTO
+$ ldc-build-runtime --reset --dFlags="-flto=thin" BUILD_SHARED_LIBS=OFF
+
+$ # Build with Full LTO
+$ ldc-build-runtime --reset --dFlags="-flto=full" BUILD_SHARED_LIBS=OFF
+```
+
+This builds in the `ldc-build-runtime.tmp` directory. The `--reset` option avoids downloading the source code if it's already present, and instead does only build only.
+
+Note that the Thin/Full choice must match the command line used to build the application.
+
+**macOS build of helloworld:**
+
+```
+$ # Thin LTO build
+$ ldc2 -flto=thin -L-L./ldc-build-runtime.tmp/lib helloworld.d
+```
+
+**Linux build of helloworld:**
+
+```
+$ # Full LTO build
+$ ldc2 -flto=full -linker=gold -L-L./ldc-build-runtime.tmp/lib helloworld.d
+```
+
+The main difference between the Linux and macOS is that an alternate (non-default) linker must be specified on Linux.
+
+Any other typical compiler options can be specified as well. For example, a Linux release mode build might be specified as follows:
+
+```
+$ # Full LTO build
+$ ldc2 -O -release -flto=full -linker=gold -L-L./ldc-build-runtime.tmp/lib helloworld.d
+```
