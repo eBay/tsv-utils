@@ -9,6 +9,7 @@ Contents:
   * [About Link Time Optimization](#about-link-time-optimization-lto)
   * [Building the TSV utilities with LTO](#building-the-tsv-utilities-with-lto)
   * [Additional options](#additional-options)
+  * [LDC command lines](#ldc-command-lines)
 
 ## About Link Time Optimization (LTO)
 
@@ -110,7 +111,7 @@ The `LDC_LTO=thin|full` parameter can also be combined with `LDC_BUILD_RUNTIME=1
 
 It is also possible to turn off LTO on macOS builds. For this use `LDC_LTO=off`.
 
-## LDC commands
+## LDC command lines
 
 The `make` commands shown above display the exact LDC command lines used. The examples below show the command lines for building a simple `helloworld` program with LTO enabled. See the [LDC documentation](https://github.com/ldc-developers/ldc) for up-to-date details.
 
