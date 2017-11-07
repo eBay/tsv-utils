@@ -7,7 +7,7 @@ This page provides instruction for building the TSV utilities from source code u
 Contents:
 
   * [About Link Time Optimization (LTO)](#about-link-time-optimization-lto)
-  * [Building the TSV utilities with LTO](#building-the-tsv-utilities-with-LTO)
+  * [Building the TSV utilities with LTO](#building-the-tsv-utilities-with-lto)
   * [Additional options](#additional-options)
 
 ## About Link Time Optimization (LTO)
@@ -102,9 +102,9 @@ $ make test-nobuild
 
 This is only applicable to Linux builds, and has only been tested on Ubuntu. On Ubuntu, release 16.04 or later is required.
 
-### Choosing between thin and full LTO builds
+### Choosing between thin and full LTO
 
-The makefile default settings choose between "thin" and "full" LTO builds based on the platform. At present, "thin" is used on macOS, "full" is used on Linux uses "full". This is based on the author's configuration testing. At the time this was written (LDC 1.5.0, TSV Utilities 1.1.15), issues have surfaced in other configurations. These issues tend to be complex, involving a combination of LDC, LLVM, and the system linkers. These are likely to be fixed in future releases, but for now the default configurations are recommended. These problems surface primarily when building both D libraries and application code using LTO (`LDC_BUILD_RUNTIME=1`). Building the application code alone works fine in most configurations. For this, use `LDC_LTO=thin` or `LDC_LTO=full`, without specifying the `LDC_BUILD_RUNTIME` parameter.
+The makefile default settings choose between *thin* and *full* LTO builds based on the platform. At present, *thin* is used on macOS, *full* is used on Linux. This is based on the author's configuration testing. At the time this was written (LDC 1.5.0, TSV Utilities 1.1.15), issues have surfaced with other choices. These issues tend to be complex, involving a combination of LDC, LLVM, and the system linkers. These are likely to be fixed in future releases, but for now the default configurations are recommended. These problems surface primarily when building both D libraries and application code using LTO (`LDC_BUILD_RUNTIME=1`). Building with LTO applied to the application code alone works fine in the configurations tested. For this, use `LDC_LTO=thin` or `LDC_LTO=full`, without specifying the `LDC_BUILD_RUNTIME` parameter.
 
 The `LDC_LTO=thin|full` parameter can also be combined with `LDC_BUILD_RUNTIME=1` to set the thin/full type when building the D libraries with LTO.
 
