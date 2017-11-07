@@ -2,9 +2,11 @@ _Visit the [main page](../README.md)_
 
 # Building with Link Time Optimization
 
-This page provides instruction for building the TSV utilities from source code using Link Time Optimization. Contents:
+This page provides instruction for building the TSV utilities from source code using Link Time Optimization.
 
-  * [About Link Time Optimization (LTO)](about-link-time-optimization-lto)
+Contents:
+
+  * [About Link Time Optimization (LTO)](#about-link-time-optimization-lto)
   * [Building the TSV utilities with LTO](#building-the-tsv-utilities-with-LTO)
   * [Additional options](#additional-options)
 
@@ -12,13 +14,13 @@ This page provides instruction for building the TSV utilities from source code u
 
 Link Time Optimization is an approach to whole program optimization that defers many optimizations to link-time. LDC, the LLVM-based D compiler, supports Link Time Optimization via LLVM's LTO.
 
-When LTO is used, the compiler generates an intermediate representation rather than machine code. In LLVM's case, LLVM bitcode. This bitcode is saved in `.o` files in place of native machine code. At link time the linker calls back into LLVM plugin modules that optimize code generation across the entire program. This enables optimization that crosses function and module boundaries.
+When LTO is used, the compiler generates an intermediate representation rather than machine code. In LLVM's case, LLVM bitcode. This bitcode is saved in `.o` files in place of native machine code. At link time the linker calls back into LLVM plugin modules that optimize code generation across the entire program. This enables optimizations that cross function and module boundaries.
 
-This is a powerful technique, but involves more complex cooperation between compiler and linker than the traditional compile-link cycle. Due to this complexity, it is only recently that LTO has started becoming widely supported by software development toolchains.
+This is a powerful technique, but involves more complex cooperation between compiler and linker than the traditional compile-link cycle. It is only recently that LTO has started to become widely supported by software development toolchains.
 
 LDC has supported LTO for several releases, however, only macOS was fully supported out-of-the-box. With the LDC 1.5.0 release, LTO is now available out-of-the-box on both Linux and macOS. Windows LTO support is in progress.
 
-A valuable enhancement introduced in LDC 1.5.0 is support for compiling the D runtime library and standard library (Phobos) with LTO. This enables interprocedural optimizations spanning both D libraries and the application. For the TSV utilities this produces materially faster executables.
+A valuable enhancement introduced in LDC 1.5.0 is support for compiling the D runtime library and standard library (Phobos) with LTO. This enables interprocedural optimizations spanning both D libraries and application code. For the TSV utilities this produces materially faster executables.
 
 Compiling the D libraries with LTO is done using the `ldc-build-runtime` tool, included with the LDC 1.5.0 release. This tool downloads the source code for the D libraries and compiles it with LTO enabled. These LTO compiled libraries are included on the `ldc2` compile/link command when building the application. Applications can also be built compiling just the application code with LTO, linking with the static versions of the D libraries shipped with LDC.
 
@@ -28,10 +30,10 @@ There are two different forms of LTO available: Full and Thin. To build the TSV 
 
 The pre-built binaries available from the [releases page](https://github.com/eBay/tsv-utils-dlang/releases) are compiled with LTO for both D libraries and the TSV utilities code. This is not enabled by default when building from source code. The reason is simple: LTO is still an early stage technology. Testing on a wider variety of platforms is needed before making it the default.
 
-However, LTO builds are enabled by setting makefile parameters. Testing with the built-in test suite should provide confidence in the resulting applications. The TSV utilities makefile takes care of invoking both `ldc-build-runtime` and `ldc2` with the necessary parameters.
+However, LTO builds can be enabled by setting makefile parameters. Testing with the built-in test suite should provide confidence in the resulting applications. The TSV utilities makefile takes care of invoking both `ldc-build-runtime` and `ldc2` with the necessary parameters.
 
 **Prerequisites:**
-  * LDC 1.5.0 or later. See the project [README](https://github.com/ldc-developers/ldc/blob/master/README.md) for installation instructions.
+  * LDC 1.5.0 or later. See the LDC project [README](https://github.com/ldc-developers/ldc/blob/master/README.md) for installation instructions.
   * TSV utilities source code, 1.15.0-beta3 or later
   * Linux or macOS. macOS requires Xcode 9.0.1 or later.
 
@@ -53,7 +55,7 @@ $ dub fetch tsv-utils-dlang --cache=local
 $ cd tsv-utils-dlang-1.1.15
 ```
 
-Via the source from the [releases page](https://github.com/eBay/tsv-utils-dlang/releases) (replace `1.1.15` with the latest version):
+Via the source from the GitHub [releases page](https://github.com/eBay/tsv-utils-dlang/releases) (replace `1.1.15` with the latest version):
 
 ```
 $ curl -L https://github.com/eBay/tsv-utils-dlang/archive/v1.1.15.tar.gz | tar xz
@@ -62,14 +64,12 @@ $ cd tsv-utils-dlang-1.1.15/tsv-utils-dlang
 
 **Build with LTO enabled:**
 
-Using LTO for D libraries and the TSV utilities application:
-
 ```
 $ make DCOMPILER=ldc2 LDC_BUILD_RUNTIME=1
 $ make test-nobuild
 ```
 
-The build should be good if the tests succeed.
+The above command builds with LTO on both the D libraries and the TSV utilities code. The build should be good if the tests succeed.
 
 ## Additional options
 
@@ -93,20 +93,18 @@ $ make test-nobuild
 
 ### Statically linking the C runtime library on Linux builds
 
-The prebuilt linux binaries statically link the C runtime library. This increases portability at the expense of increased binary sizes. The above instructions dynamically link the static library. To use static linking, add `DFLAGS=-static` to the build lines, as follows:
+The prebuilt Linux binaries statically link the C runtime library. This increases portability at the expense of increased binary sizes. The earlier instructions dynamically link the C runtime library. To use static linking, add `DFLAGS=-static` to the build lines, as follows:
 
 ```
-$ # LTO for D libraries and application
 $ make DCOMPILER=ldc2 LDC_BUILD_RUNTIME=1 DFLAGS=-static
-$ # LTO for application code only
-$ make DCOMPILER=ldc2 LDC_LTO=default DFLAGS=-static
+$ make test-nobuild
 ```
 
-This is only applicable to Linux builds, and has only been tested on Ubuntu. On Ubuntu, use release 16.04. Issues have been observed with Ubuntu 14.04.
+This is only applicable to Linux builds, and has only been tested on Ubuntu. On Ubuntu, release 16.04 or later is required.
 
 ### Choosing between thin and full LTO builds
 
-The makefile default settings choose between "thin" and "full" LTO builds based on the platform. At present, "thin" is used on macOS, "full" is used on Linux uses "full". This is based on the author's configuration testing. At the time this was written (LDC 1.5.0, TSV Utilities 1.1.15), bugs have surfaced in other configurations. These issues tend to be complex, involving a combination of LDC, LLVM, and the system linkers. These are likely to be fixed in future releases, but for now the default configurations are recommended. These bugs surface primarily when building both D libraries and application code using LTO (`LDC_BUILD_RUNTIME=1`). Building the application code alone works fine in most configurations. For this, use `LDC_LTO=thin` or `LDC_LTO=full`, without specifying the `LDC_BUILD_RUNTIME` parameter.
+The makefile default settings choose between "thin" and "full" LTO builds based on the platform. At present, "thin" is used on macOS, "full" is used on Linux uses "full". This is based on the author's configuration testing. At the time this was written (LDC 1.5.0, TSV Utilities 1.1.15), issues have surfaced in other configurations. These issues tend to be complex, involving a combination of LDC, LLVM, and the system linkers. These are likely to be fixed in future releases, but for now the default configurations are recommended. These problems surface primarily when building both D libraries and application code using LTO (`LDC_BUILD_RUNTIME=1`). Building the application code alone works fine in most configurations. For this, use `LDC_LTO=thin` or `LDC_LTO=full`, without specifying the `LDC_BUILD_RUNTIME` parameter.
 
 The `LDC_LTO=thin|full` parameter can also be combined with `LDC_BUILD_RUNTIME=1` to set the thin/full type when building the D libraries with LTO.
 
