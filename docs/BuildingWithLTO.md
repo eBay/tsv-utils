@@ -118,15 +118,13 @@ There are two steps for building with LTO. The first is downloading and building
 
 **Download and build the D library code:**
 
+*Build with Thin LTO:*
 ```
-$ # Build with Thin LTO
 $ ldc-build-runtime --reset --dFlags="-flto=thin" BUILD_SHARED_LIBS=OFF
-
 ```
 
+*Build with Full LTO:*
 ```
-
-$ # Build with Full LTO
 $ ldc-build-runtime --reset --dFlags="-flto=full" BUILD_SHARED_LIBS=OFF
 ```
 
