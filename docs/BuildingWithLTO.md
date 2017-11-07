@@ -6,7 +6,7 @@ This page provides instruction for building the TSV utilities from source code u
 
 Contents:
 
-  * [About Link Time Optimization (LTO)](#about-link-time-optimization-lto)
+  * [About Link Time Optimization](#about-link-time-optimization-lto)
   * [Building the TSV utilities with LTO](#building-the-tsv-utilities-with-lto)
   * [Additional options](#additional-options)
 
@@ -110,9 +110,9 @@ The `LDC_LTO=thin|full` parameter can also be combined with `LDC_BUILD_RUNTIME=1
 
 It is also possible to turn off LTO on macOS builds. For this use `LDC_LTO=off`.
 
-### LDC compile/build command line options
+## LDC commands
 
-The `make` commands shown above display the exact LDC command lines used. The examples below show the command lines for building a simple `helloworld` program with LTO enabled. See the [LDC documentation](https://github.com/ldc-developers/ldc) for additional and up-to-date details.
+The `make` commands shown above display the exact LDC command lines used. The examples below show the command lines for building a simple `helloworld` program with LTO enabled. See the [LDC documentation](https://github.com/ldc-developers/ldc) for up-to-date details.
 
 There are two steps for building with LTO. The first is downloading and building the D library code, the second is to reference the LTO built library from the application build command.
 
