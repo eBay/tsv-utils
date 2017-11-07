@@ -150,6 +150,6 @@ The main difference between Linux and macOS is that an alternate (non-default) l
 Any other typical compiler options can be specified as well. For example, a Linux release mode build might be specified as follows:
 
 ```
-$ # Full LTO build
+$ # Full LTO release mode build
 $ ldc2 -O -release -flto=full -linker=gold -L-L./ldc-build-runtime.tmp/lib helloworld.d
 ```
