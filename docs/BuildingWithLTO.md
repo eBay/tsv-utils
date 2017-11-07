@@ -126,7 +126,7 @@ $ # Build with Full LTO
 $ ldc-build-runtime --reset --dFlags="-flto=full" BUILD_SHARED_LIBS=OFF
 ```
 
-This builds in the `ldc-build-runtime.tmp` directory. The `--reset` option avoids downloading the source code if it's already present, and instead does only the build. This is useful when switching between *thin* and *full* builds.
+This builds in the `ldc-build-runtime.tmp` directory. The `--reset` option avoids downloading the source code if it's already present, and instead does only the build. This is useful when switching between This and Full builds.
 
 Note that the Thin/Full choice must match the command line used to build the application.
 
