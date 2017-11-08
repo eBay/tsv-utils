@@ -113,7 +113,7 @@ It is also possible to turn off LTO on macOS builds. For this use `LDC_LTO=off`.
 
 ## LDC command lines
 
-The `make` commands shown above display the exact LDC command lines used. The examples below show the command lines for building a simple `helloworld` program with LTO enabled. See the [LDC documentation](https://github.com/ldc-developers/ldc) for up-to-date details.
+Running the `make` commands shown above will display the LDC command lines. They are a bit lengthy though. The examples below show the command lines for building a simple `helloworld` program with LTO enabled. See the [LDC documentation](https://github.com/ldc-developers/ldc) for up-to-date details.
 
 There are two steps for building with LTO. The first is downloading and building the D library code, the second is to reference the LTO built library from the application build command.
 
