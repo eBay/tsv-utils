@@ -15,7 +15,7 @@ Contents:
 
 Link Time Optimization is an approach to whole program optimization that performs additional optimizations during link-time that are impossible to do at compile time when only a part of the program is available. LDC, the LLVM-based D compiler, supports Link Time Optimization via LLVM's LTO.
 
-When LTO is used, the compiler saves its intermediate representation code in `.o` files rather than machine code. In LLVM's case, LLVM bitcode. At link time the linker calls back into LLVM plugin modules that optimize code generation across the entire program. This enables optimizations that cross function and module boundaries (effectively, it's as if your whole program, including external libraries, were all in the same `.d` file).
+When LTO is used, the compiler saves its intermediate representation code in `.o` files rather than machine code. In LLVM's case, LLVM bitcode. At link time the linker calls back into LLVM plugin modules that optimize code generation across the entire program. This enables optimizations that cross function and module boundaries (effectively, it's as if your whole program, including external libraries, were all in the same `.d` file). Cross-module inlining is an example of an optimization that can often be done quite effectively via LTO.
 
 This is a powerful technique, but involves more complex cooperation between compiler and linker than the traditional compile-link cycle. It is only recently that LTO has started to become widely supported by software development toolchains.
 
