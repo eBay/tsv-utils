@@ -13,9 +13,9 @@ Contents:
 
 ## About Link Time Optimization (LTO)
 
-Link Time Optimization is an approach to whole program optimization that defers many optimizations to link-time. LDC, the LLVM-based D compiler, supports Link Time Optimization via LLVM's LTO.
+Link Time Optimization is an approach to whole program optimization that performs additional optimizations during link-time that are impossible to do at compile time when only a part of the program is available. LDC, the LLVM-based D compiler, supports Link Time Optimization via LLVM's LTO.
 
-When LTO is used, the compiler generates an intermediate representation rather than machine code. In LLVM's case, LLVM bitcode. This bitcode is saved in `.o` files in place of native machine code. At link time the linker calls back into LLVM plugin modules that optimize code generation across the entire program. This enables optimizations that cross function and module boundaries.
+When LTO is used, the compiler saves its intermediate representation code in `.o` files rather than machine code. In LLVM's case, LLVM bitcode. At link time the linker calls back into LLVM plugin modules that optimize code generation across the entire program. This enables optimizations that cross function and module boundaries (effectively, it's as if your whole program, including external libraries, were all in the same `.d` file).
 
 This is a powerful technique, but involves more complex cooperation between compiler and linker than the traditional compile-link cycle. It is only recently that LTO has started to become widely supported by software development toolchains.
 
@@ -23,7 +23,7 @@ LDC has supported LTO for several releases, however, only macOS was fully suppor
 
 A valuable enhancement introduced in LDC 1.5.0 is support for compiling the D runtime library and standard library (Phobos) with LTO. This enables interprocedural optimizations spanning both D libraries and application code. For the TSV utilities this produces materially faster executables.
 
-Compiling the D libraries with LTO is done using the `ldc-build-runtime` tool, included with the LDC 1.5.0 release. This tool downloads the source code for the D libraries and compiles it with LTO enabled. These LTO compiled libraries are included on the `ldc2` compile/link command when building the application. Applications can also be built compiling just the application code with LTO, linking with the static versions of the D libraries shipped with LDC.
+Compiling the D standard libraries with LTO is done using the `ldc-build-runtime` tool, included with the LDC 1.5.0 release. This tool downloads the source code for the D standard libraries and compiles it with user-specified compile flags. The `ldc-build-runtime` tool makes it easy to rebuild the D standard libraries with LTO enabled. These LTO compiled libraries can be included on the `ldc2` compile/link command when building the application for maximum LTO opportunities. Applications can also be built compiling just the application code with LTO, linking with the static versions of the D standard libraries shipped with LDC.
 
 There are two different forms of LTO available: Full and Thin. To build the TSV utilities with LTO is sufficient to know that they exist and are incompatible with each other. For information on the differences see the LLVM blog post [ThinLTO: Scalable and Incremental LTO](http://blog.llvm.org/2016/06/thinlto-scalable-and-incremental-lto.html).
 
