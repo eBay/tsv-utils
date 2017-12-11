@@ -3477,7 +3477,7 @@ class MissingCountOperator : SingleFieldOperator
     this(size_t fieldIndex, MissingFieldPolicy missingPolicy)
     {
         _globalMissingPolicy = missingPolicy;
-        super("unique_count", fieldIndex, new MissingFieldPolicy(false, ""));
+        super("missing_count", fieldIndex, new MissingFieldPolicy(false, ""));
     }
 
     final override SingleFieldCalculator makeCalculator()
@@ -3517,29 +3517,29 @@ unittest // MissingCount
     auto col2File = [["abc", ""], ["", ""], ["def", ""]];
     auto col3File = [["", "1", "a"], ["2.0", "", "1"], ["2", "", ""]];
 
-    testSingleFieldOperator!MissingCountOperator(col1File, 0, "unique_count", ["0", "0", "0", "1", "1", "2"]);
-    testSingleFieldOperator!MissingCountOperator(col2File, 0, "unique_count", ["0", "0", "1", "1"]);
-    testSingleFieldOperator!MissingCountOperator(col2File, 1, "unique_count", ["0", "1", "2", "3"]);
-    testSingleFieldOperator!MissingCountOperator(col3File, 0, "unique_count", ["0", "1", "1", "1"]);
-    testSingleFieldOperator!MissingCountOperator(col3File, 1, "unique_count", ["0", "0", "1", "2"]);
-    testSingleFieldOperator!MissingCountOperator(col3File, 2, "unique_count", ["0", "0", "0", "1"]);
+    testSingleFieldOperator!MissingCountOperator(col1File, 0, "missing_count", ["0", "0", "0", "1", "1", "2"]);
+    testSingleFieldOperator!MissingCountOperator(col2File, 0, "missing_count", ["0", "0", "1", "1"]);
+    testSingleFieldOperator!MissingCountOperator(col2File, 1, "missing_count", ["0", "1", "2", "3"]);
+    testSingleFieldOperator!MissingCountOperator(col3File, 0, "missing_count", ["0", "1", "1", "1"]);
+    testSingleFieldOperator!MissingCountOperator(col3File, 1, "missing_count", ["0", "0", "1", "2"]);
+    testSingleFieldOperator!MissingCountOperator(col3File, 2, "missing_count", ["0", "0", "0", "1"]);
 
     auto excludeMissing = new MissingFieldPolicy(true, "");
     auto replaceMissing = new MissingFieldPolicy(false, "X");
 
-    testSingleFieldOperator!MissingCountOperator(col1File, 0, "unique_count", ["0", "0", "0", "1", "1", "2"], excludeMissing);
-    testSingleFieldOperator!MissingCountOperator(col2File, 0, "unique_count", ["0", "0", "1", "1"], excludeMissing);
-    testSingleFieldOperator!MissingCountOperator(col2File, 1, "unique_count", ["0", "1", "2", "3"], excludeMissing);
-    testSingleFieldOperator!MissingCountOperator(col3File, 0, "unique_count", ["0", "1", "1", "1"], excludeMissing);
-    testSingleFieldOperator!MissingCountOperator(col3File, 1, "unique_count", ["0", "0", "1", "2"], excludeMissing);
-    testSingleFieldOperator!MissingCountOperator(col3File, 2, "unique_count", ["0", "0", "0", "1"], excludeMissing);
+    testSingleFieldOperator!MissingCountOperator(col1File, 0, "missing_count", ["0", "0", "0", "1", "1", "2"], excludeMissing);
+    testSingleFieldOperator!MissingCountOperator(col2File, 0, "missing_count", ["0", "0", "1", "1"], excludeMissing);
+    testSingleFieldOperator!MissingCountOperator(col2File, 1, "missing_count", ["0", "1", "2", "3"], excludeMissing);
+    testSingleFieldOperator!MissingCountOperator(col3File, 0, "missing_count", ["0", "1", "1", "1"], excludeMissing);
+    testSingleFieldOperator!MissingCountOperator(col3File, 1, "missing_count", ["0", "0", "1", "2"], excludeMissing);
+    testSingleFieldOperator!MissingCountOperator(col3File, 2, "missing_count", ["0", "0", "0", "1"], excludeMissing);
 
-    testSingleFieldOperator!MissingCountOperator(col1File, 0, "unique_count", ["0", "0", "0", "1", "1", "2"], replaceMissing);
-    testSingleFieldOperator!MissingCountOperator(col2File, 0, "unique_count", ["0", "0", "1", "1"], replaceMissing);
-    testSingleFieldOperator!MissingCountOperator(col2File, 1, "unique_count", ["0", "1", "2", "3"], replaceMissing);
-    testSingleFieldOperator!MissingCountOperator(col3File, 0, "unique_count", ["0", "1", "1", "1"], replaceMissing);
-    testSingleFieldOperator!MissingCountOperator(col3File, 1, "unique_count", ["0", "0", "1", "2"], replaceMissing);
-    testSingleFieldOperator!MissingCountOperator(col3File, 2, "unique_count", ["0", "0", "0", "1"], replaceMissing);
+    testSingleFieldOperator!MissingCountOperator(col1File, 0, "missing_count", ["0", "0", "0", "1", "1", "2"], replaceMissing);
+    testSingleFieldOperator!MissingCountOperator(col2File, 0, "missing_count", ["0", "0", "1", "1"], replaceMissing);
+    testSingleFieldOperator!MissingCountOperator(col2File, 1, "missing_count", ["0", "1", "2", "3"], replaceMissing);
+    testSingleFieldOperator!MissingCountOperator(col3File, 0, "missing_count", ["0", "1", "1", "1"], replaceMissing);
+    testSingleFieldOperator!MissingCountOperator(col3File, 1, "missing_count", ["0", "0", "1", "2"], replaceMissing);
+    testSingleFieldOperator!MissingCountOperator(col3File, 2, "missing_count", ["0", "0", "0", "1"], replaceMissing);
 }
 
 /* NotMissingCountOperator generates the number of not-missing values. This overrides
@@ -3552,7 +3552,7 @@ class NotMissingCountOperator : SingleFieldOperator
     this(size_t fieldIndex, MissingFieldPolicy missingPolicy)
     {
         _globalMissingPolicy = missingPolicy;
-        super("unique_count", fieldIndex, new MissingFieldPolicy(false, ""));
+        super("not_missing_count", fieldIndex, new MissingFieldPolicy(false, ""));
     }
 
     final override SingleFieldCalculator makeCalculator()
@@ -3592,29 +3592,29 @@ unittest // NotMissingCount
     auto col2File = [["abc", ""], ["", ""], ["def", ""]];
     auto col3File = [["", "1", "a"], ["2.0", "", "1"], ["2", "", ""]];
 
-    testSingleFieldOperator!NotMissingCountOperator(col1File, 0, "unique_count", ["0", "1", "2", "2", "3", "3"]);
-    testSingleFieldOperator!NotMissingCountOperator(col2File, 0, "unique_count", ["0", "1", "1", "2"]);
-    testSingleFieldOperator!NotMissingCountOperator(col2File, 1, "unique_count", ["0", "0", "0", "0"]);
-    testSingleFieldOperator!NotMissingCountOperator(col3File, 0, "unique_count", ["0", "0", "1", "2"]);
-    testSingleFieldOperator!NotMissingCountOperator(col3File, 1, "unique_count", ["0", "1", "1", "1"]);
-    testSingleFieldOperator!NotMissingCountOperator(col3File, 2, "unique_count", ["0", "1", "2", "2"]);
+    testSingleFieldOperator!NotMissingCountOperator(col1File, 0, "not_missing_count", ["0", "1", "2", "2", "3", "3"]);
+    testSingleFieldOperator!NotMissingCountOperator(col2File, 0, "not_missing_count", ["0", "1", "1", "2"]);
+    testSingleFieldOperator!NotMissingCountOperator(col2File, 1, "not_missing_count", ["0", "0", "0", "0"]);
+    testSingleFieldOperator!NotMissingCountOperator(col3File, 0, "not_missing_count", ["0", "0", "1", "2"]);
+    testSingleFieldOperator!NotMissingCountOperator(col3File, 1, "not_missing_count", ["0", "1", "1", "1"]);
+    testSingleFieldOperator!NotMissingCountOperator(col3File, 2, "not_missing_count", ["0", "1", "2", "2"]);
 
     auto excludeMissing = new MissingFieldPolicy(true, "");
     auto replaceMissing = new MissingFieldPolicy(false, "X");
 
-    testSingleFieldOperator!NotMissingCountOperator(col1File, 0, "unique_count", ["0", "1", "2", "2", "3", "3"], excludeMissing);
-    testSingleFieldOperator!NotMissingCountOperator(col2File, 0, "unique_count", ["0", "1", "1", "2"], excludeMissing);
-    testSingleFieldOperator!NotMissingCountOperator(col2File, 1, "unique_count", ["0", "0", "0", "0"], excludeMissing);
-    testSingleFieldOperator!NotMissingCountOperator(col3File, 0, "unique_count", ["0", "0", "1", "2"], excludeMissing);
-    testSingleFieldOperator!NotMissingCountOperator(col3File, 1, "unique_count", ["0", "1", "1", "1"], excludeMissing);
-    testSingleFieldOperator!NotMissingCountOperator(col3File, 2, "unique_count", ["0", "1", "2", "2"], excludeMissing);
+    testSingleFieldOperator!NotMissingCountOperator(col1File, 0, "not_missing_count", ["0", "1", "2", "2", "3", "3"], excludeMissing);
+    testSingleFieldOperator!NotMissingCountOperator(col2File, 0, "not_missing_count", ["0", "1", "1", "2"], excludeMissing);
+    testSingleFieldOperator!NotMissingCountOperator(col2File, 1, "not_missing_count", ["0", "0", "0", "0"], excludeMissing);
+    testSingleFieldOperator!NotMissingCountOperator(col3File, 0, "not_missing_count", ["0", "0", "1", "2"], excludeMissing);
+    testSingleFieldOperator!NotMissingCountOperator(col3File, 1, "not_missing_count", ["0", "1", "1", "1"], excludeMissing);
+    testSingleFieldOperator!NotMissingCountOperator(col3File, 2, "not_missing_count", ["0", "1", "2", "2"], excludeMissing);
 
-    testSingleFieldOperator!NotMissingCountOperator(col1File, 0, "unique_count", ["0", "1", "2", "2", "3", "3"], replaceMissing);
-    testSingleFieldOperator!NotMissingCountOperator(col2File, 0, "unique_count", ["0", "1", "1", "2"], replaceMissing);
-    testSingleFieldOperator!NotMissingCountOperator(col2File, 1, "unique_count", ["0", "0", "0", "0"], replaceMissing);
-    testSingleFieldOperator!NotMissingCountOperator(col3File, 0, "unique_count", ["0", "0", "1", "2"], replaceMissing);
-    testSingleFieldOperator!NotMissingCountOperator(col3File, 1, "unique_count", ["0", "1", "1", "1"], replaceMissing);
-    testSingleFieldOperator!NotMissingCountOperator(col3File, 2, "unique_count", ["0", "1", "2", "2"], replaceMissing);
+    testSingleFieldOperator!NotMissingCountOperator(col1File, 0, "not_missing_count", ["0", "1", "2", "2", "3", "3"], replaceMissing);
+    testSingleFieldOperator!NotMissingCountOperator(col2File, 0, "not_missing_count", ["0", "1", "1", "2"], replaceMissing);
+    testSingleFieldOperator!NotMissingCountOperator(col2File, 1, "not_missing_count", ["0", "0", "0", "0"], replaceMissing);
+    testSingleFieldOperator!NotMissingCountOperator(col3File, 0, "not_missing_count", ["0", "0", "1", "2"], replaceMissing);
+    testSingleFieldOperator!NotMissingCountOperator(col3File, 1, "not_missing_count", ["0", "1", "1", "1"], replaceMissing);
+    testSingleFieldOperator!NotMissingCountOperator(col3File, 2, "not_missing_count", ["0", "1", "2", "2"], replaceMissing);
 }
 
 /* ModeOperator outputs the most frequent value seen. In the event of a tie, the
