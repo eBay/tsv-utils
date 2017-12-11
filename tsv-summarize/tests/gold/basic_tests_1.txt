@@ -6,7 +6,7 @@ color	color_first	color_last	length_min	length_max	length_range	length_sum	lengt
 red	red	green	7.4	16	8.6	78.4	11	11	3	9.61	3.1	blue	3	red|red|blue|green|blue|blue|green	red|blue|green
 
 ====[tsv-summarize --header --missing-count 1 --not-missing-count 1 input_1field_a.tsv]====
-size_unique_count	size_unique_count
+size_missing_count	size_not_missing_count
 1	5
 
 ====[tsv-summarize --header --count --min 3,4,5 --max 3,4,5 input_5field_a.tsv]====
