@@ -5,8 +5,8 @@
 # examples. The 'common' subdirectory makefile also includes this, but has it's own
 # makefile targets.
 #
-# This makefile can be customized by setting the DCOMPILER, DFLAGS, LDC_LTO, and
-# LDC_BUILD_RUNTIME variables. These can also be set on the make command line.
+# This makefile can be customized by setting the DCOMPILER, DFLAGS, LDC_LTO,
+# LDC_BUILD_RUNTIME, and LDC_PGO variables. These can also be set on the make command line.
 #
 # - DCOMPILER - path to the D compiler to use. Should include one of 'dmd', 'ldc', or
 #   'gdc' in the compiler name.
@@ -16,6 +16,10 @@
 # - LDC_BUILD_RUNTIME - Used to enable building the druntime and phobos runtime libraries
 #   using LTO. If set to '1', builds the runtimes using the 'ldc-build-runtime' tool.
 #   Otherwise is expected to be a path to the tool. Available starting with ldc 1.5.
+# - LDC_PGO - If set to '1', uses the file at ./profile_data/app.profdata to profile
+#   instrumented profile data. At present PGO is only enabled for LDC release builds
+#   where LDC_BUILD_RUNTIME is also used. Normally this variable is set in the makefile
+#   of tools that have been setup for LTO.
 #
 # Current LTO defaults when using LDC:
 # - OS X: thin
@@ -30,8 +34,9 @@ DCOMPILER =
 DFLAGS =
 LDC_LTO =
 LDC_BUILD_RUNTIME =
+LDC_PGO =
 
-## Directory paths
+## Directory and file paths
 
 project_dir ?= $(realpath ..)
 common_srcdir = $(project_dir)/common/src
@@ -42,6 +47,13 @@ ldc_runtime_full_dir = $(project_dir)/ldc-build-runtime.full
 objdir = obj
 bindir = bin
 testsdir = tests
+ldc_profile_data_dir = profile_data
+ldc_profdata_file = $(ldc_profile_data_dir)/app.profdata
+ldc_profdata_collect_prog = collect_profile_data.sh
+
+# This is set to $(ldc_profdata_file) if the app is being built with
+# PGO. It is intended as a make target.
+app_ldc_profdata_file =
 
 OS_NAME := $(shell uname -s)
 
@@ -78,27 +90,30 @@ endif
 ifneq ($(compiler_type),dmd)
 	ifneq ($(compiler_type),ldc)
 		ifneq ($(compiler_type),gdc)
-			$(error "Internal error. Invalid compiler_type value: '$(compiler_type)'. Must be 'dmd', 'ldc', or 'gdc'.")
+                        ## Note: Spaces not tabs on the error function line.
+                        $(error "Internal error. Invalid compiler_type value: '$(compiler_type)'. Must be 'dmd', 'ldc', or 'gdc'.")
 		endif
 	endif
 endif
 
 ifneq ($(compiler_type),ldc)
 	ifneq ($(LDC_LTO),)
-		$(warning "Non-LDC compiler detected ($(compiler_type)). Ignoring LDC_LTO parameter: '$(LDC_LTO)'.")
+                $(error "Non-LDC compiler detected ($(compiler_type)) and LDC_LTO parameter set: '$(LDC_LTO)'.")
 	endif
 	ifneq ($(LDC_BUILD_RUNTIME),)
-		$(warning "Non-LDC compiler detected ($(compiler_type)). Ignoring LDC_BUILD_RUNTIME parameter: '$(LDC_BUILD_RUNTIME)'.")
+                $(error "Non-LDC compiler detected ($(compiler_type)) and LDC_BUILD_RUNTIME parameter set: '$(LDC_BUILD_RUNTIME)'.")
 	endif
 endif
 
 ## Variables used for LDC LTO. These get updated when using the LDC compiler
 ##   ldc_build_runtime_tool - Path to the ldc-build-runtime tool
 ##   ldc_build_runtime_dir - Directory for the runtime (ldc-build-runtime.[thin|full])
-##   ldc_build_runtime_dflags = Flags passed to ldc-build-runtime tool. eg. -flto=[thin|full]
+##   ldc_build_runtime_dflags - Flags passed to ldc-build-runtime tool. eg. -flto=[thin|full]
 ##   lto_option - LTO option passed to ldc (-flto=[thin|full).
 ##   lto_release_option - LTO option passed to ldc (-flto=[thin|full) on release builds.
 ##   lto_link_flags - Additional linker flags to pass to compiler
+##   pgo_link_flags - Additional linker flags to pass to the compiler.
+##   pgo_generate_link_flags - Additional linker flags when generating an instrumented build
 
 ldc_build_runtime_tool =
 ldc_build_runtime_dir = ldc-build-runtime.off
@@ -106,6 +121,8 @@ ldc_build_runtime_dflags =
 lto_option =
 lto_release_option =
 lto_link_flags =
+pgo_link_flags =
+pgo_generate_link_flags =
 
 ## If using LDC, setup all the parameters
 
@@ -119,7 +136,7 @@ ifeq ($(compiler_type),ldc)
 		ifneq ($(LDC_LTO),thin)
 			ifneq ($(LDC_LTO),full)
 				ifneq ($(LDC_LTO),off)
-					$(error "Invalid LDC_LTO value: '$(LDC_LTO)'. Must be 'thin', 'full', 'off', 'default', or empty.")
+                                    $(error "Invalid LDC_LTO value: '$(LDC_LTO)'. Must be 'thin', 'full', 'off', 'default', or empty.")
 				endif
 			endif
 		endif
@@ -127,7 +144,7 @@ ifeq ($(compiler_type),ldc)
 
 	ifneq ($(LDC_BUILD_RUNTIME),)
 		ifeq ($(LDC_LTO),off)
-			$(error "LDC_LTO value 'off' inconsistent with LDC_BUILD_RUNTIME value '$(LDC_BUILD_RUNTIME)'")
+                     $(error "LDC_LTO value 'off' inconsistent with LDC_BUILD_RUNTIME value '$(LDC_BUILD_RUNTIME)'")
 		endif
 	endif
 
@@ -147,6 +164,17 @@ ifeq ($(compiler_type),ldc)
 				override LDC_LTO = full
 			endif
 		endif
+		ifneq ($(LDC_PGO),)
+			ifneq ($(LDC_PGO),1)
+                                $(error "Invalid LDC_PGO flag: '$(LDC_PGO). Must be '1' or not set.")
+			else ifeq ($(APP_USES_LDC_PGO),1)
+				pgo_link_flags = -fprofile-instr-use=$(ldc_profdata_file)
+				pgo_generate_link_flags = -fprofile-instr-generate=profile.%p.raw
+				app_ldc_profdata_file = $(ldc_profdata_file)
+			else ifneq ($(APP_USES_LDC_PGO),)
+                                $(error "Invalid APP_USES_LDC_PGO flag: '$(APP_USES_LDC_PGO). Must be '1' or not set. (Usually set in makefile.)")
+			endif
+		endif
 	else ifeq ($(LDC_LTO),default)
 		ifeq ($(OS_NAME),Darwin)
 			override LDC_LTO = thin
@@ -160,7 +188,7 @@ ifeq ($(compiler_type),ldc)
 	ifneq ($(LDC_LTO),thin)
 		ifneq ($(LDC_LTO),full)
 			ifneq ($(LDC_LTO),off)
-				$(error "Internal error. Invalid LDC_LTO value: '$(LDC_LTO)'. Must be 'thin', 'full', or 'off' at this line.")
+                                $(error "Internal error. Invalid LDC_LTO value: '$(LDC_LTO)'. Must be 'thin', 'full', or 'off' at this line.")
 			endif
 		endif
 	endif
@@ -205,6 +233,7 @@ debug_compile_flags_base =
 release_compile_flags_base = -release -O
 debug_link_flags_base =
 release_link_flags_base =
+release_instrumented_link_flags_base =
 
 ifeq ($(compiler_type),dmd)
 	release_compile_flags_base = -release -O -boundscheck=off -inline
@@ -216,11 +245,16 @@ else ifeq ($(compiler_type),ldc)
 		debug_link_flags_base = $(lto_link_flags)
 	endif
 	release_compile_flags_base = -release -O3 -boundscheck=off -singleobj $(lto_release_option)
-	release_link_flags_base = $(lto_link_flags)
+	release_link_flags_base = $(pgo_link_flags) $(lto_link_flags)
+	release_instrumented_link_flags_base = $(pgo_generate_link_flags) $(lto_link_flags)
 endif
 
+##
+## These are the key variables used in makeapp.mk
+###
 debug_flags = $(debug_compile_flags_base) -od$(objdir) $(debug_link_flags_base) $(DFLAGS)
 release_flags = $(release_compile_flags_base) -od$(objdir) $(release_link_flags_base) $(DFLAGS)
+release_instrumented_flags =  $(release_compile_flags_base) -od$(objdir) -d-version=LDC_PROFILE $(release_instrumented_link_flags_base) $(DFLAGS)
 unittest_flags = $(DFLAGS) -unittest -main -run
 codecov_flags = -od$(objdir) $(DFLAGS) -cov
 unittest_codecov_flags = -od$(objdir) $(DFLAGS) -cov -unittest -main -run

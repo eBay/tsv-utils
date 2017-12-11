@@ -43,6 +43,8 @@ help:
 	@echo 'LDC_BUILD_RUNTIME - Enables LDC support for using LTO on the runtime libraries. Use'
 	@echo '    the value 1 to turn on. The value can also be a path to the ldc-build-runtime tool.'
 	@echo 'LDC_LTO - Controls the LDC LTO options. See makedefs.mk for details.'
+	@echo 'LDC_PGO - If set to 1, builds apps with Profile Guided Optimization. Only used for a'
+	@echo '    subset of apps, and only for release builds with LDC_BUILD_RUNTIME turned on.'
 	@echo ''
 
 release: make_subdirs
