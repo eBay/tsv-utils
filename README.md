@@ -211,6 +211,12 @@ There are several ways to obtain the tools: prebuilt binaries; building from sou
 
 Prebuilt binaries are available for Linux and Mac, these can be found on the [Github releases](https://github.com/eBay/tsv-utils-dlang/releases) page. Download and unpack the tar.gz file. Executables are in the `bin` directory. Add the `bin` directory or individual tools to the `PATH` environment variable.
 
+For some distributions, a package can directly be installed:
+
+| Distribution | Command               |
+| ------------ | --------------------- |
+| Arch Linux   | `pacaur -S tsv-utils` (see [`tsv-utils`](https://aur.archlinux.org/packages/tsv-utils/))
+
 ### Build from source files
 
 [Download a D compiler](https://dlang.org/download.html). These tools have been tested with the DMD and LDC compilers, on Mac OSX and Linux. Use DMD version 2.070 or later, LDC version 1.0.0 or later.
