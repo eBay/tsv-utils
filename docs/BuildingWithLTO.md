@@ -32,11 +32,11 @@ There are two different forms of LTO available: Full and Thin. To build the TSV 
 
 ## About Profile Guided Optimization (PGO)
 
-Profile Guided Optimization (PGO) is an approach to optimization based on recording execution patterns of common use cases. Execution behavior data enables better choices for branch prediction, inlining decisions, and other optimizatios.
+Profile Guided Optimization (PGO) is an approach to optimization based on recording typical execution patterns. Execution behavior data enables better choices for branch prediction, inlining decisions, and other optimizations.
 
-There are several ways to gather execution bahavior statistics, the approach used by the TSV utilities is to generate an instrumented build and run it on a number of common inputs. The result of these runs is recorded and passed to the compiler and linker to generate the final executable.
+There are several ways to gather execution behavior statistics, the approach used by the TSV utilities is to generate an instrumented build and run it on common inputs. The result of these runs is recorded and passed to the compiler and linker to generate the final executable.
 
-The TSV utilities build system supports PGO for a couple tools, those showing the most benefit in testing. Currently, PGO is enabled only when also using LTO. The source repository contains everything needed to generate profile data for the build, including data files and scripts invoking the instrumented builds.
+The TSV utilities build system supports PGO for a couple tools, those showing the most benefit. Currently, PGO is enabled only when also using LTO. The source repository contains everything needed to generate profile data for the build, including data files and scripts invoking the instrumented builds.
 
 For a more detailed introduction to PGO see [Profile-Guided Optimization with LDC](https://johanengelen.github.io/ldc/2016/07/15/Profile-Guided-Optimization-with-LDC.html) on Johan Engelen's blog.
 
@@ -92,7 +92,7 @@ $ make DCOMPILER=ldc2 LDC_BUILD_RUNTIME=1 LDC_PGO=1
 $ make test-nobuild
 ```
 
-This is similar to the LTO build, but adds PGO support for those tools that support it. This does add to the build time, as it includes compiling and run an instrumented build. However, builds are still reasonably quick.
+This is similar to the LTO build, but adds PGO support for those tools that support it. This does add to the build time, as it includes compiling and running an instrumented build. Builds are still reasonably quick.
 
 ## Additional options
 
