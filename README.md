@@ -226,7 +226,7 @@ Executables are written to `tsv-utils-dlang/bin`, place this directory or the ex
 
 The makefile supports other typical development tasks such as unit tests and code coverage reports. See [Building and makefile](docs/AboutTheCode.md#building-and-makefile) for more details.
 
-For fastest performance, use LDC with Link Time Optimization enabled (LTO). See [Building with Link Time Optimization](docs/BuildingWithLTO.md) for instructions. The prebuilt binaries are built using LTO, but it must be explicitly enabled when building from source.
+For fastest performance, use LDC with Link Time Optimization enabled (LTO). See [Building with Link Time Optimization](docs/BuildingWithLTO.md) for instructions. The prebuilt binaries are built using LTO, but it must be explicitly enabled when building from source. A few of the tools also support Profile Guided Optimization (PGO), this is also described in [Building with Link Time Optimization](docs/BuildingWithLTO.md).
 
 ### Install using DUB
 

@@ -18,6 +18,14 @@ if [ -e app.profdata ]; then
    rm -f app.profdata
 fi
 
+$prog profile_data_1.tsv -H --lt 3:0 > /dev/null
+$prog profile_data_1.tsv -H --le 2:0 > /dev/null
+$prog profile_data_1.tsv -H --ge 16:0 > /dev/null
+$prog profile_data_1.tsv -H --gt 17:0 > /dev/null
+$prog profile_data_1.tsv -H --lt 8:-1.11 > /dev/null
+$prog profile_data_1.tsv -H --gt 12:10000000 > /dev/null
+$prog profile_data_1.tsv -H --le 19:-10 > /dev/null
+$prog profile_data_1.tsv -H --ge 18:10 > /dev/null
 $prog profile_data_1.tsv -H --gt 6:-55 --lt 9:-0.2 > /dev/null
 $prog profile_data_1.tsv -H --ge 3:0.002 --le 14:0.0005 > /dev/null
 $prog profile_data_1.tsv -H --invert --le 1:2.2 --lt 16:1.11 > /dev/null
