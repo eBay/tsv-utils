@@ -40,6 +40,11 @@ int main(string[] cmdArgs)
     TsvFilterOptions cmdopt;
     auto r = cmdopt.processArgs(cmdArgs);
     if (!r[0]) return r[1];
+    version(LDC_Profile)
+    {
+        import ldc.profile : resetAll;
+        resetAll();
+    }
     try tsvFilter(cmdopt, cmdArgs[1..$]);
     catch (Exception exc)
     {

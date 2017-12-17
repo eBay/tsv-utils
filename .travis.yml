@@ -4,6 +4,7 @@
 #   CODECOV - Runs code coverage
 #   APPLTO=[default|off|thin|full] - make test with the setting
 #   ALLLTO=[default|thin|full] - make test LDC_BUILD_RUNTIME=1 and LTO value
+#   LTOPGO=[default|thin|full] - Like ALLLTO, but adds PGO=1 flag
 #   DOCKERSPECIAL - Special dockerized build to run LDC with LTO and -static
 #   DEPLOY - Deploy if a tagged release.
 matrix:
@@ -35,6 +36,11 @@ matrix:
       osx_image: xcode9
       language: d
       d: ldc
+      env: LTOPGO=default
+    - os: osx
+      osx_image: xcode9
+      language: d
+      d: ldc
       env: ALLLTO=default DEPLOY=1
     - os: linux
       language: d
@@ -44,6 +50,10 @@ matrix:
       language: d
       d: ldc
       env: APPLTO=thin ALLLTO=default
+    - os: linux
+      language: d
+      d: ldc
+      env: LTOPGO=default
     - os: linux
       dist: trusty
       sudo: required
@@ -87,6 +97,15 @@ script:
       && make clean;
     else
       make test DCOMPILER=$DC LDC_BUILD_RUNTIME=1 LDC_LTO=$ALLLTO
+      && make clean;
+    fi
+  fi
+- if [[ ! -z "$LTOPGO" ]]; then
+    if [[ "$LTOPGO" == "default" ]]; then
+      make test DCOMPILER=$DC LDC_BUILD_RUNTIME=1 LDC_PGO=1
+      && make clean;
+    else
+      make test DCOMPILER=$DC LDC_BUILD_RUNTIME=1 LDC_LTO=$LTOPGO LDC_PGO=1
       && make clean;
     fi
   fi

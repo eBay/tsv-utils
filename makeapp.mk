@@ -7,12 +7,14 @@ imports ?= -I$(common_srcdir)
 app_release = $(project_bindir)/$(app)
 app_debug = $(project_bindir)/$(app).dbg
 app_codecov = $(project_bindir)/$(app).cov
+app_instrumented = $(project_bindir)/$(app).instrumented
 
 release: $(app_release)
 debug: $(app_debug)
 codecov: $(app_codecov)
 
-$(app_release): ldc-build-runtime-libs $(srcs)
+# Note: If not blank, app_ldc_profdata_file will be the same as ldc_profdata_file
+$(app_release): ldc-build-runtime-libs $(app_ldc_profdata_file) $(srcs)
 	$(DCOMPILER) $(release_flags) -of$(app_release) $(imports) $(srcs)
 $(app_debug):  ldc-build-runtime-libs $(srcs)
 	$(DCOMPILER) $(debug_flags) -of$(app_debug) $(imports) $(srcs)
@@ -23,9 +25,12 @@ clean:
 	-rm $(app_debug)
 	-rm $(app_release)
 	-rm $(app_codecov)
+	-rm $(app_instrumented)
 	-rm $(objdir)/*.o
 	-rm ./*.lst
 	-rm $(testsdir)/*.lst
+	-rm $(ldc_profdata_file)
+	-rm $(ldc_profile_data_dir)/profile.*.raw
 
 .PHONY: test
 test: unittest test-debug test-release
@@ -107,6 +112,17 @@ $(ldc_build_runtime_dir):
 ifdef LDC_BUILD_RUNTIME
 	$(ldc_build_runtime_tool) --dFlags="$(ldc_build_runtime_dflags)" --buildDir $(ldc_build_runtime_dir) BUILD_SHARED_LIBS=OFF
 endif
+
+$(ldc_profdata_file):
+	@echo ''
+	@echo '---> PGO: Building an instrumented build.'
+	@echo ''
+	$(DCOMPILER) $(release_instrumented_flags) -of$(app_instrumented) $(imports) $(srcs)
+	@echo ''
+	@echo '---> PGO: Collecting profile data'
+	cd $(ldc_profile_data_dir) && ./$(ldc_profdata_collect_prog) $(app_instrumented)
+	@echo '---> PGO: Collection complete'
+	@echo ''
 
 buildtools:
 	@echo ''

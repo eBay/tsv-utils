@@ -1,15 +1,18 @@
 _Visit the [main page](../README.md)_
 
-# Building with Link Time Optimization
+# Building with Link Time Optimization and Profile Guided Optimization
 
-This page provides instruction for building the TSV utilities from source code using Link Time Optimization.
+This page provides instruction for building the TSV utilities from source code using Link Time Optimization (LTO) and Profile Guided Optimization (PGO). LTO is enabled for all the tools, PGO is enabled for a select few. Both improve run-time performance, LTO has the additional effect of reducing binary sizes. Normally PGO and LTO can be used independently, however, the TSV utilities build system only supports PGO when already using LTO.
 
 Contents:
 
   * [About Link Time Optimization](#about-link-time-optimization-lto)
-  * [Building the TSV utilities with LTO](#building-the-tsv-utilities-with-lto)
+  * [About Profile Guided Optimization](#about-profile-guided-optimization-pgo)
+  * [Building the TSV utilities with LTO and PGO](#building-the-tsv-utilities-with-lto-and-pgo)
   * [Additional options](#additional-options)
   * [LDC command lines](#ldc-command-lines)
+  
+Skip down to [Building the TSV utilities with LTO and PGO](#building-the-tsv-utilities-with-lto-and-pgo) to get right to the build instructions.
 
 ## About Link Time Optimization (LTO)
 
@@ -27,15 +30,25 @@ Compiling the D standard libraries with LTO is done using the `ldc-build-runtime
 
 There are two different forms of LTO available: Full and Thin. To build the TSV utilities with LTO is sufficient to know that they exist and are incompatible with each other. For information on the differences see the LLVM blog post [ThinLTO: Scalable and Incremental LTO](http://blog.llvm.org/2016/06/thinlto-scalable-and-incremental-lto.html).
 
-## Building the TSV utilities with LTO
+## About Profile Guided Optimization (PGO)
 
-The pre-built binaries available from the [releases page](https://github.com/eBay/tsv-utils-dlang/releases) are compiled with LTO for both D libraries and the TSV utilities code. This is not enabled by default when building from source code. The reason is simple: LTO is still an early stage technology. Testing on a wider variety of platforms is needed before making it the default.
+Profile Guided Optimization (PGO) is an approach to optimization based on recording typical execution patterns. Execution behavior data enables better choices for branch prediction, inlining decisions, and other optimizations.
 
-However, LTO builds can be enabled by setting makefile parameters. Testing with the built-in test suite should provide confidence in the resulting applications. The TSV utilities makefile takes care of invoking both `ldc-build-runtime` and `ldc2` with the necessary parameters.
+There are several ways to gather execution behavior statistics, the approach used by the TSV utilities is to generate an instrumented build and run it on common inputs. The result of these runs is recorded and passed to the compiler and linker to generate the final executable.
+
+The TSV utilities build system supports PGO for a couple tools, those showing the most benefit. Currently, PGO is enabled only when also using LTO. The source repository contains everything needed to generate profile data for the build, including data files and scripts invoking the instrumented builds.
+
+For a more detailed introduction to PGO see [Profile-Guided Optimization with LDC](https://johanengelen.github.io/ldc/2016/07/15/Profile-Guided-Optimization-with-LDC.html) on Johan Engelen's blog.
+
+## Building the TSV utilities with LTO and PGO
+
+The pre-built binaries available from the [releases page](https://github.com/eBay/tsv-utils-dlang/releases) are compiled with LTO and PGO for both D libraries and the TSV utilities code. This is not enabled by default when building from source code. The reason is simple: LTO is still an early stage technology. Testing on a wider variety of platforms is needed before making it the default.
+
+However, LTO and PGO builds can be enabled by setting makefile parameters. Testing with the built-in test suite should provide confidence in the resulting applications. The TSV utilities makefile takes care of invoking both `ldc-build-runtime` and `ldc2` with the necessary parameters.
 
 **Prerequisites:**
   * LDC 1.5.0 or later. See the LDC project [README](https://github.com/ldc-developers/ldc/blob/master/README.md) for installation instructions.
-  * TSV utilities source code, 1.15.0-beta3 or later
+  * TSV utilities source code, 1.15.0-beta3 or later (1.16.0 for PGO).
   * Linux or macOS. macOS requires Xcode 9.0.1 or later.
 
 Linux builds have been tested on Ubuntu 14.04 and 16.04.
@@ -71,6 +84,15 @@ $ make test-nobuild
 ```
 
 The above command builds with LTO on both the D libraries and the TSV utilities code. The build should be good if the tests succeed.
+
+**Build with LTO and PGO enabled:**
+
+```
+$ make DCOMPILER=ldc2 LDC_BUILD_RUNTIME=1 LDC_PGO=1
+$ make test-nobuild
+```
+
+This is similar to the LTO build, but adds PGO support for those tools that support it. This does add to the build time, as it includes compiling and running an instrumented build. Builds are still reasonably quick.
 
 ## Additional options
 
@@ -113,7 +135,7 @@ It is also possible to turn off LTO on macOS builds. For this use `LDC_LTO=off`.
 
 ## LDC command lines
 
-Running the `make` commands shown above will display the LDC command lines. They are a bit lengthy though. The examples below show the command lines for building a simple `helloworld` program with LTO enabled. See the [LDC documentation](https://github.com/ldc-developers/ldc) for up-to-date details.
+Running the `make` commands shown above will display the LDC command lines. They are a bit lengthy though. The examples below show the command lines for building a simple `helloworld` program with LTO enabled. See the [LDC documentation](https://github.com/ldc-developers/ldc) for up-to-date details. See the LDC documentation or  [Profile-Guided Optimization with LDC](https://johanengelen.github.io/ldc/2016/07/15/Profile-Guided-Optimization-with-LDC.html) (Johan Engelen's blog) for PGO build parameters.
 
 There are two steps for building with LTO. The first is downloading and building the D library code, the second is to reference the LTO built library from the application build command.
 

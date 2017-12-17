@@ -177,6 +177,11 @@ else
         Csv2tsvOptions cmdopt;
         auto r = cmdopt.processArgs(cmdArgs);
         if (!r[0]) return r[1];
+        version(LDC_Profile)
+        {
+            import ldc.profile : resetAll;
+            resetAll();
+        }
         try csv2tsvFiles(cmdopt, cmdArgs[1..$]);
         catch (Exception exc)
         {
