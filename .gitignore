@@ -23,3 +23,10 @@ buildtools/aggregate-codecov
 buildtools/codecov-to-relative-paths
 tsv-utils-dlang-*.tar.gz
 
+# LDC build artifacts
+ldc-build-runtime.tmp/
+ldc-build-runtime.thin/
+ldc-build-runtime.full/
+
+# Profile data intermediate files
+profile.*.raw

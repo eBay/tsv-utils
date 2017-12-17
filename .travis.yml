@@ -5,7 +5,7 @@
 #   APPLTO=[default|off|thin|full] - make test with the setting
 #   ALLLTO=[default|thin|full] - make test LDC_BUILD_RUNTIME=1 and LTO value
 #   LTOPGO=[default|thin|full] - Like ALLLTO, but adds PGO=1 flag
-#   DOCKERSPECIAL - Special dockerized build to run LDC with LTO and -static
+#   DOCKERSPECIAL - Special dockerized build to run LDC with LTO, PGO and -static
 #   DEPLOY - Deploy if a tagged release.
 matrix:
   include:
@@ -40,8 +40,8 @@ matrix:
     - os: osx
       osx_image: xcode9
       language: d
-      d: ldc
-      env: ALLLTO=default DEPLOY=1
+      d: ldc-1.5.0
+      env: LTOPGO=default DEPLOY=1
     - os: linux
       language: d
       d: ldc
@@ -58,7 +58,7 @@ matrix:
       dist: trusty
       sudo: required
       language: d
-      d: ldc
+      d: ldc-1.5.0
       services: docker
       env: DOCKERSPECIAL=1 DEPLOY=1
 before_install:
@@ -110,7 +110,7 @@ script:
     fi
   fi
 - if [[ "$DOCKERSPECIAL" == "1" ]]; then
-    docker run --rm -ti -v $(pwd):/src dlanguage/ldc:1.5.0 make test DCOMPILER=ldc2 LDC_BUILD_RUNTIME=1 DFLAGS=-static
+    docker run --rm -ti -v $(pwd):/src dlanguage/ldc:1.5.0 make test DCOMPILER=ldc2 LDC_BUILD_RUNTIME=1 LDC_PGO=1 DFLAGS=-static
     && sudo chown -R $UID:$GID $(pwd)
     && make test-nobuild
     && make clean;
@@ -126,10 +126,10 @@ before_deploy:
     USE_VERSION="$TRAVIS_TAG";
   fi
 - if [[ "$DOCKERSPECIAL" == "1" ]]; then
-    docker run --rm -ti -v $(pwd):/src dlanguage/ldc:1.5.0 make package PKG_ROOT_DIR=tsv-utils-dlang DCOMPILER=$DC OS=$TRAVIS_OS_NAME APP_VERSION=$USE_VERSION LDC_BUILD_RUNTIME=1 DFLAGS=-static;
+    docker run --rm -ti -v $(pwd):/src dlanguage/ldc:1.5.0 make package PKG_ROOT_DIR=tsv-utils-dlang DCOMPILER=$DC OS=$TRAVIS_OS_NAME APP_VERSION=$USE_VERSION LDC_BUILD_RUNTIME=1 LDC_PGO=1 DFLAGS=-static;
     sudo chown -R $UID:$GID $(pwd);
   else
-    make package DCOMPILER=$DC OS=$TRAVIS_OS_NAME APP_VERSION=$USE_VERSION LDC_BUILD_RUNTIME=1;
+    make package DCOMPILER=$DC OS=$TRAVIS_OS_NAME APP_VERSION=$USE_VERSION LDC_BUILD_RUNTIME=1 LDC_PGO=1;
   fi
 deploy:
   provider: releases
