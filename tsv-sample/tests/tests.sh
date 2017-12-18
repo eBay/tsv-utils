@@ -11,7 +11,7 @@
 ## on several different platorm, compiler, and library versions. However, it is certainly
 ## possible this condition will not hold on other platforms.
 ##
-## For tsv-sample, this portability implies generating the same results on different 
+## For tsv-sample, this portability implies generating the same results on different
 ## platforms when using the same random seed. This is NOT part of tsv-sample guarantees,
 ## but it is convenient for testing. If platforms are identified that do not generate
 ## the same results these tests will need to be adjusted.
@@ -85,6 +85,9 @@ echo "" >> ${basic_tests_1}
 echo "====[tsv-sample --help | grep -c Synopsis]====" >> ${basic_tests_1}
 ${prog} --help 2>&1 | grep -c Synopsis >> ${basic_tests_1} 2>&1
 
+echo "====[tsv-sample --help-verbose | grep -c Synopsis]====" >> ${basic_tests_1}
+${prog} --help-verbose 2>&1 | grep -c Synopsis >> ${basic_tests_1} 2>&1
+
 echo "====[tsv-sample --version | grep -c 'tsv-sample (eBay/tsv-utils-dlang)']====" >> ${basic_tests_1}
 ${prog} --version 2>&1 | grep -c 'tsv-sample (eBay/tsv-utils-dlang)' >> ${basic_tests_1} 2>&1
 
@@ -104,3 +107,5 @@ runtest ${prog} "-d ß input3x25.tsv" ${error_tests_1}
 runtest ${prog} "-H -f 2 input3x25.tsv" ${error_tests_1}
 runtest ${prog} "-f 3 input3x25.tsv" ${error_tests_1}
 runtest ${prog} "-H -f 11 input3x25.tsv" ${error_tests_1}
+runtest ${prog} "-H -f 3 input3x25_dos.tsv" ${error_tests_1}
+runtest ${prog} "-f 1 input2x5_noheader_dos.tsv" ${error_tests_1}

@@ -785,6 +785,7 @@ void tsvFilter(in TsvFilterOptions cmdopt, in string[] inputFiles)
 {
     import std.algorithm : all, any, splitter;
     import std.range;
+    import tsvutil : throwIfWindowsNewlineOnUnix;
 
     /* Process each input file, one line at a time. */
     auto lineFields = new char[][](cmdopt.maxFieldIndex + 1);
@@ -794,7 +795,8 @@ void tsvFilter(in TsvFilterOptions cmdopt, in string[] inputFiles)
         auto inputStream = (filename == "-") ? stdin : filename.File();
         foreach (lineNum, line; inputStream.byLine.enumerate(1))
         {
-            if (cmdopt.hasHeader && lineNum == 1)
+            if (lineNum == 1) throwIfWindowsNewlineOnUnix(line, filename, lineNum);
+            if (lineNum == 1 && cmdopt.hasHeader)
             {
                 /* Header. Output on the first file, skip subsequent files. */
                 if (!headerWritten)

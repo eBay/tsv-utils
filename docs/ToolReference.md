@@ -60,6 +60,16 @@ $ tsv-select -f 1-3,2,1   # Fields 1, 2, 3, 2, 1
 
 These tools assume data is utf-8 encoded.
 
+### Line endings
+
+At present, these tools have been tested on Unix platforms (including macOs), but not Windows. On Unix platforms, Unix line endings (`\n`) are expected, with the notable exception of `tsv2csv`. Not all the tools are affected by DOS and Windows line endings (`\r\n`), those that are check the first line and flag an error.
+
+`csv2tsv` explicitly handles DOS and Windows line endings, converting to Unix line endings as part of the conversion.
+
+The `dos2unix` tool can be used to convert Windows line endings to Unix format.
+
+The tools were written to respect platform line endings. If built on Windows, that would be Windows line endings. However, the tools have not been built or tested on Windows, and issues would be expected.
+
 ### File format and alternate delimiters (`--delimiter`)
 
 Any character can be used as a delimiter, TAB is the default. However, there is no escaping for including the delimiter character or newlines within a field. This differs from CSV file format which provides an escaping mechanism. In practice the lack of an escaping mechanism is not a meaningful limitation for data oriented files.

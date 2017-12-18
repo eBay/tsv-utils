@@ -435,6 +435,8 @@ struct TsvSummarizeOptions {
  */
 void tsvSummarize(TsvSummarizeOptions cmdopt, in string[] inputFiles)
 {
+    import tsvutil : throwIfWindowsNewlineOnUnix;
+
     /* Pick the Summarizer based on the number of key-fields entered. */
     auto summarizer =
         (cmdopt.keyFields.length == 0)
@@ -459,6 +461,8 @@ void tsvSummarize(TsvSummarizeOptions cmdopt, in string[] inputFiles)
         auto inputStream = (filename == "-") ? stdin : filename.File();
         foreach (lineNum, line; inputStream.byLine.enumerate(1))
         {
+            if (lineNum == 1) throwIfWindowsNewlineOnUnix(line, filename, lineNum);
+
             /* Copy the needed number of fields to the fields array.
              * Note: The number is zero if no operator needs fields. Notably, the count
              * operator. Used by itself, it counts the number input lines (ala 'wc -l').

@@ -293,7 +293,7 @@ int main(string[] cmdArgs)
  */
 void tsvJoin(in TsvJoinOptions cmdopt, in string[] inputFiles)
 {
-    import tsvutil : InputFieldReordering;
+    import tsvutil : InputFieldReordering, throwIfWindowsNewlineOnUnix;
     import std.algorithm : splitter;
     import std.array : join;
     import std.range;
@@ -390,6 +390,8 @@ void tsvJoin(in TsvJoinOptions cmdopt, in string[] inputFiles)
 
             debug writeln("  --> [key]:[append] => [", key, "]:[", appendValues, "]");
 
+            if (lineNum == 1) throwIfWindowsNewlineOnUnix(line, cmdopt.filterFile, lineNum);
+
             if (lineNum == 1 && cmdopt.hasHeader)
             {
                 if (cmdopt.appendHeaderPrefix.length == 0)
@@ -434,7 +436,10 @@ void tsvJoin(in TsvJoinOptions cmdopt, in string[] inputFiles)
         foreach (lineNum, line; inputStream.byLine.enumerate(1))
         {
             debug writeln("[input line] |", line, "|");
-            if (cmdopt.hasHeader && lineNum == 1)
+
+            if (lineNum == 1) throwIfWindowsNewlineOnUnix(line, filename, lineNum);
+
+            if (lineNum == 1 && cmdopt.hasHeader)
             {
                 /* Header line processing. */
                 if (!headerWritten)

@@ -148,3 +148,7 @@ runtest ${prog} "--quantile 0:0.25 input_5field_a.tsv" ${error_tests_1}
 runtest ${prog} "--quantile 1.5:0.25 input_5field_a.tsv" ${error_tests_1}
 runtest ${prog} "--quantile 1-:0.25 input_5field_a.tsv" ${error_tests_1}
 runtest ${prog} "--quantile -2:0.25 input_5field_a.tsv" ${error_tests_1}
+
+# Windows line endings detection
+runtest ${prog} "--count input_1field_a_dos.tsv" ${error_tests_1}
+runtest ${prog} "-H --count input_1field_a_dos.tsv" ${error_tests_1}

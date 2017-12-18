@@ -1025,3 +1025,102 @@ unittest // parseFieldRange
     assertThrown("32768".parseFieldRange!(ushort, Yes.convertToZeroBasedIndex));
     assert("32767".parseFieldRange!(ushort, Yes.convertToZeroBasedIndex).equal([32766]));
 }
+
+/** [Yes|No.newlineWasRemoved] is a template parameter to throwIfWindowsNewlineOnUnix.
+ *  A Yes value indicates the Unix newline was already removed, as might be done via
+ *  std.File.byLine or similar mechanism.
+ */
+alias NewlineWasRemoved = Flag!"newlineWasRemoved";
+
+/**
+throwIfWindowsLineNewlineOnUnix is used to throw an exception if a Windows/DOS
+line ending is found on a build compiled for a Unix platform. This is used by
+the TSV Utilities to detect Window/DOS line endings and terminate processing
+with an error message to the user.
+ */
+void throwIfWindowsNewlineOnUnix
+    (NewlineWasRemoved nlWasRemoved = Yes.newlineWasRemoved)
+    (const char[] line, const char[] filename, size_t lineNum)
+{
+    version(Posix)
+    {
+        static if (nlWasRemoved)
+        {
+            bool hasWindowsLineEnding = line.length != 0 && line[$ - 1] == '\r';
+        }
+        else
+        {
+            bool hasWindowsLineEnding =
+                line.length > 1 &&
+                line[$ - 2] == '\r' &&
+                line[$ - 1] == '\n';
+        }
+
+        if (hasWindowsLineEnding)
+        {
+            import std.format;
+            throw new Exception(
+                format("Windows/DOS line ending found. Convert file to Unix newlines before processing (e.g. 'dos2unix').\n  File: %s, Line: %s",
+                       (filename == "-") ? "Standard Input" : filename, lineNum));
+        }
+    }
+}
+
+unittest
+{
+    /* Note: Currently only building on Posix. Need to add non-Posix test cases
+     * if Windows builds are ever done.
+     */
+    version(Posix)
+    {
+        import std.exception;
+
+        assertNotThrown(throwIfWindowsNewlineOnUnix("", "afile.tsv", 1));
+        assertNotThrown(throwIfWindowsNewlineOnUnix("a", "afile.tsv", 2));
+        assertNotThrown(throwIfWindowsNewlineOnUnix("ab", "afile.tsv", 3));
+        assertNotThrown(throwIfWindowsNewlineOnUnix("abc", "afile.tsv", 4));
+
+        assertThrown(throwIfWindowsNewlineOnUnix("\r", "afile.tsv", 1));
+        assertThrown(throwIfWindowsNewlineOnUnix("a\r", "afile.tsv", 2));
+        assertThrown(throwIfWindowsNewlineOnUnix("ab\r", "afile.tsv", 3));
+        assertThrown(throwIfWindowsNewlineOnUnix("abc\r", "afile.tsv", 4));
+
+        assertNotThrown(throwIfWindowsNewlineOnUnix!(No.newlineWasRemoved)("\n", "afile.tsv", 1));
+        assertNotThrown(throwIfWindowsNewlineOnUnix!(No.newlineWasRemoved)("a\n", "afile.tsv", 2));
+        assertNotThrown(throwIfWindowsNewlineOnUnix!(No.newlineWasRemoved)("ab\n", "afile.tsv", 3));
+        assertNotThrown(throwIfWindowsNewlineOnUnix!(No.newlineWasRemoved)("abc\n", "afile.tsv", 4));
+
+        assertThrown(throwIfWindowsNewlineOnUnix!(No.newlineWasRemoved)("\r\n", "afile.tsv", 5));
+        assertThrown(throwIfWindowsNewlineOnUnix!(No.newlineWasRemoved)("a\r\n", "afile.tsv", 6));
+        assertThrown(throwIfWindowsNewlineOnUnix!(No.newlineWasRemoved)("ab\r\n", "afile.tsv", 7));
+        assertThrown(throwIfWindowsNewlineOnUnix!(No.newlineWasRemoved)("abc\r\n", "afile.tsv", 8));
+
+        /* Standard Input formatting. */
+        import std.algorithm : endsWith;
+        bool exceptionCaught = false;
+
+        try (throwIfWindowsNewlineOnUnix("\r", "-", 99));
+        catch (Exception e)
+        {
+            assert(e.msg.endsWith("File: Standard Input, Line: 99"));
+            exceptionCaught = true;
+        }
+        finally
+        {
+            assert(exceptionCaught);
+            exceptionCaught = false;
+        }
+
+        try (throwIfWindowsNewlineOnUnix!(No.newlineWasRemoved)("\r\n", "-", 99));
+        catch (Exception e)
+        {
+            assert(e.msg.endsWith("File: Standard Input, Line: 99"));
+            exceptionCaught = true;
+        }
+        finally
+        {
+            assert(exceptionCaught);
+            exceptionCaught = false;
+        }
+    }
+}
