@@ -116,6 +116,9 @@ F1	F2	F3	F4
 ====[tsv-filter --header --ff-lt -1:2 input1.tsv]====
 [tsv-filter] Error processing command line arguments: Missing value for argument --ff-lt.
 
+====[tsv-filter --header --ff-lt 1:1 input1.tsv]====
+[tsv-filter] Error processing command line arguments: Invalid option: '--ff-lt 1:1'. Field1 and field2 must be different fields
+
 ====[tsv-filter --header --ff-ne abc:3 input1.tsv]====
 [tsv-filter] Error processing command line arguments: Invalid values in option: '--ff-ne abc:3'. Expected: '--ff-ne <field1>:<field2>' where fields are 1-upped integers.
 
@@ -148,6 +151,9 @@ F1	F2	F3	F4
 
 ====[tsv-filter --header --ff-absdiff-le 1:0:0.5 input1.tsv]====
 [tsv-filter] Error processing command line arguments: Invalid option: '--ff-absdiff-le 1:0:0.5'. Zero is not a valid field index.
+
+====[tsv-filter --header --ff-absdiff-le 1:1:0.5 input1.tsv]====
+[tsv-filter] Error processing command line arguments: Invalid option: '--ff-absdiff-le 1:1:0.5'. Field1 and field2 must be different fields
 
 ====[tsv-filter --header --ff-absdiff-le 1:g:0.5 input1.tsv]====
 [tsv-filter] Error processing command line arguments: Invalid values in option: '--ff-absdiff-le 1:g:0.5'. Expected: '--ff-absdiff-le <field1>:<field2>:<num>' where fields are 1-upped integers.

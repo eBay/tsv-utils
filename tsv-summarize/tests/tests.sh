@@ -37,6 +37,7 @@ runtest ${prog} "--header --missing-count 1 --not-missing-count 1 input_1field_a
 
 ## Functionality tests
 runtest ${prog} "--header --count --min 3,4,5 --max 3,4,5 input_5field_a.tsv" ${basic_tests_1}
+runtest ${prog} "--header --count-header the_count input_5field_a.tsv" ${basic_tests_1}
 runtest ${prog} "--header --group-by 1 --count --min 3,4,5 --max 3,4,5 input_5field_a.tsv" ${basic_tests_1}
 runtest ${prog} "--header --group-by 1,2 --count --min 3,4,5 --max 3,4,5 input_5field_a.tsv" ${basic_tests_1}
 runtest ${prog} "--header --group-by 1-2 --count --min 3-5 --max 5-3 input_5field_a.tsv" ${basic_tests_1}
@@ -99,6 +100,9 @@ echo "" >> ${basic_tests_1}
 echo "====[tsv-summarize --help | grep -c Synopsis]====" >> ${basic_tests_1}
 ${prog} --help 2>&1 | grep -c Synopsis >> ${basic_tests_1} 2>&1
 
+echo "====[tsv-summarize --help-verbose | grep -c Synopsis]====" >> ${basic_tests_1}
+${prog} --help-verbose 2>&1 | grep -c Synopsis >> ${basic_tests_1} 2>&1
+
 echo "====[tsv-summarize --version | grep -c 'tsv-summarize (eBay/tsv-utils-dlang)']====" >> ${basic_tests_1}
 ${prog} --version 2>&1 | grep -c 'tsv-summarize (eBay/tsv-utils-dlang)' >> ${basic_tests_1} 2>&1
 
@@ -135,6 +139,7 @@ runtest ${prog} "-d abc --count input_5field_a.tsv" ${error_tests_1}
 runtest ${prog} "-d ß --count input_5field_a.tsv" ${error_tests_1}
 runtest ${prog} "-v abc --count input_5field_a.tsv" ${error_tests_1}
 runtest ${prog} "-v ß --count input_5field_a.tsv" ${error_tests_1}
+runtest ${prog} "-v , -d , --values 1 input_1field_a.tsv" ${error_tests_1}
 runtest ${prog} "--count --exclude-missing --replace-missing XYZ input_5field_a.tsv" ${error_tests_1}
 runtest ${prog} "--quantile 3 input_5field_a.tsv" ${error_tests_1}
 runtest ${prog} "--quantile 3:2 input_5field_a.tsv" ${error_tests_1}
@@ -142,6 +147,11 @@ runtest ${prog} "--quantile 3:0.5,2 input_5field_a.tsv" ${error_tests_1}
 runtest ${prog} "--quantile 0:0.5 input_5field_a.tsv" ${error_tests_1}
 runtest ${prog} "--quantile 3,4:0.75:q3 input_5field_a.tsv" ${error_tests_1}
 runtest ${prog} "--quantile 3:0.25,0.75:q1q3 input_5field_a.tsv" ${error_tests_1}
+runtest ${prog} "--quantile 3: input_5field_a.tsv" ${error_tests_1}
+runtest ${prog} "--quantile :0.25 input_5field_a.tsv" ${error_tests_1}
+runtest ${prog} "--quantile : input_5field_a.tsv" ${error_tests_1}
+runtest ${prog} "--quantile 3:0.25: input_5field_a.tsv" ${error_tests_1}
+runtest ${prog} "--quantile 3:0.25g input_5field_a.tsv" ${error_tests_1}
 runtest ${prog} "--quantile 3, input_5field_a.tsv" ${error_tests_1}
 runtest ${prog} "--quantile 3- input_5field_a.tsv" ${error_tests_1}
 runtest ${prog} "--quantile 0:0.25 input_5field_a.tsv" ${error_tests_1}

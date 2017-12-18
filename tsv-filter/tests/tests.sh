@@ -241,6 +241,12 @@ echo "" >> ${basic_tests_1}
 echo "====[tsv-filter --help | grep -c Synopsis]====" >> ${basic_tests_1}
 ${prog} --help 2>&1 | grep -c Synopsis >> ${basic_tests_1} 2>&1
 
+echo "====[tsv-filter --help-verbose | grep -c Synopsis]====" >> ${basic_tests_1}
+${prog} --help-verbose 2>&1 | grep -c Synopsis >> ${basic_tests_1} 2>&1
+
+echo "====[tsv-filter --help-options | grep -c Synopsis]====" >> ${basic_tests_1}
+${prog} --help-options 2>&1 | grep -c Synopsis >> ${basic_tests_1} 2>&1
+
 echo "====[tsv-filter --version | grep -c 'tsv-filter (eBay/tsv-utils-dlang)']====" >> ${basic_tests_1}
 ${prog} --version 2>&1 | grep -c 'tsv-filter (eBay/tsv-utils-dlang)' >> ${basic_tests_1} 2>&1
 
@@ -293,6 +299,7 @@ runtest ${prog} "--header --iregex : input1.tsv" ${error_tests_1}
 runtest ${prog} "--header --ff-gt 0:1 input1.tsv" ${error_tests_1}
 runtest ${prog} "--header --ff-gt 1:0 input1.tsv" ${error_tests_1}
 runtest ${prog} "--header --ff-lt -1:2 input1.tsv" ${error_tests_1}
+runtest ${prog} "--header --ff-lt 1:1 input1.tsv" ${error_tests_1}
 runtest ${prog} "--header --ff-ne abc:3 input1.tsv" ${error_tests_1}
 runtest ${prog} "--header --ff-eq 2.2:4 input1.tsv" ${error_tests_1}
 runtest ${prog} "--header --ff-le 2:3.1 input1.tsv" ${error_tests_1}
@@ -304,6 +311,7 @@ runtest ${prog} "--header --ff-str-eq 2.2:4 input1.tsv" ${error_tests_1}
 runtest ${prog} "--header --ff-absdiff-le 1:2:g input1.tsv" ${error_tests_1}
 runtest ${prog} "--header --ff-absdiff-le 1:2: input1.tsv" ${error_tests_1}
 runtest ${prog} "--header --ff-absdiff-le 1:0:0.5 input1.tsv" ${error_tests_1}
+runtest ${prog} "--header --ff-absdiff-le 1:1:0.5 input1.tsv" ${error_tests_1}
 runtest ${prog} "--header --ff-absdiff-le 1:g:0.5 input1.tsv" ${error_tests_1}
 runtest ${prog} "--header --ff-absdiff-le 1::0.5 input1.tsv" ${error_tests_1}
 runtest ${prog} "--header --ff-absdiff-le 0:2:0.5 input1.tsv" ${error_tests_1}

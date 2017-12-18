@@ -62,13 +62,11 @@ These tools assume data is utf-8 encoded.
 
 ### Line endings
 
-At present, these tools have been tested on Unix platforms (including macOs), but not Windows. On Unix platforms, Unix line endings (`\n`) are expected, with the notable exception of `tsv2csv`. Not all the tools are affected by DOS and Windows line endings (`\r\n`), those that are check the first line and flag an error.
-
-`csv2tsv` explicitly handles DOS and Windows line endings, converting to Unix line endings as part of the conversion.
+These tools have been tested on Unix platforms, including macOS, but not Windows. On Unix platforms, Unix line endings (`\n`) are expected, with the notable exception of `tsv2csv`. Not all the tools are affected by DOS and Windows line endings (`\r\n`), those that are check the first line and flag an error. `csv2tsv` explicitly handles DOS and Windows line endings, converting to Unix line endings as part of the conversion.
 
 The `dos2unix` tool can be used to convert Windows line endings to Unix format.
 
-The tools were written to respect platform line endings. If built on Windows, that would be Windows line endings. However, the tools have not been built or tested on Windows, and issues would be expected.
+The tools were written to respect platform line endings. If built on Windows, then Windows line endings. However, given the lack of testing, a Windows build should be expected to have some issues with line endings.
 
 ### File format and alternate delimiters (`--delimiter`)
 
