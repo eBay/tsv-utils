@@ -241,6 +241,12 @@ echo "" >> ${basic_tests_1}
 echo "====[tsv-filter --help | grep -c Synopsis]====" >> ${basic_tests_1}
 ${prog} --help 2>&1 | grep -c Synopsis >> ${basic_tests_1} 2>&1
 
+echo "====[tsv-filter --help-verbose | grep -c Synopsis]====" >> ${basic_tests_1}
+${prog} --help-verbose 2>&1 | grep -c Synopsis >> ${basic_tests_1} 2>&1
+
+echo "====[tsv-filter --help-options | grep -c Synopsis]====" >> ${basic_tests_1}
+${prog} --help-options 2>&1 | grep -c Synopsis >> ${basic_tests_1} 2>&1
+
 echo "====[tsv-filter --version | grep -c 'tsv-filter (eBay/tsv-utils-dlang)']====" >> ${basic_tests_1}
 ${prog} --version 2>&1 | grep -c 'tsv-filter (eBay/tsv-utils-dlang)' >> ${basic_tests_1} 2>&1
 
@@ -261,19 +267,58 @@ runtest ${prog} "--header --lt -1:10 input1.tsv" ${error_tests_1}
 runtest ${prog} "--header --ne abc:15 input1.tsv" ${error_tests_1}
 runtest ${prog} "--header --eq 2:def input1.tsv" ${error_tests_1}
 runtest ${prog} "--header --le 1000:10 input1.tsv" ${error_tests_1}
+runtest ${prog} "--header --le 1: input1.tsv" ${error_tests_1}
+runtest ${prog} "--header --le 1 input1.tsv" ${error_tests_1}
+runtest ${prog} "--header --le :10 input1.tsv" ${error_tests_1}
+runtest ${prog} "--header --le : input1.tsv" ${error_tests_1}
 runtest ${prog} "--header --empty 23g input1.tsv" ${error_tests_1}
+runtest ${prog} "--header --empty 0 input1.tsv" ${error_tests_1}
 runtest ${prog} "--header --str-gt 0:abc input1.tsv" ${error_tests_1}
 runtest ${prog} "--header --str-lt -1:ABC input1.tsv" ${error_tests_1}
 runtest ${prog} "--header --str-ne abc:a22 input1.tsv" ${error_tests_1}
 runtest ${prog} "--header --str-eq 2.2:def input1.tsv" ${error_tests_1}
+runtest ${prog} "--header --str-eq 0:def input1.tsv" ${error_tests_1}
+runtest ${prog} "--header --str-eq :def input1.tsv" ${error_tests_1}
+runtest ${prog} "--header --str-eq 2: input1.tsv" ${error_tests_1}
+runtest ${prog} "--header --str-eq : input1.tsv" ${error_tests_1}
+runtest ${prog} "--header --istr-eq 2.2:def input1.tsv" ${error_tests_1}
+runtest ${prog} "--header --istr-eq 0:def input1.tsv" ${error_tests_1}
+runtest ${prog} "--header --istr-eq :def input1.tsv" ${error_tests_1}
+runtest ${prog} "--header --istr-eq 2: input1.tsv" ${error_tests_1}
+runtest ${prog} "--header --istr-eq : input1.tsv" ${error_tests_1}
 runtest ${prog} "--header --regex z:^A[b|B]C$ input1.tsv" ${error_tests_1}
+runtest ${prog} "--header --regex 0:^A[b|B]C$ input1.tsv" ${error_tests_1}
+runtest ${prog} "--header --regex :^A[b|B]C$ input1.tsv" ${error_tests_1}
+runtest ${prog} "--header --regex 3: input1.tsv" ${error_tests_1}
+runtest ${prog} "--header --regex : input1.tsv" ${error_tests_1}
 runtest ${prog} "--header --iregex a:^A[b|B]C$ input1.tsv" ${error_tests_1}
+runtest ${prog} "--header --iregex 0:^A[b|B]C$ input1.tsv" ${error_tests_1}
+runtest ${prog} "--header --iregex :^A[b|B]C$ input1.tsv" ${error_tests_1}
+runtest ${prog} "--header --iregex 3: input1.tsv" ${error_tests_1}
+runtest ${prog} "--header --iregex : input1.tsv" ${error_tests_1}
 runtest ${prog} "--header --ff-gt 0:1 input1.tsv" ${error_tests_1}
+runtest ${prog} "--header --ff-gt 1:0 input1.tsv" ${error_tests_1}
 runtest ${prog} "--header --ff-lt -1:2 input1.tsv" ${error_tests_1}
+runtest ${prog} "--header --ff-lt 1:1 input1.tsv" ${error_tests_1}
 runtest ${prog} "--header --ff-ne abc:3 input1.tsv" ${error_tests_1}
 runtest ${prog} "--header --ff-eq 2.2:4 input1.tsv" ${error_tests_1}
 runtest ${prog} "--header --ff-le 2:3.1 input1.tsv" ${error_tests_1}
+runtest ${prog} "--header --ff-le 2: input1.tsv" ${error_tests_1}
+runtest ${prog} "--header --ff-le :10 input1.tsv" ${error_tests_1}
+runtest ${prog} "--header --ff-le : input1.tsv" ${error_tests_1}
 runtest ${prog} "--header --ff-str-ne abc:3 input1.tsv" ${error_tests_1}
 runtest ${prog} "--header --ff-str-eq 2.2:4 input1.tsv" ${error_tests_1}
+runtest ${prog} "--header --ff-absdiff-le 1:2:g input1.tsv" ${error_tests_1}
+runtest ${prog} "--header --ff-absdiff-le 1:2: input1.tsv" ${error_tests_1}
+runtest ${prog} "--header --ff-absdiff-le 1:0:0.5 input1.tsv" ${error_tests_1}
+runtest ${prog} "--header --ff-absdiff-le 1:1:0.5 input1.tsv" ${error_tests_1}
+runtest ${prog} "--header --ff-absdiff-le 1:g:0.5 input1.tsv" ${error_tests_1}
+runtest ${prog} "--header --ff-absdiff-le 1::0.5 input1.tsv" ${error_tests_1}
+runtest ${prog} "--header --ff-absdiff-le 0:2:0.5 input1.tsv" ${error_tests_1}
+runtest ${prog} "--header --ff-absdiff-le g:2:0.5 input1.tsv" ${error_tests_1}
+runtest ${prog} "--header --ff-absdiff-le :2:0.5 input1.tsv" ${error_tests_1}
 
+## Windows line endings
+runtest ${prog} "--header --eq 2:1 input1_dos.tsv" ${error_tests_1}
+runtest ${prog} "--str-eq 4:ABC input1_dos.tsv" ${error_tests_1}
 exit $?

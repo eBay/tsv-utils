@@ -13,6 +13,10 @@ size_missing_count	size_not_missing_count
 count	length_min	width_min	height_min	length_max	width_max	height_max
 7	7.4	1	2	16	6	7
 
+====[tsv-summarize --header --count-header the_count input_5field_a.tsv]====
+the_count
+7
+
 ====[tsv-summarize --header --group-by 1 --count --min 3,4,5 --max 3,4,5 input_5field_a.tsv]====
 color	count	length_min	width_min	height_min	length_max	width_max	height_max
 red	2	8	4	6	10	6	7
@@ -202,6 +206,8 @@ Help and Version printing 1
 -----------------
 
 ====[tsv-summarize --help | grep -c Synopsis]====
+1
+====[tsv-summarize --help-verbose | grep -c Synopsis]====
 1
 ====[tsv-summarize --version | grep -c 'tsv-summarize (eBay/tsv-utils-dlang)']====
 1

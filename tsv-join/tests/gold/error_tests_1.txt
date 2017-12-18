@@ -30,6 +30,11 @@ f1	f2	f3	f4	f5
 ====[tsv-join --header -k 2 input2.tsv]====
 [tsv-join] Error processing command line arguments: Required option --filter-file was not supplied.
 
+===Stdin filter file, no data file===
+
+====[tsv-join --header -f - -k 2]====
+[tsv-join] Error processing command line arguments: A data file is required when standard input is used for the filter file (--f|filter-file -).
+
 ===Invalid Whole line and individual field combos===
 
 ====[tsv-join --header -f input1.tsv -k 2,0 input2.tsv]====
@@ -95,3 +100,21 @@ f1	f2	f3	f4	f5
 
 ====[tsv-join --header -f input1.tsv -k input2.tsv]====
 [tsv-join] Error processing command line arguments: [--k|key-fields] Unexpected 'i' when converting from type string to type ulong
+
+===Windows Newline detection===
+
+====[tsv-join --header -f input1_dos.tsv -k 2,3 input2.tsv]====
+Error [tsv-join]: Windows/DOS line ending found. Convert file to Unix newlines before processing (e.g. 'dos2unix').
+  File: input1_dos.tsv, Line: 1
+
+====[tsv-join --header -f input1.tsv -k 2,3 input2_dos.tsv]====
+Error [tsv-join]: Windows/DOS line ending found. Convert file to Unix newlines before processing (e.g. 'dos2unix').
+  File: input2_dos.tsv, Line: 1
+
+====[tsv-join -f input1_dos.tsv -k 2,3 input2.tsv]====
+Error [tsv-join]: Windows/DOS line ending found. Convert file to Unix newlines before processing (e.g. 'dos2unix').
+  File: input1_dos.tsv, Line: 1
+
+====[tsv-join -f input1.tsv -k 2,3 input2_dos.tsv]====
+Error [tsv-join]: Windows/DOS line ending found. Convert file to Unix newlines before processing (e.g. 'dos2unix').
+  File: input2_dos.tsv, Line: 1

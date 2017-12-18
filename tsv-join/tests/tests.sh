@@ -30,6 +30,8 @@ echo "-----------------" >> ${basic_tests_1}
 # Whole line as key
 echo "====Whole line as key===" >> ${basic_tests_1}
 runtest ${prog} "--header --filter-file input1.tsv input2.tsv" ${basic_tests_1}
+runtest ${prog} "--header -f input1.tsv --key-fields 0 input2.tsv" ${basic_tests_1}
+runtest ${prog} "--header -f input1.tsv --key-fields 0 --data-fields 0 input2.tsv" ${basic_tests_1}
 runtest ${prog} "--header -f input1.tsv --exclude input2.tsv" ${basic_tests_1}
 runtest ${prog} "--header -f input1.tsv --append-fields 1 input2.tsv" ${basic_tests_1}
 runtest ${prog} "--header -f input1.tsv --append-fields 1,2 input2.tsv" ${basic_tests_1}
@@ -161,6 +163,9 @@ echo "" >> ${basic_tests_1}
 echo "====[tsv-join --help | grep -c Synopsis]====" >> ${basic_tests_1}
 ${prog} --help 2>&1 | grep -c Synopsis >> ${basic_tests_1} 2>&1
 
+echo "====[tsv-join --help-verbose | grep -c Synopsis]====" >> ${basic_tests_1}
+${prog} --help-verbose 2>&1 | grep -c Synopsis >> ${basic_tests_1} 2>&1
+
 echo "====[tsv-join --version | grep -c 'tsv-join (eBay/tsv-utils-dlang)']====" >> ${basic_tests_1}
 ${prog} --version 2>&1 | grep -c 'tsv-join (eBay/tsv-utils-dlang)' >> ${basic_tests_1} 2>&1
 
@@ -185,6 +190,9 @@ runtest ${prog} "--header -f input1.tsv -k 4 -d 6 input2.tsv" ${error_tests_1}
 
 echo "" >> ${error_tests_1}; echo "===Missing filter file===" >> ${error_tests_1}
 runtest ${prog} "--header -k 2 input2.tsv" ${error_tests_1}
+
+echo "" >> ${error_tests_1}; echo "===Stdin filter file, no data file===" >> ${error_tests_1}
+runtest ${prog} "--header -f - -k 2" ${error_tests_1}
 
 echo "" >> ${error_tests_1}; echo "===Invalid Whole line and individual field combos===" >> ${error_tests_1}
 runtest ${prog} "--header -f input1.tsv -k 2,0 input2.tsv" ${error_tests_1}
@@ -215,5 +223,11 @@ runtest ${prog} "--header -f input1.tsv -k 2,3 -d 2,1.5 input2.tsv" ${error_test
 runtest ${prog} "--header -f input1.tsv -k 2 -a 1- input2.tsv" ${error_tests_1}
 runtest ${prog} "--header -f input1.tsv -k 2,,4 input2.tsv" ${error_tests_1}
 runtest ${prog} "--header -f input1.tsv -k input2.tsv" ${error_tests_1}
+
+echo "" >> ${error_tests_1}; echo "===Windows Newline detection===" >> ${error_tests_1}
+runtest ${prog} "--header -f input1_dos.tsv -k 2,3 input2.tsv" ${error_tests_1}
+runtest ${prog} "--header -f input1.tsv -k 2,3 input2_dos.tsv" ${error_tests_1}
+runtest ${prog} "-f input1_dos.tsv -k 2,3 input2.tsv" ${error_tests_1}
+runtest ${prog} "-f input1.tsv -k 2,3 input2_dos.tsv" ${error_tests_1}
 
 exit $?

@@ -202,7 +202,7 @@ to the non-templatized version. (Note: 'cte' stands for 'compile time evaluation
 */
 void tsvSelect(CTERestLocation cteRest)(in TsvSelectOptions cmdopt, in string[] inputFiles)
 {
-    import tsvutil: InputFieldReordering;
+    import tsvutil: InputFieldReordering, throwIfWindowsNewlineOnUnix;
     import std.algorithm: splitter;
     import std.format: format;
     import std.range;
@@ -241,6 +241,8 @@ void tsvSelect(CTERestLocation cteRest)(in TsvSelectOptions cmdopt, in string[] 
         auto inputStream = (filename == "-") ? stdin : filename.File();
         foreach (lineNum, line; inputStream.byLine.enumerate(1))
         {
+            if (lineNum == 1) throwIfWindowsNewlineOnUnix(line, filename, lineNum);
+
             if (lineNum == 1 && fileNum > 0 && cmdopt.hasHeader)
             {
                 continue;   // Drop the header line from all but the first file.

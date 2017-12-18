@@ -5,7 +5,7 @@ Weights are read from a field in the file.
 Copyright (c) 2017, eBay Software Foundation
 Initially written by Jon Degenhardt
 
-License: Boost License 1.0 (http://boost.org/LICENSE_1_0.txt) 
+License: Boost License 1.0 (http://boost.org/LICENSE_1_0.txt)
 */
 module tsv_sample;
 
@@ -27,7 +27,7 @@ else
             import core.runtime : dmd_coverSetMerge;
             dmd_coverSetMerge(true);
         }
-    
+
         TsvSampleOptions cmdopt;
         auto r = cmdopt.processArgs(cmdArgs);
         if (!r[0]) return r[1];
@@ -66,7 +66,7 @@ Synopsis: tsv-sample [options] [file...]
 
 Randomizes or samples input lines. By default, all lines are output in
 random order. '--n|num' can be used to limit the sample size produced. A
-weighted random sample is generated using the '--f|field' option, this 
+weighted random sample is generated using the '--f|field' option, this
 identifies the field containing weights. Sampling is without replacement.
 
 Weighted random sampling is done using an algorithm described by Efraimidis
@@ -108,14 +108,14 @@ struct TsvSampleOptions
     char delim = '\t';           // --d|delimiter
     bool versionWanted = false;  // --V|version
     bool hasWeightField = false; // Derived.
-    
+
     auto processArgs(ref string[] cmdArgs)
     {
         import std.getopt;
         import std.path : baseName, stripExtension;
-        
+
         programName = (cmdArgs.length > 0) ? cmdArgs[0].stripExtension.baseName : "Unknown_program_name";
-        
+
         try
         {
             arraySep = ",";    // Use comma to separate values in command line options
@@ -129,13 +129,13 @@ struct TsvSampleOptions
                 "f|field",         "NUM  Field containing weights. All lines get equal weight if not provided or zero.", &weightField,
                 "p|print-random",  "     Output the random values that were assigned.", &printRandom,
                 "s|static-seed",   "     Use the same random seed every run.", &staticSeed,
-                
+
                 std.getopt.config.caseSensitive,
                 "v|seed-value",    "NUM  Sets the initial random seed. Use a non-zero, 32 bit positive integer. Zero is a no-op.", &seedValue,
                 std.getopt.config.caseInsensitive,
-                
+
                 "d|delimiter",     "CHR  Field delimiter.", &delim,
-                
+
                 std.getopt.config.caseSensitive,
                 "V|version",       "     Print version information and exit.", &versionWanted,
                 std.getopt.config.caseInsensitive,
@@ -178,9 +178,9 @@ struct TsvSampleOptions
     }
 }
 
-/* An implementation of reservior sampling. Both weighted and unweighted sampling are 
+/* An implementation of reservior sampling. Both weighted and unweighted sampling are
  * supported. Both are implemented using the one-pass algorithm described by Efraimidis
- * and Spirakis ("Weighted Random Sampling over Data Streams", Pavlos S. Efraimidis, 
+ * and Spirakis ("Weighted Random Sampling over Data Streams", Pavlos S. Efraimidis,
  * https://arxiv.org/abs/1012.0256). In the unweighted case weights are simply set to one.
  *
  * Both sampling and full permutation of the input are supported, but the implementations
@@ -199,6 +199,7 @@ void reservoirSampling(Flag!"permuteAll" permuteAll, OutputRange)
 {
     import std.random : Random, unpredictableSeed, uniform01;
     import std.container.binaryheap;
+    import tsvutil : throwIfWindowsNewlineOnUnix;
 
     /* Ensure the correct version of the template was called. */
     static if (permuteAll) assert(cmdopt.sampleSize == 0);
@@ -208,7 +209,7 @@ void reservoirSampling(Flag!"permuteAll" permuteAll, OutputRange)
         (cmdopt.seedValue != 0) ? cmdopt.seedValue
         : cmdopt.staticSeed ? 2438424139
         : unpredictableSeed;
-    
+
     auto randomGenerator = Random(seed);
 
     struct Entry
@@ -218,7 +219,7 @@ void reservoirSampling(Flag!"permuteAll" permuteAll, OutputRange)
     }
 
     /* Create the heap and backing data store. A min or max heap is used as described
-     * above. The backing store has some complications resulting from the current 
+     * above. The backing store has some complications resulting from the current
      * standard library implementation:
      * - Built-in arrays appear to have better memory bevavior when appending than
      *   std.container.array Arrays. However, built-in arrays cannot be used with
@@ -258,7 +259,8 @@ void reservoirSampling(Flag!"permuteAll" permuteAll, OutputRange)
         auto inputStream = (filename == "-") ? stdin : filename.File();
         foreach (fileLineNum, line; inputStream.byLine(KeepTerminator.no).enumerate(1))
         {
-            if (cmdopt.hasHeader && fileLineNum == 1)
+            if (fileLineNum == 1) throwIfWindowsNewlineOnUnix(line, filename, fileLineNum);
+            if (fileLineNum == 1 && cmdopt.hasHeader)
             {
                 if (!headerWritten)
                 {
@@ -307,7 +309,7 @@ void reservoirSampling(Flag!"permuteAll" permuteAll, OutputRange)
      * having a weighted order. This is especially true for weighted sampling, but
      * there is also value in the unweighted case, especially when using static seeds.
      */
-    
+
     void printEntry(Entry entry)
     {
         if (cmdopt.printRandom)
@@ -331,7 +333,7 @@ void reservoirSampling(Flag!"permuteAll" permuteAll, OutputRange)
          */
         size_t numLines = reservoir.length;
         assert(numLines == dataStore.length);
-        
+
         while (!reservoir.empty) reservoir.removeFront;
         assert(numLines == dataStore.length);
         foreach (entry; dataStore) printEntry(entry);
@@ -379,7 +381,7 @@ unittest
      * These tests make basic sanity checks on the getFieldValue wrapper.
      */
     import std.exception;
-    
+
     assert(getFieldValue!double("123", 0, '\t', "unittest", 1) == 123);
     assert(getFieldValue!double("123.4", 0, '\t', "unittest", 1) == 123.4);
     assertThrown(getFieldValue!double("abc", 0, '\t', "unittest", 1));
@@ -395,7 +397,7 @@ unittest
  * on several different platorm, compiler, and library versions. However, it is certainly
  * possible this condition will not hold on other platforms.
  *
- * For tsv-sample, this portability implies generating the same results on different 
+ * For tsv-sample, this portability implies generating the same results on different
  * platforms when using the same random seed. This is NOT part of tsv-sample guarantees,
  * but it is convenient for testing. If platforms are identified that do not generate
  * the same results these tests will need to be adjusted.
@@ -411,7 +413,7 @@ version(unittest)
     {
         import std.array : appender;
         import std.format : format;
-        
+
         assert(cmdArgs.length > 0, "[testTsvSample] cmdArgs must not be empty.");
 
         auto formatAssertMessage(T...)(string msg, T formatArgs)
@@ -454,14 +456,14 @@ unittest
     scope(exit) testDir.rmdirRecurse;
 
     /* Tabular data sets and expected results use the built-in static seed.
-     * Tests are run by writing the data set to a file, then calling the main 
+     * Tests are run by writing the data set to a file, then calling the main
      * routine to process. The function testTsvSample plays the role of the
      * main program. Rather than writing to expected output, the results are
      * matched against expected. The expected results were verified by hand
      * prior to inclusion in the test.
      *
      * The initial part of this section is simply setting up data files and
-     * expected results. 
+     * expected results.
      */
 
     /* Empty file. */
@@ -529,8 +531,8 @@ unittest
          ["black", "黒", "0.983"]];
     string fpath_data3x6 = buildPath(testDir, "data3x6.tsv");
     string fpath_data3x6_noheader = buildPath(testDir, "data3x6_noheader.tsv");
-    writeUnittestTsvFile(fpath_data3x6, data3x6);    
-    writeUnittestTsvFile(fpath_data3x6_noheader, data3x6[1..$]);    
+    writeUnittestTsvFile(fpath_data3x6, data3x6);
+    writeUnittestTsvFile(fpath_data3x6_noheader, data3x6[1..$]);
 
     string[][] data3x6ExpectedNoWt =
         [["field_a", "field_b", "field_c"],
@@ -577,7 +579,7 @@ unittest
          ["0.250923618674278", "red", "赤", "23.8"],
          ["0.155359342927113", "black", "黒", "0.983"],
          ["0.0460958210751414", "white", "白", "1.65"]];
-    
+
     string[][] data3x6ExpectedWt3V41Probs =
         [["random_weight", "field_a", "field_b", "field_c"],
          ["0.967993774989107", "blue", "青", "12"],
@@ -896,25 +898,25 @@ unittest
         size_t expectedLength = min(data3x6.length, n + 1);
         testTsvSample([format("test-f1_%d", n), "-s", "-n", n.to!string,
                        "-H", fpath_data3x6], data3x6ExpectedNoWt[0..expectedLength]);
-        
+
         testTsvSample([format("test-f2_%d", n), "-s", "-n", n.to!string,
                        "-H", "-p", fpath_data3x6], data3x6ExpectedNoWtProbs[0..expectedLength]);
-        
+
         testTsvSample([format("test-f3_%d", n), "-s", "-n", n.to!string,
                        "-H", "-f", "3", fpath_data3x6], data3x6ExpectedWt3[0..expectedLength]);
-        
+
         testTsvSample([format("test-f4_%d", n), "-s", "-n", n.to!string,
                        "-H", "-p", "-f", "3", fpath_data3x6], data3x6ExpectedWt3Probs[0..expectedLength]);
 
         testTsvSample([format("test-f5_%d", n), "-s", "-n", n.to!string,
                        fpath_data3x6_noheader], data3x6ExpectedNoWt[1..expectedLength]);
-        
+
         testTsvSample([format("test-f6_%d", n), "-s", "-n", n.to!string,
                        "-p", fpath_data3x6_noheader], data3x6ExpectedNoWtProbs[1..expectedLength]);
-        
+
         testTsvSample([format("test-f7_%d", n), "-s", "-n", n.to!string,
                        "-f", "3", fpath_data3x6_noheader], data3x6ExpectedWt3[1..expectedLength]);
-        
+
         testTsvSample([format("test-f8_%d", n), "-s", "-n", n.to!string,
                        "-p", "-f", "3", fpath_data3x6_noheader], data3x6ExpectedWt3Probs[1..expectedLength]);
     }
@@ -925,13 +927,13 @@ unittest
         size_t expectedLength = min(data1x10.length, n + 1);
         testTsvSample([format("test-g1_%d", n), "-s", "-n", n.to!string,
                        "-H", fpath_data1x10], data1x10ExpectedNoWt[0..expectedLength]);
-        
+
         testTsvSample([format("test-g2_%d", n), "-s", "-n", n.to!string,
                        "-H", "-f", "1", fpath_data1x10], data1x10ExpectedWt1[0..expectedLength]);
-        
+
         testTsvSample([format("test-g3_%d", n), "-s", "-n", n.to!string,
                        fpath_data1x10_noheader], data1x10ExpectedNoWt[1..expectedLength]);
-        
+
         testTsvSample([format("test-g4_%d", n), "-s", "-n", n.to!string,
                        "-f", "1", fpath_data1x10_noheader], data1x10ExpectedWt1[1..expectedLength]);
     }

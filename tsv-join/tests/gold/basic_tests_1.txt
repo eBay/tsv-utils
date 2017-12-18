@@ -8,6 +8,18 @@ f1	f2	f3	f4	f5
 9	v	vv	97	91
 10	GGG	nnn	101	102
 
+====[tsv-join --header -f input1.tsv --key-fields 0 input2.tsv]====
+f1	f2	f3	f4	f5
+2	bbb	ZZZ	21	28
+9	v	vv	97	91
+10	GGG	nnn	101	102
+
+====[tsv-join --header -f input1.tsv --key-fields 0 --data-fields 0 input2.tsv]====
+f1	f2	f3	f4	f5
+2	bbb	ZZZ	21	28
+9	v	vv	97	91
+10	GGG	nnn	101	102
+
 ====[tsv-join --header -f input1.tsv --exclude input2.tsv]====
 f1	f2	f3	f4	f5
 1	ggg	UUU	101b	15b
@@ -1275,6 +1287,8 @@ Help and Version printing 1
 -----------------
 
 ====[tsv-join --help | grep -c Synopsis]====
+1
+====[tsv-join --help-verbose | grep -c Synopsis]====
 1
 ====[tsv-join --version | grep -c 'tsv-join (eBay/tsv-utils-dlang)']====
 1

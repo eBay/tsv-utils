@@ -168,4 +168,8 @@ runtest ${prog} "-f input1.tsv" ${error_tests_1}
 runtest ${prog} "-f 1, input1.tsv" ${error_tests_1}
 runtest ${prog} "-f 1.1 input1.tsv" ${error_tests_1}
 
+# Windows line ending detection
+runtest ${prog} "-f 1 input1_dos.tsv" ${error_tests_1}
+runtest ${prog} "-H -f 1 input1_dos.tsv" ${error_tests_1}
+
 exit $?

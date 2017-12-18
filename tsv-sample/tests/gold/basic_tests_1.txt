@@ -344,6 +344,8 @@ Help and Version printing 1
 
 ====[tsv-sample --help | grep -c Synopsis]====
 1
+====[tsv-sample --help-verbose | grep -c Synopsis]====
+1
 ====[tsv-sample --version | grep -c 'tsv-sample (eBay/tsv-utils-dlang)']====
 1
 ====[tsv-sample -V | grep -c 'tsv-sample (eBay/tsv-utils-dlang)']====

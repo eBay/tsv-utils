@@ -47,3 +47,11 @@ Error [tsv-select]: Not enough fields in line. File: input_3plus_fields.tsv,  Li
 
 ====[tsv-select -f 1.1 input1.tsv]====
 [tsv-select] Error processing command line arguments: [--f|fields] Unexpected '.' when converting from type string to type long
+
+====[tsv-select -f 1 input1_dos.tsv]====
+Error [tsv-select]: Windows/DOS line ending found. Convert file to Unix newlines before processing (e.g. 'dos2unix').
+  File: input1_dos.tsv, Line: 1
+
+====[tsv-select -H -f 1 input1_dos.tsv]====
+Error [tsv-select]: Windows/DOS line ending found. Convert file to Unix newlines before processing (e.g. 'dos2unix').
+  File: input1_dos.tsv, Line: 1
