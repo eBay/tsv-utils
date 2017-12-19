@@ -18,11 +18,11 @@ matrix:
       language: d
       d: dmd
       env: DUBTEST=1 MAKETEST=1
-    - os: osx
-      osx_image: xcode9
-      language: d
-      d: ldc-1.2.0
-      env: DUBTEST=1 MAKETEST=1 APPLTO=off
+#    - os: osx
+#      osx_image: xcode9
+#      language: d
+#      d: ldc-1.2.0
+#      env: DUBTEST=1 MAKETEST=1 APPLTO=off
     - os: linux
       language: d
       d: ldc-1.2.0
@@ -32,11 +32,11 @@ matrix:
       language: d
       d: ldc
       env: DUBTEST=1 MAKETEST=1 APPLTO=off
-    - os: osx
-      osx_image: xcode9
-      language: d
-      d: ldc
-      env: LTOPGO=default
+#    - os: osx
+#      osx_image: xcode9
+#      language: d
+#      d: ldc
+#      env: LTOPGO=default
     - os: osx
       osx_image: xcode9
       language: d
