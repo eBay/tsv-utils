@@ -3,8 +3,16 @@ include ../makedefs.mk
 release: ;
 debug: ;
 codecov: ;
-clean:
-	-rm ./*.lst
+
+.PHONY: clean-bin-relics
+clean-bin-relics: ;
+
+.PHONY: clean-relics
+clean-relics:
+	-rm -f ./*.lst
+
+.PHONY: clean
+clean: clean-relics
 
 test: unittest
 

@@ -21,16 +21,23 @@ $(app_debug):  ldc-build-runtime-libs $(srcs)
 $(app_codecov): ldc-build-runtime-libs $(srcs)
 	$(DCOMPILER) $(codecov_flags) -of$(app_codecov) $(imports) $(srcs)
 
-clean:
-	-rm $(app_debug)
-	-rm $(app_release)
-	-rm $(app_codecov)
-	-rm $(app_instrumented)
-	-rm $(objdir)/*.o
-	-rm ./*.lst
-	-rm $(testsdir)/*.lst
-	-rm $(ldc_profdata_file)
-	-rm $(ldc_profile_data_dir)/profile.*.raw
+.PHONY: clean-bin-relics
+clean-bin-relics:
+	-rm -f $(app_debug)
+	-rm -f $(app_codecov)
+	-rm -f $(app_instrumented)
+
+.PHONY: clean-relics
+clean-relics: clean-bin-relics
+	-rm -f $(objdir)/*.o
+	-rm -f ./*.lst
+	-rm -f $(testsdir)/*.lst
+	-rm -f $(ldc_profdata_file)
+	-rm -f $(ldc_profile_data_dir)/profile.*.raw
+
+.PHONY: clean
+clean: clean-relics
+	-rm -f $(app_release)
 
 .PHONY: test
 test: unittest test-debug test-release

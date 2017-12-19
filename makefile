@@ -19,6 +19,9 @@ help:
 	@echo 'release      - Release mode build.'
 	@echo 'debug        - Debug build. (Apps are written with a .dbg extension.)'
 	@echo 'clean        - Removes executables and other build artifacts.'
+	@echo 'clean-relics - Removes build artifacts, but not release artifacts.'
+	@echo 'clean-bin-relics - Removes build artifacts from the bin directory, except for release'
+	@echo '               binaries. Used to create a release package.'
 	@echo 'test         - Runs all tests. Unit tests, and release and debug executable tests.'
 	@echo 'unittest     - Runs unit tests.'
 	@echo 'test-debug   - Builds debug apps and runs command line tests against the apps.'
@@ -50,7 +53,10 @@ help:
 release: make_subdirs
 debug: make_subdirs
 clean: make_subdirs
-	-rm ./*.lst
+	-rm -f ./*.lst
+clean-relics: make_subdirs
+	-rm -f ./*.lst
+clean-bin-relics: make_subdirs
 
 test: make_subdirs
 unittest: make_subdirs
@@ -87,7 +93,11 @@ package:
 	@$(MAKE) -C $(CURDIR) clean
 	@$(MAKE) -C $(CURDIR) release
 	@$(MAKE) -C $(CURDIR) test-nobuild
-	-rm -r $(PKG_DIR)
+	@$(MAKE) -C $(CURDIR) clean-bin-relics
+	@echo ''
+	@echo '---> Build successful. Creating package.'
+	@echo ''
+	-rm -rf $(PKG_DIR)
 	mkdir $(PKG_DIR)
 	cp -pr $(CURDIR)/bin $(PKG_DIR)
 	cp -pr $(CURDIR)/bash_completion $(PKG_DIR)
