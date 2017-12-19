@@ -13,11 +13,11 @@ matrix:
       osx_image: xcode9
       language: d
       d: dmd
-      env: DUBTEST=1 MAKETEST=1 CODECOV=1
+      env: DUBTEST=1 MAKETEST=1
     - os: linux
       language: d
       d: dmd
-      env: DUBTEST=1 MAKETEST=1
+      env: DUBTEST=1 MAKETEST=1 CODECOV=1
 #    - os: osx
 #      osx_image: xcode9
 #      language: d
