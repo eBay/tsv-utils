@@ -164,17 +164,33 @@ ifeq ($(compiler_type),ldc)
 				override LDC_LTO = full
 			endif
 		endif
+
 		ifneq ($(LDC_PGO),)
 			ifneq ($(LDC_PGO),1)
-                                $(error "Invalid LDC_PGO flag: '$(LDC_PGO). Must be '1' or not set.")
-			else ifeq ($(APP_USES_LDC_PGO),1)
-				pgo_link_flags = -fprofile-instr-use=$(ldc_profdata_file)
-				pgo_generate_link_flags = -fprofile-instr-generate=profile.%p.raw
-				app_ldc_profdata_file = $(ldc_profdata_file)
-			else ifneq ($(APP_USES_LDC_PGO),)
-                                $(error "Invalid APP_USES_LDC_PGO flag: '$(APP_USES_LDC_PGO). Must be '1' or not set. (Usually set in makefile.)")
+				ifneq ($(LDC_PGO),2)
+                                        $(error "Invalid LDC_PGO flag: '$(LDC_PGO). Must be '1', '2', or not set.")
+				endif
 			endif
-		endif
+			ifneq ($(APP_USES_LDC_PGO),)
+				this_app_uses_pgo=0
+				ifeq ($(APP_USES_LDC_PGO),1)
+					this_app_uses_pgo=1
+				else ifeq ($(APP_USES_LDC_PGO),2)
+					ifeq ($(LDC_PGO),2)
+						this_app_uses_pgo=1
+					endif
+				else ifneq ($(APP_USES_LDC_PGO),1)
+					ifneq ($(APP_USES_LDC_PGO),2)
+                                                $(error "Invalid APP_USES_LDC_PGO flag: '$(APP_USES_LDC_PGO). Must be '1', '2', or not set. (Usually set in makefile.)"")
+					endif
+				endif
+				ifeq ($(this_app_uses_pgo),1)
+					pgo_link_flags = -fprofile-instr-use=$(ldc_profdata_file)
+					pgo_generate_link_flags = -fprofile-instr-generate=profile.%p.raw
+					app_ldc_profdata_file = $(ldc_profdata_file)
+				endif
+			endif
+		endif			
 	else ifeq ($(LDC_LTO),default)
 		ifeq ($(OS_NAME),Darwin)
 			override LDC_LTO = thin

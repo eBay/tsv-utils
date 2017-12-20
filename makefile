@@ -46,8 +46,11 @@ help:
 	@echo 'LDC_BUILD_RUNTIME - Enables LDC support for using LTO on the runtime libraries. Use'
 	@echo '    the value 1 to turn on. The value can also be a path to the ldc-build-runtime tool.'
 	@echo 'LDC_LTO - Controls the LDC LTO options. See makedefs.mk for details.'
-	@echo 'LDC_PGO - If set to 1, builds apps with Profile Guided Optimization. Only used for a'
-	@echo '    subset of apps, and only for release builds with LDC_BUILD_RUNTIME turned on.'
+	@echo 'LDC_PGO - Turns on Profile Guided Optimization. This is available for a subset of apps,'
+	@echo '    release builds with LDC_BUILD_RUNTIME=1 only. If LDC_PGO=1, PGO is used on the apps'
+	@echo '    showing the largest performance benefits. If LDC_PGO=2, PGO is used on all apps it'
+	@echo '    has been enabled for. Speed gains are smaller for the additional apps. PGO has'
+	@echo '    longer build times. LDC_PGO=1 is a good compromise between build time and performance.'
 	@echo ''
 
 release: make_subdirs

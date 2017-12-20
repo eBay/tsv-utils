@@ -4,7 +4,7 @@
 #   CODECOV - Runs code coverage
 #   APPLTO=[default|off|thin|full] - make test with the setting
 #   ALLLTO=[default|thin|full] - make test LDC_BUILD_RUNTIME=1 and LTO value
-#   LTOPGO=[default|thin|full] - Like ALLLTO, but adds PGO=1 flag
+#   LTOPGO=[default|thin|full] - Like ALLLTO, but adds LDC_PGO=2 flag
 #   DOCKERSPECIAL - Special dockerized build to run LDC with LTO, PGO and -static
 #   DEPLOY - Deploy if a tagged release.
 matrix:
@@ -102,15 +102,15 @@ script:
   fi
 - if [[ ! -z "$LTOPGO" ]]; then
     if [[ "$LTOPGO" == "default" ]]; then
-      make test DCOMPILER=$DC LDC_BUILD_RUNTIME=1 LDC_PGO=1
+      make test DCOMPILER=$DC LDC_BUILD_RUNTIME=1 LDC_PGO=2
       && make clean;
     else
-      make test DCOMPILER=$DC LDC_BUILD_RUNTIME=1 LDC_LTO=$LTOPGO LDC_PGO=1
+      make test DCOMPILER=$DC LDC_BUILD_RUNTIME=1 LDC_LTO=$LTOPGO LDC_PGO=2
       && make clean;
     fi
   fi
 - if [[ "$DOCKERSPECIAL" == "1" ]]; then
-    docker run --rm -ti -v $(pwd):/src dlanguage/ldc:1.5.0 make test DCOMPILER=ldc2 LDC_BUILD_RUNTIME=1 LDC_PGO=1 DFLAGS=-static
+    docker run --rm -ti -v $(pwd):/src dlanguage/ldc:1.5.0 make test DCOMPILER=ldc2 LDC_BUILD_RUNTIME=1 LDC_PGO=2 DFLAGS=-static
     && sudo chown -R $UID:$GID $(pwd)
     && make test-nobuild
     && make clean;
@@ -126,10 +126,10 @@ before_deploy:
     USE_VERSION="$TRAVIS_TAG";
   fi
 - if [[ "$DOCKERSPECIAL" == "1" ]]; then
-    docker run --rm -ti -v $(pwd):/src dlanguage/ldc:1.5.0 make package PKG_ROOT_DIR=tsv-utils-dlang DCOMPILER=$DC OS=$TRAVIS_OS_NAME APP_VERSION=$USE_VERSION LDC_BUILD_RUNTIME=1 LDC_PGO=1 DFLAGS=-static;
+    docker run --rm -ti -v $(pwd):/src dlanguage/ldc:1.5.0 make package PKG_ROOT_DIR=tsv-utils-dlang DCOMPILER=$DC OS=$TRAVIS_OS_NAME APP_VERSION=$USE_VERSION LDC_BUILD_RUNTIME=1 LDC_PGO=2 DFLAGS=-static;
     sudo chown -R $UID:$GID $(pwd);
   else
-    make package DCOMPILER=$DC OS=$TRAVIS_OS_NAME APP_VERSION=$USE_VERSION LDC_BUILD_RUNTIME=1 LDC_PGO=1;
+    make package DCOMPILER=$DC OS=$TRAVIS_OS_NAME APP_VERSION=$USE_VERSION LDC_BUILD_RUNTIME=1 LDC_PGO=2;
   fi
 deploy:
   provider: releases
