@@ -99,7 +99,7 @@ This turns on PGO for the tools supporting it. The two values are used to help w
 - `LDC_PGO=1` - Enables PGO for those tools showing the largest performance gains.
 - `LDC_PGO=2` - Enable PGO for all tools that have been configured to use it.
 
-The PGO setup creates and runs an instrumented build to collect profiling, this is what increased build times. Build times are still not excessive, but `LDC_PGO=1` is often a nice compromise.
+The PGO setup creates and runs an instrumented build to collect profiling data, this is what increases build times. Build times are still not excessive, but `LDC_PGO=1` can be a nice compromise.
 
 ## Additional options
 
