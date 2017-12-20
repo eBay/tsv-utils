@@ -18,6 +18,8 @@ if [ -e app.profdata ]; then
    rm -f app.profdata
 fi
 
+## All operators get at least one call, but the basic arithmetic operators are the
+## most common, make sure they are overweighted.
 $prog profile_data_1.tsv -H --lt 3:0 > /dev/null
 $prog profile_data_1.tsv -H --le 2:0 > /dev/null
 $prog profile_data_1.tsv -H --ge 16:0 > /dev/null
@@ -28,12 +30,20 @@ $prog profile_data_1.tsv -H --le 19:-10 > /dev/null
 $prog profile_data_1.tsv -H --ge 18:10 > /dev/null
 $prog profile_data_1.tsv -H --gt 6:-55 --lt 9:-0.2 > /dev/null
 $prog profile_data_1.tsv -H --ge 3:0.002 --le 14:0.0005 > /dev/null
+$prog profile_data_1.tsv -H --gt 1:-2.8899720283 --lt 1:2.82987744963 > /dev/null
+$prog profile_data_1.tsv -H --gt 14:0.000242308466917 --lt 14:0.00071920351827 > /dev/null
+$prog profile_data_1.tsv -H --gt 15:-54.2458244835 --lt 15:57.8627273685 > /dev/null
 $prog profile_data_1.tsv -H --invert --le 1:2.2 --lt 16:1.11 > /dev/null
 $prog profile_data_1.tsv -H --or --ge 4:1.65 --lt 5:22.0 > /dev/null
 $prog profile_data_1.tsv -H --invert --or --ge 18:-15 --lt 20:-15 > /dev/null
+$prog profile_data_2.tsv --ge 2:573 --le 2:629 > /dev/null
+$prog profile_data_2.tsv --ge 3:22 --le 3:76 > /dev/null
+$prog profile_data_2.tsv --ge 4:120 --le 4:303 > /dev/null
 $prog profile_data_2.tsv --or --eq 2:646 --eq 2:647 --eq 2:609 > /dev/null
 $prog profile_data_2.tsv --ne 2:622 --ne 2:642 --ne 2:649 > /dev/null
 $prog profile_data_2.tsv --or --eq 3:16 --gt 4:570 --ge 3:140 --le 3:3 --lt 2:510 > /dev/null
+
+## Most of the other operators start here
 $prog profile_data_5.tsv --ff-eq 2:3 > /dev/null
 $prog profile_data_5.tsv --ff-ne 3:4 > /dev/null
 $prog profile_data_5.tsv --ff-le 3:2 > /dev/null

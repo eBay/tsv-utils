@@ -87,12 +87,19 @@ The above command builds with LTO on both the D libraries and the TSV utilities 
 
 **Build with LTO and PGO enabled:**
 
+To use PGO, add either `LDC_PGO=1` or `LDC_PGO=2` to the above command:
+
 ```
 $ make DCOMPILER=ldc2 LDC_BUILD_RUNTIME=1 LDC_PGO=1
 $ make test-nobuild
 ```
 
-This is similar to the LTO build, but adds PGO support for those tools that support it. This does add to the build time, as it includes compiling and running an instrumented build. Builds are still reasonably quick.
+This turns on PGO for the tools supporting it. The two values are used to help with build times.
+
+- `LDC_PGO=1` - Enables PGO for those tools showing the largest performance gains.
+- `LDC_PGO=2` - Enable PGO for all tools that have been configured to use it.
+
+The PGO setup creates and runs an instrumented build to collect profiling data, this is what increases build times. Build times are still not excessive, but `LDC_PGO=1` can be a nice compromise.
 
 ## Additional options
 

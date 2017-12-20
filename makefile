@@ -19,6 +19,9 @@ help:
 	@echo 'release      - Release mode build.'
 	@echo 'debug        - Debug build. (Apps are written with a .dbg extension.)'
 	@echo 'clean        - Removes executables and other build artifacts.'
+	@echo 'clean-relics - Removes build artifacts, but not release artifacts.'
+	@echo 'clean-bin-relics - Removes build artifacts from the bin directory, except for release'
+	@echo '               binaries. Used to create a release package.'
 	@echo 'test         - Runs all tests. Unit tests, and release and debug executable tests.'
 	@echo 'unittest     - Runs unit tests.'
 	@echo 'test-debug   - Builds debug apps and runs command line tests against the apps.'
@@ -43,14 +46,20 @@ help:
 	@echo 'LDC_BUILD_RUNTIME - Enables LDC support for using LTO on the runtime libraries. Use'
 	@echo '    the value 1 to turn on. The value can also be a path to the ldc-build-runtime tool.'
 	@echo 'LDC_LTO - Controls the LDC LTO options. See makedefs.mk for details.'
-	@echo 'LDC_PGO - If set to 1, builds apps with Profile Guided Optimization. Only used for a'
-	@echo '    subset of apps, and only for release builds with LDC_BUILD_RUNTIME turned on.'
+	@echo 'LDC_PGO - Turns on Profile Guided Optimization. This is available for a subset of apps,'
+	@echo '    release builds with LDC_BUILD_RUNTIME=1 only. If LDC_PGO=1, PGO is used on the apps'
+	@echo '    showing the largest performance benefits. If LDC_PGO=2, PGO is used on all apps it'
+	@echo '    has been enabled for. Speed gains are smaller for the additional apps. PGO has'
+	@echo '    longer build times. LDC_PGO=1 is a good compromise between build time and performance.'
 	@echo ''
 
 release: make_subdirs
 debug: make_subdirs
 clean: make_subdirs
-	-rm ./*.lst
+	-rm -f ./*.lst
+clean-relics: make_subdirs
+	-rm -f ./*.lst
+clean-bin-relics: make_subdirs
 
 test: make_subdirs
 unittest: make_subdirs
@@ -87,7 +96,11 @@ package:
 	@$(MAKE) -C $(CURDIR) clean
 	@$(MAKE) -C $(CURDIR) release
 	@$(MAKE) -C $(CURDIR) test-nobuild
-	-rm -r $(PKG_DIR)
+	@$(MAKE) -C $(CURDIR) clean-bin-relics
+	@echo ''
+	@echo '---> Build successful. Creating package.'
+	@echo ''
+	-rm -rf $(PKG_DIR)
 	mkdir $(PKG_DIR)
 	cp -pr $(CURDIR)/bin $(PKG_DIR)
 	cp -pr $(CURDIR)/bash_completion $(PKG_DIR)

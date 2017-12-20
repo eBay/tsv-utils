@@ -145,6 +145,11 @@ int main(string[] cmdArgs)
     TsvSelectOptions cmdopt;
     auto r = cmdopt.processArgs(cmdArgs);
     if (!r[0]) return r[1];
+    version(LDC_Profile)
+    {
+        import ldc.profile : resetAll;
+        resetAll();
+    }
     try
     {
         /* Invoke the tsvSelect template matching the --rest option chosen. Option args
