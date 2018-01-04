@@ -6,7 +6,7 @@ file, contains the records (lines) being matched. The other input files are sear
 matching records. Matching records are written to standard output, along with any designated
 fields from the 'filter' file. In database parlance this is a 'hash semi-join'.
 
-Copyright (c) 2015-2017, eBay Software Foundation
+Copyright (c) 2015-2018, eBay Software Foundation
 Initially written by Jon Degenhardt
 
 License: Boost Licence 1.0 (http://boost.org/LICENSE_1_0.txt)

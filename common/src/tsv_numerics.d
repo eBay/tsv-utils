@@ -9,7 +9,7 @@ Utilities in this file:
 
 * quantile - Generates quantile values for a data set.
 
-Copyright (c) 2016-2017, eBay Software Foundation
+Copyright (c) 2016-2018, eBay Software Foundation
 Initially written by Jon Degenhardt
 
 License: Boost Licence 1.0 (http://boost.org/LICENSE_1_0.txt)
@@ -42,15 +42,15 @@ auto formatNumber(T, size_t readablePrecisionMax = 6)(T num, const size_t floatP
 
     import std.conv : to;
     import std.format : format;
-    
+
     static if (isIntegral!T)
     {
         return format("%d", num);  // The easy case.
     }
-    else 
+    else
     {
         static assert(isFloatingPoint!T);
-        
+
         static if (!is(UT == float) && !is(UT == double))
         {
             /* Not a double or float, but a floating point. Punt on refinements. */
@@ -69,7 +69,7 @@ auto formatNumber(T, size_t readablePrecisionMax = 6)(T num, const size_t floatP
                  */
                 auto str = format("%.*f", floatPrecision, num);
                 size_t trimToLength = str.length;
-                
+
                 if (floatPrecision != 0 && str.length > floatPrecision + 1)
                 {
                     import std.ascii : isDigit;
@@ -115,16 +115,16 @@ auto formatNumber(T, size_t readablePrecisionMax = 6)(T num, const size_t floatP
                 }
                 else
                 {
-                    /* Check for integral values needing to be printed in decimal format. 
+                    /* Check for integral values needing to be printed in decimal format.
                      * modf/modff are used to determine if the value has a non-zero
                      * fractional component.
                      */
                     import core.stdc.math : modf, modff;
-                
+
                     static if (is(UT == float)) alias modfUT = modff;
                     else static if (is(UT == double)) alias modfUT = modf;
                     else static assert(0);
-                
+
                     UT integerPart;
 
                     if (modfUT(num, &integerPart) == 0.0) return format("%d", num.to!long);
@@ -223,7 +223,7 @@ unittest  // formatNumber unit tests
     assert(formatNumber(99999.99996, 5) == "99999.99996");
     assert(formatNumber(999999.999996, 5) == "1000000");
     assert(formatNumber(999999.999996, 6) == "999999.999996");
-    
+
     /* Turn off precision, the 'human readable' style.
      * Note: Remains o if both are zero (first test). If it becomes desirable to support
      * turning it off when for the precision equal zero case the simple extension is to
@@ -263,7 +263,7 @@ unittest  // formatNumber unit tests
     assert(formatNumber(0.00003) == "3e-05" || formatNumber(0.00003) == "3e-5");
     assert(formatNumber(0.000003) == "3e-06" || formatNumber(0.000003) == "3e-6");
     assert(formatNumber(0.0000003) == "3e-07" || formatNumber(0.0000003) == "3e-7");
-    
+
     // Large number inside and outside the contiguous integer representation range
     double dlarge = 2.0^^(double.mant_dig - 2) - 10.0;
     double dhuge =  2.0^^(double.mant_dig + 1) + 1000.0;
@@ -356,7 +356,7 @@ unittest  // formatNumber unit tests
     assert(formatNumber(-0.00003) == "-3e-05" || formatNumber(-0.00003) == "-3e-5");
     assert(formatNumber(-0.000003) == "-3e-06" || formatNumber(-0.000003) == "-3e-6");
     assert(formatNumber(-0.0000003) == "-3e-07" || formatNumber(-0.0000003) == "-3e-7");
-    
+
     const double dlargeNeg = -2.0^^(double.mant_dig - 2) + 10.0;
     immutable double dhugeNeg =  -2.0^^(double.mant_dig + 1) - 1000.0;
 
@@ -382,7 +382,7 @@ unittest  // formatNumber unit tests
 
     // Float. Mix negative and type qualifiers in.
     assert(formatNumber(0.0f) == "0");
-    assert(formatNumber(0.5f) == "0.5");    
+    assert(formatNumber(0.5f) == "0.5");
     assert(formatNumber(0.123412f, 0) == "0");
     assert(formatNumber(0.123412f, 1) == "0.1");
     assert(formatNumber(-0.123412f, 2) == "-0.12");
@@ -391,7 +391,7 @@ unittest  // formatNumber unit tests
     assert(formatNumber(-99.123412f, 5) == "-99.12341");
     assert(formatNumber(99.123412f, 7) == "99.12341");
     assert(formatNumber(-999.123412f, 5) == "-999.12341");
-    
+
     float c1 = 999.123412f;           assert(formatNumber(c1, 7) == "999.1234");
     float c2 = 999.1234f;             assert(formatNumber!(float, 9)(c2, 3) == "999.123");
     const float c3 = 9001.0f;         assert(formatNumber(c3) == "9001");
@@ -449,19 +449,19 @@ auto rangeMedian (Range) (Range r)
     }
 
     import std.traits : isFloatingPoint;
-    
+
     ElementType!Range median;
 
     if (r.length > 0)
     {
         size_t medianIndex = r.length / 2;
-        
+
         version(rangeMedianViaSort)
         {
             import std.algorithm : sort;
             sort(r);
             median = r[medianIndex];
-            
+
             static if (isFloatingPoint!(ElementType!Range))
             {
                 if (r.length % 2 == 0)
@@ -476,7 +476,7 @@ auto rangeMedian (Range) (Range r)
             import std.algorithm : maxElement, topN;
             topN(r, medianIndex);
             median = r[medianIndex];
-            
+
             static if (isFloatingPoint!(ElementType!Range))
             {
                 if (r.length % 2 == 0)
@@ -494,7 +494,7 @@ auto rangeMedian (Range) (Range r)
             static assert(0, "A version of rangeMedianViaSort or rangeMedianViaTopN must be assigned.");
         }
     }
-    
+
     return median;
 }
 
@@ -508,24 +508,24 @@ unittest
     assert(rangeMedian(new int[0]) == int.init);
     assert(rangeMedian(new double[0]).isNaN && double.init.isNaN);
     assert(rangeMedian(new string[0]) == "");
-    
+
     assert(rangeMedian([3]) == 3);
     assert(rangeMedian([3.0]) == 3.0);
     assert(rangeMedian([3.5]) == 3.5);
     assert(rangeMedian(["aaa"]) == "aaa");
-    
+
     /* Even number of elements: Split the difference for floating point, but not other types. */
     assert(rangeMedian([3, 4]) == 4);
     assert(rangeMedian([3.0, 4.0]) == 3.5);
-    
+
     assert(rangeMedian([3, 6, 12]) == 6);
     assert(rangeMedian([3.0, 6.5, 12.5]) == 6.5);
-    
+
     // Do the rest with permutations
     assert([4, 7].permutations.all!(x => (x.rangeMedian == 7)));
     assert([4.0, 7.0].permutations.all!(x => (x.rangeMedian == 5.5)));
     assert(["aaa", "bbb"].permutations.all!(x => (x.rangeMedian == "bbb")));
-    
+
     assert([4, 7, 19].permutations.all!(x => (x.rangeMedian == 7)));
     assert([4.5, 7.5, 19.5].permutations.all!(x => (x.rangeMedian == 7.5)));
     assert(["aaa", "bbb", "ccc"].permutations.all!(x => (x.rangeMedian == "bbb")));
@@ -552,7 +552,7 @@ enum QuantileInterpolation
     R9 = 9,
 }
 
-/** 
+/**
 Returns the quantile in a data vector for a cumulative probability.
 
 Takes a data vector and a probability and returns the quantile cut point for the
@@ -588,14 +588,14 @@ body
     import std.algorithm : max, min;
     import std.conv : to;
     import std.math : ceil, lrint;
-    
+
     /* Note: In the implementation below, 'h1' is the 1-based index into the data vector.
      * This follows the wikipedia notation for the interpolation methods. One will be
      * subtracted before the vector is accessed.
      */
 
     double q = double.nan;     // The return value.
-    
+
     if (data.length == 1) q = data[0].to!double;
     else if (data.length > 1)
     {
@@ -656,7 +656,7 @@ body
         else assert(0);
     }
     return q;
-}   
+}
 
 unittest
 {
@@ -669,7 +669,7 @@ unittest
     assert(quantile(0.5, [22.5, 57.5, 73.5, 97.5, 113.5]) == 73.5);
     assert([0.25, 0.5, 0.75].map!(p => p.quantile([22, 57, 73, 97, 113])).array == [57.0, 73.0, 97.0]);
     assert([0.25, 0.5, 0.75].map!(p => p.quantile([22, 57, 73, 97, 113], QuantileInterpolation.R1)).array == [57.0, 73.0, 97.0]);
-        
+
     /* Data arrays. */
     double[] d1 = [];
     double[] d2 = [5.5];
@@ -831,7 +831,7 @@ unittest
         [38.37, 38.37, 41.365, 45.7, 51.025, 53.08, 53.51, 53.94, 58.95, 63.63, 65.25, 65.25, 65.25],
         [38.37, 38.37, 38.969, 45.365, 50.958, 53.037, 53.51, 53.983, 59.715, 64.926, 65.25, 65.25, 65.25],
         [38.37, 41.0655, 43.761, 46.9475, 51.092, 53.123, 53.51, 53.897, 58.44, 62.334, 63.792, 64.6668, 65.25],
-        [38.37, 38.37, 40.56633, 45.58833, 51.00267, 53.06567, 53.51, 53.95433, 59.205, 64.062, 65.25, 65.25, 65.25], 
+        [38.37, 38.37, 40.56633, 45.58833, 51.00267, 53.06567, 53.51, 53.95433, 59.205, 64.062, 65.25, 65.25, 65.25],
         [38.37, 38.37, 40.766, 45.61625, 51.00825, 53.06925, 53.51, 53.95075, 59.14125, 63.954, 65.25, 65.25, 65.25],
         ];
 
@@ -841,7 +841,7 @@ unittest
         import std.format : format;
         import std.math : approxEqual, isNaN;
         import std.range : lockstep;
-        
+
         foreach (i, actualValue, expectedValue; lockstep(actual, expected))
         {
             assert(actualValue.approxEqual(expectedValue) || (actualValue.isNaN && expectedValue.isNaN),
@@ -849,7 +849,7 @@ unittest
                           dataset, method.to!string, i, expectedValue, actualValue));
         }
     }
-    
+
     foreach(methodIndex, method; EnumMembers!QuantileInterpolation)
     {
         compareResults(probs.map!(p => p.quantile(d1, method)).array, d1_expected[methodIndex], "d1", method);
