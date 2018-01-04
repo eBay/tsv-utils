@@ -1,10 +1,10 @@
 /**
 Command line tool that executes a command while preserving header lines.
 
-Copyright (c) 2017, eBay Software Foundation
+Copyright (c) 2018, eBay Software Foundation
 Initially written by Jon Degenhardt
 
-License: Boost License 1.0 (http://boost.org/LICENSE_1_0.txt) 
+License: Boost License 1.0 (http://boost.org/LICENSE_1_0.txt)
 */
 module keep_header;
 
@@ -47,7 +47,7 @@ int main(string[] args)
         import core.runtime : dmd_coverSetMerge;
         dmd_coverSetMerge(true);
     }
-    
+
     auto programName = (args.length > 0) ? args[0].stripExtension.baseName : "Unknown_program_name";
     auto splitArgs = findSplit(args, ["--"]);
 
@@ -55,7 +55,7 @@ int main(string[] args)
     {
         auto cmdArgs = splitArgs[0][1 .. $];
         stderr.writefln("Synopsis: %s [file...] -- program [args]", programName);
-        if (cmdArgs.length > 0 && 
+        if (cmdArgs.length > 0 &&
             (cmdArgs[0] == "-h" || cmdArgs[0] == "--help" || cmdArgs[0] == "--help-verbose"))
         {
             stderr.writeln();
@@ -87,7 +87,7 @@ int main(string[] args)
             auto pipeStatus = wait(pipe.pid);
             if (pipeStatus != 0) status = pipeStatus;
         }
-        
+
         bool headerWritten = false;
         foreach (filename; splitArgs[0].length > 1 ? splitArgs[0][1..$] : ["-"])
         {
@@ -108,9 +108,9 @@ int main(string[] args)
             }
 
             auto firstLine = inputStream.readln();
-            
+
             if (inputStream.eof && firstLine.length == 0) continue;
-            
+
             if (!headerWritten)
             {
                 write(firstLine);

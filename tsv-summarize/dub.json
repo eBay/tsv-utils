@@ -3,7 +3,7 @@
     "description": "Run aggregation and summarization operations on fields from TSV files.",
     "homepage": "https://github.com/eBay/tsv-utils-dlang",
     "authors": ["Jon Degenhardt"],
-    "copyright": "Copyright (c) 2016-2017, eBay Software Foundation",
+    "copyright": "Copyright (c) 2016-2018, eBay Software Foundation",
     "license": "BSL-1.0",
     "targetType": "executable",
     "configurations": [

@@ -22,7 +22,7 @@ This build launcher does not provide general build services. For example, it doe
 support 'test'. This can still be done via dub, but on the individual sub-packages, not
 the full package.
 
-Copyright (c) 2015-2016, eBay Software Foundation
+Copyright (c) 2015-2018, eBay Software Foundation
 Initially written by Jon Degenhardt
 
 License: Boost Licence 1.0 (http://boost.org/LICENSE_1_0.txt)

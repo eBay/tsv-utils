@@ -1,10 +1,10 @@
 /**
 Helper functions for tsv-utils-dlang unit tests.
 
-Copyright (c) 2017, eBay Software Foundation
+Copyright (c) 2017-2018, eBay Software Foundation
 Initially written by Jon Degenhardt
 
-License: Boost License 1.0 (http://boost.org/LICENSE_1_0.txt) 
+License: Boost License 1.0 (http://boost.org/LICENSE_1_0.txt)
 */
 
 version(unittest)
@@ -47,7 +47,7 @@ version(unittest)
         string dirNamePrefix = "tsv_utils_dlang__" ~ toolDirName ~ "_unittest_";
         string systemTempDirPath = tempDir();
         string newTempDirPath = "";
-        
+
         for (auto i = 0; i < 1000 && newTempDirPath.empty; i++)
         {
             string path = buildPath(systemTempDirPath, dirNamePrefix ~ i.to!string);
@@ -76,14 +76,14 @@ version(unittest)
      * This routine is intended to be run in 'unittest' mode, so that it will assert
      * if the write fails. However, if run in a mode with asserts disabled, it will
      * return false if the write failed.
-     */ 
+     */
     bool writeUnittestTsvFile(string filepath, string[][] tsvData, char delimiter = '\t')
     {
         import std.algorithm : each, joiner, map;
         import std.conv : to;
         import std.format: format;
         import std.stdio : File;
-        
+
         try
         {
             auto file = File(filepath, "w");
@@ -106,7 +106,7 @@ version(unittest)
     {
         import std.algorithm : joiner, map;
         import std.conv : to;
-        
+
         return tsvData
             .map!(row => row.joiner(delimiter.to!string).to!string ~ "\n")
             .joiner

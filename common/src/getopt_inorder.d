@@ -13,7 +13,7 @@ This should only be used when retaining order is important. Though minimized, th
 cases that don't work as expected, the most important involving option arguments starting
 with a dash. See the getoptInorder function comments for specifics.
 
-Copyright (c) 2016-2017, eBay Software Foundation
+Copyright (c) 2016-2018, eBay Software Foundation
 Initially written by Jon Degenhardt
 
 License: Boost License 1.0 (http://boost.org/LICENSE_1_0.txt)
@@ -60,7 +60,7 @@ private void checkForUnsupportedConfigOptions(T...)(T opts)
 
 /* hasStopOnFirstNotOption walks the config list returns true if one of the
  * options in is std.getopt.config.stopOnFirstNonOption.
- */ 
+ */
 private bool hasStopOnFirstNonOption(T...)(T opts)
 {
     static if (opts.length > 0)
@@ -265,7 +265,7 @@ unittest // Issue 16539
                  "-a", "7", "-b", "8", "-c", "9"];
 
     string optionHandlerResult;
-    
+
     void optionHandler(string option, string optionVal)
     {
         if (optionHandlerResult.length > 0) optionHandlerResult ~= "; ";
@@ -280,7 +280,7 @@ unittest // Issue 16539
         );
 
     assert(optionHandlerResult == "a|aa=1; b|bb=2; c|cc=3; c|cc=4; b|bb=5; a|aa=6; a|aa=7; b|bb=8; c|cc=9");
-    
+
     // Array population order
     string[] cmdvals;
 
@@ -288,7 +288,7 @@ unittest // Issue 16539
             "-a", "1", "-b", "2", "-c", "3",
             "--cc", "4", "--bb", "5", "--aa", "6",
             "-a", "7", "-b", "8", "-c", "9"];
-    
+
     getoptInorder(
         args,
         "a|aa", "aaa VAL", &cmdvals,
@@ -306,7 +306,7 @@ unittest // Dashes
     int m;
     int n;
     char c;
-    
+
     getoptInorder(
         args,
         "m|mm", "integer", &m,
@@ -321,8 +321,8 @@ unittest // Dashes
 
 
 /* NOTE: The following unit tests have been adapted from unit tests in std.getopt.d
- * See https://github.com/dlang/phobos/blob/master/std/getopt.d and 
- * https://dlang.org/phobos/std_getopt.html. 
+ * See https://github.com/dlang/phobos/blob/master/std/getopt.d and
+ * https://dlang.org/phobos/std_getopt.html.
  */
 
 @system unittest
@@ -544,7 +544,7 @@ unittest // Dashes
     assert(args[1] == "--bAr");
 
     // test stopOnFirstNonOption
-    
+
     args = ["program.name", "--foo", "nonoption", "--bar"];
     foo = bar = false;
     getoptInorder(args,
@@ -552,7 +552,7 @@ unittest // Dashes
                   "foo", &foo,
                   "bar", &bar);
     assert(foo && !bar && args[1] == "nonoption" && args[2] == "--bar");
-    
+
     args = ["program.name", "--foo", "nonoption", "--zab"];
     foo = bar = false;
     getoptInorder(args,
@@ -560,13 +560,13 @@ unittest // Dashes
                   "foo", &foo,
                   "bar", &bar);
     assert(foo && !bar && args[1] == "nonoption" && args[2] == "--zab");
-    
+
     args = ["program.name", "--fb1", "--fb2=true", "--tb1=false"];
     bool fb1, fb2;
     bool tb1 = true;
     getoptInorder(args, "fb1", &fb1, "fb2", &fb2, "tb1", &tb1);
     assert(fb1 && fb2 && !tb1);
-    
+
     // test keepEndOfOptions
 
     args = ["program.name", "--foo", "nonoption", "--bar", "--", "--baz"];
@@ -775,7 +775,7 @@ unittest // Dashes
 @system unittest
 {
     import std.exception;
-    
+
     bool foo;
     bool bar;
     auto args = ["prog", "-b", "-z"];
@@ -789,7 +789,7 @@ unittest // Dashes
     version(none)  // No point running this test without config.required support.
     {
         import std.exception;
-        
+
         bool foo;
         bool bar;
         auto args = ["prog", "--foo", "-z"];
@@ -889,7 +889,7 @@ unittest // Dashes
         string s;
         auto app = appender!string();
         defaultGetoptFormatter(app, "Some Text", t.options);
-        
+
         string helpMsg = app.data;
         //writeln(helpMsg);
         assert(helpMsg.length);
@@ -901,7 +901,7 @@ unittest // Dashes
         assert(helpMsg.indexOf("-h") != -1);
         assert(helpMsg.indexOf("--help") != -1);
         assert(helpMsg.indexOf("Help") != -1);
-        
+
         string wanted = "Some Text\n-f  --foo Required: Help\n-h --help "
             ~ "          This help information.\n";
         assert(wanted == helpMsg, helpMsg ~ wanted);
@@ -925,7 +925,7 @@ unittest // Dashes
                 "must not be set.";
             assert(false, errorMsg);
         }
-        
+
         assert(rslt.helpWanted);
     }
 }

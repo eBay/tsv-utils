@@ -2,10 +2,10 @@
 Command line tool that appends multiple TSV files. It is header aware and supports
 tracking the original source file of each row.
 
-Copyright (c) 2017, eBay Software Foundation
+Copyright (c) 2017-2018, eBay Software Foundation
 Initially written by Jon Degenhardt
 
-License: Boost License 1.0 (http://boost.org/LICENSE_1_0.txt) 
+License: Boost License 1.0 (http://boost.org/LICENSE_1_0.txt)
 */
 module tsv_append;
 
@@ -28,7 +28,7 @@ else
             import core.runtime : dmd_coverSetMerge;
             dmd_coverSetMerge(true);
         }
-    
+
         TsvAppendOptions cmdopt;
         auto r = cmdopt.processArgs(cmdArgs);
         if (!r[0]) return r[1];
@@ -92,7 +92,7 @@ EOS";
 struct TsvAppendOptions
 {
     string programName;
-    string[] files;                    // Input files 
+    string[] files;                    // Input files
     string[string] fileSourceNames;    // Maps file path to the 'source' value
     bool helpVerbose = false;          // --help-verbose
     string sourceHeader;               // --s|source-header
@@ -118,7 +118,7 @@ struct TsvAppendOptions
         files ~= filepath;
         fileSourceNames[filepath] = source;
     }
-    
+
     /* Returns a tuple. First value is true if command line arguments were successfully
      * processed and execution should continue, or false if an error occurred or the user
      * asked for help. If false, the second value is the appropriate exit code (0 or 1).
@@ -134,7 +134,7 @@ struct TsvAppendOptions
         import std.path : baseName, stripExtension;
 
         programName = (cmdArgs.length > 0) ? cmdArgs[0].stripExtension.baseName : "Unknown_program_name";
-        
+
         try
         {
             arraySep = ",";    // Use comma to separate values in command line options
@@ -146,13 +146,13 @@ struct TsvAppendOptions
                 std.getopt.config.caseInsensitive,
                 "t|track-source",  "          Track the source file. Adds an column with the source name.", &trackSource,
                 "s|source-header", "STR       Use STR as the header for the source column. Implies --H|header and --t|track-source. Default: 'file'", &sourceHeader,
-                "f|file",          "STR=FILE  Read file FILE, using STR as the 'source' value. Implies --t|track-source.", &fileOptionHandler, 
+                "f|file",          "STR=FILE  Read file FILE, using STR as the 'source' value. Implies --t|track-source.", &fileOptionHandler,
                 "d|delimiter",     "CHR       Field delimiter. Default: TAB. (Single byte UTF-8 characters only.)", &delim,
                 std.getopt.config.caseSensitive,
                 "V|version",       "          Print version information and exit.", &versionWanted,
                 std.getopt.config.caseInsensitive,
                 );
-            
+
             if (r.helpWanted)
             {
                 defaultGetoptPrinter(helpText, r.options);
@@ -174,7 +174,7 @@ struct TsvAppendOptions
             if (files.length > 0 || !sourceHeader.empty) trackSource = true;
             if (!sourceHeader.empty) hasHeader = true;
             if (hasHeader && sourceHeader.empty) sourceHeader = "file";
-            
+
             /* Assume the remaing arguments are filepaths. */
             foreach (fp; cmdArgs[1 .. $])
             {
@@ -241,7 +241,7 @@ version(unittest)
     {
         import std.array : appender;
         import std.format : format;
-        
+
         assert(cmdArgs.length > 0, "[testTsvAppend] cmdArgs must not be empty.");
 
         auto formatAssertMessage(T...)(string msg, T formatArgs)
@@ -271,7 +271,7 @@ unittest
     import std.path : buildPath;
     import std.file : rmdirRecurse;
     import std.format : format;
-    
+
     auto testDir = makeUnittestTempDir("tsv_append");
     scope(exit) testDir.rmdirRecurse;
 
@@ -322,7 +322,7 @@ unittest
                    ["red", "17", "κόκκινος"],
                    ["blue", "12", "άσπρο"],
                    ["green", "13.5", "κόκκινος"],
-                   ["blue", "15", "πράσινος"],                   
+                   ["blue", "15", "πράσινος"],
                    ["yellow", "9", "κίτρινος"]]);
 
     testTsvAppend(["test-6", filepath1, filepathEmpty, filepath2, filepathHeaderRowOnly, filepath3],
@@ -333,7 +333,7 @@ unittest
                    ["red", "17", "κόκκινος"],
                    ["blue", "12", "άσπρο"],
                    ["green", "13.5", "κόκκινος"],
-                   ["blue", "15", "πράσινος"],                   
+                   ["blue", "15", "πράσινος"],
                    ["yellow", "9", "κίτρινος"]]);
 
     testTsvAppend(["test-8", "--track-source", filepath1, filepath2],

@@ -13,7 +13,7 @@ Utilities in this file:
 * parseFieldList, makeFieldListOptionHandler - Helper functions for parsing field-lists
   entered on the command line.
 
-Copyright (c) 2015-2017, eBay Software Foundation
+Copyright (c) 2015-2018, eBay Software Foundation
 Initially written by Jon Degenhardt
 
 License: Boost Licence 1.0 (http://boost.org/LICENSE_1_0.txt)
