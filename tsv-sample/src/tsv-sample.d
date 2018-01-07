@@ -33,7 +33,11 @@ else
         if (!r[0]) return r[1];
         try
         {
-            if (cmdopt.sampleSize == 0)
+            if (cmdopt.useStreamSampling)
+            {
+                streamSampling(cmdopt, stdout.lockingTextWriter);
+            }
+            else if (cmdopt.sampleSize == 0)
             {
                 reservoirSampling!(Yes.permuteAll)(cmdopt, stdout.lockingTextWriter);
             }
@@ -98,20 +102,23 @@ struct TsvSampleOptions
 {
     string programName;
     string[] files;
-    bool helpVerbose = false;    // --help-verbose
-    size_t sampleSize = 0;       // --n|num - Size of the desired sample
-    size_t weightField = 0;      // --f|field - Field holding the weight
-    bool hasHeader = false;      // --H|header
-    bool printRandom = false;    // --p|print-random
-    bool staticSeed = false;     // --s|static-seed
-    uint seedValue = 0;          // --v|seed-value
-    char delim = '\t';           // --d|delimiter
-    bool versionWanted = false;  // --V|version
-    bool hasWeightField = false; // Derived.
+    bool helpVerbose = false;        // --help-verbose
+    double sampleRate = double.nan;  // --r|rate - Sampling rate
+    size_t sampleSize = 0;           // --n|num - Size of the desired sample
+    size_t weightField = 0;          // --f|field - Field holding the weight
+    bool hasHeader = false;          // --H|header
+    bool printRandom = false;        // --p|print-random
+    bool staticSeed = false;         // --s|static-seed
+    uint seedValue = 0;              // --v|seed-value
+    char delim = '\t';               // --d|delimiter
+    bool versionWanted = false;      // --V|version
+    bool hasWeightField = false;     // Derived.
+    bool useStreamSampling = false;  // Derived.
 
     auto processArgs(ref string[] cmdArgs)
     {
         import std.getopt;
+        import std.math : isNaN;
         import std.path : baseName, stripExtension;
 
         programName = (cmdArgs.length > 0) ? cmdArgs[0].stripExtension.baseName : "Unknown_program_name";
@@ -125,6 +132,7 @@ struct TsvSampleOptions
                 std.getopt.config.caseSensitive,
                 "H|header",        "     Treat the first line of each file as a header.", &hasHeader,
                 std.getopt.config.caseInsensitive,
+                "r|rate",          "NUM  Sampling rating (0.0 < NUM <= 1.0). This sampling mode outputs a random fraction of lines, in the input order.", &sampleRate,
                 "n|num",           "NUM  Number of lines to output. All lines are output if not provided or zero.", &sampleSize,
                 "f|field",         "NUM  Field containing weights. All lines get equal weight if not provided or zero.", &weightField,
                 "p|print-random",  "     Output the random values that were assigned.", &printRandom,
@@ -158,11 +166,25 @@ struct TsvSampleOptions
                 return tuple(false, 0);
             }
 
-            /* Derivations. */
+            /* Derivations and validations. */
             if (weightField > 0)
             {
                 hasWeightField = true;
                 weightField--;    // Switch to zero-based indexes.
+            }
+
+            if (!sampleRate.isNaN)
+            {
+                useStreamSampling = true;
+
+                if (sampleRate <= 0.0 || sampleRate > 1.0)
+                {
+                    import std.format : format;
+                    throw new Exception(
+                        format("Invalid --r|rate option: %g. Must satisfy 0.0 < rate <= 1.0.", sampleRate));
+                }
+
+                if (hasWeightField) throw new Exception("--f|field and --r|rate cannot be used together.");
             }
 
             /* Assume remaining args are files. Use standard input if files were not provided. */
@@ -175,6 +197,70 @@ struct TsvSampleOptions
             return tuple(false, 1);
         }
         return tuple(true, 0);
+    }
+}
+
+/* streamSampling does simple bernoulli sampling on the input stream. Each input line
+ * is a assigned a random value and output if less than the sampling rate.
+ */
+void streamSampling(OutputRange)(TsvSampleOptions cmdopt, OutputRange outputStream)
+    if (isOutputRange!(OutputRange, char))
+{
+    import std.random : Random, unpredictableSeed, uniform01;
+    import tsvutil : throwIfWindowsNewlineOnUnix;
+
+    uint seed =
+        (cmdopt.seedValue != 0) ? cmdopt.seedValue
+        : cmdopt.staticSeed ? 2438424139
+        : unpredictableSeed;
+
+    auto randomGenerator = Random(seed);
+
+    /* Process each line. */
+    bool headerWritten = false;
+    size_t numLinesWritten = 0;
+    foreach (filename; cmdopt.files)
+    {
+        auto inputStream = (filename == "-") ? stdin : filename.File();
+        foreach (fileLineNum, line; inputStream.byLine(KeepTerminator.no).enumerate(1))
+        {
+            if (fileLineNum == 1) throwIfWindowsNewlineOnUnix(line, filename, fileLineNum);
+            if (fileLineNum == 1 && cmdopt.hasHeader)
+            {
+                if (!headerWritten)
+                {
+                    if (cmdopt.printRandom)
+                    {
+                        outputStream.put("random_weight");
+                        outputStream.put(cmdopt.delim);
+                    }
+                    outputStream.put(line);
+                    outputStream.put("\n");
+                    headerWritten = true;
+                }
+            }
+            else
+            {
+                double lineScore = uniform01(randomGenerator);
+                if (lineScore < cmdopt.sampleRate)
+                {
+                    if (cmdopt.printRandom)
+                    {
+                        import std.format;
+                        outputStream.put(format("%.15g", lineScore));
+                        outputStream.put(cmdopt.delim);
+                    }
+                    outputStream.put(line);
+                    outputStream.put("\n");
+
+                    if (cmdopt.sampleSize != 0)
+                    {
+                        ++numLinesWritten;
+                        if (numLinesWritten == cmdopt.sampleSize) return;
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -274,7 +360,8 @@ void reservoirSampling(Flag!"permuteAll" permuteAll, OutputRange)
                     headerWritten = true;
                 }
             }
-            else {
+            else
+            {
                 double lineWeight =
                     cmdopt.hasWeightField
                     ? getFieldValue!double(line, cmdopt.weightField, cmdopt.delim, filename, fileLineNum)
