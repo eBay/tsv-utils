@@ -58,9 +58,18 @@ else
 auto helpText = q"EOS
 Synopsis: tsv-sample [options] [file...]
 
-Randomizes or samples input lines. By default, all lines are output in a
-random order. '--n|num' can be used to limit the sample size produced. A
-weighted random sample can be produced with the '--f|field' option.
+Samples or randomizes input lines. There are several modes of operation:
+* Randomization (Default): Input lines are output in random order.
+* Stream sampling (--r|rate): Input lines are sampled based on a sampling
+  rate. The order of the input is unchanged.
+* Weighted sampling (--f|field): Input lines are selected using weighted
+  random sampling, with the weight taken from a field. Input lines are
+  output in the order selected, reordering the lines.
+
+The '--n|num' option limits the sample sized produced. It speeds up the
+randomization and weighted sampling cases significantly.
+
+Use '--help-verbose' for detailed information.
 
 Options:
 EOS";
@@ -68,32 +77,50 @@ EOS";
 auto helpTextVerbose = q"EOS
 Synopsis: tsv-sample [options] [file...]
 
-Randomizes or samples input lines. By default, all lines are output in
-random order. '--n|num' can be used to limit the sample size produced. A
-weighted random sample is generated using the '--f|field' option, this
-identifies the field containing weights. Sampling is without replacement.
+Samples or randomizes input lines. There are several modes of operation:
+* Randomization (Default): Input lines are output in random order.
+* Stream sampling (--r|rate): Input lines are sampled based on a sampling
+  rate. The order of the input is unchanged.
+* Weighted sampling (--f|field): Input lines are selected using weighted
+  random sampling, with the weight taken from a field. Input lines are
+  output in the order selected, reordering the lines. See 'Weighted
+  sampling and field weights' below for info on field weights.
 
-Weighted random sampling is done using an algorithm described by Efraimidis
-and Spirakis. Weights should be positive values representing the relative
-weight of the entry in the collection. Negative values are not meaningful
-and given the value zero. However, any positive real values can be used.
-Lines are output ordered by the randomized weight that was assigned. This
-means, for example, that a smaller sample can be produced by taking the
-first N lines of output. For more info on the sampling approach see:
+Sample size: The '--n|num' option limits the sample sized produced. This
+speeds up randomization and weighted sampling significantly (details below).
+
+Controlling randomization: Each run produces a different randomization.
+Using '--s|static-seed' changes this so multiple runs produce the same
+randomization. This works by using the same random seed each run. The
+random seed can be specified using '--v|seed-value'. This takes a
+non-zero, 32-bit positive integer. (A zero value is a no-op and ignored.)
+
+Generating random weights: The random weight assigned to each line can
+output using the '--p|print-random' option. This can be used with
+'--rate 1' to assign a random weight to each line. The random weight
+is prepended line as field one (separated by TAB or --d|delimiter char).
+Weights are in the interval [0,1]. The open/closed aspects of the
+interval (including/excluding 0.0 and 1.0) are subject to change and
+should not be relied on.
+
+Reservoir sampling: The randomization and weighted sampling cases are
+implemented using reservoir sampling. This means all lines output must be
+held in memory. Memory needed for large input streams can reduced
+significantly using a sample size. Both 'tsv-sample -n 1000' and
+'tsv-sample | head -n 1000' produce the same results, but the former is
+quite a bit faster.
+
+Weighted sampling and field weights: Weighted random sampling is done
+using an algorithm described by Efraimidis and Spirakis. Weights should
+be positive values representing the relative weight of the entry in the
+collection. Negative values are not meaningful and given the value zero.
+However, any positive real values can be used. Lines are output ordered
+by the randomized weight that was assigned. This means, for example, that
+a smaller sample can be produced by taking the first N lines of output.
+For more info on the sampling approach see:
 * Wikipedia: https://en.wikipedia.org/wiki/Reservoir_sampling
 * "Weighted Random Sampling over Data Streams", Pavlos S. Efraimidis
   (https://arxiv.org/abs/1012.0256)
-
-The implementation uses reservoir sampling. All lines output must be held
-in memory. Memory needed for large inputs can reduced significantly using a
-sample size. Both 'tsv-sample -n <num>' and  'tsv-sample | head -n <num>'
-produce the same results, but the former is faster.
-
-Each run produces a different randomization. This can be changed using
-'--s|static-seed'. This uses the same initial seed each run to produce
-consistent randomization orders. The random seed can also be specified
-using '--v|seed-value'. This takes a non-zero, 32-bit positive integer.
-(A zero value is a no-op and ignored.)
 
 Options:
 EOS";
