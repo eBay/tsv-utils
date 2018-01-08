@@ -274,6 +274,8 @@ Help and Version printing 1
 
 ====[tsv-append --help | grep -c Synopsis]====
 1
+====[tsv-append --help-verbose | grep -c Synopsis]====
+1
 ====[tsv-append --version | grep -c 'tsv-append (eBay/tsv-utils-dlang)']====
 1
 ====[tsv-append -V | grep -c 'tsv-append (eBay/tsv-utils-dlang)']====

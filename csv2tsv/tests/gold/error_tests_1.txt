@@ -16,3 +16,16 @@ Error [csv2tsv]: Cannot open file `nosuchfile.txt' in mode `rb' (No such file or
 
 ====[csv2tsv -t x -r wxyz input2.csv]====
 [csv2tsv] Error processing command line arguments: Replacement character cannot contain newlines or TSV field delimiters (--r|replacement).
+
+====[csv2tsv invalid1.csv]====
+Error [csv2tsv]: Invalid CSV. Improperly terminated quoted field. File: invalid1.csv, Line: 3
+field1	field2	field3
+100	ab c	de f
+
+
+====[csv2tsv invalid2.csv]====
+Error [csv2tsv]: Invalid CSV. Improperly terminated quoted field. File: invalid2.csv, Line: 4
+field1	field2	field3
+100	ab c	de f
+200	gh i	jk l
+

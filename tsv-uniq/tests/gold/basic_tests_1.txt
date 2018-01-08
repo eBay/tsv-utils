@@ -610,6 +610,8 @@ Help and Version printing 1
 
 ====[tsv-uniq --help | grep -c Synopsis]====
 1
+====[tsv-uniq --help-verbose | grep -c Synopsis]====
+1
 ====[tsv-uniq --version | grep -c 'tsv-uniq (eBay/tsv-utils-dlang)']====
 1
 ====[tsv-uniq -V | grep -c 'tsv-uniq (eBay/tsv-utils-dlang)']====

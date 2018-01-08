@@ -86,6 +86,9 @@ echo "" >> ${basic_tests_1}
 echo "====[tsv-append --help | grep -c Synopsis]====" >> ${basic_tests_1}
 ${prog} --help 2>&1 | grep -c Synopsis >> ${basic_tests_1} 2>&1
 
+echo "====[tsv-append --help-verbose | grep -c Synopsis]====" >> ${basic_tests_1}
+${prog} --help-verbose 2>&1 | grep -c Synopsis >> ${basic_tests_1} 2>&1
+
 echo "====[tsv-append --version | grep -c 'tsv-append (eBay/tsv-utils-dlang)']====" >> ${basic_tests_1}
 ${prog} --version 2>&1 | grep -c 'tsv-append (eBay/tsv-utils-dlang)' >> ${basic_tests_1} 2>&1
 
@@ -101,5 +104,9 @@ echo "----------------" >> ${error_tests_1}
 
 runtest ${prog} "no_such_file.tsv" ${error_tests_1}
 runtest ${prog} "-f none=no_such_file.tsv" ${error_tests_1}
+runtest ${prog} "-f" ${error_tests_1}
+runtest ${prog} "-f file" ${error_tests_1}
+runtest ${prog} "-f source=" ${error_tests_1}
+runtest ${prog} "-f =file" ${error_tests_1}
 runtest ${prog} "--no-such-param input1x3.tsv" ${error_tests_1}
 runtest ${prog} "-d ß input1x3.tsv" ${error_tests_1}

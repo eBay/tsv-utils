@@ -151,6 +151,8 @@ Help and Version printing 1
 
 ====[csv2tsv --help | grep -c Synopsis]====
 1
+====[csv2tsv --help-verbose | grep -c Synopsis]====
+1
 ====[csv2tsv --version | grep -c 'csv2tsv (eBay/tsv-utils-dlang)']====
 1
 ====[csv2tsv -V | grep -c 'csv2tsv (eBay/tsv-utils-dlang)']====

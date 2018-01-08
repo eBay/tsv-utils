@@ -49,6 +49,9 @@ echo "" >> ${basic_tests_1}
 echo "====[csv2tsv --help | grep -c Synopsis]====" >> ${basic_tests_1}
 ${prog} --help 2>&1 | grep -c Synopsis >> ${basic_tests_1} 2>&1
 
+echo "====[csv2tsv --help-verbose | grep -c Synopsis]====" >> ${basic_tests_1}
+${prog} --help-verbose 2>&1 | grep -c Synopsis >> ${basic_tests_1} 2>&1
+
 echo "====[csv2tsv --version | grep -c 'csv2tsv (eBay/tsv-utils-dlang)']====" >> ${basic_tests_1}
 ${prog} --version 2>&1 | grep -c 'csv2tsv (eBay/tsv-utils-dlang)' >> ${basic_tests_1} 2>&1
 
@@ -67,3 +70,5 @@ runtest ${prog} "--nosuchparam input1.txt" ${error_tests_1}
 runtest ${prog} "-q x -c x input2.csv" ${error_tests_1}
 runtest ${prog} "-q x -t x input2.csv" ${error_tests_1}
 runtest ${prog} "-t x -r wxyz input2.csv" ${error_tests_1}
+runtest ${prog} "invalid1.csv" ${error_tests_1}
+runtest ${prog} "invalid2.csv" ${error_tests_1}

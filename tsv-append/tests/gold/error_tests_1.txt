@@ -7,6 +7,18 @@ Error [tsv-append]: Cannot open file `no_such_file.tsv' in mode `rb' (No such fi
 ====[tsv-append -f none=no_such_file.tsv]====
 Error [tsv-append]: Cannot open file `no_such_file.tsv' in mode `rb' (No such file or directory)
 
+====[tsv-append -f]====
+[tsv-append] Error processing command line arguments: Missing value for argument -f.
+
+====[tsv-append -f file]====
+[tsv-append] Error processing command line arguments: Invalid option value: '--f|file file'. Expected: '--f|file <source>=<file>'.
+
+====[tsv-append -f source=]====
+[tsv-append] Error processing command line arguments: Invalid option value: '--f|file source='. Expected: '--f|file <source>=<file>'.
+
+====[tsv-append -f =file]====
+[tsv-append] Error processing command line arguments: Invalid option value: '--f|file =file'. Expected: '--f|file <source>=<file>'.
+
 ====[tsv-append --no-such-param input1x3.tsv]====
 [tsv-append] Error processing command line arguments: Unrecognized option --no-such-param
 
