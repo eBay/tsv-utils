@@ -84,6 +84,9 @@ echo "" >> ${basic_tests_1}
 echo "====[tsv-uniq --help | grep -c Synopsis]====" >> ${basic_tests_1}
 ${prog} --help 2>&1 | grep -c Synopsis >> ${basic_tests_1} 2>&1
 
+echo "====[tsv-uniq --help-verbose | grep -c Synopsis]====" >> ${basic_tests_1}
+${prog} --help-verbose 2>&1 | grep -c Synopsis >> ${basic_tests_1} 2>&1
+
 echo "====[tsv-uniq --version | grep -c 'tsv-uniq (eBay/tsv-utils-dlang)']====" >> ${basic_tests_1}
 ${prog} --version 2>&1 | grep -c 'tsv-uniq (eBay/tsv-utils-dlang)' >> ${basic_tests_1} 2>&1
 

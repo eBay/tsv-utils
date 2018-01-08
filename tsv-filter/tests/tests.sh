@@ -317,6 +317,10 @@ runtest ${prog} "--header --ff-absdiff-le 1::0.5 input1.tsv" ${error_tests_1}
 runtest ${prog} "--header --ff-absdiff-le 0:2:0.5 input1.tsv" ${error_tests_1}
 runtest ${prog} "--header --ff-absdiff-le g:2:0.5 input1.tsv" ${error_tests_1}
 runtest ${prog} "--header --ff-absdiff-le :2:0.5 input1.tsv" ${error_tests_1}
+runtest ${prog} "--eq 2:1 input1.tsv" ${error_tests_1}
+
+echo "" >> ${error_tests_1}; echo "====[cat input_3x2.tsv | tsv-filter --ge 2:23]====" >> ${error_tests_1}
+cat input_3x2.tsv | ${prog} --ge 2:23 >> ${error_tests_1} 2>&1
 
 ## Windows line endings
 runtest ${prog} "--header --eq 2:1 input1_dos.tsv" ${error_tests_1}
