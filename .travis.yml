@@ -58,7 +58,7 @@ matrix:
       dist: trusty
       sudo: required
       language: d
-      d: ldc-1.5.0
+      d: ldc-1.7.0
       services: docker
       env: DOCKERSPECIAL=1 DEPLOY=1
 before_install:
