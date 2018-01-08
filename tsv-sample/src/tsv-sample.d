@@ -229,6 +229,11 @@ struct TsvSampleOptions
 
 /* streamSampling does simple bernoulli sampling on the input stream. Each input line
  * is a assigned a random value and output if less than the sampling rate.
+ *
+ * Note: Performance tests show that skip sampling is faster when the sampling rate
+ * is approximately 4-5% or less. An optimization would be to have separate function
+ * to use when the sampling rate is small and the random weights are not being added
+ * to each line.
  */
 void streamSampling(OutputRange)(TsvSampleOptions cmdopt, OutputRange outputStream)
     if (isOutputRange!(OutputRange, char))
@@ -542,7 +547,11 @@ version(unittest)
         assert(r[0], formatAssertMessage("Invalid command lines arg: '%s'.", savedCmdArgs));
         auto output = appender!(char[])();
 
-        if (cmdopt.sampleSize == 0)
+        if (cmdopt.useStreamSampling)
+        {
+            streamSampling(cmdopt, output);
+        }
+        else if (cmdopt.sampleSize == 0)
         {
             reservoirSampling!(Yes.permuteAll)(cmdopt, output);
         }
@@ -666,6 +675,29 @@ unittest
          ["0.159293440869078", "green", "緑", "0.0072"],
          ["0.010968807619065", "red", "赤", "23.8"]];
 
+    string[][] data3x6ExpectedProbsStreamSampleP100 =
+        [["random_weight", "field_a", "field_b", "field_c"],
+         ["0.010968807619065", "red", "赤", "23.8"],
+         ["0.159293440869078", "green", "緑", "0.0072"],
+         ["0.492878549499437", "white", "白", "1.65"],
+         ["0.960555462865159", "yellow", "黄", "12"],
+         ["0.525259808870032", "blue", "青", "12"],
+         ["0.757101539289579", "black", "黒", "0.983"]];
+
+    string[][] data3x6ExpectedProbsStreamSampleP60 =
+        [["random_weight", "field_a", "field_b", "field_c"],
+         ["0.010968807619065", "red", "赤", "23.8"],
+         ["0.159293440869078", "green", "緑", "0.0072"],
+         ["0.492878549499437", "white", "白", "1.65"],
+         ["0.525259808870032", "blue", "青", "12"]];
+
+    string[][] data3x6ExpectedStreamSampleP60 =
+        [["field_a", "field_b", "field_c"],
+         ["red", "赤", "23.8"],
+         ["green", "緑", "0.0072"],
+         ["white", "白", "1.65"],
+         ["blue", "青", "12"]];
+
     string[][] data3x6ExpectedWt3Probs =
         [["random_weight", "field_a", "field_b", "field_c"],
          ["0.996651987576454", "yellow", "黄", "12"],
@@ -693,6 +725,13 @@ unittest
          ["0.250923618674278", "red", "赤", "23.8"],
          ["0.155359342927113", "black", "黒", "0.983"],
          ["0.0460958210751414", "white", "白", "1.65"]];
+
+    string[][] data3x6ExpectedV41ProbsStreamSampleP60 =
+        [["random_weight", "field_a", "field_b", "field_c"],
+         ["0.250923618674278", "red", "赤", "23.8"],
+         ["0.0460958210751414", "white", "白", "1.65"],
+         ["0.32097338931635", "yellow", "黄", "12"],
+         ["0.155359342927113", "black", "黒", "0.983"]];
 
     string[][] data3x6ExpectedWt3V41Probs =
         [["random_weight", "field_a", "field_b", "field_c"],
@@ -734,6 +773,24 @@ unittest
          ["0.240332160145044", "blue", "青", "12"],
          ["0.159293440869078", "pink", "ピンク", "1.1"],
          ["0.010968807619065", "orange", "オレンジ", "2.5"]];
+
+    string[][] combo1ExpectedProbsStreamSampleP50 =
+        [["random_weight", "field_a", "field_b", "field_c"],
+         ["0.010968807619065", "orange", "オレンジ", "2.5"],
+         ["0.159293440869078", "pink", "ピンク", "1.1"],
+         ["0.492878549499437", "purple", "紫の", "42"],
+         ["0.383881829213351", "white", "白", "1.65"],
+         ["0.240332160145044", "blue", "青", "12"],
+         ["0.470815070671961", "black", "黒", "0.983"],
+         ["0.292159906122833", "gray", "グレー", "6.2"]];
+
+    string[][] combo1ExpectedStreamSampleP40 =
+        [["field_a", "field_b", "field_c"],
+         ["orange", "オレンジ", "2.5"],
+         ["pink", "ピンク", "1.1"],
+         ["white", "白", "1.65"],
+         ["blue", "青", "12"],
+         ["gray", "グレー", "6.2"]];
 
     string[][] combo1ExpectedWt3Probs =
         [["random_weight", "field_a", "field_b", "field_c"],
@@ -947,6 +1004,17 @@ unittest
     testTsvSample(["test-a12", "-H", "-s", "-v", "0", "-p", fpath_data3x6], data3x6ExpectedNoWtProbs);
     testTsvSample(["test-a13", "-H", "-v", "41", "-f", "3", "-p", fpath_data3x6], data3x6ExpectedWt3V41Probs);
 
+    /* Stream sampling cases. */
+    testTsvSample(["test-a14", "--header", "--static-seed", "--rate", "0.001", fpath_dataEmpty], dataEmpty);
+    testTsvSample(["test-a15", "--header", "--static-seed", "--rate", "0.001", fpath_data3x0], data3x0);
+    testTsvSample(["test-a16", "-H", "-s", "-r", "1.0", fpath_data3x1], data3x1);
+    testTsvSample(["test-a17", "-H", "-s", "-r", "1.0", fpath_data3x6], data3x6);
+    testTsvSample(["test-a18", "-H", "-r", "1.0", fpath_data3x6], data3x6);
+    testTsvSample(["test-a19", "-H", "-s", "--rate", "1.0", "-p", fpath_data3x6], data3x6ExpectedProbsStreamSampleP100);
+    testTsvSample(["test-a20", "-H", "-s", "--rate", "0.60", "-p", fpath_data3x6], data3x6ExpectedProbsStreamSampleP60);
+    testTsvSample(["test-a21", "-H", "-s", "--rate", "0.60", fpath_data3x6], data3x6ExpectedStreamSampleP60);
+    testTsvSample(["test-a22", "-H", "-v", "41", "--rate", "0.60", "-p", fpath_data3x6], data3x6ExpectedV41ProbsStreamSampleP60);
+
     /* Basic tests, without headers. */
     testTsvSample(["test-b1", "-s", fpath_data3x1_noheader], data3x1[1..$]);
     testTsvSample(["test-b2", "-s", fpath_data3x2_noheader], data3x2ExpectedNoWt[1..$]);
@@ -957,6 +1025,14 @@ unittest
     testTsvSample(["test-b7", "-s", "-p", "-f", "3", fpath_data3x6_noheader], data3x6ExpectedWt3Probs[1..$]);
     testTsvSample(["test-b8", "-v", "41", "-p", fpath_data3x6_noheader], data3x6ExpectedNoWtV41Probs[1..$]);
     testTsvSample(["test-b9", "-v", "41", "-f", "3", "-p", fpath_data3x6_noheader], data3x6ExpectedWt3V41Probs[1..$]);
+
+    /* Stream sampling cases. */
+    testTsvSample(["test-b10", "-s", "-r", "1.0", fpath_data3x1_noheader], data3x1[1..$]);
+    testTsvSample(["test-b11", "-s", "-r", "1.0", fpath_data3x6_noheader], data3x6[1..$]);
+    testTsvSample(["test-b12", "-r", "1.0", fpath_data3x6_noheader], data3x6[1..$]);
+    testTsvSample(["test-b13", "-s", "--rate", "1.0", "-p", fpath_data3x6_noheader], data3x6ExpectedProbsStreamSampleP100[1..$]);
+    testTsvSample(["test-b14", "-s", "--rate", "0.60", "-p", fpath_data3x6_noheader], data3x6ExpectedProbsStreamSampleP60[1..$]);
+    testTsvSample(["test-b15", "-v", "41", "--rate", "0.60", "-p", fpath_data3x6_noheader], data3x6ExpectedV41ProbsStreamSampleP60[1..$]);
 
     /* Multi-file tests. */
     testTsvSample(["test-c1", "--header", "--static-seed",
@@ -989,6 +1065,22 @@ unittest
                    fpath_data3x3_noheader, fpath_data3x1_noheader, fpath_dataEmpty,
                    fpath_data3x6_noheader, fpath_data3x2_noheader],
                   combo1ExpectedWt3[1..$]);
+
+    /* Stream sampling cases. */
+    testTsvSample(["test-c9", "--header", "--static-seed", "--print-random", "--rate", ".5",
+                   fpath_data3x0, fpath_data3x3, fpath_data3x1, fpath_dataEmpty, fpath_data3x6, fpath_data3x2],
+                  combo1ExpectedProbsStreamSampleP50);
+    testTsvSample(["test-c10", "--header", "--static-seed", "--rate", ".4",
+                   fpath_data3x0, fpath_data3x3, fpath_data3x1, fpath_dataEmpty, fpath_data3x6, fpath_data3x2],
+                  combo1ExpectedStreamSampleP40);
+    testTsvSample(["test-c11", "--static-seed", "--print-random", "--rate", ".5",
+                   fpath_data3x3_noheader, fpath_data3x1_noheader, fpath_dataEmpty,
+                   fpath_data3x6_noheader, fpath_data3x2_noheader],
+                  combo1ExpectedProbsStreamSampleP50[1..$]);
+    testTsvSample(["test-c12", "--static-seed", "--rate", ".4",
+                   fpath_data3x3_noheader, fpath_data3x1_noheader, fpath_dataEmpty,
+                   fpath_data3x6_noheader, fpath_data3x2_noheader],
+                  combo1ExpectedStreamSampleP40[1..$]);
 
     /* Single column file. */
     testTsvSample(["test-d1", "-H", "-s", fpath_data1x10], data1x10ExpectedNoWt);
@@ -1033,6 +1125,21 @@ unittest
 
         testTsvSample([format("test-f8_%d", n), "-s", "-n", n.to!string,
                        "-p", "-f", "3", fpath_data3x6_noheader], data3x6ExpectedWt3Probs[1..expectedLength]);
+
+        import std.algorithm : min;
+        size_t sampleExpectedLength = min(expectedLength, data3x6ExpectedProbsStreamSampleP60.length);
+
+        testTsvSample([format("test-f9_%d", n), "-s", "-r", "0.6", "-n", n.to!string,
+                       "-H", "-p", fpath_data3x6], data3x6ExpectedProbsStreamSampleP60[0..sampleExpectedLength]);
+
+        testTsvSample([format("test-f10_%d", n), "-s", "-r", "0.6", "-n", n.to!string,
+                       "-H", fpath_data3x6], data3x6ExpectedStreamSampleP60[0..sampleExpectedLength]);
+
+        testTsvSample([format("test-f11_%d", n), "-s", "-r", "0.6", "-n", n.to!string,
+                       "-p", fpath_data3x6_noheader], data3x6ExpectedProbsStreamSampleP60[1..sampleExpectedLength]);
+
+        testTsvSample([format("test-f12_%d", n), "-s", "-r", "0.6", "-n", n.to!string,
+                       fpath_data3x6_noheader], data3x6ExpectedStreamSampleP60[1..sampleExpectedLength]);
     }
 
     /* Similar tests with the 1x10 data set. */
