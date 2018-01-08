@@ -45,6 +45,9 @@ runtest ${prog} "-H -s -p --field 3 input3x10.tsv input3x25.tsv" ${basic_tests_1
 runtest ${prog} "-H -s -p -f 3 --num 15 input3x10.tsv input3x25.tsv" ${basic_tests_1}
 runtest ${prog} "-H -s -p -n 15 input3x10.tsv input3x25.tsv" ${basic_tests_1}
 runtest ${prog} "-H -s -n 100 input3x10.tsv input3x25.tsv" ${basic_tests_1}
+runtest ${prog} "-H -s --rate 1.0 --print-random input3x10.tsv input3x25.tsv" ${basic_tests_1}
+runtest ${prog} "-H -s -r 0.25 input3x10.tsv input3x25.tsv" ${basic_tests_1}
+runtest ${prog} "-H -s -r 0.75 -n 5 input3x10.tsv input3x25.tsv" ${basic_tests_1}
 
 runtest ${prog} "--static-seed input2x10_noheader.tsv input2x5_noheader.tsv" ${basic_tests_1}
 runtest ${prog} "-s --print-random input2x10_noheader.tsv input2x5_noheader.tsv" ${basic_tests_1}
@@ -53,11 +56,16 @@ runtest ${prog} "-s -p -f 1 --num 15 input2x10_noheader.tsv input2x5_noheader.ts
 runtest ${prog} "-s -p -n 5 input2x10_noheader.tsv input2x5_noheader.tsv" ${basic_tests_1}
 runtest ${prog} "-s -n 100 input2x10_noheader.tsv input2x5_noheader.tsv" ${basic_tests_1}
 
+runtest ${prog} "-s --rate 1 -p input2x10_noheader.tsv input2x5_noheader.tsv" ${basic_tests_1}
+runtest ${prog} "-s -r .25 input2x10_noheader.tsv input2x5_noheader.tsv" ${basic_tests_1}
+runtest ${prog} "-s -r .75 -n 5 input2x10_noheader.tsv input2x5_noheader.tsv" ${basic_tests_1}
+
 runtest ${prog} "--delimiter @ -H --static-seed input2x7_atsign.tsv" ${basic_tests_1}
 runtest ${prog} "-d @ -H -s -p input2x7_atsign.tsv" ${basic_tests_1}
 runtest ${prog} "-d @ -H -s -p -f 2 input2x7_atsign.tsv" ${basic_tests_1}
 runtest ${prog} "-d @ -H -s -p -f 2 -n 3 input2x7_atsign.tsv" ${basic_tests_1}
 runtest ${prog} "-d @ -H -s -p -n 20 input2x7_atsign.tsv" ${basic_tests_1}
+runtest ${prog} "-d @ -H -s -p --rate 1.0 input2x7_atsign.tsv" ${basic_tests_1}
 
 ## Need to run at least one test with the unpredictable seed. Can't compare the
 ## results, so check the number of lines returned. Check standard input also.
@@ -109,3 +117,6 @@ runtest ${prog} "-f 3 input3x25.tsv" ${error_tests_1}
 runtest ${prog} "-H -f 11 input3x25.tsv" ${error_tests_1}
 runtest ${prog} "-H -f 3 input3x25_dos.tsv" ${error_tests_1}
 runtest ${prog} "-f 1 input2x5_noheader_dos.tsv" ${error_tests_1}
+runtest ${prog} "--rate 0.5 --field 3 input3x25.tsv" ${error_tests_1}
+runtest ${prog} "--rate 0 input3x25.tsv" ${error_tests_1}
+runtest ${prog} "--rate 1.00001 input3x25.tsv" ${error_tests_1}

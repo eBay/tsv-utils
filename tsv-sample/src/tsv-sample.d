@@ -33,7 +33,11 @@ else
         if (!r[0]) return r[1];
         try
         {
-            if (cmdopt.sampleSize == 0)
+            if (cmdopt.useStreamSampling)
+            {
+                streamSampling(cmdopt, stdout.lockingTextWriter);
+            }
+            else if (cmdopt.sampleSize == 0)
             {
                 reservoirSampling!(Yes.permuteAll)(cmdopt, stdout.lockingTextWriter);
             }
@@ -54,9 +58,18 @@ else
 auto helpText = q"EOS
 Synopsis: tsv-sample [options] [file...]
 
-Randomizes or samples input lines. By default, all lines are output in a
-random order. '--n|num' can be used to limit the sample size produced. A
-weighted random sample can be produced with the '--f|field' option.
+Samples or randomizes input lines. There are several modes of operation:
+* Randomization (Default): Input lines are output in random order.
+* Stream sampling (--r|rate): Input lines are sampled based on a sampling
+  rate. The order of the input is unchanged.
+* Weighted sampling (--f|field): Input lines are selected using weighted
+  random sampling, with the weight taken from a field. Input lines are
+  output in the order selected, reordering the lines.
+
+The '--n|num' option limits the sample sized produced. It speeds up the
+randomization and weighted sampling cases significantly.
+
+Use '--help-verbose' for detailed information.
 
 Options:
 EOS";
@@ -64,32 +77,50 @@ EOS";
 auto helpTextVerbose = q"EOS
 Synopsis: tsv-sample [options] [file...]
 
-Randomizes or samples input lines. By default, all lines are output in
-random order. '--n|num' can be used to limit the sample size produced. A
-weighted random sample is generated using the '--f|field' option, this
-identifies the field containing weights. Sampling is without replacement.
+Samples or randomizes input lines. There are several modes of operation:
+* Randomization (Default): Input lines are output in random order.
+* Stream sampling (--r|rate): Input lines are sampled based on a sampling
+  rate. The order of the input is unchanged.
+* Weighted sampling (--f|field): Input lines are selected using weighted
+  random sampling, with the weight taken from a field. Input lines are
+  output in the order selected, reordering the lines. See 'Weighted
+  sampling and field weights' below for info on field weights.
 
-Weighted random sampling is done using an algorithm described by Efraimidis
-and Spirakis. Weights should be positive values representing the relative
-weight of the entry in the collection. Negative values are not meaningful
-and given the value zero. However, any positive real values can be used.
-Lines are output ordered by the randomized weight that was assigned. This
-means, for example, that a smaller sample can be produced by taking the
-first N lines of output. For more info on the sampling approach see:
+Sample size: The '--n|num' option limits the sample sized produced. This
+speeds up randomization and weighted sampling significantly (details below).
+
+Controlling randomization: Each run produces a different randomization.
+Using '--s|static-seed' changes this so multiple runs produce the same
+randomization. This works by using the same random seed each run. The
+random seed can be specified using '--v|seed-value'. This takes a
+non-zero, 32-bit positive integer. (A zero value is a no-op and ignored.)
+
+Generating random weights: The random weight assigned to each line can
+output using the '--p|print-random' option. This can be used with
+'--rate 1' to assign a random weight to each line. The random weight
+is prepended line as field one (separated by TAB or --d|delimiter char).
+Weights are in the interval [0,1]. The open/closed aspects of the
+interval (including/excluding 0.0 and 1.0) are subject to change and
+should not be relied on.
+
+Reservoir sampling: The randomization and weighted sampling cases are
+implemented using reservoir sampling. This means all lines output must be
+held in memory. Memory needed for large input streams can reduced
+significantly using a sample size. Both 'tsv-sample -n 1000' and
+'tsv-sample | head -n 1000' produce the same results, but the former is
+quite a bit faster.
+
+Weighted sampling and field weights: Weighted random sampling is done
+using an algorithm described by Efraimidis and Spirakis. Weights should
+be positive values representing the relative weight of the entry in the
+collection. Negative values are not meaningful and given the value zero.
+However, any positive real values can be used. Lines are output ordered
+by the randomized weight that was assigned. This means, for example, that
+a smaller sample can be produced by taking the first N lines of output.
+For more info on the sampling approach see:
 * Wikipedia: https://en.wikipedia.org/wiki/Reservoir_sampling
 * "Weighted Random Sampling over Data Streams", Pavlos S. Efraimidis
   (https://arxiv.org/abs/1012.0256)
-
-The implementation uses reservoir sampling. All lines output must be held
-in memory. Memory needed for large inputs can reduced significantly using a
-sample size. Both 'tsv-sample -n <num>' and  'tsv-sample | head -n <num>'
-produce the same results, but the former is faster.
-
-Each run produces a different randomization. This can be changed using
-'--s|static-seed'. This uses the same initial seed each run to produce
-consistent randomization orders. The random seed can also be specified
-using '--v|seed-value'. This takes a non-zero, 32-bit positive integer.
-(A zero value is a no-op and ignored.)
 
 Options:
 EOS";
@@ -98,20 +129,23 @@ struct TsvSampleOptions
 {
     string programName;
     string[] files;
-    bool helpVerbose = false;    // --help-verbose
-    size_t sampleSize = 0;       // --n|num - Size of the desired sample
-    size_t weightField = 0;      // --f|field - Field holding the weight
-    bool hasHeader = false;      // --H|header
-    bool printRandom = false;    // --p|print-random
-    bool staticSeed = false;     // --s|static-seed
-    uint seedValue = 0;          // --v|seed-value
-    char delim = '\t';           // --d|delimiter
-    bool versionWanted = false;  // --V|version
-    bool hasWeightField = false; // Derived.
+    bool helpVerbose = false;        // --help-verbose
+    double sampleRate = double.nan;  // --r|rate - Sampling rate
+    size_t sampleSize = 0;           // --n|num - Size of the desired sample
+    size_t weightField = 0;          // --f|field - Field holding the weight
+    bool hasHeader = false;          // --H|header
+    bool printRandom = false;        // --p|print-random
+    bool staticSeed = false;         // --s|static-seed
+    uint seedValue = 0;              // --v|seed-value
+    char delim = '\t';               // --d|delimiter
+    bool versionWanted = false;      // --V|version
+    bool hasWeightField = false;     // Derived.
+    bool useStreamSampling = false;  // Derived.
 
     auto processArgs(ref string[] cmdArgs)
     {
         import std.getopt;
+        import std.math : isNaN;
         import std.path : baseName, stripExtension;
 
         programName = (cmdArgs.length > 0) ? cmdArgs[0].stripExtension.baseName : "Unknown_program_name";
@@ -125,6 +159,7 @@ struct TsvSampleOptions
                 std.getopt.config.caseSensitive,
                 "H|header",        "     Treat the first line of each file as a header.", &hasHeader,
                 std.getopt.config.caseInsensitive,
+                "r|rate",          "NUM  Sampling rating (0.0 < NUM <= 1.0). This sampling mode outputs a random fraction of lines, in the input order.", &sampleRate,
                 "n|num",           "NUM  Number of lines to output. All lines are output if not provided or zero.", &sampleSize,
                 "f|field",         "NUM  Field containing weights. All lines get equal weight if not provided or zero.", &weightField,
                 "p|print-random",  "     Output the random values that were assigned.", &printRandom,
@@ -158,11 +193,25 @@ struct TsvSampleOptions
                 return tuple(false, 0);
             }
 
-            /* Derivations. */
+            /* Derivations and validations. */
             if (weightField > 0)
             {
                 hasWeightField = true;
                 weightField--;    // Switch to zero-based indexes.
+            }
+
+            if (!sampleRate.isNaN)
+            {
+                useStreamSampling = true;
+
+                if (sampleRate <= 0.0 || sampleRate > 1.0)
+                {
+                    import std.format : format;
+                    throw new Exception(
+                        format("Invalid --r|rate option: %g. Must satisfy 0.0 < rate <= 1.0.", sampleRate));
+                }
+
+                if (hasWeightField) throw new Exception("--f|field and --r|rate cannot be used together.");
             }
 
             /* Assume remaining args are files. Use standard input if files were not provided. */
@@ -175,6 +224,75 @@ struct TsvSampleOptions
             return tuple(false, 1);
         }
         return tuple(true, 0);
+    }
+}
+
+/* streamSampling does simple bernoulli sampling on the input stream. Each input line
+ * is a assigned a random value and output if less than the sampling rate.
+ *
+ * Note: Performance tests show that skip sampling is faster when the sampling rate
+ * is approximately 4-5% or less. An optimization would be to have separate function
+ * to use when the sampling rate is small and the random weights are not being added
+ * to each line.
+ */
+void streamSampling(OutputRange)(TsvSampleOptions cmdopt, OutputRange outputStream)
+    if (isOutputRange!(OutputRange, char))
+{
+    import std.random : Random, unpredictableSeed, uniform01;
+    import tsvutil : throwIfWindowsNewlineOnUnix;
+
+    uint seed =
+        (cmdopt.seedValue != 0) ? cmdopt.seedValue
+        : cmdopt.staticSeed ? 2438424139
+        : unpredictableSeed;
+
+    auto randomGenerator = Random(seed);
+
+    /* Process each line. */
+    bool headerWritten = false;
+    size_t numLinesWritten = 0;
+    foreach (filename; cmdopt.files)
+    {
+        auto inputStream = (filename == "-") ? stdin : filename.File();
+        foreach (fileLineNum, line; inputStream.byLine(KeepTerminator.no).enumerate(1))
+        {
+            if (fileLineNum == 1) throwIfWindowsNewlineOnUnix(line, filename, fileLineNum);
+            if (fileLineNum == 1 && cmdopt.hasHeader)
+            {
+                if (!headerWritten)
+                {
+                    if (cmdopt.printRandom)
+                    {
+                        outputStream.put("random_weight");
+                        outputStream.put(cmdopt.delim);
+                    }
+                    outputStream.put(line);
+                    outputStream.put("\n");
+                    headerWritten = true;
+                }
+            }
+            else
+            {
+                double lineScore = uniform01(randomGenerator);
+                if (lineScore < cmdopt.sampleRate)
+                {
+                    if (cmdopt.printRandom)
+                    {
+                        import std.format;
+                        outputStream.put(format("%.15g", lineScore));
+                        outputStream.put(cmdopt.delim);
+                    }
+                    outputStream.put(line);
+                    outputStream.put("\n");
+
+                    if (cmdopt.sampleSize != 0)
+                    {
+                        ++numLinesWritten;
+                        if (numLinesWritten == cmdopt.sampleSize) return;
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -274,7 +392,8 @@ void reservoirSampling(Flag!"permuteAll" permuteAll, OutputRange)
                     headerWritten = true;
                 }
             }
-            else {
+            else
+            {
                 double lineWeight =
                     cmdopt.hasWeightField
                     ? getFieldValue!double(line, cmdopt.weightField, cmdopt.delim, filename, fileLineNum)
@@ -428,7 +547,11 @@ version(unittest)
         assert(r[0], formatAssertMessage("Invalid command lines arg: '%s'.", savedCmdArgs));
         auto output = appender!(char[])();
 
-        if (cmdopt.sampleSize == 0)
+        if (cmdopt.useStreamSampling)
+        {
+            streamSampling(cmdopt, output);
+        }
+        else if (cmdopt.sampleSize == 0)
         {
             reservoirSampling!(Yes.permuteAll)(cmdopt, output);
         }
@@ -552,6 +675,29 @@ unittest
          ["0.159293440869078", "green", "緑", "0.0072"],
          ["0.010968807619065", "red", "赤", "23.8"]];
 
+    string[][] data3x6ExpectedProbsStreamSampleP100 =
+        [["random_weight", "field_a", "field_b", "field_c"],
+         ["0.010968807619065", "red", "赤", "23.8"],
+         ["0.159293440869078", "green", "緑", "0.0072"],
+         ["0.492878549499437", "white", "白", "1.65"],
+         ["0.960555462865159", "yellow", "黄", "12"],
+         ["0.525259808870032", "blue", "青", "12"],
+         ["0.757101539289579", "black", "黒", "0.983"]];
+
+    string[][] data3x6ExpectedProbsStreamSampleP60 =
+        [["random_weight", "field_a", "field_b", "field_c"],
+         ["0.010968807619065", "red", "赤", "23.8"],
+         ["0.159293440869078", "green", "緑", "0.0072"],
+         ["0.492878549499437", "white", "白", "1.65"],
+         ["0.525259808870032", "blue", "青", "12"]];
+
+    string[][] data3x6ExpectedStreamSampleP60 =
+        [["field_a", "field_b", "field_c"],
+         ["red", "赤", "23.8"],
+         ["green", "緑", "0.0072"],
+         ["white", "白", "1.65"],
+         ["blue", "青", "12"]];
+
     string[][] data3x6ExpectedWt3Probs =
         [["random_weight", "field_a", "field_b", "field_c"],
          ["0.996651987576454", "yellow", "黄", "12"],
@@ -579,6 +725,13 @@ unittest
          ["0.250923618674278", "red", "赤", "23.8"],
          ["0.155359342927113", "black", "黒", "0.983"],
          ["0.0460958210751414", "white", "白", "1.65"]];
+
+    string[][] data3x6ExpectedV41ProbsStreamSampleP60 =
+        [["random_weight", "field_a", "field_b", "field_c"],
+         ["0.250923618674278", "red", "赤", "23.8"],
+         ["0.0460958210751414", "white", "白", "1.65"],
+         ["0.32097338931635", "yellow", "黄", "12"],
+         ["0.155359342927113", "black", "黒", "0.983"]];
 
     string[][] data3x6ExpectedWt3V41Probs =
         [["random_weight", "field_a", "field_b", "field_c"],
@@ -620,6 +773,24 @@ unittest
          ["0.240332160145044", "blue", "青", "12"],
          ["0.159293440869078", "pink", "ピンク", "1.1"],
          ["0.010968807619065", "orange", "オレンジ", "2.5"]];
+
+    string[][] combo1ExpectedProbsStreamSampleP50 =
+        [["random_weight", "field_a", "field_b", "field_c"],
+         ["0.010968807619065", "orange", "オレンジ", "2.5"],
+         ["0.159293440869078", "pink", "ピンク", "1.1"],
+         ["0.492878549499437", "purple", "紫の", "42"],
+         ["0.383881829213351", "white", "白", "1.65"],
+         ["0.240332160145044", "blue", "青", "12"],
+         ["0.470815070671961", "black", "黒", "0.983"],
+         ["0.292159906122833", "gray", "グレー", "6.2"]];
+
+    string[][] combo1ExpectedStreamSampleP40 =
+        [["field_a", "field_b", "field_c"],
+         ["orange", "オレンジ", "2.5"],
+         ["pink", "ピンク", "1.1"],
+         ["white", "白", "1.65"],
+         ["blue", "青", "12"],
+         ["gray", "グレー", "6.2"]];
 
     string[][] combo1ExpectedWt3Probs =
         [["random_weight", "field_a", "field_b", "field_c"],
@@ -833,6 +1004,17 @@ unittest
     testTsvSample(["test-a12", "-H", "-s", "-v", "0", "-p", fpath_data3x6], data3x6ExpectedNoWtProbs);
     testTsvSample(["test-a13", "-H", "-v", "41", "-f", "3", "-p", fpath_data3x6], data3x6ExpectedWt3V41Probs);
 
+    /* Stream sampling cases. */
+    testTsvSample(["test-a14", "--header", "--static-seed", "--rate", "0.001", fpath_dataEmpty], dataEmpty);
+    testTsvSample(["test-a15", "--header", "--static-seed", "--rate", "0.001", fpath_data3x0], data3x0);
+    testTsvSample(["test-a16", "-H", "-s", "-r", "1.0", fpath_data3x1], data3x1);
+    testTsvSample(["test-a17", "-H", "-s", "-r", "1.0", fpath_data3x6], data3x6);
+    testTsvSample(["test-a18", "-H", "-r", "1.0", fpath_data3x6], data3x6);
+    testTsvSample(["test-a19", "-H", "-s", "--rate", "1.0", "-p", fpath_data3x6], data3x6ExpectedProbsStreamSampleP100);
+    testTsvSample(["test-a20", "-H", "-s", "--rate", "0.60", "-p", fpath_data3x6], data3x6ExpectedProbsStreamSampleP60);
+    testTsvSample(["test-a21", "-H", "-s", "--rate", "0.60", fpath_data3x6], data3x6ExpectedStreamSampleP60);
+    testTsvSample(["test-a22", "-H", "-v", "41", "--rate", "0.60", "-p", fpath_data3x6], data3x6ExpectedV41ProbsStreamSampleP60);
+
     /* Basic tests, without headers. */
     testTsvSample(["test-b1", "-s", fpath_data3x1_noheader], data3x1[1..$]);
     testTsvSample(["test-b2", "-s", fpath_data3x2_noheader], data3x2ExpectedNoWt[1..$]);
@@ -843,6 +1025,14 @@ unittest
     testTsvSample(["test-b7", "-s", "-p", "-f", "3", fpath_data3x6_noheader], data3x6ExpectedWt3Probs[1..$]);
     testTsvSample(["test-b8", "-v", "41", "-p", fpath_data3x6_noheader], data3x6ExpectedNoWtV41Probs[1..$]);
     testTsvSample(["test-b9", "-v", "41", "-f", "3", "-p", fpath_data3x6_noheader], data3x6ExpectedWt3V41Probs[1..$]);
+
+    /* Stream sampling cases. */
+    testTsvSample(["test-b10", "-s", "-r", "1.0", fpath_data3x1_noheader], data3x1[1..$]);
+    testTsvSample(["test-b11", "-s", "-r", "1.0", fpath_data3x6_noheader], data3x6[1..$]);
+    testTsvSample(["test-b12", "-r", "1.0", fpath_data3x6_noheader], data3x6[1..$]);
+    testTsvSample(["test-b13", "-s", "--rate", "1.0", "-p", fpath_data3x6_noheader], data3x6ExpectedProbsStreamSampleP100[1..$]);
+    testTsvSample(["test-b14", "-s", "--rate", "0.60", "-p", fpath_data3x6_noheader], data3x6ExpectedProbsStreamSampleP60[1..$]);
+    testTsvSample(["test-b15", "-v", "41", "--rate", "0.60", "-p", fpath_data3x6_noheader], data3x6ExpectedV41ProbsStreamSampleP60[1..$]);
 
     /* Multi-file tests. */
     testTsvSample(["test-c1", "--header", "--static-seed",
@@ -875,6 +1065,22 @@ unittest
                    fpath_data3x3_noheader, fpath_data3x1_noheader, fpath_dataEmpty,
                    fpath_data3x6_noheader, fpath_data3x2_noheader],
                   combo1ExpectedWt3[1..$]);
+
+    /* Stream sampling cases. */
+    testTsvSample(["test-c9", "--header", "--static-seed", "--print-random", "--rate", ".5",
+                   fpath_data3x0, fpath_data3x3, fpath_data3x1, fpath_dataEmpty, fpath_data3x6, fpath_data3x2],
+                  combo1ExpectedProbsStreamSampleP50);
+    testTsvSample(["test-c10", "--header", "--static-seed", "--rate", ".4",
+                   fpath_data3x0, fpath_data3x3, fpath_data3x1, fpath_dataEmpty, fpath_data3x6, fpath_data3x2],
+                  combo1ExpectedStreamSampleP40);
+    testTsvSample(["test-c11", "--static-seed", "--print-random", "--rate", ".5",
+                   fpath_data3x3_noheader, fpath_data3x1_noheader, fpath_dataEmpty,
+                   fpath_data3x6_noheader, fpath_data3x2_noheader],
+                  combo1ExpectedProbsStreamSampleP50[1..$]);
+    testTsvSample(["test-c12", "--static-seed", "--rate", ".4",
+                   fpath_data3x3_noheader, fpath_data3x1_noheader, fpath_dataEmpty,
+                   fpath_data3x6_noheader, fpath_data3x2_noheader],
+                  combo1ExpectedStreamSampleP40[1..$]);
 
     /* Single column file. */
     testTsvSample(["test-d1", "-H", "-s", fpath_data1x10], data1x10ExpectedNoWt);
@@ -919,6 +1125,21 @@ unittest
 
         testTsvSample([format("test-f8_%d", n), "-s", "-n", n.to!string,
                        "-p", "-f", "3", fpath_data3x6_noheader], data3x6ExpectedWt3Probs[1..expectedLength]);
+
+        import std.algorithm : min;
+        size_t sampleExpectedLength = min(expectedLength, data3x6ExpectedProbsStreamSampleP60.length);
+
+        testTsvSample([format("test-f9_%d", n), "-s", "-r", "0.6", "-n", n.to!string,
+                       "-H", "-p", fpath_data3x6], data3x6ExpectedProbsStreamSampleP60[0..sampleExpectedLength]);
+
+        testTsvSample([format("test-f10_%d", n), "-s", "-r", "0.6", "-n", n.to!string,
+                       "-H", fpath_data3x6], data3x6ExpectedStreamSampleP60[0..sampleExpectedLength]);
+
+        testTsvSample([format("test-f11_%d", n), "-s", "-r", "0.6", "-n", n.to!string,
+                       "-p", fpath_data3x6_noheader], data3x6ExpectedProbsStreamSampleP60[1..sampleExpectedLength]);
+
+        testTsvSample([format("test-f12_%d", n), "-s", "-r", "0.6", "-n", n.to!string,
+                       fpath_data3x6_noheader], data3x6ExpectedStreamSampleP60[1..sampleExpectedLength]);
     }
 
     /* Similar tests with the 1x10 data set. */
