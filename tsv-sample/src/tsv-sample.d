@@ -37,6 +37,10 @@ else
             {
                 streamSampling(cmdopt, stdout.lockingTextWriter);
             }
+            else if (cmdopt.useBucketSampling)
+            {
+                bucketSampling(cmdopt, stdout.lockingTextWriter);
+            }
             else if (cmdopt.sampleSize == 0)
             {
                 reservoirSampling!(Yes.permuteAll)(cmdopt, stdout.lockingTextWriter);
@@ -62,6 +66,10 @@ Samples or randomizes input lines. There are several modes of operation:
 * Randomization (Default): Input lines are output in random order.
 * Stream sampling (--r|rate): Input lines are sampled based on a sampling
   rate. The order of the input is unchanged.
+* Bucket sampling (--r|rate, --k|key-fields): Sampling is based on the
+  values in the key field. A portion of the key are chosen based on the
+  sampling rate. All lines with one of the selected keys are output.
+  Input order is unchanged.
 * Weighted sampling (--f|field): Input lines are selected using weighted
   random sampling, with the weight taken from a field. Input lines are
   output in the order selected, reordering the lines.
@@ -81,6 +89,10 @@ Samples or randomizes input lines. There are several modes of operation:
 * Randomization (Default): Input lines are output in random order.
 * Stream sampling (--r|rate): Input lines are sampled based on a sampling
   rate. The order of the input is unchanged.
+* Bucket sampling (--r|rate, --k|key-fields): Sampling is based on the
+  values in the key field. A portion of the key are chosen based on the
+  sampling rate. All lines with one of the selected keys are output.
+  Input order is unchanged.
 * Weighted sampling (--f|field): Input lines are selected using weighted
   random sampling, with the weight taken from a field. Input lines are
   output in the order selected, reordering the lines. See 'Weighted
@@ -133,6 +145,7 @@ struct TsvSampleOptions
     double sampleRate = double.nan;  // --r|rate - Sampling rate
     size_t sampleSize = 0;           // --n|num - Size of the desired sample
     size_t weightField = 0;          // --f|field - Field holding the weight
+    size_t[] keyFields;              // --k|key-fields - Used with sampling rate
     bool hasHeader = false;          // --H|header
     bool printRandom = false;        // --p|print-random
     bool staticSeed = false;         // --s|static-seed
@@ -141,12 +154,15 @@ struct TsvSampleOptions
     bool versionWanted = false;      // --V|version
     bool hasWeightField = false;     // Derived.
     bool useStreamSampling = false;  // Derived.
+    bool useBucketSampling = false;  // Derived.
 
     auto processArgs(ref string[] cmdArgs)
     {
         import std.getopt;
         import std.math : isNaN;
         import std.path : baseName, stripExtension;
+        import std.typecons : Yes, No;
+        import tsvutil : makeFieldListOptionHandler;
 
         programName = (cmdArgs.length > 0) ? cmdArgs[0].stripExtension.baseName : "Unknown_program_name";
 
@@ -162,6 +178,10 @@ struct TsvSampleOptions
                 "r|rate",          "NUM  Sampling rating (0.0 < NUM <= 1.0). This sampling mode outputs a random fraction of lines, in the input order.", &sampleRate,
                 "n|num",           "NUM  Number of lines to output. All lines are output if not provided or zero.", &sampleSize,
                 "f|field",         "NUM  Field containing weights. All lines get equal weight if not provided or zero.", &weightField,
+
+                "k|key-fields",    "<field-list>  Fields to use as key for bucket sampling. Use with --r|rate.",
+                keyFields.makeFieldListOptionHandler!(size_t, Yes.convertToZeroBasedIndex),
+
                 "p|print-random",  "     Output the random values that were assigned.", &printRandom,
                 "s|static-seed",   "     Use the same random seed every run.", &staticSeed,
 
@@ -200,10 +220,14 @@ struct TsvSampleOptions
                 weightField--;    // Switch to zero-based indexes.
             }
 
+            if (keyFields.length > 0 && sampleRate.isNaN)
+            {
+                throw new Exception("--r|rate is required when using --k|key-fields.");
+            }
+
+            /* Sample rate (--r|rate) is used for both stream sampling and bucket sampling. */
             if (!sampleRate.isNaN)
             {
-                useStreamSampling = true;
-
                 if (sampleRate <= 0.0 || sampleRate > 1.0)
                 {
                     import std.format : format;
@@ -212,6 +236,9 @@ struct TsvSampleOptions
                 }
 
                 if (hasWeightField) throw new Exception("--f|field and --r|rate cannot be used together.");
+
+                if (keyFields.length > 0) useBucketSampling = true;
+                else useStreamSampling = true;
             }
 
             /* Assume remaining args are files. Use standard input if files were not provided. */
@@ -282,6 +309,94 @@ void streamSampling(OutputRange)(TsvSampleOptions cmdopt, OutputRange outputStre
                         outputStream.put(format("%.15g", lineScore));
                         outputStream.put(cmdopt.delim);
                     }
+                    outputStream.put(line);
+                    outputStream.put("\n");
+
+                    if (cmdopt.sampleSize != 0)
+                    {
+                        ++numLinesWritten;
+                        if (numLinesWritten == cmdopt.sampleSize) return;
+                    }
+                }
+            }
+        }
+    }
+}
+
+/* bucketSampling samples a portion of the unique values from the key fields. This
+ * is done by hashing the key and mapping the hash value into buckets matching the
+ *  sampling rate size. Records having a key mapping to bucket zero are output.
+ */
+void bucketSampling(OutputRange)(TsvSampleOptions cmdopt, OutputRange outputStream)
+    if (isOutputRange!(OutputRange, char))
+{
+    import std.algorithm : splitter;
+    import std.conv : to;
+    import std.digest.murmurhash;
+    import std.math : lrint;
+    import std.random : unpredictableSeed;
+    import tsvutil : InputFieldReordering, throwIfWindowsNewlineOnUnix;
+
+    assert(cmdopt.keyFields.length > 0);
+    assert(0.0 < cmdopt.sampleRate && cmdopt.sampleRate <= 1.0);
+
+    uint seed =
+        (cmdopt.seedValue != 0) ? cmdopt.seedValue
+        : cmdopt.staticSeed ? 2438424139
+        : unpredictableSeed;
+
+    immutable ubyte[1] delimArray = [cmdopt.delim]; // For assembling multi-field hash keys.
+
+    uint numBuckets = (1.0 / cmdopt.sampleRate).lrint.to!uint;
+
+    /* Create a mapping for the key fields. */
+    auto keyFieldsReordering = new InputFieldReordering!char(cmdopt.keyFields);
+
+    /* Process each line. */
+    bool headerWritten = false;
+    size_t numLinesWritten = 0;
+    foreach (filename; cmdopt.files)
+    {
+        auto inputStream = (filename == "-") ? stdin : filename.File();
+        foreach (fileLineNum, line; inputStream.byLine(KeepTerminator.no).enumerate(1))
+        {
+            if (fileLineNum == 1) throwIfWindowsNewlineOnUnix(line, filename, fileLineNum);
+            if (fileLineNum == 1 && cmdopt.hasHeader)
+            {
+                if (!headerWritten)
+                {
+                    outputStream.put(line);
+                    outputStream.put("\n");
+                    headerWritten = true;
+                }
+            }
+            else
+            {
+                /* Gather the key field values and assemble the key. */
+                keyFieldsReordering.initNewLine;
+                foreach (fieldIndex, fieldValue; line.splitter(cmdopt.delim).enumerate)
+                {
+                    keyFieldsReordering.processNextField(fieldIndex, fieldValue);
+                    if (keyFieldsReordering.allFieldsFilled) break;
+                }
+
+                if (!keyFieldsReordering.allFieldsFilled)
+                {
+                    import std.format : format;
+                    throw new Exception(
+                        format("Not enough fields in line. File: %s, Line: %s",
+                               (filename == "-") ? "Standard Input" : filename, fileLineNum));
+                }
+
+                auto hasher = MurmurHash3!32(seed);
+                foreach (count, key; keyFieldsReordering.outputFields.enumerate)
+                {
+                    if (count > 0) hasher.put(delimArray);
+                    hasher.put(cast(ubyte[]) key);
+                }
+                hasher.finish;
+                if (hasher.get % numBuckets == 0)
+                {
                     outputStream.put(line);
                     outputStream.put("\n");
 
