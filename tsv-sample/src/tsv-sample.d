@@ -662,7 +662,11 @@ version(unittest)
         assert(r[0], formatAssertMessage("Invalid command lines arg: '%s'.", savedCmdArgs));
         auto output = appender!(char[])();
 
-        if (cmdopt.useStreamSampling)
+        if (cmdopt.useBucketSampling)
+        {
+            bucketSampling(cmdopt, output);
+        }
+        else if (cmdopt.useStreamSampling)
         {
             streamSampling(cmdopt, output);
         }
@@ -813,6 +817,12 @@ unittest
          ["white", "白", "1.65"],
          ["blue", "青", "12"]];
 
+    string[][] data3x6ExpectedBucketSampleK1K3P60 =
+        [["field_a", "field_b", "field_c"],
+         ["green", "緑", "0.0072"],
+         ["white", "白", "1.65"],
+         ["blue", "青", "12"]];
+
     string[][] data3x6ExpectedWt3Probs =
         [["random_weight", "field_a", "field_b", "field_c"],
          ["0.996651987576454", "yellow", "黄", "12"],
@@ -906,6 +916,14 @@ unittest
          ["white", "白", "1.65"],
          ["blue", "青", "12"],
          ["gray", "グレー", "6.2"]];
+
+    string[][] combo1ExpectedBucketSampleK1P40 =
+        [["field_a", "field_b", "field_c"],
+         ["orange", "オレンジ", "2.5"],
+         ["red", "赤", "23.8"],
+         ["green", "緑", "0.0072"],
+         ["blue", "青", "12"],
+         ["black", "黒", "0.983"]];
 
     string[][] combo1ExpectedWt3Probs =
         [["random_weight", "field_a", "field_b", "field_c"],
@@ -1100,6 +1118,83 @@ unittest
          ["0.840939024352278", "9", "8.23"],
          ["0.6565001592629", "10", "1.79"]];
 
+    /* Data sets for bucket sampling. */
+    string[][] data5x25 =
+        [["ID", "Shape", "Color", "Size", "Weight"],
+         ["01", "circle", "red", "S", "10"],
+         ["02", "circle", "black", "L", "20"],
+         ["03", "square", "black", "L", "20"],
+         ["04", "circle", "green", "L", "30"],
+         ["05", "ellipse", "red", "S", "20"],
+         ["06", "triangle", "red", "S", "10"],
+         ["07", "triangle", "red", "L", "20"],
+         ["08", "square", "black", "S", "10"],
+         ["09", "circle", "black", "S", "20"],
+         ["10", "square", "green", "L", "20"],
+         ["11", "triangle", "red", "L", "20"],
+         ["12", "circle", "green", "L", "30"],
+         ["13", "ellipse", "red", "S", "20"],
+         ["14", "circle", "green", "L", "30"],
+         ["15", "ellipse", "red", "L", "30"],
+         ["16", "square", "red", "S", "10"],
+         ["17", "circle", "black", "L", "20"],
+         ["18", "square", "red", "S", "20"],
+         ["19", "square", "black", "L", "20"],
+         ["20", "circle", "red", "S", "10"],
+         ["21", "ellipse", "black", "L", "30"],
+         ["22", "triangle", "red", "L", "30"],
+         ["23", "circle", "green", "S", "20"],
+         ["24", "square", "green", "L", "20"],
+         ["25", "circle", "red", "S", "10"],
+            ];
+
+    string fpath_data5x25 = buildPath(testDir, "data5x25.tsv");
+    string fpath_data5x25_noheader = buildPath(testDir, "data5x25_noheader.tsv");
+    writeUnittestTsvFile(fpath_data5x25, data5x25);
+    writeUnittestTsvFile(fpath_data5x25_noheader, data5x25[1..$]);
+
+    string[][] data5x25ExpectedBucketSampleK2P40 =
+        [["ID", "Shape", "Color", "Size", "Weight"],
+         ["03", "square", "black", "L", "20"],
+         ["05", "ellipse", "red", "S", "20"],
+         ["08", "square", "black", "S", "10"],
+         ["10", "square", "green", "L", "20"],
+         ["13", "ellipse", "red", "S", "20"],
+         ["15", "ellipse", "red", "L", "30"],
+         ["16", "square", "red", "S", "10"],
+         ["18", "square", "red", "S", "20"],
+         ["19", "square", "black", "L", "20"],
+         ["21", "ellipse", "black", "L", "30"],
+         ["24", "square", "green", "L", "20"],
+            ];
+
+    string[][] data5x25ExpectedBucketSampleK2K4P20 =
+        [["ID", "Shape", "Color", "Size", "Weight"],
+         ["03", "square", "black", "L", "20"],
+         ["07", "triangle", "red", "L", "20"],
+         ["08", "square", "black", "S", "10"],
+         ["10", "square", "green", "L", "20"],
+         ["11", "triangle", "red", "L", "20"],
+         ["16", "square", "red", "S", "10"],
+         ["18", "square", "red", "S", "20"],
+         ["19", "square", "black", "L", "20"],
+         ["22", "triangle", "red", "L", "30"],
+         ["24", "square", "green", "L", "20"],
+            ];
+
+    string[][] data5x25ExpectedBucketSampleK2K3K4P20 =
+        [["ID", "Shape", "Color", "Size", "Weight"],
+         ["04", "circle", "green", "L", "30"],
+         ["07", "triangle", "red", "L", "20"],
+         ["09", "circle", "black", "S", "20"],
+         ["11", "triangle", "red", "L", "20"],
+         ["12", "circle", "green", "L", "30"],
+         ["14", "circle", "green", "L", "30"],
+         ["16", "square", "red", "S", "10"],
+         ["18", "square", "red", "S", "20"],
+         ["22", "triangle", "red", "L", "30"],
+            ];
+
     /*
      * Enough setup! Actually run some tests!
      */
@@ -1130,6 +1225,12 @@ unittest
     testTsvSample(["test-a21", "-H", "-s", "--rate", "0.60", fpath_data3x6], data3x6ExpectedStreamSampleP60);
     testTsvSample(["test-a22", "-H", "-v", "41", "--rate", "0.60", "-p", fpath_data3x6], data3x6ExpectedV41ProbsStreamSampleP60);
 
+    /* Bucket sampling cases. */
+    testTsvSample(["test-a23", "--header", "--static-seed", "--rate", "0.001", "--key-fields", "1", fpath_dataEmpty], dataEmpty);
+    testTsvSample(["test-a24", "--header", "--static-seed", "--rate", "0.001", "--key-fields", "1", fpath_data3x0], data3x0);
+    testTsvSample(["test-a25", "-H", "-s", "-r", "1.0", "-k", "2", fpath_data3x1], data3x1);
+    testTsvSample(["test-a26", "-H", "-s", "-r", "1.0", "-k", "2", fpath_data3x6], data3x6);
+
     /* Basic tests, without headers. */
     testTsvSample(["test-b1", "-s", fpath_data3x1_noheader], data3x1[1..$]);
     testTsvSample(["test-b2", "-s", fpath_data3x2_noheader], data3x2ExpectedNoWt[1..$]);
@@ -1148,6 +1249,12 @@ unittest
     testTsvSample(["test-b13", "-s", "--rate", "1.0", "-p", fpath_data3x6_noheader], data3x6ExpectedProbsStreamSampleP100[1..$]);
     testTsvSample(["test-b14", "-s", "--rate", "0.60", "-p", fpath_data3x6_noheader], data3x6ExpectedProbsStreamSampleP60[1..$]);
     testTsvSample(["test-b15", "-v", "41", "--rate", "0.60", "-p", fpath_data3x6_noheader], data3x6ExpectedV41ProbsStreamSampleP60[1..$]);
+
+    /* Bucket sampling cases. */
+    testTsvSample(["test-a25", "-s", "-r", "1.0", "-k", "2", fpath_data3x1_noheader], data3x1[1..$]);
+    testTsvSample(["test-a26", "-s", "-r", "1.0", "-k", "2", fpath_data3x6_noheader], data3x6[1..$]);
+    testTsvSample(["test-a27", "-r", "1.0", "-k", "2", fpath_data3x6_noheader], data3x6[1..$]);
+    testTsvSample(["test-a28", "-v", "71563", "-r", "1.0", "-k", "2", fpath_data3x6_noheader], data3x6[1..$]);
 
     /* Multi-file tests. */
     testTsvSample(["test-c1", "--header", "--static-seed",
@@ -1196,6 +1303,15 @@ unittest
                    fpath_data3x3_noheader, fpath_data3x1_noheader, fpath_dataEmpty,
                    fpath_data3x6_noheader, fpath_data3x2_noheader],
                   combo1ExpectedStreamSampleP40[1..$]);
+
+    /* Bucket sampling cases. */
+    testTsvSample(["test-c13", "--header", "--static-seed", "--key-fields", "1", "--rate", ".4",
+                   fpath_data3x0, fpath_data3x3, fpath_data3x1, fpath_dataEmpty, fpath_data3x6, fpath_data3x2],
+                  combo1ExpectedBucketSampleK1P40);
+    testTsvSample(["test-c14", "--static-seed", "--key-fields", "1", "--rate", ".4",
+                   fpath_data3x3_noheader, fpath_data3x1_noheader, fpath_dataEmpty,
+                   fpath_data3x6_noheader, fpath_data3x2_noheader],
+                  combo1ExpectedBucketSampleK1P40[1..$]);
 
     /* Single column file. */
     testTsvSample(["test-d1", "-H", "-s", fpath_data1x10], data1x10ExpectedNoWt);
@@ -1255,6 +1371,14 @@ unittest
 
         testTsvSample([format("test-f12_%d", n), "-s", "-r", "0.6", "-n", n.to!string,
                        fpath_data3x6_noheader], data3x6ExpectedStreamSampleP60[1..sampleExpectedLength]);
+
+        size_t bucketExpectedLength = min(expectedLength, data3x6ExpectedBucketSampleK1K3P60.length);
+
+        testTsvSample([format("test-f13_%d", n), "-s", "-k", "1,3", "-r", "0.6", "-n", n.to!string,
+                       "-H", fpath_data3x6], data3x6ExpectedBucketSampleK1K3P60[0..bucketExpectedLength]);
+
+        testTsvSample([format("test-f14_%d", n), "-s", "-k", "1,3", "-r", "0.6", "-n", n.to!string,
+                       fpath_data3x6_noheader], data3x6ExpectedBucketSampleK1K3P60[1..bucketExpectedLength]);
     }
 
     /* Similar tests with the 1x10 data set. */
@@ -1273,4 +1397,23 @@ unittest
         testTsvSample([format("test-g4_%d", n), "-s", "-n", n.to!string,
                        "-f", "1", fpath_data1x10_noheader], data1x10ExpectedWt1[1..expectedLength]);
     }
+
+    /* Bucket sampling tests. */
+    testTsvSample(["h1", "--header", "--static-seed", "--rate", "0.40", "--key-fields", "2", fpath_data5x25],
+                  data5x25ExpectedBucketSampleK2P40);
+
+    testTsvSample(["h2", "-H", "-s", "-r", "0.20", "-k", "2,4", fpath_data5x25],
+                  data5x25ExpectedBucketSampleK2K4P20);
+
+    testTsvSample(["h3", "-H", "-s", "-r", "0.20", "-k", "2-4", fpath_data5x25],
+                  data5x25ExpectedBucketSampleK2K3K4P20);
+
+    testTsvSample(["h4", "--static-seed", "--rate", "0.40", "--key-fields", "2", fpath_data5x25_noheader],
+                  data5x25ExpectedBucketSampleK2P40[1..$]);
+
+    testTsvSample(["h5", "-s", "-r", "0.20", "-k", "2,4", fpath_data5x25_noheader],
+                  data5x25ExpectedBucketSampleK2K4P20[1..$]);
+
+    testTsvSample(["h6", "-s", "-r", "0.20", "-k", "2-4", fpath_data5x25_noheader],
+                  data5x25ExpectedBucketSampleK2K3K4P20[1..$]);
 }
