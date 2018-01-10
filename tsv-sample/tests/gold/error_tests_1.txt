@@ -59,3 +59,13 @@ Error [tsv-sample]: Windows/DOS line ending found. Convert file to Unix newlines
 
 ====[tsv-sample -r 0.5 -v -10 -k 1 input4x50.tsv input4x15.tsv]====
 [tsv-sample] Error processing command line arguments: Unexpected '-' when converting from type string to type uint
+
+====[tsv-sample -k 1 input4x50.tsv input4x15.tsv]====
+[tsv-sample] Error processing command line arguments: --r|rate is required when using --k|key-fields.
+
+====[tsv-sample -r 0.5 -k 5 input4x50.tsv input4x15.tsv]====
+Error [tsv-sample]: Not enough fields in line. File: input4x50.tsv, Line: 1
+
+====[tsv-sample -H -r 0.5 -k 5 input4x50.tsv input4x15.tsv]====
+Error [tsv-sample]: Not enough fields in line. File: input4x50.tsv, Line: 2
+c-1	c-2	c-3	c-4

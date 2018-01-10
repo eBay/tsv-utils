@@ -136,3 +136,6 @@ runtest ${prog} "-r 0 -k 1 input4x50.tsv input4x15.tsv" ${error_tests_1}
 runtest ${prog} "-r -0.5 -k 1 input4x50.tsv input4x15.tsv" ${error_tests_1}
 runtest ${prog} "-r -v 10 -k 1 input4x50.tsv input4x15.tsv" ${error_tests_1}
 runtest ${prog} "-r 0.5 -v -10 -k 1 input4x50.tsv input4x15.tsv" ${error_tests_1}
+runtest ${prog} "-k 1 input4x50.tsv input4x15.tsv" ${error_tests_1}
+runtest ${prog} "-r 0.5 -k 5 input4x50.tsv input4x15.tsv" ${error_tests_1}
+runtest ${prog} "-H -r 0.5 -k 5 input4x50.tsv input4x15.tsv" ${error_tests_1}
