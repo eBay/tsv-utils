@@ -37,6 +37,10 @@ else
             {
                 streamSampling(cmdopt, stdout.lockingTextWriter);
             }
+            else if (cmdopt.useBucketSampling)
+            {
+                bucketSampling(cmdopt, stdout.lockingTextWriter);
+            }
             else if (cmdopt.sampleSize == 0)
             {
                 reservoirSampling!(Yes.permuteAll)(cmdopt, stdout.lockingTextWriter);
@@ -62,9 +66,13 @@ Samples or randomizes input lines. There are several modes of operation:
 * Randomization (Default): Input lines are output in random order.
 * Stream sampling (--r|rate): Input lines are sampled based on a sampling
   rate. The order of the input is unchanged.
-* Weighted sampling (--f|field): Input lines are selected using weighted
-  random sampling, with the weight taken from a field. Input lines are
-  output in the order selected, reordering the lines.
+* Bucket sampling (--k|key-fields, --r|rate): Sampling is based on the
+  values in the key field. A portion of the key are chosen based on the
+  sampling rate. All lines with one of the selected keys are output.
+  Input order is unchanged.
+* Weighted sampling (--w|weight-field): Input lines are selected using
+  weighted random sampling, with the weight taken from a field. Input
+  lines are output in the order selected, reordering the lines.
 
 The '--n|num' option limits the sample sized produced. It speeds up the
 randomization and weighted sampling cases significantly.
@@ -81,10 +89,14 @@ Samples or randomizes input lines. There are several modes of operation:
 * Randomization (Default): Input lines are output in random order.
 * Stream sampling (--r|rate): Input lines are sampled based on a sampling
   rate. The order of the input is unchanged.
-* Weighted sampling (--f|field): Input lines are selected using weighted
-  random sampling, with the weight taken from a field. Input lines are
-  output in the order selected, reordering the lines. See 'Weighted
-  sampling and field weights' below for info on field weights.
+* Bucket sampling (--k|key-fields, --r|rate): Sampling is based on the
+  values in the key field. A portion of the key are chosen based on the
+  sampling rate. All lines with one of the selected keys are output.
+  Input order is unchanged.
+* Weighted sampling (--w|weight-field): Input lines are selected using
+  weighted random sampling, with the weight taken from a field. Input
+  lines are output in the order selected, reordering the lines. See
+  'Weighted sampling' below for info on field weights.
 
 Sample size: The '--n|num' option limits the sample sized produced. This
 speeds up randomization and weighted sampling significantly (details below).
@@ -110,14 +122,15 @@ significantly using a sample size. Both 'tsv-sample -n 1000' and
 'tsv-sample | head -n 1000' produce the same results, but the former is
 quite a bit faster.
 
-Weighted sampling and field weights: Weighted random sampling is done
-using an algorithm described by Efraimidis and Spirakis. Weights should
-be positive values representing the relative weight of the entry in the
-collection. Negative values are not meaningful and given the value zero.
-However, any positive real values can be used. Lines are output ordered
-by the randomized weight that was assigned. This means, for example, that
-a smaller sample can be produced by taking the first N lines of output.
-For more info on the sampling approach see:
+Weighted sampling: Weighted random sampling is done using an algorithm
+described by Efraimidis and Spirakis. Weights should be positive values
+representing the relative weight of the entry in the collection. Counts
+and similar can be used as weights, it is *not* necessary to normalize to
+a [0,1] interval. Negative values are not meaningful and given the value
+zero. Input order is not retained, instead lines are output ordered by
+the randomized weight that was assigned. This means that a smaller valid
+sample can be produced by taking the first N lines of output. For more
+info on the sampling approach see:
 * Wikipedia: https://en.wikipedia.org/wiki/Reservoir_sampling
 * "Weighted Random Sampling over Data Streams", Pavlos S. Efraimidis
   (https://arxiv.org/abs/1012.0256)
@@ -132,21 +145,26 @@ struct TsvSampleOptions
     bool helpVerbose = false;        // --help-verbose
     double sampleRate = double.nan;  // --r|rate - Sampling rate
     size_t sampleSize = 0;           // --n|num - Size of the desired sample
-    size_t weightField = 0;          // --f|field - Field holding the weight
+    size_t weightField = 0;          // --w|weight-field - Field holding the weight
+    size_t[] keyFields;              // --k|key-fields - Used with sampling rate
     bool hasHeader = false;          // --H|header
     bool printRandom = false;        // --p|print-random
     bool staticSeed = false;         // --s|static-seed
-    uint seedValue = 0;              // --v|seed-value
+    uint seedValueOptionArg = 0;     // --v|seed-value
     char delim = '\t';               // --d|delimiter
     bool versionWanted = false;      // --V|version
     bool hasWeightField = false;     // Derived.
     bool useStreamSampling = false;  // Derived.
+    bool useBucketSampling = false;  // Derived.
+    uint seed = 0;                   // Derived from --static-seed, --seed-value
 
     auto processArgs(ref string[] cmdArgs)
     {
         import std.getopt;
         import std.math : isNaN;
         import std.path : baseName, stripExtension;
+        import std.typecons : Yes, No;
+        import tsvutil : makeFieldListOptionHandler;
 
         programName = (cmdArgs.length > 0) ? cmdArgs[0].stripExtension.baseName : "Unknown_program_name";
 
@@ -161,12 +179,16 @@ struct TsvSampleOptions
                 std.getopt.config.caseInsensitive,
                 "r|rate",          "NUM  Sampling rating (0.0 < NUM <= 1.0). This sampling mode outputs a random fraction of lines, in the input order.", &sampleRate,
                 "n|num",           "NUM  Number of lines to output. All lines are output if not provided or zero.", &sampleSize,
-                "f|field",         "NUM  Field containing weights. All lines get equal weight if not provided or zero.", &weightField,
+                "w|weight-field",         "NUM  Field containing weights. All lines get equal weight if not provided or zero.", &weightField,
+
+                "k|key-fields",    "<field-list>  Fields to use as key for bucket sampling. Use with --r|rate.",
+                keyFields.makeFieldListOptionHandler!(size_t, Yes.convertToZeroBasedIndex),
+
                 "p|print-random",  "     Output the random values that were assigned.", &printRandom,
                 "s|static-seed",   "     Use the same random seed every run.", &staticSeed,
 
                 std.getopt.config.caseSensitive,
-                "v|seed-value",    "NUM  Sets the initial random seed. Use a non-zero, 32 bit positive integer. Zero is a no-op.", &seedValue,
+                "v|seed-value",    "NUM  Sets the initial random seed. Use a non-zero, 32 bit positive integer. Zero is a no-op.", &seedValueOptionArg,
                 std.getopt.config.caseInsensitive,
 
                 "d|delimiter",     "CHR  Field delimiter.", &delim,
@@ -200,10 +222,14 @@ struct TsvSampleOptions
                 weightField--;    // Switch to zero-based indexes.
             }
 
+            if (keyFields.length > 0 && sampleRate.isNaN)
+            {
+                throw new Exception("--r|rate is required when using --k|key-fields.");
+            }
+
+            /* Sample rate (--r|rate) is used for both stream sampling and bucket sampling. */
             if (!sampleRate.isNaN)
             {
-                useStreamSampling = true;
-
                 if (sampleRate <= 0.0 || sampleRate > 1.0)
                 {
                     import std.format : format;
@@ -211,8 +237,17 @@ struct TsvSampleOptions
                         format("Invalid --r|rate option: %g. Must satisfy 0.0 < rate <= 1.0.", sampleRate));
                 }
 
-                if (hasWeightField) throw new Exception("--f|field and --r|rate cannot be used together.");
+                if (hasWeightField) throw new Exception("--w|weight-field and --r|rate cannot be used together.");
+
+                if (keyFields.length > 0) useBucketSampling = true;
+                else useStreamSampling = true;
             }
+
+            /* Seed. */
+            import std.random : unpredictableSeed;
+            seed = (seedValueOptionArg != 0) ? seedValueOptionArg
+                : staticSeed ? 2438424139
+                : unpredictableSeed;
 
             /* Assume remaining args are files. Use standard input if files were not provided. */
             files ~= (cmdArgs.length > 1) ? cmdArgs[1..$] : ["-"];
@@ -238,15 +273,10 @@ struct TsvSampleOptions
 void streamSampling(OutputRange)(TsvSampleOptions cmdopt, OutputRange outputStream)
     if (isOutputRange!(OutputRange, char))
 {
-    import std.random : Random, unpredictableSeed, uniform01;
+    import std.random : Random, uniform01;
     import tsvutil : throwIfWindowsNewlineOnUnix;
 
-    uint seed =
-        (cmdopt.seedValue != 0) ? cmdopt.seedValue
-        : cmdopt.staticSeed ? 2438424139
-        : unpredictableSeed;
-
-    auto randomGenerator = Random(seed);
+    auto randomGenerator = Random(cmdopt.seed);
 
     /* Process each line. */
     bool headerWritten = false;
@@ -296,6 +326,88 @@ void streamSampling(OutputRange)(TsvSampleOptions cmdopt, OutputRange outputStre
     }
 }
 
+/* bucketSampling samples a portion of the unique values from the key fields. This
+ * is done by hashing the key and mapping the hash value into buckets matching the
+ *  sampling rate size. Records having a key mapping to bucket zero are output.
+ */
+void bucketSampling(OutputRange)(TsvSampleOptions cmdopt, OutputRange outputStream)
+    if (isOutputRange!(OutputRange, char))
+{
+    import std.algorithm : splitter;
+    import std.conv : to;
+    import std.digest.murmurhash;
+    import std.math : lrint;
+    import tsvutil : InputFieldReordering, throwIfWindowsNewlineOnUnix;
+
+    assert(cmdopt.keyFields.length > 0);
+    assert(0.0 < cmdopt.sampleRate && cmdopt.sampleRate <= 1.0);
+
+    immutable ubyte[1] delimArray = [cmdopt.delim]; // For assembling multi-field hash keys.
+
+    uint numBuckets = (1.0 / cmdopt.sampleRate).lrint.to!uint;
+
+    /* Create a mapping for the key fields. */
+    auto keyFieldsReordering = new InputFieldReordering!char(cmdopt.keyFields);
+
+    /* Process each line. */
+    bool headerWritten = false;
+    size_t numLinesWritten = 0;
+    foreach (filename; cmdopt.files)
+    {
+        auto inputStream = (filename == "-") ? stdin : filename.File();
+        foreach (fileLineNum, line; inputStream.byLine(KeepTerminator.no).enumerate(1))
+        {
+            if (fileLineNum == 1) throwIfWindowsNewlineOnUnix(line, filename, fileLineNum);
+            if (fileLineNum == 1 && cmdopt.hasHeader)
+            {
+                if (!headerWritten)
+                {
+                    outputStream.put(line);
+                    outputStream.put("\n");
+                    headerWritten = true;
+                }
+            }
+            else
+            {
+                /* Gather the key field values and assemble the key. */
+                keyFieldsReordering.initNewLine;
+                foreach (fieldIndex, fieldValue; line.splitter(cmdopt.delim).enumerate)
+                {
+                    keyFieldsReordering.processNextField(fieldIndex, fieldValue);
+                    if (keyFieldsReordering.allFieldsFilled) break;
+                }
+
+                if (!keyFieldsReordering.allFieldsFilled)
+                {
+                    import std.format : format;
+                    throw new Exception(
+                        format("Not enough fields in line. File: %s, Line: %s",
+                               (filename == "-") ? "Standard Input" : filename, fileLineNum));
+                }
+
+                auto hasher = MurmurHash3!32(cmdopt.seed);
+                foreach (count, key; keyFieldsReordering.outputFields.enumerate)
+                {
+                    if (count > 0) hasher.put(delimArray);
+                    hasher.put(cast(ubyte[]) key);
+                }
+                hasher.finish;
+                if (hasher.get % numBuckets == 0)
+                {
+                    outputStream.put(line);
+                    outputStream.put("\n");
+
+                    if (cmdopt.sampleSize != 0)
+                    {
+                        ++numLinesWritten;
+                        if (numLinesWritten == cmdopt.sampleSize) return;
+                    }
+                }
+            }
+        }
+    }
+}
+
 /* An implementation of reservior sampling. Both weighted and unweighted sampling are
  * supported. Both are implemented using the one-pass algorithm described by Efraimidis
  * and Spirakis ("Weighted Random Sampling over Data Streams", Pavlos S. Efraimidis,
@@ -315,7 +427,7 @@ void reservoirSampling(Flag!"permuteAll" permuteAll, OutputRange)
     (TsvSampleOptions cmdopt, OutputRange outputStream)
     if (isOutputRange!(OutputRange, char))
 {
-    import std.random : Random, unpredictableSeed, uniform01;
+    import std.random : Random, uniform01;
     import std.container.binaryheap;
     import tsvutil : throwIfWindowsNewlineOnUnix;
 
@@ -323,12 +435,7 @@ void reservoirSampling(Flag!"permuteAll" permuteAll, OutputRange)
     static if (permuteAll) assert(cmdopt.sampleSize == 0);
     else assert(cmdopt.sampleSize > 0);
 
-    uint seed =
-        (cmdopt.seedValue != 0) ? cmdopt.seedValue
-        : cmdopt.staticSeed ? 2438424139
-        : unpredictableSeed;
-
-    auto randomGenerator = Random(seed);
+    auto randomGenerator = Random(cmdopt.seed);
 
     struct Entry
     {
@@ -547,7 +654,11 @@ version(unittest)
         assert(r[0], formatAssertMessage("Invalid command lines arg: '%s'.", savedCmdArgs));
         auto output = appender!(char[])();
 
-        if (cmdopt.useStreamSampling)
+        if (cmdopt.useBucketSampling)
+        {
+            bucketSampling(cmdopt, output);
+        }
+        else if (cmdopt.useStreamSampling)
         {
             streamSampling(cmdopt, output);
         }
@@ -698,6 +809,12 @@ unittest
          ["white", "白", "1.65"],
          ["blue", "青", "12"]];
 
+    string[][] data3x6ExpectedBucketSampleK1K3P60 =
+        [["field_a", "field_b", "field_c"],
+         ["green", "緑", "0.0072"],
+         ["white", "白", "1.65"],
+         ["blue", "青", "12"]];
+
     string[][] data3x6ExpectedWt3Probs =
         [["random_weight", "field_a", "field_b", "field_c"],
          ["0.996651987576454", "yellow", "黄", "12"],
@@ -791,6 +908,14 @@ unittest
          ["white", "白", "1.65"],
          ["blue", "青", "12"],
          ["gray", "グレー", "6.2"]];
+
+    string[][] combo1ExpectedBucketSampleK1P40 =
+        [["field_a", "field_b", "field_c"],
+         ["orange", "オレンジ", "2.5"],
+         ["red", "赤", "23.8"],
+         ["green", "緑", "0.0072"],
+         ["blue", "青", "12"],
+         ["black", "黒", "0.983"]];
 
     string[][] combo1ExpectedWt3Probs =
         [["random_weight", "field_a", "field_b", "field_c"],
@@ -985,6 +1110,83 @@ unittest
          ["0.840939024352278", "9", "8.23"],
          ["0.6565001592629", "10", "1.79"]];
 
+    /* Data sets for bucket sampling. */
+    string[][] data5x25 =
+        [["ID", "Shape", "Color", "Size", "Weight"],
+         ["01", "circle", "red", "S", "10"],
+         ["02", "circle", "black", "L", "20"],
+         ["03", "square", "black", "L", "20"],
+         ["04", "circle", "green", "L", "30"],
+         ["05", "ellipse", "red", "S", "20"],
+         ["06", "triangle", "red", "S", "10"],
+         ["07", "triangle", "red", "L", "20"],
+         ["08", "square", "black", "S", "10"],
+         ["09", "circle", "black", "S", "20"],
+         ["10", "square", "green", "L", "20"],
+         ["11", "triangle", "red", "L", "20"],
+         ["12", "circle", "green", "L", "30"],
+         ["13", "ellipse", "red", "S", "20"],
+         ["14", "circle", "green", "L", "30"],
+         ["15", "ellipse", "red", "L", "30"],
+         ["16", "square", "red", "S", "10"],
+         ["17", "circle", "black", "L", "20"],
+         ["18", "square", "red", "S", "20"],
+         ["19", "square", "black", "L", "20"],
+         ["20", "circle", "red", "S", "10"],
+         ["21", "ellipse", "black", "L", "30"],
+         ["22", "triangle", "red", "L", "30"],
+         ["23", "circle", "green", "S", "20"],
+         ["24", "square", "green", "L", "20"],
+         ["25", "circle", "red", "S", "10"],
+            ];
+
+    string fpath_data5x25 = buildPath(testDir, "data5x25.tsv");
+    string fpath_data5x25_noheader = buildPath(testDir, "data5x25_noheader.tsv");
+    writeUnittestTsvFile(fpath_data5x25, data5x25);
+    writeUnittestTsvFile(fpath_data5x25_noheader, data5x25[1..$]);
+
+    string[][] data5x25ExpectedBucketSampleK2P40 =
+        [["ID", "Shape", "Color", "Size", "Weight"],
+         ["03", "square", "black", "L", "20"],
+         ["05", "ellipse", "red", "S", "20"],
+         ["08", "square", "black", "S", "10"],
+         ["10", "square", "green", "L", "20"],
+         ["13", "ellipse", "red", "S", "20"],
+         ["15", "ellipse", "red", "L", "30"],
+         ["16", "square", "red", "S", "10"],
+         ["18", "square", "red", "S", "20"],
+         ["19", "square", "black", "L", "20"],
+         ["21", "ellipse", "black", "L", "30"],
+         ["24", "square", "green", "L", "20"],
+            ];
+
+    string[][] data5x25ExpectedBucketSampleK2K4P20 =
+        [["ID", "Shape", "Color", "Size", "Weight"],
+         ["03", "square", "black", "L", "20"],
+         ["07", "triangle", "red", "L", "20"],
+         ["08", "square", "black", "S", "10"],
+         ["10", "square", "green", "L", "20"],
+         ["11", "triangle", "red", "L", "20"],
+         ["16", "square", "red", "S", "10"],
+         ["18", "square", "red", "S", "20"],
+         ["19", "square", "black", "L", "20"],
+         ["22", "triangle", "red", "L", "30"],
+         ["24", "square", "green", "L", "20"],
+            ];
+
+    string[][] data5x25ExpectedBucketSampleK2K3K4P20 =
+        [["ID", "Shape", "Color", "Size", "Weight"],
+         ["04", "circle", "green", "L", "30"],
+         ["07", "triangle", "red", "L", "20"],
+         ["09", "circle", "black", "S", "20"],
+         ["11", "triangle", "red", "L", "20"],
+         ["12", "circle", "green", "L", "30"],
+         ["14", "circle", "green", "L", "30"],
+         ["16", "square", "red", "S", "10"],
+         ["18", "square", "red", "S", "20"],
+         ["22", "triangle", "red", "L", "30"],
+            ];
+
     /*
      * Enough setup! Actually run some tests!
      */
@@ -997,12 +1199,12 @@ unittest
     testTsvSample(["test-a5", "-H", "-s", fpath_data3x3], data3x3ExpectedNoWt);
     testTsvSample(["test-a6", "-H", "-s", fpath_data3x6], data3x6ExpectedNoWt);
     testTsvSample(["test-a7", "-H", "-s", "--print-random", fpath_data3x6], data3x6ExpectedNoWtProbs);
-    testTsvSample(["test-a8", "-H", "-s", "--field", "3", fpath_data3x6], data3x6ExpectedWt3);
-    testTsvSample(["test-a9", "-H", "-s", "-p", "-f", "3", fpath_data3x6], data3x6ExpectedWt3Probs);
+    testTsvSample(["test-a8", "-H", "-s", "--weight-field", "3", fpath_data3x6], data3x6ExpectedWt3);
+    testTsvSample(["test-a9", "-H", "-s", "-p", "-w", "3", fpath_data3x6], data3x6ExpectedWt3Probs);
     testTsvSample(["test-a10", "-H", "--seed-value", "41", "-p", fpath_data3x6], data3x6ExpectedNoWtV41Probs);
     testTsvSample(["test-a11", "-H", "-s", "-v", "41", "-p", fpath_data3x6], data3x6ExpectedNoWtV41Probs);
     testTsvSample(["test-a12", "-H", "-s", "-v", "0", "-p", fpath_data3x6], data3x6ExpectedNoWtProbs);
-    testTsvSample(["test-a13", "-H", "-v", "41", "-f", "3", "-p", fpath_data3x6], data3x6ExpectedWt3V41Probs);
+    testTsvSample(["test-a13", "-H", "-v", "41", "-w", "3", "-p", fpath_data3x6], data3x6ExpectedWt3V41Probs);
 
     /* Stream sampling cases. */
     testTsvSample(["test-a14", "--header", "--static-seed", "--rate", "0.001", fpath_dataEmpty], dataEmpty);
@@ -1015,16 +1217,22 @@ unittest
     testTsvSample(["test-a21", "-H", "-s", "--rate", "0.60", fpath_data3x6], data3x6ExpectedStreamSampleP60);
     testTsvSample(["test-a22", "-H", "-v", "41", "--rate", "0.60", "-p", fpath_data3x6], data3x6ExpectedV41ProbsStreamSampleP60);
 
+    /* Bucket sampling cases. */
+    testTsvSample(["test-a23", "--header", "--static-seed", "--rate", "0.001", "--key-fields", "1", fpath_dataEmpty], dataEmpty);
+    testTsvSample(["test-a24", "--header", "--static-seed", "--rate", "0.001", "--key-fields", "1", fpath_data3x0], data3x0);
+    testTsvSample(["test-a25", "-H", "-s", "-r", "1.0", "-k", "2", fpath_data3x1], data3x1);
+    testTsvSample(["test-a26", "-H", "-s", "-r", "1.0", "-k", "2", fpath_data3x6], data3x6);
+
     /* Basic tests, without headers. */
     testTsvSample(["test-b1", "-s", fpath_data3x1_noheader], data3x1[1..$]);
     testTsvSample(["test-b2", "-s", fpath_data3x2_noheader], data3x2ExpectedNoWt[1..$]);
     testTsvSample(["test-b3", "-s", fpath_data3x3_noheader], data3x3ExpectedNoWt[1..$]);
     testTsvSample(["test-b4", "-s", fpath_data3x6_noheader], data3x6ExpectedNoWt[1..$]);
     testTsvSample(["test-b5", "-s", "--print-random", fpath_data3x6_noheader], data3x6ExpectedNoWtProbs[1..$]);
-    testTsvSample(["test-b6", "-s", "--field", "3", fpath_data3x6_noheader], data3x6ExpectedWt3[1..$]);
-    testTsvSample(["test-b7", "-s", "-p", "-f", "3", fpath_data3x6_noheader], data3x6ExpectedWt3Probs[1..$]);
+    testTsvSample(["test-b6", "-s", "--weight-field", "3", fpath_data3x6_noheader], data3x6ExpectedWt3[1..$]);
+    testTsvSample(["test-b7", "-s", "-p", "-w", "3", fpath_data3x6_noheader], data3x6ExpectedWt3Probs[1..$]);
     testTsvSample(["test-b8", "-v", "41", "-p", fpath_data3x6_noheader], data3x6ExpectedNoWtV41Probs[1..$]);
-    testTsvSample(["test-b9", "-v", "41", "-f", "3", "-p", fpath_data3x6_noheader], data3x6ExpectedWt3V41Probs[1..$]);
+    testTsvSample(["test-b9", "-v", "41", "-w", "3", "-p", fpath_data3x6_noheader], data3x6ExpectedWt3V41Probs[1..$]);
 
     /* Stream sampling cases. */
     testTsvSample(["test-b10", "-s", "-r", "1.0", fpath_data3x1_noheader], data3x1[1..$]);
@@ -1034,6 +1242,12 @@ unittest
     testTsvSample(["test-b14", "-s", "--rate", "0.60", "-p", fpath_data3x6_noheader], data3x6ExpectedProbsStreamSampleP60[1..$]);
     testTsvSample(["test-b15", "-v", "41", "--rate", "0.60", "-p", fpath_data3x6_noheader], data3x6ExpectedV41ProbsStreamSampleP60[1..$]);
 
+    /* Bucket sampling cases. */
+    testTsvSample(["test-a25", "-s", "-r", "1.0", "-k", "2", fpath_data3x1_noheader], data3x1[1..$]);
+    testTsvSample(["test-a26", "-s", "-r", "1.0", "-k", "2", fpath_data3x6_noheader], data3x6[1..$]);
+    testTsvSample(["test-a27", "-r", "1.0", "-k", "2", fpath_data3x6_noheader], data3x6[1..$]);
+    testTsvSample(["test-a28", "-v", "71563", "-r", "1.0", "-k", "2", fpath_data3x6_noheader], data3x6[1..$]);
+
     /* Multi-file tests. */
     testTsvSample(["test-c1", "--header", "--static-seed",
                    fpath_data3x0, fpath_data3x3, fpath_data3x1, fpath_dataEmpty, fpath_data3x6, fpath_data3x2],
@@ -1041,10 +1255,10 @@ unittest
     testTsvSample(["test-c2", "--header", "--static-seed", "--print-random",
                    fpath_data3x0, fpath_data3x3, fpath_data3x1, fpath_dataEmpty, fpath_data3x6, fpath_data3x2],
                   combo1ExpectedNoWtProbs);
-    testTsvSample(["test-c3", "--header", "--static-seed", "--print-random", "--field", "3",
+    testTsvSample(["test-c3", "--header", "--static-seed", "--print-random", "--weight-field", "3",
                    fpath_data3x0, fpath_data3x3, fpath_data3x1, fpath_dataEmpty, fpath_data3x6, fpath_data3x2],
                   combo1ExpectedWt3Probs);
-    testTsvSample(["test-c4", "--header", "--static-seed", "--field", "3",
+    testTsvSample(["test-c4", "--header", "--static-seed", "--weight-field", "3",
                    fpath_data3x0, fpath_data3x3, fpath_data3x1, fpath_dataEmpty, fpath_data3x6, fpath_data3x2],
                   combo1ExpectedWt3);
 
@@ -1057,11 +1271,11 @@ unittest
                    fpath_data3x3_noheader, fpath_data3x1_noheader, fpath_dataEmpty,
                    fpath_data3x6_noheader, fpath_data3x2_noheader],
                   combo1ExpectedNoWtProbs[1..$]);
-    testTsvSample(["test-c7", "--static-seed", "--print-random", "--field", "3",
+    testTsvSample(["test-c7", "--static-seed", "--print-random", "--weight-field", "3",
                    fpath_data3x3_noheader, fpath_data3x1_noheader, fpath_dataEmpty,
                    fpath_data3x6_noheader, fpath_data3x2_noheader],
                   combo1ExpectedWt3Probs[1..$]);
-    testTsvSample(["test-c8", "--static-seed", "--field", "3",
+    testTsvSample(["test-c8", "--static-seed", "--weight-field", "3",
                    fpath_data3x3_noheader, fpath_data3x1_noheader, fpath_dataEmpty,
                    fpath_data3x6_noheader, fpath_data3x2_noheader],
                   combo1ExpectedWt3[1..$]);
@@ -1082,16 +1296,25 @@ unittest
                    fpath_data3x6_noheader, fpath_data3x2_noheader],
                   combo1ExpectedStreamSampleP40[1..$]);
 
+    /* Bucket sampling cases. */
+    testTsvSample(["test-c13", "--header", "--static-seed", "--key-fields", "1", "--rate", ".4",
+                   fpath_data3x0, fpath_data3x3, fpath_data3x1, fpath_dataEmpty, fpath_data3x6, fpath_data3x2],
+                  combo1ExpectedBucketSampleK1P40);
+    testTsvSample(["test-c14", "--static-seed", "--key-fields", "1", "--rate", ".4",
+                   fpath_data3x3_noheader, fpath_data3x1_noheader, fpath_dataEmpty,
+                   fpath_data3x6_noheader, fpath_data3x2_noheader],
+                  combo1ExpectedBucketSampleK1P40[1..$]);
+
     /* Single column file. */
     testTsvSample(["test-d1", "-H", "-s", fpath_data1x10], data1x10ExpectedNoWt);
     testTsvSample(["test-d1", "-H", "-s", fpath_data1x10], data1x10ExpectedNoWt);
 
     /* Distributions. */
-    testTsvSample(["test-e1", "-H", "-s", "-f", "2", "-p", fpath_data2x10a], data2x10aExpectedWt2Probs);
-    testTsvSample(["test-e1", "-H", "-s", "-f", "2", "-p", fpath_data2x10b], data2x10bExpectedWt2Probs);
-    testTsvSample(["test-e1", "-H", "-s", "-f", "2", "-p", fpath_data2x10c], data2x10cExpectedWt2Probs);
-    testTsvSample(["test-e1", "-H", "-s", "-f", "2", "-p", fpath_data2x10d], data2x10dExpectedWt2Probs);
-    testTsvSample(["test-e1", "-H", "-s", "-f", "2", "-p", fpath_data2x10e], data2x10eExpectedWt2Probs);
+    testTsvSample(["test-e1", "-H", "-s", "-w", "2", "-p", fpath_data2x10a], data2x10aExpectedWt2Probs);
+    testTsvSample(["test-e1", "-H", "-s", "-w", "2", "-p", fpath_data2x10b], data2x10bExpectedWt2Probs);
+    testTsvSample(["test-e1", "-H", "-s", "-w", "2", "-p", fpath_data2x10c], data2x10cExpectedWt2Probs);
+    testTsvSample(["test-e1", "-H", "-s", "-w", "2", "-p", fpath_data2x10d], data2x10dExpectedWt2Probs);
+    testTsvSample(["test-e1", "-H", "-s", "-w", "2", "-p", fpath_data2x10e], data2x10eExpectedWt2Probs);
 
     /* Tests of subset sample (--n|num) field.
      *
@@ -1109,10 +1332,10 @@ unittest
                        "-H", "-p", fpath_data3x6], data3x6ExpectedNoWtProbs[0..expectedLength]);
 
         testTsvSample([format("test-f3_%d", n), "-s", "-n", n.to!string,
-                       "-H", "-f", "3", fpath_data3x6], data3x6ExpectedWt3[0..expectedLength]);
+                       "-H", "-w", "3", fpath_data3x6], data3x6ExpectedWt3[0..expectedLength]);
 
         testTsvSample([format("test-f4_%d", n), "-s", "-n", n.to!string,
-                       "-H", "-p", "-f", "3", fpath_data3x6], data3x6ExpectedWt3Probs[0..expectedLength]);
+                       "-H", "-p", "-w", "3", fpath_data3x6], data3x6ExpectedWt3Probs[0..expectedLength]);
 
         testTsvSample([format("test-f5_%d", n), "-s", "-n", n.to!string,
                        fpath_data3x6_noheader], data3x6ExpectedNoWt[1..expectedLength]);
@@ -1121,10 +1344,10 @@ unittest
                        "-p", fpath_data3x6_noheader], data3x6ExpectedNoWtProbs[1..expectedLength]);
 
         testTsvSample([format("test-f7_%d", n), "-s", "-n", n.to!string,
-                       "-f", "3", fpath_data3x6_noheader], data3x6ExpectedWt3[1..expectedLength]);
+                       "-w", "3", fpath_data3x6_noheader], data3x6ExpectedWt3[1..expectedLength]);
 
         testTsvSample([format("test-f8_%d", n), "-s", "-n", n.to!string,
-                       "-p", "-f", "3", fpath_data3x6_noheader], data3x6ExpectedWt3Probs[1..expectedLength]);
+                       "-p", "-w", "3", fpath_data3x6_noheader], data3x6ExpectedWt3Probs[1..expectedLength]);
 
         import std.algorithm : min;
         size_t sampleExpectedLength = min(expectedLength, data3x6ExpectedProbsStreamSampleP60.length);
@@ -1140,6 +1363,14 @@ unittest
 
         testTsvSample([format("test-f12_%d", n), "-s", "-r", "0.6", "-n", n.to!string,
                        fpath_data3x6_noheader], data3x6ExpectedStreamSampleP60[1..sampleExpectedLength]);
+
+        size_t bucketExpectedLength = min(expectedLength, data3x6ExpectedBucketSampleK1K3P60.length);
+
+        testTsvSample([format("test-f13_%d", n), "-s", "-k", "1,3", "-r", "0.6", "-n", n.to!string,
+                       "-H", fpath_data3x6], data3x6ExpectedBucketSampleK1K3P60[0..bucketExpectedLength]);
+
+        testTsvSample([format("test-f14_%d", n), "-s", "-k", "1,3", "-r", "0.6", "-n", n.to!string,
+                       fpath_data3x6_noheader], data3x6ExpectedBucketSampleK1K3P60[1..bucketExpectedLength]);
     }
 
     /* Similar tests with the 1x10 data set. */
@@ -1150,12 +1381,31 @@ unittest
                        "-H", fpath_data1x10], data1x10ExpectedNoWt[0..expectedLength]);
 
         testTsvSample([format("test-g2_%d", n), "-s", "-n", n.to!string,
-                       "-H", "-f", "1", fpath_data1x10], data1x10ExpectedWt1[0..expectedLength]);
+                       "-H", "-w", "1", fpath_data1x10], data1x10ExpectedWt1[0..expectedLength]);
 
         testTsvSample([format("test-g3_%d", n), "-s", "-n", n.to!string,
                        fpath_data1x10_noheader], data1x10ExpectedNoWt[1..expectedLength]);
 
         testTsvSample([format("test-g4_%d", n), "-s", "-n", n.to!string,
-                       "-f", "1", fpath_data1x10_noheader], data1x10ExpectedWt1[1..expectedLength]);
+                       "-w", "1", fpath_data1x10_noheader], data1x10ExpectedWt1[1..expectedLength]);
     }
+
+    /* Bucket sampling tests. */
+    testTsvSample(["h1", "--header", "--static-seed", "--rate", "0.40", "--key-fields", "2", fpath_data5x25],
+                  data5x25ExpectedBucketSampleK2P40);
+
+    testTsvSample(["h2", "-H", "-s", "-r", "0.20", "-k", "2,4", fpath_data5x25],
+                  data5x25ExpectedBucketSampleK2K4P20);
+
+    testTsvSample(["h3", "-H", "-s", "-r", "0.20", "-k", "2-4", fpath_data5x25],
+                  data5x25ExpectedBucketSampleK2K3K4P20);
+
+    testTsvSample(["h4", "--static-seed", "--rate", "0.40", "--key-fields", "2", fpath_data5x25_noheader],
+                  data5x25ExpectedBucketSampleK2P40[1..$]);
+
+    testTsvSample(["h5", "-s", "-r", "0.20", "-k", "2,4", fpath_data5x25_noheader],
+                  data5x25ExpectedBucketSampleK2K4P20[1..$]);
+
+    testTsvSample(["h6", "-s", "-r", "0.20", "-k", "2-4", fpath_data5x25_noheader],
+                  data5x25ExpectedBucketSampleK2K3K4P20[1..$]);
 }
