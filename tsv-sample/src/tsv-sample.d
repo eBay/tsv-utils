@@ -89,7 +89,7 @@ Samples or randomizes input lines. There are several modes of operation:
 * Randomization (Default): Input lines are output in random order.
 * Stream sampling (--r|rate): Input lines are sampled based on a sampling
   rate. The order of the input is unchanged.
-* Bucket sampling (--r|rate, --k|key-fields): Sampling is based on the
+* Bucket sampling (--k|key-fields, --r|rate): Sampling is based on the
   values in the key field. A portion of the key are chosen based on the
   sampling rate. All lines with one of the selected keys are output.
   Input order is unchanged.
