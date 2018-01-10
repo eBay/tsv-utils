@@ -45,9 +45,19 @@ runtest ${prog} "-H -s -p --field 3 input3x10.tsv input3x25.tsv" ${basic_tests_1
 runtest ${prog} "-H -s -p -f 3 --num 15 input3x10.tsv input3x25.tsv" ${basic_tests_1}
 runtest ${prog} "-H -s -p -n 15 input3x10.tsv input3x25.tsv" ${basic_tests_1}
 runtest ${prog} "-H -s -n 100 input3x10.tsv input3x25.tsv" ${basic_tests_1}
+# Stream sampling
 runtest ${prog} "-H -s --rate 1.0 --print-random input3x10.tsv input3x25.tsv" ${basic_tests_1}
 runtest ${prog} "-H -s -r 0.25 input3x10.tsv input3x25.tsv" ${basic_tests_1}
 runtest ${prog} "-H -s -r 0.75 -n 5 input3x10.tsv input3x25.tsv" ${basic_tests_1}
+runtest ${prog} "-H -s -r .25 --key-fields 1 input4x50.tsv input4x15.tsv" ${basic_tests_1}
+# Bucket Sampling
+runtest ${prog} "-H -s --rate .25 -k 3,1 input4x50.tsv input4x15.tsv" ${basic_tests_1}
+runtest ${prog} "-H -s -r .25 -k 1,3 input4x50.tsv input4x15.tsv" ${basic_tests_1}
+runtest ${prog} "-H -s -r .25 -k 1,1 input4x50.tsv input4x15.tsv" ${basic_tests_1}
+runtest ${prog} "-H -s -r .25 -k 1 -n 5 input4x50.tsv input4x15.tsv" ${basic_tests_1}
+runtest ${prog} "-s -r .25 -k 1,3 input4x50.tsv input4x15.tsv" ${basic_tests_1}
+runtest ${prog} "-s -r .25 -k 3,1 input4x50.tsv input4x15.tsv" ${basic_tests_1}
+runtest ${prog} "-s -r 1 -k 3,1 input4x50.tsv input4x15.tsv" ${basic_tests_1}
 
 runtest ${prog} "--static-seed input2x10_noheader.tsv input2x5_noheader.tsv" ${basic_tests_1}
 runtest ${prog} "-s --print-random input2x10_noheader.tsv input2x5_noheader.tsv" ${basic_tests_1}
@@ -120,3 +130,9 @@ runtest ${prog} "-f 1 input2x5_noheader_dos.tsv" ${error_tests_1}
 runtest ${prog} "--rate 0.5 --field 3 input3x25.tsv" ${error_tests_1}
 runtest ${prog} "--rate 0 input3x25.tsv" ${error_tests_1}
 runtest ${prog} "--rate 1.00001 input3x25.tsv" ${error_tests_1}
+runtest ${prog} "-r .1 -k 0 input4x50.tsv input4x15.tsv" ${error_tests_1}
+runtest ${prog} "-r .1 -k -1 input4x50.tsv input4x15.tsv" ${error_tests_1}
+runtest ${prog} "-r 0 -k 1 input4x50.tsv input4x15.tsv" ${error_tests_1}
+runtest ${prog} "-r -0.5 -k 1 input4x50.tsv input4x15.tsv" ${error_tests_1}
+runtest ${prog} "-r -v 10 -k 1 input4x50.tsv input4x15.tsv" ${error_tests_1}
+runtest ${prog} "-r 0.5 -v -10 -k 1 input4x50.tsv input4x15.tsv" ${error_tests_1}

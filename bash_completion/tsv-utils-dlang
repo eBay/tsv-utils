@@ -179,7 +179,7 @@ _tsv_sample()
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
-    opts="--help --help-verbose --version --header --num --field --print-random --static-seed --seed-value --delimiter"
+    opts="--help --help-verbose --version --header --rate --num --field --key-fields --print-random --static-seed --seed-value --delimiter"
 
     case $prev in
          -h|--help|--help-verbose|-V|--version|-n|--num|-f|--field|-v|--seed-value|-d|--delimiter)

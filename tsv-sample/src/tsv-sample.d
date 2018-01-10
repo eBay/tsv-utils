@@ -96,7 +96,7 @@ Samples or randomizes input lines. There are several modes of operation:
 * Weighted sampling (--f|field): Input lines are selected using weighted
   random sampling, with the weight taken from a field. Input lines are
   output in the order selected, reordering the lines. See 'Weighted
-  sampling and field weights' below for info on field weights.
+  sampling' below for info on field weights.
 
 Sample size: The '--n|num' option limits the sample sized produced. This
 speeds up randomization and weighted sampling significantly (details below).
@@ -122,14 +122,15 @@ significantly using a sample size. Both 'tsv-sample -n 1000' and
 'tsv-sample | head -n 1000' produce the same results, but the former is
 quite a bit faster.
 
-Weighted sampling and field weights: Weighted random sampling is done
-using an algorithm described by Efraimidis and Spirakis. Weights should
-be positive values representing the relative weight of the entry in the
-collection. Negative values are not meaningful and given the value zero.
-However, any positive real values can be used. Lines are output ordered
-by the randomized weight that was assigned. This means, for example, that
-a smaller sample can be produced by taking the first N lines of output.
-For more info on the sampling approach see:
+Weighted sampling: Weighted random sampling is done using an algorithm
+described by Efraimidis and Spirakis. Weights should be positive values
+representing the relative weight of the entry in the collection. Counts
+and similar can be used as weights, it is *not* necessary to normalize to
+a [0,1] interval. Negative values are not meaningful and given the value
+zero. Input order is not retained, instead lines are output ordered by
+the randomized weight that was assigned. This means that a smaller valid
+sample can be produced by taking the first N lines of output. For more
+info on the sampling approach see:
 * Wikipedia: https://en.wikipedia.org/wiki/Reservoir_sampling
 * "Weighted Random Sampling over Data Streams", Pavlos S. Efraimidis
   (https://arxiv.org/abs/1012.0256)
@@ -149,12 +150,13 @@ struct TsvSampleOptions
     bool hasHeader = false;          // --H|header
     bool printRandom = false;        // --p|print-random
     bool staticSeed = false;         // --s|static-seed
-    uint seedValue = 0;              // --v|seed-value
+    uint seedValueOptionArg = 0;     // --v|seed-value
     char delim = '\t';               // --d|delimiter
     bool versionWanted = false;      // --V|version
     bool hasWeightField = false;     // Derived.
     bool useStreamSampling = false;  // Derived.
     bool useBucketSampling = false;  // Derived.
+    uint seed = 0;                   // Derived from --static-seed, --seed-value
 
     auto processArgs(ref string[] cmdArgs)
     {
@@ -186,7 +188,7 @@ struct TsvSampleOptions
                 "s|static-seed",   "     Use the same random seed every run.", &staticSeed,
 
                 std.getopt.config.caseSensitive,
-                "v|seed-value",    "NUM  Sets the initial random seed. Use a non-zero, 32 bit positive integer. Zero is a no-op.", &seedValue,
+                "v|seed-value",    "NUM  Sets the initial random seed. Use a non-zero, 32 bit positive integer. Zero is a no-op.", &seedValueOptionArg,
                 std.getopt.config.caseInsensitive,
 
                 "d|delimiter",     "CHR  Field delimiter.", &delim,
@@ -241,6 +243,12 @@ struct TsvSampleOptions
                 else useStreamSampling = true;
             }
 
+            /* Seed. */
+            import std.random : unpredictableSeed;
+            seed = (seedValueOptionArg != 0) ? seedValueOptionArg
+                : staticSeed ? 2438424139
+                : unpredictableSeed;
+
             /* Assume remaining args are files. Use standard input if files were not provided. */
             files ~= (cmdArgs.length > 1) ? cmdArgs[1..$] : ["-"];
             cmdArgs.length = 1;
@@ -265,15 +273,10 @@ struct TsvSampleOptions
 void streamSampling(OutputRange)(TsvSampleOptions cmdopt, OutputRange outputStream)
     if (isOutputRange!(OutputRange, char))
 {
-    import std.random : Random, unpredictableSeed, uniform01;
+    import std.random : Random, uniform01;
     import tsvutil : throwIfWindowsNewlineOnUnix;
 
-    uint seed =
-        (cmdopt.seedValue != 0) ? cmdopt.seedValue
-        : cmdopt.staticSeed ? 2438424139
-        : unpredictableSeed;
-
-    auto randomGenerator = Random(seed);
+    auto randomGenerator = Random(cmdopt.seed);
 
     /* Process each line. */
     bool headerWritten = false;
@@ -334,16 +337,10 @@ void bucketSampling(OutputRange)(TsvSampleOptions cmdopt, OutputRange outputStre
     import std.conv : to;
     import std.digest.murmurhash;
     import std.math : lrint;
-    import std.random : unpredictableSeed;
     import tsvutil : InputFieldReordering, throwIfWindowsNewlineOnUnix;
 
     assert(cmdopt.keyFields.length > 0);
     assert(0.0 < cmdopt.sampleRate && cmdopt.sampleRate <= 1.0);
-
-    uint seed =
-        (cmdopt.seedValue != 0) ? cmdopt.seedValue
-        : cmdopt.staticSeed ? 2438424139
-        : unpredictableSeed;
 
     immutable ubyte[1] delimArray = [cmdopt.delim]; // For assembling multi-field hash keys.
 
@@ -388,7 +385,7 @@ void bucketSampling(OutputRange)(TsvSampleOptions cmdopt, OutputRange outputStre
                                (filename == "-") ? "Standard Input" : filename, fileLineNum));
                 }
 
-                auto hasher = MurmurHash3!32(seed);
+                auto hasher = MurmurHash3!32(cmdopt.seed);
                 foreach (count, key; keyFieldsReordering.outputFields.enumerate)
                 {
                     if (count > 0) hasher.put(delimArray);
@@ -430,7 +427,7 @@ void reservoirSampling(Flag!"permuteAll" permuteAll, OutputRange)
     (TsvSampleOptions cmdopt, OutputRange outputStream)
     if (isOutputRange!(OutputRange, char))
 {
-    import std.random : Random, unpredictableSeed, uniform01;
+    import std.random : Random, uniform01;
     import std.container.binaryheap;
     import tsvutil : throwIfWindowsNewlineOnUnix;
 
@@ -438,12 +435,7 @@ void reservoirSampling(Flag!"permuteAll" permuteAll, OutputRange)
     static if (permuteAll) assert(cmdopt.sampleSize == 0);
     else assert(cmdopt.sampleSize > 0);
 
-    uint seed =
-        (cmdopt.seedValue != 0) ? cmdopt.seedValue
-        : cmdopt.staticSeed ? 2438424139
-        : unpredictableSeed;
-
-    auto randomGenerator = Random(seed);
+    auto randomGenerator = Random(cmdopt.seed);
 
     struct Entry
     {

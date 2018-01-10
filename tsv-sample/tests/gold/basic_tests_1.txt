@@ -247,6 +247,194 @@ line	title	weight
 5	Pinocchion seikkailut	19
 7	Oude Egyptische Legenden	28
 
+====[tsv-sample -H -s -r .25 --key-fields 1 input4x50.tsv input4x15.tsv]====
+c-1	c-2	c-3	c-4
+púrpura	2088	Macuco	1
+blutrot	2142	Tüpfelsumpfhuhn	1
+blutrot	2118	Tüpfelsumpfhuhn	4
+Cerise	2076	Malvasía Cabeciblanca	4
+café	2088	Purpurreiher	2
+púrpura	2070	Macreuse à bec jaune	2
+blutrot	2121	Воробей	4
+púrpura	2092	Macreuse à bec jaune	4
+blutrot	2117	Tüpfelsumpfhuhn	0
+púrpura	2093	Macreuse à bec jaune	4
+café	2062	Purpurreiher	4
+Cerise	2119	Malvasía Cabeciblanca	4
+café	2100	Purpurreiher	2
+blutrot	2143	Tüpfelsumpfhuhn	4
+púrpura	2119	Macuco	4
+púrpura	2145	Macreuse à bec jaune	2
+blutrot	2149	Tüpfelsumpfhuhn	1
+blutrot	2120	Tüpfelsumpfhuhn	1
+café	2041	Purpurreiher	4
+café	2019	Marreca-cabocla	1
+blutrot	2093	Araqua-pintado	2
+blutrot	2137	Marreca-cabocla	1
+
+====[tsv-sample -H -s --rate .25 -k 3,1 input4x50.tsv input4x15.tsv]====
+c-1	c-2	c-3	c-4
+púrpura	2088	Macuco	1
+schneeweiß	2117	Porrón Islándico	4
+café	2088	Purpurreiher	2
+Orange-red	2089	Purpurreiher	1
+púrpura	2070	Macreuse à bec jaune	2
+púrpura	2092	Macreuse à bec jaune	4
+púrpura	2093	Macreuse à bec jaune	4
+schneeweiß	2121	Porrón Islándico	1
+café	2062	Purpurreiher	4
+café	2100	Purpurreiher	2
+красный	2049	Weißwangengans	3
+púrpura	2119	Macuco	4
+púrpura	2145	Macreuse à bec jaune	2
+café	2041	Purpurreiher	4
+café	2019	Marreca-cabocla	1
+blutrot	2093	Araqua-pintado	2
+jaune	2104	Tüpfelsumpfhuhn	1
+
+====[tsv-sample -H -s -r .25 -k 1,3 input4x50.tsv input4x15.tsv]====
+c-1	c-2	c-3	c-4
+púrpura	2088	Macuco	1
+blutrot	2142	Tüpfelsumpfhuhn	1
+Indigo	2056	Голубь	1
+Indigo	2141	Голубь	1
+blutrot	2118	Tüpfelsumpfhuhn	4
+Cerise	2076	Malvasía Cabeciblanca	4
+blutrot	2117	Tüpfelsumpfhuhn	0
+Cerise	2119	Malvasía Cabeciblanca	4
+blutrot	2143	Tüpfelsumpfhuhn	4
+púrpura	2119	Macuco	4
+blutrot	2149	Tüpfelsumpfhuhn	1
+blutrot	2120	Tüpfelsumpfhuhn	1
+Indigo	2138	Голубь	4
+jaune	2090	Weißwangengans	4
+marrón	2121	Marreca-cabocla	2
+
+====[tsv-sample -H -s -r .25 -k 1,1 input4x50.tsv input4x15.tsv]====
+c-1	c-2	c-3	c-4
+Indigo	2056	Голубь	1
+Indigo	2141	Голубь	1
+暗紅色/暗赤色	2015	Malvasía Cabeciblanca	2
+marrón	2102	Weißwangengans	1
+dorado	2045	Лебедь	2
+Indigo	2138	Голубь	4
+marrón	2034	Weißwangengans	1
+ébène	2142	Орёл	2
+marrón	2121	Marreca-cabocla	2
+dorado	2147	Tüpfelsumpfhuhn	1
+
+====[tsv-sample -H -s -r .25 -k 1 -n 5 input4x50.tsv input4x15.tsv]====
+c-1	c-2	c-3	c-4
+púrpura	2088	Macuco	1
+blutrot	2142	Tüpfelsumpfhuhn	1
+blutrot	2118	Tüpfelsumpfhuhn	4
+Cerise	2076	Malvasía Cabeciblanca	4
+café	2088	Purpurreiher	2
+
+====[tsv-sample -s -r .25 -k 1,3 input4x50.tsv input4x15.tsv]====
+púrpura	2088	Macuco	1
+blutrot	2142	Tüpfelsumpfhuhn	1
+Indigo	2056	Голубь	1
+Indigo	2141	Голубь	1
+blutrot	2118	Tüpfelsumpfhuhn	4
+Cerise	2076	Malvasía Cabeciblanca	4
+blutrot	2117	Tüpfelsumpfhuhn	0
+Cerise	2119	Malvasía Cabeciblanca	4
+blutrot	2143	Tüpfelsumpfhuhn	4
+púrpura	2119	Macuco	4
+blutrot	2149	Tüpfelsumpfhuhn	1
+blutrot	2120	Tüpfelsumpfhuhn	1
+Indigo	2138	Голубь	4
+jaune	2090	Weißwangengans	4
+marrón	2121	Marreca-cabocla	2
+
+====[tsv-sample -s -r .25 -k 3,1 input4x50.tsv input4x15.tsv]====
+púrpura	2088	Macuco	1
+schneeweiß	2117	Porrón Islándico	4
+café	2088	Purpurreiher	2
+Orange-red	2089	Purpurreiher	1
+púrpura	2070	Macreuse à bec jaune	2
+púrpura	2092	Macreuse à bec jaune	4
+púrpura	2093	Macreuse à bec jaune	4
+schneeweiß	2121	Porrón Islándico	1
+café	2062	Purpurreiher	4
+café	2100	Purpurreiher	2
+красный	2049	Weißwangengans	3
+púrpura	2119	Macuco	4
+púrpura	2145	Macreuse à bec jaune	2
+café	2041	Purpurreiher	4
+café	2019	Marreca-cabocla	1
+blutrot	2093	Araqua-pintado	2
+jaune	2104	Tüpfelsumpfhuhn	1
+
+====[tsv-sample -s -r 1 -k 3,1 input4x50.tsv input4x15.tsv]====
+c-1	c-2	c-3	c-4
+púrpura	2088	Macuco	1
+blutrot	2142	Tüpfelsumpfhuhn	1
+Indigo	2056	Голубь	1
+Indigo	2141	Голубь	1
+blutrot	2118	Tüpfelsumpfhuhn	4
+Cerise	2076	Malvasía Cabeciblanca	4
+schneeweiß	2117	Porrón Islándico	4
+café	2088	Purpurreiher	2
+Orange-red	2089	Purpurreiher	1
+暗紅色/暗赤色	2015	Malvasía Cabeciblanca	2
+rouge	2132	Löffelente	4
+zitronengelb	2136	Macreuse à bec jaune	3
+Grünspan	2145	Pipit de Godlewski	4
+zitronengelb	2083	Macreuse à bec jaune	4
+púrpura	2070	Macreuse à bec jaune	2
+blutrot	2121	Воробей	4
+marrón	2102	Weißwangengans	1
+púrpura	2092	Macreuse à bec jaune	4
+rouge	2146	Löffelente	1
+blutrot	2117	Tüpfelsumpfhuhn	0
+púrpura	2093	Macreuse à bec jaune	4
+schneeweiß	2121	Porrón Islándico	1
+dorado	2045	Лебедь	2
+café	2062	Purpurreiher	4
+Cerise	2119	Malvasía Cabeciblanca	4
+noir	2082	Weißwangengans	1
+noir	2094	Weißwangengans	4
+blanc	2137	Голубь	2
+café	2100	Purpurreiher	2
+rouge	2135	Marreca-cabocla	1
+красный	2049	Weißwangengans	3
+noir	2115	Weißwangengans	2
+blanc	2109	Голубь	3
+blutrot	2143	Tüpfelsumpfhuhn	4
+púrpura	2119	Macuco	4
+púrpura	2145	Macreuse à bec jaune	2
+Grünspan	2082	Pipit de Godlewski	2
+blutrot	2149	Tüpfelsumpfhuhn	1
+blutrot	2120	Tüpfelsumpfhuhn	1
+café	2041	Purpurreiher	4
+Indigo	2138	Голубь	4
+café	2019	Marreca-cabocla	1
+Grünspan	2053	Pipit de Godlewski	4
+blanc	2038	Голубь	0
+Grünspan	2071	Pipit de Godlewski	3
+rouge	2037	Marreca-cabocla	0
+fumée	2113	Araqua-pintado	0
+marrón	2034	Weißwangengans	1
+fumée	2124	Araqua-pintado	0
+c-1	c-2	c-3	c-4
+pechschwarz	2079	Araqua-pintado	1
+Grünspan	2105	Macuco	0
+ébène	2142	Орёл	2
+blutrot	2093	Araqua-pintado	2
+fumée	2129	Löffelente	0
+jaune	2090	Weißwangengans	4
+türkis	2097	Голубь	2
+Grünspan	2100	Purpurreiher	1
+rouge	2058	Pipit de Godlewski	4
+marrón	2121	Marreca-cabocla	2
+blutrot	2137	Marreca-cabocla	1
+jaune	2058	Purpurreiher	2
+jaune	2104	Tüpfelsumpfhuhn	1
+dorado	2147	Tüpfelsumpfhuhn	1
+jaune	2097	Purpurreiher	4
+
 ====[tsv-sample --static-seed input2x10_noheader.tsv input2x5_noheader.tsv]====
 0.20987466	殘唐五代史演義傳
 0.67881307	Burning Daylight
