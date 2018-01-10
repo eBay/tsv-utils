@@ -66,13 +66,13 @@ Samples or randomizes input lines. There are several modes of operation:
 * Randomization (Default): Input lines are output in random order.
 * Stream sampling (--r|rate): Input lines are sampled based on a sampling
   rate. The order of the input is unchanged.
-* Bucket sampling (--r|rate, --k|key-fields): Sampling is based on the
+* Bucket sampling (--k|key-fields, --r|rate): Sampling is based on the
   values in the key field. A portion of the key are chosen based on the
   sampling rate. All lines with one of the selected keys are output.
   Input order is unchanged.
-* Weighted sampling (--f|field): Input lines are selected using weighted
-  random sampling, with the weight taken from a field. Input lines are
-  output in the order selected, reordering the lines.
+* Weighted sampling (--w|weight-field): Input lines are selected using
+  weighted random sampling, with the weight taken from a field. Input
+  lines are output in the order selected, reordering the lines.
 
 The '--n|num' option limits the sample sized produced. It speeds up the
 randomization and weighted sampling cases significantly.
@@ -93,10 +93,10 @@ Samples or randomizes input lines. There are several modes of operation:
   values in the key field. A portion of the key are chosen based on the
   sampling rate. All lines with one of the selected keys are output.
   Input order is unchanged.
-* Weighted sampling (--f|field): Input lines are selected using weighted
-  random sampling, with the weight taken from a field. Input lines are
-  output in the order selected, reordering the lines. See 'Weighted
-  sampling' below for info on field weights.
+* Weighted sampling (--w|weight-field): Input lines are selected using
+  weighted random sampling, with the weight taken from a field. Input
+  lines are output in the order selected, reordering the lines. See
+  'Weighted sampling' below for info on field weights.
 
 Sample size: The '--n|num' option limits the sample sized produced. This
 speeds up randomization and weighted sampling significantly (details below).
@@ -145,7 +145,7 @@ struct TsvSampleOptions
     bool helpVerbose = false;        // --help-verbose
     double sampleRate = double.nan;  // --r|rate - Sampling rate
     size_t sampleSize = 0;           // --n|num - Size of the desired sample
-    size_t weightField = 0;          // --f|field - Field holding the weight
+    size_t weightField = 0;          // --w|weight-field - Field holding the weight
     size_t[] keyFields;              // --k|key-fields - Used with sampling rate
     bool hasHeader = false;          // --H|header
     bool printRandom = false;        // --p|print-random
@@ -179,7 +179,7 @@ struct TsvSampleOptions
                 std.getopt.config.caseInsensitive,
                 "r|rate",          "NUM  Sampling rating (0.0 < NUM <= 1.0). This sampling mode outputs a random fraction of lines, in the input order.", &sampleRate,
                 "n|num",           "NUM  Number of lines to output. All lines are output if not provided or zero.", &sampleSize,
-                "f|field",         "NUM  Field containing weights. All lines get equal weight if not provided or zero.", &weightField,
+                "w|weight-field",         "NUM  Field containing weights. All lines get equal weight if not provided or zero.", &weightField,
 
                 "k|key-fields",    "<field-list>  Fields to use as key for bucket sampling. Use with --r|rate.",
                 keyFields.makeFieldListOptionHandler!(size_t, Yes.convertToZeroBasedIndex),
@@ -237,7 +237,7 @@ struct TsvSampleOptions
                         format("Invalid --r|rate option: %g. Must satisfy 0.0 < rate <= 1.0.", sampleRate));
                 }
 
-                if (hasWeightField) throw new Exception("--f|field and --r|rate cannot be used together.");
+                if (hasWeightField) throw new Exception("--w|weight-field and --r|rate cannot be used together.");
 
                 if (keyFields.length > 0) useBucketSampling = true;
                 else useStreamSampling = true;
@@ -1199,12 +1199,12 @@ unittest
     testTsvSample(["test-a5", "-H", "-s", fpath_data3x3], data3x3ExpectedNoWt);
     testTsvSample(["test-a6", "-H", "-s", fpath_data3x6], data3x6ExpectedNoWt);
     testTsvSample(["test-a7", "-H", "-s", "--print-random", fpath_data3x6], data3x6ExpectedNoWtProbs);
-    testTsvSample(["test-a8", "-H", "-s", "--field", "3", fpath_data3x6], data3x6ExpectedWt3);
-    testTsvSample(["test-a9", "-H", "-s", "-p", "-f", "3", fpath_data3x6], data3x6ExpectedWt3Probs);
+    testTsvSample(["test-a8", "-H", "-s", "--weight-field", "3", fpath_data3x6], data3x6ExpectedWt3);
+    testTsvSample(["test-a9", "-H", "-s", "-p", "-w", "3", fpath_data3x6], data3x6ExpectedWt3Probs);
     testTsvSample(["test-a10", "-H", "--seed-value", "41", "-p", fpath_data3x6], data3x6ExpectedNoWtV41Probs);
     testTsvSample(["test-a11", "-H", "-s", "-v", "41", "-p", fpath_data3x6], data3x6ExpectedNoWtV41Probs);
     testTsvSample(["test-a12", "-H", "-s", "-v", "0", "-p", fpath_data3x6], data3x6ExpectedNoWtProbs);
-    testTsvSample(["test-a13", "-H", "-v", "41", "-f", "3", "-p", fpath_data3x6], data3x6ExpectedWt3V41Probs);
+    testTsvSample(["test-a13", "-H", "-v", "41", "-w", "3", "-p", fpath_data3x6], data3x6ExpectedWt3V41Probs);
 
     /* Stream sampling cases. */
     testTsvSample(["test-a14", "--header", "--static-seed", "--rate", "0.001", fpath_dataEmpty], dataEmpty);
@@ -1229,10 +1229,10 @@ unittest
     testTsvSample(["test-b3", "-s", fpath_data3x3_noheader], data3x3ExpectedNoWt[1..$]);
     testTsvSample(["test-b4", "-s", fpath_data3x6_noheader], data3x6ExpectedNoWt[1..$]);
     testTsvSample(["test-b5", "-s", "--print-random", fpath_data3x6_noheader], data3x6ExpectedNoWtProbs[1..$]);
-    testTsvSample(["test-b6", "-s", "--field", "3", fpath_data3x6_noheader], data3x6ExpectedWt3[1..$]);
-    testTsvSample(["test-b7", "-s", "-p", "-f", "3", fpath_data3x6_noheader], data3x6ExpectedWt3Probs[1..$]);
+    testTsvSample(["test-b6", "-s", "--weight-field", "3", fpath_data3x6_noheader], data3x6ExpectedWt3[1..$]);
+    testTsvSample(["test-b7", "-s", "-p", "-w", "3", fpath_data3x6_noheader], data3x6ExpectedWt3Probs[1..$]);
     testTsvSample(["test-b8", "-v", "41", "-p", fpath_data3x6_noheader], data3x6ExpectedNoWtV41Probs[1..$]);
-    testTsvSample(["test-b9", "-v", "41", "-f", "3", "-p", fpath_data3x6_noheader], data3x6ExpectedWt3V41Probs[1..$]);
+    testTsvSample(["test-b9", "-v", "41", "-w", "3", "-p", fpath_data3x6_noheader], data3x6ExpectedWt3V41Probs[1..$]);
 
     /* Stream sampling cases. */
     testTsvSample(["test-b10", "-s", "-r", "1.0", fpath_data3x1_noheader], data3x1[1..$]);
@@ -1255,10 +1255,10 @@ unittest
     testTsvSample(["test-c2", "--header", "--static-seed", "--print-random",
                    fpath_data3x0, fpath_data3x3, fpath_data3x1, fpath_dataEmpty, fpath_data3x6, fpath_data3x2],
                   combo1ExpectedNoWtProbs);
-    testTsvSample(["test-c3", "--header", "--static-seed", "--print-random", "--field", "3",
+    testTsvSample(["test-c3", "--header", "--static-seed", "--print-random", "--weight-field", "3",
                    fpath_data3x0, fpath_data3x3, fpath_data3x1, fpath_dataEmpty, fpath_data3x6, fpath_data3x2],
                   combo1ExpectedWt3Probs);
-    testTsvSample(["test-c4", "--header", "--static-seed", "--field", "3",
+    testTsvSample(["test-c4", "--header", "--static-seed", "--weight-field", "3",
                    fpath_data3x0, fpath_data3x3, fpath_data3x1, fpath_dataEmpty, fpath_data3x6, fpath_data3x2],
                   combo1ExpectedWt3);
 
@@ -1271,11 +1271,11 @@ unittest
                    fpath_data3x3_noheader, fpath_data3x1_noheader, fpath_dataEmpty,
                    fpath_data3x6_noheader, fpath_data3x2_noheader],
                   combo1ExpectedNoWtProbs[1..$]);
-    testTsvSample(["test-c7", "--static-seed", "--print-random", "--field", "3",
+    testTsvSample(["test-c7", "--static-seed", "--print-random", "--weight-field", "3",
                    fpath_data3x3_noheader, fpath_data3x1_noheader, fpath_dataEmpty,
                    fpath_data3x6_noheader, fpath_data3x2_noheader],
                   combo1ExpectedWt3Probs[1..$]);
-    testTsvSample(["test-c8", "--static-seed", "--field", "3",
+    testTsvSample(["test-c8", "--static-seed", "--weight-field", "3",
                    fpath_data3x3_noheader, fpath_data3x1_noheader, fpath_dataEmpty,
                    fpath_data3x6_noheader, fpath_data3x2_noheader],
                   combo1ExpectedWt3[1..$]);
@@ -1310,11 +1310,11 @@ unittest
     testTsvSample(["test-d1", "-H", "-s", fpath_data1x10], data1x10ExpectedNoWt);
 
     /* Distributions. */
-    testTsvSample(["test-e1", "-H", "-s", "-f", "2", "-p", fpath_data2x10a], data2x10aExpectedWt2Probs);
-    testTsvSample(["test-e1", "-H", "-s", "-f", "2", "-p", fpath_data2x10b], data2x10bExpectedWt2Probs);
-    testTsvSample(["test-e1", "-H", "-s", "-f", "2", "-p", fpath_data2x10c], data2x10cExpectedWt2Probs);
-    testTsvSample(["test-e1", "-H", "-s", "-f", "2", "-p", fpath_data2x10d], data2x10dExpectedWt2Probs);
-    testTsvSample(["test-e1", "-H", "-s", "-f", "2", "-p", fpath_data2x10e], data2x10eExpectedWt2Probs);
+    testTsvSample(["test-e1", "-H", "-s", "-w", "2", "-p", fpath_data2x10a], data2x10aExpectedWt2Probs);
+    testTsvSample(["test-e1", "-H", "-s", "-w", "2", "-p", fpath_data2x10b], data2x10bExpectedWt2Probs);
+    testTsvSample(["test-e1", "-H", "-s", "-w", "2", "-p", fpath_data2x10c], data2x10cExpectedWt2Probs);
+    testTsvSample(["test-e1", "-H", "-s", "-w", "2", "-p", fpath_data2x10d], data2x10dExpectedWt2Probs);
+    testTsvSample(["test-e1", "-H", "-s", "-w", "2", "-p", fpath_data2x10e], data2x10eExpectedWt2Probs);
 
     /* Tests of subset sample (--n|num) field.
      *
@@ -1332,10 +1332,10 @@ unittest
                        "-H", "-p", fpath_data3x6], data3x6ExpectedNoWtProbs[0..expectedLength]);
 
         testTsvSample([format("test-f3_%d", n), "-s", "-n", n.to!string,
-                       "-H", "-f", "3", fpath_data3x6], data3x6ExpectedWt3[0..expectedLength]);
+                       "-H", "-w", "3", fpath_data3x6], data3x6ExpectedWt3[0..expectedLength]);
 
         testTsvSample([format("test-f4_%d", n), "-s", "-n", n.to!string,
-                       "-H", "-p", "-f", "3", fpath_data3x6], data3x6ExpectedWt3Probs[0..expectedLength]);
+                       "-H", "-p", "-w", "3", fpath_data3x6], data3x6ExpectedWt3Probs[0..expectedLength]);
 
         testTsvSample([format("test-f5_%d", n), "-s", "-n", n.to!string,
                        fpath_data3x6_noheader], data3x6ExpectedNoWt[1..expectedLength]);
@@ -1344,10 +1344,10 @@ unittest
                        "-p", fpath_data3x6_noheader], data3x6ExpectedNoWtProbs[1..expectedLength]);
 
         testTsvSample([format("test-f7_%d", n), "-s", "-n", n.to!string,
-                       "-f", "3", fpath_data3x6_noheader], data3x6ExpectedWt3[1..expectedLength]);
+                       "-w", "3", fpath_data3x6_noheader], data3x6ExpectedWt3[1..expectedLength]);
 
         testTsvSample([format("test-f8_%d", n), "-s", "-n", n.to!string,
-                       "-p", "-f", "3", fpath_data3x6_noheader], data3x6ExpectedWt3Probs[1..expectedLength]);
+                       "-p", "-w", "3", fpath_data3x6_noheader], data3x6ExpectedWt3Probs[1..expectedLength]);
 
         import std.algorithm : min;
         size_t sampleExpectedLength = min(expectedLength, data3x6ExpectedProbsStreamSampleP60.length);
@@ -1381,13 +1381,13 @@ unittest
                        "-H", fpath_data1x10], data1x10ExpectedNoWt[0..expectedLength]);
 
         testTsvSample([format("test-g2_%d", n), "-s", "-n", n.to!string,
-                       "-H", "-f", "1", fpath_data1x10], data1x10ExpectedWt1[0..expectedLength]);
+                       "-H", "-w", "1", fpath_data1x10], data1x10ExpectedWt1[0..expectedLength]);
 
         testTsvSample([format("test-g3_%d", n), "-s", "-n", n.to!string,
                        fpath_data1x10_noheader], data1x10ExpectedNoWt[1..expectedLength]);
 
         testTsvSample([format("test-g4_%d", n), "-s", "-n", n.to!string,
-                       "-f", "1", fpath_data1x10_noheader], data1x10ExpectedWt1[1..expectedLength]);
+                       "-w", "1", fpath_data1x10_noheader], data1x10ExpectedWt1[1..expectedLength]);
     }
 
     /* Bucket sampling tests. */

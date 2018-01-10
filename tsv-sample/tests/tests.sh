@@ -41,8 +41,8 @@ echo "-----------------" >> ${basic_tests_1}
 
 runtest ${prog} "--header --static-seed input3x10.tsv input3x25.tsv" ${basic_tests_1}
 runtest ${prog} "-H -s --print-random input3x10.tsv input3x25.tsv" ${basic_tests_1}
-runtest ${prog} "-H -s -p --field 3 input3x10.tsv input3x25.tsv" ${basic_tests_1}
-runtest ${prog} "-H -s -p -f 3 --num 15 input3x10.tsv input3x25.tsv" ${basic_tests_1}
+runtest ${prog} "-H -s -p --weight-field 3 input3x10.tsv input3x25.tsv" ${basic_tests_1}
+runtest ${prog} "-H -s -p -w 3 --num 15 input3x10.tsv input3x25.tsv" ${basic_tests_1}
 runtest ${prog} "-H -s -p -n 15 input3x10.tsv input3x25.tsv" ${basic_tests_1}
 runtest ${prog} "-H -s -n 100 input3x10.tsv input3x25.tsv" ${basic_tests_1}
 # Stream sampling
@@ -61,8 +61,8 @@ runtest ${prog} "-s -r 1 -k 3,1 input4x50.tsv input4x15.tsv" ${basic_tests_1}
 
 runtest ${prog} "--static-seed input2x10_noheader.tsv input2x5_noheader.tsv" ${basic_tests_1}
 runtest ${prog} "-s --print-random input2x10_noheader.tsv input2x5_noheader.tsv" ${basic_tests_1}
-runtest ${prog} "-s -p --field 1 input2x10_noheader.tsv input2x5_noheader.tsv" ${basic_tests_1}
-runtest ${prog} "-s -p -f 1 --num 15 input2x10_noheader.tsv input2x5_noheader.tsv" ${basic_tests_1}
+runtest ${prog} "-s -p --weight-field 1 input2x10_noheader.tsv input2x5_noheader.tsv" ${basic_tests_1}
+runtest ${prog} "-s -p -w 1 --num 15 input2x10_noheader.tsv input2x5_noheader.tsv" ${basic_tests_1}
 runtest ${prog} "-s -p -n 5 input2x10_noheader.tsv input2x5_noheader.tsv" ${basic_tests_1}
 runtest ${prog} "-s -n 100 input2x10_noheader.tsv input2x5_noheader.tsv" ${basic_tests_1}
 
@@ -72,8 +72,8 @@ runtest ${prog} "-s -r .75 -n 5 input2x10_noheader.tsv input2x5_noheader.tsv" ${
 
 runtest ${prog} "--delimiter @ -H --static-seed input2x7_atsign.tsv" ${basic_tests_1}
 runtest ${prog} "-d @ -H -s -p input2x7_atsign.tsv" ${basic_tests_1}
-runtest ${prog} "-d @ -H -s -p -f 2 input2x7_atsign.tsv" ${basic_tests_1}
-runtest ${prog} "-d @ -H -s -p -f 2 -n 3 input2x7_atsign.tsv" ${basic_tests_1}
+runtest ${prog} "-d @ -H -s -p -w 2 input2x7_atsign.tsv" ${basic_tests_1}
+runtest ${prog} "-d @ -H -s -p -w 2 -n 3 input2x7_atsign.tsv" ${basic_tests_1}
 runtest ${prog} "-d @ -H -s -p -n 20 input2x7_atsign.tsv" ${basic_tests_1}
 runtest ${prog} "-d @ -H -s -p --rate 1.0 input2x7_atsign.tsv" ${basic_tests_1}
 
@@ -87,11 +87,11 @@ ${prog} -H input3x10.tsv | wc -l | tr -d ' ' >> ${basic_tests_1} 2>&1
 echo "" >> ${basic_tests_1}; echo "====[cat input3x10.tsv tsv-sample -H -p | wc -l | tr -d ' ']====" >> ${basic_tests_1}
 cat input3x10.tsv | ${prog} -H -p | wc -l | tr -d ' ' >> ${basic_tests_1} 2>&1
 
-echo "" >> ${basic_tests_1}; echo "====[cat input3x10.tsv tsv-sample -H -p -f 3 -- - input3x25.tsv | wc -l | tr -d ' ']====" >> ${basic_tests_1}
-cat input3x10.tsv | ${prog} -H -p -f 3 -- - input3x25.tsv | wc -l | tr -d ' ' >> ${basic_tests_1} 2>&1
+echo "" >> ${basic_tests_1}; echo "====[cat input3x10.tsv tsv-sample -H -p -w 3 -- - input3x25.tsv | wc -l | tr -d ' ']====" >> ${basic_tests_1}
+cat input3x10.tsv | ${prog} -H -p -w 3 -- - input3x25.tsv | wc -l | tr -d ' ' >> ${basic_tests_1} 2>&1
 
-echo "" >> ${basic_tests_1}; echo "====[cat input3x10.tsv tsv-sample -H -p -f 3 -n 10 -- - input3x25.tsv | wc -l | tr -d ' ']====" >> ${basic_tests_1}
-cat input3x10.tsv | ${prog} -H -p -f 3 -n 10 -- - input3x25.tsv | wc -l | tr -d ' ' >> ${basic_tests_1} 2>&1
+echo "" >> ${basic_tests_1}; echo "====[cat input3x10.tsv tsv-sample -H -p -w 3 -n 10 -- - input3x25.tsv | wc -l | tr -d ' ']====" >> ${basic_tests_1}
+cat input3x10.tsv | ${prog} -H -p -w 3 -n 10 -- - input3x25.tsv | wc -l | tr -d ' ' >> ${basic_tests_1} 2>&1
 
 ## Help and Version printing
 
@@ -122,12 +122,12 @@ echo "----------------" >> ${error_tests_1}
 runtest ${prog} "no_such_file.tsv" ${error_tests_1}
 runtest ${prog} "--no-such-param input3x25.tsv" ${error_tests_1}
 runtest ${prog} "-d ß input3x25.tsv" ${error_tests_1}
-runtest ${prog} "-H -f 2 input3x25.tsv" ${error_tests_1}
-runtest ${prog} "-f 3 input3x25.tsv" ${error_tests_1}
-runtest ${prog} "-H -f 11 input3x25.tsv" ${error_tests_1}
-runtest ${prog} "-H -f 3 input3x25_dos.tsv" ${error_tests_1}
-runtest ${prog} "-f 1 input2x5_noheader_dos.tsv" ${error_tests_1}
-runtest ${prog} "--rate 0.5 --field 3 input3x25.tsv" ${error_tests_1}
+runtest ${prog} "-H -w 2 input3x25.tsv" ${error_tests_1}
+runtest ${prog} "-w 3 input3x25.tsv" ${error_tests_1}
+runtest ${prog} "-H -w 11 input3x25.tsv" ${error_tests_1}
+runtest ${prog} "-H -w 3 input3x25_dos.tsv" ${error_tests_1}
+runtest ${prog} "-w 1 input2x5_noheader_dos.tsv" ${error_tests_1}
+runtest ${prog} "--rate 0.5 --weight-field 3 input3x25.tsv" ${error_tests_1}
 runtest ${prog} "--rate 0 input3x25.tsv" ${error_tests_1}
 runtest ${prog} "--rate 1.00001 input3x25.tsv" ${error_tests_1}
 runtest ${prog} "-r .1 -k 0 input4x50.tsv input4x15.tsv" ${error_tests_1}

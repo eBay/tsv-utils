@@ -77,7 +77,7 @@ random_weight	line	title	weight
 0.0307818604633212	25	Don Quijote	88
 0.010968807619065	1	Álomvilág: Elbeszélések	41
 
-====[tsv-sample -H -s -p --field 3 input3x10.tsv input3x25.tsv]====
+====[tsv-sample -H -s -p --weight-field 3 input3x10.tsv input3x25.tsv]====
 random_weight	line	title	weight
 0.999085791899963	4	Soitannollisia satuja ja jutelmia	44
 0.999015583407115	8	Door het land der Skipetaren	30
@@ -115,7 +115,7 @@ random_weight	line	title	weight
 0.686159653923167	10	Platero y yo	2
 0.660089884298655	8	Διδαχή των Δώδεκα αποστόλων	2
 
-====[tsv-sample -H -s -p -f 3 --num 15 input3x10.tsv input3x25.tsv]====
+====[tsv-sample -H -s -p -w 3 --num 15 input3x10.tsv input3x25.tsv]====
 random_weight	line	title	weight
 0.999085791899963	4	Soitannollisia satuja ja jutelmia	44
 0.999015583407115	8	Door het land der Skipetaren	30
@@ -469,7 +469,7 @@ jaune	2097	Purpurreiher	4
 0.135690446943045	0.656434250	Bulalakaw ng Pag-asa
 0.010968807619065	0.90391933	Folk-Lore of West and Mid-Wales
 
-====[tsv-sample -s -p --field 1 input2x10_noheader.tsv input2x5_noheader.tsv]====
+====[tsv-sample -s -p --weight-field 1 input2x10_noheader.tsv input2x5_noheader.tsv]====
 0.942437966848233	0.67881307	Burning Daylight
 0.868676721429664	0.20987466	殘唐五代史演義傳
 0.279204915793009	0.157876295	Jacques le fataliste et son maître
@@ -486,7 +486,7 @@ jaune	2097	Purpurreiher	4
 0.000184072038298519	0.03235488	海上花列傳
 5.09465567909741e-62	0.008718457	L'influence d'un livre
 
-====[tsv-sample -s -p -f 1 --num 15 input2x10_noheader.tsv input2x5_noheader.tsv]====
+====[tsv-sample -s -p -w 1 --num 15 input2x10_noheader.tsv input2x5_noheader.tsv]====
 0.942437966848233	0.67881307	Burning Daylight
 0.868676721429664	0.20987466	殘唐五代史演義傳
 0.279204915793009	0.157876295	Jacques le fataliste et son maître
@@ -578,7 +578,7 @@ random_weight@title@weight
 0.159293440869078@法螺男爵旅土産@5803
 0.010968807619065@友情@5992
 
-====[tsv-sample -d @ -H -s -p -f 2 input2x7_atsign.tsv]====
+====[tsv-sample -d @ -H -s -p -w 2 input2x7_atsign.tsv]====
 random_weight@title@weight
 0.999993182548277@幽霊書店@5903
 0.999949075619396@Aristophanis Lysistrata@5464
@@ -588,7 +588,7 @@ random_weight@title@weight
 0.999683488453338@法螺男爵旅土産@5803
 0.999247162745683@友情@5992
 
-====[tsv-sample -d @ -H -s -p -f 2 -n 3 input2x7_atsign.tsv]====
+====[tsv-sample -d @ -H -s -p -w 2 -n 3 input2x7_atsign.tsv]====
 random_weight@title@weight
 0.999993182548277@幽霊書店@5903
 0.999949075619396@Aristophanis Lysistrata@5464
@@ -620,10 +620,10 @@ random_weight@title@weight
 ====[cat input3x10.tsv tsv-sample -H -p | wc -l | tr -d ' ']====
 11
 
-====[cat input3x10.tsv tsv-sample -H -p -f 3 -- - input3x25.tsv | wc -l | tr -d ' ']====
+====[cat input3x10.tsv tsv-sample -H -p -w 3 -- - input3x25.tsv | wc -l | tr -d ' ']====
 36
 
-====[cat input3x10.tsv tsv-sample -H -p -f 3 -n 10 -- - input3x25.tsv | wc -l | tr -d ' ']====
+====[cat input3x10.tsv tsv-sample -H -p -w 3 -n 10 -- - input3x25.tsv | wc -l | tr -d ' ']====
 11
 
 Help and Version printing 1
