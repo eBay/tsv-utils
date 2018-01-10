@@ -37,9 +37,9 @@ else
             {
                 streamSampling(cmdopt, stdout.lockingTextWriter);
             }
-            else if (cmdopt.useBucketSampling)
+            else if (cmdopt.useDistinctSampling)
             {
-                bucketSampling(cmdopt, stdout.lockingTextWriter);
+                distinctSampling(cmdopt, stdout.lockingTextWriter);
             }
             else if (cmdopt.sampleSize == 0)
             {
@@ -66,10 +66,10 @@ Samples or randomizes input lines. There are several modes of operation:
 * Randomization (Default): Input lines are output in random order.
 * Stream sampling (--r|rate): Input lines are sampled based on a sampling
   rate. The order of the input is unchanged.
-* Bucket sampling (--k|key-fields, --r|rate): Sampling is based on the
-  values in the key field. A portion of the key are chosen based on the
-  sampling rate. All lines with one of the selected keys are output.
-  Input order is unchanged.
+* Distinct sampling (--k|key-fields, --r|rate): Sampling is based on the
+  values in the key field. A portion of the keys are chosen based on the
+  sampling rate (a distinct set). All lines with one of the selected keys
+  are output. Input order is unchanged.
 * Weighted sampling (--w|weight-field): Input lines are selected using
   weighted random sampling, with the weight taken from a field. Input
   lines are output in the order selected, reordering the lines.
@@ -89,10 +89,10 @@ Samples or randomizes input lines. There are several modes of operation:
 * Randomization (Default): Input lines are output in random order.
 * Stream sampling (--r|rate): Input lines are sampled based on a sampling
   rate. The order of the input is unchanged.
-* Bucket sampling (--k|key-fields, --r|rate): Sampling is based on the
-  values in the key field. A portion of the key are chosen based on the
-  sampling rate. All lines with one of the selected keys are output.
-  Input order is unchanged.
+* Distinct sampling (--k|key-fields, --r|rate): Sampling is based on the
+  values in the key field. A portion of the keys are chosen based on the
+  sampling rate (a distinct set). All lines with one of the selected keys
+  are output. Input order is unchanged.
 * Weighted sampling (--w|weight-field): Input lines are selected using
   weighted random sampling, with the weight taken from a field. Input
   lines are output in the order selected, reordering the lines. See
@@ -142,21 +142,21 @@ struct TsvSampleOptions
 {
     string programName;
     string[] files;
-    bool helpVerbose = false;        // --help-verbose
-    double sampleRate = double.nan;  // --r|rate - Sampling rate
-    size_t sampleSize = 0;           // --n|num - Size of the desired sample
-    size_t weightField = 0;          // --w|weight-field - Field holding the weight
-    size_t[] keyFields;              // --k|key-fields - Used with sampling rate
-    bool hasHeader = false;          // --H|header
-    bool printRandom = false;        // --p|print-random
-    bool staticSeed = false;         // --s|static-seed
-    uint seedValueOptionArg = 0;     // --v|seed-value
-    char delim = '\t';               // --d|delimiter
-    bool versionWanted = false;      // --V|version
-    bool hasWeightField = false;     // Derived.
-    bool useStreamSampling = false;  // Derived.
-    bool useBucketSampling = false;  // Derived.
-    uint seed = 0;                   // Derived from --static-seed, --seed-value
+    bool helpVerbose = false;         // --help-verbose
+    double sampleRate = double.nan;   // --r|rate - Sampling rate
+    size_t sampleSize = 0;            // --n|num - Size of the desired sample
+    size_t weightField = 0;           // --w|weight-field - Field holding the weight
+    size_t[] keyFields;               // --k|key-fields - Used with sampling rate
+    bool hasHeader = false;           // --H|header
+    bool printRandom = false;         // --p|print-random
+    bool staticSeed = false;          // --s|static-seed
+    uint seedValueOptionArg = 0;      // --v|seed-value
+    char delim = '\t';                // --d|delimiter
+    bool versionWanted = false;       // --V|version
+    bool hasWeightField = false;      // Derived.
+    bool useStreamSampling = false;   // Derived.
+    bool useDistinctSampling = false; // Derived.
+    uint seed = 0;                    // Derived from --static-seed, --seed-value
 
     auto processArgs(ref string[] cmdArgs)
     {
@@ -181,7 +181,7 @@ struct TsvSampleOptions
                 "n|num",           "NUM  Number of lines to output. All lines are output if not provided or zero.", &sampleSize,
                 "w|weight-field",         "NUM  Field containing weights. All lines get equal weight if not provided or zero.", &weightField,
 
-                "k|key-fields",    "<field-list>  Fields to use as key for bucket sampling. Use with --r|rate.",
+                "k|key-fields",    "<field-list>  Fields to use as key for distinct sampling. Use with --r|rate.",
                 keyFields.makeFieldListOptionHandler!(size_t, Yes.convertToZeroBasedIndex),
 
                 "p|print-random",  "     Output the random values that were assigned.", &printRandom,
@@ -227,7 +227,7 @@ struct TsvSampleOptions
                 throw new Exception("--r|rate is required when using --k|key-fields.");
             }
 
-            /* Sample rate (--r|rate) is used for both stream sampling and bucket sampling. */
+            /* Sample rate (--r|rate) is used for both stream sampling and distinct sampling. */
             if (!sampleRate.isNaN)
             {
                 if (sampleRate <= 0.0 || sampleRate > 1.0)
@@ -239,7 +239,7 @@ struct TsvSampleOptions
 
                 if (hasWeightField) throw new Exception("--w|weight-field and --r|rate cannot be used together.");
 
-                if (keyFields.length > 0) useBucketSampling = true;
+                if (keyFields.length > 0) useDistinctSampling = true;
                 else useStreamSampling = true;
             }
 
@@ -326,11 +326,11 @@ void streamSampling(OutputRange)(TsvSampleOptions cmdopt, OutputRange outputStre
     }
 }
 
-/* bucketSampling samples a portion of the unique values from the key fields. This
+/* distinctSampling samples a portion of the unique values from the key fields. This
  * is done by hashing the key and mapping the hash value into buckets matching the
  *  sampling rate size. Records having a key mapping to bucket zero are output.
  */
-void bucketSampling(OutputRange)(TsvSampleOptions cmdopt, OutputRange outputStream)
+void distinctSampling(OutputRange)(TsvSampleOptions cmdopt, OutputRange outputStream)
     if (isOutputRange!(OutputRange, char))
 {
     import std.algorithm : splitter;
@@ -654,9 +654,9 @@ version(unittest)
         assert(r[0], formatAssertMessage("Invalid command lines arg: '%s'.", savedCmdArgs));
         auto output = appender!(char[])();
 
-        if (cmdopt.useBucketSampling)
+        if (cmdopt.useDistinctSampling)
         {
-            bucketSampling(cmdopt, output);
+            distinctSampling(cmdopt, output);
         }
         else if (cmdopt.useStreamSampling)
         {
@@ -809,7 +809,7 @@ unittest
          ["white", "白", "1.65"],
          ["blue", "青", "12"]];
 
-    string[][] data3x6ExpectedBucketSampleK1K3P60 =
+    string[][] data3x6ExpectedDistinctSampleK1K3P60 =
         [["field_a", "field_b", "field_c"],
          ["green", "緑", "0.0072"],
          ["white", "白", "1.65"],
@@ -909,7 +909,7 @@ unittest
          ["blue", "青", "12"],
          ["gray", "グレー", "6.2"]];
 
-    string[][] combo1ExpectedBucketSampleK1P40 =
+    string[][] combo1ExpectedDistinctSampleK1P40 =
         [["field_a", "field_b", "field_c"],
          ["orange", "オレンジ", "2.5"],
          ["red", "赤", "23.8"],
@@ -1110,7 +1110,7 @@ unittest
          ["0.840939024352278", "9", "8.23"],
          ["0.6565001592629", "10", "1.79"]];
 
-    /* Data sets for bucket sampling. */
+    /* Data sets for distinct sampling. */
     string[][] data5x25 =
         [["ID", "Shape", "Color", "Size", "Weight"],
          ["01", "circle", "red", "S", "10"],
@@ -1145,7 +1145,7 @@ unittest
     writeUnittestTsvFile(fpath_data5x25, data5x25);
     writeUnittestTsvFile(fpath_data5x25_noheader, data5x25[1..$]);
 
-    string[][] data5x25ExpectedBucketSampleK2P40 =
+    string[][] data5x25ExpectedDistinctSampleK2P40 =
         [["ID", "Shape", "Color", "Size", "Weight"],
          ["03", "square", "black", "L", "20"],
          ["05", "ellipse", "red", "S", "20"],
@@ -1160,7 +1160,7 @@ unittest
          ["24", "square", "green", "L", "20"],
             ];
 
-    string[][] data5x25ExpectedBucketSampleK2K4P20 =
+    string[][] data5x25ExpectedDistinctSampleK2K4P20 =
         [["ID", "Shape", "Color", "Size", "Weight"],
          ["03", "square", "black", "L", "20"],
          ["07", "triangle", "red", "L", "20"],
@@ -1174,7 +1174,7 @@ unittest
          ["24", "square", "green", "L", "20"],
             ];
 
-    string[][] data5x25ExpectedBucketSampleK2K3K4P20 =
+    string[][] data5x25ExpectedDistinctSampleK2K3K4P20 =
         [["ID", "Shape", "Color", "Size", "Weight"],
          ["04", "circle", "green", "L", "30"],
          ["07", "triangle", "red", "L", "20"],
@@ -1217,7 +1217,7 @@ unittest
     testTsvSample(["test-a21", "-H", "-s", "--rate", "0.60", fpath_data3x6], data3x6ExpectedStreamSampleP60);
     testTsvSample(["test-a22", "-H", "-v", "41", "--rate", "0.60", "-p", fpath_data3x6], data3x6ExpectedV41ProbsStreamSampleP60);
 
-    /* Bucket sampling cases. */
+    /* Distinct sampling cases. */
     testTsvSample(["test-a23", "--header", "--static-seed", "--rate", "0.001", "--key-fields", "1", fpath_dataEmpty], dataEmpty);
     testTsvSample(["test-a24", "--header", "--static-seed", "--rate", "0.001", "--key-fields", "1", fpath_data3x0], data3x0);
     testTsvSample(["test-a25", "-H", "-s", "-r", "1.0", "-k", "2", fpath_data3x1], data3x1);
@@ -1242,7 +1242,7 @@ unittest
     testTsvSample(["test-b14", "-s", "--rate", "0.60", "-p", fpath_data3x6_noheader], data3x6ExpectedProbsStreamSampleP60[1..$]);
     testTsvSample(["test-b15", "-v", "41", "--rate", "0.60", "-p", fpath_data3x6_noheader], data3x6ExpectedV41ProbsStreamSampleP60[1..$]);
 
-    /* Bucket sampling cases. */
+    /* Distinct sampling cases. */
     testTsvSample(["test-a25", "-s", "-r", "1.0", "-k", "2", fpath_data3x1_noheader], data3x1[1..$]);
     testTsvSample(["test-a26", "-s", "-r", "1.0", "-k", "2", fpath_data3x6_noheader], data3x6[1..$]);
     testTsvSample(["test-a27", "-r", "1.0", "-k", "2", fpath_data3x6_noheader], data3x6[1..$]);
@@ -1296,14 +1296,14 @@ unittest
                    fpath_data3x6_noheader, fpath_data3x2_noheader],
                   combo1ExpectedStreamSampleP40[1..$]);
 
-    /* Bucket sampling cases. */
+    /* Distinct sampling cases. */
     testTsvSample(["test-c13", "--header", "--static-seed", "--key-fields", "1", "--rate", ".4",
                    fpath_data3x0, fpath_data3x3, fpath_data3x1, fpath_dataEmpty, fpath_data3x6, fpath_data3x2],
-                  combo1ExpectedBucketSampleK1P40);
+                  combo1ExpectedDistinctSampleK1P40);
     testTsvSample(["test-c14", "--static-seed", "--key-fields", "1", "--rate", ".4",
                    fpath_data3x3_noheader, fpath_data3x1_noheader, fpath_dataEmpty,
                    fpath_data3x6_noheader, fpath_data3x2_noheader],
-                  combo1ExpectedBucketSampleK1P40[1..$]);
+                  combo1ExpectedDistinctSampleK1P40[1..$]);
 
     /* Single column file. */
     testTsvSample(["test-d1", "-H", "-s", fpath_data1x10], data1x10ExpectedNoWt);
@@ -1364,13 +1364,13 @@ unittest
         testTsvSample([format("test-f12_%d", n), "-s", "-r", "0.6", "-n", n.to!string,
                        fpath_data3x6_noheader], data3x6ExpectedStreamSampleP60[1..sampleExpectedLength]);
 
-        size_t bucketExpectedLength = min(expectedLength, data3x6ExpectedBucketSampleK1K3P60.length);
+        size_t distinctExpectedLength = min(expectedLength, data3x6ExpectedDistinctSampleK1K3P60.length);
 
         testTsvSample([format("test-f13_%d", n), "-s", "-k", "1,3", "-r", "0.6", "-n", n.to!string,
-                       "-H", fpath_data3x6], data3x6ExpectedBucketSampleK1K3P60[0..bucketExpectedLength]);
+                       "-H", fpath_data3x6], data3x6ExpectedDistinctSampleK1K3P60[0..distinctExpectedLength]);
 
         testTsvSample([format("test-f14_%d", n), "-s", "-k", "1,3", "-r", "0.6", "-n", n.to!string,
-                       fpath_data3x6_noheader], data3x6ExpectedBucketSampleK1K3P60[1..bucketExpectedLength]);
+                       fpath_data3x6_noheader], data3x6ExpectedDistinctSampleK1K3P60[1..distinctExpectedLength]);
     }
 
     /* Similar tests with the 1x10 data set. */
@@ -1390,22 +1390,22 @@ unittest
                        "-w", "1", fpath_data1x10_noheader], data1x10ExpectedWt1[1..expectedLength]);
     }
 
-    /* Bucket sampling tests. */
+    /* Distinct sampling tests. */
     testTsvSample(["h1", "--header", "--static-seed", "--rate", "0.40", "--key-fields", "2", fpath_data5x25],
-                  data5x25ExpectedBucketSampleK2P40);
+                  data5x25ExpectedDistinctSampleK2P40);
 
     testTsvSample(["h2", "-H", "-s", "-r", "0.20", "-k", "2,4", fpath_data5x25],
-                  data5x25ExpectedBucketSampleK2K4P20);
+                  data5x25ExpectedDistinctSampleK2K4P20);
 
     testTsvSample(["h3", "-H", "-s", "-r", "0.20", "-k", "2-4", fpath_data5x25],
-                  data5x25ExpectedBucketSampleK2K3K4P20);
+                  data5x25ExpectedDistinctSampleK2K3K4P20);
 
     testTsvSample(["h4", "--static-seed", "--rate", "0.40", "--key-fields", "2", fpath_data5x25_noheader],
-                  data5x25ExpectedBucketSampleK2P40[1..$]);
+                  data5x25ExpectedDistinctSampleK2P40[1..$]);
 
     testTsvSample(["h5", "-s", "-r", "0.20", "-k", "2,4", fpath_data5x25_noheader],
-                  data5x25ExpectedBucketSampleK2K4P20[1..$]);
+                  data5x25ExpectedDistinctSampleK2K4P20[1..$]);
 
     testTsvSample(["h6", "-s", "-r", "0.20", "-k", "2-4", fpath_data5x25_noheader],
-                  data5x25ExpectedBucketSampleK2K3K4P20[1..$]);
+                  data5x25ExpectedDistinctSampleK2K3K4P20[1..$]);
 }
