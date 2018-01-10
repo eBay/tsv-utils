@@ -50,7 +50,7 @@ runtest ${prog} "-H -s --rate 1.0 --print-random input3x10.tsv input3x25.tsv" ${
 runtest ${prog} "-H -s -r 0.25 input3x10.tsv input3x25.tsv" ${basic_tests_1}
 runtest ${prog} "-H -s -r 0.75 -n 5 input3x10.tsv input3x25.tsv" ${basic_tests_1}
 runtest ${prog} "-H -s -r .25 --key-fields 1 input4x50.tsv input4x15.tsv" ${basic_tests_1}
-# Bucket Sampling
+# Distinct Sampling
 runtest ${prog} "-H -s --rate .25 -k 3,1 input4x50.tsv input4x15.tsv" ${basic_tests_1}
 runtest ${prog} "-H -s -r .25 -k 1,3 input4x50.tsv input4x15.tsv" ${basic_tests_1}
 runtest ${prog} "-H -s -r .25 -k 1,1 input4x50.tsv input4x15.tsv" ${basic_tests_1}
