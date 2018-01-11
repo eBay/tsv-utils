@@ -105,9 +105,7 @@ Weighted random sampling selects input lines in a weighted fashion, using weight
 
 Distinct sampling selects a subset based on a key in data. Consider a query log with records consisting of <user, query, clicked-url> triples. Simple random sampling selects a random subset of all records. Distinct sampling selects all records matching a subset of values from one of fields. For example, all events for ten percent of the users. This is important for certain types of statistical analysis.
 
-`tsv-sample` is designed for large data sets. Algorithms make one pass over the data, using reservoir sampling and hashing when possible to limit the memory required.
-
-Options are provided controlling the random seed. This allows using a new randomization each run or keeping the randomization across multiple runs.
+`tsv-sample` is designed for large data sets. Algorithms make one pass over the data, using reservoir sampling and hashing when possible to limit the memory required. By default, a new random order is generated every run, but options are available for using the same randomization order over multiple runs.
 
 See the [tsv-sample reference](docs/ToolReference.md#tsv-sample-reference) for further details.
 
