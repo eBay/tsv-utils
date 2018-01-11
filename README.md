@@ -99,7 +99,7 @@ See the [tsv-summarize reference](docs/ToolReference.md#tsv-summarize-reference)
 
 `tsv-sample` randomizes or sample lines from input data. Several sampling methods are available, including simple random sampling, weighted random sampling, and distinct sampling.
 
-Simple random sampling operates in the customary fashion, randomly selecting lines with equal probability. When reordering a file, lines output in the order selected. In streaming mode, a subset of lines are output, but retaining the order of the input.
+Simple random sampling operates in the customary fashion, randomly selecting lines with equal probability. When reordering a file, lines output in the order selected. In streaming mode, the subset of lines selected are output in the order of the input.
 
 Weighted random sampling selects input lines in a weighted fashion, using weights from a field in the data. Lines are output in the order selected, reordering the file.
 
