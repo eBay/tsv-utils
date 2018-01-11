@@ -34,7 +34,7 @@ The rest of this section contains a short description of each tool. There is mor
 * [tsv-filter](#tsv-filter) - Filter data file rows via numeric and string comparisons.
 * [tsv-select](#tsv-select) - Keep a subset of the columns (fields) in the input.
 * [tsv-summarize](#tsv-summarize) - Summary statistics on selected fields, against the full data set or grouped by key.
-* [tsv-sample](#tsv-sample) - Sampling and permutation of input lines. Uniform, weighted, and distinct sampling methods available.
+* [tsv-sample](#tsv-sample) - Sampling and permutation of input lines. Several methods are available.
 * [tsv-join](#tsv-join) - Join lines from multiple files using fields as a key.
 * [tsv-uniq](#tsv-uniq) - Filter out duplicate lines using fields as a key.
 * [tsv-append](#tsv-append) - Concatenate TSV files. Header-aware; supports source file tracking.
@@ -97,15 +97,15 @@ See the [tsv-summarize reference](docs/ToolReference.md#tsv-summarize-reference)
 
 ### tsv-sample
 
-`tsv-sample` is used to randomize or sample lines from data files. Several sampling methods are available for doing this, including simple random sampling, weighted random sampling, and distinct sampling.
+`tsv-sample` randomizes or sample lines from input data. Several sampling methods are available, including simple random sampling, weighted random sampling, and distinct sampling.
 
 Simple random sampling operates in the customary fashion, randomly selecting lines with equal probability. When reordering a file, lines output in the order selected. In streaming mode, a subset of lines are output, but retaining the order of the input.
 
-Weighted random sampling selects input lines in a weighted fashion, using weights from a field in the line. Lines are output in the order selected, reordering the file.
+Weighted random sampling selects input lines in a weighted fashion, using weights from a field in the data. Lines are output in the order selected, reordering the file.
 
-Distinct sampling selects a subset based on a key in data. Consider a query click log with records consisting of <user, query, clicked-url> triples. Simple random sampling selects a random subset of all records. Distinct sampling selects all records matching a subset of values from one of fields. For example all events for ten percent of the users. This is important for certain types of statistical analysis.
+Distinct sampling selects a subset based on a key in data. Consider a query log with records consisting of <user, query, clicked-url> triples. Simple random sampling selects a random subset of all records. Distinct sampling selects all records matching a subset of values from one of fields. For example, all events for ten percent of the users. This is important for certain types of statistical analysis.
 
-`tsv-sample` is designed for large data sets. Algorithms make one pass over the data, using reservoir sampling and hashing when possible to limit the memory requirements. 
+`tsv-sample` is designed for large data sets. Algorithms make one pass over the data, using reservoir sampling and hashing when possible to limit the memory required.
 
 Options are provided controlling the random seed. This allows using a new randomization each run or keeping the randomization across multiple runs.
 
