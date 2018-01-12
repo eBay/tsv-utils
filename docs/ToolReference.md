@@ -405,7 +405,7 @@ non-zero, 32-bit positive integer. (A zero value is a no-op and ignored.)
 
 **Distinct sampling**: Distinct sampling selects a subset based on a key in data. Consider a query log with records consisting of <user, query, clicked-url> triples. Simple random sampling selects a random subset of all records. Distinct sampling selects all records matching a subset of values from one of fields. For example, all events for ten percent of the users. This is important for certain types of statistical analysis.
 
-**Options:**q
+**Options:**
 
 * `--help-verbose` - Print more detailed help.
 * `--V|version` - Print version information and exit.
