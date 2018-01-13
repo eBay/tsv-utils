@@ -34,10 +34,10 @@ The rest of this section contains a short description of each tool. There is mor
 * [tsv-filter](#tsv-filter) - Filter data file rows via numeric and string comparisons.
 * [tsv-select](#tsv-select) - Keep a subset of the columns (fields) in the input.
 * [tsv-summarize](#tsv-summarize) - Summary statistics on selected fields, against the full data set or grouped by key.
+* [tsv-sample](#tsv-sample) - Sampling and permutation of input lines. Several methods are available.
 * [tsv-join](#tsv-join) - Join lines from multiple files using fields as a key.
-* [tsv-append](#tsv-append) - Concatenate TSV files. Header-aware; supports source file tracking.
 * [tsv-uniq](#tsv-uniq) - Filter out duplicate lines using fields as a key.
-* [tsv-sample](#tsv-sample) - Uniform and weighted random sampling or permutation of input lines.
+* [tsv-append](#tsv-append) - Concatenate TSV files. Header-aware; supports source file tracking.
 * [tsv-pretty](#tsv-pretty) - Print TSV data aligned for easier reading on the command-line.
 * [csv2tsv](#csv2tsv) - Convert CSV files to TSV.
 * [number-lines](#number-lines) - Number the input lines.
@@ -95,6 +95,20 @@ Multiple fields can be used as the `--group-by` key. The file's sort order does 
 
 See the [tsv-summarize reference](docs/ToolReference.md#tsv-summarize-reference) for the list of statistical and other aggregation operations available.
 
+### tsv-sample
+
+`tsv-sample` randomizes or sample lines from input data. Several sampling methods are available, including simple random sampling, weighted random sampling, and distinct sampling.
+
+Simple random sampling operates in the customary fashion, randomly selecting lines with equal probability. When reordering a file, lines are randomly selected from the entire file and output in the order selected. In streaming mode, a subset of input lines are selected and output. This occurs in the order of the input. Streaming mode operates on arbitrary large inputs.
+
+Weighted random sampling selects input lines in a weighted fashion, using weights from a field in the data. Lines are output in the order selected, reordering the file.
+
+Distinct sampling selects a subset based on a key in data. Consider a query log with records consisting of <user, query, clicked-url> triples. Simple random sampling selects a random subset of all records. Distinct sampling selects all records matching a subset of values from one of fields. For example, all events for ten percent of the users. This is important for certain types of statistical analysis.
+
+`tsv-sample` is designed for large data sets. Algorithms make one pass over the data, using reservoir sampling and hashing when possible to limit the memory required. By default, a new random order is generated every run, but options are available for using the same randomization order over multiple runs.
+
+See the [tsv-sample reference](docs/ToolReference.md#tsv-sample-reference) for further details.
+
 ### tsv-join
 
 Joins lines from multiple files based on a common key. One file, the 'filter' file, contains the records (lines) being matched. The other input files are scanned for matching records. Matching records are written to standard output, along with any designated fields from the filter file. In database parlance this is a hash semi-join. Example:
@@ -107,18 +121,6 @@ This reads `filter.tsv`, creating a lookup table keyed on fields 1 and 3. `data.
 Common uses for `tsv-join` are to join related datasets or to filter one dataset based on another. Filter file entries are kept in memory, this limits the ultimate size that can be handled effectively. The author has found that filter files up to about 10 million lines are processed effectively, but performance starts to degrade after that.
 
 See the [tsv-join reference](docs/ToolReference.md#tsv-join-reference) for details.
-
-### tsv-append
-
-`tsv-append` concatenates multiple TSV files, similar to the Unix `cat` utility. It is header-aware, writing the header from only the first file. It also supports source tracking, adding a column indicating the original file to each row.
-
-Concatenation with header support is useful when preparing data for traditional Unix utilities like `sort` and `sed` or applications that read a single file.
-
-Source tracking is useful when creating long/narrow form tabular data. This format is used by many statistics and data mining packages. (See [Wide & Long Data - Stanford University](https://stanford.edu/~ejdemyr/r-tutorials/wide-and-long/) or Hadley Wickham's [Tidy data](http://vita.had.co.nz/papers/tidy-data.html) for more info.)
-
-In this scenario, files have been used to capture related data sets, the difference between data sets being a condition represented by the file. For example, results from different variants of an experiment might each be recorded in their own files. Retaining the source file as an output column preserves the condition represented by the file. The source values default to the file names, but this can be customized.
-
-See the [tsv-append reference](docs/ToolReference.md#tsv-append-reference) for the complete list of options available.
 
 ### tsv-uniq
 
@@ -133,11 +135,17 @@ As with `tsv-join`, this uses an in-memory lookup table to record unique entries
 
 See the [tsv-uniq reference](docs/ToolReference.md#tsv-uniq-reference) for details.
 
-### tsv-sample
+### tsv-append
 
-`tsv-sample` performs uniform or weighted random sampling on input data lines. This can be used sub-sample data or fully randomize the order of the data lines.
+`tsv-append` concatenates multiple TSV files, similar to the Unix `cat` utility. It is header-aware, writing the header from only the first file. It also supports source tracking, adding a column indicating the original file to each row.
 
-Weighted random sampling is where `tsv-sample` is really useful. For uniform random sampling, the GNU `shuf` program is quite good and widely available. For weighted random sampling the choices are limited, especially when working with large files. `tsv-sample` implements weighted reservoir sampling, with the weights taken from a field in the input data. Performance is good, it works quite well on large files. See the [tsv-sample reference](docs/ToolReference.md#tsv-sample-reference) for details.
+Concatenation with header support is useful when preparing data for traditional Unix utilities like `sort` and `sed` or applications that read a single file.
+
+Source tracking is useful when creating long/narrow form tabular data. This format is used by many statistics and data mining packages. (See [Wide & Long Data - Stanford University](https://stanford.edu/~ejdemyr/r-tutorials/wide-and-long/) or Hadley Wickham's [Tidy data](http://vita.had.co.nz/papers/tidy-data.html) for more info.)
+
+In this scenario, files have been used to capture related data sets, the difference between data sets being a condition represented by the file. For example, results from different variants of an experiment might each be recorded in their own files. Retaining the source file as an output column preserves the condition represented by the file. The source values default to the file names, but this can be customized.
+
+See the [tsv-append reference](docs/ToolReference.md#tsv-append-reference) for the complete list of options available.
 
 ### tsv-pretty
 

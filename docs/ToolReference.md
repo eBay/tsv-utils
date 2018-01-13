@@ -8,10 +8,10 @@ This page provides detailed documentation about the different tools as well as e
 * [tsv-filter reference](#tsv-filter-reference)
 * [tsv-select reference](#tsv-select-reference)
 * [tsv-summarize reference](#tsv-summarize-reference)
-* [tsv-join reference](#tsv-join-reference)
-* [tsv-append reference](#tsv-append-reference)
-* [tsv-uniq reference](#tsv-uniq-reference)
 * [tsv-sample reference](#tsv-sample-reference)
+* [tsv-join reference](#tsv-join-reference)
+* [tsv-uniq reference](#tsv-uniq-reference)
+* [tsv-append reference](#tsv-append-reference)
 * [tsv-pretty reference](#tsv-pretty-reference)
 * [csv2tsv reference](#csv2tsv-reference)
 * [number-lines reference](#number-lines-reference)
@@ -378,6 +378,50 @@ _**Tip:**_ Bash completion is very helpful when using commands like `tsv-summari
 
 ---
 
+## tsv-sample reference
+
+**Synopsis:** tsv-sample [options] [file...]
+
+`tsv-sample` randomizes or sample lines from input data. Several sampling methods are available, including simple random sampling, weighted random sampling, and distinct sampling.
+
+There are several modes of operation:
+
+* Randomization (Default): Input lines are output in random order. This is a case of simple random sampling. Use `--n|num` to limit the output records. This enables reservoir sampling, limiting memory use and improving performance.
+* Stream sampling (`--r|rate`): Input lines are sampled based on a sampling rate. The order of the input is unchanged. This is another case of simple random sampling.
+* Distinct sampling (`--k|key-fields`, `--r|rate`): Sampling is based on the values in the key field. A portion of the keys are chosen based on the sampling rate (a distinct set). This is streaming algorithm. Lines are processed in the order read, and all lines with one of the selected keys are output. Hashing is used to make an immediate decision about inclusion, the algorithm does not wait until all the unique keys have been seen.
+* Weighted sampling (`--w|weight-field`): Input lines are selected using weighted random sampling, with the weight taken from a field. Input lines are output in the order selected, reordering the lines. See 'Weighted sampling' below for info on field weights. Use `--n|num` to limit output records and improve performance.
+
+**Performance**: `tsv-sample` is designed for large data sets. Algorithms make one pass over the data, using reservoir sampling and hashing when possible to limit the memory required. The streaming algorithms make immediate decisions on each line, with no memory accumulation. They can operate on arbitrary length data streams. For the non-streaming algorithms, use `--n|num` to limit the sample size and engage reservoir sampling. Otherwise it is necessary to hold every record in memory. (Notice that both `tsv-sample -n <num>` and  `tsv-sample | head -n <num>` produce the same results, but the former is faster.)
+
+**Controlling randomization**: Each run produces a different randomization. Using `--s|static-seed` changes this so multiple runs produce the same randomization. This works by using the same random seed each run. The random seed can be specified using `--v|seed-value`. This takes a
+non-zero, 32-bit positive integer. (A zero value is a no-op and ignored.)
+
+**Generating random weights**: The random weight assigned to each line can output using the `--p|print-random` option. This can be used with
+`--rate 1` to assign a random weight to each line. The random weight is prepended line as field one (separated by TAB or the `--d|delimiter` character). Weights are in the interval [0,1]. The open/closed aspects of the interval (including/excluding 0.0 and 1.0) are subject to change and should not be relied on.
+
+**Weighted sampling**: Weighted random sampling is done using an algorithm described by Efraimidis and Spirakis. Weights should be positive values representing the relative weight of the entry in the collection. Negative values are not meaningful and given the value zero. However, any positive real values can be used. Counts and similar can be used as weights, it is *not* necessary to normalize to a [0,1] interval. Input order is not retained, instead lines are output ordered by the randomized weight that was assigned. This means that a smaller valid sample can be produced by taking the first N lines of output. For more info on the sampling approach see:
+* Wikipedia: https://en.wikipedia.org/wiki/Reservoir_sampling
+* "Weighted Random Sampling over Data Streams", Pavlos S. Efraimidis (https://arxiv.org/abs/1012.0256)
+
+**Distinct sampling**: Distinct sampling selects a subset based on a key in data. Consider a query log with records consisting of <user, query, clicked-url> triples. Simple random sampling selects a random subset of all records. Distinct sampling selects all records matching a subset of values from one of fields. For example, all events for ten percent of the users. This is important for certain types of statistical analysis.
+
+**Options:**
+
+* `--help-verbose` - Print more detailed help.
+* `--V|version` - Print version information and exit.
+* `--H|header` - Treat the first line of each file as a header.
+* `--r|rate NUM`  Sampling rating (0.0 < NUM <= 1.0). This sampling mode outputs a random fraction of lines, in the input order.
+* `--n|num NUM` - Number of lines to output. All lines are output if not provided or zero.
+* `--w|weight-field NUM` - Field containing weights. All lines get equal weight if not provided or zero.
+* `--k|key-fields <field-list>` - Fields to use as key for distinct sampling. Use with `--r|rate`.
+* `--p|print-random` - Output the random values that were assigned.
+* `--s|static-seed` - Use the same random seed every run.
+* `--v|seed-value NUM` - Sets the initial random seed. Use a non-zero, 32 bit positive integer. Zero is a no-op.
+* `--d|delimiter CHR` - Field delimiter.
+* `--h|help` - This help information.
+
+---
+
 ## tsv-join reference
 
 **Synopsis:** tsv-join --filter-file file [options] file [file...]
@@ -437,45 +481,6 @@ $ tsv-join -f run1.tsv --header --key-fields 1 --append-fields 2 --prefix run1_ 
 
 ---
 
-## tsv-append reference
-
-**Synopsis:** tsv-append [options] [file...]
-
-tsv-append concatenates multiple TSV files, similar to the Unix `cat` utility. Unlike `cat`, it is header-aware (`--H|header`), writing the header from only the first file. It also supports source tracking, adding a column indicating the original file to each row. Results are written to standard output.
-
-Concatenation with header support is useful when preparing data for traditional Unix utilities like `sort` and `sed` or applications that read a single file.
-
-Source tracking is useful when creating long/narrow form tabular data, a format used by many statistics and data mining packages. In this scenario, files have been used to capture related data sets, the difference between data sets being a condition represented by the file. For example, results from different variants of an experiment might each be recorded in their own files. Retaining the source file as an output column preserves the condition represented by the file.
-
-The file-name (without extension) is used as the source value. This can customized using the `--f|file` option.
-
-Example: Header processing:
-```
-$ tsv-append -H file1.tsv file2.tsv file3.tsv
-```
-
-Example: Header processing and source tracking:
-```
-$ tsv-append -H -t file1.tsv file2.tsv file3.tsv
-```
-
-Example: Source tracking with custom source values:
-```
-$ tsv-append -H -s test_id -f test1=file1.tsv -f test2=file2.tsv
- ```
-
-**Options:**
-* `--h|help` - Print help.
-* `--help-verbose` - Print detailed help.
-* `--V|version` - Print version information and exit.
-* `--H|header` - Treat the first line of each file as a header.
-* `--t|track-source` - Track the source file. Adds an column with the source name.
-* `--s|source-header STR` - Use STR as the header for the source column. Implies `--H|header` and `--t|track-source`. Default: 'file'
-* `--f|file STR=FILE` - Read file FILE, using STR as the 'source' value. Implies `--t|track-source`.
-* `--d|delimiter CHR` - Field delimiter. Default: TAB. (Single byte UTF-8 characters only.)
-
----
-
 ## tsv-uniq reference
 
 `tsv-uniq` identifies equivalent lines in tab-separated value files. Input is read line by line, recording a key based on one or more of the fields. Two lines are equivalent if they have the same key. When operating in the default 'uniq' mode, the first time a key is seen the line is written to standard output, but subsequent lines are discarded. This is similar to the Unix `uniq` program, but based on individual fields and without requiring sorted data.
@@ -524,32 +529,42 @@ $ tsv-uniq -f 1,2 --equiv --header data.tsv
 
 ---
 
-## tsv-sample reference
+## tsv-append reference
 
-**Synopsis:** tsv-sample [options] [file...]
+**Synopsis:** tsv-append [options] [file...]
 
-tsv-sample randomizes or samples input lines. By default, all lines are output in random order. `--n|num` can be used to limit the sample size produced. A weighted random sample is generated using the `--f|field` option, this identifies the field containing weights. Sampling is without replacement.
+tsv-append concatenates multiple TSV files, similar to the Unix `cat` utility. Unlike `cat`, it is header-aware (`--H|header`), writing the header from only the first file. It also supports source tracking, adding a column indicating the original file to each row. Results are written to standard output.
 
-Weighted random sampling is done using an algorithm described by Efraimidis and Spirakis. Weights should be positive values representing the relative weight of the entry in the collection. Negative values are not meaningful and given the value zero. However, any positive real values can be used. Lines are output ordered by the randomized weight that was assigned. This means, for example, that a smaller sample can be produced by taking the first N lines of output. For more info on the sampling approach see:
-* Wikipedia: https://en.wikipedia.org/wiki/Reservoir_sampling
-* "Weighted Random Sampling over Data Streams", Pavlos S. Efraimidis (https://arxiv.org/abs/1012.0256)
+Concatenation with header support is useful when preparing data for traditional Unix utilities like `sort` and `sed` or applications that read a single file.
 
-The implementation uses reservoir sampling. All lines output must be held in memory. Memory needed for large inputs can reduced significantly using a sample size. Both `tsv-sample -n <num>` and  `tsv-sample | head -n <num>` produce the same results, but the former is faster.
+Source tracking is useful when creating long/narrow form tabular data, a format used by many statistics and data mining packages. In this scenario, files have been used to capture related data sets, the difference between data sets being a condition represented by the file. For example, results from different variants of an experiment might each be recorded in their own files. Retaining the source file as an output column preserves the condition represented by the file.
 
-Each run produces a different randomization. This can be changed using `--s|static-seed`. This uses the same initial seed each run to produce consistent randomization orders. The random seed can also be specified using `--v|seed-value`. This takes a non-zero, 32-bit positive integer. (A zero value is a no-op and ignored.)
+The file-name (without extension) is used as the source value. This can customized using the `--f|file` option.
+
+Example: Header processing:
+```
+$ tsv-append -H file1.tsv file2.tsv file3.tsv
+```
+
+Example: Header processing and source tracking:
+```
+$ tsv-append -H -t file1.tsv file2.tsv file3.tsv
+```
+
+Example: Source tracking with custom source values:
+```
+$ tsv-append -H -s test_id -f test1=file1.tsv -f test2=file2.tsv
+ ```
 
 **Options:**
-
-* `--help-verbose` - Print more detailed help.
+* `--h|help` - Print help.
+* `--help-verbose` - Print detailed help.
 * `--V|version` - Print version information and exit.
 * `--H|header` - Treat the first line of each file as a header.
-* `--n|num NUM` - Number of lines to output. All lines are output if not provided or zero.
-* `--f|field NUM` - Field containing weights. All lines get equal weight if not provided or zero.
-* `--p|print-random` - Output the random values that were assigned.
-* `--s|static-seed` - Use the same random seed every run.
-* `--v|seed-value NUM` - Sets the initial random seed. Use a non-zero, 32 bit positive integer. Zero is a no-op.
-* `--d|delimiter CHR` - Field delimiter.
-* `--h|help` - This help information.
+* `--t|track-source` - Track the source file. Adds an column with the source name.
+* `--s|source-header STR` - Use STR as the header for the source column. Implies `--H|header` and `--t|track-source`. Default: 'file'
+* `--f|file STR=FILE` - Read file FILE, using STR as the 'source' value. Implies `--t|track-source`.
+* `--d|delimiter CHR` - Field delimiter. Default: TAB. (Single byte UTF-8 characters only.)
 
 ---
 
