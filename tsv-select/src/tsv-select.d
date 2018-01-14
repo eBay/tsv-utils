@@ -238,6 +238,14 @@ void tsvSelect(CTERestLocation cteRest)(in TsvSelectOptions cmdopt, in string[] 
         auto leftOverFieldsAppender = appender!(char[][]);
     }
 
+    /* outputLineBuffer and joinAppend are used to build the output line prior to
+     * writing it. This is a performance enhancement over direct use of either
+     * std.algorithm.joiner. See the comments with joinAppend in common/src/tsvutil.d.
+     * for further info.
+     */
+    import tsvutil : joinAppend;
+    auto outputLineBuffer = appender!(char[]);
+
     /* Read each input file (or stdin) and iterate over each line. A filename of "-" is
      * interpreted as stdin, common behavior for unix command line tools.
      */
@@ -279,32 +287,29 @@ void tsvSelect(CTERestLocation cteRest)(in TsvSelectOptions cmdopt, in string[] 
             }
 
             // Write the re-ordered line.
-            static if (cteRest == CTERestLocation.none)
+            outputLineBuffer.clear;
+
+            static if (cteRest == CTERestLocation.first)
             {
-                writeln(fieldReordering.outputFields.join(cmdopt.delim));
+                if (leftOverFieldsAppender.data.length > 0)
+                {
+                    leftOverFieldsAppender.data.joinAppend(outputLineBuffer, cmdopt.delim);
+                    outputLineBuffer.put(cmdopt.delim);
+                }
             }
 
-            else static if (cteRest == CTERestLocation.first)
+            fieldReordering.outputFields.joinAppend(outputLineBuffer, cmdopt.delim);
+
+            static if (cteRest == CTERestLocation.last)
             {
                 if (leftOverFieldsAppender.data.length > 0)
                 {
-                    write(leftOverFieldsAppender.data.join(cmdopt.delim), cmdopt.delim);
+                    outputLineBuffer.put(cmdopt.delim);
+                    leftOverFieldsAppender.data.joinAppend(outputLineBuffer, cmdopt.delim);
                 }
-                writeln(fieldReordering.outputFields.join(cmdopt.delim));
             }
-            else static if (cteRest == CTERestLocation.last)
-            {
-                write(fieldReordering.outputFields.join(cmdopt.delim));
-                if (leftOverFieldsAppender.data.length > 0)
-                {
-                    write(cmdopt.delim, leftOverFieldsAppender.data.join(cmdopt.delim));
-                }
-                writeln();
-            }
-            else
-            {
-                static assert (false, "Unexpected cteRest value.");
-            }
+
+            writeln(outputLineBuffer.data);
         }
     }
 }

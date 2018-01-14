@@ -7,6 +7,9 @@ Utilities in this file:
   useful when processing the subset in a specific order, such as the order listed on the
   command-line at run-time.
 
+* joinAppend - A function that performs a join, but appending the join output to an
+  output stream. It is a performance improvement over using join or joiner with writeln.
+
 * getTsvFieldValue - A convenience function when only a single value is needed from an
   input line.
 
@@ -41,7 +44,8 @@ buffer is ready when the allFieldsFilled method returns true.
 Fields are not copied, instead the output buffer points to the fields passed by the caller.
 The caller needs to use or copy the output buffer while the fields are still valid, which
 is normally until reading the next input line. The program below illustrates the basic use
-case. It reads stdin and outputs fields [3, 0, 2], in that order.
+case. It reads stdin and outputs fields [3, 0, 2], in that order. (See also joinAppend,
+below, which has a performance improvement over join used here.)
 
     int main(string[] args)
     {
@@ -344,6 +348,120 @@ unittest
     }
 }
 
+/**
+joinAppend performs a join operation on an input range, appending the results to
+an output range.
+
+This routine was written as a performance enhancement over std.algorithm.joiner.
+Performance of joiner when used with writeln is poor. Using std.array.join with
+writeln is 3-4x faster. The joiner performance may be due to interaction with
+writeln, this was not investigated. Using joiner with stdout.lockingTextWriter is
+better, but still substantially slower than join. Using join works reasonably well,
+but is allocating memory unnecessarily.
+
+Using joinAppend with an Appender is a bit faster than join, and allocates less memory.
+The Appender re-uses the underlying data buffer, saving memory. This example illustrates.
+It is a modification of the InputFieldReordering example.
+
+    int main(string[] args)
+    {
+        import tsvutil;
+        import std.algorithm, std.array, std.range, std.stdio;
+        size_t[] fieldIndicies = [3, 0, 2];
+        auto fieldReordering = new InputFieldReordering!char(fieldIndicies);
+        auto outputBuffer = appender!(char[]);
+        foreach (line; stdin.byLine)
+        {
+            fieldReordering.initNewLine;
+            foreach(fieldIndex, fieldValue; line.splitter('\t').enumerate)
+            {
+                fieldReordering.processNextField(fieldIndex, fieldValue);
+                if (fieldReordering.allFieldsFilled) break;
+            }
+            if (fieldReordering.allFieldsFilled)
+            {
+                outputBuffer.clear;
+                writeln(fieldReordering.outputFields.joinAppend(outputBuffer, ('\t')));
+            }
+            else
+            {
+                writeln("Error: Insufficient number of field on the line.");
+            }
+        }
+        return 0;
+    }
+ */
+OutputRange joinAppend(InputRange, OutputRange, E)
+    (InputRange inputRange, ref OutputRange outputRange, E delimiter)
+    if (isInputRange!InputRange &&
+        (is(ElementType!InputRange : const E[]) &&
+         isOutputRange!(OutputRange, E[]))
+        ||
+        (is(ElementType!InputRange : const E) &&
+         isOutputRange!(OutputRange, E))
+        )
+{
+    if (!inputRange.empty)
+    {
+        outputRange.put(inputRange.front);
+        inputRange.popFront;
+    }
+    foreach (x; inputRange)
+    {
+        outputRange.put(delimiter);
+        outputRange.put(x);
+    }
+    return outputRange;
+}
+
+@safe unittest
+{
+    import std.array : appender;
+    import std.algorithm : equal;
+
+    char[] c1 = ['a', 'b', 'c'];
+    char[] c2 = ['d', 'e', 'f'];
+    char[] c3 = ['g', 'h', 'i'];
+    auto cvec = [c1, c2, c3];
+
+    auto s1 = "abc";
+    auto s2 = "def";
+    auto s3 = "ghi";
+    auto svec = [s1, s2, s3];
+
+    auto charAppender = appender!(char[])();
+
+    assert(cvec.joinAppend(charAppender, '_').data == "abc_def_ghi");
+    assert(equal(cvec, [c1, c2, c3]));
+
+    charAppender.put('$');
+    assert(svec.joinAppend(charAppender, '|').data == "abc_def_ghi$abc|def|ghi");
+    assert(equal(cvec, [s1, s2, s3]));
+
+    charAppender.clear;
+    assert(svec.joinAppend(charAppender, '|').data == "abc|def|ghi");
+
+    auto intAppender = appender!(int[])();
+
+    auto i1 = [100, 101, 102];
+    auto i2 = [200, 201, 202];
+    auto i3 = [300, 301, 302];
+    auto ivec = [i1, i2, i3];
+
+    assert(ivec.joinAppend(intAppender, 0).data ==
+           [100, 101, 102, 0, 200, 201, 202, 0, 300, 301, 302]);
+
+    intAppender.clear;
+    assert(i1.joinAppend(intAppender, 0).data ==
+           [100, 0, 101, 0, 102]);
+    assert(i2.joinAppend(intAppender, 1).data ==
+           [100, 0, 101, 0, 102,
+            200, 1, 201, 1, 202]);
+    assert(i3.joinAppend(intAppender, 2).data ==
+           [100, 0, 101, 0, 102,
+            200, 1, 201, 1, 202,
+            300, 2, 301, 2, 302]);
+}
 
 /**
 getTsvFieldValue extracts the value of a single field from a delimited text string.
