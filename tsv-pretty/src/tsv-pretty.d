@@ -53,8 +53,8 @@ Processing begins by reading the initial set of lines into memory to determine
 the field widths and data types of each column. This look-ahead buffer is used
 for header detection as well. Output begins after this processing is complete.
 
-By default, the only the alignment is changed, the actual values are not
-modified. Several of the formatting options do modify the values.
+By default, only the alignment is changed, the actual values are not modified.
+Several of the formatting options do modify the values.
 
 Features:
 
