@@ -12,4 +12,4 @@ Distinct sampling selects a subset based on a key in data. Consider a query log 
 
 `tsv-sample` is designed for large data sets. Algorithms make one pass over the data, using reservoir sampling and hashing when possible to limit the memory required. By default, a new random order is generated every run, but options are available for using the same randomization order over multiple runs.
 
-See the [tsv-sample reference](docs/ToolReference.md#tsv-sample-reference) for further details.
+See the [tsv-sample reference](../docs/ToolReference.md#tsv-sample-reference) for further details.
