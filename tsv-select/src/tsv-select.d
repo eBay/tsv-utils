@@ -238,13 +238,22 @@ void tsvSelect(CTERestLocation cteRest)(in TsvSelectOptions cmdopt, in string[] 
         auto leftOverFieldsAppender = appender!(char[][]);
     }
 
-    /* outputLineBuffer and joinAppend are used to build the output line prior to
-     * writing it. This is a performance enhancement over direct use of either
-     * std.algorithm.joiner. See the comments with joinAppend in common/src/tsvutil.d.
-     * for further info.
+    /* outputBuffer and joinAppend are used to build the output line prior to writing it.
+     * This was originally written as a performance enhancement over std.algorithm.joiner
+     * and std.array.join. It is faster than either, even when writing line-at-a-time.
+     * However, it also enables a simple output buffer system. This is a meaningful
+     * enhancement when working with data with short records. See the comments with
+     * joinAppend in common/src/tsvutil.d. for further info.
      */
     import tsvutil : joinAppend;
-    auto outputLineBuffer = appender!(char[]);
+
+    enum bufferReserveSize = 11264;
+    enum bufferFlushSize = 10240;
+    auto outputBuffer = appender!(char[]);
+    outputBuffer.reserve(bufferReserveSize);
+
+    /* Write any remaining buffered data before exiting. */
+    scope (exit) if (outputBuffer.data.length > 0) write(outputBuffer.data);
 
     /* Read each input file (or stdin) and iterate over each line. A filename of "-" is
      * interpreted as stdin, common behavior for unix command line tools.
@@ -287,29 +296,34 @@ void tsvSelect(CTERestLocation cteRest)(in TsvSelectOptions cmdopt, in string[] 
             }
 
             // Write the re-ordered line.
-            outputLineBuffer.clear;
 
             static if (cteRest == CTERestLocation.first)
             {
                 if (leftOverFieldsAppender.data.length > 0)
                 {
-                    leftOverFieldsAppender.data.joinAppend(outputLineBuffer, cmdopt.delim);
-                    outputLineBuffer.put(cmdopt.delim);
+                    leftOverFieldsAppender.data.joinAppend(outputBuffer, cmdopt.delim);
+                    outputBuffer.put(cmdopt.delim);
                 }
             }
 
-            fieldReordering.outputFields.joinAppend(outputLineBuffer, cmdopt.delim);
+            fieldReordering.outputFields.joinAppend(outputBuffer, cmdopt.delim);
 
             static if (cteRest == CTERestLocation.last)
             {
                 if (leftOverFieldsAppender.data.length > 0)
                 {
-                    outputLineBuffer.put(cmdopt.delim);
-                    leftOverFieldsAppender.data.joinAppend(outputLineBuffer, cmdopt.delim);
+                    outputBuffer.put(cmdopt.delim);
+                    leftOverFieldsAppender.data.joinAppend(outputBuffer, cmdopt.delim);
                 }
             }
 
-            writeln(outputLineBuffer.data);
+            outputBuffer.put('\n');
+
+            if (outputBuffer.data.length >= bufferFlushSize)
+            {
+                write(outputBuffer.data);
+                outputBuffer.clear;
+            }
         }
     }
 }

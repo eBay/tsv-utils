@@ -352,16 +352,18 @@ unittest
 joinAppend performs a join operation on an input range, appending the results to
 an output range.
 
-This routine was written as a performance enhancement over std.algorithm.joiner.
-Performance of joiner when used with writeln is poor. Using std.array.join with
-writeln is 3-4x faster. The joiner performance may be due to interaction with
-writeln, this was not investigated. Using joiner with stdout.lockingTextWriter is
-better, but still substantially slower than join. Using join works reasonably well,
+This routine was written as a performance enhancement over using std.algorithm.joiner
+or std.array.join with writeln. Using joiner with writeln is quite slow, 3-4x slower
+than std.array.join with writeln. The joiner performance may be due to interaction
+with writeln, this was not investigated. Using joiner with stdout.lockingTextWriter
+is better, but still substantially slower than join. Using join works reasonably well,
 but is allocating memory unnecessarily.
 
-Using joinAppend with an Appender is a bit faster than join, and allocates less memory.
-The Appender re-uses the underlying data buffer, saving memory. This example illustrates.
-It is a modification of the InputFieldReordering example.
+Using joinAppend with Appender is a bit faster than join, and allocates less memory.
+The Appender re-uses the underlying data buffer, saving memory. The example below
+illustrates. It is a modification of the InputFieldReordering example. The role
+Appender plus joinAppend are playing is to buffer the output. This can also be used to
+buffer multiple lines, improving performance further.
 
     int main(string[] args)
     {
