@@ -674,3 +674,57 @@ Help and Version printing 1
 1
 ====[tsv-select -V | grep -c 'tsv-select (eBay/tsv-utils-dlang)']====
 1
+
+====Longer output to trigger buffered output flush===
+
+====[tsv-select -f 1,3,5,7,8 input_8x50.tsv]====
+c-1	c-3	c-5	c-7	c-8
+pechschwarz	Araqua-pintado	Leopard	391553	799569
+púrpura	Macuco	Lion	454849	9.50952e+06
+Grünspan	Löffelente		746252	1.49768e+06
+Red-violet	Tüpfelsumpfhuhn	Leopard	302851	1.14038e+07
+violeta	Araqua-pintado	Lion	525103	2.76757e+06
+Grünspan	Macuco	Cougar	118000	204750
+ébène	Орёл		479157	358421
+blutrot	Araqua-pintado	Jaguar	240092	7.47234e+06
+púrpura	Pipit de Godlewski	Clouded Leopard	377055	5.92283e+06
+blutrot	Puffin des Baléares		483895	985720
+blutrot	Голубь		1.23555e+06	4.30317e+06
+fumée	Löffelente	Cougar	179447	6.15445e+06
+kohlrabenschwarz	Орёл	Asiatic Cheetah	503035	6.7872e+06
+fumée	Орёл		373015	1.44126e+06
+jaune	Pipit de Godlewski		1.26796e+06	3.16338e+06
+красный	Malvasía Cabeciblanca	Asiatic Lion	242439	3.84703e+06
+jaune	Weißwangengans	Asiatic Lion	341552	1.2647e+07
+jaune	Macreuse à bec jaune		800002	2.10985e+06
+altrosa	Macuco		926196	1.37339e+06
+café	Silbón Europeo	Asiatic Lion	242796	3.67369e+06
+türkis	Голубь		336388	725071
+濡れ羽色	Löffelente	Leopard	156572	2.73698e+06
+Grünspan	Purpurreiher		958879	3.8767e+06
+café	Tüpfelsumpfhuhn		1.11079e+06	2.55395e+06
+rouge	Pipit de Godlewski		631378	9.97228e+06
+dorado	Malvasía Cabeciblanca		177448	242918
+rouge	Macreuse à bec jaune	Leopard	476440	6.86172e+06
+marrón	Marreca-cabocla	Leopard	158591	1.90446e+06
+marrón	Malvasía Cabeciblanca	Leopard	16961	9.3182e+06
+Cerise	Silbón Europeo	Leopard	5076.85	1.2018e+07
+красный	Araqua-pintado	Asiatic Cheetah	505440	7.18885e+06
+jaune	Löffelente		420057	3.81928e+06
+fumée	Pipit de Godlewski	Lion	415660	1.19819e+07
+blutrot	Marreca-cabocla	Cougar	79237.5	8.8727e+06
+jaune	Purpurreiher	Leopard	146494	9.97194e+06
+jaune	Tüpfelsumpfhuhn	Mountain Lion	1.11318e+06	1.09238e+07
+dorado	Tüpfelsumpfhuhn	Asiatic Lion	432540	5.54834e+06
+blutrot	Silbón Europeo		935245	13442.3
+jaune	Purpurreiher	Leopard	887033	906184
+altrosa	Pica-pau-de-penacho	Leopard	256490	841759
+blutrot	Tüpfelsumpfhuhn	Mountain Lion	769994	9.31987e+06
+violeta	Pipit de Godlewski		566900	4.95726e+06
+暗紅色/暗赤色	Porrón Islándico	Cheetah	447148	252464
+türkis	Weißwangengans	Jaguar	503297	5.43214e+06
+pechschwarz	Löffelente	Leopard	351736	6.36675e+06
+pechschwarz	Орёл	Asiatic Lion	20635.8	5.46064e+06
+türkis	Löffelente	Leopard	409775	429166
+fumée	Голубь	Cheetah	54046	5.49175e+06
+türkis	Araqua-pintado	Lion	266594	1.25841e+06
