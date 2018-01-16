@@ -231,6 +231,19 @@ cat input_3x2.tsv | ${prog} --header --ge 2:23 >> ${basic_tests_1} 2>&1
 echo "" >> ${basic_tests_1}; echo "====[cat input_3x2.tsv | tsv-filter --header --ge 2:23 -- input_3x3.tsv - input_3x1.tsv]====" >> ${basic_tests_1}
 cat input_3x2.tsv | ${prog} --header --ge 2:23 -- input_3x3.tsv - input_3x1.tsv >> ${basic_tests_1} 2>&1
 
+## These tests are for the output buffering cases.
+echo "" >> ${basic_tests_1};
+echo "====[seq 100000 | tsv-filter --or --eq 1:1000 --eq 1:1100 --eq 1:5000 --eq 1:10000 --ge 1:70000 | wc -l | tr -d ' ']====" >> ${basic_tests_1}
+seq 100000 | ${prog} --or --eq 1:1000 --eq 1:1100 --eq 1:5000 --eq 1:10000 --ge 1:70000 | wc -l | tr -d ' ' >> ${basic_tests_1} 2>&1
+
+echo "" >> ${basic_tests_1};
+echo "====[seq 100000 | tsv-filter --le 1:20 | wc -l | tr -d ' ']====" >> ${basic_tests_1}
+seq 100000 | ${prog} --le 1:20 | wc -l | tr -d ' ' >> ${basic_tests_1} 2>&1
+
+echo "" >> ${basic_tests_1};
+echo "====[seq 100000 | tsv-filter --or --le 1:20 --eq 1:50000 --eq 1:50001 | wc -l | tr -d ' ']====" >> ${basic_tests_1}
+seq 100000 | ${prog} --or --le 1:20 --eq 1:50000 --eq 1:50001 | wc -l | tr -d ' ' >> ${basic_tests_1} 2>&1
+
 ## Help and Version printing
 
 echo "" >> ${basic_tests_1}
