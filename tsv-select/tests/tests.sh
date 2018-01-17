@@ -140,6 +140,20 @@ ${prog} --version 2>&1 | grep -c 'tsv-select (eBay/tsv-utils-dlang)' >> ${basic_
 echo "====[tsv-select -V | grep -c 'tsv-select (eBay/tsv-utils-dlang)']====" >> ${basic_tests_1}
 ${prog} -V 2>&1 | grep -c 'tsv-select (eBay/tsv-utils-dlang)' >> ${basic_tests_1} 2>&1
 
+## Longer output to trigger buffer flush
+
+echo "" >> ${basic_tests_1}; echo "====[tsv-select -H -f 1,3,5,7,8 input_8xlong.tsv | wc -l | tr -d ' ']====" >> ${basic_tests_1}
+${prog} -H -f 1,3,5,7,8 input_8xlong.tsv | wc -l | tr -d ' ' >>  ${basic_tests_1} 2>&1
+
+echo "" >> ${basic_tests_1}; echo "====[tsv-select -H -f 1,3,5,7,8 input_8xlong.tsv input_8xlong.tsv | wc -l | tr -d ' ']====" >> ${basic_tests_1}
+${prog} -H -f 1,3,5,7,8 input_8xlong.tsv input_8xlong.tsv | wc -l | tr -d ' ' >>  ${basic_tests_1} 2>&1
+
+echo "" >> ${basic_tests_1}; echo "====[tsv-select -H -f 1,3,5 input_8xlong.tsv input_8xlong.tsv | wc -l | tr -d ' ']====" >> ${basic_tests_1}
+${prog} -H -f 1,3,5 input_8xlong.tsv input_8xlong.tsv | wc -l | tr -d ' ' >>  ${basic_tests_1} 2>&1
+
+echo "" >> ${basic_tests_1}; echo "====[tsv-select -H -f 3 input_8xlong.tsv input_8xlong.tsv input_8xlong.tsv | wc -l | tr -d ' ']====" >> ${basic_tests_1}
+${prog} -H -f 3 input_8xlong.tsv input_8xlong.tsv input_8xlong.tsv | wc -l | tr -d ' ' >>  ${basic_tests_1} 2>&1
+
 ## Error cases
 
 error_tests_1=${odir}/error_tests_1.txt
