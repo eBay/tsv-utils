@@ -787,6 +787,21 @@ void tsvFilter(in TsvFilterOptions cmdopt, in string[] inputFiles)
     import std.range;
     import tsvutil : throwIfWindowsNewlineOnUnix;
 
+    /* An output buffer. Improves performance on narrow files with high percentages of
+     * writes. Want responsive output if output is rare, so ensure the first matched
+     * line is written, and that writes separated by long stretches of non-matched lines
+     * are written.
+     */
+    enum bufferReserveSize = 11264;
+    enum bufferFlushSize = 10240;
+    enum maxInputLinesWithoutBufferFlush = 1024;
+    size_t inputLinesWithoutBufferFlush = maxInputLinesWithoutBufferFlush + 1;
+
+    auto outputBuffer = appender!(char[]);
+    outputBuffer.reserve(bufferReserveSize);
+
+    scope(exit) if (outputBuffer.data.length > 0) write(outputBuffer.data);
+
     /* Process each input file, one line at a time. */
     auto lineFields = new char[][](cmdopt.maxFieldIndex + 1);
     bool headerWritten = false;
@@ -801,7 +816,8 @@ void tsvFilter(in TsvFilterOptions cmdopt, in string[] inputFiles)
                 /* Header. Output on the first file, skip subsequent files. */
                 if (!headerWritten)
                 {
-                    writeln(line);
+                    outputBuffer.put(line);
+                    outputBuffer.put('\n');
                     headerWritten = true;
                 }
             }
@@ -840,11 +856,23 @@ void tsvFilter(in TsvFilterOptions cmdopt, in string[] inputFiles)
                  */
                 try
                 {
+                    inputLinesWithoutBufferFlush++;
                     bool passed = cmdopt.disjunct ?
                         cmdopt.tests.any!(x => x(lineFields)) :
                         cmdopt.tests.all!(x => x(lineFields));
                     if (cmdopt.invert) passed = !passed;
-                    if (passed) writeln(line);
+                    if (passed)
+                    {
+                        outputBuffer.put(line);
+                        outputBuffer.put('\n');
+                        if (outputBuffer.data.length >= bufferFlushSize ||
+                            inputLinesWithoutBufferFlush > maxInputLinesWithoutBufferFlush)
+                        {
+                            write(outputBuffer.data);
+                            outputBuffer.clear;
+                            inputLinesWithoutBufferFlush = 0;
+                        }
+                    }
                 }
                 catch (Exception exc)
                 {

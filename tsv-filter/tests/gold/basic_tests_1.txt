@@ -1231,6 +1231,15 @@ f1	f2	f3
 3x2-r2	2002	3002
 3x1-r1	201	301
 
+====[seq 100000 | tsv-filter --or --eq 1:1000 --eq 1:1100 --eq 1:5000 --eq 1:10000 --ge 1:70000 | wc -l | tr -d ' ']====
+30005
+
+====[seq 100000 | tsv-filter --le 1:20 | wc -l | tr -d ' ']====
+20
+
+====[seq 100000 | tsv-filter --or --le 1:20 --eq 1:50000 --eq 1:50001 | wc -l | tr -d ' ']====
+22
+
 Help and Version printing 1
 -----------------
 
