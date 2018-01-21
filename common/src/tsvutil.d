@@ -354,9 +354,10 @@ BufferedOutput
 
 import std.stdio : isFileHandle;
 import std.range : isOutputRange;
+import std.traits : Unqual;
 
 struct BufferedOutput(OutputTarget)
-    if (isFileHandle!OutputTarget || isOutputRange!(OutputTarget, char))
+    if (isFileHandle!(Unqual!OutputTarget) || isOutputRange!(Unqual!OutputTarget, char))
 {
     import std.range : isOutputRange;
     import std.array : appender;
@@ -426,7 +427,7 @@ struct BufferedOutput(OutputTarget)
     }
 
     /* Make this an output range. */
-    final void put(T)(T stuff)
+    void put(T)(T stuff)
     {
         import std.traits;
         import std.stdio;
@@ -489,20 +490,26 @@ unittest
     assert(filepath2.readText == "file2: abcdefghijkl100\n0 1 2 3 4 5 6 7 8 9\n");
 
     /* With a locking text writer. */
-    string filepath3 = buildPath(testDir, "file3.txt");
-    {
-        import std.stdio : File;
 
-        auto ltw = filepath3.File("w").lockingTextWriter;
-        auto ostream = BufferedOutput!(typeof(ltw))(ltw);
-        ostream.append("file3: ");
-        ostream.append("abc");
-        ostream.append(["def", "ghi", "jkl"]);
-        ostream.appendln("100");
-        ostream.append(iota(0, 10).map!(x => x.to!string).joiner(" "));
-        ostream.appendln();
+    version(none)
+    {
+        string filepath3 = buildPath(testDir, "file3.txt");
+        {
+            import std.stdio : File;
+
+            auto ltw = filepath3.File("w").lockingTextWriter;
+            {
+                auto ostream = BufferedOutput!(typeof(ltw))(ltw);
+                ostream.append("file3: ");
+                ostream.append("abc");
+                ostream.append(["def", "ghi", "jkl"]);
+            ostream.appendln("100");
+            ostream.append(iota(0, 10).map!(x => x.to!string).joiner(" "));
+            ostream.appendln();
+            }
+        }
+        assert(filepath3.readText == "file3: abcdefghijkl100\n0 1 2 3 4 5 6 7 8 9\n");
     }
-    assert(filepath3.readText == "file3: abcdefghijkl100\n0 1 2 3 4 5 6 7 8 9\n");
 
     /* With an Appender. */
     import std.array : appender;
