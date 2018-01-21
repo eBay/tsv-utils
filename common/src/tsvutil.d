@@ -349,6 +349,253 @@ unittest
 }
 
 /**
+BufferedOutput
+ */
+
+import std.stdio : isFileHandle;
+import std.range : isOutputRange;
+
+struct BufferedOutput(OutputTarget)
+    if (isFileHandle!OutputTarget || isOutputRange!(OutputTarget, char))
+{
+    import std.range : isOutputRange;
+    import std.array : appender;
+    import std.format : format;
+
+    /* Identify the output element type. Only supporting char and ubyte for now. */
+    static if (isFileHandle!OutputTarget || isOutputRange!(OutputTarget, char))
+    {
+        alias C = char;
+    }
+    else static if (isOutputRange!(OutputTarget, ubyte))
+    {
+        alias C = ubyte;
+    }
+    else static assert(false);
+
+    private enum defaultReserveSize = 11264;
+    private enum defaultFlushSize = 10240;
+
+    private OutputTarget _outputTarget;
+    private auto _outputBuffer = appender!(C[]);
+    private immutable size_t _flushSize;
+
+    this(OutputTarget outputTarget,
+         size_t flushSize = defaultFlushSize,
+         size_t reserveSize = defaultReserveSize)
+    {
+        _outputTarget = outputTarget;
+        _flushSize = flushSize;
+        _outputBuffer.reserve(reserveSize);
+    }
+
+    ~this()
+    {
+        flush();
+    }
+
+    void flush()
+    {
+        static if (isFileHandle!OutputTarget) _outputTarget.write(_outputBuffer.data);
+        else _outputTarget.put(_outputBuffer.data);
+
+        _outputBuffer.clear;
+    }
+
+    void flushIfFull()
+    {
+        if (_outputBuffer.data.length >= _flushSize) flush();
+    }
+
+    void append(T)(T stuff)
+    {
+        import std.range : rangePut = put;
+        rangePut(_outputBuffer, stuff);
+    }
+
+    void appendln()
+    {
+        append('\n');
+        flushIfFull();
+    }
+
+    void appendln(T)(T stuff)
+    {
+        append(stuff);
+        appendln();
+    }
+
+    /* Make this an output range. */
+    final void put(T)(T stuff)
+    {
+        import std.traits;
+        import std.stdio;
+
+        static if (isSomeChar!T)
+        {
+            if (stuff == '\n') appendln();
+            else append(stuff);
+        }
+        else static if (isSomeString!T)
+        {
+            if (stuff == "\n") appendln();
+            else append(stuff);
+        }
+        else append(stuff);
+    }
+}
+
+unittest
+{
+    import unittest_utils;
+    import std.file : rmdirRecurse, readText;
+    import std.path : buildPath;
+
+    auto testDir = makeUnittestTempDir("tsv_utils_buffered_output");
+    scope(exit) testDir.rmdirRecurse;
+
+    import std.algorithm : map, joiner;
+    import std.range : iota;
+    import std.conv : to;
+
+    /* Basic test. Note that exiting the scope triggers flush. */
+    string filepath1 = buildPath(testDir, "file1.txt");
+    {
+        import std.stdio : File;
+
+        auto ostream = BufferedOutput!File(filepath1.File("w"));
+        ostream.append("file1: ");
+        ostream.append("abc");
+        ostream.append(["def", "ghi", "jkl"]);
+        ostream.appendln(100.to!string);
+        ostream.append(iota(0, 10).map!(x => x.to!string).joiner(" "));
+        ostream.appendln();
+    }
+    assert(filepath1.readText == "file1: abcdefghijkl100\n0 1 2 3 4 5 6 7 8 9\n");
+
+    /* Test with no reserve and no flush at every line. */
+    string filepath2 = buildPath(testDir, "file2.txt");
+    {
+        import std.stdio : File;
+
+        auto ostream = BufferedOutput!File(filepath2.File("w"), 0, 0);
+        ostream.append("file2: ");
+        ostream.append("abc");
+        ostream.append(["def", "ghi", "jkl"]);
+        ostream.appendln("100");
+        ostream.append(iota(0, 10).map!(x => x.to!string).joiner(" "));
+        ostream.appendln();
+    }
+    assert(filepath2.readText == "file2: abcdefghijkl100\n0 1 2 3 4 5 6 7 8 9\n");
+
+    /* With a locking text writer. */
+    string filepath3 = buildPath(testDir, "file3.txt");
+    {
+        import std.stdio : File;
+
+        auto ltw = filepath3.File("w").lockingTextWriter;
+        auto ostream = BufferedOutput!(typeof(ltw))(ltw);
+        ostream.append("file3: ");
+        ostream.append("abc");
+        ostream.append(["def", "ghi", "jkl"]);
+        ostream.appendln("100");
+        ostream.append(iota(0, 10).map!(x => x.to!string).joiner(" "));
+        ostream.appendln();
+    }
+    assert(filepath3.readText == "file3: abcdefghijkl100\n0 1 2 3 4 5 6 7 8 9\n");
+
+    /* With an Appender. */
+    import std.array : appender;
+    auto app1 = appender!(char[]);
+    {
+        auto ostream = BufferedOutput!(typeof(app1))(app1);
+        ostream.append("appender1: ");
+        ostream.append("abc");
+        ostream.append(["def", "ghi", "jkl"]);
+        ostream.appendln("100");
+        ostream.append(iota(0, 10).map!(x => x.to!string).joiner(" "));
+        ostream.appendln();
+    }
+    assert(app1.data == "appender1: abcdefghijkl100\n0 1 2 3 4 5 6 7 8 9\n");
+
+    /* With an Appender, but checking flush boundaries. */
+    auto app2 = appender!(char[]);
+    {
+        auto ostream = BufferedOutput!(typeof(app2))(app2, 10, 0); // Flush if 10+
+        assert(app2.data == "");
+        ostream.append("12345678"); // Not flushed yet.
+        assert(app2.data == "");
+        ostream.appendln;  // Nineth char, not flushed yet.
+        assert(app2.data == "");
+        ostream.appendln;  // Tenth char, now flushed.
+        assert(app2.data == "12345678\n\n");
+
+        app2.clear;
+        assert(app2.data == "");
+
+        ostream.append("12345678");
+        ostream.flushIfFull;
+        assert(app2.data == "");
+        ostream.flush;
+        assert(app2.data == "12345678");
+
+        app2.clear;
+        assert(app2.data == "");
+
+        ostream.append("123456789012345");
+        assert(app2.data == "");
+    }
+    assert(app2.data == "123456789012345");
+
+    /* Operating as an output range. When passed to a function as a ref, exiting
+     * the function does not flush. When passed as a value, it get flushed when
+     * the function returns.
+     */
+
+    void outputStuffAsRef(T)(ref T range)
+        if (isOutputRange!(T, char))
+    {
+        range.put('1');
+        range.put("23");
+        range.put('\n');
+        range.put(["5", "67"]);
+        range.put(iota(8, 10).map!(x => x.to!string));
+        range.put("\n");
+    }
+
+    void outputStuffAsVal(T)(T range)
+        if (isOutputRange!(T, char))
+    {
+        range.put('1');
+        range.put("23");
+        range.put('\n');
+        range.put(["5", "67"]);
+        range.put(iota(8, 10).map!(x => x.to!string));
+        range.put("\n");
+    }
+
+    auto app3 = appender!(char[]);
+    {
+        auto ostream = BufferedOutput!(typeof(app3))(app3, 12, 0);
+        outputStuffAsRef(ostream);
+        assert(app3.data == "", "app3.data: |" ~app3.data ~ "|");
+        outputStuffAsRef(ostream);
+        assert(app3.data == "123\n56789\n123\n", "app3.data: |" ~app3.data ~ "|");
+    }
+    assert(app3.data == "123\n56789\n123\n56789\n", "app3.data: |" ~app3.data ~ "|");
+
+    auto app4 = appender!(char[]);
+    {
+        auto ostream = BufferedOutput!(typeof(app4))(app4, 12, 0);
+        outputStuffAsVal(ostream);
+        assert(app4.data == "123\n56789\n", "app4.data: |" ~app4.data ~ "|");
+        outputStuffAsVal(ostream);
+        assert(app4.data == "123\n56789\n123\n56789\n", "app4.data: |" ~app4.data ~ "|");
+    }
+    assert(app4.data == "123\n56789\n123\n56789\n", "app4.data: |" ~app4.data ~ "|");
+}
+
+/**
 joinAppend performs a join operation on an input range, appending the results to
 an output range.
 
