@@ -122,26 +122,34 @@ int main(string[] cmdArgs)
 
 void numberLines(in NumberLinesOptions cmdopt, in string[] inputFiles)
 {
+    import std.conv : to;
     import std.range;
+    import tsvutil : BufferedOutputRange;
+
+    auto bufferedOutput = BufferedOutputRange!(typeof(stdout))(stdout);
 
     long lineNum = cmdopt.startNum;
     bool headerWritten = false;
     foreach (filename; (inputFiles.length > 0) ? inputFiles : ["-"])
     {
         auto inputStream = (filename == "-") ? stdin : filename.File();
-        foreach (fileLineNum, line; inputStream.byLine(KeepTerminator.yes).enumerate(1))
+        foreach (fileLineNum, line; inputStream.byLine(KeepTerminator.no).enumerate(1))
         {
             if (cmdopt.hasHeader && fileLineNum == 1)
             {
                 if (!headerWritten)
                 {
-                    write(cmdopt.headerString, cmdopt.delim, line);
+                    bufferedOutput.append(cmdopt.headerString);
+                    bufferedOutput.append(cmdopt.delim);
+                    bufferedOutput.appendln(line);
                     headerWritten = true;
                 }
             }
             else
             {
-                write(lineNum, cmdopt.delim, line);
+                bufferedOutput.append(lineNum.to!string);
+                bufferedOutput.append(cmdopt.delim);
+                bufferedOutput.appendln(line);
                 lineNum++;
             }
         }
