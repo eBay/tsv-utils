@@ -785,22 +785,17 @@ void tsvFilter(in TsvFilterOptions cmdopt, in string[] inputFiles)
 {
     import std.algorithm : all, any, splitter;
     import std.range;
-    import tsvutil : throwIfWindowsNewlineOnUnix;
+    import tsvutil : BufferedOutputRange, throwIfWindowsNewlineOnUnix;
 
-    /* An output buffer. Improves performance on narrow files with high percentages of
+    /* BufferedOutputRange improves performance on narrow files with high percentages of
      * writes. Want responsive output if output is rare, so ensure the first matched
      * line is written, and that writes separated by long stretches of non-matched lines
      * are written.
      */
-    enum bufferReserveSize = 11264;
-    enum bufferFlushSize = 10240;
     enum maxInputLinesWithoutBufferFlush = 1024;
     size_t inputLinesWithoutBufferFlush = maxInputLinesWithoutBufferFlush + 1;
 
-    auto outputBuffer = appender!(char[]);
-    outputBuffer.reserve(bufferReserveSize);
-
-    scope(exit) if (outputBuffer.data.length > 0) write(outputBuffer.data);
+    auto bufferedOutput = BufferedOutputRange!(typeof(stdout))(stdout);
 
     /* Process each input file, one line at a time. */
     auto lineFields = new char[][](cmdopt.maxFieldIndex + 1);
@@ -816,8 +811,7 @@ void tsvFilter(in TsvFilterOptions cmdopt, in string[] inputFiles)
                 /* Header. Output on the first file, skip subsequent files. */
                 if (!headerWritten)
                 {
-                    outputBuffer.put(line);
-                    outputBuffer.put('\n');
+                    bufferedOutput.appendln(line);
                     headerWritten = true;
                 }
             }
@@ -863,13 +857,11 @@ void tsvFilter(in TsvFilterOptions cmdopt, in string[] inputFiles)
                     if (cmdopt.invert) passed = !passed;
                     if (passed)
                     {
-                        outputBuffer.put(line);
-                        outputBuffer.put('\n');
-                        if (outputBuffer.data.length >= bufferFlushSize ||
-                            inputLinesWithoutBufferFlush > maxInputLinesWithoutBufferFlush)
+                        bool wasFlushed = bufferedOutput.appendln(line);
+                        if (wasFlushed) inputLinesWithoutBufferFlush = 0;
+                        else if (inputLinesWithoutBufferFlush > maxInputLinesWithoutBufferFlush)
                         {
-                            write(outputBuffer.data);
-                            outputBuffer.clear;
+                            bufferedOutput.flush;
                             inputLinesWithoutBufferFlush = 0;
                         }
                     }

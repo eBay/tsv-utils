@@ -435,9 +435,11 @@ struct BufferedOutputRange(OutputTarget)
         _outputBuffer.clear;
     }
 
-    void flushIfFull()
+    bool flushIfFull()
     {
-        if (_outputBuffer.data.length >= _flushSize) flush();
+        bool isFull = _outputBuffer.data.length >= _flushSize;
+        if (isFull) flush();
+        return isFull;
     }
 
     void append(T)(T stuff)
@@ -446,16 +448,16 @@ struct BufferedOutputRange(OutputTarget)
         rangePut(_outputBuffer, stuff);
     }
 
-    void appendln()
+    bool appendln()
     {
         append('\n');
-        flushIfFull();
+        return flushIfFull();
     }
 
-    void appendln(T)(T stuff)
+    bool appendln(T)(T stuff)
     {
         append(stuff);
-        appendln();
+        return appendln();
     }
 
     /* joinAppend is an optimization of append(inputRange.joiner(delimiter).
@@ -582,20 +584,30 @@ unittest
     auto app2 = appender!(char[]);
     {
         auto ostream = BufferedOutputRange!(typeof(app2))(app2, 10, 0); // Flush if 10+
+        bool wasFlushed = false;
+
         assert(app2.data == "");
+
         ostream.append("12345678"); // Not flushed yet.
         assert(app2.data == "");
-        ostream.appendln;  // Nineth char, not flushed yet.
+
+        wasFlushed = ostream.appendln;  // Nineth char, not flushed yet.
+        assert(!wasFlushed);
         assert(app2.data == "");
-        ostream.appendln;  // Tenth char, now flushed.
+
+        wasFlushed = ostream.appendln;  // Tenth char, now flushed.
+        assert(wasFlushed);
         assert(app2.data == "12345678\n\n");
 
         app2.clear;
         assert(app2.data == "");
 
         ostream.append("12345678");
-        ostream.flushIfFull;
+
+        wasFlushed = ostream.flushIfFull;
+        assert(!wasFlushed);
         assert(app2.data == "");
+
         ostream.flush;
         assert(app2.data == "12345678");
 
