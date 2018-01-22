@@ -205,10 +205,11 @@ output.
 void csv2tsvFiles(in Csv2tsvOptions cmdopt, in string[] inputFiles)
 {
     import std.algorithm : joiner;
+    import tsvutil : BufferedOutputRange;
 
     ubyte[1024 * 1024] fileRawBuf;
     ubyte[] stdinRawBuf = fileRawBuf[0..1024];
-    auto stdoutWriter = stdout.lockingTextWriter;
+    auto stdoutWriter = BufferedOutputRange!(typeof(stdout))(stdout);
     bool firstFile = true;
 
     foreach (filename; (inputFiles.length > 0) ? inputFiles : ["-"])
@@ -273,30 +274,6 @@ void csv2tsv(InputRange, OutputRange)
     if (isInputRange!InputRange && isOutputRange!(OutputRange, char) &&
         is(Unqual!(ElementType!InputRange) == ubyte))
 {
-    /* Writes are buffered to avoid byte-at-a-time output penalty. Writes are done on
-     * newline boundaries, a simple but effective strategy. It has the side benefit that
-     * multi-byte utf-8 sequences are not split up when output is done.
-     * Note: In Phobos version 2.073 and earlier it is important to do output with char
-     * rather than ubyte. See issue 17229 (https://issues.dlang.org/show_bug.cgi?id=17229).
-     */
-    auto outputBuffer = appender!(char[])();
-    outputBuffer.reserve(8192);
-
-    void outputChar(const char c)
-    {
-        put(outputBuffer, c);
-        if (c == '\n')
-        {
-            put(outputStream, outputBuffer.data);
-            outputBuffer.clear;
-        }
-    }
-
-    void outputString(string s)
-    {
-        put(outputBuffer, s);
-    }
-
     enum State { FieldEnd, NonQuotedField, QuotedField, QuoteInQuotedField }
 
     State currState = State.FieldEnd;
@@ -337,16 +314,16 @@ InputLoop: while (!inputStream.empty)
         case State.NonQuotedField:
             if (nextChar == csvDelim)
             {
-                outputChar(tsvDelim);
+                put(outputStream, tsvDelim);
                 currState = State.FieldEnd;
             }
             else if (nextChar == tsvDelim)
             {
-                outputString(tsvDelimReplacement);
+                put(outputStream, tsvDelimReplacement);
             }
             else if (nextChar == '\n')
             {
-                outputChar('\n');
+                put(outputStream, '\n');
                 ++recordNum;
                 fieldNum = 0;
                 currState = State.FieldEnd;
@@ -357,7 +334,7 @@ InputLoop: while (!inputStream.empty)
             }
             else
             {
-                outputChar(nextChar);
+                put(outputStream, nextChar);
             }
             break;
 
@@ -381,15 +358,15 @@ InputLoop: while (!inputStream.empty)
             else if (nextChar ==  '\n')
             {
                 /* Newline in a quoted field. */
-                outputString(tsvDelimReplacement);
+                put(outputStream, tsvDelimReplacement);
             }
             else if (nextChar == tsvDelim)
             {
-                outputString(tsvDelimReplacement);
+                put(outputStream, tsvDelimReplacement);
             }
             else
             {
-                outputChar(nextChar);
+                put(outputStream, nextChar);
             }
             break;
 
@@ -397,17 +374,17 @@ InputLoop: while (!inputStream.empty)
             /* Just processed a quote in a quoted field. */
             if (nextChar == csvQuote)
             {
-                outputChar(csvQuote);
+                put(outputStream, csvQuote);
                 currState = State.QuotedField;
             }
             else if (nextChar == csvDelim)
             {
-                outputChar(tsvDelim);
+                put(outputStream, tsvDelim);
                 currState = State.FieldEnd;
             }
             else if (nextChar == '\n')
             {
-                outputChar('\n');
+                put(outputStream, '\n');
                 ++recordNum;
                 fieldNum = 0;
                 currState = State.FieldEnd;
@@ -435,8 +412,7 @@ InputLoop: while (!inputStream.empty)
                    currFileLineNumber + recordNum));
     }
 
-    if (fieldNum > 0) outputChar('\n');    // Last line w/o terminating newline.
-    assert(outputBuffer.data.length == 0);
+    if (fieldNum > 0) put(outputStream, '\n');    // Last line w/o terminating newline.
 }
 
 unittest

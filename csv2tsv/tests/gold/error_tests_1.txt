@@ -21,11 +21,11 @@ Error [csv2tsv]: Cannot open file `nosuchfile.txt' in mode `rb' (No such file or
 Error [csv2tsv]: Invalid CSV. Improperly terminated quoted field. File: invalid1.csv, Line: 3
 field1	field2	field3
 100	ab c	de f
-
+200	gh i,
 
 ====[csv2tsv invalid2.csv]====
 Error [csv2tsv]: Invalid CSV. Improperly terminated quoted field. File: invalid2.csv, Line: 4
 field1	field2	field3
 100	ab c	de f
 200	gh i	jk l
-
+300	mn o	pq r 
