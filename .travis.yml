@@ -27,11 +27,13 @@ matrix:
       language: d
       d: ldc-1.2.0
       env: DUBTEST=1 MAKETEST=1
+      if: NOT fork
     - os: osx
       osx_image: xcode9
       language: d
       d: ldc
       env: DUBTEST=1 MAKETEST=1 APPLTO=off
+      if: NOT fork
 #    - os: osx
 #      osx_image: xcode9
 #      language: d
@@ -46,10 +48,12 @@ matrix:
       language: d
       d: ldc
       env: DUBTEST=1 MAKETEST=1 APPLTO=full
+      if: NOT fork
     - os: linux
       language: d
       d: ldc
       env: APPLTO=thin ALLLTO=default
+      if: NOT fork
     - os: linux
       language: d
       d: ldc
