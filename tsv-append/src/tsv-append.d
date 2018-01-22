@@ -22,6 +22,7 @@ else
 {
     int main(string[] cmdArgs)
     {
+        import tsvutil : BufferedOutputRange;
         /* When running in DMD code coverage mode, turn on report merging. */
         version(D_Coverage) version(DigitalMars)
         {
@@ -32,7 +33,7 @@ else
         TsvAppendOptions cmdopt;
         auto r = cmdopt.processArgs(cmdArgs);
         if (!r[0]) return r[1];
-        try tsvAppend(cmdopt, stdout.lockingTextWriter);
+        try tsvAppend(cmdopt, BufferedOutputRange!(typeof(stdout))(stdout));
         catch (Exception exc)
         {
             stderr.writefln("Error [%s]: %s", cmdopt.programName, exc.msg);
@@ -203,7 +204,7 @@ void tsvAppend(OutputRange)(TsvAppendOptions cmdopt, OutputRange outputStream)
     {
         auto inputStream = (filename == "-") ? stdin : filename.File();
         auto sourceName = cmdopt.fileSourceNames[filename];
-        foreach (fileLineNum, line; inputStream.byLine(KeepTerminator.yes).enumerate(1))
+        foreach (fileLineNum, line; inputStream.byLine(KeepTerminator.no).enumerate(1))
         {
             if (cmdopt.hasHeader && fileLineNum == 1)
             {
@@ -215,6 +216,7 @@ void tsvAppend(OutputRange)(TsvAppendOptions cmdopt, OutputRange outputStream)
                         outputStream.put(cmdopt.delim);
                     }
                     outputStream.put(line);
+                    outputStream.put('\n');
                     headerWritten = true;
                 }
             }
@@ -226,6 +228,7 @@ void tsvAppend(OutputRange)(TsvAppendOptions cmdopt, OutputRange outputStream)
                     outputStream.put(cmdopt.delim);
                 }
                 outputStream.put(line);
+                outputStream.put('\n');
             }
         }
     }
