@@ -192,7 +192,7 @@ int main(string[] cmdArgs)
 
 void tsvUniq(in TsvUniqOptions cmdopt, in string[] inputFiles)
 {
-    import tsvutil : InputFieldReordering;
+    import tsvutil : InputFieldReordering, BufferedOutputRange;
     import std.algorithm : splitter;
     import std.array : join;
     import std.conv : to;
@@ -201,6 +201,9 @@ void tsvUniq(in TsvUniqOptions cmdopt, in string[] inputFiles)
 
     /* InputFieldReordering maps the key fields from an input line to a separate buffer. */
     auto keyFieldsReordering = new InputFieldReordering!char(cmdopt.fields);
+
+    /* BufferedOutputRange is a performance enhancement for writing to stdout. */
+    auto bufferedOutput = BufferedOutputRange!(typeof(stdout))(stdout);
 
     /* The master hash. The key is the specified fields concatenated together (including
      * separators). The value is the equiv-id.
@@ -220,9 +223,13 @@ void tsvUniq(in TsvUniqOptions cmdopt, in string[] inputFiles)
                 /* Header line. */
                 if (!headerWritten)
                 {
-                    write(line);
-                    if (cmdopt.equivMode) write(cmdopt.delim, cmdopt.equivHeader);
-                    writeln();
+                    bufferedOutput.append(line);
+                    if (cmdopt.equivMode)
+                    {
+                        bufferedOutput.append(cmdopt.delim);
+                        bufferedOutput.append(cmdopt.equivHeader);
+                    }
+                    bufferedOutput.appendln();
                     headerWritten = true;
                 }
             }
@@ -274,9 +281,13 @@ void tsvUniq(in TsvUniqOptions cmdopt, in string[] inputFiles)
 
                 if (isUniq || cmdopt.equivMode)
                 {
-                    write(line);
-                    if (cmdopt.equivMode) write(cmdopt.delim, currEquivID);
-                    writeln();
+                    bufferedOutput.append(line);
+                    if (cmdopt.equivMode)
+                    {
+                        bufferedOutput.append(cmdopt.delim);
+                        bufferedOutput.append(currEquivID.to!string);
+                    }
+                    bufferedOutput.appendln();
                 }
             }
         }
