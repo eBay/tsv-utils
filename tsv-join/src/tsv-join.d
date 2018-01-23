@@ -293,7 +293,7 @@ int main(string[] cmdArgs)
  */
 void tsvJoin(in TsvJoinOptions cmdopt, in string[] inputFiles)
 {
-    import tsvutil : InputFieldReordering, throwIfWindowsNewlineOnUnix;
+    import tsvutil : InputFieldReordering, BufferedOutputRange, throwIfWindowsNewlineOnUnix;
     import std.algorithm : splitter;
     import std.array : join;
     import std.range;
@@ -429,7 +429,9 @@ void tsvJoin(in TsvJoinOptions cmdopt, in string[] inputFiles)
 
     /* Now process each input file, one line at a time. */
 
+    auto bufferedOutput = BufferedOutputRange!(typeof(stdout))(stdout);
     bool headerWritten = false;
+
     foreach (filename; (inputFiles.length > 0) ? inputFiles : ["-"])
     {
         auto inputStream = (filename == "-") ? stdin : filename.File();
@@ -444,9 +446,13 @@ void tsvJoin(in TsvJoinOptions cmdopt, in string[] inputFiles)
                 /* Header line processing. */
                 if (!headerWritten)
                 {
-                    write(line);
-                    if (isAppending) write(cmdopt.delim, appendFieldsHeader);
-                    writeln();
+                    bufferedOutput.append(line);
+                    if (isAppending)
+                    {
+                        bufferedOutput.append(cmdopt.delim);
+                        bufferedOutput.append(appendFieldsHeader);
+                    }
+                    bufferedOutput.appendln;
                     headerWritten = true;
                 }
             }
@@ -487,9 +493,13 @@ void tsvJoin(in TsvJoinOptions cmdopt, in string[] inputFiles)
                 debug writeln("   --> matched? ", matched);
                 if (cmdopt.writeAll || (matched && !cmdopt.exclude) || (!matched && cmdopt.exclude))
                 {
-                    write(line);
-                    if (isAppending) write(cmdopt.delim, matched ? *appendFields : appendFieldsUnmatchedValue);
-                    writeln();
+                    bufferedOutput.append(line);
+                    if (isAppending)
+                    {
+                        bufferedOutput.append(cmdopt.delim);
+                        bufferedOutput.append(matched ? *appendFields : appendFieldsUnmatchedValue);
+                    }
+                    bufferedOutput.appendln();
                 }
             }
         }
