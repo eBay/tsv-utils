@@ -357,31 +357,39 @@ unittest
 
 /**
 BufferedOutputRange is a performance enhancement over writing directly to an output
-stream. It holds a File or OutputRange. Output is held in an internal buffer prior an
-written to the File or OutputRange as a block.
+stream. It holds a File open for write or an OutputRange. Ouput is accumulated in an
+internal buffer and written to the output stream as a block.
 
-BufferedOutputRange was designed specifically for writing to stdout, but it can write
-to either a File open for writing or an OutputRange. It is often dramatically faster
+Writing to stdout is a key use case. BufferedOutputRange is often dramatically faster
 than writing to stdout directly. This is especially noticable for outputs with short
 lines, as it blocks many writes together in a single write.
 
-BufferedOutputRange has a number of its own methods. It also exposes a put method so
-it can be used as an OutputRange.
+The internal buffer is written to the output stream after flushSize has been reached.
+This is checked at newline boundaries, when appendln is called or when put is called
+with a single newline character. Other writes check maxSize, which is used to avoid
+runaway buffers.
 
-* this(outputStream [, flushSize, reserveSize]) - Constructor
-* append(stuff) - Append to the internal buffer. This will not flush to the output stream.
+
+BufferedOutputRange has a put method allowing it to be used a range. It has a number
+of other methods providing additional control.
+
+* this(outputStream [, flushSize, reserveSize, maxSize]) - Constructor. Takes the output
+      stream, e.g. stdout. Other arguments are optional, defaults normally suffice.
+* append(stuff) - Append to the internal buffer.
 * appendln(stuff) - Append to the internal buffer, followed by a newline. The buffer is
       flushed to the output stream if is has reached flushSize.
-* appendln() - Append a newline to the internal buffer. The buffer is flushed to the output
-      stream if is has reached flushSize.
+* appendln() - Append a newline to the internal buffer. The buffer is flushed to the
+      output stream if is has reached flushSize.
 * joinAppend(inputRange, delim) - An optimization of append(inputRange.joiner(delim).
       For reasons that are not clear, joiner is quite slow.
-* flushIfFull() - Flush the internal buffer to the output stream if it has reached flushSize.
+* flushIfFull() - Flush the internal buffer to the output stream if flushSize has been
+      reached.
 * flush() - Write the internal buffer to the output stream.
-* put(stuff) - To act as an OutputRange. Appends to the internal buffer. Acts as appendln()
-      if passed a single newline character ('\n' or "\n").
+* put(stuff) - Appends to the internal buffer. Acts as appendln() if passed a single
+      newline character ('\n' or "\n").
 
-The internal buffer is automatically flushed when the BufferedOutputRange goes out of scope.
+The internal buffer is automatically flushed when the BufferedOutputRange goes out of
+scope.
 */
 
 import std.stdio : isFileHandle;
@@ -408,17 +416,23 @@ struct BufferedOutputRange(OutputTarget)
 
     private enum defaultReserveSize = 11264;
     private enum defaultFlushSize = 10240;
+    private enum defaultMaxSize = 4194304;
 
     private OutputTarget _outputTarget;
     private auto _outputBuffer = appender!(C[]);
     private immutable size_t _flushSize;
+    private immutable size_t _maxSize;
 
     this(OutputTarget outputTarget,
          size_t flushSize = defaultFlushSize,
-         size_t reserveSize = defaultReserveSize)
+         size_t reserveSize = defaultReserveSize,
+         size_t maxSize = defaultMaxSize)
     {
+        assert(flushSize <= maxSize);
+
         _outputTarget = outputTarget;
         _flushSize = flushSize;
+        _maxSize = (flushSize <= maxSize) ? maxSize : flushSize;
         _outputBuffer.reserve(reserveSize);
     }
 
@@ -442,21 +456,33 @@ struct BufferedOutputRange(OutputTarget)
         return isFull;
     }
 
-    void append(T)(T stuff)
+    /* flushIfMaxSize is a safety check to avoid runaway buffer growth. */
+    void flushIfMaxSize()
+    {
+        if (_outputBuffer.data.length >= _maxSize) flush();
+    }
+
+    private void appendRaw(T)(T stuff)
     {
         import std.range : rangePut = put;
         rangePut(_outputBuffer, stuff);
     }
 
+    void append(T)(T stuff)
+    {
+        appendRaw(stuff);
+        flushIfMaxSize();
+    }
+
     bool appendln()
     {
-        append('\n');
+        appendRaw('\n');
         return flushIfFull();
     }
 
     bool appendln(T)(T stuff)
     {
-        append(stuff);
+        appendRaw(stuff);
         return appendln();
     }
 
@@ -470,14 +496,15 @@ struct BufferedOutputRange(OutputTarget)
     {
         if (!inputRange.empty)
         {
-            append(inputRange.front);
+            appendRaw(inputRange.front);
             inputRange.popFront;
         }
         foreach (x; inputRange)
         {
-            append(delimiter);
-            append(x);
+            appendRaw(delimiter);
+            appendRaw(x);
         }
+        flushIfMaxSize();
     }
 
     /* Make this an output range. */
@@ -489,7 +516,7 @@ struct BufferedOutputRange(OutputTarget)
         static if (isSomeChar!T)
         {
             if (stuff == '\n') appendln();
-            else append(stuff);
+            else appendRaw(stuff);
         }
         else static if (isSomeString!T)
         {
@@ -682,6 +709,30 @@ unittest
         assert(app4.data == "123\n56789\n123\n56789\n", "app4.data: |" ~app4.data ~ "|");
     }
     assert(app4.data == "123\n56789\n123\n56789\n", "app4.data: |" ~app4.data ~ "|");
+
+    /* Test maxSize. */
+    auto app5 = appender!(char[]);
+    {
+        auto ostream = BufferedOutputRange!(typeof(app5))(app5, 5, 0, 10); // maxSize 10
+        assert(app5.data == "");
+
+        ostream.append("1234567");  // Not flushed yet (no newline).
+        assert(app5.data == "");
+
+        ostream.append("89012");    // Flushed by maxSize
+        assert(app5.data == "123456789012");
+
+        ostream.put("1234567");     // Not flushed yet (no newline).
+        assert(app5.data == "123456789012");
+
+        ostream.put("89012");       // Flushed by maxSize
+        assert(app5.data == "123456789012123456789012");
+
+        ostream.joinAppend(["ab", "cd"], '-');        // Not flushed yet
+        ostream.joinAppend(["de", "gh", "ij"], '-');  // Flushed by maxSize
+        assert(app5.data == "123456789012123456789012ab-cdde-gh-ij");
+    }
+    assert(app5.data == "123456789012123456789012ab-cdde-gh-ij");
 }
 
 /**
