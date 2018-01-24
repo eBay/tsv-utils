@@ -207,7 +207,7 @@ to the non-templatized version. (Note: 'cte' stands for 'compile time evaluation
 */
 void tsvSelect(CTERestLocation cteRest)(in TsvSelectOptions cmdopt, in string[] inputFiles)
 {
-    import tsvutil: InputFieldReordering, throwIfWindowsNewlineOnUnix;
+    import tsvutil: BufferedOutputRange, InputFieldReordering, throwIfWindowsNewlineOnUnix;
     import std.algorithm: splitter;
     import std.format: format;
     import std.range;
@@ -238,22 +238,10 @@ void tsvSelect(CTERestLocation cteRest)(in TsvSelectOptions cmdopt, in string[] 
         auto leftOverFieldsAppender = appender!(char[][]);
     }
 
-    /* outputBuffer and joinAppend are used to build the output line prior to writing it.
-     * This was originally written as a performance enhancement over std.algorithm.joiner
-     * and std.array.join. It is faster than either, even when writing line-at-a-time.
-     * However, it also enables a simple output buffer system. This is a meaningful
-     * enhancement when working with data with short records. See the comments with
-     * joinAppend in common/src/tsvutil.d. for further info.
+    /* BufferedOutputRange (from tsvutils.d) is a performance improvement over writing
+     * directly to stdout.
      */
-    import tsvutil : joinAppend;
-
-    enum bufferReserveSize = 11264;
-    enum bufferFlushSize = 10240;
-    auto outputBuffer = appender!(char[]);
-    outputBuffer.reserve(bufferReserveSize);
-
-    /* Write any remaining buffered data before exiting. */
-    scope (exit) if (outputBuffer.data.length > 0) write(outputBuffer.data);
+    auto bufferedOutput = BufferedOutputRange!(typeof(stdout))(stdout);
 
     /* Read each input file (or stdin) and iterate over each line. A filename of "-" is
      * interpreted as stdin, common behavior for unix command line tools.
@@ -301,29 +289,23 @@ void tsvSelect(CTERestLocation cteRest)(in TsvSelectOptions cmdopt, in string[] 
             {
                 if (leftOverFieldsAppender.data.length > 0)
                 {
-                    leftOverFieldsAppender.data.joinAppend(outputBuffer, cmdopt.delim);
-                    outputBuffer.put(cmdopt.delim);
+                    bufferedOutput.joinAppend(leftOverFieldsAppender.data, cmdopt.delim);
+                    bufferedOutput.append(cmdopt.delim);
                 }
             }
 
-            fieldReordering.outputFields.joinAppend(outputBuffer, cmdopt.delim);
+            bufferedOutput.joinAppend(fieldReordering.outputFields, cmdopt.delim);
 
             static if (cteRest == CTERestLocation.last)
             {
                 if (leftOverFieldsAppender.data.length > 0)
                 {
-                    outputBuffer.put(cmdopt.delim);
-                    leftOverFieldsAppender.data.joinAppend(outputBuffer, cmdopt.delim);
+                    bufferedOutput.append(cmdopt.delim);
+                    bufferedOutput.joinAppend(leftOverFieldsAppender.data, cmdopt.delim);
                 }
             }
 
-            outputBuffer.put('\n');
-
-            if (outputBuffer.data.length >= bufferFlushSize)
-            {
-                write(outputBuffer.data);
-                outputBuffer.clear;
-            }
+            bufferedOutput.appendln;
         }
     }
 }

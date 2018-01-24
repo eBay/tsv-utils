@@ -4,6 +4,8 @@ _Visit the eBay TSV utilities [main page](../README.md)_
 
 This directory contains utility functions shared by multiple TSV utility tools. A few that may be of more general interest:
 * **InputFieldReordering** - A class that creates a reordered subset of fields from an input line. Used to operate on a subset of fields in the order specified on the command line. *File: tsvutils.d*.
+* **BufferedOutputRange** - An OutputRange with an internal buffer used to buffer output.
+  Intended for use with stdout, it is a significant performance benefit. *File: tsvutils.d*.
 * **quantile** - Calculates a cummulative probability for values in a data set. Supports the same interpolation methods as the quantile function in R and many other statistical packages. *File: tsv_numerics.d*.
 * **rangeMedian** - Finds the median in a range. Implements via the faster of `std.algorithm.topN` or `std.algorithm.sort` depending on the Phobos version. *File: tsv_numerics.d*.
 * **formatNumber** - An alternate print format for numbers, especially useful when doubles are being used to represent integer and float values. *File: tsv_numerics.d*.

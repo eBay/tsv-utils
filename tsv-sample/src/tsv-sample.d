@@ -33,21 +33,24 @@ else
         if (!r[0]) return r[1];
         try
         {
+            import tsvutil : BufferedOutputRange;
+            auto bufferedOutput = BufferedOutputRange!(typeof(stdout))(stdout);
+
             if (cmdopt.useStreamSampling)
             {
-                streamSampling(cmdopt, stdout.lockingTextWriter);
+                streamSampling(cmdopt, bufferedOutput);
             }
             else if (cmdopt.useDistinctSampling)
             {
-                distinctSampling(cmdopt, stdout.lockingTextWriter);
+                distinctSampling(cmdopt, bufferedOutput);
             }
             else if (cmdopt.sampleSize == 0)
             {
-                reservoirSampling!(Yes.permuteAll)(cmdopt, stdout.lockingTextWriter);
+                reservoirSampling!(Yes.permuteAll)(cmdopt, bufferedOutput);
             }
             else
             {
-                reservoirSampling!(No.permuteAll)(cmdopt, stdout.lockingTextWriter);
+                reservoirSampling!(No.permuteAll)(cmdopt, bufferedOutput);
             }
         }
         catch (Exception exc)

@@ -2,10 +2,13 @@
 Utilities used by TSV applications.
 
 Utilities in this file:
-* InputFieldReordering class - A class that creates a reordered subset of fields from an
+* InputFieldReordering - A class that creates a reordered subset of fields from an
   input line. Fields in the subset are accessed by array indicies. This is especially
   useful when processing the subset in a specific order, such as the order listed on the
   command-line at run-time.
+
+* BufferedOutputRange - An OutputRange with an internal buffer used to buffer output.
+  Intended for use with stdout, it is a significant performance benefit.
 
 * joinAppend - A function that performs a join, but appending the join output to an
   output stream. It is a performance improvement over using join or joiner with writeln.
@@ -13,8 +16,11 @@ Utilities in this file:
 * getTsvFieldValue - A convenience function when only a single value is needed from an
   input line.
 
-* parseFieldList, makeFieldListOptionHandler - Helper functions for parsing field-lists
-  entered on the command line.
+* Field-lists: parseFieldList, makeFieldListOptionHandler - Helper functions for parsing
+  field-lists entered on the command line.
+
+* throwIfWindowsNewlineOnUnix - A utility for Unix platform builds to detecting Windows
+  newlines in input.
 
 Copyright (c) 2015-2018, eBay Software Foundation
 Initially written by Jon Degenhardt
@@ -32,7 +38,8 @@ import std.typecons : Flag, No, Yes;
 alias EnablePartialLines = Flag!"enablePartialLines";
 
 /**
-Move select fields from an input line to an output array, reordering along the way.
+InputFieldReordering - Move select fields from an input line to an output array,
+reordering along the way.
 
 The InputFieldReordering class is used to reorder a subset of fields from an input line.
 The caller instantiates an InputFieldReordering object at the start of input processing.
@@ -349,10 +356,393 @@ unittest
 }
 
 /**
+BufferedOutputRange is a performance enhancement over writing directly to an output
+stream. It holds a File open for write or an OutputRange. Ouput is accumulated in an
+internal buffer and written to the output stream as a block.
+
+Writing to stdout is a key use case. BufferedOutputRange is often dramatically faster
+than writing to stdout directly. This is especially noticable for outputs with short
+lines, as it blocks many writes together in a single write.
+
+The internal buffer is written to the output stream after flushSize has been reached.
+This is checked at newline boundaries, when appendln is called or when put is called
+with a single newline character. Other writes check maxSize, which is used to avoid
+runaway buffers.
+
+
+BufferedOutputRange has a put method allowing it to be used a range. It has a number
+of other methods providing additional control.
+
+* this(outputStream [, flushSize, reserveSize, maxSize]) - Constructor. Takes the output
+      stream, e.g. stdout. Other arguments are optional, defaults normally suffice.
+* append(stuff) - Append to the internal buffer.
+* appendln(stuff) - Append to the internal buffer, followed by a newline. The buffer is
+      flushed to the output stream if is has reached flushSize.
+* appendln() - Append a newline to the internal buffer. The buffer is flushed to the
+      output stream if is has reached flushSize.
+* joinAppend(inputRange, delim) - An optimization of append(inputRange.joiner(delim).
+      For reasons that are not clear, joiner is quite slow.
+* flushIfFull() - Flush the internal buffer to the output stream if flushSize has been
+      reached.
+* flush() - Write the internal buffer to the output stream.
+* put(stuff) - Appends to the internal buffer. Acts as appendln() if passed a single
+      newline character ('\n' or "\n").
+
+The internal buffer is automatically flushed when the BufferedOutputRange goes out of
+scope.
+*/
+
+import std.stdio : isFileHandle;
+import std.range : isOutputRange;
+import std.traits : Unqual;
+
+struct BufferedOutputRange(OutputTarget)
+    if (isFileHandle!(Unqual!OutputTarget) || isOutputRange!(Unqual!OutputTarget, char))
+{
+    import std.range : isOutputRange;
+    import std.array : appender;
+    import std.format : format;
+
+    /* Identify the output element type. Only supporting char and ubyte for now. */
+    static if (isFileHandle!OutputTarget || isOutputRange!(OutputTarget, char))
+    {
+        alias C = char;
+    }
+    else static if (isOutputRange!(OutputTarget, ubyte))
+    {
+        alias C = ubyte;
+    }
+    else static assert(false);
+
+    private enum defaultReserveSize = 11264;
+    private enum defaultFlushSize = 10240;
+    private enum defaultMaxSize = 4194304;
+
+    private OutputTarget _outputTarget;
+    private auto _outputBuffer = appender!(C[]);
+    private immutable size_t _flushSize;
+    private immutable size_t _maxSize;
+
+    this(OutputTarget outputTarget,
+         size_t flushSize = defaultFlushSize,
+         size_t reserveSize = defaultReserveSize,
+         size_t maxSize = defaultMaxSize)
+    {
+        assert(flushSize <= maxSize);
+
+        _outputTarget = outputTarget;
+        _flushSize = flushSize;
+        _maxSize = (flushSize <= maxSize) ? maxSize : flushSize;
+        _outputBuffer.reserve(reserveSize);
+    }
+
+    ~this()
+    {
+        flush();
+    }
+
+    void flush()
+    {
+        static if (isFileHandle!OutputTarget) _outputTarget.write(_outputBuffer.data);
+        else _outputTarget.put(_outputBuffer.data);
+
+        _outputBuffer.clear;
+    }
+
+    bool flushIfFull()
+    {
+        bool isFull = _outputBuffer.data.length >= _flushSize;
+        if (isFull) flush();
+        return isFull;
+    }
+
+    /* flushIfMaxSize is a safety check to avoid runaway buffer growth. */
+    void flushIfMaxSize()
+    {
+        if (_outputBuffer.data.length >= _maxSize) flush();
+    }
+
+    private void appendRaw(T)(T stuff)
+    {
+        import std.range : rangePut = put;
+        rangePut(_outputBuffer, stuff);
+    }
+
+    void append(T)(T stuff)
+    {
+        appendRaw(stuff);
+        flushIfMaxSize();
+    }
+
+    bool appendln()
+    {
+        appendRaw('\n');
+        return flushIfFull();
+    }
+
+    bool appendln(T)(T stuff)
+    {
+        appendRaw(stuff);
+        return appendln();
+    }
+
+    /* joinAppend is an optimization of append(inputRange.joiner(delimiter).
+     * This form is quite a bit faster, 40%+ on some benchmarks.
+     */
+    void joinAppend(InputRange, E)(InputRange inputRange, E delimiter)
+        if (isInputRange!InputRange &&
+            is(ElementType!InputRange : const C[]) &&
+            (is(E : const C[]) || is(E : const C)))
+    {
+        if (!inputRange.empty)
+        {
+            appendRaw(inputRange.front);
+            inputRange.popFront;
+        }
+        foreach (x; inputRange)
+        {
+            appendRaw(delimiter);
+            appendRaw(x);
+        }
+        flushIfMaxSize();
+    }
+
+    /* Make this an output range. */
+    void put(T)(T stuff)
+    {
+        import std.traits;
+        import std.stdio;
+
+        static if (isSomeChar!T)
+        {
+            if (stuff == '\n') appendln();
+            else appendRaw(stuff);
+        }
+        else static if (isSomeString!T)
+        {
+            if (stuff == "\n") appendln();
+            else append(stuff);
+        }
+        else append(stuff);
+    }
+}
+
+unittest
+{
+    import unittest_utils;
+    import std.file : rmdirRecurse, readText;
+    import std.path : buildPath;
+
+    auto testDir = makeUnittestTempDir("tsv_utils_buffered_output");
+    scope(exit) testDir.rmdirRecurse;
+
+    import std.algorithm : map, joiner;
+    import std.range : iota;
+    import std.conv : to;
+
+    /* Basic test. Note that exiting the scope triggers flush. */
+    string filepath1 = buildPath(testDir, "file1.txt");
+    {
+        import std.stdio : File;
+
+        auto ostream = BufferedOutputRange!File(filepath1.File("w"));
+        ostream.append("file1: ");
+        ostream.append("abc");
+        ostream.append(["def", "ghi", "jkl"]);
+        ostream.appendln(100.to!string);
+        ostream.append(iota(0, 10).map!(x => x.to!string).joiner(" "));
+        ostream.appendln();
+    }
+    assert(filepath1.readText == "file1: abcdefghijkl100\n0 1 2 3 4 5 6 7 8 9\n");
+
+    /* Test with no reserve and no flush at every line. */
+    string filepath2 = buildPath(testDir, "file2.txt");
+    {
+        import std.stdio : File;
+
+        auto ostream = BufferedOutputRange!File(filepath2.File("w"), 0, 0);
+        ostream.append("file2: ");
+        ostream.append("abc");
+        ostream.append(["def", "ghi", "jkl"]);
+        ostream.appendln("100");
+        ostream.append(iota(0, 10).map!(x => x.to!string).joiner(" "));
+        ostream.appendln();
+    }
+    assert(filepath2.readText == "file2: abcdefghijkl100\n0 1 2 3 4 5 6 7 8 9\n");
+
+    /* With a locking text writer. Requires version 2.078.0
+       See: https://issues.dlang.org/show_bug.cgi?id=9661
+     */
+    static if (__VERSION__ >= 2078)
+    {
+        string filepath3 = buildPath(testDir, "file3.txt");
+        {
+            import std.stdio : File;
+
+            auto ltw = filepath3.File("w").lockingTextWriter;
+            {
+                auto ostream = BufferedOutputRange!(typeof(ltw))(ltw);
+                ostream.append("file3: ");
+                ostream.append("abc");
+                ostream.append(["def", "ghi", "jkl"]);
+                ostream.appendln("100");
+                ostream.append(iota(0, 10).map!(x => x.to!string).joiner(" "));
+                ostream.appendln();
+            }
+        }
+        assert(filepath3.readText == "file3: abcdefghijkl100\n0 1 2 3 4 5 6 7 8 9\n");
+    }
+
+    /* With an Appender. */
+    import std.array : appender;
+    auto app1 = appender!(char[]);
+    {
+        auto ostream = BufferedOutputRange!(typeof(app1))(app1);
+        ostream.append("appender1: ");
+        ostream.append("abc");
+        ostream.append(["def", "ghi", "jkl"]);
+        ostream.appendln("100");
+        ostream.append(iota(0, 10).map!(x => x.to!string).joiner(" "));
+        ostream.appendln();
+    }
+    assert(app1.data == "appender1: abcdefghijkl100\n0 1 2 3 4 5 6 7 8 9\n");
+
+    /* With an Appender, but checking flush boundaries. */
+    auto app2 = appender!(char[]);
+    {
+        auto ostream = BufferedOutputRange!(typeof(app2))(app2, 10, 0); // Flush if 10+
+        bool wasFlushed = false;
+
+        assert(app2.data == "");
+
+        ostream.append("12345678"); // Not flushed yet.
+        assert(app2.data == "");
+
+        wasFlushed = ostream.appendln;  // Nineth char, not flushed yet.
+        assert(!wasFlushed);
+        assert(app2.data == "");
+
+        wasFlushed = ostream.appendln;  // Tenth char, now flushed.
+        assert(wasFlushed);
+        assert(app2.data == "12345678\n\n");
+
+        app2.clear;
+        assert(app2.data == "");
+
+        ostream.append("12345678");
+
+        wasFlushed = ostream.flushIfFull;
+        assert(!wasFlushed);
+        assert(app2.data == "");
+
+        ostream.flush;
+        assert(app2.data == "12345678");
+
+        app2.clear;
+        assert(app2.data == "");
+
+        ostream.append("123456789012345");
+        assert(app2.data == "");
+    }
+    assert(app2.data == "123456789012345");
+
+    /* Using joinAppend. */
+    auto app1b = appender!(char[]);
+    {
+        auto ostream = BufferedOutputRange!(typeof(app1b))(app1b);
+        ostream.append("appenderB: ");
+        ostream.joinAppend(["a", "bc", "def"], '-');
+        ostream.append(':');
+        ostream.joinAppend(["g", "hi", "jkl"], '-');
+        ostream.appendln("*100*");
+        ostream.joinAppend(iota(0, 6).map!(x => x.to!string), ' ');
+        ostream.append(' ');
+        ostream.joinAppend(iota(6, 10).map!(x => x.to!string), " ");
+        ostream.appendln();
+    }
+    assert(app1b.data == "appenderB: a-bc-def:g-hi-jkl*100*\n0 1 2 3 4 5 6 7 8 9\n",
+           "app1b.data: |" ~app1b.data ~ "|");
+
+    /* Operating as an output range. When passed to a function as a ref, exiting
+     * the function does not flush. When passed as a value, it get flushed when
+     * the function returns. Also test both UCFS and non-UFCS styles.
+     */
+
+    void outputStuffAsRef(T)(ref T range)
+        if (isOutputRange!(T, char))
+    {
+        range.put('1');
+        put(range, "23");
+        range.put('\n');
+        range.put(["5", "67"]);
+        put(range, iota(8, 10).map!(x => x.to!string));
+        put(range, "\n");
+    }
+
+    void outputStuffAsVal(T)(T range)
+        if (isOutputRange!(T, char))
+    {
+        put(range, '1');
+        range.put("23");
+        put(range, '\n');
+        put(range, ["5", "67"]);
+        range.put(iota(8, 10).map!(x => x.to!string));
+        range.put("\n");
+    }
+
+    auto app3 = appender!(char[]);
+    {
+        auto ostream = BufferedOutputRange!(typeof(app3))(app3, 12, 0);
+        outputStuffAsRef(ostream);
+        assert(app3.data == "", "app3.data: |" ~app3.data ~ "|");
+        outputStuffAsRef(ostream);
+        assert(app3.data == "123\n56789\n123\n", "app3.data: |" ~app3.data ~ "|");
+    }
+    assert(app3.data == "123\n56789\n123\n56789\n", "app3.data: |" ~app3.data ~ "|");
+
+    auto app4 = appender!(char[]);
+    {
+        auto ostream = BufferedOutputRange!(typeof(app4))(app4, 12, 0);
+        outputStuffAsVal(ostream);
+        assert(app4.data == "123\n56789\n", "app4.data: |" ~app4.data ~ "|");
+        outputStuffAsVal(ostream);
+        assert(app4.data == "123\n56789\n123\n56789\n", "app4.data: |" ~app4.data ~ "|");
+    }
+    assert(app4.data == "123\n56789\n123\n56789\n", "app4.data: |" ~app4.data ~ "|");
+
+    /* Test maxSize. */
+    auto app5 = appender!(char[]);
+    {
+        auto ostream = BufferedOutputRange!(typeof(app5))(app5, 5, 0, 10); // maxSize 10
+        assert(app5.data == "");
+
+        ostream.append("1234567");  // Not flushed yet (no newline).
+        assert(app5.data == "");
+
+        ostream.append("89012");    // Flushed by maxSize
+        assert(app5.data == "123456789012");
+
+        ostream.put("1234567");     // Not flushed yet (no newline).
+        assert(app5.data == "123456789012");
+
+        ostream.put("89012");       // Flushed by maxSize
+        assert(app5.data == "123456789012123456789012");
+
+        ostream.joinAppend(["ab", "cd"], '-');        // Not flushed yet
+        ostream.joinAppend(["de", "gh", "ij"], '-');  // Flushed by maxSize
+        assert(app5.data == "123456789012123456789012ab-cdde-gh-ij");
+    }
+    assert(app5.data == "123456789012123456789012ab-cdde-gh-ij");
+}
+
+/**
 joinAppend performs a join operation on an input range, appending the results to
 an output range.
 
-This routine was written as a performance enhancement over using std.algorithm.joiner
+Note: The main uses of joinAppend have been replaced by BufferedOutputRange, which has
+its own joinAppend method.
+
+joinAppend was written as a performance enhancement over using std.algorithm.joiner
 or std.array.join with writeln. Using joiner with writeln is quite slow, 3-4x slower
 than std.array.join with writeln. The joiner performance may be due to interaction
 with writeln, this was not investigated. Using joiner with stdout.lockingTextWriter
@@ -362,8 +752,8 @@ but is allocating memory unnecessarily.
 Using joinAppend with Appender is a bit faster than join, and allocates less memory.
 The Appender re-uses the underlying data buffer, saving memory. The example below
 illustrates. It is a modification of the InputFieldReordering example. The role
-Appender plus joinAppend are playing is to buffer the output. This can also be used to
-buffer multiple lines, improving performance further.
+Appender plus joinAppend are playing is to buffer the output. BufferedOutputRange
+uses a similar technique to buffer multiple lines.
 
     int main(string[] args)
     {
@@ -593,7 +983,7 @@ unittest
 }
 
 /**
-Fieldlists - A field-list is a string entered on the command line identifying one or more
+Field-lists - A field-list is a string entered on the command line identifying one or more
 field numbers. They are used by the majority of the tsv utility applications. There are
 two helper functions, makeFieldListOptionHandler and parseFieldList. Most applications
 will use makeFieldListOptionHandler, it creates a delegate that can be passed to
