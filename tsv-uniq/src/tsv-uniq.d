@@ -49,6 +49,10 @@ equivalent entries with an ID. The ID is simply a one-upped counter. Example:
 
    tsv-uniq --header -f 2,3 --equiv file.tsv
 
+The '--m|max MAX' option changes the behavior to output the first MAX lines for
+each key, rather than just the first line for each key. This can also with used
+with '--e|equiv' to limit the number output for each equivalence class.
+
 Options:
 EOS";
 
@@ -65,6 +69,7 @@ struct TsvUniqOptions
     bool versionWanted = false;               // --V|version
     size_t[] fields;                          // --fields
     bool hasHeader = false;                   // --header
+    size_t max = 0;                           // --max. Zero implies default behavior.
     bool equivMode = false;                   // --equiv
     string equivHeader = defaultEquivHeader;  // --equiv-header
     long equivStartID = defaultEquivStartID;  // --equiv-start
@@ -105,6 +110,7 @@ struct TsvUniqOptions
                 fields.makeFieldListOptionHandler!(size_t, No.convertToZeroBasedIndex,Yes.allowFieldNumZero),
 
                 "i|ignore-case", "              Ignore case when comparing keys.", &ignoreCase,
+                "m|max",         "INT           Max number of each unqiue key to output (zero is ignored).", &max,
                 "e|equiv",       "              Output equiv class IDs rather than uniq'ing entries.", &equivMode,
                 "equiv-header",  "STR           Use STR as the equiv-id field header. Applies when using '--header --equiv'. Default: 'equiv_id'.", &equivHeader,
                 "equiv-start",   "INT           Use INT as the first equiv-id. Default: 1.", &equivStartID,
@@ -208,7 +214,8 @@ void tsvUniq(in TsvUniqOptions cmdopt, in string[] inputFiles)
     /* The master hash. The key is the specified fields concatenated together (including
      * separators). The value is the equiv-id.
      */
-    long[string] equivHash;
+    struct EquivEntry { size_t equivID; size_t count; }
+    EquivEntry[string] equivHash;
 
     size_t numFields = cmdopt.fields.length;
     long nextEquivID = cmdopt.equivStartID;
@@ -263,29 +270,36 @@ void tsvUniq(in TsvUniqOptions cmdopt, in string[] inputFiles)
 
                 if (cmdopt.ignoreCase) key = key.toLower;
 
-                bool isUniq;
-                long currEquivID;
-                long* priorEquivID = (key in equivHash);
-                if (priorEquivID is null)
+                bool isOutput = false;
+                EquivEntry currEntry;
+                EquivEntry* priorEntry = (key in equivHash);
+                if (priorEntry is null)
                 {
-                    isUniq = true;
-                    currEquivID = nextEquivID;
-                    equivHash[key.to!string] = nextEquivID;
+                    isOutput = true;
+                    currEntry.equivID = nextEquivID;
+                    currEntry.count = 1;
+                    equivHash[key.to!string] = currEntry;
                     nextEquivID++;
                 }
                 else
                 {
-                    isUniq = false;
-                    currEquivID = *priorEquivID;
+                    (*priorEntry).count++;
+                    currEntry = *priorEntry;
+
+                    if (currEntry.count <= cmdopt.max ||
+                        (cmdopt.equivMode && cmdopt.max == 0))
+                    {
+                        isOutput = true;
+                    }
                 }
 
-                if (isUniq || cmdopt.equivMode)
+                if (isOutput)
                 {
                     bufferedOutput.append(line);
                     if (cmdopt.equivMode)
                     {
                         bufferedOutput.append(cmdopt.delim);
-                        bufferedOutput.append(currEquivID.to!string);
+                        bufferedOutput.append(currEntry.equivID.to!string);
                     }
                     bufferedOutput.appendln();
                 }

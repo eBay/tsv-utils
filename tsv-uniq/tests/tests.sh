@@ -54,6 +54,17 @@ runtest ${prog} "input1.tsv -H -f 3,4 --equiv --ignore-case" ${basic_tests_1}
 runtest ${prog} "input1.tsv --header -f 3,4 --equiv --equiv-start 10 --ignore-case" ${basic_tests_1}
 runtest ${prog} "input1.tsv --header -f 3,4 --equiv --equiv-start 10 --equiv-header id --ignore-case" ${basic_tests_1}
 
+# Max unique values
+echo "" >> ${basic_tests_1}; echo "====Max count tests===" >> ${basic_tests_1}
+runtest ${prog} "-H --max 0 input1.tsv" ${basic_tests_1}
+runtest ${prog} "-H --max 1 input1.tsv" ${basic_tests_1}
+runtest ${prog} "-H --max 2 input1.tsv" ${basic_tests_1}
+runtest ${prog} "-H -m 3 input1.tsv input1.tsv" ${basic_tests_1}
+runtest ${prog} "-H -m 2 input1.tsv input1.tsv input1.tsv" ${basic_tests_1}
+runtest ${prog} "-H -f 2 --max 3 input2.tsv input2.tsv" ${basic_tests_1}
+runtest ${prog} "-H -f 3,5 --max 3 input2.tsv input2.tsv" ${basic_tests_1}
+runtest ${prog} "-H -f 2 --equiv --max 3 input2.tsv input2.tsv" ${basic_tests_1}
+
 # Alternate delimiter tests
 echo "" >> ${basic_tests_1}; echo "====Alternate delimiter tests===" >> ${basic_tests_1}
 runtest ${prog} "input_delim_underscore.tsv --delimiter _ --fields 1" ${basic_tests_1}
