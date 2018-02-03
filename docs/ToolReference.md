@@ -489,6 +489,8 @@ The alternate to 'uniq' mode is 'equiv-class' identification. In this mode, all 
 
 `tsv-uniq` can be run without specifying a key field. In this case the whole line is used as a key, same as the Unix `uniq` program. As with `uniq`, this works on any line-oriented text file, not just TSV files. As there is no need to sort the data, `tsv-uniq` is generally [quite a bit faster](TipsAndTricks.md#a-faster-way-to-unique-a-file) and preserves input order in the process.
 
+The `--m|max NUM` option can be used to output the first `NUM` lines for each uniq key. This works in both 'uniq' and 'equiv-class' mode.
+
 **Synopsis:** tsv-uniq [options] [file...]
 
 **Options:**
@@ -498,6 +500,7 @@ The alternate to 'uniq' mode is 'equiv-class' identification. In this mode, all 
 * `--H|header` - Treat the first line of each file as a header.
 * `--f|fields <field-list>` - Fields to use as the key. Default: 0 (entire line).
 * `--i|ignore-case` - Ignore case when comparing keys.
+* `--m|max INT` - Max number of each unique key to output (zero is ignored).
 * `--e|equiv` - Output equiv class IDs rather than uniq'ing entries.
 * `--equiv-header STR` - Use STR as the equiv-id field header. Applies when using `--header --equiv`. Default: 'equiv_id'.
 * `--equiv-start INT` - Use INT as the first equiv-id. Default: 1.
