@@ -403,7 +403,7 @@ non-zero, 32-bit positive integer. (A zero value is a no-op and ignored.)
 * Wikipedia: https://en.wikipedia.org/wiki/Reservoir_sampling
 * "Weighted Random Sampling over Data Streams", Pavlos S. Efraimidis (https://arxiv.org/abs/1012.0256)
 
-**Distinct sampling**: Distinct sampling selects a subset based on a key in data. Consider a query log with records consisting of <user, query, clicked-url> triples. Simple random sampling selects a random subset of all records. Distinct sampling selects all records matching a subset of values from one of fields. For example, all events for ten percent of the users. This is important for certain types of statistical analysis.
+**Distinct sampling**: Distinct sampling selects a subset based on a key in data. Consider a query log with records consisting of <user, query, clicked-url> triples. Simple random sampling selects a random subset of all records. Distinct sampling selects all records matching a subset of values from one of fields. For example, all events for ten percent of the users. This is important for certain types of statistical analysis. The term "distinct sampling" originates from algorithms estimating the number of distinct elements in extremely large data sets.
 
 **Options:**
 
