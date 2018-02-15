@@ -7,7 +7,7 @@ _Visit the [main page](../README.md)_
 * [DMD vs LDC](#dmd-vs-ldc)
 * [Relative performance of the tools](#relative-performance-of-the-tools)
 
-*Note: This benchmark study was conducted in March 2017.*
+*This benchmark study was conducted in March 2017. Subsequent performance changes are described in the release notes on the [Github releases](https://github.com/eBay/tsv-utils-dlang/releases) page.*
 
 ## Summary
 
