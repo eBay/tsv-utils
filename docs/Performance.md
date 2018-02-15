@@ -7,6 +7,8 @@ _Visit the [main page](../README.md)_
 * [DMD vs LDC](#dmd-vs-ldc)
 * [Relative performance of the tools](#relative-performance-of-the-tools)
 
+*This benchmark study was conducted in March 2017. Subsequent performance changes are described in the release notes on the [Github releases](https://github.com/eBay/tsv-utils-dlang/releases) page.*
+
 ## Summary
 
 Performance is a key motivation for writing tools like the tsv utilities in D rather an interpreted language like Python or Perl. It is also a consideration in choosing between D and C/C++.

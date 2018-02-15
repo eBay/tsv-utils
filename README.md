@@ -23,7 +23,7 @@ File an [issue](https://github.com/eBay/tsv-utils-dlang/issues) if you have prob
 
 ## Tools overview
 
-These tools perform data manipulation and statistical calculations on delimited data. They are intended for large files. Larger than ideal for loading entirely in memory in an application like R, but not so big as to necessitate moving to Hadoop or similar distributed compute environments. The features supported are useful both for standalone analysis and for preparing data for use in R, Pandas, similar toolkits.
+These tools perform data manipulation and statistical calculations on delimited data. They are intended for large files. Larger than ideal for loading entirely in memory in an application like R, but not so big as to necessitate moving to Hadoop or similar distributed compute environments. The features supported are useful both for standalone analysis and for preparing data for use in R, Pandas, and similar toolkits.
 
 The tools work like traditional Unix command line utilities such as `cut`, `sort`,  and `grep`, and are intended to complement these tools. Each tool is a standalone executable. They follow common Unix conventions for pipeline programs. Data is read from files or standard input, results are written to standard output. The field separator defaults to TAB, but any character can be used. Input and output is UTF-8, and all operations are Unicode ready, including regular expression match (`tsv-filter`). Documentation is available for each tool by invoking it with the `--help` option.
 
@@ -32,9 +32,9 @@ Speed matters when processing large files, these tools are the fastest the autho
 The rest of this section contains a short description of each tool. There is more detail in the [tool reference](docs/ToolReference.md).
 
 * [tsv-filter](#tsv-filter) - Filter data file rows via numeric and string comparisons.
-* [tsv-select](#tsv-select) - Keep a subset of the columns (fields) in the input.
+* [tsv-select](#tsv-select) - Keep a subset of columns (fields). Like `cut`, but with field reordering.
 * [tsv-summarize](#tsv-summarize) - Summary statistics on selected fields, against the full data set or grouped by key.
-* [tsv-sample](#tsv-sample) - Sampling and permutation of input lines. Several methods are available.
+* [tsv-sample](#tsv-sample) - Sampling and permutation of input lines. Several sampling methods are available.
 * [tsv-join](#tsv-join) - Join lines from multiple files using fields as a key.
 * [tsv-uniq](#tsv-uniq) - Filter out duplicate lines using fields as a key.
 * [tsv-append](#tsv-append) - Concatenate TSV files. Header-aware; supports source file tracking.
@@ -134,7 +134,7 @@ $ tsv-uniq -f 2,3 data.tsv
 As with `tsv-join`, this uses an in-memory lookup table to record unique entries. This ultimately limits the data sizes that can be processed. The author has found that datasets with up to about 10 million unique entries work fine, but performance degrades after that.
 
 See the [tsv-uniq reference](docs/ToolReference.md#tsv-uniq-reference) for details.
-
+    
 ### tsv-append
 
 `tsv-append` concatenates multiple TSV files, similar to the Unix `cat` utility. It is header-aware, writing the header from only the first file. It also supports source tracking, adding a column indicating the original file to each row.
@@ -244,7 +244,7 @@ For fastest performance, use LDC with Link Time Optimization enabled (LTO). See 
 
 ### Install using DUB
 
-If you are already a D user you likely use DUB, the D package manager. DUB comes packaged with DMD starting with DMD 2.072. You can install and build using DUB as follows (replace `1.1.13` with the current version):
+If you are a D user you likely use DUB, the D package manager. DUB comes packaged with DMD starting with DMD 2.072. You can install and build using DUB as follows (replace `1.1.13` with the current version):
 ```
 $ dub fetch tsv-utils-dlang --cache=local
 $ cd tsv-utils-dlang-1.1.13/tsv-utils-dlang
@@ -259,4 +259,4 @@ The applications can be built with Link Time Optimization (LTO) enabled when sou
 
 ### Setup customization
 
-There are a number of simple ways to ways to improve the utility of these tools, these are listed on the [Tips and tricks](docs/TipsAndTricks.md) page. [Bash aliases](docs/TipsAndTricks.md#useful-bash-aliases), [Unix sort command customization](docs/TipsAndTricks.md#customize-the-unix-sort-command)), and [bash completion](docs/TipsAndTricks.md#enable-bash-completion) are especially useful.
+There are a number of simple ways to ways to improve the utility of these tools, these are listed on the [Tips and tricks](docs/TipsAndTricks.md) page. [Bash aliases](docs/TipsAndTricks.md#useful-bash-aliases), [Unix sort command customization](docs/TipsAndTricks.md#customize-the-unix-sort-command), and [bash completion](docs/TipsAndTricks.md#enable-bash-completion) are especially useful.
