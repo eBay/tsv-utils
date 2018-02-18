@@ -127,7 +127,7 @@ $(ldc_profdata_file):
 	$(DCOMPILER) $(release_instrumented_flags) -of$(app_instrumented) $(imports) $(srcs)
 	@echo ''
 	@echo '---> PGO: Collecting profile data'
-	cd $(ldc_profile_data_dir) && ./$(ldc_profdata_collect_prog) $(app_instrumented)
+	cd $(ldc_profile_data_dir) && ./$(ldc_profdata_collect_prog) $(app_instrumented) $(LDC_HOME)
 	@echo '---> PGO: Collection complete'
 	@echo ''
 

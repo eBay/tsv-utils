@@ -32,9 +32,11 @@
 
 DCOMPILER =
 DFLAGS =
+LDC_HOME =
 LDC_LTO =
 LDC_BUILD_RUNTIME =
 LDC_PGO =
+LDC_PGO_TYPE ?= AST
 
 ## Directory and file paths
 
@@ -106,8 +108,9 @@ ifneq ($(compiler_type),ldc)
 endif
 
 ## Variables used for LDC LTO. These get updated when using the LDC compiler
+##   ldc_version - Version number reported by the LDC compiler
 ##   ldc_build_runtime_tool - Path to the ldc-build-runtime tool
-##   ldc_build_runtime_dir - Directory for the runtime (ldc-build-runtime.[thin|full])
+##   ldc_build_runtime_dir - Directory for the runtime (ldc-build-runtime.[thin|full].<version>)
 ##   ldc_build_runtime_dflags - Flags passed to ldc-build-runtime tool. eg. -flto=[thin|full]
 ##   lto_option - LTO option passed to ldc (-flto=[thin|full).
 ##   lto_release_option - LTO option passed to ldc (-flto=[thin|full) on release builds.
@@ -115,6 +118,7 @@ endif
 ##   pgo_link_flags - Additional linker flags to pass to the compiler.
 ##   pgo_generate_link_flags - Additional linker flags when generating an instrumented build
 
+ldc_version =
 ldc_build_runtime_tool =
 ldc_build_runtime_dir = ldc-build-runtime.off
 ldc_build_runtime_dflags =
@@ -127,6 +131,17 @@ pgo_generate_link_flags =
 ## If using LDC, setup all the parameters
 
 ifeq ($(compiler_type),ldc)
+	# if LDC_HOME was provided, update the compiler path
+	ifneq ($(LDC_HOME),)
+		override DCOMPILER := $(LDC_HOME)/bin/$(DCOMPILER)
+	endif
+
+	# Set the compiler version
+	ldc_version = $(shell $(DCOMPILER) --version | head -n 1 | sed s'/^LDC.*( *//' | sed s'/):* *$$//' )
+	ifeq ($(ldc_version),)
+		ldc_version = unknown
+	endif
+
 	# Update/validate the LDC_LTO parameter
 	ifeq ($(LDC_LTO),)
 		override LDC_LTO = default
@@ -153,9 +168,13 @@ ifeq ($(compiler_type),ldc)
 	ldc_build_runtime_tool_name = ldc-build-runtime
 	ldc_build_runtime_tool = $(ldc_build_runtime_tool_name)
 
+	ifneq ($(LDC_HOME),)
+		ldc_build_runtime_tool = $(LDC_HOME)/bin/$(ldc_build_runtime_tool_name)
+	endif
+
 	ifneq ($(LDC_BUILD_RUNTIME),)
 		ifneq ($(LDC_BUILD_RUNTIME),1)
-			ldc_build_runtime_tool=$(LDC_BUILD_RUNTIME)
+                        $(error "Invalid LDC_BUILD_RUNTIME flag: '$(LDC_BUILD_RUNTIME)'. Must be '1' or not set.")
 		endif
 		ifeq ($(LDC_LTO),default)
 			ifeq ($(OS_NAME),Darwin)
@@ -168,7 +187,7 @@ ifeq ($(compiler_type),ldc)
 		ifneq ($(LDC_PGO),)
 			ifneq ($(LDC_PGO),1)
 				ifneq ($(LDC_PGO),2)
-                                        $(error "Invalid LDC_PGO flag: '$(LDC_PGO). Must be '1', '2', or not set.")
+                                        $(error "Invalid LDC_PGO flag: '$(LDC_PGO)'. Must be '1', '2', or not set.")
 				endif
 			endif
 			ifneq ($(APP_USES_LDC_PGO),)
@@ -181,16 +200,23 @@ ifeq ($(compiler_type),ldc)
 					endif
 				else ifneq ($(APP_USES_LDC_PGO),1)
 					ifneq ($(APP_USES_LDC_PGO),2)
-                                                $(error "Invalid APP_USES_LDC_PGO flag: '$(APP_USES_LDC_PGO). Must be '1', '2', or not set. (Usually set in makefile.)"")
+                                                $(error "Invalid APP_USES_LDC_PGO flag: '$(APP_USES_LDC_PGO)'. Must be '1', '2', or not set. (Usually set in makefile.)"")
 					endif
 				endif
 				ifeq ($(this_app_uses_pgo),1)
-					pgo_link_flags = -fprofile-instr-use=$(ldc_profdata_file)
-					pgo_generate_link_flags = -fprofile-instr-generate=profile.%p.raw
+					pgo_qualifier =
+					ifeq ($(LDC_PGO_TYPE),AST)
+						pgo_qualifier = -instr
+					else ifneq ($(LDC_PGO_TYPE),IR)
+                                                $(error "Invalid LDC_PGO_TYPE flag: '$(LDC_PGO_TYPE)'. Must be 'AST' or 'IR' or not set.")
+					endif
+
+					pgo_link_flags = -fprofile$(pgo_qualifier)-use=$(ldc_profdata_file)
+					pgo_generate_link_flags = -fprofile$(pgo_qualifier)-generate=profile.%p.raw
 					app_ldc_profdata_file = $(ldc_profdata_file)
 				endif
 			endif
-		endif			
+		endif
 	else ifeq ($(LDC_LTO),default)
 		ifeq ($(OS_NAME),Darwin)
 			override LDC_LTO = thin
@@ -212,9 +238,9 @@ ifeq ($(compiler_type),ldc)
 	# Update the ldc_build_runtime_dir name.
 
 	ifeq ($(LDC_LTO),thin)
-		ldc_build_runtime_dir = $(ldc_runtime_thin_dir)
+		ldc_build_runtime_dir = $(ldc_runtime_thin_dir).v-$(ldc_version)
 	else ifeq ($(LDC_LTO),full)
-		ldc_build_runtime_dir = $(ldc_runtime_full_dir)
+		ldc_build_runtime_dir = $(ldc_runtime_full_dir).v-$(ldc_version)
 	endif
 
 	# Set the LTO compile/link options

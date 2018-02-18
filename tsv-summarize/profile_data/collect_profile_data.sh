@@ -8,6 +8,13 @@ fi
 prog=$1
 shift
 
+ldc_profdata_tool_name=ldc-profdata
+ldc_profdata_tool=${ldc_profdata_tool_name}
+
+if [ $# -ne 0 ]; then
+   ldc_profdata_tool=${1}/bin/${ldc_profdata_tool_name}
+fi
+
 for f in profile.*.raw; do
     if [ -e $f ]; then
         rm $f
@@ -26,4 +33,4 @@ $prog profile_data_3.tsv -H --unique-count 1,3 --missing-count 5 --not-missing-c
 $prog profile_data_3.tsv -H --group-by 1,3 --count --range 6-8 --median 6-8 > /dev/null
 $prog profile_data_3.tsv -H --group-by 1 --count --retain 2 --first 6 --last 7 --mode 5 --mode-count 5 --values 3 > /dev/null
 
-ldc-profdata merge -o app.profdata profile.*.raw
+${ldc_profdata_tool} merge -o app.profdata profile.*.raw
