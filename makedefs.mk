@@ -108,15 +108,18 @@ ifneq ($(compiler_type),ldc)
 endif
 
 ## Variables used for LDC LTO. These get updated when using the LDC compiler
-##   ldc_version - Version number reported by the LDC compiler
+##   ldc_version - Version number reported by the LDC compiler eg: 1.5.0, 1.7.0-beta1
 ##   ldc_build_runtime_tool - Path to the ldc-build-runtime tool
 ##   ldc_build_runtime_dir - Directory for the runtime (ldc-build-runtime.[thin|full].<version>)
 ##   ldc_build_runtime_dflags - Flags passed to ldc-build-runtime tool. eg. -flto=[thin|full]
 ##   lto_option - LTO option passed to ldc (-flto=[thin|full).
 ##   lto_release_option - LTO option passed to ldc (-flto=[thin|full) on release builds.
-##   lto_link_flags - Additional linker flags to pass to compiler
-##   pgo_link_flags - Additional linker flags to pass to the compiler.
+##   lto_link_flags - Additional linker flags to pass to compiler. Examples:
+##       * LTO includes runtime libs: -L-L$(ldc_build_runtime_dir)/lib -linker=gold
+##       * LTO without runtime libs: -linker=gold
+##   pgo_link_flags - Additional linker flags to pass to the compiler. eg. -fprofile-use=...
 ##   pgo_generate_link_flags - Additional linker flags when generating an instrumented build
+##       eg. -fprofile-generate=...
 
 ldc_version =
 ldc_build_runtime_tool =
@@ -286,7 +289,10 @@ else ifeq ($(compiler_type),ldc)
 		debug_compile_flags_base = $(lto_option)
 		debug_link_flags_base = $(lto_link_flags)
 	endif
+	# Compile flags currently the same for instrumented and final build. May need to separate
+	# in the future for IR-PGO. See: https://github.com/ldc-developers/ldc/issues/2582
 	release_compile_flags_base = -release -O3 -boundscheck=off -singleobj $(lto_release_option)
+	release_instrumented_compile_flags_base = -release -O3 -boundscheck=off -singleobj $(lto_release_option)
 	release_link_flags_base = $(pgo_link_flags) $(lto_link_flags)
 	release_instrumented_link_flags_base = $(pgo_generate_link_flags) $(lto_link_flags)
 endif
@@ -296,7 +302,7 @@ endif
 ###
 debug_flags = $(debug_compile_flags_base) -od$(objdir) $(debug_link_flags_base) $(DFLAGS)
 release_flags = $(release_compile_flags_base) -od$(objdir) $(release_link_flags_base) $(DFLAGS)
-release_instrumented_flags =  $(release_compile_flags_base) -od$(objdir) -d-version=LDC_PROFILE $(release_instrumented_link_flags_base) $(DFLAGS)
+release_instrumented_flags =  $(release_instrumented_compile_flags_base) -od$(objdir) -d-version=LDC_PROFILE $(release_instrumented_link_flags_base) $(DFLAGS)
 unittest_flags = $(DFLAGS) -unittest -main -run
 codecov_flags = -od$(objdir) $(DFLAGS) -cov
 unittest_codecov_flags = -od$(objdir) $(DFLAGS) -cov -unittest -main -run

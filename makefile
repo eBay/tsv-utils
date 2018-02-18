@@ -54,7 +54,8 @@ help:
 	@echo '    showing the largest performance benefits. If LDC_PGO=2, PGO is used on all apps it'
 	@echo '    has been enabled for. Speed gains are smaller for the additional apps. PGO has'
 	@echo '    longer build times. LDC_PGO=1 is a good compromise between build time and performance.'
-	@echo "LDC_PGO_TYPE - Either 'IR' or 'AST'. Defaults to AST.'
+	@echo "LDC_PGO_TYPE - Either 'IR' or 'AST'. Defaults to AST. Currently only AST is supported.'
+	@echo "    IR-PGO is anticipated in a future LDC release.
 	@echo ''
 
 release: make_subdirs
