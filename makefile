@@ -43,14 +43,19 @@ help:
 	@echo '==========='
 	@echo 'DCOMPILER - Compiler to use. Defaults to DMD. Value can be a path.'
 	@echo 'DFLAGS - Extra flags to pass to the compiler.'
+	@echo 'LDC_HOME - The LDC install directory. If provided, all LDC binaries will located in'
+	@echo '    in the bin directory inside LDC_HOME.'
 	@echo 'LDC_BUILD_RUNTIME - Enables LDC support for using LTO on the runtime libraries. Use'
-	@echo '    the value 1 to turn on. The value can also be a path to the ldc-build-runtime tool.'
-	@echo 'LDC_LTO - Controls the LDC LTO options. See makedefs.mk for details.'
+	@echo '    the value 1 to turn on.'
+	@echo "LDC_LTO - LDC LTO options. One of 'thin', 'full', 'off', or 'default'. Leave unspecified"
+	@echo '    to use the default (recommended).'
 	@echo 'LDC_PGO - Turns on Profile Guided Optimization. This is available for a subset of apps,'
 	@echo '    release builds with LDC_BUILD_RUNTIME=1 only. If LDC_PGO=1, PGO is used on the apps'
 	@echo '    showing the largest performance benefits. If LDC_PGO=2, PGO is used on all apps it'
 	@echo '    has been enabled for. Speed gains are smaller for the additional apps. PGO has'
 	@echo '    longer build times. LDC_PGO=1 is a good compromise between build time and performance.'
+	@echo "LDC_PGO_TYPE - Either 'IR' or 'AST'. Defaults to AST. Currently only AST is supported.'
+	@echo "    IR-PGO is anticipated in a future LDC release.
 	@echo ''
 
 release: make_subdirs

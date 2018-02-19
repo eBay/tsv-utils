@@ -56,6 +56,7 @@ test-debug: $(app_debug)
 	@if diff -q $(testsdir)/latest_debug $(testsdir)/gold ; \
 	then echo '---> $(app) command line tests passed.'; exit 0; \
 	else echo '---> $(app) command line tests failed.'; \
+	diff $(testsdir)/latest_debug $(testsdir)/gold | head -n 40; \
 	exit 1; \
 	fi
 
@@ -67,6 +68,7 @@ test-release: $(app_release)
 	@if diff -q $(testsdir)/latest_release $(testsdir)/gold ; \
 	then echo '---> $(app) command line tests passed.'; exit 0; \
 	else echo '---> $(app) command line tests failed.'; \
+	diff $(testsdir)/latest_release $(testsdir)/gold | head -n 40; \
 	exit 1; \
 	fi
 
@@ -78,6 +80,7 @@ test-nobuild:
 	@if diff -q $(testsdir)/latest_release $(testsdir)/gold ; \
 	then echo '---> $(app) command line tests passed.'; exit 0; \
 	else echo '---> $(app) command line tests failed.'; \
+	diff $(testsdir)/latest_release $(testsdir)/gold | head -n 40; \
 	exit 1; \
 	fi
 
@@ -109,6 +112,7 @@ apptest-codecov: $(app_codecov)
 	@if diff -q $(testsdir)/latest_debug $(testsdir)/gold ; \
 	then echo '---> $(app) command line tests passed (code coverage on).'; exit 0; \
 	else echo '---> $(app) command line tests failed (code coverage on).'; \
+	diff $(testsdir)/latest_debug $(testsdir)/gold | head -n 40; \
 	exit 1; \
 	fi
 
@@ -127,7 +131,7 @@ $(ldc_profdata_file):
 	$(DCOMPILER) $(release_instrumented_flags) -of$(app_instrumented) $(imports) $(srcs)
 	@echo ''
 	@echo '---> PGO: Collecting profile data'
-	cd $(ldc_profile_data_dir) && ./$(ldc_profdata_collect_prog) $(app_instrumented)
+	cd $(ldc_profile_data_dir) && ./$(ldc_profdata_collect_prog) $(app_instrumented) $(LDC_HOME)
 	@echo '---> PGO: Collection complete'
 	@echo ''
 
