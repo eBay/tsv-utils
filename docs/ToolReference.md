@@ -64,7 +64,7 @@ These tools assume data is utf-8 encoded.
 
 These tools have been tested on Unix platforms, including macOS, but not Windows. On Unix platforms, Unix line endings (`\n`) are expected, with the notable exception of `tsv2csv`. Not all the tools are affected by DOS and Windows line endings (`\r\n`), those that are check the first line and flag an error. `csv2tsv` explicitly handles DOS and Windows line endings, converting to Unix line endings as part of the conversion.
 
-The `dos2unix` tool can be used to convert Windows line endings to Unix format.
+The `dos2unix` tool can be used to convert Windows line endings to Unix format. See [Convert newline format and character encoding with dos2unix and iconv](TipsAndTricks.md#convert-newline-format-and-character-encoding-with-dos2unix-and-iconv)
 
 The tools were written to respect platform line endings. If built on Windows, then Windows line endings. However, given the lack of testing, a Windows build should be expected to have some issues with line endings.
 
@@ -664,7 +664,7 @@ Grey                   19   140.3  1.0
 
 csv2tsv converts CSV (comma-separated) text to TSV (tab-separated) format. Records are read from files or standard input, converted records are written to standard output.
 
-Both formats represent tabular data, each record on its own line, fields separated by a delimiter character. The key difference is that CSV uses escape sequences to represent newlines and field separators in the data, whereas TSV disallows these characters in the data. The most common field delimiters are comma for CSV and tab for TSV, but any character can be used.
+Both formats represent tabular data, each record on its own line, fields separated by a delimiter character. The key difference is that CSV uses escape sequences to represent newlines and field separators in the data, whereas TSV disallows these characters in the data. The most common field delimiters are comma for CSV and tab for TSV, but any character can be used. See [Comparing TSV and CSV formats](docs/TipsAndTricks.md#comparing-tsv-and-csv-formats) for addition discussion of the formats.
 
 Conversion to TSV is done by removing CSV escape syntax, changing field delimiters, and replacing newlines and tabs in the data. By default, newlines and tabs in the data are replaced by spaces. Most details are customizable.
 

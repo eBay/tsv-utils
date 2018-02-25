@@ -10,6 +10,8 @@ Contents:
 * [A faster way to unique a file](#a-faster-way-to-unique-a-file)
 * [Using grep and tsv-filter together](#using-grep-and-tsv-filter-together)
 * [Enable bash-completion](#enable-bash-completion)
+* [Convert newline format and character encoding with dos2unix and iconv](#convert-newline-format-and-character-encoding-with-dos2unix-and-iconv)
+* [Comparing TSV and CSV formats](#comparing-tsv-and-csv-formats)
 
 ### Useful bash aliases
 
@@ -30,7 +32,7 @@ $ tsv-header worldcitiespop.tsv
      7	Longitude
 ```
 
-A similar alias can be setup for CSV files. Here are two, the first one takes advantage of a csv-to-tsv converter. The second one uses only standard unix tools. It won't interpret CSV escapes, but many header lines don't use escapes. (Define only one):
+A similar alias can be setup for CSV files. Here are two, the first one takes advantage of a csv-to-tsv converter. The second one uses only standard Unix tools. It won't interpret CSV escapes, but many header lines don't use escapes. (Define only one):
 ```
 csv-header () { csv2tsv $* | head -n 1 | tr $'\t' '\n' | nl ; }
 csv-header () { head -n 1 $* | tr ',' '\n' | nl ; }
@@ -68,7 +70,7 @@ $ tsv-sort worldcitiespop.tsv -k2,2
 
 #### Set the buffer size for reading from standard input
 
-GNU sort uses a small buffer by default when reading from standard input. This causes it to run much more slowly than when reading files directly. On the author's system the delta is about 2x. This will happen when using unix pipelines. The [keep-header](ToolReference.md#keep-header-reference) tool uses a pipe internally, so it is affected as well. Examples:
+GNU sort uses a small buffer by default when reading from standard input. This causes it to run much more slowly than when reading files directly. On the author's system the delta is about 2x. This will happen when using Unix pipelines. The [keep-header](ToolReference.md#keep-header-reference) tool uses a pipe internally, so it is affected as well. Examples:
 ```
 $ grep green file.txt | sort
 $ keep-header file.txt -- sort
@@ -190,3 +192,59 @@ fi
 ```
 
 The file can also be added to the bash completions system directory on your system. The location is system specific, see the bash-completion installation instructions for details.
+
+## Convert newline format and character encoding with dos2unix and iconv
+
+The TSV Utilities expect input data to be utf-8 encoded and on Unix, to use Unix newlines. The `dos2unix` and `iconv` command line tools are useful when conversion is required.
+
+Needing to convert newlines from DOS/Windows format to Unix is relatively common. Data files may have been prepared for Windows, and a number of spreadsheet programs generate Windows line feeds when exporting data. The `csv2tsv` tool converts Windows newlines as part of its operation. The other TSV Utilities detect Window newlines when running on a Unix platform, including MacOS. The following `dos2unix` commands convert files to use Unix newlines:
+```
+$ # In-place conversion.
+$ dos2unix file.tsv
+
+$ # Conversion writing to a new file. The existing file is not modified.
+$ dos2unix -n file_dos.tsv file_unix.tsv
+
+$ # Reading from standard input writes to standard output
+$ cat file_dos.tsv | dos2unix | tsv-select -f 1-3 > newfile.tsv
+```
+
+Most applications and databases will export data in utf-8 encoding, but it can still be necessary to convert to utf-8. `iconv` serves this purpose nicely. An example converting Windows Latin-1 (code page 1252) to utf-8:
+```
+$ iconv -f CP1252 -t UTF-8 file_latin1.tsv > file_utf8.tsv
+```
+
+The above can be combined with `dos2unix` to perform both conversions at once:
+```
+$ iconv -f CP1252 -t UTF-8 file_window.tsv | dos2unix > file_unix.tsv
+```
+
+See the `dos2unix` and `iconv` man pages for more details.
+
+### Comparing TSV and CSV formats
+
+The differences between TSV and CSV formats can be confusing. The obvious distinction is the default field delimiter: TSV uses TAB, and CSV uses comma. Both use newline as the record delimiter.
+
+By itself, using different default field delimiters is not especially significant. Far more important is the approach to delimiters occurring in the data. CSV uses an escape syntax to represent comma and newlines in the data. TSV takes a different approach, disallowing TABs and newlines in the data.
+
+The escape syntax enables CSV to fully represent common written text. This is a good fit for human edited documents, notably spreadsheets. This generality has a cost: reading it requires programs to parse the escape syntax. While not overly difficult, it is still easy to do incorrectly, especially when writing one-off programs. It is good practice is to use a CSV parser when processing CSV files. Traditional Unix tools like `cut` and `awk` do not process CSV escapes, alternate tools are needed.
+
+By contrast, parsing TSV data is simple. Records can be read using the typical `readline` routines. The fields in each record can be found using a `split` or `splitter` routine available in most programming languages. No special parser is needed. This is more reliable. It is also faster, no CPU time is used parsing the escape syntax.
+
+This makes TSV format well suited for many large, tabular data sets common in data mining and machine learning environments. These data sets rarely need TAB and newline characters in the fields.
+
+The similarity between TSV and CSV can lead to confusion about which tools are appropriate. Furthering this confusion, it is somewhat common to have data files using comma as the field delimiter, but without CSV escapes. These are sometimes referred to as "simple CSV". They are equivalent to TSV files with comma as a field delimiter. The TSV Utilities and traditional Unix tools like `cut` and `awk` process these files correctly by specifying the field delimiter.
+
+The most common CSV escape format uses quotes to delimit fields containing delimiter characters. Quote characters in data are represented by a pair of quotes. An example:
+```
+Field1,Field2,Field3
+abc,"hello, world!",def
+ghi,"Say ""hello, world!""",jkl
+```
+
+The second value in second line contains comma. The second value in the third line contains both quotes and commas. A newline would be escaped the same way as a common. Here is the same data represented in TSV format:
+```
+Field1	Field2	Field3
+abc	hello, world	def
+ghi	Say "hello, world!"	jkl
+```

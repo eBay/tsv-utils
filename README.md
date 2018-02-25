@@ -25,7 +25,7 @@ File an [issue](https://github.com/eBay/tsv-utils-dlang/issues) if you have prob
 
 These tools perform data manipulation and statistical calculations on delimited data. They are intended for large files. Larger than ideal for loading entirely in memory in an application like R, but not so big as to necessitate moving to Hadoop or similar distributed compute environments. The features supported are useful both for standalone analysis and for preparing data for use in R, Pandas, and similar toolkits.
 
-The tools work like traditional Unix command line utilities such as `cut`, `sort`,  and `grep`, and are intended to complement these tools. Each tool is a standalone executable. They follow common Unix conventions for pipeline programs. Data is read from files or standard input, results are written to standard output. The field separator defaults to TAB, but any character can be used. Input and output is UTF-8, and all operations are Unicode ready, including regular expression match (`tsv-filter`). Documentation is available for each tool by invoking it with the `--help` option.
+The tools work like traditional Unix command line utilities such as `cut`, `sort`,  and `grep`, and are intended to complement these tools. Each tool is a standalone executable. They follow common Unix conventions for pipeline programs. Data is read from files or standard input, results are written to standard output. The field separator defaults to TAB, but any character can be used. Input and output is UTF-8, and all operations are Unicode ready, including regular expression match (`tsv-filter`). Documentation is available for each tool by invoking it with the `--help` option. TSV format is similar to CSV, see [Comparing TSV and CSV formats](docs/TipsAndTricks.md#comparing-tsv-and-csv-formats) for the differences.
 
 Speed matters when processing large files, these tools are the fastest the author has found. See [Performance benchmarks](docs/Performance.md) for details.
 
@@ -45,14 +45,14 @@ The rest of this section contains a short description of each tool. There is mor
 
 ### tsv-filter
 
-Outputs select lines by making numeric and string comparisons against individual fields. Multiple comparisons can be specified in a single call. A variety of numeric and string comparison operators are available as well as regular expressions. Example:
+Filters lines by making numeric and string comparisons against individual fields. Multiple tests can be specified in a single call. A variety of numeric and string comparison operators are available as well as regular expressions. Example:
 ```
 $ tsv-filter --ge 3:100 --le 3:200 --str-eq 4:red file.tsv
 ```
 
 This outputs lines where field 3 satisfies (100 <= fieldval <= 200) and field 4 matches 'red'.
 
-`tsv-filter` is the most widely applicable of the tools, as dataset pruning is a common task. It is stream oriented, so it can handle arbitrarily large files. It is quite fast, faster than other tools the author has tried. This makes it ideal for preparing data for applications like R and Pandas. It is also convenient for quickly answering simple questions about a dataset. For example, to count the number of records with a non-zero value in field 3, use the command:
+`tsv-filter` is the most widely applicable of the tools, as dataset pruning is a common task. It is stream oriented, so it can handle arbitrarily large files. It is fast, quite a bit faster than other tools the author has tried. This makes it ideal for preparing data for applications like R and Pandas. It is also convenient for quickly answering simple questions about a dataset. For example, to count the number of records with a non-zero value in field 3, use the command:
 ```
 $ tsv-filter --ne 3:0 file.tsv | wc -l
 ```
@@ -134,7 +134,7 @@ $ tsv-uniq -f 2,3 data.tsv
 As with `tsv-join`, this uses an in-memory lookup table to record unique entries. This ultimately limits the data sizes that can be processed. The author has found that datasets with up to about 10 million unique entries work fine, but performance degrades after that.
 
 See the [tsv-uniq reference](docs/ToolReference.md#tsv-uniq-reference) for details.
-    
+
 ### tsv-append
 
 `tsv-append` concatenates multiple TSV files, similar to the Unix `cat` utility. It is header-aware, writing the header from only the first file. It also supports source tracking, adding a column indicating the original file to each row.
