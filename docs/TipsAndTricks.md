@@ -4,12 +4,44 @@ _Visit the [main page](../README.md)_
 
 Contents:
 
+* [Comparing TSV and CSV](#comparing-tsv-and-csv)
 * [Useful bash aliases](#useful-bash-aliases)
 * [Customize the Unix sort command](#customize-the-unix-sort-command)
 * [Reading data in R](#reading-data-in-r)
 * [A faster way to unique a file](#a-faster-way-to-unique-a-file)
 * [Using grep and tsv-filter together](#using-grep-and-tsv-filter-together)
 * [Enable bash-completion](#enable-bash-completion)
+* [Change newline format and character encoding with dos2unix and iconv](#Change-newline-format-and-character-encoding-with-dos2unix-and-iconv)
+
+### Comparing TSV and CSV
+
+The key differences between TSV and CSV formats are not always well understood. The most obvious distinction is the character used to delimit each field: TSV uses TAB by default, and CSV uses comma by default. Both use a newline as the record delimiter.
+
+However, the difference in the default field delimiter is not especially significant. Far more important is how field and record delimiters are represented in the data. CSV uses an escape syntax to represent comma and newlines in the data. TSV takes a different approach, disallowing TABs and newlines in the data.
+
+The escape syntax enables CSV to fully represent common written text. This makes it a good fit for human edited documents, such as spreadsheets. However, this generality has a cost: reading it properly means processing the escape syntax. While not terribly hard to parse, it is also easy to get incorrect, especially when writing one-time-use scripts. Correct CSV processing cannot even use the `readline` routines available in most programming languages to identify record boundaries. Indeed, it is a good practice is to use a proper CSV parser when processing CSV files.
+
+By contrast, parsing TSV data is quite simple. Record can be read using the `readline` routines typically available. The fields in each record can be identified by finding the delimiter characters, typically by a `split` or `splitter` routine available in most programming languages. No special parser is needed. This is more reliable. It is also faster, as no computation is expended processing the escape syntax.
+
+This makes TSV format well suited for many large, tabular data sets common in data mining and machine learning environments. These data sets generally don't need to contain TAB and newline characters in the fields.
+
+Somewhat common is a hybrid, where comma is used as a record delimiter, but commas and newlines are not permitted in the data, so no escape syntax is used. This is basically the same as TSV with comma used as delimiter. However, because comma is used as a the delimiter, this is sometimes referred to as "simple CSV". The TSV Utilities and common Unix tools like `cut` and `awk` operate fine on these files simply by specifying the delimiter character. Still, use of CSV tools or conversion to TSV via `csv2tsv` is recommended when the data may contain escapes.
+
+The most common CSV escape format uses quotes to delimit fields containing delimiter characters. Quote characters in data are represented by a pair of quotes. An example:
+```
+Field-,Field2,Field3
+abc,"hello, world!",def
+ghi,"Say ""hello, world!""",jkl
+```
+
+The second value in second line contains comma. In the third line the second value contains both quotes and commas. A newline would be escaped the same as a common. Here is the same data represented in TSV format:
+```
+Field1	Field2	Field3
+abc	hello, world	def
+ghi	Say "hello, world!"	jkl
+```
+
+There are of course many other data representation formats besides TSV and CSV. The appropriate choices depend on a number of factors, including the nature of the data, the processing being done, the data processing environment, tools, etc. TSV is a useful option in many cases, but in many others there are better choices.
 
 ### Useful bash aliases
 
@@ -30,7 +62,7 @@ $ tsv-header worldcitiespop.tsv
      7	Longitude
 ```
 
-A similar alias can be setup for CSV files. Here are two, the first one takes advantage of a csv-to-tsv converter. The second one uses only standard unix tools. It won't interpret CSV escapes, but many header lines don't use escapes. (Define only one):
+A similar alias can be setup for CSV files. Here are two, the first one takes advantage of a csv-to-tsv converter. The second one uses only standard Unix tools. It won't interpret CSV escapes, but many header lines don't use escapes. (Define only one):
 ```
 csv-header () { csv2tsv $* | head -n 1 | tr $'\t' '\n' | nl ; }
 csv-header () { head -n 1 $* | tr ',' '\n' | nl ; }
@@ -68,7 +100,7 @@ $ tsv-sort worldcitiespop.tsv -k2,2
 
 #### Set the buffer size for reading from standard input
 
-GNU sort uses a small buffer by default when reading from standard input. This causes it to run much more slowly than when reading files directly. On the author's system the delta is about 2x. This will happen when using unix pipelines. The [keep-header](ToolReference.md#keep-header-reference) tool uses a pipe internally, so it is affected as well. Examples:
+GNU sort uses a small buffer by default when reading from standard input. This causes it to run much more slowly than when reading files directly. On the author's system the delta is about 2x. This will happen when using Unix pipelines. The [keep-header](ToolReference.md#keep-header-reference) tool uses a pipe internally, so it is affected as well. Examples:
 ```
 $ grep green file.txt | sort
 $ keep-header file.txt -- sort
@@ -190,3 +222,31 @@ fi
 ```
 
 The file can also be added to the bash completions system directory on your system. The location is system specific, see the bash-completion installation instructions for details.
+
+## Change newline format and character encoding with dos2unix and iconv
+
+The TSV Utilities expect input data to be utf-8 encoded and on Unix, to use Unix newlines. The `dos2unix` and `iconv` command line tools are useful when conversion is required.
+
+Needing to convert newlines from DOS/Windows format to Unix is relatively common. Data files may have been prepared for Windows, and a number of spreadsheet programs generate Windows line feeds when exporting data. The TSV Utilities detect Window newlines when running on a Unix platform, including MacOS. The following commands convert a file to use Unix newlines:
+```
+$ # In-place conversion.
+$ dos2unix file.tsv
+
+$ # Conversion writing to a new file. The existing file is not modified.
+$ dos2unix -n file_dos.tsv file_unix.tsv
+
+$ # Reading from standard input writes to standard output
+$ cat file_dos.tsv | dos2unix | tsv-select -f 1-3 > newfile.tsv
+```
+
+Most applications and databases will export data in utf-8 encoding, but it can still be necessary to convert to utf-8. `iconv` serves this purpose nicely. An example converting Windows Latin-1 (code page 1252) to utf-8:
+```
+$ iconv -f CP1252 -t UTF-8 file_latin1.tsv > file_utf8.tsv
+```
+
+The above can be combined with `dos2unix` to perform both conversions at once:
+```
+$ iconv -f CP1252 -t UTF-8 file_window.tsv | dos2unix > file_unix.tsv
+```
+
+See the `dos2unix` and `iconv` man pages for more details.
