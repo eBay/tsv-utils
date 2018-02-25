@@ -10,10 +10,7 @@ Contents:
 * [A faster way to unique a file](#a-faster-way-to-unique-a-file)
 * [Using grep and tsv-filter together](#using-grep-and-tsv-filter-together)
 * [Enable bash-completion](#enable-bash-completion)
-* [Convert newline format and character encoding with dos2unix and iconv](#change-newline-format-and-character-encoding-with-dos2unix-and-iconv)
-
-* [Convert newline format and character encoding with dos2unix and iconv](#Convert-newline-format-and-character-encoding-with-dos2unix-and-iconv)
-
+* [Convert newline format and character encoding with dos2unix and iconv](#convert-newline-format-and-character-encoding-with-dos2unix-and-iconv)
 * [Comparing TSV and CSV formats](#comparing-tsv-and-csv-formats)
 
 ### Useful bash aliases
