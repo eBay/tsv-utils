@@ -4,7 +4,7 @@ _Visit the [main page](../README.md)_
 
 Contents:
 
-* [Comparing TSV and CSV](#comparing-tsv-and-csv)
+* [Comparing TSV and CSV formats](#comparing-tsv-and-csv-formats)
 * [Useful bash aliases](#useful-bash-aliases)
 * [Customize the Unix sort command](#customize-the-unix-sort-command)
 * [Reading data in R](#reading-data-in-r)
@@ -12,36 +12,6 @@ Contents:
 * [Using grep and tsv-filter together](#using-grep-and-tsv-filter-together)
 * [Enable bash-completion](#enable-bash-completion)
 * [Change newline format and character encoding with dos2unix and iconv](#Change-newline-format-and-character-encoding-with-dos2unix-and-iconv)
-
-### Comparing TSV and CSV
-
-The differences between TSV and CSV formats are not always well understood. The obvious distinction is the default field delimiter: TSV uses TAB, and CSV uses comma. Both use newline as the record delimiter.
-
-By itself, use of different default field delimiters is not especially significant. Far more important is the approach to delimiters occurring in the data. CSV uses an escape syntax to represent comma and newlines in the data. TSV takes a different approach, disallowing TABs and newlines in the data.
-
-The escape syntax enables CSV to fully represent common written text. This is a good fit for human edited documents, such as spreadsheets. However, this generality has a cost: reading it properly requires programs to parse the escape syntax. While not overly hard, it is also easy to get incorrect, especially when writing one-time-use scripts. It is a good practice is to use a CSV parser when processing CSV files. Traditional Unix tools like `cut` and `awk` do not process CSV escapes, alternately tools are needed for correct processing.
-
-By contrast, parsing TSV data is quite simple. Records can be read using the typical `readline` routines. The fields in each record can be identified by finding the delimiter characters, typically using a `split` or `splitter` routine available in most programming languages. No special parser is needed. This is more reliable. It is also faster, as no computation is expended processing the escape syntax.
-
-This makes TSV format well suited for many large, tabular data sets common in data mining and machine learning environments. These data sets generally don't need to contain TAB and newline characters in the fields.
-
-Somewhat common is a hybrid form, where comma is used as a record delimiter, but commas and newlines are not permitted in the data, so no escape syntax is used. This works the same as TSV with comma as field delimiter. However, because comma is being used, this is sometimes referred to as "simple CSV". The TSV Utilities and common Unix tools like `cut` and `awk` operate fine on these files simply by specifying the delimiter character. Still, use of CSV tools or conversion to TSV via `csv2tsv` is recommended when the data may contain escapes.
-
-The most common CSV escape format uses quotes to delimit fields containing delimiter characters. Quote characters in data are represented by a pair of quotes. An example:
-```
-Field-,Field2,Field3
-abc,"hello, world!",def
-ghi,"Say ""hello, world!""",jkl
-```
-
-The second value in second line contains comma. In the third line the second value contains both quotes and commas. A newline would be escaped the same as a common. Here is the same data represented in TSV format:
-```
-Field1	Field2	Field3
-abc	hello, world	def
-ghi	Say "hello, world!"	jkl
-```
-
-There are of course many other data representation formats besides TSV and CSV. The appropriate choices depend on a number of factors, including the nature of the data, the processing being done, the data processing environment, tools, etc. TSV is a useful option in many cases, but in many others there are better choices.
 
 ### Useful bash aliases
 
@@ -250,3 +220,31 @@ $ iconv -f CP1252 -t UTF-8 file_window.tsv | dos2unix > file_unix.tsv
 ```
 
 See the `dos2unix` and `iconv` man pages for more details.
+
+### Comparing TSV and CSV formats
+
+The differences between TSV and CSV formats are not always well understood. The obvious distinction is the default field delimiter: TSV uses TAB, and CSV uses comma. Both use newline as the record delimiter.
+
+By itself, having different default field delimiters is not especially significant. Far more important is the approach to delimiters occurring in the data. CSV uses an escape syntax to represent comma and newlines in the data. TSV takes a different approach, disallowing TABs and newlines in the data.
+
+The escape syntax enables CSV to fully represent common written text. This is a good fit for human edited documents, notably spreadsheets. This generality has a cost: reading it requires programs to parse the escape syntax. While not overly hard, it is easy to do incorrectly, especially when writing one-off programs. It is a good practice is to use a CSV parser when processing CSV files. Traditional Unix tools like `cut` and `awk` do not process CSV escapes, alternate tools are needed.
+
+By contrast, parsing TSV data is simple. Records can be read using the typical `readline` routines. The fields in each record can be found using a `split` or `splitter` routine available in most programming languages. No special parser is needed. This is more reliable. It is also faster, no CPU time is used parsing the escape syntax.
+
+This makes TSV format well suited for many large, tabular data sets common in data mining and machine learning environments. These data sets rarely need TAB and newline characters in the fields.
+
+The similarity between TSV and CSV can lead to confusion about which tools are appropriate. Furthering this confusion, it is somewhat common to have data files using comma as the field delimiter, but without CSV escapes. These are sometimes referred to as "simple CSV". They are equivalent to TSV files with comma as a field delimiter. The TSV Utilities and traditional Unix tools like `cut` and `awk` process these files correctly by specifying the field delimiter.
+
+The most common CSV escape format uses quotes to delimit fields containing delimiter characters. Quote characters in data are represented by a pair of quotes. An example:
+```
+Field-,Field2,Field3
+abc,"hello, world!",def
+ghi,"Say ""hello, world!""",jkl
+```
+
+The second value in second line contains comma. In the third line the second value contains both quotes and commas. A newline would be escaped the same as a common. Here is the same data represented in TSV format:
+```
+Field1	Field2	Field3
+abc	hello, world	def
+ghi	Say "hello, world!"	jkl
+```
