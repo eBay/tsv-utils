@@ -156,7 +156,7 @@ int main(string[] cmdArgs)
          * are removed by command line processing (getopt). The program name and any files
          * remain. Pass the files to tsvSelect.
          */
-        switch (cmdopt.rest)
+        final switch (cmdopt.rest)
         {
         case TsvSelectOptions.RestOptionVal.none:
             tsvSelect!(CTERestLocation.none)(cmdopt, cmdArgs[1..$]);
@@ -167,9 +167,6 @@ int main(string[] cmdArgs)
         case TsvSelectOptions.RestOptionVal.last:
             tsvSelect!(CTERestLocation.last)(cmdopt, cmdArgs[1..$]);
             break;
-        default:
-            // Note: assert(false) triggers even in release mode compiles.
-            assert(false, "Program error. Unexpected TsvSelectOptions.RestOptionVal.");
         }
     }
     catch (Exception exc)
