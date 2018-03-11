@@ -231,7 +231,7 @@ The escape syntax enables CSV to fully represent common written text. This is a 
 
 By contrast, parsing TSV data is simple. Records can be read using the typical `readline` routines. The fields in each record can be found using a `split` or `splitter` routine available in most programming languages. No special parser is needed. This is much more reliable. It is also faster, no CPU time is used parsing the escape syntax.
 
-This makes TSV format well suited for the large, tabular data sets common in data mining and machine learning environments. These data sets rarely need TAB and newline characters in the fields.
+This makes TSV format well suited for the large tabular data sets common in data mining and machine learning environments. These data sets rarely need TAB and newline characters in the fields.
 
 The similarity between TSV and CSV can lead to confusion about which tools are appropriate. Furthering this confusion, it is somewhat common to have data files using comma as the field delimiter, but without CSV escapes. These are sometimes referred to as "simple CSV". They are equivalent to TSV files with comma as a field delimiter. The TSV Utilities and traditional Unix tools like `cut` and `awk` process these files correctly by specifying the field delimiter.
 
@@ -250,10 +250,14 @@ abc,"hello, world!",def
 ghi,"Say ""hello, world!""",jkl
 ```
 
-Here is the same data represented in TSV format:
+Here is the same data represented in TSV format, no escapes needed:
 ```
 Field-1	Field-2	Field-3
 abc	hello, world	def
 ghi	Say "hello, world!"	jkl
 ```
 
+A few addition references to CSV and TSV format:
+- [Wikipedia: Tab-separated values](https://en.wikipedia.org/wiki/Tab-separated_values) - Useful description of TSV format, with a link to the IANA standard.
+- [Wikipedia: Comma-separated-values](https://en.wikipedia.org/wiki/Tab-separated_values) - Useful description of CSV format, with many references.
+- [brendano/tsvutils: The philosophy of tsvutils](https://github.com/brendano/tsvutils#the-philosophy-of-tsvutils) - Brendan O'Connor's discussion of the rationale for using TSV in his open source toolkit.
