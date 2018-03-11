@@ -223,7 +223,7 @@ See the `dos2unix` and `iconv` man pages for more details.
 
 ### Comparing TSV and CSV formats
 
-The differences between TSV and CSV formats can be confusing. The obvious distinction is the default field delimiter: TSV uses TAB, and CSV uses comma. Both use newline as the record delimiter.
+The differences between TSV and CSV formats can be confusing. The obvious distinction is the default field delimiter: TSV uses TAB, CSV uses comma. Both use newline as the record delimiter.
 
 By itself, different default field delimiters is not especially significant. Far more important is the approach to delimiters occurring in the data. CSV uses an escape syntax to represent comma and newlines in the data. TSV takes a different approach, disallowing TABs and newlines in the data.
 
@@ -242,17 +242,17 @@ The most common CSV escape format uses quotes to delimit fields containing delim
 | abc     | hello, world!        | def     |
 | ghi     | Say "hello, world!"  | jkl     |
 
-In field2, the first value contains a comma, the second value contain both quotes and a comma. Here is the CSV representation, using escapes:
+In field2, the first value contains a comma, the second value contain both quotes and a comma. Here is the CSV representation, using escapes to represent commas and quotes in the data.
 
 ```
-Field1,Field2,Field3
+Field-1,Field-2,Field-3
 abc,"hello, world!",def
 ghi,"Say ""hello, world!""",jkl
 ```
 
 Here is the same data represented in TSV format:
 ```
-Field1	Field2	Field3
+Field-1	Field-2	Field-3
 abc	hello, world	def
 ghi	Say "hello, world!"	jkl
 ```
