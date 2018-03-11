@@ -257,7 +257,7 @@ abc	hello, world	def
 ghi	Say "hello, world!"	jkl
 ```
 
-A few addition references to CSV and TSV format:
-- [Wikipedia: Tab-separated values](https://en.wikipedia.org/wiki/Tab-separated_values) - Useful description of TSV format, with a link to the IANA standard.
-- [Wikipedia: Comma-separated-values](https://en.wikipedia.org/wiki/Tab-separated_values) - Useful description of CSV format, with many references.
-- [brendano/tsvutils: The philosophy of tsvutils](https://github.com/brendano/tsvutils#the-philosophy-of-tsvutils) - Brendan O'Connor's discussion of the rationale for using TSV in his open source toolkit.
+Additional references to CSV and TSV format:
+- [Wikipedia: Tab-separated values](https://en.wikipedia.org/wiki/Tab-separated_values) - Description of TSV format. Includes a link to the IANA standard.
+- [Wikipedia: Comma-separated-values](https://en.wikipedia.org/wiki/Tab-separated_values) - Description of CSV format, with many references.
+- [brendano/tsvutils: The philosophy of tsvutils](https://github.com/brendano/tsvutils#the-philosophy-of-tsvutils) - Brendan O'Connor's discussion of the rationale for using TSV format in his open source toolkit.
