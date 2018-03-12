@@ -75,6 +75,9 @@ Features:
   columns where exponential notation is found so all the values in the column
   are displayed using exponential notation with the same precision.
 
+* Preamble: A number of initial lines can be designated as a preamble and output
+  unchanged. The preamble is before the header, if a header is present.
+
 * Fonts: Fixed-width fonts are assumed. CJK characters are assumed to be double
   width. This is not always correct, but works well in most cases.
 
@@ -110,6 +113,7 @@ struct TsvPrettyOptions
     char delim = '\t';                  // --d|delimiter
     size_t spaceBetweenFields = 2;      // --s|space-between-fields num
     size_t maxFieldPrintWidth = 40;     // --m|max-text-width num; Max width for variable width text fields.
+    size_t preambleLines = 0;           // --a|preamble; Number of preamble lines.
     bool versionWanted = false;         // --V|version
 
     /* Returns a tuple. First value is true if command line arguments were successfully
@@ -151,7 +155,8 @@ struct TsvPrettyOptions
                 std.getopt.config.caseInsensitive,
                 "d|delimiter",            "CHR    Field delimiter. Default: TAB. (Single byte UTF-8 characters only.)", &delim,
                 "s|space-between-fields", "NUM    Spaces between each field (Default: 2)", &spaceBetweenFields,
-                "m|max-text-width",       "NUM     Max reserved field width for variable width text fields. Default: 40", &maxFieldPrintWidth,
+                "m|max-text-width",       "NUM    Max reserved field width for variable width text fields. Default: 40", &maxFieldPrintWidth,
+                "a|preamble",             "NUM    Treat the first NUM lines as a preamble and output them unchanged.", &preambleLines,
                 std.getopt.config.caseSensitive,
                 "V|version",              "       Print version information and exit.", &versionWanted,
                 std.getopt.config.caseInsensitive,
@@ -222,13 +227,18 @@ struct TsvPrettyOptions
  */
 void tsvPretty(in ref TsvPrettyOptions options, string[] files)
 {
+    auto firstNonPreambleLine = options.preambleLines + 1;
     auto tpp = TsvPrettyProcessor(options);
     foreach (filename; (files.length > 0) ? files : ["-"])
     {
         auto inputStream = (filename == "-") ? stdin : filename.File();
         foreach (lineNum, line; inputStream.byLine.enumerate(1))
         {
-            if (lineNum == 1)
+            if (lineNum < firstNonPreambleLine)
+            {
+                tpp.processPreambleLine(outputRangeObject!(char, char[])(stdout.lockingTextWriter), line);
+            }
+            else if (lineNum == firstNonPreambleLine)
             {
                 tpp.processFileFirstLine(outputRangeObject!(char, char[])(stdout.lockingTextWriter), line);
             }
@@ -249,7 +259,9 @@ void tsvPretty(in ref TsvPrettyOptions options, string[] files)
  * written to an output range. The caller is expected to pass each line to in the
  * order received, that is an assumption built-into the its processing.
  *
- * In addition to the constructor, there are three API methods:
+ * In addition to the constructor, there are four API methods:
+ *   * processPreambleLine - Called to process a preamble line occurring before
+ *     the header line or first line of data.
  *   * processFileFirstLine - Called to process the first line of each file. This
  *     enables header processing.
  *   * processLine - Called to process all lines except for the first line a file.
@@ -284,6 +296,15 @@ private:
         assert(_options.hasHeader || _options.noHeader || _options.autoDetectHeader);
         assert((_options.lookahead == 0 && _lookaheadCache.data.length == 0) ||
                _lookaheadCache.data.length < _options.lookahead);
+    }
+
+    void processPreambleLine(OutputRange!char outputStream, const char[] line)
+    {
+        if (_fileCount == 0)
+        {
+            put(outputStream, line);
+            put(outputStream, '\n');
+        }
     }
 
     void processFileFirstLine(OutputRange!char outputStream, const char[] line)

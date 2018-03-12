@@ -591,6 +591,8 @@ Features:
 
 * Exponential notion: As part of float formatting, `--f|format-floats` re-formats columns where exponential notation is found so all the values in the column are displayed using exponential notation and the same precision.
 
+* Preamble: A number of initial lines can be designated as a preamble and output unchanged. The preamble is before the header, if a header is present.
+
 * Fonts: Fixed-width fonts are assumed. CJK characters are assumed to be double width. This is not always correct, but works well in most cases.
 
 **Options:**
@@ -608,6 +610,7 @@ Features:
 * `--d|delimiter CHR` - Field delimiter. Default: TAB. (Single byte UTF-8 characters only.)
 * `--s|space-between-fields NUM` - Spaces between each field (Default: 2)
 * `--m|max-text-width NUM` - Max reserved field width for variable width text fields. Default: 40
+* `--a|preamble NUM` - Treat the first NUM lines as a preamble and output them unchanged.
 * `--V|version` - Print version information and exit.
 * `--h|help` - This help information.
 

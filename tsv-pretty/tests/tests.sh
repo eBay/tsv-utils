@@ -574,6 +574,37 @@ cat input_5x5.tsv | ${prog} -u -- - >> ${basic_tests_5} 2>&1
 echo "" >> ${basic_tests_5}; echo "====[cat input_5x5.tsv | tsv-pretty -u -- input_5x2.tsv -]====" >> ${basic_tests_5}
 cat input_5x5.tsv | ${prog} -u -- input_5x2.tsv - >> ${basic_tests_5} 2>&1
 
+###
+### Preamble tests. Use file ${basics_tests_6}
+###
+basic_tests_6=${odir}/basic_tests_6.txt
+
+runtest ${prog} "--preamble 1 input_5x1_preamble1.tsv" ${basic_tests_6}
+runtest ${prog} "--preamble 1 input_5x2_preamble1.tsv" ${basic_tests_6}
+runtest ${prog} "--preamble 1 input_5x3_preamble1.tsv" ${basic_tests_6}
+runtest ${prog} "--preamble 1 input_5x1_preamble1.tsv input_5x1_preamble1.tsv" ${basic_tests_6}
+runtest ${prog} "--preamble 1 -u input_5x1_preamble1.tsv input_5x2_preamble1.tsv" ${basic_tests_6}
+runtest ${prog} "-a 1 -u input_5x2_preamble1.tsv input_5x3_preamble1.tsv" ${basic_tests_6}
+runtest ${prog} "-a 1 -u input_5x1_preamble1.tsv input_5x2_preamble1.tsv input_5x3_preamble1.tsv" ${basic_tests_6}
+runtest ${prog} "-a 1 --no-header input_5x1_noheader_preamble1.tsv" ${basic_tests_6}
+runtest ${prog} "-a 1 --no-header input_5x1_noheader_preamble1.tsv input_5x1_noheader_preamble1.tsv" ${basic_tests_6}
+runtest ${prog} "-a 1 --no-header input_5x2_noheader_preamble1.tsv" ${basic_tests_6}
+runtest ${prog} "-a 1 -x input_5x2_noheader_preamble1.tsv input_5x2_noheader_preamble1.tsv" ${basic_tests_6}
+runtest ${prog} "-a 1 -x input_5x1_noheader_preamble1.tsv input_5x2_noheader_preamble1.tsv" ${basic_tests_6}
+
+runtest ${prog} "--preamble 2 input_5x1_preamble2.tsv" ${basic_tests_6}
+runtest ${prog} "--preamble 2 input_5x2_preamble2.tsv" ${basic_tests_6}
+runtest ${prog} "--preamble 2 input_5x3_preamble2.tsv" ${basic_tests_6}
+runtest ${prog} "--preamble 2 input_5x1_preamble2.tsv input_5x1_preamble2.tsv" ${basic_tests_6}
+runtest ${prog} "--preamble 2 -u input_5x1_preamble2.tsv input_5x2_preamble2.tsv" ${basic_tests_6}
+runtest ${prog} "-a 2 -u input_5x2_preamble2.tsv input_5x3_preamble2.tsv" ${basic_tests_6}
+runtest ${prog} "-a 2 -u input_5x1_preamble2.tsv input_5x2_preamble2.tsv input_5x3_preamble2.tsv" ${basic_tests_6}
+runtest ${prog} "-a 2 --no-header input_5x1_noheader_preamble2.tsv" ${basic_tests_6}
+runtest ${prog} "-a 2 --no-header input_5x1_noheader_preamble2.tsv input_5x1_noheader_preamble2.tsv" ${basic_tests_6}
+runtest ${prog} "-a 2 --no-header input_5x2_noheader_preamble2.tsv" ${basic_tests_6}
+runtest ${prog} "-a 2 -x input_5x2_noheader_preamble2.tsv input_5x2_noheader_preamble2.tsv" ${basic_tests_6}
+runtest ${prog} "-a 2 -x input_5x1_noheader_preamble2.tsv input_5x2_noheader_preamble2.tsv" ${basic_tests_6}
+
 ## Error cases
 
 error_tests_1=${odir}/error_tests_1.txt
