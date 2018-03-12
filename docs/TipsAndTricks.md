@@ -233,7 +233,7 @@ By contrast, parsing TSV data is simple. Records can be read using the typical `
 
 This makes TSV format well suited for the large tabular data sets common in data mining and machine learning environments. These data sets rarely need TAB and newline characters in the fields.
 
-The most common CSV escape format uses quotes to delimit fields containing delimiter characters. Quote characters in data are represented by a pair of quotes. Consider the data in this table:
+The most common CSV escape format uses quotes to delimit fields containing delimiters. Quotes must also be escaped, this is done by using a pair of quotes to represent a single quote. Consider the data in this table:
 
 | Field-1 | Field-2              | Field-3 |
 | ------- | -------------------- | ------- |
@@ -241,14 +241,20 @@ The most common CSV escape format uses quotes to delimit fields containing delim
 | ghi     | Say "hello, world!"  | jkl     |
 
 In field2, the first value contains a comma, the second value contain both quotes and a comma. Here is the CSV representation, using escapes to represent commas and quotes in the data.
-
 ```
 Field-1,Field-2,Field-3
 abc,"hello, world!",def
 ghi,"Say ""hello, world!""",jkl
 ```
 
-Here is the same data represented in TSV format, no escapes involved:
+In the above example, only fields with delimiters are quoted. It is also common to quote all fields whether or not they contain delimiters. The following CSV file is equivalent:
+```
+"Field-1","Field-2","Field-3"
+"abc","hello, world!","def"
+"ghi","Say ""hello, world!""","jkl"
+```
+
+Here's the same data in TSV. It is much simpler as no escapes are involved:
 ```
 Field-1	Field-2	Field-3
 abc	hello, world	def
