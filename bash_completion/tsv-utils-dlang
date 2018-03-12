@@ -155,10 +155,10 @@ _tsv_pretty()
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
-    opts="--help --help-verbose --version --header --no-header --lookahead --repeat-header --underline-header --format-floats --precision --replace-empty --empty-replacement --delimiter --space-between-fields --max-text-width"
+    opts="--help --help-verbose --version --header --no-header --lookahead --repeat-header --underline-header --format-floats --precision --replace-empty --empty-replacement --delimiter --space-between-fields --max-text-width --preamble"
 
     case $prev in
-         -h--help|--help-verbose|-V|--version|-l|--lookahead|-r|--repeat-header|-u|--underline-header|-f|--format-floats|-p|--precision|-e|--replace-empty|-E|--empty-replacement|-d|--delimiter|-s|--space-between-fields|-m|--max-text-width)
+         -h--help|--help-verbose|-V|--version|-l|--lookahead|-r|--repeat-header|-u|--underline-header|-f|--format-floats|-p|--precision|-e|--replace-empty|-E|--empty-replacement|-d|--delimiter|-s|--space-between-fields|-m|--max-text-width|-a|--preamble)
           return
           ;;
     esac
