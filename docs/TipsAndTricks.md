@@ -225,15 +225,13 @@ See the `dos2unix` and `iconv` man pages for more details.
 
 The differences between TSV and CSV formats can be confusing. The obvious distinction is the default field delimiter: TSV uses TAB, CSV uses comma. Both use newline as the record delimiter.
 
-By itself, different default field delimiters is not especially significant. Far more important is the approach to delimiters occurring in the data. CSV uses an escape syntax to represent comma and newlines in the data. TSV takes a different approach, disallowing TABs and newlines in the data.
+By itself, using different default field delimiters is not especially significant. Far more important is the approach to delimiters occurring in the data. CSV uses an escape syntax to represent comma and newlines in the data. TSV takes a different approach, disallowing TABs and newlines in the data.
 
 The escape syntax enables CSV to fully represent common written text. This is a good fit for human edited documents, notably spreadsheets. This generality has a cost: reading it requires programs to parse the escape syntax. While not overly difficult, it is still easy to do incorrectly, especially when writing one-off programs. It is good practice is to use a CSV parser when processing CSV files. Traditional Unix tools like `cut` and `awk` do not process CSV escapes, alternate tools are needed.
 
 By contrast, parsing TSV data is simple. Records can be read using the typical `readline` routines. The fields in each record can be found using a `split` or `splitter` routine available in most programming languages. No special parser is needed. This is much more reliable. It is also faster, no CPU time is used parsing the escape syntax.
 
 This makes TSV format well suited for the large tabular data sets common in data mining and machine learning environments. These data sets rarely need TAB and newline characters in the fields.
-
-The similarity between TSV and CSV can lead to confusion about which tools are appropriate. Furthering this confusion, it is somewhat common to have data files using comma as the field delimiter, but without CSV escapes. These are sometimes referred to as "simple CSV". They are equivalent to TSV files with comma as a field delimiter. The TSV Utilities and traditional Unix tools like `cut` and `awk` process these files correctly by specifying the field delimiter.
 
 The most common CSV escape format uses quotes to delimit fields containing delimiter characters. Quote characters in data are represented by a pair of quotes. Consider the data in this table:
 
@@ -250,12 +248,14 @@ abc,"hello, world!",def
 ghi,"Say ""hello, world!""",jkl
 ```
 
-Here is the same data represented in TSV format, no escapes needed:
+Here is the same data represented in TSV format, no escapes involved:
 ```
 Field-1	Field-2	Field-3
 abc	hello, world	def
 ghi	Say "hello, world!"	jkl
 ```
+
+The similarity between TSV and CSV can lead to confusion about which tools are appropriate. Furthering this confusion, it is somewhat common to have data files using comma as the field delimiter, but without comma, quote, or newlines in the data. No CSV escapes are needed in these files, with the implication that traditional Unix tools like `cut` and `awk` can be used to process these files. Such files are sometimes referred to as "simple CSV". They are equivalent to TSV files with comma as a field delimiter. Traditional Unix tools and the TSV Utilities can process these files correctly by specifying the field delimiter. However, a the notion of "simple csv" is a very ad hoc notion and ill defined notion. A simple precaution when working with these files is to run a CSV-to-TSV converter like `csv2tsv` prior to other processing steps. 
 
 References:
 - [Wikipedia: Tab-separated values](https://en.wikipedia.org/wiki/Tab-separated_values) - Useful description of TSV format. Includes a link to the IANA standard.
