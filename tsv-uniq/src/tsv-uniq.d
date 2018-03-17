@@ -49,9 +49,20 @@ equivalent entries with an ID. The ID is simply a one-upped counter. Example:
 
    tsv-uniq --header -f 2,3 --equiv file.tsv
 
+tsv-uniq can be run without specifying a key field. In this case the whole line
+is used as a key, same as the Unix 'uniq' program. This works on any line-oriented
+text file, not just TSV files.
+
+The '--r|repeated' option can be used to print only lines occurring more than
+once. '--a|at-least N' is similar, except that it only prints lines occuring at
+least N times. For both, the Nth line found is printed, in the order found.
+
 The '--m|max MAX' option changes the behavior to output the first MAX lines for
 each key, rather than just the first line for each key. This can also with used
 with '--e|equiv' to limit the number output for each equivalence class.
+
+It's not obvious when both '--a|at-least' and '--m|max' might be useful, but, if
+both are specified, the occurrences between 'at-least' and 'max' are output.
 
 Options:
 EOS";
@@ -65,16 +76,18 @@ struct TsvUniqOptions
     enum defaultEquivStartID = 1;
 
     string programName;
-    bool helpVerbose = false;                 // --help-verbose
+    bool helpVerbose = false;                 // --h|help-verbose
     bool versionWanted = false;               // --V|version
-    size_t[] fields;                          // --fields
-    bool hasHeader = false;                   // --header
-    size_t max = 0;                           // --max. Zero implies default behavior.
-    bool equivMode = false;                   // --equiv
+    size_t[] fields;                          // --f|fields
+    bool hasHeader = false;                   // --H|header
+    bool onlyRepeated = false;                // --r|repeated. Shorthand for '--atleast 2'
+    size_t atLeast = 0;                       // --a|at-least. Zero implies default behavior.
+    size_t max = 0;                           // --m|max. Zero implies default behavior.
+    bool equivMode = false;                   // --e|equiv
     string equivHeader = defaultEquivHeader;  // --equiv-header
     long equivStartID = defaultEquivStartID;  // --equiv-start
-    bool ignoreCase = false;                  // --ignore-case
-    char delim = '\t';                        // --delimiter
+    bool ignoreCase = false;                  // --i|ignore-case
+    char delim = '\t';                        // --d|delimiter
     bool keyIsFullLine = false;               // Derived. True if no fields specified or '--f|fields 0'
 
     /* Returns a tuple. First value is true if command line arguments were successfully
@@ -84,6 +97,18 @@ struct TsvUniqOptions
      * Returning true (execution continues) means args have been validated and derived
      * values calculated. In addition, field indices have been converted to zero-based.
      * If the whole line is the key, the individual fields list will be cleared.
+     *
+     * Repeat count control variables 'atLeast' and max' - The general idea is that the
+     * values are left at zero if no repeat count options are specified. They are set if
+     * repeat count options are specified, as follows:
+     *   * atLeast - Will be zero unless --r|repeated or --a|at-least is specified.
+     *     --r|repeated option sets it 2, --a|at-least sets it to the specified value.
+     *   * max - Default to zero. Is set to the --m|max value if provided. Is set to
+     *    'atLeast' if --r|repeated or --a|at-least is provided.
+     *
+     * An exception to the above: If --e|equiv-mode is specified, then (max == 0)
+     * represents the default "output all values" case. In this case max may be less
+     * than the at-least value.
      */
     auto processArgs (ref string[] cmdArgs)
     {
@@ -110,7 +135,9 @@ struct TsvUniqOptions
                 fields.makeFieldListOptionHandler!(size_t, No.convertToZeroBasedIndex,Yes.allowFieldNumZero),
 
                 "i|ignore-case", "              Ignore case when comparing keys.", &ignoreCase,
-                "m|max",         "INT           Max number of each unqiue key to output (zero is ignored).", &max,
+                "r|repeated",    "              Output only lines that are repeated (based on the key).", &onlyRepeated,
+                "a|at-least",    "INT           Output only lines that are repeated INT times (based on the key). Zero and one are ignored.", &atLeast,
+                "m|max",         "INT           Max number of each unique key to output (zero is ignored).", &max,
                 "e|equiv",       "              Output equiv class IDs rather than uniq'ing entries.", &equivMode,
                 "equiv-header",  "STR           Use STR as the equiv-id field header. Applies when using '--header --equiv'. Default: 'equiv_id'.", &equivHeader,
                 "equiv-start",   "INT           Use INT as the first equiv-id. Default: 1.", &equivStartID,
@@ -163,6 +190,13 @@ struct TsvUniqOptions
                 fields.length = 0;
             }
 
+            if (onlyRepeated && atLeast <= 1) atLeast = 2;
+            if (atLeast >= 2 && max < atLeast)
+            {
+                // Don't modify max if it is zero and equivMode is in effect.
+                if (max != 0 || !equivMode) max = atLeast;
+            }
+
             fields.each!((ref x) => --x);  // Convert to 1-based indexing.
 
         }
@@ -212,7 +246,7 @@ void tsvUniq(in TsvUniqOptions cmdopt, in string[] inputFiles)
     auto bufferedOutput = BufferedOutputRange!(typeof(stdout))(stdout);
 
     /* The master hash. The key is the specified fields concatenated together (including
-     * separators). The value is the equiv-id.
+     * separators). The value is a struct with the equiv-id and occurrence count.
      */
     struct EquivEntry { size_t equivID; size_t count; }
     EquivEntry[string] equivHash;
@@ -275,7 +309,7 @@ void tsvUniq(in TsvUniqOptions cmdopt, in string[] inputFiles)
                 EquivEntry* priorEntry = (key in equivHash);
                 if (priorEntry is null)
                 {
-                    isOutput = true;
+                    isOutput = (cmdopt.atLeast <= 1);
                     currEntry.equivID = nextEquivID;
                     currEntry.count = 1;
                     equivHash[key.to!string] = currEntry;
@@ -286,7 +320,7 @@ void tsvUniq(in TsvUniqOptions cmdopt, in string[] inputFiles)
                     (*priorEntry).count++;
                     currEntry = *priorEntry;
 
-                    if (currEntry.count <= cmdopt.max ||
+                    if ((currEntry.count <= cmdopt.max && currEntry.count >= cmdopt.atLeast) ||
                         (cmdopt.equivMode && cmdopt.max == 0))
                     {
                         isOutput = true;

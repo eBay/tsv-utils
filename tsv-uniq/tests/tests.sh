@@ -65,6 +65,39 @@ runtest ${prog} "-H -f 2 --max 3 input2.tsv input2.tsv" ${basic_tests_1}
 runtest ${prog} "-H -f 3,5 --max 3 input2.tsv input2.tsv" ${basic_tests_1}
 runtest ${prog} "-H -f 2 --equiv --max 3 input2.tsv input2.tsv" ${basic_tests_1}
 
+echo "" >> ${basic_tests_1}; echo "====repeated and at-least count tests===" >> ${basic_tests_1}
+runtest ${prog} "--repeated input1.tsv" ${basic_tests_1}
+runtest ${prog} "-H --repeated input1.tsv" ${basic_tests_1}
+runtest ${prog} "-H --at-least 0 input1.tsv" ${basic_tests_1}
+runtest ${prog} "-H --at-least 1 input1.tsv" ${basic_tests_1}
+runtest ${prog} "-H --at-least 2 input1.tsv" ${basic_tests_1}
+runtest ${prog} "-H --at-least 3 input1.tsv" ${basic_tests_1}
+runtest ${prog} "--at-least 3 input1.tsv" ${basic_tests_1}
+runtest ${prog} "-H -a 3 input1.tsv input1.tsv" ${basic_tests_1}
+runtest ${prog} "-H -r input1.tsv input1.tsv input1.tsv" ${basic_tests_1}
+runtest ${prog} "-H -f 2 -r input2.tsv input2.tsv" ${basic_tests_1}
+runtest ${prog} "-H -f 2 --at-least 3 input2.tsv input2.tsv" ${basic_tests_1}
+runtest ${prog} "-H -f 3,5 --at-least 2 input2.tsv input2.tsv" ${basic_tests_1}
+runtest ${prog} "-H -f 2 --equiv --repeated input2.tsv input2.tsv input2.tsv" ${basic_tests_1}
+runtest ${prog} "-H -f 2 --equiv --at-least 3 input2.tsv input2.tsv input2.tsv" ${basic_tests_1}
+
+runtest ${prog} "-H --repeated --max 0 input1.tsv" ${basic_tests_1}
+runtest ${prog} "-H --repeated --max 1 input1.tsv" ${basic_tests_1}
+runtest ${prog} "-H --r --max 2 input1.tsv" ${basic_tests_1}
+runtest ${prog} "-H --r --max 3 input1.tsv" ${basic_tests_1}
+runtest ${prog} "-H --r --max 3 input1.tsv input1.tsv" ${basic_tests_1}
+runtest ${prog} "-H --at-least 2 --max 2 input1.tsv" ${basic_tests_1}
+runtest ${prog} "-H --at-least 3 --max 0 input1.tsv" ${basic_tests_1}
+runtest ${prog} "-H --at-least 3 --max 1 input1.tsv" ${basic_tests_1}
+runtest ${prog} "-H --at-least 3 --max 2 input1.tsv" ${basic_tests_1}
+runtest ${prog} "-H --at-least 3 --max 3 input1.tsv" ${basic_tests_1}
+runtest ${prog} "-H --at-least 3 --max 4 input1.tsv input1.tsv input1.tsv" ${basic_tests_1}
+runtest ${prog} "-H --at-least 3 --max 5 input1.tsv input1.tsv input1.tsv" ${basic_tests_1}
+runtest ${prog} "-H -f 2 -r  --max 4 input2.tsv input2.tsv" ${basic_tests_1}
+runtest ${prog} "-H -f 2 --at-least 3 --max 4 input2.tsv input2.tsv" ${basic_tests_1}
+runtest ${prog} "-H -f 3,5 --at-least 2 --max 4 input2.tsv input2.tsv" ${basic_tests_1}
+runtest ${prog} "-H -f 2 --equiv --at-least 3 --max 5 input2.tsv input2.tsv input2.tsv" ${basic_tests_1}
+
 # Alternate delimiter tests
 echo "" >> ${basic_tests_1}; echo "====Alternate delimiter tests===" >> ${basic_tests_1}
 runtest ${prog} "input_delim_underscore.tsv --delimiter _ --fields 1" ${basic_tests_1}
