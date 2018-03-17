@@ -489,7 +489,9 @@ The alternate to 'uniq' mode is 'equiv-class' identification. In this mode, all 
 
 `tsv-uniq` can be run without specifying a key field. In this case the whole line is used as a key, same as the Unix `uniq` program. As with `uniq`, this works on any line-oriented text file, not just TSV files. As there is no need to sort the data, `tsv-uniq` is generally [quite a bit faster](TipsAndTricks.md#a-faster-way-to-unique-a-file) and preserves input order in the process.
 
-The `--m|max NUM` option can be used to output the first `NUM` lines for each uniq key. This works in both 'uniq' and 'equiv-class' mode.
+The `--r|repeated` option can be used to print only lines occurring more than once. `--a|at-least N` is similar, except that it only prints lines occuring at least N times. For both, the Nth line found is printed, in the order found.
+
+The `--m|max NUM` option can be used to output the first `NUM` lines for each uniq key. This works in both 'uniq' and 'equiv-class' mode. `--a|at-least` and `--m|max` can be used together, though its not clear why that would be useful.
 
 **Synopsis:** tsv-uniq [options] [file...]
 

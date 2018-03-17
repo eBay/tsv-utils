@@ -607,6 +607,333 @@ f1	f2	f3	f4	f5	equiv_id
 9	ÀBC		1367	1331	7
 15	7	xyz	9999	8888	8
 
+====repeated and at-least count tests===
+
+====[tsv-uniq --repeated input1.tsv]====
+9	ÀBC		1367	1331
+3	ggg	CCC	5734	52
+
+====[tsv-uniq -H --repeated input1.tsv]====
+f1	f2	f3	f4	f5
+9	ÀBC		1367	1331
+3	ggg	CCC	5734	52
+
+====[tsv-uniq -H --at-least 0 input1.tsv]====
+f1	f2	f3	f4	f5
+1	ggg	UUU	101	15
+2	bbb	ZZZ	21	28
+3	ggg	CCC	5734	52
+4	ddd	ZZZ	65	602
+5	ßßß	SSS	 7	771
+6	sss	sss	17	15
+7	ssssss	sss	18	16
+8	àbc	P	1209	1234
+9	ÀBC		1367	1331
+10			e-e	1602
+11	0	X	1721	1703
+12	 	 	sp-sp	2020
+13	0.0	Z	1931	1956
+8	ÀBC	p	1209	1234
+14	 	 	sp-sp	2022
+17	0	Z	5734	602
+
+====[tsv-uniq -H --at-least 1 input1.tsv]====
+f1	f2	f3	f4	f5
+1	ggg	UUU	101	15
+2	bbb	ZZZ	21	28
+3	ggg	CCC	5734	52
+4	ddd	ZZZ	65	602
+5	ßßß	SSS	 7	771
+6	sss	sss	17	15
+7	ssssss	sss	18	16
+8	àbc	P	1209	1234
+9	ÀBC		1367	1331
+10			e-e	1602
+11	0	X	1721	1703
+12	 	 	sp-sp	2020
+13	0.0	Z	1931	1956
+8	ÀBC	p	1209	1234
+14	 	 	sp-sp	2022
+17	0	Z	5734	602
+
+====[tsv-uniq -H --at-least 2 input1.tsv]====
+f1	f2	f3	f4	f5
+9	ÀBC		1367	1331
+3	ggg	CCC	5734	52
+
+====[tsv-uniq -H --at-least 3 input1.tsv]====
+f1	f2	f3	f4	f5
+9	ÀBC		1367	1331
+
+====[tsv-uniq --at-least 3 input1.tsv]====
+9	ÀBC		1367	1331
+
+====[tsv-uniq -H -a 3 input1.tsv input1.tsv]====
+f1	f2	f3	f4	f5
+9	ÀBC		1367	1331
+3	ggg	CCC	5734	52
+
+====[tsv-uniq -H -r input1.tsv input1.tsv input1.tsv]====
+f1	f2	f3	f4	f5
+9	ÀBC		1367	1331
+3	ggg	CCC	5734	52
+1	ggg	UUU	101	15
+2	bbb	ZZZ	21	28
+4	ddd	ZZZ	65	602
+5	ßßß	SSS	 7	771
+6	sss	sss	17	15
+7	ssssss	sss	18	16
+8	àbc	P	1209	1234
+10			e-e	1602
+11	0	X	1721	1703
+12	 	 	sp-sp	2020
+13	0.0	Z	1931	1956
+8	ÀBC	p	1209	1234
+14	 	 	sp-sp	2022
+17	0	Z	5734	602
+
+====[tsv-uniq -H -f 2 -r input2.tsv input2.tsv]====
+f1	f2	f3	f4	f5
+3	ggg	CCC	5734	52
+5	ßßß	SSS	 7	771
+17	8	str	9997	8886
+5	ßßßz	SSS	 7	771
+16	pqr	uvw	9998	8887
+11	0	X	1721	1703
+9	ÀBC		1367	1331
+15	7	xyz	9999	8888
+
+====[tsv-uniq -H -f 2 --at-least 3 input2.tsv input2.tsv]====
+f1	f2	f3	f4	f5
+5	ßßß	SSS	 76	771
+1	ggg	UUU	101	15
+
+====[tsv-uniq -H -f 3,5 --at-least 2 input2.tsv input2.tsv]====
+f1	f2	f3	f4	f5
+5	ßßß	SSS	 7	771
+1	ggg	UUU	101	15
+3	ggg	CCC	5734	52
+5	ßßß	SSSa	 7	771
+17	8	str	9997	8886
+16	pqr	uvw	9998	8887
+11	0	X	1721	1703
+9	ÀBC		1367	1331
+15	7	xyz	9999	8888
+
+====[tsv-uniq -H -f 2 --equiv --repeated input2.tsv input2.tsv input2.tsv]====
+f1	f2	f3	f4	f5	equiv_id
+3	ggg	CCC	5734	52	1
+5	ßßß	SSS	 7	771	2
+5	ßßß	SSS	 76	771	2
+1	ggg	UUU	101	15	1
+3	ggg	CCC	5734	52	1
+5	ßßß	SSSa	 7	771	2
+17	8	str	9997	8886	3
+5	ßßßz	SSS	 7	771	4
+16	pqr	uvw	9998	8887	5
+5	ßßß	SSS	 7	771	2
+5	ßßß	SSS	 76	771	2
+11	0	X	1721	1703	6
+9	ÀBC		1367	1331	7
+15	7	xyz	9999	8888	8
+1	ggg	UUU	101	15	1
+3	ggg	CCC	5734	52	1
+5	ßßß	SSSa	 7	771	2
+17	8	str	9997	8886	3
+5	ßßßz	SSS	 7	771	4
+16	pqr	uvw	9998	8887	5
+5	ßßß	SSS	 7	771	2
+5	ßßß	SSS	 76	771	2
+11	0	X	1721	1703	6
+9	ÀBC		1367	1331	7
+15	7	xyz	9999	8888	8
+
+====[tsv-uniq -H -f 2 --equiv --at-least 3 input2.tsv input2.tsv input2.tsv]====
+f1	f2	f3	f4	f5	equiv_id
+3	ggg	CCC	5734	52	1
+5	ßßß	SSS	 7	771	2
+5	ßßß	SSS	 76	771	2
+1	ggg	UUU	101	15	1
+3	ggg	CCC	5734	52	1
+5	ßßß	SSSa	 7	771	2
+17	8	str	9997	8886	3
+5	ßßßz	SSS	 7	771	4
+16	pqr	uvw	9998	8887	5
+5	ßßß	SSS	 7	771	2
+5	ßßß	SSS	 76	771	2
+11	0	X	1721	1703	6
+9	ÀBC		1367	1331	7
+15	7	xyz	9999	8888	8
+1	ggg	UUU	101	15	1
+3	ggg	CCC	5734	52	1
+5	ßßß	SSSa	 7	771	2
+17	8	str	9997	8886	3
+5	ßßßz	SSS	 7	771	4
+16	pqr	uvw	9998	8887	5
+5	ßßß	SSS	 7	771	2
+5	ßßß	SSS	 76	771	2
+11	0	X	1721	1703	6
+9	ÀBC		1367	1331	7
+15	7	xyz	9999	8888	8
+
+====[tsv-uniq -H --repeated --max 0 input1.tsv]====
+f1	f2	f3	f4	f5
+9	ÀBC		1367	1331
+3	ggg	CCC	5734	52
+
+====[tsv-uniq -H --repeated --max 1 input1.tsv]====
+f1	f2	f3	f4	f5
+9	ÀBC		1367	1331
+3	ggg	CCC	5734	52
+
+====[tsv-uniq -H --r --max 2 input1.tsv]====
+f1	f2	f3	f4	f5
+9	ÀBC		1367	1331
+3	ggg	CCC	5734	52
+
+====[tsv-uniq -H --r --max 3 input1.tsv]====
+f1	f2	f3	f4	f5
+9	ÀBC		1367	1331
+3	ggg	CCC	5734	52
+9	ÀBC		1367	1331
+
+====[tsv-uniq -H --r --max 3 input1.tsv input1.tsv]====
+f1	f2	f3	f4	f5
+9	ÀBC		1367	1331
+3	ggg	CCC	5734	52
+9	ÀBC		1367	1331
+1	ggg	UUU	101	15
+2	bbb	ZZZ	21	28
+3	ggg	CCC	5734	52
+4	ddd	ZZZ	65	602
+5	ßßß	SSS	 7	771
+6	sss	sss	17	15
+7	ssssss	sss	18	16
+8	àbc	P	1209	1234
+10			e-e	1602
+11	0	X	1721	1703
+12	 	 	sp-sp	2020
+13	0.0	Z	1931	1956
+8	ÀBC	p	1209	1234
+14	 	 	sp-sp	2022
+17	0	Z	5734	602
+
+====[tsv-uniq -H --at-least 2 --max 2 input1.tsv]====
+f1	f2	f3	f4	f5
+9	ÀBC		1367	1331
+3	ggg	CCC	5734	52
+
+====[tsv-uniq -H --at-least 3 --max 0 input1.tsv]====
+f1	f2	f3	f4	f5
+9	ÀBC		1367	1331
+
+====[tsv-uniq -H --at-least 3 --max 1 input1.tsv]====
+f1	f2	f3	f4	f5
+9	ÀBC		1367	1331
+
+====[tsv-uniq -H --at-least 3 --max 2 input1.tsv]====
+f1	f2	f3	f4	f5
+9	ÀBC		1367	1331
+
+====[tsv-uniq -H --at-least 3 --max 3 input1.tsv]====
+f1	f2	f3	f4	f5
+9	ÀBC		1367	1331
+
+====[tsv-uniq -H --at-least 3 --max 4 input1.tsv input1.tsv input1.tsv]====
+f1	f2	f3	f4	f5
+9	ÀBC		1367	1331
+3	ggg	CCC	5734	52
+9	ÀBC		1367	1331
+3	ggg	CCC	5734	52
+1	ggg	UUU	101	15
+2	bbb	ZZZ	21	28
+4	ddd	ZZZ	65	602
+5	ßßß	SSS	 7	771
+6	sss	sss	17	15
+7	ssssss	sss	18	16
+8	àbc	P	1209	1234
+10			e-e	1602
+11	0	X	1721	1703
+12	 	 	sp-sp	2020
+13	0.0	Z	1931	1956
+8	ÀBC	p	1209	1234
+14	 	 	sp-sp	2022
+17	0	Z	5734	602
+
+====[tsv-uniq -H --at-least 3 --max 5 input1.tsv input1.tsv input1.tsv]====
+f1	f2	f3	f4	f5
+9	ÀBC		1367	1331
+3	ggg	CCC	5734	52
+9	ÀBC		1367	1331
+9	ÀBC		1367	1331
+3	ggg	CCC	5734	52
+1	ggg	UUU	101	15
+2	bbb	ZZZ	21	28
+3	ggg	CCC	5734	52
+4	ddd	ZZZ	65	602
+5	ßßß	SSS	 7	771
+6	sss	sss	17	15
+7	ssssss	sss	18	16
+8	àbc	P	1209	1234
+10			e-e	1602
+11	0	X	1721	1703
+12	 	 	sp-sp	2020
+13	0.0	Z	1931	1956
+8	ÀBC	p	1209	1234
+14	 	 	sp-sp	2022
+17	0	Z	5734	602
+
+====[tsv-uniq -H -f 2 -r  --max 4 input2.tsv input2.tsv]====
+f1	f2	f3	f4	f5
+3	ggg	CCC	5734	52
+5	ßßß	SSS	 7	771
+5	ßßß	SSS	 76	771
+1	ggg	UUU	101	15
+3	ggg	CCC	5734	52
+5	ßßß	SSSa	 7	771
+17	8	str	9997	8886
+5	ßßßz	SSS	 7	771
+16	pqr	uvw	9998	8887
+11	0	X	1721	1703
+9	ÀBC		1367	1331
+15	7	xyz	9999	8888
+
+====[tsv-uniq -H -f 2 --at-least 3 --max 4 input2.tsv input2.tsv]====
+f1	f2	f3	f4	f5
+5	ßßß	SSS	 76	771
+1	ggg	UUU	101	15
+3	ggg	CCC	5734	52
+5	ßßß	SSSa	 7	771
+
+====[tsv-uniq -H -f 3,5 --at-least 2 --max 4 input2.tsv input2.tsv]====
+f1	f2	f3	f4	f5
+5	ßßß	SSS	 7	771
+5	ßßß	SSS	 76	771
+1	ggg	UUU	101	15
+3	ggg	CCC	5734	52
+5	ßßß	SSSa	 7	771
+17	8	str	9997	8886
+5	ßßßz	SSS	 7	771
+16	pqr	uvw	9998	8887
+11	0	X	1721	1703
+9	ÀBC		1367	1331
+15	7	xyz	9999	8888
+
+====[tsv-uniq -H -f 2 --equiv --at-least 3 --max 5 input2.tsv input2.tsv input2.tsv]====
+f1	f2	f3	f4	f5	equiv_id
+5	ßßß	SSS	 76	771	2
+1	ggg	UUU	101	15	1
+3	ggg	CCC	5734	52	1
+5	ßßß	SSSa	 7	771	2
+5	ßßß	SSS	 7	771	2
+1	ggg	UUU	101	15	1
+17	8	str	9997	8886	3
+5	ßßßz	SSS	 7	771	4
+16	pqr	uvw	9998	8887	5
+11	0	X	1721	1703	6
+9	ÀBC		1367	1331	7
+15	7	xyz	9999	8888	8
+
 ====Alternate delimiter tests===
 
 ====[tsv-uniq input_delim_underscore.tsv --delimiter _ --fields 1]====
