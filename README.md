@@ -19,7 +19,9 @@ File an [issue](https://github.com/eBay/tsv-utils-dlang/issues) if you have prob
 [![Travis](https://img.shields.io/travis/eBay/tsv-utils-dlang.svg)](https://travis-ci.org/eBay/tsv-utils-dlang)
 [![Codecov](https://img.shields.io/codecov/c/github/eBay/tsv-utils-dlang.svg)](https://codecov.io/gh/eBay/tsv-utils-dlang)
 [![GitHub release](https://img.shields.io/github/release/eBay/tsv-utils-dlang.svg)](https://github.com/eBay/tsv-utils-dlang/releases)
-[![DUB](https://img.shields.io/dub/v/tsv-utils-dlang.svg)](https://code.dlang.org/packages/tsv-utils-dlang)
+![Github commits (since latest release)](https://img.shields.io/github/commits-since/eBay/tsv-utils-dlang/latest.svg)
+![GitHub last commit](https://img.shields.io/github/last-commit/eBay/tsv-utils-dlang.svg)
+![license](https://img.shields.io/github/license/eBay/tsv-utils-dlang.svg)
 
 ## Tools overview
 
