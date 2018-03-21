@@ -258,7 +258,7 @@ _tsv_uniq()
     opts="--help --help-verbose --version --header --fields --ignore-case --repeated --at-least --max --equiv --equiv-header --equiv-start --delimiter"
 
     case $prev in
-         -h|--help|--help-verbose|-V|--version|-f|--fields|-r|--repeated|-a|--at-least|-m|--max|--equiv-header|--equiv-start|-d|--delimiter)
+         -h|--help|--help-verbose|-V|--version|-f|--fields|-a|--at-least|-m|--max|--equiv-header|--equiv-start|-d|--delimiter)
           return
           ;;
     esac
