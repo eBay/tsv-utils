@@ -40,7 +40,7 @@ matrix:
 #      if: type IN (pull_request, cron)
 #      if: fork = true
     - os: osx
-      osx_image: xcode9
+      osx_image: xcode9.3beta
       language: d
       d: ldc
       env: LTOPGO=default
