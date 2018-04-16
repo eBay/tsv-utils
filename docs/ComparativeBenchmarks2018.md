@@ -70,41 +70,41 @@ The tables show fastest times for each benchmark. Times are in seconds.
 
 **MacOS: Top-4 in each benchmark**
 
-| Benchmark                     |       Tool/Time | Tool/Time | Tool/Time | Tool/Time |
-| ----------------------------- | --------------: | --------: | --------: | --------: |
-| **Numeric row filter**        |            foo1 |      foo2 |      foo3 |      foo4 |
-| (4.8 GB, 7M lines)            |            0.00 |      0.00 |      0.00 |      0.00 |
-| **Regex row filter**          |            foo1 |      foo2 |      foo3 |      foo4 |
-| (2.7 GB, 14M lines)           |            0.00 |      0.00 |      0.00 |      0.00 |
-| **Column selection**          |            foo1 |      foo2 |      foo3 |      foo4 |
-| (4.8 GB, 7M lines)            |            0.00 |      0.00 |      0.00 |      0.00 |
-| **Column selection (narrow)** |            foo1 |      foo2 |      foo3 |      foo4 |
-| (1.7 GB, 86M lines)           |            0.00 |      0.00 |      0.00 |      0.00 |
-| **Join two files**            |            foo1 |      foo2 |      foo3 |      foo4 |
-| (4.8 GB, 7M lines)            |            0.00 |      0.00 |      0.00 |      0.00 |
-| **CSV-to-TSV**                |            foo1 |      foo2 |      foo3 |      foo4 |
-| (2.7 GB, 14M lines)           |            0.00 |      0.00 |      0.00 |      0.00 |
-| **Summary statistics**        |            foo1 |      foo2 |      foo3 |      foo4 |
-| (4.8 GB, 7M lines)            |            0.00 |      0.00 |      0.00 |      0.00 |
+| Benchmark                     | Tool/Time | Tool/Time | Tool/Time | Tool/Time |
+| ----------------------------- | --------: | --------: | --------: | --------: |
+| **Numeric row filter**        |      foo1 |      foo2 |      foo3 |      foo4 |
+| (4.8 GB, 7M lines)            |      0.00 |      0.00 |      0.00 |      0.00 |
+| **Regex row filter**          |      foo1 |      foo2 |      foo3 |      foo4 |
+| (2.7 GB, 14M lines)           |      0.00 |      0.00 |      0.00 |      0.00 |
+| **Column selection**          |      foo1 |      foo2 |      foo3 |      foo4 |
+| (4.8 GB, 7M lines)            |      0.00 |      0.00 |      0.00 |      0.00 |
+| **Column selection (narrow)** |      foo1 |      foo2 |      foo3 |      foo4 |
+| (1.7 GB, 86M lines)           |      0.00 |      0.00 |      0.00 |      0.00 |
+| **Join two files**            |      foo1 |      foo2 |      foo3 |      foo4 |
+| (4.8 GB, 7M lines)            |      0.00 |      0.00 |      0.00 |      0.00 |
+| **Summary statistics**        |      foo1 |      foo2 |      foo3 |      foo4 |
+| (4.8 GB, 7M lines)            |      0.00 |      0.00 |      0.00 |      0.00 |
+| **CSV-to-TSV**                |      foo1 |      foo2 |      foo3 |      foo4 |
+| (2.7 GB, 14M lines)           |      0.00 |      0.00 |      0.00 |      0.00 |
 
 **Linux: Top-4 in each benchmark**
 
-| Benchmark                     |       Tool/Time | Tool/Time | Tool/Time | Tool/Time |
-| ----------------------------- | --------------: | --------: | --------: | --------: |
-| **Numeric row filter**        |            foo1 |      foo2 |      foo3 |      foo4 |
-| (4.8 GB, 7M lines)            |            0.00 |      0.00 |      0.00 |      0.00 |
-| **Regex row filter**          |            foo1 |      foo2 |      foo3 |      foo4 |
-| (2.7 GB, 14M lines)           |            0.00 |      0.00 |      0.00 |      0.00 |
-| **Column selection**          |            foo1 |      foo2 |      foo3 |      foo4 |
-| (4.8 GB, 7M lines)            |            0.00 |      0.00 |      0.00 |      0.00 |
-| **Column selection (narrow)** |            foo1 |      foo2 |      foo3 |      foo4 |
-| (1.7 GB, 86M lines)           |            0.00 |      0.00 |      0.00 |      0.00 |
-| **Join two files**            |            foo1 |      foo2 |      foo3 |      foo4 |
-| (4.8 GB, 7M lines)            |            0.00 |      0.00 |      0.00 |      0.00 |
-| **Summary statistics**        |            foo1 |      foo2 |      foo3 |      foo4 |
-| (4.8 GB, 7M lines)            |            0.00 |      0.00 |      0.00 |      0.00 |
-| **CSV-to-TSV**                |            foo1 |      foo2 |      foo3 |      foo4 |
-| (2.7 GB, 14M lines)           |            0.00 |      0.00 |      0.00 |      0.00 |
+| Benchmark                     | Tool/Time | Tool/Time | Tool/Time | Tool/Time |
+| ----------------------------- | --------: | --------: | --------: | --------: |
+| **Numeric row filter**        |      foo1 |      foo2 |      foo3 |      foo4 |
+| (4.8 GB, 7M lines)            |      0.00 |      0.00 |      0.00 |      0.00 |
+| **Regex row filter**          |      foo1 |      foo2 |      foo3 |      foo4 |
+| (2.7 GB, 14M lines)           |      0.00 |      0.00 |      0.00 |      0.00 |
+| **Column selection**          |      foo1 |      foo2 |      foo3 |      foo4 |
+| (4.8 GB, 7M lines)            |      0.00 |      0.00 |      0.00 |      0.00 |
+| **Column selection (narrow)** |      foo1 |      foo2 |      foo3 |      foo4 |
+| (1.7 GB, 86M lines)           |      0.00 |      0.00 |      0.00 |      0.00 |
+| **Join two files**            |      foo1 |      foo2 |      foo3 |      foo4 |
+| (4.8 GB, 7M lines)            |      0.00 |      0.00 |      0.00 |      0.00 |
+| **Summary statistics**        |      foo1 |      foo2 |      foo3 |      foo4 |
+| (4.8 GB, 7M lines)            |      0.00 |      0.00 |      0.00 |      0.00 |
+| **CSV-to-TSV**                |      foo1 |      foo2 |      foo3 |      foo4 |
+| (2.7 GB, 14M lines)           |      0.00 |      0.00 |      0.00 |      0.00 |
 
 ## Test Details
 
