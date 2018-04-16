@@ -35,10 +35,8 @@ The MacOS benchmarks were run 25 times, the Linux benchmarks 35 times. The 10th 
 
 The TSV Utilities became materially faster between the March 2017 and April 2018 studies. The tables below show these changes. The pre-built binary for release v1.1.11 was used as a proxy for the March 2017 versions. v1.1.11 was released after the March 2017 study, but is largely unchanged.
 
-|                               |    MacOS   |    MacOS   |   Linux    |   Linux    |
+| Benchmark | MacOS<br>March 2017<br>(v1.1.11) | MacOS<br>April 2018<br>(v1.1.19) | Linux<br>March 2017<br>(v1.1.11) | Linux<br>April 2018<br>(v1.1.19) |
 | ----------------------------- | ---------: | ---------: | ---------: | ---------: |
-|                               | March 2017 | April 2018 | March 2017 | April 2018 |
-| Benchmark                     |  (v1.1.11) |  (v1.1.19) |  (v1.1.11) |  (v1.1.19) |
 | **Numeric row filter**        |       0.00 |       0.00 |       0.00 |       0.00 |
 | **Regex row filter**          |       0.00 |       0.00 |       0.00 |       0.00 |
 | **Column selection**          |       0.00 |       0.00 |       0.00 |       0.00 |
