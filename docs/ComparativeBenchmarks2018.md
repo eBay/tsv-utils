@@ -1,4 +1,4 @@
-_Visit the [main performance benchmarks page](Performance.md)_
+_Visit the [main performance benchmarks page](Performance.md)_  
 _Visit the [main project page](../README.md)_
 
 # April 2018 Comparative Benchmarks Update
@@ -23,7 +23,7 @@ The 2018 study adds one additional benchmark to the 2017 set. Benchmarks were ru
 
 Seven tasks were used as benchmarks. Two forms of row filtering: numeric comparisons and regular expression match. Join two files on a common key. Simple statistical calculations (e.g. mean of column values). Convert CSV files to TSV. Two column selection tests (aka 'cut'), one with medium width lines, the other on a file with short lines. The second column selection test was added in the 2018 study.
 
-Reasonably large files were used. One 4.8 GB, 7 million rows, another 2.7 GB, 14 million rows, and a third file 1.8 GB, 86 million lines. Tests against smaller files gave results consistent with the larger file tests.
+Reasonably large files were used. One 4.8 GB, 7 million rows, another 2.7 GB, 14 million rows, and a third file 1.7 GB, 86 million lines. Tests against smaller files gave results consistent with the larger file tests.
 
 The MacOS benchmarks were run on a Mac mini, 16 GB RAM, SSD drives, 3 GHz Intel i7 (2 cores). This machine is not quite as fast as the MacBook Pro used for the 2017 study, but the performance is not far off.
 
@@ -36,9 +36,9 @@ The MacOS benchmarks were run 25 times, the Linux benchmarks 35 times. The 10th 
 The TSV Utilities became materially faster between the March 2017 and April 2018 studies. The tables below show these changes. The pre-built binary for release v1.1.11 was used as a proxy for the March 2017 versions. v1.1.11 was released after the March 2017 study, but is largely unchanged.
 
 |                               |    MacOS   |    MacOS   |   Linux    |   Linux    |
+| ----------------------------- | ---------: | ---------: | ---------: | ---------: |
 |                               | March 2017 | April 2018 | March 2017 | April 2018 |
 | Benchmark                     |  (v1.1.11) |  (v1.1.19) |  (v1.1.11) |  (v1.1.19) |
-| ----------------------------- | ---------: | ---------: | ---------: | ---------: |
 | **Numeric row filter**        |       0.00 |       0.00 |       0.00 |       0.00 |
 | **Regex row filter**          |       0.00 |       0.00 |       0.00 |       0.00 |
 | **Column selection**          |       0.00 |       0.00 |       0.00 |       0.00 |
@@ -71,6 +71,7 @@ A few specific considerations:
 The tables show fastest times for each benchmark. Times are in seconds.
 
 **MacOS: Top-4 in each benchmark**
+
 | Benchmark                     |       Tool/Time | Tool/Time | Tool/Time | Tool/Time |
 | ----------------------------- | --------------: | --------: | --------: | --------: |
 | **Numeric row filter**        |            foo1 |      foo2 |      foo3 |      foo4 |
@@ -89,6 +90,7 @@ The tables show fastest times for each benchmark. Times are in seconds.
 | (4.8 GB, 7M lines)            |            0.00 |      0.00 |      0.00 |      0.00 |
 
 **Linux: Top-4 in each benchmark**
+
 | Benchmark                     |       Tool/Time | Tool/Time | Tool/Time | Tool/Time |
 | ----------------------------- | --------------: | --------: | --------: | --------: |
 | **Numeric row filter**        |            foo1 |      foo2 |      foo3 |      foo4 |
