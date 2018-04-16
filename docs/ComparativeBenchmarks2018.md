@@ -5,8 +5,8 @@ _Visit the [main project page](../README.md)_
 
 * [Overview](#overview)
 * [Benchmark Tests](#benchmark-tests)
-* [TSV Utilities performance improvements post the March 2017 study](#tsv-utilities-performance-improvements-after-the-march-2017-study)
-* [Comparative benchmark updates](#comparative-benchmarks)
+* [TSV Utilities performance improvements post the March 2017 study](#tsv-utilities-performance-improvements-post-the-march-2017-study)
+* [Comparative benchmark updates](#comparative-benchmark-updates)
 * [Test details](#test-details)
 
 ## Overview
@@ -56,7 +56,7 @@ Updates to the benchmarks from the 2017 study are provided below. The top-4 tool
 
 ### A note about comparisons between individual tools
 
-The intent of the study is to gain an overall picture of how performance of D programs compares with other native compiled languages. It is hoped that there is some validity in larger picture. However, such evaluations may not be useful or worthwhile when considering specific tools. Each tool will have its own design and functionality goals. These goals will affect performance, often in ways that are a deliberate design trade-off on the part of the developer.
+The intent of the study is to gain an overall picture of the performance of typical D programs. Comparisons across a range of tests and tools helps with this. However, any one test or comparison between individual tools is less meaningful. Each tool will have its own design and functionality goals. These goals will affect performance, often in ways that are a deliberate design trade-off on the part of the developer.
 
 A few specific considerations:
 * Tools accepting CSV data must handle escape characters. This is computationally more expensive than a strict delimited format like TSV. Supporting both CSV and TSV makes optimizing the TSV case challenging.
@@ -66,7 +66,7 @@ A few specific considerations:
 
 ### Top four in each benchmark
 
-The tables below show fastest times for each benchmark. One table each for MacOS and Linux. Times are in seconds.
+The tables below show fastest times for each benchmark. One table each for MacOS and Linux. Times are in seconds. A description of the individual tests can be found in the [March 2017 study](ComparativeBenchmarks2017.md).
 
 #### MacOS: Top-4 in each benchmark
 
@@ -108,7 +108,7 @@ The tables below show fastest times for each benchmark. One table each for MacOS
 
 ## Test details
 
-Tests were run on April 14, 2018. The latest released version of each tool was used. Details needed to reproduce the tests are given below. In some cases [March 2017 study](ComparativeBenchmarks2017.md) has a more detailed of the individual tests, however, everything need to reproduce the tests can be found here.
+Tests were run on April 14, 2018. The latest released version of each tool was used. Details needed to reproduce the tests are given below. The [March 2017 study](ComparativeBenchmarks2017.md) has a more detailed of the individual tests, however, everything need to reproduce the tests can be found here.
 
 ### Machines
 
