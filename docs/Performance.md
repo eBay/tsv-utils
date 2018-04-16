@@ -2,10 +2,10 @@ _Visit the [main page](../README.md)_
 
 # Performance Studies
 
-* [Comparative Benchmark Study](#comparative-benchmark-study)
+* [Comparative Benchmark Studies](#comparative-benchmark-study)
 * [LTO and PGO studies](#lto-and-pgo-studies)
 
-## Comparative Benchmark Study
+## Comparative Benchmark Studies
 
 Performance is a key motivation for using D rather an interpreted language like Python or Perl. It is also a consideration in choosing between D and C/C++.
 

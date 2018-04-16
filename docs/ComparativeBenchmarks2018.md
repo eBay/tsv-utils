@@ -5,9 +5,9 @@ _Visit the [main project page](../README.md)_
 
 * [Overview](#overview)
 * [Benchmark Tests](#benchmark-tests)
-* [TSV Utilities Performance Improvements](#tsv-utilities-performance-improvements)
-* [Comparative Benchmarks](#comparative-benchmarks)
-* [Test Details](#test-details)
+* [TSV Utilities performance improvements post the March 2017 study](#tsv-utilities-performance-improvements-after-the-march-2017-study)
+* [Comparative benchmark updates](#comparative-benchmarks)
+* [Test details](#test-details)
 
 ## Overview
 
@@ -31,7 +31,7 @@ The Linux benchmarks were run using a commodity cloud machine with a 16 CPU Inte
 
 The MacOS benchmarks were run 25 times, the Linux benchmarks 35 times. The 10th percentile numbers are reported here. Median and quartile numbers were consistent and could have been used as well.
 
-## TSV Utilities Performance Improvements
+## TSV Utilities performance improvements post the March 2017 Study
 
 The TSV Utilities became materially faster between the March 2017 and April 2018 studies. The tables below show these changes. The pre-built binary for release v1.1.11 was used as a proxy for the March 2017 versions. v1.1.11 was released after the March 2017 study, but is largely unchanged.
 
@@ -50,9 +50,9 @@ There were three main sources of performance improvements between the 2017 and 2
 * Performance improvements in D, the standard libraries, and compilers.
 * The use of output buffering in the tools. This had the largest impact on the narrow file column selection test.
 
-## Comparative Benchmarks
+## Comparative benchmark updates
 
-Updates to the benchmarks from the 2017 study are provided below. For brevity, only the top-4 tools in each benchmark are shown.
+Updates to the benchmarks from the 2017 study are provided below. The top-4 tools in each benchmark are shown.
 
 ### A note about comparisons between individual tools
 
@@ -62,11 +62,11 @@ A few specific considerations:
 * Tools accepting CSV data must handle escape characters. This is computationally more expensive than a strict delimited format like TSV. Supporting both CSV and TSV makes optimizing the TSV case challenging.
 * Some CSV implementations support embedded newlines, others do not. Embedded newline support is more challenging because highly optimized "readline" routines cannot be used to find record boundaries.
 * Handling arbitrary expression trees (ala `Awk`) is more computationally complex than the handling a single conjunctive or disjunctive expression list as `tsv-filter` does.
-* Some tools use multi-threading, others do not. (The TSV Utilities do not.) This is a design tradeoff. Running multiple threads can improve run-times of individual tools. However, this may reduce overall throughput when several tools are chained in a command pipeline.
+* Some tools use multi-threading, others do not. (The TSV Utilities do not.) This is a design trade-off. Running multiple threads can improve run-times of individual tools. However, this may reduce overall throughput when several tools are chained in a command pipeline.
 
 ### Top four in each benchmark
 
-The tables below show fastest times for each benchmark. Times are in seconds.
+The tables below show fastest times for each benchmark. One table each for MacOS and Linux. Times are in seconds.
 
 #### MacOS: Top-4 in each benchmark
 
@@ -106,7 +106,7 @@ The tables below show fastest times for each benchmark. Times are in seconds.
 | **CSV-to-TSV**                |      foo1 |      foo2 |      foo3 |      foo4 |
 | (2.7 GB, 14M lines)           |      0.00 |      0.00 |      0.00 |      0.00 |
 
-## Test Details
+## Test details
 
 Tests were run on April 14, 2018. The latest released version of each tool was used. Details needed to reproduce the tests are given below. In some cases [March 2017 study](ComparativeBenchmarks2017.md) has a more detailed of the individual tests, however, everything need to reproduce the tests can be found here.
 
