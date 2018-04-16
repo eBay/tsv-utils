@@ -66,9 +66,9 @@ A few specific considerations:
 
 ### Top four in each benchmark
 
-The tables show fastest times for each benchmark. Times are in seconds.
+The tables below show fastest times for each benchmark. Times are in seconds.
 
-**MacOS: Top-4 in each benchmark**
+#### MacOS: Top-4 in each benchmark
 
 | Benchmark                     | Tool/Time | Tool/Time | Tool/Time | Tool/Time |
 | ----------------------------- | --------: | --------: | --------: | --------: |
@@ -87,7 +87,7 @@ The tables show fastest times for each benchmark. Times are in seconds.
 | **CSV-to-TSV**                |      foo1 |      foo2 |      foo3 |      foo4 |
 | (2.7 GB, 14M lines)           |      0.00 |      0.00 |      0.00 |      0.00 |
 
-**Linux: Top-4 in each benchmark**
+#### Linux: Top-4 in each benchmark
 
 | Benchmark                     | Tool/Time | Tool/Time | Tool/Time | Tool/Time |
 | ----------------------------- | --------: | --------: | --------: | --------: |
