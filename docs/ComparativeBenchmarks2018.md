@@ -11,11 +11,11 @@ _Visit the [TSV Utilities main page](../README.md)_
 
 ## Overview
 
-This is an update to the [March 2017 Comparative Benchmarks Study](ComparativeBenchmarks2017.md). The 2017 study compared the TSV Utilities to a number of other tools as a way to guage the performance the language. This page contains updates to those benchmarks.
+This is an update to the [March 2017 Comparative Benchmarks Study](ComparativeBenchmarks2017.md). The 2017 study compared the TSV Utilities to a number of other tools as a way to gauge the performance the language. This page contains updates to those benchmarks.
 
 The goal of the 2017 study was to evaluate performance of an application written in a straightforward fashion, without going to unusual lengths optimize performance. The 2018 version of the TSV Utilities are still written in this style, but have had performance improvements since. The most notable is the use of Link Time Optimization (LTO) and Profile Guided Optimization (PGO) compiler technologies available via the LDC compiler.
 
-See the [main performance benchmarks page](Performance.md) for more information on the goals of the study and the approach used. The [2017 study](ComparativeBenchmarks2017.md) is still interesting from this perspective. It also includes several analyses not included in the 2018 study, for example, a comparison of DMD and LDC compilers.
+See the [main performance benchmarks page](Performance.md) for more information on the goals of the study and the approach used. See the [2017 study](ComparativeBenchmarks2017.md) for more details about the individual benchmarks (this page is primarily reporting the new results). The 2017 study also includes several analyses not included in the 2018 study, for example, a comparison of DMD and LDC compilers.
 
 The 2018 study adds one additional benchmark to the 2017 set. Benchmarks were run on MacOS and Linux. Only the faster tools from the 2017 study were included the 2018 update, the slower tools were dropped.
 
