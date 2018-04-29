@@ -13,7 +13,7 @@ _Visit the [TSV Utilities main page](../README.md)_
 
 This is an update to the [March 2017 Comparative Benchmarks Study](ComparativeBenchmarks2017.md). The 2017 study compared the TSV Utilities to a number of other tools as a way to gauge the performance the language. This page contains updates to those benchmarks.
 
-The goal of the 2017 study was to evaluate performance of an application written in a straightforward fashion, without going to unusual lengths optimize performance. The 2018 version of the TSV Utilities are still written in this style, but have had performance improvements since. The most notable is the use of Link Time Optimization (LTO) and Profile Guided Optimization (PGO) compiler technologies available via the LDC compiler.
+The goal of the 2017 study was to evaluate performance of an application written in a straightforward fashion, without going to unusual lengths optimize performance. The 2018 version of the TSV Utilities are still written in this style, but have had performance improvements since. The most notable is the use of Link Time Optimization (LTO) and Profile Guided Optimization (PGO). These are compiler technologies available via the LDC compiler.
 
 See the [main performance benchmarks page](Performance.md) for more information on the goals of the study and the approach used. See the [2017 study](ComparativeBenchmarks2017.md) for more details about the individual benchmarks (this page is primarily reporting the new results). The 2017 study also includes several analyses not included in the 2018 study, for example, a comparison of DMD and LDC compilers.
 
@@ -21,7 +21,7 @@ The 2018 study adds one additional benchmark to the 2017 set. Benchmarks were ru
 
 ## Benchmark tests
 
-Seven tasks were used as benchmarks. Two forms of row filtering: numeric comparisons and regular expression match. Join two files on a common key. Simple statistical calculations (e.g. mean of column values). Convert CSV files to TSV. Two column selection tests (aka 'cut'), one with medium width lines, the other on a file with short lines. The second column selection test was added in the 2018 study.
+Seven tasks were used as benchmarks. Two forms of row filtering: numeric comparisons and regular expression match. Join two files on a common key. Simple statistical calculations (e.g. mean of column values). Convert CSV files to TSV. Two column selection tests (aka 'cut'), one with medium width lines, the other with short lines. The second column selection test was added in the 2018 study.
 
 Reasonably large files were used. One 4.8 GB, 7 million rows, another 2.7 GB, 14 million rows, and a third file 1.7 GB, 86 million lines. Tests against smaller files gave results consistent with the larger file tests.
 
