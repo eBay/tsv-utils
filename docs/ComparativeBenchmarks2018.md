@@ -171,11 +171,11 @@ $ xsv select 1,8,19 hepmass_all_train.tsv > /dev/null
 
 Column selection (narrow) command lines:
 ```
-$ [awk|gawk|mawk] -F $'\t' -v OFS='\t' '{ print $2,$4 }' googlebooks-eng-all-1gram-20120701-a.tsv > /dev/null
-$ csvtk cut -t -l -f 2,4 googlebooks-eng-all-1gram-20120701-a.tsv > /dev/null
-$ cut -f 2,4 googlebooks-eng-all-1gram-20120701-a.tsv > /dev/null
-$ tsv-select -f 2,4 googlebooks-eng-all-1gram-20120701-a.tsv > /dev/null
-$ xsv select 2,4 googlebooks-eng-all-1gram-20120701-a.tsv > /dev/null
+$ [awk|gawk|mawk] -F $'\t' -v OFS='\t' '{ print $1,$3 }' googlebooks-eng-all-1gram-20120701-a.tsv > /dev/null
+$ csvtk cut -t -l -f 1,3 googlebooks-eng-all-1gram-20120701-a.tsv > /dev/null
+$ cut -f 1,3 googlebooks-eng-all-1gram-20120701-a.tsv > /dev/null
+$ tsv-select -f 1,3 googlebooks-eng-all-1gram-20120701-a.tsv > /dev/null
+$ xsv select 1,3 googlebooks-eng-all-1gram-20120701-a.tsv > /dev/null
 ```
 
 Join files command lines:
