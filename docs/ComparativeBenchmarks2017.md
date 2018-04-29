@@ -1,5 +1,5 @@
-_Visit the [main performance benchmarks page](Performance.md)_  
-_Visit the [main project page](../README.md)_
+_Visit the [Performance Benchmarks main page](Performance.md)_  
+_Visit the [TSV Utilities main page](../README.md)_
 
 # March 2017 Comparative Benchmarks
 
