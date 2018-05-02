@@ -36,14 +36,14 @@ The MacOS benchmarks were run 25 times, the Linux benchmarks 35 times. The 10th 
 The TSV Utilities became materially faster between the March 2017 and April 2018 studies. The tables below show these changes. The pre-built binary for release v1.1.11 was used as a proxy for the March 2017 versions. v1.1.11 was released after the March 2017 study, but is largely unchanged.
 
 | Benchmark | MacOS<br>March 2017<br>(v1.1.11) | MacOS<br>April 2018<br>(v1.1.19) | MacOS<br>Delta | Linux<br>March 2017<br>(v1.1.11) | Linux<br>April 2018<br>(v1.1.19) | Linux<br>Delta |
-| ----------------------------- | ---------: | ---------: | ---------: | ---------: | ---------: | ---------: |
-| **Numeric row filter**        |       0.00 |       0.00 |         0% |       0.00 |       0.00 |         0% |
-| **Regex row filter**          |       0.00 |       0.00 |         0% |       0.00 |       0.00 |         0% |
-| **Column selection**          |       0.00 |       0.00 |         0% |       0.00 |       0.00 |         0% |
-| **Column selection (narrow)** |       0.00 |       0.00 |         0% |       0.00 |       0.00 |         0% |
-| **Join two files**            |       0.00 |       0.00 |         0% |       0.00 |       0.00 |         0% |
-| **Summary statistics**        |       0.00 |       0.00 |         0% |       0.00 |       0.00 |         0% |
-| **CSV-to-TSV**                |       0.00 |       0.00 |         0% |       0.00 |       0.00 |         0% |
+| ----------------------------- | -------: | -------: | -------: | -------: | -------: | -------: |
+| **Numeric row filter**        |     4.25 |     3.35 |      21% |     6.32 |     5.48 |      13% |
+| **Regex row filter**          |    10.11 |     8.28 |      18% |     9.72 |     8.80 |       9% |
+| **Column selection**          |     4.26 |     2.93 |      31% |     5.52 |     4.79 |      13% |
+| **Column selection (narrow)** |    25.12 |    10.18 |      59% |    15.41 |     8.26 |      46% |
+| **Join two files**            |    23.94 |    21.17 |      12% |    28.77 |    26.68 |       7% |
+| **Summary statistics**        |    16.97 |     9.82 |      42% |    22.68 |    15.78 |      30% |
+| **CSV-to-TSV**                |    30.70 |    10.91 |      64% |    34.65 |    20.30 |      41% |
 
 There were three main sources of performance improvements between the 2017 and 2018 studies:
 * Using Link Time Optimization (LTO) and Profile Guided Optimization (PGO) in the builds.
@@ -70,41 +70,41 @@ The tables below show fastest times for each benchmark. One table each for MacOS
 
 #### MacOS: Top-4 in each benchmark
 
-| Benchmark                     | Tool/Time | Tool/Time | Tool/Time | Tool/Time |
-| ----------------------------- | --------: | --------: | --------: | --------: |
-| **Numeric row filter**        |      foo1 |      foo2 |      foo3 |      foo4 |
-| (4.8 GB, 7M lines)            |      0.00 |      0.00 |      0.00 |      0.00 |
-| **Regex row filter**          |      foo1 |      foo2 |      foo3 |      foo4 |
-| (2.7 GB, 14M lines)           |      0.00 |      0.00 |      0.00 |      0.00 |
-| **Column selection**          |      foo1 |      foo2 |      foo3 |      foo4 |
-| (4.8 GB, 7M lines)            |      0.00 |      0.00 |      0.00 |      0.00 |
-| **Column selection (narrow)** |      foo1 |      foo2 |      foo3 |      foo4 |
-| (1.7 GB, 86M lines)           |      0.00 |      0.00 |      0.00 |      0.00 |
-| **Join two files**            |      foo1 |      foo2 |      foo3 |      foo4 |
-| (4.8 GB, 7M lines)            |      0.00 |      0.00 |      0.00 |      0.00 |
-| **Summary statistics**        |      foo1 |      foo2 |      foo3 |      foo4 |
-| (4.8 GB, 7M lines)            |      0.00 |      0.00 |      0.00 |      0.00 |
-| **CSV-to-TSV**                |      foo1 |      foo2 |      foo3 |      foo4 |
-| (2.7 GB, 14M lines)           |      0.00 |      0.00 |      0.00 |      0.00 |
+| Benchmark                     |       Tool/Time |    Tool/Time | Tool/Time |    Tool/Time |
+| ----------------------------- | --------------: | -----------: | --------: | -----------: |
+| **Numeric row filter**        |    _tsv-filter_ |         mawk |   GNU awk |        csvtk |
+| (4.8 GB, 7M lines)            |            3.35 |        15.06 |     24.25 |        39.10 |
+| **Regex row filter**          |             xsv | _tsv-filter_ |   GNU awk |         mawk |
+| (2.7 GB, 14M lines)           |            7.03 |         8.28 |     16.47 |        19.40 |
+| **Column selection**          |    _tsv-select_ |          xsv |     csvtk |         mawk |
+| (4.8 GB, 7M lines)            |            2.93 |         7.67 |     11.00 |        12.37 |
+| **Column selection (narrow)** |             xsv | _tsv-select_ |   GNU cut |        csvtk |
+| (1.7 GB, 86M lines)           |            9.22 |        10.18 |     10.65 |        23.01 |
+| **Join two files**            |      _tsv-join_ |          xsv |     csvtk |              |
+| (4.8 GB, 7M lines)            |           21.78 |        60.03 |     82.43 |              |
+| **Summary statistics**        | _tsv-summarize_ |          xsv |     csvtk | GNU datamash |
+| (4.8 GB, 7M lines)            |            9.82 |        35.32 |     45.59 |        71.60 |
+| **CSV-to-TSV**                |       _csv2tsv_ |          xsv |     csvtk |              |
+| (2.7 GB, 14M lines)           |           10.91 |        14.38 |     32.49 |              |
 
 #### Linux: Top-4 in each benchmark
 
-| Benchmark                     | Tool/Time | Tool/Time | Tool/Time | Tool/Time |
-| ----------------------------- | --------: | --------: | --------: | --------: |
-| **Numeric row filter**        |      foo1 |      foo2 |      foo3 |      foo4 |
-| (4.8 GB, 7M lines)            |      0.00 |      0.00 |      0.00 |      0.00 |
-| **Regex row filter**          |      foo1 |      foo2 |      foo3 |      foo4 |
-| (2.7 GB, 14M lines)           |      0.00 |      0.00 |      0.00 |      0.00 |
-| **Column selection**          |      foo1 |      foo2 |      foo3 |      foo4 |
-| (4.8 GB, 7M lines)            |      0.00 |      0.00 |      0.00 |      0.00 |
-| **Column selection (narrow)** |      foo1 |      foo2 |      foo3 |      foo4 |
-| (1.7 GB, 86M lines)           |      0.00 |      0.00 |      0.00 |      0.00 |
-| **Join two files**            |      foo1 |      foo2 |      foo3 |      foo4 |
-| (4.8 GB, 7M lines)            |      0.00 |      0.00 |      0.00 |      0.00 |
-| **Summary statistics**        |      foo1 |      foo2 |      foo3 |      foo4 |
-| (4.8 GB, 7M lines)            |      0.00 |      0.00 |      0.00 |      0.00 |
-| **CSV-to-TSV**                |      foo1 |      foo2 |      foo3 |      foo4 |
-| (2.7 GB, 14M lines)           |      0.00 |      0.00 |      0.00 |      0.00 |
+| Benchmark                     |       Tool/Time |    Tool/Time |    Tool/Time | Tool/Time |
+| ----------------------------- | --------------: | -----------: | -----------: | --------: |
+| **Numeric row filter**        |    _tsv_filter_ |         mawk |      GNU awk |     csvtk |
+| (4.8 GB, 7M lines)            |            5.48 |        11.31 |        42.80 |     53.36 |
+| **Regex row filter**          |             xsv | _tsv-filter_ |         mawk |   GNU awk |
+| (2.7 GB, 14M lines)           |            7.97 |         8.80 |        17.74 |     29.02 |
+| **Column selection**          |    _tsv-select_ |         mawk |          xsv |   GNU cut |
+| (4.8 GB, 7M lines)            |            4.79 |         9.51 |         9.74 |     14.46 |
+| **Column selection (narrow)** |         GNU cut | _tsv-select_ |          xsv |      mawk |
+| (1.7 GB, 86M lines)           |            5.60 |         8.26 |        13.60 |     23.88 |
+| **Join two files**            |      _tsv-join_ |          xsv |        csvtk |           |
+| (4.8 GB, 7M lines)            |           26.68 |        68.02 |        98.51 |           |
+| **Summary statistics**        | _tsv-summarize_ |          xsv | GNU datamash |     csvtk |
+| (4.8 GB, 7M lines)            |           15.78 |        44.38 |        48.51 |     59.71 |
+| **CSV-to-TSV**                |       _csv2tsv_ |          xsv |        csvtk |           |
+| (2.7 GB, 14M lines)           |           20.30 |        26.82 |        44.82 |           |
 
 ## Test details
 
