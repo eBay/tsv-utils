@@ -2,6 +2,8 @@
 
 This is a set of command line utilities for working with tab-separated value files. They were originally developed in Perl and used for day-to-day work in a large scale data mining environment. One of the tools was re-written in D as an exercise exploring the language. Significant performance gains and agreeable programmer characteristics soon led to writing additional utilities in D. Information on the D programming language is available at [dlang.org](https://dlang.org/).
 
+File an [issue](https://github.com/eBay/tsv-utils-dlang/issues) if you have problems, questions or suggestions.
+
 **In this README:**
 * [Tools overview](#tools-overview)
 * [Installation](#installation)
@@ -18,8 +20,6 @@ This is a set of command line utilities for working with tab-separated value fil
 * [Faster Command Line Tools in D](https://dlang.org/blog/2017/05/24/faster-command-line-tools-in-d/). May 24, 2017. A blog post showing a few ways to optimize performance in command line tools. Many of ideas in the post were developed while developing the TSV Utilities.
 * [Experimenting with Link Time Optimization](docs/dlang-meetup-14dec2017.pdf). Dec 14, 2017. A presentation at the [Silicon Valley D Meetup](https://www.meetup.com/D-Lang-Silicon-Valley/) describing experiments using LTO based on the TSV Utilities.
 * [Exploring D via Benchmarking of eBay's TSV Utilities](http://dconf.org/2018/talks/degenhardt.html). May 2, 2018. A presentation at [DConf 2018](http://dconf.org/2018/) describing benchmarking studies conducted using the TSV Utilities (slides [here](docs/dconf2018.pdf)).
-
-File an [issue](https://github.com/eBay/tsv-utils-dlang/issues) if you have problems, questions or suggestions.
 
 [![Travis](https://img.shields.io/travis/eBay/tsv-utils-dlang.svg)](https://travis-ci.org/eBay/tsv-utils-dlang)
 [![Codecov](https://img.shields.io/codecov/c/github/eBay/tsv-utils-dlang.svg)](https://codecov.io/gh/eBay/tsv-utils-dlang)
