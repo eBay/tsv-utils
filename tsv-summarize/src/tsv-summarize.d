@@ -3444,7 +3444,7 @@ class UniqueCountOperator : SingleFieldOperator
 
         final override void processNextField(const char[] nextField)
         {
-            _values[nextField.to!string] = true;
+            if (nextField !in _values) _values[nextField.to!string] = true;
         }
 
         final string calculate(UniqueKeyValuesLists valuesLists, const ref SummarizerPrintOptions printOptions)
