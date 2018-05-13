@@ -11,7 +11,7 @@ matrix:
   include:
 #==> Put back when Travis has more OSX capacity
 #    - os: osx
-#      osx_image: xcode9
+#      osx_image: xcode9.3
 #      language: d
 #      d: dmd
 #      env: DUBTEST=1 MAKETEST=1
@@ -20,7 +20,7 @@ matrix:
       d: dmd
       env: DUBTEST=1 MAKETEST=1 CODECOV=1
 #    - os: osx
-#      osx_image: xcode9
+#      osx_image: xcode9.3
 #      language: d
 #      d: ldc-1.2.0
 #      env: DUBTEST=1 MAKETEST=1 APPLTO=off
@@ -33,19 +33,19 @@ matrix:
 #
 #==> Put back when Travis has more OSX capacity
 #    - os: osx
-#      osx_image: xcode9
+#      osx_image: xcode9.3
 #      language: d
 #      d: ldc
 #      env: DUBTEST=1 MAKETEST=1 APPLTO=off
 #      if: type IN (pull_request, cron)
 #      if: fork = true
     - os: osx
-      osx_image: xcode9.3beta
+      osx_image: xcode9.3
       language: d
       d: ldc
       env: LTOPGO=default
     - os: osx
-      osx_image: xcode9
+      osx_image: xcode9.3
       language: d
       d: ldc-1.5.0
       env: LTOPGO=default DEPLOY=1
