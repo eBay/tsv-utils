@@ -9,12 +9,13 @@
 #   DEPLOY - Deploy if a tagged release.
 matrix:
   include:
-#==> Put back when Travis has more OSX capacity
-#    - os: osx
-#      osx_image: xcode9.3
-#      language: d
-#      d: dmd
-#      env: DUBTEST=1 MAKETEST=1
+#==> Use only in Cron build until Travis has more OSX capacity
+    - os: osx
+      osx_image: xcode9.3
+      language: d
+      d: dmd
+      env: DUBTEST=1 MAKETEST=1
+      if: type IN (cron)
     - os: linux
       language: d
       d: dmd
