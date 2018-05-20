@@ -1,7 +1,7 @@
 _Visit the [Performance Benchmarks home page](Performance.md)_
 _Visit the [TSV Utilities main page](../README.md)_
 
-# Link Time Optimization and Profile Guided Optimization evaluation
+# Link Time Optimization and Profile Guided Optimization Evaluation
 
 Link Time Optimization (LTO) and Profile Guided Optimization (PGO) are LLVM compiler technologies supported by LDC, the LLVM D Compiler. Benchmarks were done in fall 2017 to see if these technologies would benefit the TSV Utilities. The same benchmarks were used as in the [March 2017 Comparative Benchmark Study](ComparativeBenchmarks2017.md). Material improvements were seen both in run-time performance and binary size. Both LTO and PGO are now used when building the pre-built binaries available on the [Github releases](https://github.com/eBay/tsv-utils-dlang/releases) page.
 
@@ -16,6 +16,7 @@ LTO also resulted in meaningful binary size deltas. These deltas were much more 
 ## Performance improvements
 
 **MacOS**
+
 | LTO/PGO               | tsv-summarize | csv2tsv | tsv-filter<br>(numeric) | tsv-filter<br>(regex) | tsv-select |   tsv-join |
 | --------------------- | ------------: | ------: | ----------------------: | --------------------: | ---------: | ---------: |
 | None                  |         21.79 |   25.43 |                    4.98 |                  7.71 |       4.23 |      21.33 |
@@ -27,6 +28,7 @@ LTO also resulted in meaningful binary size deltas. These deltas were much more 
 | ThinLTO+PGO: App+Libs |           58% |     44% |                     30% |                    8% |         6% | not tested |
 
 **Linux**
+
 | LTO/PGO               | tsv-summarize | csv2tsv | tsv-filter<br>(numeric) | tsv-filter<br>(regex) | tsv-select |   tsv-join |
 | --------------------- | ------------: | ------: | ----------------------: | --------------------: | ---------: | ---------: |
 | None                  |         30.81 |   47.64 |                    7.98 |                 12.17 |       6.45 | not tested |
@@ -39,6 +41,7 @@ LTO also resulted in meaningful binary size deltas. These deltas were much more 
 ## LTO binary size deltas
 
 **MacOS sizes (bytes)**
+
 | LTO               | tsv-summarize |   csv2tsv | tsv-filter | tsv-select |  tsv-join |
 | ----------------- | ------------: | --------: | ---------: | ---------: | --------: |
 | None              |     7,988,448 | 6,709,936 |  8,137,804 |  6,890,192 | 6,945,336 |
@@ -47,6 +50,7 @@ LTO also resulted in meaningful binary size deltas. These deltas were much more 
 | Reduction         |           61% |       60% |        61% |        60% |       61% |
 
 **Linux sizes (bytes)**
+
 | LTO               | tsv-summarize |   csv2tsv | tsv-filter | tsv-select |  tsv-join |
 | ----------------- | ------------: | --------: | ---------: | ---------: | --------: |
 | None              |     1,400,672 |   995.760 |  1,743,288 |  1,026,344 | 1,049,176 |
