@@ -1,4 +1,4 @@
-_Visit the [Performance Benchmarks main page](Performance.md)_  
+_Visit the [Performance Benchmarks main page](Performance.md)_<br>
 _Visit the [TSV Utilities main page](../README.md)_
 
 # March 2017 Comparative Benchmarks
@@ -144,7 +144,7 @@ $ tsv-select -f 1,17-30 hepmass_numbered.tsv | tsv-sample -H > hepmass_right.shu
 $ rm hepmass_numbered.tsv
 ```
 
-*Note: The `tsv-select` call above uses field range notation introduced in version 1.1.11. List each field individually if using an earlier version. The Unix `nl`, `cut`, and `shuf` can also be used. The header line must be handled specially if `nl` or `shuf` are used.* 
+*Note: The `tsv-select` call above uses field range notation introduced in version 1.1.11. List each field individually if using an earlier version. The Unix `nl`, `cut`, and `shuf` can also be used. The header line must be handled specially if `nl` or `shuf` are used.*
 
 ### Summary statistics
 
