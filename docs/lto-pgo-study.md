@@ -7,7 +7,7 @@ Link Time Optimization (LTO) and Profile Guided Optimization (PGO) are LLVM comp
 
 This page contains the performance numbers from the study. For more information about LTO and PGO see the [About Link Time Optimization](BuildingWithLTO.md#about-link-time-optimization-lto) and [About Profile Guided Optimization](BuildingWithLTO.md#about-profile-guided-optimization-pgo) sections of the [Building with LTO and PGO](BuildingWithLTO.md) page. The slide decks from presentations at [Silicon Valley D Meetup (December 2017)](dlang-meetup-14dec2017.pdf) and [DConf 2018](dconf2018.pdf) also contain useful information about these studies.
 
-The same benchmarks were used as in the [March 2017 Comparative Benchmark Study](ComparativeBenchmarks2017.md). LTO was applied first to just the TSV Utilities code, excluding the D standard libraries (druntime and phobos). Then it was applied to both the TSV Utilities code and the D standard libraries. Finally, PGO was added on top of LTO.
+The benchmarks were first run without LTO or PGO. Then LTO was applied to the TSV Utilities code, excluding the D standard libraries (druntime and phobos). Then it was applied to both the TSV Utilities code and the D standard libraries. Finally, PGO was added on top of LTO, against both the TSV Utilities code and D standard libraries.
 
 Using LTO on only the TSV Utilities application code had very limited impact, but LTO on both the application and D standard library code resulted in significant gains on several benchmarks. PGO also resulted in material improvements on several benchmarks.
 
