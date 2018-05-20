@@ -1,4 +1,4 @@
-_Visit the [Performance Benchmarks main page](Performance.md)_  
+_Visit the [Performance Benchmarks main page](Performance.md)_
 _Visit the [TSV Utilities main page](../README.md)_
 
 # April 2018 Comparative Benchmarks Update
@@ -61,7 +61,7 @@ The intent of the study is to gain an overall picture of the performance of typi
 A few specific considerations:
 * Tools accepting CSV data must handle escape characters. This is computationally more expensive than a strict delimited format like TSV. Supporting both CSV and TSV makes optimizing the TSV case challenging.
 * Some CSV implementations support embedded newlines, others do not. Embedded newline support is more challenging because highly optimized "readline" routines cannot be used to find record boundaries.
-* Handling arbitrary expression trees (ala `Awk`) is more computationally complex than the handling a single conjunctive or disjunctive expression list as `tsv-filter` does.
+* Handling arbitrary expression trees (ala `Awk`) is more computationally complex than handling a single conjunctive or disjunctive expression list as `tsv-filter` does.
 * Some tools use multi-threading, others do not. (The TSV Utilities do not.) This is a design trade-off. Running multiple threads can improve run-times of individual tools. However, this may reduce overall throughput when several tools are chained in a command pipeline.
 
 ### Top four in each benchmark
@@ -70,41 +70,41 @@ The tables below show fastest times for each benchmark. One table each for MacOS
 
 #### MacOS: Top-4 in each benchmark
 
-| Benchmark                     |       Tool/Time |    Tool/Time | Tool/Time |    Tool/Time |
-| ----------------------------- | --------------: | -----------: | --------: | -----------: |
-| **Numeric row filter**        |    _tsv-filter_ |         mawk |   GNU awk |        csvtk |
-| (4.8 GB, 7M lines)            |            3.35 |        15.06 |     24.25 |        39.10 |
-| **Regex row filter**          |             xsv | _tsv-filter_ |   GNU awk |         mawk |
-| (2.7 GB, 14M lines)           |            7.03 |         8.28 |     16.47 |        19.40 |
-| **Column selection**          |    _tsv-select_ |          xsv |     csvtk |         mawk |
-| (4.8 GB, 7M lines)            |            2.93 |         7.67 |     11.00 |        12.37 |
-| **Column selection (narrow)** |             xsv | _tsv-select_ |   GNU cut |        csvtk |
-| (1.7 GB, 86M lines)           |            9.22 |        10.18 |     10.65 |        23.01 |
-| **Join two files**            |      _tsv-join_ |          xsv |     csvtk |              |
-| (4.8 GB, 7M lines)            |           21.78 |        60.03 |     82.43 |              |
-| **Summary statistics**        | _tsv-summarize_ |          xsv |     csvtk | GNU datamash |
-| (4.8 GB, 7M lines)            |            9.82 |        35.32 |     45.59 |        71.60 |
-| **CSV-to-TSV**                |       _csv2tsv_ |          xsv |     csvtk |              |
-| (2.7 GB, 14M lines)           |           10.91 |        14.38 |     32.49 |              |
+| Benchmark                     |           Tool/Time |        Tool/Time | Tool/Time |    Tool/Time |
+| ----------------------------- | ------------------: | ---------------: | --------: | -----------: |
+| **Numeric row filter**        |    _**tsv-filter**_ |             mawk |   GNU awk |        csvtk |
+| (4.8 GB, 7M lines)            |                3.35 |            15.06 |     24.25 |        39.10 |
+| **Regex row filter**          |                 xsv | _**tsv-filter**_ |   GNU awk |         mawk |
+| (2.7 GB, 14M lines)           |                7.03 |             8.28 |     16.47 |        19.40 |
+| **Column selection**          |    _**tsv-select**_ |              xsv |     csvtk |         mawk |
+| (4.8 GB, 7M lines)            |                2.93 |             7.67 |     11.00 |        12.37 |
+| **Column selection (narrow)** |                 xsv | _**tsv-select**_ |   GNU cut |        csvtk |
+| (1.7 GB, 86M lines)           |                9.22 |            10.18 |     10.65 |        23.01 |
+| **Join two files**            |      _**tsv-join**_ |              xsv |     csvtk |              |
+| (4.8 GB, 7M lines)            |               21.78 |            60.03 |     82.43 |              |
+| **Summary statistics**        | _**tsv-summarize**_ |              xsv |     csvtk | GNU Datamash |
+| (4.8 GB, 7M lines)            |                9.82 |            35.32 |     45.59 |        71.60 |
+| **CSV-to-TSV**                |       _**csv2tsv**_ |              xsv |     csvtk |              |
+| (2.7 GB, 14M lines)           |               10.91 |            14.38 |     32.49 |              |
 
 #### Linux: Top-4 in each benchmark
 
-| Benchmark                     |       Tool/Time |    Tool/Time |    Tool/Time | Tool/Time |
-| ----------------------------- | --------------: | -----------: | -----------: | --------: |
-| **Numeric row filter**        |    _tsv_filter_ |         mawk |      GNU awk |     csvtk |
-| (4.8 GB, 7M lines)            |            5.48 |        11.31 |        42.80 |     53.36 |
-| **Regex row filter**          |             xsv | _tsv-filter_ |         mawk |   GNU awk |
-| (2.7 GB, 14M lines)           |            7.97 |         8.80 |        17.74 |     29.02 |
-| **Column selection**          |    _tsv-select_ |         mawk |          xsv |   GNU cut |
-| (4.8 GB, 7M lines)            |            4.79 |         9.51 |         9.74 |     14.46 |
-| **Column selection (narrow)** |         GNU cut | _tsv-select_ |          xsv |      mawk |
-| (1.7 GB, 86M lines)           |            5.60 |         8.26 |        13.60 |     23.88 |
-| **Join two files**            |      _tsv-join_ |          xsv |        csvtk |           |
-| (4.8 GB, 7M lines)            |           26.68 |        68.02 |        98.51 |           |
-| **Summary statistics**        | _tsv-summarize_ |          xsv | GNU datamash |     csvtk |
-| (4.8 GB, 7M lines)            |           15.78 |        44.38 |        48.51 |     59.71 |
-| **CSV-to-TSV**                |       _csv2tsv_ |          xsv |        csvtk |           |
-| (2.7 GB, 14M lines)           |           20.30 |        26.82 |        44.82 |           |
+| Benchmark                     |           Tool/Time |        Tool/Time |    Tool/Time | Tool/Time |
+| ----------------------------- | ------------------: | ---------------: | -----------: | --------: |
+| **Numeric row filter**        |    _**tsv-filter**_ |             mawk |      GNU awk |     csvtk |
+| (4.8 GB, 7M lines)            |                5.48 |            11.31 |        42.80 |     53.36 |
+| **Regex row filter**          |                 xsv | _**tsv-filter**_ |         mawk |   GNU awk |
+| (2.7 GB, 14M lines)           |                7.97 |             8.80 |        17.74 |     29.02 |
+| **Column selection**          |    _**tsv-select**_ |             mawk |          xsv |   GNU cut |
+| (4.8 GB, 7M lines)            |                4.79 |             9.51 |         9.74 |     14.46 |
+| **Column selection (narrow)** |             GNU cut | _**tsv-select**_ |          xsv |      mawk |
+| (1.7 GB, 86M lines)           |                5.60 |             8.26 |        13.60 |     23.88 |
+| **Join two files**            |      _**tsv-join**_ |              xsv |        csvtk |           |
+| (4.8 GB, 7M lines)            |               26.68 |            68.02 |        98.51 |           |
+| **Summary statistics**        | _**tsv-summarize**_ |              xsv | GNU Datamash |     csvtk |
+| (4.8 GB, 7M lines)            |               15.78 |            44.38 |        48.51 |     59.71 |
+| **CSV-to-TSV**                |       _**csv2tsv**_ |              xsv |        csvtk |           |
+| (2.7 GB, 14M lines)           |               20.30 |            26.82 |        44.82 |           |
 
 ## Test details
 
@@ -112,7 +112,7 @@ Tests were run on April 14, 2018. The latest released version of each tool was u
 
 ### Machines
 
-* MacOS: Mac Mini; 16 GB RAM; SSD drives; MacOS High Sierra version 10.13.3 
+* MacOS: Mac Mini; 16 GB RAM; SSD drives; MacOS High Sierra version 10.13.3
 * Linux: 16 CPUs; Intel (Haswell) 2095 MHz; 32 GB RAM Ubuntu 16.04 (commodity cloud machine)
 
 ### Tools
@@ -122,7 +122,7 @@ GNU Awk, GNU cut and mawk are available on most platforms via standard package m
 * [GNU Awk](https://www.gnu.org/software/gawk/) - Version 4.2.1. Written in C.
 * [mawk](https://invisible-island.net/mawk/mawk.html) - MacOs: Version 1.3.4; Linux: Version 1.3.3. Written in C.
 * [GNU cut](https://www.gnu.org/software/coreutils/coreutils.html) - MacOS: Version 8.29; Linux: Version 8.25. Written in C.
-* [GNU datamash](https://www.gnu.org/software/datamash/) - Version 1.3. Written in C.
+* [GNU Datamash](https://www.gnu.org/software/datamash/) - Version 1.3. Written in C.
 * [xsv](https://github.com/BurntSushi/xsv) - Version 0.12.2. Written in Rust.
 * [csvtk](https://github.com/shenwei356/csvtk) - Version v0.14.0-dev. Written in Go.
 * [TSV Utilities](https://github.com/eBay/tsv-utils-dlang) - Version v1.1.19 (this toolkit). Written in D.
