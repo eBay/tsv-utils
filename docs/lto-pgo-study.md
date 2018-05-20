@@ -53,7 +53,7 @@ LTO also resulted in meaningful binary size deltas. These deltas were much more 
 
 | LTO               | tsv-summarize |   csv2tsv | tsv-filter | tsv-select |  tsv-join |
 | ----------------- | ------------: | --------: | ---------: | ---------: | --------: |
-| None              |     1,400,672 |   995.760 |  1,743,288 |  1,026,344 | 1,049,176 |
+| None              |     1,400,672 |   995,760 |  1,743,288 |  1,026,344 | 1,049,176 |
 | ThinLTO: App Only |     1,300,792 |   998,432 |  1,547,656 |  1,024,312 | 1,036,648 |
 | ThinLTO: App+Libs |     1,154,808 |   826,064 |  1,359,554 |    856,064 |   868,736 |
 | Reduction         |           18% |       17% |        22% |        17% |       17% |
