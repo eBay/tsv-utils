@@ -40,7 +40,7 @@ LTO also resulted in meaningful binary size deltas. These deltas were much more 
 
 ## Binary size reductions (LTO)
 
-**MacOS sizes (bytes)**
+**MacOS executable size (bytes)**
 
 | LTO               | tsv-summarize |   csv2tsv | tsv-filter | tsv-select |  tsv-join |
 | ----------------- | ------------: | --------: | ---------: | ---------: | --------: |
@@ -49,7 +49,7 @@ LTO also resulted in meaningful binary size deltas. These deltas were much more 
 | ThinLTO: App+Libs |     3,082,068 | 2,679,184 |  3,172,648 |  2,734,356 | 2,738,700 |
 | Reduction         |           61% |       60% |        61% |        60% |       61% |
 
-**Linux sizes (bytes)**
+**Linux executable size (bytes)**
 
 | LTO               | tsv-summarize |   csv2tsv | tsv-filter | tsv-select |  tsv-join |
 | ----------------- | ------------: | --------: | ---------: | ---------: | --------: |
