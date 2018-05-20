@@ -70,41 +70,41 @@ The tables below show fastest times for each benchmark. One table each for MacOS
 
 #### MacOS: Top-4 in each benchmark
 
-| Benchmark                     |           Tool/Time |        Tool/Time | Tool/Time |    Tool/Time |
-| ----------------------------- | ------------------: | ---------------: | --------: | -----------: |
-| **Numeric row filter**        |    _**tsv-filter**_ |             mawk |   GNU awk |        csvtk |
-| (4.8 GB, 7M lines)            |                3.35 |            15.06 |     24.25 |        39.10 |
-| **Regex row filter**          |                 xsv | _**tsv-filter**_ |   GNU awk |         mawk |
-| (2.7 GB, 14M lines)           |                7.03 |             8.28 |     16.47 |        19.40 |
-| **Column selection**          |    _**tsv-select**_ |              xsv |     csvtk |         mawk |
-| (4.8 GB, 7M lines)            |                2.93 |             7.67 |     11.00 |        12.37 |
-| **Column selection (narrow)** |                 xsv | _**tsv-select**_ |   GNU cut |        csvtk |
-| (1.7 GB, 86M lines)           |                9.22 |            10.18 |     10.65 |        23.01 |
-| **Join two files**            |      _**tsv-join**_ |              xsv |     csvtk |              |
-| (4.8 GB, 7M lines)            |               21.78 |            60.03 |     82.43 |              |
-| **Summary statistics**        | _**tsv-summarize**_ |              xsv |     csvtk | GNU Datamash |
-| (4.8 GB, 7M lines)            |                9.82 |            35.32 |     45.59 |        71.60 |
-| **CSV-to-TSV**                |       _**csv2tsv**_ |              xsv |     csvtk |              |
-| (2.7 GB, 14M lines)           |               10.91 |            14.38 |     32.49 |              |
+| Benchmark                     |       Tool/Time |    Tool/Time | Tool/Time |    Tool/Time |
+| ----------------------------- | --------------: | -----------: | --------: | -----------: |
+| **Numeric row filter**        |    _tsv-filter_ |         mawk |   GNU awk |        csvtk |
+| (4.8 GB, 7M lines)            |            3.35 |        15.06 |     24.25 |        39.10 |
+| **Regex row filter**          |             xsv | _tsv-filter_ |   GNU awk |         mawk |
+| (2.7 GB, 14M lines)           |            7.03 |         8.28 |     16.47 |        19.40 |
+| **Column selection**          |    _tsv-select_ |          xsv |     csvtk |         mawk |
+| (4.8 GB, 7M lines)            |            2.93 |         7.67 |     11.00 |        12.37 |
+| **Column selection (narrow)** |             xsv | _tsv-select_ |   GNU cut |        csvtk |
+| (1.7 GB, 86M lines)           |            9.22 |        10.18 |     10.65 |        23.01 |
+| **Join two files**            |      _tsv-join_ |          xsv |     csvtk |              |
+| (4.8 GB, 7M lines)            |           21.78 |        60.03 |     82.43 |              |
+| **Summary statistics**        | _tsv-summarize_ |          xsv |     csvtk | GNU Datamash |
+| (4.8 GB, 7M lines)            |            9.82 |        35.32 |     45.59 |        71.60 |
+| **CSV-to-TSV**                |       _csv2tsv_ |          xsv |     csvtk |              |
+| (2.7 GB, 14M lines)           |           10.91 |        14.38 |     32.49 |              |
 
 #### Linux: Top-4 in each benchmark
 
-| Benchmark                     |           Tool/Time |        Tool/Time |    Tool/Time | Tool/Time |
-| ----------------------------- | ------------------: | ---------------: | -----------: | --------: |
-| **Numeric row filter**        |    _**tsv-filter**_ |             mawk |      GNU awk |     csvtk |
-| (4.8 GB, 7M lines)            |                5.48 |            11.31 |        42.80 |     53.36 |
-| **Regex row filter**          |                 xsv | _**tsv-filter**_ |         mawk |   GNU awk |
-| (2.7 GB, 14M lines)           |                7.97 |             8.80 |        17.74 |     29.02 |
-| **Column selection**          |    _**tsv-select**_ |             mawk |          xsv |   GNU cut |
-| (4.8 GB, 7M lines)            |                4.79 |             9.51 |         9.74 |     14.46 |
-| **Column selection (narrow)** |             GNU cut | _**tsv-select**_ |          xsv |      mawk |
-| (1.7 GB, 86M lines)           |                5.60 |             8.26 |        13.60 |     23.88 |
-| **Join two files**            |      _**tsv-join**_ |              xsv |        csvtk |           |
-| (4.8 GB, 7M lines)            |               26.68 |            68.02 |        98.51 |           |
-| **Summary statistics**        | _**tsv-summarize**_ |              xsv | GNU Datamash |     csvtk |
-| (4.8 GB, 7M lines)            |               15.78 |            44.38 |        48.51 |     59.71 |
-| **CSV-to-TSV**                |       _**csv2tsv**_ |              xsv |        csvtk |           |
-| (2.7 GB, 14M lines)           |               20.30 |            26.82 |        44.82 |           |
+| Benchmark                     |       Tool/Time |    Tool/Time |    Tool/Time | Tool/Time |
+| ----------------------------- | --------------: | -----------: | -----------: | --------: |
+| **Numeric row filter**        |    _tsv-filter_ |         mawk |      GNU awk |     csvtk |
+| (4.8 GB, 7M lines)            |            5.48 |        11.31 |        42.80 |     53.36 |
+| **Regex row filter**          |             xsv | _tsv-filter_ |         mawk |   GNU awk |
+| (2.7 GB, 14M lines)           |            7.97 |         8.80 |        17.74 |     29.02 |
+| **Column selection**          |    _tsv-select_ |         mawk |          xsv |   GNU cut |
+| (4.8 GB, 7M lines)            |            4.79 |         9.51 |         9.74 |     14.46 |
+| **Column selection (narrow)** |         GNU cut | _tsv-select_ |          xsv |      mawk |
+| (1.7 GB, 86M lines)           |            5.60 |         8.26 |        13.60 |     23.88 |
+| **Join two files**            |      _tsv-join_ |          xsv |        csvtk |           |
+| (4.8 GB, 7M lines)            |           26.68 |        68.02 |        98.51 |           |
+| **Summary statistics**        | _tsv-summarize_ |          xsv | GNU Datamash |     csvtk |
+| (4.8 GB, 7M lines)            |           15.78 |        44.38 |        48.51 |     59.71 |
+| **CSV-to-TSV**                |       _csv2tsv_ |          xsv |        csvtk |           |
+| (2.7 GB, 14M lines)           |           20.30 |        26.82 |        44.82 |           |
 
 ## Test details
 
