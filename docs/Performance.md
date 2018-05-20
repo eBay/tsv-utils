@@ -26,6 +26,8 @@ Despite limitations of the benchmarks, this is certainly a good result. The benc
 
 ## LTO and PGO studies
 
-In the fall of 2017 the TSV Utilities were used as the basis for studying Link Time Optimization (LTO) and Profile Guided Optimization (PGO). In D, the LLVM versions of these technologies are made available via LDC, the LLVM-based D Compiler. More details on the LTO and PGO work will be published in these pages in the future. 
+In the fall of 2017 the TSV Utilities were used as the basis for studying Link Time Optimization (LTO) and Profile Guided Optimization (PGO). In D, the LLVM versions of these technologies are made available via LDC, the LLVM-based D Compiler.
 
-The short story: both LTO and PGO resulted in significant performance gains. Results from the LTO studies can be found in this [Silicon Valley D Meetup slide deck](dlang-meetup-14dec2017.pdf). The [TSV Utilities version v1.1.16 release notes](https://github.com/eBay/tsv-utils-dlang/releases/tag/v1.1.16) contains a summary of performance improvements resulting from PGO. The [DConf 2018 slide deck](dconf2018.pdf) contains a summary of both LTO and PGO improvements.
+Both LTO and PGO resulted in significant performance gains. Details are on the [LTO and PGO Evaluation](lto-pgo-study.md) page.
+
+Additional information about LTO and PGO can be found on the [Building with LTO and PGO](BuildingWithLTO.md) page. The slide decks from presentations at [Silicon Valley D Meetup (December 2017)](dlang-meetup-14dec2017.pdf) and [DConf 2018](dconf2018.pdf) also contain useful information, including additional references to other resources about LTO and PGO.
