@@ -38,10 +38,9 @@ LTO also resulted in meaningful binary size deltas. These deltas were much more 
 | FullLTO: App+Libs     |           42% |     28% |                     19% |                    8% |         7% |            |
 | FullLTO+PGO: App+Libs |           45% |     34% |                     23% |                    8% |         8% |            |
 
-## LTO binary size deltas
+## Binary size reductions (LTO)
 
 **MacOS sizes (bytes)**
-
 | LTO               | tsv-summarize |   csv2tsv | tsv-filter | tsv-select |  tsv-join |
 | ----------------- | ------------: | --------: | ---------: | ---------: | --------: |
 | None              |     7,988,448 | 6,709,936 |  8,137,804 |  6,890,192 | 6,945,336 |
@@ -50,7 +49,6 @@ LTO also resulted in meaningful binary size deltas. These deltas were much more 
 | Reduction         |           61% |       60% |        61% |        60% |       61% |
 
 **Linux sizes (bytes)**
-
 | LTO               | tsv-summarize |   csv2tsv | tsv-filter | tsv-select |  tsv-join |
 | ----------------- | ------------: | --------: | ---------: | ---------: | --------: |
 | None              |     1,400,672 |   995.760 |  1,743,288 |  1,026,344 | 1,049,176 |
