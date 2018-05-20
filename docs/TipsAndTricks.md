@@ -6,6 +6,7 @@ Contents:
 
 * [Useful bash aliases](#useful-bash-aliases)
 * [Customize the Unix sort command](#customize-the-unix-sort-command)
+* [MacOS: Install GNU versions of Unix command line tools](#macos-install-gnu-versions-of-unix-command-line-tools)
 * [Reading data in R](#reading-data-in-r)
 * [A faster way to unique a file](#a-faster-way-to-unique-a-file)
 * [Using grep and tsv-filter together](#using-grep-and-tsv-filter-together)
@@ -95,6 +96,16 @@ $ keep-header file.txt -- tsv-sort
 ```
 
 Remember to use the correct `sort` program name if an updated version has been installed under a different name. This may be `gsort` on some systems.
+
+## MacOS: Install GNU versions of Unix command line tools
+
+If you're using a Mac, one of best things you can do is install GNU versions of the typical Unix text processing tools. `cat`, `cut`, `grep`, `awk`, etc. The versions shipped with MacOS are older and quite slow compared to the newer GNU versions, which are typically more than five times faster. The [2017 Comparative Benchmarks](ComparativeBenchmarks2017.md) includes several benchmarks showing these deltas.
+
+The [Homebrew](https://brew.sh/) and [MacPorts(https://www.macports.org/) package managers are good ways to install these tools and many others. Useful packages for data processing include:
+* `coreutils` - The majority of the key Unix command line tools, including `cp`, `cat`, `cut`, `head`, `tail`, `wc`, `sort`, `uniq`, `shuf` and quite a few others.
+* `gawk` - GNU awk.
+* `gnu-sed` (Homebrew), `gsed` (MacPorts)  - GNU sed.
+* `grep` - GNU grep.
 
 ## Reading data in R
 
