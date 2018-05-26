@@ -11,8 +11,8 @@ File an [issue](https://github.com/eBay/tsv-utils-dlang/issues) if you have prob
 **Additional documents:**
 * [Tool reference](docs/ToolReference.md)
 * [Tips and tricks](docs/TipsAndTricks.md)
-* [Performance Studies](docs/Performance.md) (quick access: [2018 Comparative Benchmarsk Update](docs/ComparativeBenchmarks2018.md))
 * [Building with Link Time Optimization (LTO) and Profile Guided Optimization (PGO)](docs/BuildingWithLTO.md)
+* [Performance Studies](docs/Performance.md) (quick access: [2018 Comparative Benchmarsk Update](docs/ComparativeBenchmarks2018.md))
 * [About the code](docs/AboutTheCode.md)
 * [Other toolkits](docs/OtherToolkits.md)
 
