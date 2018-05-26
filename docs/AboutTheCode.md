@@ -2,7 +2,7 @@ _Visit the [main page](../README.md)_
 
 # About the code
 
-Some further details about the code used in the tsv-utils-dlang tools.
+Some further details about the code used in the TSV Utilities.
 
 Contents:
 * [Code structure](#code-structure)
@@ -14,7 +14,7 @@ Contents:
 
 There is directory for each tool, plus one directory for shared code (`common`). The tools all have a similar structure. Code is typically in one file, e.g. `tsv-uniq.d`. Functionality is broken into three pieces:
 
-* A class managing command line options. e.g. `tsvUniqOptions`.
+* A class managing command line options. e.g. `TsvUniqOptions`.
 * A function reading reading input and processing each line. e.g. `tsvUniq`.
 * A `main` routine putting it all together.
 
