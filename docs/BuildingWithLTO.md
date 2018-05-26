@@ -2,17 +2,17 @@ _Visit the [main page](../README.md)_
 
 # Building with Link Time Optimization and Profile Guided Optimization
 
-This page provides instruction for building the TSV utilities from source code using Link Time Optimization (LTO) and Profile Guided Optimization (PGO). LTO is enabled for all the tools, PGO is enabled for a select few. Both improve run-time performance, LTO has the additional effect of reducing binary sizes. Normally PGO and LTO can be used independently, however, the TSV utilities build system only supports PGO when already using LTO.
+This page provides instruction for building the TSV Utilities from source code using Link Time Optimization (LTO) and Profile Guided Optimization (PGO). LTO is enabled for all the tools, PGO is enabled for a select few. Both improve run-time performance, LTO has the additional effect of reducing binary sizes. Normally PGO and LTO can be used independently, however, the TSV Utilities build system only supports PGO when already using LTO.
 
 Contents:
 
   * [About Link Time Optimization](#about-link-time-optimization-lto)
   * [About Profile Guided Optimization](#about-profile-guided-optimization-pgo)
-  * [Building the TSV utilities with LTO and PGO](#building-the-tsv-utilities-with-lto-and-pgo)
+  * [Building the TSV Utilities with LTO and PGO](#building-the-tsv-utilities-with-lto-and-pgo)
   * [Additional options](#additional-options)
   * [LDC command lines](#ldc-command-lines)
   
-Skip down to [Building the TSV utilities with LTO and PGO](#building-the-tsv-utilities-with-lto-and-pgo) to get right to the build instructions.
+Skip down to [Building the TSV Utilities with LTO and PGO](#building-the-tsv-utilities-with-lto-and-pgo) to get right to the build instructions.
 
 ## About Link Time Optimization (LTO)
 
@@ -24,36 +24,36 @@ This is a powerful technique, but involves more complex cooperation between comp
 
 LDC has supported LTO for several releases, however, only macOS was fully supported out-of-the-box. With the LDC 1.5.0 release, LTO is now available out-of-the-box on both Linux and macOS. Windows LTO support is in progress.
 
-A valuable enhancement introduced in LDC 1.5.0 is support for compiling the D runtime library and standard library (Phobos) with LTO. This enables interprocedural optimizations spanning both D libraries and application code. For the TSV utilities this produces materially faster executables.
+A valuable enhancement introduced in LDC 1.5.0 is support for compiling the D runtime library and standard library (Phobos) with LTO. This enables interprocedural optimizations spanning both D libraries and application code. For the TSV Utilities this produces materially faster executables.
 
 Compiling the D standard libraries with LTO is done using the `ldc-build-runtime` tool, included with the LDC 1.5.0 release. This tool downloads the source code for the D standard libraries and compiles it with user-specified compile flags. The `ldc-build-runtime` tool makes it easy to rebuild the D standard libraries with LTO enabled. These LTO compiled libraries can be included on the `ldc2` compile/link command when building the application for maximum LTO opportunities. Applications can also be built compiling just the application code with LTO, linking with the static versions of the D standard libraries shipped with LDC.
 
-There are two different forms of LTO available: Full and Thin. To build the TSV utilities with LTO is sufficient to know that they exist and are incompatible with each other. For information on the differences see the LLVM blog post [ThinLTO: Scalable and Incremental LTO](http://blog.llvm.org/2016/06/thinlto-scalable-and-incremental-lto.html).
+There are two different forms of LTO available: Full and Thin. To build the TSV Utilities with LTO is sufficient to know that they exist and are incompatible with each other. For information on the differences see the LLVM blog post [ThinLTO: Scalable and Incremental LTO](http://blog.llvm.org/2016/06/thinlto-scalable-and-incremental-lto.html).
 
 ## About Profile Guided Optimization (PGO)
 
 Profile Guided Optimization (PGO) is an approach to optimization based on recording typical execution patterns. Execution behavior data enables better choices for branch prediction, inlining decisions, and other optimizations.
 
-There are several ways to gather execution behavior statistics, the approach used by the TSV utilities is to generate an instrumented build and run it on common inputs. The result of these runs is recorded and passed to the compiler and linker to generate the final executable.
+There are several ways to gather execution behavior statistics, the approach used by the TSV Utilities is to generate an instrumented build and run it on common inputs. The result of these runs is recorded and passed to the compiler and linker to generate the final executable.
 
-The TSV utilities build system supports PGO for a couple tools, those showing the most benefit. Currently, PGO is enabled only when also using LTO. The source repository contains everything needed to generate profile data for the build, including data files and scripts invoking the instrumented builds.
+The TSV Utilities build system supports PGO for a couple tools, those showing the most benefit. Currently, PGO is enabled only when also using LTO. The source repository contains everything needed to generate profile data for the build, including data files and scripts invoking the instrumented builds.
 
 For a more detailed introduction to PGO see [Profile-Guided Optimization with LDC](https://johanengelen.github.io/ldc/2016/07/15/Profile-Guided-Optimization-with-LDC.html) on Johan Engelen's blog.
 
-## Building the TSV utilities with LTO and PGO
+## Building the TSV Utilities with LTO and PGO
 
-The pre-built binaries available from the [releases page](https://github.com/eBay/tsv-utils-dlang/releases) are compiled with LTO and PGO for both D libraries and the TSV utilities code. This is not enabled by default when building from source code. The reason is simple: LTO is still an early stage technology. Testing on a wider variety of platforms is needed before making it the default.
+The pre-built binaries available from the [releases page](https://github.com/eBay/tsv-utils-dlang/releases) are compiled with LTO and PGO for both D libraries and the TSV Utilities code. This is not enabled by default when building from source code. The reason is simple: LTO is still an early stage technology. Testing on a wider variety of platforms is needed before making it the default.
 
-However, LTO and PGO builds can be enabled by setting makefile parameters. Testing with the built-in test suite should provide confidence in the resulting applications. The TSV utilities makefile takes care of invoking both `ldc-build-runtime` and `ldc2` with the necessary parameters.
+However, LTO and PGO builds can be enabled by setting makefile parameters. Testing with the built-in test suite should provide confidence in the resulting applications. The TSV Utilities makefile takes care of invoking both `ldc-build-runtime` and `ldc2` with the necessary parameters.
 
 **Prerequisites:**
   * LDC 1.5.0 or later. See the LDC project [README](https://github.com/ldc-developers/ldc/blob/master/README.md) for installation instructions.
-  * TSV utilities source code, 1.15.0-beta3 or later (1.16.0 for PGO).
+  * TSV Utilities source code, 1.15.0-beta3 or later (1.16.0 for PGO).
   * Linux or macOS. macOS requires Xcode 9.0.1 or later.
 
 Linux builds have been tested on Ubuntu 14.04 and 16.04.
 
-**Retrieve the TSV utilities source code:**
+**Retrieve the TSV Utilities source code:**
 
 Via git clone:
 
@@ -83,7 +83,7 @@ $ make DCOMPILER=ldc2 LDC_BUILD_RUNTIME=1
 $ make test-nobuild
 ```
 
-The above command builds with LTO on both the D libraries and the TSV utilities code. The build should be good if the tests succeed.
+The above command builds with LTO on both the D libraries and the TSV Utilities code. The build should be good if the tests succeed.
 
 **Build with LTO and PGO enabled:**
 
@@ -105,9 +105,9 @@ The PGO setup creates and runs an instrumented build to collect profiling data, 
 
 The above instructions should be sufficient to create valid LTO builds. This section describes a few additional choices.
 
-### Use LTO on the TSV utilities code only
+### Use LTO on the TSV Utilities code only
 
-The largest gains come from using LTO on both the D libraries and the application code. However, LTO can also be used on the application code alone. For the TSV utilities, this is the default on macOS. On Linux it needs to be enabled explicitly.
+The largest gains come from using LTO on both the D libraries and the application code. However, LTO can also be used on the application code alone. For the TSV Utilities, this is the default on macOS. On Linux it needs to be enabled explicitly.
 
 **macOS:**
 ```

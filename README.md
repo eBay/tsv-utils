@@ -11,8 +11,8 @@ File an [issue](https://github.com/eBay/tsv-utils-dlang/issues) if you have prob
 **Additional documents:**
 * [Tool reference](docs/ToolReference.md)
 * [Tips and tricks](docs/TipsAndTricks.md)
-* [Performance benchmarks](docs/Performance.md)
 * [Building with Link Time Optimization (LTO) and Profile Guided Optimization (PGO)](docs/BuildingWithLTO.md)
+* [Performance Studies](docs/Performance.md) (quick access: [2018 Comparative Benchmarsk Update](docs/ComparativeBenchmarks2018.md))
 * [About the code](docs/AboutTheCode.md)
 * [Other toolkits](docs/OtherToolkits.md)
 
@@ -34,7 +34,7 @@ These tools perform data manipulation and statistical calculations on delimited 
 
 The tools work like traditional Unix command line utilities such as `cut`, `sort`,  and `grep`, and are intended to complement these tools. Each tool is a standalone executable. They follow common Unix conventions for pipeline programs. Data is read from files or standard input, results are written to standard output. The field separator defaults to TAB, but any character can be used. Input and output is UTF-8, and all operations are Unicode ready, including regular expression match (`tsv-filter`). Documentation is available for each tool by invoking it with the `--help` option. TSV format is similar to CSV, see [Comparing TSV and CSV formats](docs/TipsAndTricks.md#comparing-tsv-and-csv-formats) for the differences.
 
-Speed matters when processing large files, these tools are the fastest the author has found. See [Performance benchmarks](docs/Performance.md) for details.
+Speed matters when processing large files, these tools are the fastest the author has found. See the [2018 Comparative Benchmarks Update](docs/ComparativeBenchmarks2018.md) for comparisons with similar tools.
 
 The rest of this section contains a short description of each tool. There is more detail in the [tool reference](docs/ToolReference.md).
 
