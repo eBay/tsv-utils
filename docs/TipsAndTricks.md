@@ -277,6 +277,6 @@ The similarity between TSV and CSV can lead to confusion about which tools are a
 References:
 - [Wikipedia: Tab-separated values](https://en.wikipedia.org/wiki/Tab-separated_values) - Useful description of TSV format.
 - [IANA TSV specification](https://www.iana.org/assignments/media-types/text/tab-separated-values) - Formal definition of the tab-separated-values mime type.
-- [Wikipedia: Comma-separated-values](https://en.wikipedia.org/wiki/Tab-separated_values) - Describes CSV and related formats.
+- [Wikipedia: Comma-separated-values](https://en.wikipedia.org/wiki/Comma-separated_values) - Describes CSV and related formats.
 - [RFC 4180](https://tools.ietf.org/html/rfc4180) - IETF CSV format description, the closest thing to an actual standard for CSV.
 - [brendano/tsvutils: The philosophy of tsvutils](https://github.com/brendano/tsvutils#the-philosophy-of-tsvutils) - Brendan O'Connor's discussion of the rationale for using TSV format in his open source toolkit.

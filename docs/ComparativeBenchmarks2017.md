@@ -30,7 +30,7 @@ Specific considerations to keep in mind when comparing individual tools:
 
 ### Top four in each benchmark
 
-This table shows fastest times for each benchmark. Times are in seconds. Complete results for each benchmark are in the succeeding sections. The tools from tsv-utils-dlang were the fastest on each test.
+This table shows fastest times for each benchmark. Times are in seconds. Complete results for each benchmark are in the succeeding sections. eBay's TSV Utilities were the fastest on each test.
 
 | Benchmark              |       Tool/Time | Tool/Time | Tool/Time | Tool/Time |
 | ---------------------- | --------------: | --------: | --------: | --------: |
@@ -201,7 +201,7 @@ $ xsv fmt -t '\t' TREE_GRM_ESTN_14mil.csv >> /dev/null
   * [GNU datamash](https://www.gnu.org/software/datamash/) version 1.1.1; written in C.
   * [csvtk](https://github.com/shenwei356/csvtk) version v0.5.0; written in Go.
   * [Miller](https://github.com/johnkerl/miller) (mlr) version 5.0.0; written in C.
-  * [tsv-utils-dlang](https://github.com/eBay/tsv-utils-dlang) version v1.1.1 (this toolkit); written in D.
+  * [eBay's TSV Utilities](https://github.com/eBay/tsv-utils-dlang) version v1.1.1 (this toolkit); written in D.
   * [xsv](https://github.com/BurntSushi/xsv) version 0.10.3; written in Rust.
 * Compilers:
   * LDC 1.1 (D compiler, Phobos 2.071.2)
