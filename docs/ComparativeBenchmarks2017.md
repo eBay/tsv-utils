@@ -10,7 +10,7 @@ _Visit the [TSV Utilities main page](../README.md)_
 
 ## Summary
 
-This performance benchmark study compared the TSV Utilities to similar tools written in other native lanugages. These studies were intended to guage D's performance when writing code in a straightforward fashion, as might occur in the context of a software development team. See the [main performance benchmarks page](Performance.md) for additional discussion of the goals and motivations behind the study.
+This performance benchmark study compared eBay's TSV Utilities to similar tools written in other native lanugages. These studies were intended to guage D's performance when writing code in a straightforward fashion, as might occur in the context of a software development team. See the [main performance benchmarks page](Performance.md) for additional discussion of the goals and motivations behind the study.
 
 ## Comparative benchmarks
 

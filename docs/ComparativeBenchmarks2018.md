@@ -6,16 +6,16 @@ _Visit the [TSV Utilities main page](../README.md)_
 * [Overview](#overview)
 * [Benchmark Tests](#benchmark-tests)
 * [TSV Utilities performance improvements post the March 2017 study](#tsv-utilities-performance-improvements-post-the-march-2017-study)
-* [Comparative benchmark updates](#comparative-benchmark-updates)
+* [Comparative benchmark results](#comparative-benchmark-results)
 * [Test details](#test-details)
 
 ## Overview
 
-This is an update to the [March 2017 Comparative Benchmarks Study](ComparativeBenchmarks2017.md). The 2017 study compared the TSV Utilities to a number of other tools as a way to gauge the performance the language. This page contains updates to those benchmarks.
+This is an update to the [March 2017 Comparative Benchmarks Study](ComparativeBenchmarks2017.md). The 2017 study compared eBay's TSV Utilities to a number of other tools as a way to gauge the performance of the D programming language. This page contains updates to those benchmarks.
 
-The goal of the 2017 study was to evaluate performance of an application written in a straightforward fashion, without going to unusual lengths optimize performance. The 2018 version of the TSV Utilities are still written in this style, but have had performance improvements since. The most notable is the use of Link Time Optimization (LTO) and Profile Guided Optimization (PGO). These are compiler technologies available via the LDC compiler.
+The goal of the 2017 study was to evaluate performance of an application written in a straightforward fashion, without going to unusual lengths optimize performance. The 2018 version of eBay's TSV Utilities are still written in this style, but have had performance improvements since. The most notable is the use of Link Time Optimization (LTO) and Profile Guided Optimization (PGO). These are compiler technologies available via the LDC compiler.
 
-See the [main performance benchmarks page](Performance.md) for more information on the goals of the study and the approach used. See the [2017 study](ComparativeBenchmarks2017.md) for more details about the individual benchmarks (this page is primarily reporting the new results). The 2017 study also includes several analyses not included in the 2018 study, for example, a comparison of DMD and LDC compilers.
+See the [main performance benchmarks page](Performance.md) for more information on the goals of the study and the approach used. See the [2017 study](ComparativeBenchmarks2017.md) for details about the individual benchmarks. This page is primarily reporting the updated results. The 2017 study also includes several analyses not included in the 2018 study, for example, a comparison of DMD and LDC compilers.
 
 The 2018 study adds one additional benchmark to the 2017 set. Benchmarks were run on MacOS and Linux. Only the faster tools from the 2017 study were included the 2018 update, the slower tools were dropped.
 
@@ -33,7 +33,7 @@ The MacOS benchmarks were run 25 times, the Linux benchmarks 35 times. The 10th 
 
 ## TSV Utilities performance improvements post the March 2017 Study
 
-The TSV Utilities became materially faster between the March 2017 and April 2018 studies. The tables below show these changes. The pre-built binary for release v1.1.11 was used as a proxy for the March 2017 versions. v1.1.11 was released after the March 2017 study, but is largely unchanged.
+eBay's TSV Utilities became materially faster between the March 2017 and April 2018 studies. The tables below show these changes. The pre-built binary for release v1.1.11 was used as a proxy for the March 2017 versions. v1.1.11 was released after the March 2017 study, but is largely unchanged.
 
 | Benchmark | MacOS<br>March 2017<br>(v1.1.11) | MacOS<br>April 2018<br>(v1.1.19) | MacOS<br>Delta | Linux<br>March 2017<br>(v1.1.11) | Linux<br>April 2018<br>(v1.1.19) | Linux<br>Delta |
 | ----------------------------- | -------: | -------: | -------: | -------: | -------: | -------: |
@@ -50,9 +50,9 @@ There were three main sources of performance improvements between the 2017 and 2
 * Performance improvements in D, the standard libraries, and compilers.
 * The use of output buffering in the tools. This had the largest impact on the narrow file column selection test.
 
-## Comparative benchmark updates
+## Comparative benchmark results
 
-Updates to the benchmarks from the 2017 study are provided below. The top-4 tools in each benchmark are shown.
+Updates to the benchmarks from the 2017 study are provided below. The top four tools in each benchmark are shown.
 
 ### A note about comparisons between individual tools
 
@@ -62,11 +62,11 @@ A few specific considerations:
 * Tools accepting CSV data must handle escape characters. This is computationally more expensive than a strict delimited format like TSV. Supporting both CSV and TSV makes optimizing the TSV case challenging.
 * Some CSV implementations support embedded newlines, others do not. Embedded newline support is more challenging because highly optimized "readline" routines cannot be used to find record boundaries.
 * Handling arbitrary expression trees (ala `Awk`) is more computationally complex than handling a single conjunctive or disjunctive expression list as `tsv-filter` does.
-* Some tools use multi-threading, others do not. (The TSV Utilities do not.) This is a design trade-off. Running multiple threads can improve run-times of individual tools. However, this may reduce overall throughput when several tools are chained in a command pipeline.
+* Some tools use multi-threading, others do not. (eBay's TSV Utilities do not.) This is a design trade-off. Running multiple threads can improve run-times of individual tools. However, this may reduce overall throughput when several tools are chained in a command pipeline.
 
 ### Top four in each benchmark
 
-The tables below show fastest times for each benchmark. One table each for MacOS and Linux. Times are in seconds. A description of the individual tests can be found in the [March 2017 study](ComparativeBenchmarks2017.md).
+The tables below show fastest times for each benchmark. One table each for MacOS and Linux. Times are in seconds. A description of the individual tests can be found in the [March 2017 study](ComparativeBenchmarks2017.md). eBay's TSV Utilities are shown in italics. Reference information for all tools is in the [Test Details](#test-details) section.
 
 #### MacOS: Top-4 in each benchmark
 
@@ -117,7 +117,7 @@ Tests were run on April 14, 2018. The latest released version of each tool was u
 
 ### Tools
 
-GNU Awk, GNU cut and mawk are available on most platforms via standard package managers. The xsv and csvtk packages were downloaded from pre-built binaries on their respective GitHub releases pages. The TSV Utilities releases are also from the pre-built binaries available from GitHub.
+GNU Awk, GNU cut and mawk are available on most platforms via standard package managers. The xsv and csvtk packages were downloaded from pre-built binaries on their respective GitHub releases pages. eBay's TSV Utilities releases are also from the pre-built binaries available from GitHub.
 
 * [GNU Awk](https://www.gnu.org/software/gawk/) - Version 4.2.1. Written in C.
 * [mawk](https://invisible-island.net/mawk/mawk.html) - MacOs: Version 1.3.4; Linux: Version 1.3.3. Written in C.
@@ -125,7 +125,7 @@ GNU Awk, GNU cut and mawk are available on most platforms via standard package m
 * [GNU Datamash](https://www.gnu.org/software/datamash/) - Version 1.3. Written in C.
 * [xsv](https://github.com/BurntSushi/xsv) - Version 0.12.2. Written in Rust.
 * [csvtk](https://github.com/shenwei356/csvtk) - Version v0.14.0-dev. Written in Go.
-* [TSV Utilities](https://github.com/eBay/tsv-utils-dlang) - Version v1.1.19 (this toolkit). Written in D.
+* [eBay's TSV Utilities](https://github.com/eBay/tsv-utils-dlang) - Version v1.1.19 (this toolkit). Written in D.
 
 ### Data files
 
