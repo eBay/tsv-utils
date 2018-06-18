@@ -14,14 +14,14 @@ File an [issue](https://github.com/eBay/tsv-utils-dlang/issues) if you have prob
 * [Tool reference](docs/ToolReference.md)
 * [Tips and tricks](docs/TipsAndTricks.md)
 * [Building with Link Time Optimization (LTO) and Profile Guided Optimization (PGO)](docs/BuildingWithLTO.md)
-* [Performance Studies](docs/Performance.md) (quick access: [2018 Comparative Benchmarks Update](docs/ComparativeBenchmarks2018.md))
+* [Performance Studies](docs/Performance.md) (quick access: [2018 Comparative Benchmarks](docs/ComparativeBenchmarks2018.md))
 * [About the code](docs/AboutTheCode.md)
 * [Other toolkits](docs/OtherToolkits.md)
 
 **Talks and blog posts:**
 * [Faster Command Line Tools in D](https://dlang.org/blog/2017/05/24/faster-command-line-tools-in-d/). May 24, 2017. A blog post showing a few ways to optimize performance in command line tools. Many of the ideas in the post were identified while developing the TSV Utilities.
-* [Experimenting with Link Time Optimization](docs/dlang-meetup-14dec2017.pdf). Dec 14, 2017. A presentation at the [Silicon Valley D Meetup](https://www.meetup.com/D-Lang-Silicon-Valley/) describing experiments using LTO based on the TSV Utilities.
-* [Exploring D via Benchmarking of eBay's TSV Utilities](http://dconf.org/2018/talks/degenhardt.html). May 2, 2018. A presentation at [DConf 2018](http://dconf.org/2018/) describing benchmarking studies conducted using the TSV Utilities (slides [here](docs/dconf2018.pdf)).
+* [Experimenting with Link Time Optimization](docs/dlang-meetup-14dec2017.pdf). Dec 14, 2017. A presentation at the [Silicon Valley D Meetup](https://www.meetup.com/D-Lang-Silicon-Valley/) describing experiments using LTO based on eBay's TSV Utilities.
+* [Exploring D via Benchmarking of eBay's TSV Utilities](http://dconf.org/2018/talks/degenhardt.html). May 2, 2018. A presentation at [DConf 2018](http://dconf.org/2018/) describing benchmarking studies conducted using eBay's TSV Utilities (slides [here](docs/dconf2018.pdf)).
 
 [![Travis](https://img.shields.io/travis/eBay/tsv-utils-dlang.svg)](https://travis-ci.org/eBay/tsv-utils-dlang)
 [![Codecov](https://img.shields.io/codecov/c/github/eBay/tsv-utils-dlang.svg)](https://codecov.io/gh/eBay/tsv-utils-dlang)
