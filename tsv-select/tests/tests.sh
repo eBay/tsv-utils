@@ -134,11 +134,11 @@ echo "" >> ${basic_tests_1}
 echo "====[tsv-select --help | grep -c Synopsis]====" >> ${basic_tests_1}
 ${prog} --help 2>&1 | grep -c Synopsis >> ${basic_tests_1} 2>&1
 
-echo "====[tsv-select --version | grep -c 'tsv-select (eBay/tsv-utils-dlang)']====" >> ${basic_tests_1}
-${prog} --version 2>&1 | grep -c 'tsv-select (eBay/tsv-utils-dlang)' >> ${basic_tests_1} 2>&1
+echo "====[tsv-select --version | grep -c 'tsv-select (eBay/tsv-utils)']====" >> ${basic_tests_1}
+${prog} --version 2>&1 | grep -c 'tsv-select (eBay/tsv-utils)' >> ${basic_tests_1} 2>&1
 
-echo "====[tsv-select -V | grep -c 'tsv-select (eBay/tsv-utils-dlang)']====" >> ${basic_tests_1}
-${prog} -V 2>&1 | grep -c 'tsv-select (eBay/tsv-utils-dlang)' >> ${basic_tests_1} 2>&1
+echo "====[tsv-select -V | grep -c 'tsv-select (eBay/tsv-utils)']====" >> ${basic_tests_1}
+${prog} -V 2>&1 | grep -c 'tsv-select (eBay/tsv-utils)' >> ${basic_tests_1} 2>&1
 
 ## Longer output to trigger buffer flush
 

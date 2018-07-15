@@ -1,7 +1,7 @@
 {
     "name": "tsv-uniq",
     "description": "Output unique lines in TSV files using a subset of fields.",
-    "homepage": "https://github.com/eBay/tsv-utils-dlang",
+    "homepage": "https://github.com/eBay/tsv-utils",
     "authors": ["Jon Degenhardt"],
     "copyright": "Copyright (c) 2015-2018, eBay Software Foundation",
     "license": "BSL-1.0",
@@ -13,7 +13,7 @@
             "targetPath": "../bin/",
             "mainSourceFile": "src/tsv-uniq.d",
             "dependencies": {
-                "tsv-utils-dlang:common": "*"
+                "tsv-utils:common": "*"
             }
         },
         {

@@ -20,7 +20,7 @@ There is directory for each tool, plus one directory for shared code (`common`).
 
 Documentation for each tool is found near the top of the main file, both in the help text and the option documentation.
 
-The simplest tool is `number-lines`. It is useful as an illustration of the code outline followed by the other tools. `tsv-select` and `tsv-uniq` also have straightforward functionality, but employ a few more D programming concepts. `tsv-select` uses templates and compile-time programming in a somewhat less common way, it may be clearer after gaining some familiarity with D templates. A non-templatized version of the source code is included for comparison. 
+The simplest tool is `number-lines`. It is useful as an illustration of the code outline followed by the other tools. `tsv-select` and `tsv-uniq` also have straightforward functionality, but employ a few more D programming concepts. `tsv-select` uses templates and compile-time programming in a somewhat less common way, it may be clearer after gaining some familiarity with D templates. A non-templatized version of the source code is included for comparison.
 
 `tsv-append` has a simple code structure. It's one of the newer tools. It's only additional complexity is that writes to an 'output range' rather than directly to standard output. This enables better encapsulation for unit testing. `tsv-sample`, another new tool, is written in a similar fashion. The code is only a bit more complicated, but the algorithm is much more interesting.
 
@@ -44,7 +44,7 @@ These tools were implemented with these trade-offs in mind. The code was deliber
 
 A useful aspect of D is that is additional optimization can be made as the need arises. Coding of these tools did utilize a several optimizations that might not have been done in an initial effort. These include:
 
-* The `InputFieldReordering` class in the `common` directory. This is an optimization for processing only the first N fields needed for the individual command invocation. This is used by several tools. 
+* The `InputFieldReordering` class in the `common` directory. This is an optimization for processing only the first N fields needed for the individual command invocation. This is used by several tools.
 * The template expansion done in `tsv-select`. This reduces the number of if-tests in the inner loop.
 * Reusing arrays every input line, without re-allocating. Some programmers would do this naturally on the first attempt, for others it would be a second pass optimization.
 * The output buffering done in `csv2tsv`. The algorithm used naturally generates a single byte at a time, but writing a byte-at-a-time incurs a costly system call. Buffering the writes sped the program up signficantly.
@@ -69,9 +69,9 @@ Builds can be customized by changing the settings in `makedefs.mk`. The most bas
 
 A parallel build setup was created using DUB packages. This was done to better align with the D ecosystem. However, at present DUB does not have first class support for multiple executables, and this setup pushes the boundaries of what works smoothly. That said, the setup appears to work well. One specific functionality not supported are the test capabilities. However, after building with DUB tests can be run using the makefile setup. Here's an example:
 ```
-$ cd tsv-utils-dlang
+$ cd tsv-utils
 $ dub run
-$ dub test tsv-utils-dlang:common
+$ dub test tsv-utils:common
 $ make test-nobuild
 ```
 

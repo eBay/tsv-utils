@@ -21,7 +21,7 @@ obj/
 dub_build
 buildtools/aggregate-codecov
 buildtools/codecov-to-relative-paths
-tsv-utils-dlang-*.tar.gz
+tsv-utils-*.tar.gz
 
 # LDC build artifacts
 ldc-build-runtime.tmp/
