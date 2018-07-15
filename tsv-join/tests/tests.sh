@@ -166,11 +166,11 @@ ${prog} --help 2>&1 | grep -c Synopsis >> ${basic_tests_1} 2>&1
 echo "====[tsv-join --help-verbose | grep -c Synopsis]====" >> ${basic_tests_1}
 ${prog} --help-verbose 2>&1 | grep -c Synopsis >> ${basic_tests_1} 2>&1
 
-echo "====[tsv-join --version | grep -c 'tsv-join (eBay/tsv-utils-dlang)']====" >> ${basic_tests_1}
-${prog} --version 2>&1 | grep -c 'tsv-join (eBay/tsv-utils-dlang)' >> ${basic_tests_1} 2>&1
+echo "====[tsv-join --version | grep -c 'tsv-join (eBay/tsv-utils)']====" >> ${basic_tests_1}
+${prog} --version 2>&1 | grep -c 'tsv-join (eBay/tsv-utils)' >> ${basic_tests_1} 2>&1
 
-echo "====[tsv-join -V | grep -c 'tsv-join (eBay/tsv-utils-dlang)']====" >> ${basic_tests_1}
-${prog} -V 2>&1 | grep -c 'tsv-join (eBay/tsv-utils-dlang)' >> ${basic_tests_1} 2>&1
+echo "====[tsv-join -V | grep -c 'tsv-join (eBay/tsv-utils)']====" >> ${basic_tests_1}
+${prog} -V 2>&1 | grep -c 'tsv-join (eBay/tsv-utils)' >> ${basic_tests_1} 2>&1
 
 ## Error cases
 

@@ -178,9 +178,9 @@ Help and Version printing 1
 1
 ====[keep-header -h | grep -c Synopsis]====
 1
-====[keep-header --version | grep -c 'keep-header (eBay/tsv-utils-dlang)']====
+====[keep-header --version | grep -c 'keep-header (eBay/tsv-utils)']====
 1
-====[keep-header --V | grep -c 'keep-header (eBay/tsv-utils-dlang)']====
+====[keep-header --V | grep -c 'keep-header (eBay/tsv-utils)']====
 1
-====[keep-header -V | grep -c 'keep-header (eBay/tsv-utils-dlang)']====
+====[keep-header -V | grep -c 'keep-header (eBay/tsv-utils)']====
 1

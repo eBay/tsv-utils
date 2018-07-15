@@ -1,13 +1,13 @@
 /**
-This is a simple dub build launcher for tsv-utils-dlang to use with Dub installs.
+This is a simple dub build launcher for tsv-utils to use with Dub installs.
 
-The tsv-utils-dlang package contains multiple executable programs in sub-directories.
+The tsv-utils package contains multiple executable programs in sub-directories.
 Vanilla Dub does not support building multiple executables, a separate invocations is
 required for each app. However, experienced Dub users may try to install with a
 standard Dub sequence, for example:
 
-    dub fetch tsv-utils-dlang
-    dub run tsv-utils-dlang
+    dub fetch tsv-utils
+    dub run tsv-utils
 
 Another use-case:
 
@@ -29,7 +29,7 @@ License: Boost Licence 1.0 (http://boost.org/LICENSE_1_0.txt)
 */
 
 auto helpText = q"EOS
-Build the apps in the tsv-utils-dlang package. Options:
+Build the apps in the tsv-utils package. Options:
 EOS";
 
 int main(string[] args) {
@@ -55,7 +55,7 @@ int main(string[] args) {
     }
 
     // Note: At present 'common' is a source library and does not need a standalone compilation step.
-    auto packageName = "tsv-utils-dlang";
+    auto packageName = "tsv-utils";
     auto subPackages = ["csv2tsv", "keep-header", "number-lines", "tsv-append", "tsv-filter", "tsv-join", "tsv-pretty", "tsv-sample", "tsv-select", "tsv-summarize", "tsv-uniq"];
     auto buildCmdArgs = ["dub", "build", "<package>", "--force", "-b"];
     buildCmdArgs ~= debugBuild ? "debug" : "release";
@@ -68,7 +68,7 @@ int main(string[] args) {
     auto exeDir = exePath.dirName;
     auto binDir = buildNormalizedPath(exeDir, "bin");
     writeln();
-    writeln("=== Building tsv-utils-dlang executables ===");
+    writeln("=== Building tsv-utils executables ===");
     writeln();
     foreach (subPkg; subPackages) {
         auto subPkgBuildName = packageName ~ ":" ~ subPkg;

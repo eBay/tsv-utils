@@ -1,7 +1,7 @@
 {
     "name": "tsv-filter",
     "description": "Filter lines in a tab-separated value file.",
-    "homepage": "https://github.com/eBay/tsv-utils-dlang",
+    "homepage": "https://github.com/eBay/tsv-utils",
     "authors": ["Jon Degenhardt"],
     "copyright": "Copyright (c) 2015-2018, eBay Software Foundation",
     "license": "BSL-1.0",
@@ -14,7 +14,7 @@
             "targetPath": "../bin/",
             "mainSourceFile": "src/tsv-filter.d",
             "dependencies": {
-                "tsv-utils-dlang:common": "*"
+                "tsv-utils:common": "*"
             }
         },
         {

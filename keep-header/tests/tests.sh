@@ -88,14 +88,14 @@ ${prog} --help 2>&1 | grep -c Synopsis >> ${basic_tests_1} 2>&1
 echo "====[keep-header -h | grep -c Synopsis]====" >> ${basic_tests_1}
 ${prog} -h 2>&1 | grep -c Synopsis >> ${basic_tests_1} 2>&1
 
-echo "====[keep-header --version | grep -c 'keep-header (eBay/tsv-utils-dlang)']====" >> ${basic_tests_1}
-${prog} --version 2>&1 | grep -c 'keep-header (eBay/tsv-utils-dlang)' >> ${basic_tests_1} 2>&1
+echo "====[keep-header --version | grep -c 'keep-header (eBay/tsv-utils)']====" >> ${basic_tests_1}
+${prog} --version 2>&1 | grep -c 'keep-header (eBay/tsv-utils)' >> ${basic_tests_1} 2>&1
 
-echo "====[keep-header --V | grep -c 'keep-header (eBay/tsv-utils-dlang)']====" >> ${basic_tests_1}
-${prog} --V 2>&1 | grep -c 'keep-header (eBay/tsv-utils-dlang)' >> ${basic_tests_1} 2>&1
+echo "====[keep-header --V | grep -c 'keep-header (eBay/tsv-utils)']====" >> ${basic_tests_1}
+${prog} --V 2>&1 | grep -c 'keep-header (eBay/tsv-utils)' >> ${basic_tests_1} 2>&1
 
-echo "====[keep-header -V | grep -c 'keep-header (eBay/tsv-utils-dlang)']====" >> ${basic_tests_1}
-${prog} -V 2>&1 | grep -c 'keep-header (eBay/tsv-utils-dlang)' >> ${basic_tests_1} 2>&1
+echo "====[keep-header -V | grep -c 'keep-header (eBay/tsv-utils)']====" >> ${basic_tests_1}
+${prog} -V 2>&1 | grep -c 'keep-header (eBay/tsv-utils)' >> ${basic_tests_1} 2>&1
 
 ## Error cases
 

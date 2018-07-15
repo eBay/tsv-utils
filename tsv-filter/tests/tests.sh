@@ -260,11 +260,11 @@ ${prog} --help-verbose 2>&1 | grep -c Synopsis >> ${basic_tests_1} 2>&1
 echo "====[tsv-filter --help-options | grep -c Synopsis]====" >> ${basic_tests_1}
 ${prog} --help-options 2>&1 | grep -c Synopsis >> ${basic_tests_1} 2>&1
 
-echo "====[tsv-filter --version | grep -c 'tsv-filter (eBay/tsv-utils-dlang)']====" >> ${basic_tests_1}
-${prog} --version 2>&1 | grep -c 'tsv-filter (eBay/tsv-utils-dlang)' >> ${basic_tests_1} 2>&1
+echo "====[tsv-filter --version | grep -c 'tsv-filter (eBay/tsv-utils)']====" >> ${basic_tests_1}
+${prog} --version 2>&1 | grep -c 'tsv-filter (eBay/tsv-utils)' >> ${basic_tests_1} 2>&1
 
-echo "====[tsv-filter -V | grep -c 'tsv-filter (eBay/tsv-utils-dlang)']====" >> ${basic_tests_1}
-${prog} -V 2>&1 | grep -c 'tsv-filter (eBay/tsv-utils-dlang)' >> ${basic_tests_1} 2>&1
+echo "====[tsv-filter -V | grep -c 'tsv-filter (eBay/tsv-utils)']====" >> ${basic_tests_1}
+${prog} -V 2>&1 | grep -c 'tsv-filter (eBay/tsv-utils)' >> ${basic_tests_1} 2>&1
 
 
 ## Error cases

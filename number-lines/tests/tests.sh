@@ -75,11 +75,11 @@ echo "" >> ${basic_tests_1}
 echo "====[number-lines --help | grep -c Synopsis]====" >> ${basic_tests_1}
 ${prog} --help 2>&1 | grep -c Synopsis >> ${basic_tests_1} 2>&1
 
-echo "====[number-lines --version | grep -c 'number-lines (eBay/tsv-utils-dlang)']====" >> ${basic_tests_1}
-${prog} --version 2>&1 | grep -c 'number-lines (eBay/tsv-utils-dlang)' >> ${basic_tests_1} 2>&1
+echo "====[number-lines --version | grep -c 'number-lines (eBay/tsv-utils)']====" >> ${basic_tests_1}
+${prog} --version 2>&1 | grep -c 'number-lines (eBay/tsv-utils)' >> ${basic_tests_1} 2>&1
 
-echo "====[number-lines -V | grep -c 'number-lines (eBay/tsv-utils-dlang)']====" >> ${basic_tests_1}
-${prog} -V 2>&1 | grep -c 'number-lines (eBay/tsv-utils-dlang)' >> ${basic_tests_1} 2>&1
+echo "====[number-lines -V | grep -c 'number-lines (eBay/tsv-utils)']====" >> ${basic_tests_1}
+${prog} -V 2>&1 | grep -c 'number-lines (eBay/tsv-utils)' >> ${basic_tests_1} 2>&1
 
 ## Error cases
 

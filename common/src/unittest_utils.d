@@ -1,5 +1,5 @@
 /**
-Helper functions for tsv-utils-dlang unit tests.
+Helper functions for tsv-utils unit tests.
 
 Copyright (c) 2017-2018, eBay Software Foundation
 Initially written by Jon Degenhardt
@@ -44,7 +44,7 @@ version(unittest)
         import std.path : buildPath;
         import std.range;
 
-        string dirNamePrefix = "tsv_utils_dlang__" ~ toolDirName ~ "_unittest_";
+        string dirNamePrefix = "ebay_tsv_utils__" ~ toolDirName ~ "_unittest_";
         string systemTempDirPath = tempDir();
         string newTempDirPath = "";
 

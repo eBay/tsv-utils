@@ -103,11 +103,11 @@ ${prog} --help 2>&1 | grep -c Synopsis >> ${basic_tests_1} 2>&1
 echo "====[tsv-summarize --help-verbose | grep -c Synopsis]====" >> ${basic_tests_1}
 ${prog} --help-verbose 2>&1 | grep -c Synopsis >> ${basic_tests_1} 2>&1
 
-echo "====[tsv-summarize --version | grep -c 'tsv-summarize (eBay/tsv-utils-dlang)']====" >> ${basic_tests_1}
-${prog} --version 2>&1 | grep -c 'tsv-summarize (eBay/tsv-utils-dlang)' >> ${basic_tests_1} 2>&1
+echo "====[tsv-summarize --version | grep -c 'tsv-summarize (eBay/tsv-utils)']====" >> ${basic_tests_1}
+${prog} --version 2>&1 | grep -c 'tsv-summarize (eBay/tsv-utils)' >> ${basic_tests_1} 2>&1
 
-echo "====[tsv-summarize -V | grep -c 'tsv-summarize (eBay/tsv-utils-dlang)']====" >> ${basic_tests_1}
-${prog} -V 2>&1 | grep -c 'tsv-summarize (eBay/tsv-utils-dlang)' >> ${basic_tests_1} 2>&1
+echo "====[tsv-summarize -V | grep -c 'tsv-summarize (eBay/tsv-utils)']====" >> ${basic_tests_1}
+${prog} -V 2>&1 | grep -c 'tsv-summarize (eBay/tsv-utils)' >> ${basic_tests_1} 2>&1
 
 ## Error cases
 

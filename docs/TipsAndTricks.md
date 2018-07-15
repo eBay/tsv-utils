@@ -15,7 +15,6 @@ Contents:
 * [Comparing TSV and CSV formats](#comparing-tsv-and-csv-formats)
 
 ### Useful bash aliases
-
 A bash alias is a keystroke shortcut known by the shell. They are setup in the user's `~/.bashrc` or another shell init file. There's one that's really valuable when working with TSV files: `tsv-header`, which lists the field numbers for each field in a TSV file. To define it, put the following in `~/.bashrc` or other init file:
 ```
 tsv-header () { head -n 1 $* | tr $'\t' '\n' | nl ; }
@@ -195,10 +194,10 @@ Now type 'r', then TAB, and the command will complete up to `$ tsv-select --rest
 
 Enabling bash completion is a bit more involved than other packages, but still not too hard. It will often be necessary to install a package. The way to do this is system specific. A good source of instructions can be found at the [bash-completion GitHub repository](https://github.com/scop/bash-completion). Mac users may find the MacPorts [How to use bash-completion](https://trac.macports.org/wiki/howto/bash-completion) guide useful. Procedures for Homebrew are similar, but the details differ a bit.
 
-After enabling bash-completion, add completions for the tsv-utils-dlang package. Completions are available in the `bash_completion/tsv-utils-dlang` file. One way to add them is to 'source' the file from the `~/.bash_completion` file. A line like the following will do this.
+After enabling bash-completion, add completions for the tsv-utils package. Completions are available in the `bash_completion/tsv-utils` file. One way to add them is to 'source' the file from the `~/.bash_completion` file. A line like the following will do this.
 ```
-if [ -r ~/tsv-utils-dlang/bash_completion/tsv-utils-dlang ]; then
-    . ~/tsv-utils-dlang/bash_completion/tsv-utils-dlang
+if [ -r ~/tsv-utils/bash_completion/tsv-utils ]; then
+    . ~/tsv-utils/bash_completion/tsv-utils
 fi
 ```
 
@@ -272,7 +271,7 @@ abc	hello, world	def
 ghi	Say "hello, world!"	jkl
 ```
 
-The similarity between TSV and CSV can lead to confusion about which tools are appropriate. Furthering this confusion, it is somewhat common to have data files using comma as the field delimiter, but without comma, quote, or newlines in the data. No CSV escapes are needed in these files, with the implication that traditional Unix tools like `cut` and `awk` can be used to process these files. Such files are sometimes referred to as "simple CSV". They are equivalent to TSV files with comma as a field delimiter. Traditional Unix tools and the TSV Utilities can process these files correctly by specifying the field delimiter. However, "simple csv" is a very ad hoc and ill defined notion. A simple precaution when working with these files is to run a CSV-to-TSV converter like `csv2tsv` prior to other processing steps. 
+The similarity between TSV and CSV can lead to confusion about which tools are appropriate. Furthering this confusion, it is somewhat common to have data files using comma as the field delimiter, but without comma, quote, or newlines in the data. No CSV escapes are needed in these files, with the implication that traditional Unix tools like `cut` and `awk` can be used to process these files. Such files are sometimes referred to as "simple CSV". They are equivalent to TSV files with comma as a field delimiter. Traditional Unix tools and the TSV Utilities can process these files correctly by specifying the field delimiter. However, "simple csv" is a very ad hoc and ill defined notion. A simple precaution when working with these files is to run a CSV-to-TSV converter like `csv2tsv` prior to other processing steps.
 
 References:
 - [Wikipedia: Tab-separated values](https://en.wikipedia.org/wiki/Tab-separated_values) - Useful description of TSV format.

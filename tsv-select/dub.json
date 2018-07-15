@@ -1,7 +1,7 @@
 {
     "name": "tsv-select",
     "description": "Output select columns from TSV files.",
-    "homepage": "https://github.com/eBay/tsv-utils-dlang",
+    "homepage": "https://github.com/eBay/tsv-utils",
     "authors": ["Jon Degenhardt"],
     "copyright": "Copyright (c) 2015-2018, eBay Software Foundation",
     "license": "BSL-1.0",
@@ -14,7 +14,7 @@
             "mainSourceFile": "src/tsv-select.d",
             "excludedSourceFiles": ["src/tsv-select_no-template-version.d"],
             "dependencies": {
-                "tsv-utils-dlang:common": "*"
+                "tsv-utils:common": "*"
             }
         },
         {

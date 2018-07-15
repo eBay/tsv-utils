@@ -1,7 +1,7 @@
 {
     "name": "tsv-pretty",
     "description": "Print TSV data aligned for easier reading on consoles and traditional command-line environments.",
-    "homepage": "https://github.com/eBay/tsv-utils-dlang",
+    "homepage": "https://github.com/eBay/tsv-utils",
     "authors": ["Jon Degenhardt"],
     "copyright": "Copyright (c) 2017-2018, eBay Software Foundation",
     "license": "BSL-1.0",
@@ -13,7 +13,7 @@
             "targetPath": "../bin/",
             "mainSourceFile": "src/tsv-pretty.d",
             "dependencies": {
-                "tsv-utils-dlang:common": "*"
+                "tsv-utils:common": "*"
             }
         },
         {

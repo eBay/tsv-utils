@@ -47,9 +47,9 @@ Help and version options
 1
 ====[tsv-pretty --help-verbose | grep -c Limitations]====
 1
-====[tsv-pretty --version | grep -c 'tsv-pretty (eBay/tsv-utils-dlang)']====
+====[tsv-pretty --version | grep -c 'tsv-pretty (eBay/tsv-utils)']====
 1
-====[tsv-pretty -V | grep -c 'tsv-pretty (eBay/tsv-utils-dlang)']====
+====[tsv-pretty -V | grep -c 'tsv-pretty (eBay/tsv-utils)']====
 1
 
 Standard input

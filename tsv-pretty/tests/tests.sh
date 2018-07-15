@@ -554,11 +554,11 @@ ${prog} --help-verbose 2>&1 | grep -c Synopsis >> ${basic_tests_5} 2>&1
 echo "====[tsv-pretty --help-verbose | grep -c Limitations]====" >> ${basic_tests_5}
 ${prog} --help-verbose 2>&1 | grep -c Synopsis >> ${basic_tests_5} 2>&1
 
-echo "====[tsv-pretty --version | grep -c 'tsv-pretty (eBay/tsv-utils-dlang)']====" >> ${basic_tests_5}
-${prog} --version 2>&1 | grep -c 'tsv-pretty (eBay/tsv-utils-dlang)' >> ${basic_tests_5} 2>&1
+echo "====[tsv-pretty --version | grep -c 'tsv-pretty (eBay/tsv-utils)']====" >> ${basic_tests_5}
+${prog} --version 2>&1 | grep -c 'tsv-pretty (eBay/tsv-utils)' >> ${basic_tests_5} 2>&1
 
-echo "====[tsv-pretty -V | grep -c 'tsv-pretty (eBay/tsv-utils-dlang)']====" >> ${basic_tests_5}
-${prog} -V 2>&1 | grep -c 'tsv-pretty (eBay/tsv-utils-dlang)' >> ${basic_tests_5} 2>&1
+echo "====[tsv-pretty -V | grep -c 'tsv-pretty (eBay/tsv-utils)']====" >> ${basic_tests_5}
+${prog} -V 2>&1 | grep -c 'tsv-pretty (eBay/tsv-utils)' >> ${basic_tests_5} 2>&1
 
 echo "" >> ${basic_tests_5}
 echo "Standard input" >> ${basic_tests_5}

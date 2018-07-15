@@ -1290,7 +1290,7 @@ Help and Version printing 1
 1
 ====[tsv-join --help-verbose | grep -c Synopsis]====
 1
-====[tsv-join --version | grep -c 'tsv-join (eBay/tsv-utils-dlang)']====
+====[tsv-join --version | grep -c 'tsv-join (eBay/tsv-utils)']====
 1
-====[tsv-join -V | grep -c 'tsv-join (eBay/tsv-utils-dlang)']====
+====[tsv-join -V | grep -c 'tsv-join (eBay/tsv-utils)']====
 1
