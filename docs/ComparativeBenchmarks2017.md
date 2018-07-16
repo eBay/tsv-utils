@@ -201,7 +201,7 @@ $ xsv fmt -t '\t' TREE_GRM_ESTN_14mil.csv >> /dev/null
   * [GNU datamash](https://www.gnu.org/software/datamash/) version 1.1.1; written in C.
   * [csvtk](https://github.com/shenwei356/csvtk) version v0.5.0; written in Go.
   * [Miller](https://github.com/johnkerl/miller) (mlr) version 5.0.0; written in C.
-  * [eBay's TSV Utilities](https://github.com/eBay/tsv-utils-dlang) version v1.1.1 (this toolkit); written in D.
+  * [eBay's TSV Utilities](https://github.com/eBay/tsv-utils) version v1.1.1 (this toolkit); written in D.
   * [xsv](https://github.com/BurntSushi/xsv) version 0.10.3; written in Rust.
 * Compilers:
   * LDC 1.1 (D compiler, Phobos 2.071.2)

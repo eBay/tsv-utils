@@ -152,5 +152,5 @@ deploy:
   skip_cleanup: true
   on:
     tags: true
-    repo: eBay/tsv-utils-dlang
+    repo: eBay/tsv-utils
     condition: "$DEPLOY = 1"

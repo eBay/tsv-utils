@@ -42,7 +42,7 @@ For a more detailed introduction to PGO see [Profile-Guided Optimization with LD
 
 ## Building the TSV Utilities with LTO and PGO
 
-The pre-built binaries available from the [releases page](https://github.com/eBay/tsv-utils-dlang/releases) are compiled with LTO and PGO for both D libraries and the TSV Utilities code. This is not enabled by default when building from source code. The reason is simple: LTO is still an early stage technology. Testing on a wider variety of platforms is needed before making it the default.
+The pre-built binaries available from the [releases page](https://github.com/eBay/tsv-utils/releases) are compiled with LTO and PGO for both D libraries and the TSV Utilities code. This is not enabled by default when building from source code. The reason is simple: LTO is still an early stage technology. Testing on a wider variety of platforms is needed before making it the default.
 
 However, LTO and PGO builds can be enabled by setting makefile parameters. Testing with the built-in test suite should provide confidence in the resulting applications. The TSV Utilities makefile takes care of invoking both `ldc-build-runtime` and `ldc2` with the necessary parameters.
 
@@ -58,22 +58,22 @@ Linux builds have been tested on Ubuntu 14.04 and 16.04.
 Via git clone:
 
 ```
-$ git clone https://github.com/eBay/tsv-utils-dlang.git
-$ cd tsv-utils-dlang
+$ git clone https://github.com/eBay/tsv-utils.git
+$ cd tsv-utils
 ```
 
 Via DUB (replace `1.1.15` with the version retrieved):
 
 ```
-$ dub fetch tsv-utils-dlang --cache=local
-$ cd tsv-utils-dlang-1.1.15
+$ dub fetch tsv-utils --cache=local
+$ cd tsv-utils-1.1.15
 ```
 
-Via the source from the GitHub [releases page](https://github.com/eBay/tsv-utils-dlang/releases) (replace `1.1.15` with the latest version):
+Via the source from the GitHub [releases page](https://github.com/eBay/tsv-utils/releases) (replace `1.1.15` with the latest version):
 
 ```
-$ curl -L https://github.com/eBay/tsv-utils-dlang/archive/v1.1.15.tar.gz | tar xz
-$ cd tsv-utils-dlang-1.1.15/tsv-utils-dlang
+$ curl -L https://github.com/eBay/tsv-utils/archive/v1.1.15.tar.gz | tar xz
+$ cd tsv-utils-1.1.15/tsv-utils
 ```
 
 **Build with LTO enabled:**
