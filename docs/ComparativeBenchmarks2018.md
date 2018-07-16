@@ -125,7 +125,7 @@ GNU Awk, GNU cut and mawk are available on most platforms via standard package m
 * [GNU Datamash](https://www.gnu.org/software/datamash/) - Version 1.3. Written in C.
 * [xsv](https://github.com/BurntSushi/xsv) - Version 0.12.2. Written in Rust.
 * [csvtk](https://github.com/shenwei356/csvtk) - Version v0.14.0-dev. Written in Go.
-* [eBay's TSV Utilities](https://github.com/eBay/tsv-utils-dlang) - Version v1.1.19 (this toolkit). Written in D.
+* [eBay's TSV Utilities](https://github.com/eBay/tsv-utils) - Version v1.1.19 (this toolkit). Written in D.
 
 ### Data files
 

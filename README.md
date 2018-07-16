@@ -4,7 +4,7 @@ This is a set of command line utilities for manipulating large tabular data file
 
 The tools were originally developed in Perl and used for day-to-day work in a large scale data mining environment. One of the tools was re-written in D as an exercise exploring the language. Significant performance gains and agreeable programmer characteristics soon led to writing additional utilities in D. Information on the D programming language is available at [dlang.org](https://dlang.org/).
 
-File an [issue](https://github.com/eBay/tsv-utils-dlang/issues) if you have problems, questions or suggestions.
+File an [issue](https://github.com/eBay/tsv-utils/issues) if you have problems, questions or suggestions.
 
 **In this README:**
 * [Tools overview](#tools-overview)
@@ -23,12 +23,12 @@ File an [issue](https://github.com/eBay/tsv-utils-dlang/issues) if you have prob
 * [Experimenting with Link Time Optimization](docs/dlang-meetup-14dec2017.pdf). Dec 14, 2017. A presentation at the [Silicon Valley D Meetup](https://www.meetup.com/D-Lang-Silicon-Valley/) describing experiments using LTO based on eBay's TSV Utilities.
 * [Exploring D via Benchmarking of eBay's TSV Utilities](http://dconf.org/2018/talks/degenhardt.html). May 2, 2018. A presentation at [DConf 2018](http://dconf.org/2018/) describing benchmarking studies conducted using eBay's TSV Utilities (slides [here](docs/dconf2018.pdf)).
 
-[![Travis](https://img.shields.io/travis/eBay/tsv-utils-dlang.svg)](https://travis-ci.org/eBay/tsv-utils-dlang)
-[![Codecov](https://img.shields.io/codecov/c/github/eBay/tsv-utils-dlang.svg)](https://codecov.io/gh/eBay/tsv-utils-dlang)
-[![GitHub release](https://img.shields.io/github/release/eBay/tsv-utils-dlang.svg)](https://github.com/eBay/tsv-utils-dlang/releases)
-[![Github commits (since latest release)](https://img.shields.io/github/commits-since/eBay/tsv-utils-dlang/latest.svg)](https://github.com/eBay/tsv-utils-dlang/commits/master)
-[![GitHub last commit](https://img.shields.io/github/last-commit/eBay/tsv-utils-dlang.svg)](https://github.com/eBay/tsv-utils-dlang/commits/master)
-[![license](https://img.shields.io/github/license/eBay/tsv-utils-dlang.svg)](https://github.com/eBay/tsv-utils-dlang/blob/master/LICENSE.txt)
+[![Travis](https://img.shields.io/travis/eBay/tsv-utils.svg)](https://travis-ci.org/eBay/tsv-utils)
+[![Codecov](https://img.shields.io/codecov/c/github/eBay/tsv-utils.svg)](https://codecov.io/gh/eBay/tsv-utils)
+[![GitHub release](https://img.shields.io/github/release/eBay/tsv-utils.svg)](https://github.com/eBay/tsv-utils/releases)
+[![Github commits (since latest release)](https://img.shields.io/github/commits-since/eBay/tsv-utils/latest.svg)](https://github.com/eBay/tsv-utils/commits/master)
+[![GitHub last commit](https://img.shields.io/github/last-commit/eBay/tsv-utils.svg)](https://github.com/eBay/tsv-utils/commits/master)
+[![license](https://img.shields.io/github/license/eBay/tsv-utils.svg)](https://github.com/eBay/tsv-utils/blob/master/LICENSE.txt)
 
 ## Tools overview
 
@@ -226,7 +226,7 @@ There are several ways to obtain the tools: [prebuilt binaries](#prebuilt-binari
 
 ### Prebuilt binaries
 
-Prebuilt binaries are available for Linux and Mac, these can be found on the [Github releases](https://github.com/eBay/tsv-utils-dlang/releases) page. Download and unpack the tar.gz file. Executables are in the `bin` directory. Add the `bin` directory or individual tools to the `PATH` environment variable.
+Prebuilt binaries are available for Linux and Mac, these can be found on the [Github releases](https://github.com/eBay/tsv-utils/releases) page. Download and unpack the tar.gz file. Executables are in the `bin` directory. Add the `bin` directory or individual tools to the `PATH` environment variable.
 
 For some distributions, a package can directly be installed:
 
@@ -240,12 +240,12 @@ For some distributions, a package can directly be installed:
 
 Clone this repository, select a compiler, and run `make` from the top level directory:
 ```
-$ git clone https://github.com/eBay/tsv-utils-dlang.git
-$ cd tsv-utils-dlang
+$ git clone https://github.com/eBay/tsv-utils.git
+$ cd tsv-utils
 $ make         # For LDC: make DCOMPILER=ldc2
 ```
 
-Executables are written to `tsv-utils-dlang/bin`, place this directory or the executables in the PATH. The compiler defaults to DMD, this can be changed on the make command line (e.g. `make DCOMPILER=ldc2`). DMD is the reference compiler, but LDC produces faster executables. (For some tools LDC is quite a bit faster than DMD.)
+Executables are written to `tsv-utils/bin`, place this directory or the executables in the PATH. The compiler defaults to DMD, this can be changed on the make command line (e.g. `make DCOMPILER=ldc2`). DMD is the reference compiler, but LDC produces faster executables. (For some tools LDC is quite a bit faster than DMD.)
 
 The makefile supports other typical development tasks such as unit tests and code coverage reports. See [Building and makefile](docs/AboutTheCode.md#building-and-makefile) for more details.
 
@@ -255,12 +255,12 @@ For fastest performance, use LDC with Link Time Optimization enabled (LTO). See 
 
 If you are a D user you likely use DUB, the D package manager. DUB comes packaged with DMD starting with DMD 2.072. You can install and build using DUB as follows (replace `1.1.13` with the current version):
 ```
-$ dub fetch tsv-utils-dlang --cache=local
-$ cd tsv-utils-dlang-1.1.13/tsv-utils-dlang
+$ dub fetch tsv-utils --cache=local
+$ cd tsv-utils-1.2.0/tsv-utils
 $ dub run    # For LDC: dub run -- --compiler=ldc2
 ```
 
-The `dub run` command compiles all the tools. The executables are written to `tsv-utils-dlang/bin`. Add this directory or individual executables to the PATH.
+The `dub run` command compiles all the tools. The executables are written to `tsv-utils/bin`. Add this directory or individual executables to the PATH.
 
 See [Building and makefile](docs/AboutTheCode.md#building-and-makefile) for more information about the DUB setup.
 
