@@ -44,6 +44,7 @@ project_dir ?= $(realpath ..)
 common_srcdir = $(project_dir)/common/src
 project_bindir = $(project_dir)/bin
 buildtools_dir = $(project_dir)/buildtools
+diff_test_result_dirs = $(buildtools_dir)/diff-test-result-dirs
 ldc_runtime_thin_dir = $(project_dir)/ldc-build-runtime.thin
 ldc_runtime_full_dir = $(project_dir)/ldc-build-runtime.full
 objdir = obj

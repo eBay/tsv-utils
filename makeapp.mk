@@ -49,38 +49,38 @@ unittest:
 	@echo '---> Unit tests completed successfully.'
 
 .PHONY: test-debug
-test-debug: $(app_debug)
+test-debug: $(app_debug) buildtools
 	-@if [ -d $(testsdir)/latest_debug ]; then echo 'Deleting prior test files.';  rm $(testsdir)/latest_debug/*; fi
 	@if [ ! -d $(testsdir)/latest_debug ]; then mkdir $(testsdir)/latest_debug; fi
 	cd $(testsdir) && ./tests.sh $(app_debug) latest_debug
-	@if diff -q $(testsdir)/latest_debug $(testsdir)/gold ; \
+	@if $(diff_test_result_dirs) -q -d $(testsdir) latest_debug; \
 	then echo '---> $(app) command line tests passed.'; exit 0; \
 	else echo '---> $(app) command line tests failed.'; \
-	diff $(testsdir)/latest_debug $(testsdir)/gold | head -n 40; \
+	$(diff_test_result_dirs) -d $(testsdir) latest_debug; \
 	exit 1; \
 	fi
 
 .PHONY: test-release
-test-release: $(app_release)
+test-release: $(app_release) buildtools
 	-@if [ -d $(testsdir)/latest_release ]; then echo 'Deleting prior test files.';  rm $(testsdir)/latest_release/*; fi
 	@if [ ! -d $(testsdir)/latest_release ]; then mkdir $(testsdir)/latest_release; fi
 	cd $(testsdir) && ./tests.sh $(app_release) latest_release
-	@if diff -q $(testsdir)/latest_release $(testsdir)/gold ; \
+	@if $(diff_test_result_dirs) -q -d $(testsdir) latest_release; \
 	then echo '---> $(app) command line tests passed.'; exit 0; \
 	else echo '---> $(app) command line tests failed.'; \
-	diff $(testsdir)/latest_release $(testsdir)/gold | head -n 40; \
+	$(diff_test_result_dirs) -d $(testsdir) latest_release; \
 	exit 1; \
 	fi
 
 .PHONY: test-nobuild
-test-nobuild:
+test-nobuild: buildtools
 	-@if [ -d $(testsdir)/latest_release ]; then echo 'Deleting prior test files.';  rm $(testsdir)/latest_release/*; fi
 	@if [ ! -d $(testsdir)/latest_release ]; then mkdir $(testsdir)/latest_release; fi
 	cd $(testsdir) && ./tests.sh $(app_release) latest_release
-	@if diff -q $(testsdir)/latest_release $(testsdir)/gold ; \
+	@if $(diff_test_result_dirs) -q -d $(testsdir) latest_release; \
 	then echo '---> $(app) command line tests passed.'; exit 0; \
 	else echo '---> $(app) command line tests failed.'; \
-	diff $(testsdir)/latest_release $(testsdir)/gold | head -n 40; \
+	$(diff_test_result_dirs) -d $(testsdir) latest_release; \
 	exit 1; \
 	fi
 
@@ -98,7 +98,7 @@ unittest-codecov:
 	@echo '---> Unit tests completed successfully (code coverage on).'
 
 .PHONY: apptest-codecov
-apptest-codecov: $(app_codecov)
+apptest-codecov: $(app_codecov) buildtools
 # Notes:
 # * The app code coverage tests are setup to aggregate with prior files. Files from
 #   prior runs need to be deleted first. That's what the first 'find' does.
@@ -109,10 +109,10 @@ apptest-codecov: $(app_codecov)
 	find $(testsdir) -maxdepth 1 -name '*.lst' -exec rm {} \;
 	cd $(testsdir) && ./tests.sh $(app_codecov) latest_debug
 	find $(testsdir) -maxdepth 1 -name '*.lst' -exec sh -c 'tail -n 1 -- $$0 | grep -q "has no code"' {} \; -exec rm {} \;
-	@if diff -q $(testsdir)/latest_debug $(testsdir)/gold ; \
+	@if $(diff_test_result_dirs) -q -d $(testsdir) latest_debug; \
 	then echo '---> $(app) command line tests passed (code coverage on).'; exit 0; \
 	else echo '---> $(app) command line tests failed (code coverage on).'; \
-	diff $(testsdir)/latest_debug $(testsdir)/gold | head -n 40; \
+	$(diff_test_result_dirs) -d $(testsdir) latest_debug; \
 	exit 1; \
 	fi
 
