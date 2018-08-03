@@ -137,5 +137,5 @@ $(ldc_profdata_file):
 
 buildtools:
 	@echo ''
-	@echo 'make -C $(buildtools_dir)'
-	@$(MAKE) -C $(buildtools_dir)
+	@echo 'make -C $(buildtools_dir) DCOMPILER=$(DCOMPILER)'
+	@$(MAKE) -C $(buildtools_dir) DCOMPILER=$(DCOMPILER)
