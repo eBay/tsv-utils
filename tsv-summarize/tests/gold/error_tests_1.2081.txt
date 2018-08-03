@@ -56,7 +56,7 @@ Error [tsv-summarize]: Not enough fields in line. File: input_1field_a.tsv, Line
 [tsv-summarize] Error processing command line arguments: [--g|group-by] Field numbers must be greater than zero: '0'
 
 ====[tsv-summarize --header --max 1 input_1field_a.tsv]====
-Error [tsv-summarize]: Could not process line or field: no digits seen for input "small".
+Error [tsv-summarize]: Could not process line or field: no digits seen
   File: input_1field_a.tsv Line: 3
 
 ====[tsv-summarize -d abc --count input_5field_a.tsv]====

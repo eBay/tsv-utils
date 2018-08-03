@@ -84,7 +84,7 @@ before_install:
 script:
 - if [[ "$DUBTEST" == "1" ]]; then
     dub run -- --compiler=$DC
-    && make test-nobuild
+    && make test-nobuild DCOMPILER=$DC
     && dub clean
     && make clean;
   fi
@@ -97,7 +97,7 @@ script:
     && make clean;
   fi
 - if [[ "$CODECOV" == "1" ]]; then
-    make test-codecov;
+    make test-codecov DCOMPILER=$DC;
   fi
 - if [[ ! -z "$APPLTO" ]]; then
     make test DCOMPILER=$DC LDC_LTO=$APPLTO
@@ -124,7 +124,7 @@ script:
 - if [[ "$DOCKERSPECIAL" == "1" ]]; then
     docker run --rm -ti -v $(pwd):/src dlanguage/ldc:1.7.0 make test DCOMPILER=ldc2 LDC_BUILD_RUNTIME=1 LDC_PGO=2 DFLAGS=-static
     && sudo chown -R $UID:$GID $(pwd)
-    && make test-nobuild
+    && make test-nobuild DCOMPILER=ldc2
     && make clean;
   fi
 after_success:

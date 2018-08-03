@@ -11,12 +11,12 @@ Error [tsv-sample]: Cannot open file `no_such_file.tsv' in mode `rb' (No such fi
 [tsv-sample] Error processing command line arguments: Invalid UTF-8 sequence (at index 1)
 
 ====[tsv-sample -H -w 2 input3x25.tsv]====
-Error [tsv-sample]: Could not process line: no digits seen for input "Белые ночи".
+Error [tsv-sample]: Could not process line: no digits seen
   File: input3x25.tsv Line: 2
 line	title	weight
 
 ====[tsv-sample -w 3 input3x25.tsv]====
-Error [tsv-sample]: Could not process line: no digits seen for input "weight".
+Error [tsv-sample]: Could not process line: no digits seen
   File: input3x25.tsv Line: 1
   Is this a header line? Use --H|header to skip.
 
@@ -55,7 +55,7 @@ Error [tsv-sample]: Windows/DOS line ending found. Convert file to Unix newlines
 [tsv-sample] Error processing command line arguments: Invalid --r|rate option: -0.5. Must satisfy 0.0 < rate <= 1.0.
 
 ====[tsv-sample -r -v 10 -k 1 input4x50.tsv input4x15.tsv]====
-[tsv-sample] Error processing command line arguments: no digits seen for input "-v".
+[tsv-sample] Error processing command line arguments: no digits seen
 
 ====[tsv-sample -r 0.5 -v -10 -k 1 input4x50.tsv input4x15.tsv]====
 [tsv-sample] Error processing command line arguments: Unexpected '-' when converting from type string to type uint

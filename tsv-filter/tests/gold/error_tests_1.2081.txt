@@ -171,12 +171,12 @@ F1	F2	F3	F4
 [tsv-filter] Error processing command line arguments: Invalid values in option: '--ff-absdiff-le :2:0.5'. Expected: '--ff-absdiff-le <field1>:<field2>:<num>' where fields are 1-upped integers.
 
 ====[tsv-filter --eq 2:1 input1.tsv]====
-Error [tsv-filter]: Could not process line or field: no digits seen for input "F2".
+Error [tsv-filter]: Could not process line or field: no digits seen
   File: input1.tsv Line: 1
   Is this a header line? Use --header to skip.
 
 ====[cat input_3x2.tsv | tsv-filter --ge 2:23]====
-Error [tsv-filter]: Could not process line or field: no digits seen for input "f2".
+Error [tsv-filter]: Could not process line or field: no digits seen
   File: Standard Input Line: 1
   Is this a header line? Use --header to skip.
 
