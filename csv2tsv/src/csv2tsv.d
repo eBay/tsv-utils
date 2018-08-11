@@ -267,7 +267,7 @@ Throws: Exception on finding inconsistent CSV. Exception text includes the filen
 void csv2tsv(InputRange, OutputRange)
     (ref InputRange inputStream, ref OutputRange outputStream,
      string filename = "(none)", size_t currFileLineNumber = 0,
-     char csvQuote = '"', char csvDelim = ',', char tsvDelim = '\t',
+     const char csvQuote = '"', const char csvDelim = ',', const char tsvDelim = '\t',
      string tsvDelimReplacement = " ",
      NullableSizeT maxRecords=NullableSizeT.init,
         )
@@ -295,52 +295,54 @@ InputLoop: while (!inputStream.empty)
             nextChar = '\n';
         }
 
-        final switch (currState)
+    OuterSwitch: final switch (currState)
         {
         case State.FieldEnd:
-            /* Start of input, or after consuming a field terminator. */
+            /* Start of input or after consuming a field terminator. */
             ++fieldNum;
+
+            /* Note: Can't use a switch here do the 'goto case' to the OuterSwitch.  */
             if (nextChar == csvQuote)
             {
                 currState = State.QuotedField;
-                break;
+                break OuterSwitch;
             }
             else
             {
+                /* Processing state change only. Don't consume the character. */
                 currState = State.NonQuotedField;
                 goto case State.NonQuotedField;
             }
 
         case State.NonQuotedField:
-            if (nextChar == csvDelim)
+            switch (nextChar)
             {
+            default:
+                put(outputStream, nextChar);
+                break OuterSwitch;
+            case csvDelim:
                 put(outputStream, tsvDelim);
                 currState = State.FieldEnd;
-            }
-            else if (nextChar == tsvDelim)
-            {
+                break OuterSwitch;
+            case tsvDelim:
                 put(outputStream, tsvDelimReplacement);
-            }
-            else if (nextChar == '\n')
-            {
+                break OuterSwitch;
+            case '\n':
                 put(outputStream, '\n');
                 ++recordNum;
                 fieldNum = 0;
                 currState = State.FieldEnd;
-                if (!maxRecords.isNull && recordNum > maxRecords)
-                {
-                    break InputLoop;
-                }
+                if (!maxRecords.isNull && recordNum > maxRecords) break InputLoop;
+                else break OuterSwitch;
             }
-            else
-            {
-                put(outputStream, nextChar);
-            }
-            break;
 
         case State.QuotedField:
-            if (nextChar == csvQuote)
+            switch (nextChar)
             {
+            default:
+                put(outputStream, nextChar);
+                break OuterSwitch;
+            case csvQuote:
                 /* Quote in a quoted field. Need to look at the next character.*/
                 if (!inputStream.empty)
                 {
@@ -354,53 +356,42 @@ InputLoop: while (!inputStream.empty)
                      */
                     currState = State.FieldEnd;
                 }
-            }
-            else if (nextChar ==  '\n')
-            {
+                break OuterSwitch;
+            case '\n':
                 /* Newline in a quoted field. */
                 put(outputStream, tsvDelimReplacement);
-            }
-            else if (nextChar == tsvDelim)
-            {
+                break OuterSwitch;
+            case tsvDelim:
                 put(outputStream, tsvDelimReplacement);
+                break OuterSwitch;
             }
-            else
-            {
-                put(outputStream, nextChar);
-            }
-            break;
 
         case State.QuoteInQuotedField:
             /* Just processed a quote in a quoted field. */
-            if (nextChar == csvQuote)
+            switch (nextChar)
             {
+            case csvQuote:
                 put(outputStream, csvQuote);
                 currState = State.QuotedField;
-            }
-            else if (nextChar == csvDelim)
-            {
+                break OuterSwitch;
+            case csvDelim:
                 put(outputStream, tsvDelim);
                 currState = State.FieldEnd;
-            }
-            else if (nextChar == '\n')
-            {
+                break OuterSwitch;
+            case '\n':
                 put(outputStream, '\n');
                 ++recordNum;
                 fieldNum = 0;
                 currState = State.FieldEnd;
-                if (!maxRecords.isNull && recordNum > maxRecords)
-                {
-                    break InputLoop;
-                }
-            }
-            else
-            {
+
+                if (!maxRecords.isNull && recordNum > maxRecords) break InputLoop;
+                else break OuterSwitch;
+            default:
                 throw new Exception(
                     format("Invalid CSV. Improperly terminated quoted field. File: %s, Line: %d",
                            (filename == "-") ? "Standard Input" : filename,
                            currFileLineNumber + recordNum));
             }
-            break;
         }
     }
 
