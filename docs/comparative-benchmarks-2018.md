@@ -6,7 +6,7 @@ _Visit the [TSV Utilities main page](../README.md)_
 * [Overview](#overview)
 * [Benchmark Tests](#benchmark-tests)
 * [TSV Utilities performance improvements post the March 2017 study](#tsv-utilities-performance-improvements-post-the-march-2017-study)
-* [Comparative benchmark results](#comparative-benchmark-results)
+* [Benchmark results](#benchmark-results)
 * [Test details](#test-details)
 
 ## Overview
@@ -50,7 +50,7 @@ There were three main sources of performance improvements between the 2017 and 2
 * Performance improvements in D, the standard libraries, and compilers.
 * The use of output buffering in the tools. This had the largest impact on the narrow file column selection test.
 
-## Comparative benchmark results
+## Benchmark results
 
 Updates to the benchmarks from the 2017 study are provided below. The top four tools in each benchmark are shown.
 
