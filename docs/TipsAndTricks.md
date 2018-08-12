@@ -99,7 +99,7 @@ Remember to use the correct `sort` program name if an updated version has been i
 
 ## MacOS: Install GNU versions of Unix command line tools
 
-If you're using a Mac, one of best things you can do is install GNU versions of the typical Unix text processing tools. `cat`, `cut`, `grep`, `awk`, etc. The versions shipped with MacOS are older and quite slow compared to the newer GNU versions, which are typically more than five times faster. The [2017 Comparative Benchmarks](ComparativeBenchmarks2017.md) includes several benchmarks showing these deltas.
+If you're using a Mac, one of best things you can do is install GNU versions of the typical Unix text processing tools. `cat`, `cut`, `grep`, `awk`, etc. The versions shipped with MacOS are older and quite slow compared to the newer GNU versions, which are typically more than five times faster. The [2017 Comparative Benchmarks](comparative-benchmarks-2017.md) includes several benchmarks showing these deltas.
 
 The [Homebrew](https://brew.sh/) and [MacPorts](https://www.macports.org/) package managers are good ways to install these tools and many others. Useful packages for data processing include:
 * `coreutils` - The key Unix command line tools, including `cp`, `cat`, `cut`, `head`, `tail`, `wc`, `sort`, `uniq`, `shuf` and quite a few others.

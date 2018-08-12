@@ -108,7 +108,7 @@ The tables below show fastest times for each benchmark. One table each for MacOS
 
 ## Test details
 
-Tests were run on April 14, 2018. The latest released version of each tool was used. Details needed to reproduce the tests are given below. The [March 2017 study](ComparativeBenchmarks2017.md) has a more detailed description of the individual tests, however, everything need to reproduce the tests can be found here.
+Tests were run on April 14, 2018. The latest released version of each tool was used. Details needed to reproduce the tests are given below. The [March 2017 study](comparative-benchmarks-2017.md) has a more detailed description of the individual tests, however, everything need to reproduce the tests can be found here.
 
 ### Machines
 
