@@ -15,8 +15,8 @@ This larger goal was also the motivation for using multiple benchmarks and a var
 
 The study was conducted in March 2017. An update done in April 2018 using the fastest tools from the initial study.
 
-* [March 2017 Comparative Benchmark Study](ComparativeBenchmarks2017.md)
-* [April 2018 Comparative Benchmark Update](ComparativeBenchmarks2018.md)
+* [March 2017 Comparative Benchmark Study](comparative-benchmarks-2017.md)
+* [April 2018 Comparative Benchmark Update](comparative-benchmarks-2018.md)
 
 The D programs performed extremely well, exceeding the author's expectations. Six benchmarks were used in the 2017 study, the D tools were the fastest on each, often by significant margins. This is impressive given that very little low-level programming was done. In the 2018 update the TSV Utilities were first or second on all benchmarks. The TSV Utilities were faster than in 2017, but several of the other tools had gotten faster as well.
 

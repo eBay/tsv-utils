@@ -1,6 +1,7 @@
 /**
-Command line tool implementing weighted reservoir sampling on delimited data files.
-Weights are read from a field in the file.
+Command line tool for randomizing or sampling lines from input streams. Several
+sampling methods are available, including simple random sampling, weighted random
+sampling, and distinct sampling.
 
 Copyright (c) 2017-2018, eBay Software Foundation
 Initially written by Jon Degenhardt

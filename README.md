@@ -4,17 +4,20 @@ This is a set of command line utilities for manipulating large tabular data file
 
 The tools were originally developed in Perl and used for day-to-day work in a large scale data mining environment. One of the tools was re-written in D as an exercise exploring the language. Significant performance gains and agreeable programmer characteristics soon led to writing additional utilities in D. Information on the D programming language is available at [dlang.org](https://dlang.org/).
 
+These tools are especially useful when working with large data sets, as they generally run faster than other tools providing similar functionality, often by significant margins.
+
 File an [issue](https://github.com/eBay/tsv-utils/issues) if you have problems, questions or suggestions.
 
 **In this README:**
 * [Tools overview](#tools-overview)
-* [Installation](#installation)
+* [Obtaining and installation](#obtaining-and-installation)
 
 **Additional documents:**
 * [Tool reference](docs/ToolReference.md)
 * [Tips and tricks](docs/TipsAndTricks.md)
+* [Performance Studies](docs/Performance.md) (quick access: [2018 Comparative Benchmarks](docs/comparative-benchmarks-2018.md))
+* [Comparing TSV and CSV formats](docs/comparing-tsv-and-csv.md)
 * [Building with Link Time Optimization (LTO) and Profile Guided Optimization (PGO)](docs/BuildingWithLTO.md)
-* [Performance Studies](docs/Performance.md) (quick access: [2018 Comparative Benchmarks](docs/ComparativeBenchmarks2018.md))
 * [About the code](docs/AboutTheCode.md)
 * [Other toolkits](docs/OtherToolkits.md)
 
@@ -34,9 +37,9 @@ File an [issue](https://github.com/eBay/tsv-utils/issues) if you have problems, 
 
 These tools perform data manipulation and statistical calculations on tab delimited data. They are intended for large files. Larger than ideal for loading entirely in memory in an application like R, but not so big as to necessitate moving to Hadoop or similar distributed compute environments. The features supported are useful both for standalone analysis and for preparing data for use in R, Pandas, and similar toolkits.
 
-The tools work like traditional Unix command line utilities such as `cut`, `sort`,  and `grep`, and are intended to complement these tools. Each tool is a standalone executable. They follow common Unix conventions for pipeline programs. Data is read from files or standard input, results are written to standard output. The field separator defaults to TAB, but any character can be used. Input and output is UTF-8, and all operations are Unicode ready, including regular expression match (`tsv-filter`). Documentation is available for each tool by invoking it with the `--help` option. TSV format is similar to CSV, see [Comparing TSV and CSV formats](docs/TipsAndTricks.md#comparing-tsv-and-csv-formats) for the differences.
+The tools work like traditional Unix command line utilities such as `cut`, `sort`,  and `grep`, and are intended to complement these tools. Each tool is a standalone executable. They follow common Unix conventions for pipeline programs. Data is read from files or standard input, results are written to standard output. The field separator defaults to TAB, but any character can be used. Input and output is UTF-8, and all operations are Unicode ready, including regular expression match (`tsv-filter`). Documentation is available for each tool by invoking it with the `--help` option. TSV format is similar to CSV, see [Comparing TSV and CSV formats](docs/comparing-tsv-and-csv.md) for the differences.
 
-Speed matters when processing large files, these tools are the fastest the author has found. See the [2018 Comparative Benchmarks Update](docs/ComparativeBenchmarks2018.md) for comparisons with similar tools.
+Speed matters when processing large files, these tools are the fastest the author has found. See the [2018 Comparative Benchmarks Update](docs/comparative-benchmarks-2018.md) for comparisons with similar tools.
 
 The rest of this section contains a short description of each tool. There is more detail in the [tool reference](docs/ToolReference.md).
 
@@ -106,7 +109,7 @@ See the [tsv-summarize reference](docs/ToolReference.md#tsv-summarize-reference)
 
 ### tsv-sample
 
-`tsv-sample` randomizes or sample lines from input data. Several sampling methods are available, including simple random sampling, weighted random sampling, and distinct sampling.
+`tsv-sample` randomizes or sample lines from input data. Several sampling methods are available, including simple random sampling, weighted random sampling, and distinct sampling. Simple random sampling works on any line oriented data format, weighted random sampling and distinct sampling are specific to TSV format.
 
 Simple random sampling operates in the customary fashion, randomly selecting lines with equal probability. When reordering a file, lines are randomly selected from the entire file and output in the order selected. In streaming mode, a subset of input lines are selected and output. This occurs in the order of the input. Streaming mode operates on arbitrary large inputs.
 
@@ -220,13 +223,19 @@ Multiple files can be provided, only the header from the first is retained. The 
 
 ---
 
-## Installation
+## Obtaining and installation
 
 There are several ways to obtain the tools: [prebuilt binaries](#prebuilt-binaries); [building from source code](#build-from-source-files); and [installing using the DUB package manager](#install-using-dub). The tools have been tested on Linux and Mac OS X. They have not been tested on Windows, but there are no obvious impediments to running on Windows as well.
 
 ### Prebuilt binaries
 
-Prebuilt binaries are available for Linux and Mac, these can be found on the [Github releases](https://github.com/eBay/tsv-utils/releases) page. Download and unpack the tar.gz file. Executables are in the `bin` directory. Add the `bin` directory or individual tools to the `PATH` environment variable.
+Prebuilt binaries are available for Linux and Mac, these can be found on the [Github releases](https://github.com/eBay/tsv-utils/releases) page. Download and unpack the tar.gz file. Executables are in the `bin` directory. Add the `bin` directory or individual tools to the `PATH` environment variable. As an example, the 1.2.1 releases for Linux and MacOS can be downloaded and unpacked with these commands:
+```
+$ curl -L https://github.com/eBay/tsv-utils/releases/download/v1.2.1/tsv-utils-v1.2.1_linux-x86_64_ldc2.tar.gz | tar xz
+$ curl -L https://github.com/eBay/tsv-utils/releases/download/v1.2.1/tsv-utils-v1.2.1_osx-x86_64_ldc2.tar.gz | tar xz
+```
+
+See the [Github releases](https://github.com/eBay/tsv-utils/releases) page for the latest release.
 
 For some distributions, a package can directly be installed:
 
