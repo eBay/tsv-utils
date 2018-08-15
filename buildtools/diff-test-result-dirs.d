@@ -82,10 +82,10 @@ This tool runs diff comparisons of test result files. The exit status gives the 
 status. Zero indicates success (no differences), one indicates failure (differences).
 
 This tool was developed for TSV Utilities command line tests. Command line tests work
-by running a tool (executable) against a set of command line test inputs. Results are
-written to files and compared to a "gold" set of correct results. Tests generate one
-or more output files; all written to a single directory. The resulting comparison is
-a "test" directory vs a "gold" directory.
+by running a tool against a set of command line test inputs. Results are written to
+files and compared to a "gold" set of correct results. Tests generate one or more
+output files; all written to a single directory. The resulting comparison is a "test"
+directory vs a "gold" directory.
 
 A directory level 'diff' is sufficient in many cases. This is the default behavior of
 this tool. In some cases the corrent results depend on the compiler version. The main
