@@ -15,4 +15,4 @@ Another useful benefit of the `csv2tsv` converter is that it normalizes newlines
 
 CSV files come in different formats. See the [csv2tsv reference](../docs/ToolReference.md#csv2tsv-reference) for details of how this tool operates and the format variations handled.
 
-See [Comparing TSV and CSV formats](../docs/TipsAndTricks.md#comparing-tsv-and-csv-formats) for more information on CSV escapes and other differences between CSV and TSV formats.
+See [Comparing TSV and CSV formats](../docs/comparing-tsv-and-csv.md) for more information on CSV escapes and other differences between CSV and TSV formats.
