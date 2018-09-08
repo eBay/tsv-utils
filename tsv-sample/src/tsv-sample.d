@@ -42,7 +42,11 @@ else
             import tsvutil : BufferedOutputRange;
             auto bufferedOutput = BufferedOutputRange!(typeof(stdout))(stdout);
 
-            if (cmdopt.useStreamSampling)
+            if (cmdopt.genRandomInorder)
+            {
+                generateRandomWeightsInorder(cmdopt, bufferedOutput);
+            }
+            else if (cmdopt.useStreamSampling)
             {
                 streamSampling(cmdopt, bufferedOutput);
             }
@@ -71,20 +75,22 @@ else
 auto helpText = q"EOS
 Synopsis: tsv-sample [options] [file...]
 
-Samples or randomizes input lines. There are several modes of operation:
-* Randomization (Default): Input lines are output in random order.
-* Stream sampling (--r|rate): Input lines are sampled based on a sampling
-  rate. The order of the input is unchanged.
-* Distinct sampling (--k|key-fields, --r|rate): Sampling is based on the
-  values in the key field. A portion of the keys are chosen based on the
-  sampling rate (a distinct set). All lines with one of the selected keys
-  are output. Input order is unchanged.
+Sample input lines or randomize their order. Several modes of operation
+are available:
+* Randomizing line order (the default): All input lines are output in a
+  random order.
+* Stream sampling (--r|rate): A random subset of lines is output based on
+  a sampling rate. The order of the lines is unchanged.
+* Distinct sampling (--k|key-fields, --r|rate): Input lines are sampled
+  based on the values in the key field. A subset of the keys are chosen
+  based on the sampling rate (a 'distinct' set of keys). All lines with
+  one of the selected keys are output. Line order is not changed.
 * Weighted sampling (--w|weight-field): Input lines are selected using
-  weighted random sampling, with the weight taken from a field. Input
-  lines are output in the order selected, reordering the lines.
+  weighted random sampling, with the weight taken from a field. Lines
+  are output in the weighted sample selection order, reordering the lines.
 
-The '--n|num' option limits the sample sized produced. It speeds up the
-randomization and weighted sampling cases significantly.
+The '--n|num' option limits the sample sized produced. It speeds up line
+order randomization and weighted sampling significantly.
 
 Use '--help-verbose' for detailed information.
 
@@ -94,42 +100,57 @@ EOS";
 auto helpTextVerbose = q"EOS
 Synopsis: tsv-sample [options] [file...]
 
-Samples or randomizes input lines. There are several modes of operation:
-* Randomization (Default): Input lines are output in random order.
-* Stream sampling (--r|rate): Input lines are sampled based on a sampling
-  rate. The order of the input is unchanged.
-* Distinct sampling (--k|key-fields, --r|rate): Sampling is based on the
-  values in the key field. A portion of the keys are chosen based on the
-  sampling rate (a distinct set). All lines with one of the selected keys
-  are output. Input order is unchanged.
+Sample input lines or randomize their order. Several modes of operation
+are available:
+* Randomizing line order (the default): All input lines are output in a
+  random order.
+* Stream sampling (--r|rate): A random subset of lines is output based on
+  a sampling rate. The order of the lines is unchanged.
+* Distinct sampling (--k|key-fields, --r|rate): Input lines are sampled
+  based on the values in the key field. A subset of the keys are chosen
+  based on the sampling rate (a 'distinct' set of keys). All lines with
+  one of the selected keys are output. Line order is not changed.
 * Weighted sampling (--w|weight-field): Input lines are selected using
-  weighted random sampling, with the weight taken from a field. Input
-  lines are output in the order selected, reordering the lines. See
-  'Weighted sampling' below for info on field weights.
+  weighted random sampling, with the weight taken from a field. Lines
+  are output in the weighted sample selection order, reordering the lines.
 
 Sample size: The '--n|num' option limits the sample sized produced. This
-speeds up randomization and weighted sampling significantly (details below).
+speeds up line order randomization and weighted sampling significantly
+(details below).
 
-Controlling randomization: Each run produces a different randomization.
-Using '--s|static-seed' changes this so multiple runs produce the same
-randomization. This works by using the same random seed each run. The
-random seed can be specified using '--v|seed-value'. This takes a
-non-zero, 32-bit positive integer. (A zero value is a no-op and ignored.)
+Controlling the random seed: By default, each run produces a different
+randomization or sampling. Using '--s|static-seed' changes this so
+multiple runs produce the same results. This works by using the same
+random seed each run. The random seed can be specified using
+'--v|seed-value'. This takes a non-zero, 32-bit positive integer. (A zero
+value is a no-op and ignored.)
 
-Generating random weights: The random weight assigned to each line can
-output using the '--p|print-random' option. This can be used with
-'--rate 1' to assign a random weight to each line. The random weight
-is prepended line as field one (separated by TAB or --d|delimiter char).
-Weights are in the interval [0,1]. The open/closed aspects of the
-interval (including/excluding 0.0 and 1.0) are subject to change and
-should not be relied on.
+Generating random weights: These algorithms work by generating a random
+weight for each line. These values can be output using the
+'--p|print-random' option. The random weight is prepended to the line
+separated by TAB or the --d|delimiter char. The '--q|gen-random-inorder'
+option takes this one step further, generating random weights for all
+input lines without changing the input order. There is no sampling or
+line order randomization when this option is used, only generation of
+weights. Weights are in the interval [0,1]. The open/closed aspects of
+the interval (including/excluding 0.0 and 1.0) are subject to change and
+should not be relied on. Note that when using weighted random sampling
+the values form a partial ordering, not a probability.
 
-Reservoir sampling: The randomization and weighted sampling cases are
+Reservoir sampling: Input line randomization and weighted sampling are
 implemented using reservoir sampling. This means all lines output must be
 held in memory. Memory needed for large input streams can reduced
 significantly using a sample size. Both 'tsv-sample -n 1000' and
 'tsv-sample | head -n 1000' produce the same results, but the former is
 quite a bit faster.
+
+Alternative to reservoir sampling for very large result sets: Reservoir
+sampling works fine most of the time, but becomes problematic when the
+result set is so large it won't fit in available memory. An alternative
+is to use the '--q|gen-random-inorder' option to generate the random
+values for each line, then use a 'sort' program to sort by the random
+values. This works because most sort programs use both RAM and disk to
+process large data sets.
 
 Weighted sampling: Weighted random sampling is done using an algorithm
 described by Efraimidis and Spirakis. Weights should be positive values
@@ -147,6 +168,8 @@ info on the sampling approach see:
 Options:
 EOS";
 
+/** Container for command line options.
+ */
 struct TsvSampleOptions
 {
     string programName;
@@ -158,6 +181,7 @@ struct TsvSampleOptions
     size_t[] keyFields;               // --k|key-fields - Used with sampling rate
     bool hasHeader = false;           // --H|header
     bool printRandom = false;         // --p|print-random
+    bool genRandomInorder = false;    // --q|gen-random-inorder
     bool staticSeed = false;          // --s|static-seed
     uint seedValueOptionArg = 0;      // --v|seed-value
     char delim = '\t';                // --d|delimiter
@@ -186,14 +210,15 @@ struct TsvSampleOptions
                 std.getopt.config.caseSensitive,
                 "H|header",        "     Treat the first line of each file as a header.", &hasHeader,
                 std.getopt.config.caseInsensitive,
-                "r|rate",          "NUM  Sampling rating (0.0 < NUM <= 1.0). This sampling mode outputs a random fraction of lines, in the input order.", &sampleRate,
                 "n|num",           "NUM  Number of lines to output. All lines are output if not provided or zero.", &sampleSize,
-                "w|weight-field",         "NUM  Field containing weights. All lines get equal weight if not provided or zero.", &weightField,
+                "r|rate",          "NUM  Sampling rating (0.0 < NUM <= 1.0). This sampling mode outputs a random subset of lines. Line order is not changed.", &sampleRate,
 
                 "k|key-fields",    "<field-list>  Fields to use as key for distinct sampling. Use with --r|rate.",
                 keyFields.makeFieldListOptionHandler!(size_t, Yes.convertToZeroBasedIndex),
+                "w|weight-field",         "NUM  Field containing weights. All lines get equal weight if not provided or zero.", &weightField,
 
-                "p|print-random",  "     Output the random values that were assigned.", &printRandom,
+                "p|print-random",  "     Include the assigned random value (prepended) when writing output lines.", &printRandom,
+                "q|gen-random-inorder", "     Output all lines with assigned random values prepended, no changes to the order of input.", &genRandomInorder,
                 "s|static-seed",   "     Use the same random seed every run.", &staticSeed,
 
                 std.getopt.config.caseSensitive,
@@ -231,9 +256,10 @@ struct TsvSampleOptions
                 weightField--;    // Switch to zero-based indexes.
             }
 
-            if (keyFields.length > 0 && sampleRate.isNaN)
+            if (keyFields.length > 0)
             {
-                throw new Exception("--r|rate is required when using --k|key-fields.");
+                if (sampleRate.isNaN) throw new Exception("--r|rate is required when using --k|key-fields.");
+                if (genRandomInorder) throw new Exception("--q|gen-random-inorder and --k|key-fields cannot be used together.");
             }
 
             /* Sample rate (--r|rate) is used for both stream sampling and distinct sampling. */
@@ -247,6 +273,7 @@ struct TsvSampleOptions
                 }
 
                 if (hasWeightField) throw new Exception("--w|weight-field and --r|rate cannot be used together.");
+                if (genRandomInorder) throw new Exception("--q|gen-random-inorder and --r|rate cannot be used together.");
 
                 if (keyFields.length > 0) useDistinctSampling = true;
                 else useStreamSampling = true;
@@ -271,13 +298,75 @@ struct TsvSampleOptions
     }
 }
 
-/* streamSampling does simple bernoulli sampling on the input stream. Each input line
- * is a assigned a random value and output if less than the sampling rate.
+/** generateRandomWeights produces randomized weights for each line in the input stream. Wieghts
+ * for both uniform sampling and weighted sampling are supported.
+ */
+void generateRandomWeightsInorder(OutputRange)(TsvSampleOptions cmdopt, OutputRange outputStream)
+    if (isOutputRange!(OutputRange, char))
+{
+    import std.format : format;
+    import std.random : Random, uniform01;
+    import tsvutil : throwIfWindowsNewlineOnUnix;
+
+    auto randomGenerator = Random(cmdopt.seed);
+
+    /* Process each line. */
+    bool headerWritten = false;
+    size_t numLinesWritten = 0;
+    foreach (filename; cmdopt.files)
+    {
+        auto inputStream = (filename == "-") ? stdin : filename.File();
+        foreach (fileLineNum, line; inputStream.byLine(KeepTerminator.no).enumerate(1))
+        {
+            if (fileLineNum == 1) throwIfWindowsNewlineOnUnix(line, filename, fileLineNum);
+            if (fileLineNum == 1 && cmdopt.hasHeader)
+            {
+                if (!headerWritten)
+                {
+                    outputStream.put("random_weight");
+                    outputStream.put(cmdopt.delim);
+                    outputStream.put(line);
+                    outputStream.put("\n");
+                    headerWritten = true;
+                }
+            }
+            else
+            {
+                double lineWeight =
+                    cmdopt.hasWeightField
+                    ? getFieldValue!double(line, cmdopt.weightField, cmdopt.delim, filename, fileLineNum)
+                    : 1.0;
+                double lineScore =
+                    (lineWeight > 0.0)
+                    ? uniform01(randomGenerator) ^^ (1.0 / lineWeight)
+                    : 0.0;
+
+                outputStream.put(format("%.17g", lineScore));
+                outputStream.put(cmdopt.delim);
+                outputStream.put(line);
+                outputStream.put("\n");
+
+                if (cmdopt.sampleSize != 0)
+                {
+                    ++numLinesWritten;
+                    if (numLinesWritten == cmdopt.sampleSize) return;
+                }
+            }
+        }
+    }
+}
+
+/** streamSampling does simple bernoulli sampling on the input stream.
  *
- * Note: Performance tests show that skip sampling is faster when the sampling rate
- * is approximately 4-5% or less. An optimization would be to have separate function
- * to use when the sampling rate is small and the random weights are not being added
- * to each line.
+ * Each input line is a assigned a random value and output if less than the sampling
+ * rate.
+ *
+ * Design note: Performance tests show that skip sampling is faster when the sampling
+ * rate is approximately 4-5% or less. A performance optimization would be to create
+ * a separate function for cases when the sampling rate is small and the random
+ * weights are not being output with each line. A disadvantage would be that the
+ * random weights assigned to each element would change based on the sampling.
+ * Printed weights would no longer be consistent run-to-run.
  */
 void streamSampling(OutputRange)(TsvSampleOptions cmdopt, OutputRange outputStream)
     if (isOutputRange!(OutputRange, char))
@@ -335,9 +424,11 @@ void streamSampling(OutputRange)(TsvSampleOptions cmdopt, OutputRange outputStre
     }
 }
 
-/* distinctSampling samples a portion of the unique values from the key fields. This
- * is done by hashing the key and mapping the hash value into buckets matching the
- *  sampling rate size. Records having a key mapping to bucket zero are output.
+/** distinctSampling samples a portion of the unique values from the key fields.
+ *
+ * Distinct sampling is done by hashing the key and mapping the hash value into
+ * buckets matching the sampling rate size. Records having a key mapping to bucket
+ * zero are output.
  */
 void distinctSampling(OutputRange)(TsvSampleOptions cmdopt, OutputRange outputStream)
     if (isOutputRange!(OutputRange, char))
@@ -417,17 +508,20 @@ void distinctSampling(OutputRange)(TsvSampleOptions cmdopt, OutputRange outputSt
     }
 }
 
-/* An implementation of reservior sampling. Both weighted and unweighted sampling are
- * supported. Both are implemented using the one-pass algorithm described by Efraimidis
- * and Spirakis ("Weighted Random Sampling over Data Streams", Pavlos S. Efraimidis,
- * https://arxiv.org/abs/1012.0256). In the unweighted case weights are simply set to one.
+/** An implementation of reservior sampling. Both weighted and uniform random sampling
+ * are supported.
  *
- * Both sampling and full permutation of the input are supported, but the implementations
+ * Both weighted and uniform random sampling are implemented using the one-pass algorithm
+ * described by Efraimidis and Spirakis ("Weighted Random Sampling over Data Streams",
+ * Pavlos S. Efraimidis, https://arxiv.org/abs/1012.0256). In the unweighted case weights
+ * are simply set to one.
+ *
+ * Both sampling and full permutation of input lines are supported, but the implementations
  * differ. Both use a heap (priority queue). A "max" heap is used when permuting all lines,
  * as it leaves the heap in the correct order for output. However, a "min" heap is used
- * when sampling. When sampling the case the role of the heap is to indentify the top-k
- * elements. Adding a new items means dropping the "min" item. When done reading all lines,
- * the "min" heap is in the opposite order needed for output. The desired order is obtained
+ * when sampling. When sampling the role of the heap is to indentify the top-k elements.
+ * Adding a new item means dropping the "min" item. When done reading all lines, the "min"
+ * heap is in the opposite order needed for output. The desired order is obtained
  * by removing each element one at at time from the heap. The underlying data store will
  * have the elements in correct order. The other notable difference is that the backing
  * store can be pre-allocated when sampling, but must be grown when permuting all lines.
@@ -575,7 +669,7 @@ void reservoirSampling(Flag!"permuteAll" permuteAll, OutputRange)
     }
 }
 
-/* A convenience function for extracting a single field from a line. See getTsvFieldValue in
+/** A convenience function for extracting a single field from a line. See getTsvFieldValue in
  * common/src/tsvutils.d for details. This wrapper creates error text tailored for this program.
  */
 import std.traits : isSomeChar;
@@ -663,7 +757,11 @@ version(unittest)
         assert(r[0], formatAssertMessage("Invalid command lines arg: '%s'.", savedCmdArgs));
         auto output = appender!(char[])();
 
-        if (cmdopt.useDistinctSampling)
+        if (cmdopt.genRandomInorder)
+        {
+            generateRandomWeightsInorder(cmdopt, output);
+        }
+        else if (cmdopt.useDistinctSampling)
         {
             distinctSampling(cmdopt, output);
         }
