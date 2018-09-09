@@ -42,26 +42,7 @@ else
             import tsvutil : BufferedOutputRange;
             auto bufferedOutput = BufferedOutputRange!(typeof(stdout))(stdout);
 
-            if (cmdopt.genRandomInorder)
-            {
-                generateRandomWeightsInorder(cmdopt, bufferedOutput);
-            }
-            else if (cmdopt.useStreamSampling)
-            {
-                streamSampling(cmdopt, bufferedOutput);
-            }
-            else if (cmdopt.useDistinctSampling)
-            {
-                distinctSampling(cmdopt, bufferedOutput);
-            }
-            else if (cmdopt.sampleSize == 0)
-            {
-                reservoirSampling!(Yes.permuteAll)(cmdopt, bufferedOutput);
-            }
-            else
-            {
-                reservoirSampling!(No.permuteAll)(cmdopt, bufferedOutput);
-            }
+            tsvSample(cmdopt, bufferedOutput);
         }
         catch (Exception exc)
         {
@@ -295,6 +276,32 @@ struct TsvSampleOptions
             return tuple(false, 1);
         }
         return tuple(true, 0);
+    }
+}
+/** tsvSample invokes the appropriate sampling routine based on the command line
+ * arguments.
+ */
+void tsvSample(OutputRange)(TsvSampleOptions cmdopt, OutputRange outputStream)
+{
+    if (cmdopt.genRandomInorder)
+    {
+        generateRandomWeightsInorder(cmdopt, outputStream);
+    }
+    else if (cmdopt.useStreamSampling)
+    {
+        streamSampling(cmdopt, outputStream);
+    }
+    else if (cmdopt.useDistinctSampling)
+    {
+        distinctSampling(cmdopt, outputStream);
+    }
+    else if (cmdopt.sampleSize == 0)
+    {
+        reservoirSampling!(Yes.permuteAll)(cmdopt, outputStream);
+    }
+    else
+    {
+        reservoirSampling!(No.permuteAll)(cmdopt, outputStream);
     }
 }
 
@@ -757,26 +764,7 @@ version(unittest)
         assert(r[0], formatAssertMessage("Invalid command lines arg: '%s'.", savedCmdArgs));
         auto output = appender!(char[])();
 
-        if (cmdopt.genRandomInorder)
-        {
-            generateRandomWeightsInorder(cmdopt, output);
-        }
-        else if (cmdopt.useDistinctSampling)
-        {
-            distinctSampling(cmdopt, output);
-        }
-        else if (cmdopt.useStreamSampling)
-        {
-            streamSampling(cmdopt, output);
-        }
-        else if (cmdopt.sampleSize == 0)
-        {
-            reservoirSampling!(Yes.permuteAll)(cmdopt, output);
-        }
-        else
-        {
-            reservoirSampling!(No.permuteAll)(cmdopt, output);
-        }
+        tsvSample(cmdopt, output);    // This invokes the main code line.
 
         auto expectedOutput = expected.tsvDataToString;
 
