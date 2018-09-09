@@ -69,3 +69,6 @@ Error [tsv-sample]: Not enough fields in line. File: input4x50.tsv, Line: 1
 ====[tsv-sample -H -r 0.5 -k 5 input4x50.tsv input4x15.tsv]====
 Error [tsv-sample]: Not enough fields in line. File: input4x50.tsv, Line: 2
 c-1	c-2	c-3	c-4
+
+====[tsv-sample -H -r 0.5 --gen-random-inorder input4x50.tsv input4x15.tsv]====
+[tsv-sample] Error processing command line arguments: --q|gen-random-inorder and --r|rate cannot be used together.

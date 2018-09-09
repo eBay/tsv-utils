@@ -45,6 +45,11 @@ runtest ${prog} "-H -s -p --weight-field 3 input3x10.tsv input3x25.tsv" ${basic_
 runtest ${prog} "-H -s -p -w 3 --num 15 input3x10.tsv input3x25.tsv" ${basic_tests_1}
 runtest ${prog} "-H -s -p -n 15 input3x10.tsv input3x25.tsv" ${basic_tests_1}
 runtest ${prog} "-H -s -n 100 input3x10.tsv input3x25.tsv" ${basic_tests_1}
+runtest ${prog} "-H -s --gen-random-inorder --weight-field 3 input3x10.tsv input3x25.tsv" ${basic_tests_1}
+runtest ${prog} "-H -s --gen-random-inorder -n 15 --weight-field 3 input3x10.tsv input3x25.tsv" ${basic_tests_1}
+runtest ${prog} "-H -s -q input3x10.tsv input3x25.tsv" ${basic_tests_1}
+runtest ${prog} "-H -s --gen-random-inorder -n 15 input3x10.tsv input3x25.tsv" ${basic_tests_1}
+
 # Stream sampling
 runtest ${prog} "-H -s --rate 1.0 --print-random input3x10.tsv input3x25.tsv" ${basic_tests_1}
 runtest ${prog} "-H -s -r 0.25 input3x10.tsv input3x25.tsv" ${basic_tests_1}
@@ -139,3 +144,4 @@ runtest ${prog} "-r 0.5 -v -10 -k 1 input4x50.tsv input4x15.tsv" ${error_tests_1
 runtest ${prog} "-k 1 input4x50.tsv input4x15.tsv" ${error_tests_1}
 runtest ${prog} "-r 0.5 -k 5 input4x50.tsv input4x15.tsv" ${error_tests_1}
 runtest ${prog} "-H -r 0.5 -k 5 input4x50.tsv input4x15.tsv" ${error_tests_1}
+runtest ${prog} "-H -r 0.5 --gen-random-inorder input4x50.tsv input4x15.tsv" ${error_tests_1}

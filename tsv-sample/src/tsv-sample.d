@@ -931,6 +931,15 @@ unittest
          ["0.65130103496422487", "white", "白", "1.65"],
          ["1.5636943712879866e-111", "green", "緑", "0.0072"]];
 
+    string[][] data3x6ExpectedWt3ProbsInorder =
+        [["random_weight", "field_a", "field_b", "field_c"],
+         ["0.82728234682286661", "red", "赤", "23.8"],
+         ["1.5636943712879866e-111", "green", "緑", "0.0072"],
+         ["0.65130103496422487", "white", "白", "1.65"],
+         ["0.9966519875764539", "yellow", "黄", "12"],
+         ["0.94775884809836686", "blue", "青", "12"],
+         ["0.75346697377181959", "black", "黒", "0.983"]];
+
     string[][] data3x6ExpectedWt3 =
         [["field_a", "field_b", "field_c"],
          ["yellow", "黄", "12"],
@@ -966,6 +975,15 @@ unittest
          ["0.15043620392537033", "black", "黒", "0.983"],
          ["6.1394674830701461e-24", "green", "緑", "0.0072"]];
 
+    string[][] data3x6ExpectedWt3V41ProbsInorder =
+        [["random_weight", "field_a", "field_b", "field_c"],
+         ["0.94356245792573568", "red", "赤", "23.8"],
+         ["6.1394674830701461e-24", "green", "緑", "0.0072"],
+         ["0.15491658409260103", "white", "白", "1.65"],
+         ["0.90964601024271996", "yellow", "黄", "12"],
+         ["0.96799377498910666", "blue", "青", "12"],
+         ["0.15043620392537033", "black", "黒", "0.983"]];
+
 
     /* Combo 1: 3x3, 3x1, 3x6, 3x2. No data files, only expected results. */
     string[][] combo1ExpectedNoWt =
@@ -997,6 +1015,22 @@ unittest
          ["0.24033216014504433", "blue", "青", "12"],
          ["0.15929344086907804", "pink", "ピンク", "1.1"],
          ["0.010968807619065046", "orange", "オレンジ", "2.5"]];
+
+    /* Combo 1: 3x3, 3x1, 3x6, 3x2. No data files, only expected results. */
+    string[][] combo1ExpectedNoWtProbsInorder =
+        [["random_weight", "field_a", "field_b", "field_c"],
+         ["0.010968807619065046", "orange", "オレンジ", "2.5"],
+         ["0.15929344086907804", "pink", "ピンク", "1.1"],
+         ["0.49287854949943721", "purple", "紫の", "42"],
+         ["0.96055546286515892", "tan", "タン", "8.5"],
+         ["0.52525980887003243", "red", "赤", "23.8"],
+         ["0.7571015392895788", "green", "緑", "0.0072"],
+         ["0.38388182921335101", "white", "白", "1.65"],
+         ["0.97088520275428891", "yellow", "黄", "12"],
+         ["0.24033216014504433", "blue", "青", "12"],
+         ["0.47081507067196071", "black", "黒", "0.983"],
+         ["0.81756894313730299", "brown", "褐色", "29.2"],
+         ["0.29215990612283349", "gray", "グレー", "6.2"]];
 
     string[][] combo1ExpectedProbsStreamSampleP50 =
         [["random_weight", "field_a", "field_b", "field_c"],
@@ -1330,6 +1364,14 @@ unittest
     testTsvSample(["test-a25", "-H", "-s", "-r", "1.0", "-k", "2", fpath_data3x1], data3x1);
     testTsvSample(["test-a26", "-H", "-s", "-r", "1.0", "-k", "2", fpath_data3x6], data3x6);
 
+    /* Generating random weights. Use stream sampling test set at prob 100% for uniform sampling.
+     * For weighted sampling, use the weighted cases, but with expected using the original ordering.
+     */
+    testTsvSample(["test-a27", "-H", "-s", "--gen-random-inorder", fpath_data3x6], data3x6ExpectedProbsStreamSampleP100);
+    testTsvSample(["test-a28", "-H", "-s", "-q", fpath_data3x6], data3x6ExpectedProbsStreamSampleP100);
+    testTsvSample(["test-a29", "-H", "-s", "--gen-random-inorder", "--weight-field", "3", fpath_data3x6], data3x6ExpectedWt3ProbsInorder);
+    testTsvSample(["test-a30", "-H", "-v", "41", "--gen-random-inorder", "--weight-field", "3", fpath_data3x6], data3x6ExpectedWt3V41ProbsInorder);
+
     /* Basic tests, without headers. */
     testTsvSample(["test-b1", "-s", fpath_data3x1_noheader], data3x1[1..$]);
     testTsvSample(["test-b2", "-s", fpath_data3x2_noheader], data3x2ExpectedNoWt[1..$]);
@@ -1350,10 +1392,14 @@ unittest
     testTsvSample(["test-b15", "-v", "41", "--rate", "0.60", "-p", fpath_data3x6_noheader], data3x6ExpectedV41ProbsStreamSampleP60[1..$]);
 
     /* Distinct sampling cases. */
-    testTsvSample(["test-a25", "-s", "-r", "1.0", "-k", "2", fpath_data3x1_noheader], data3x1[1..$]);
-    testTsvSample(["test-a26", "-s", "-r", "1.0", "-k", "2", fpath_data3x6_noheader], data3x6[1..$]);
-    testTsvSample(["test-a27", "-r", "1.0", "-k", "2", fpath_data3x6_noheader], data3x6[1..$]);
-    testTsvSample(["test-a28", "-v", "71563", "-r", "1.0", "-k", "2", fpath_data3x6_noheader], data3x6[1..$]);
+    testTsvSample(["test-b16", "-s", "-r", "1.0", "-k", "2", fpath_data3x1_noheader], data3x1[1..$]);
+    testTsvSample(["test-b17", "-s", "-r", "1.0", "-k", "2", fpath_data3x6_noheader], data3x6[1..$]);
+    testTsvSample(["test-b18", "-r", "1.0", "-k", "2", fpath_data3x6_noheader], data3x6[1..$]);
+    testTsvSample(["test-b19", "-v", "71563", "-r", "1.0", "-k", "2", fpath_data3x6_noheader], data3x6[1..$]);
+
+    /* Generating random weights. Reuse stream sampling tests at prob 100%. */
+    testTsvSample(["test-b20", "-s", "--gen-random-inorder", fpath_data3x6_noheader], data3x6ExpectedProbsStreamSampleP100[1..$]);
+    testTsvSample(["test-b23", "-v", "41", "--gen-random-inorder", "--weight-field", "3", fpath_data3x6_noheader], data3x6ExpectedWt3V41ProbsInorder[1..$]);
 
     /* Multi-file tests. */
     testTsvSample(["test-c1", "--header", "--static-seed",
@@ -1411,6 +1457,16 @@ unittest
                    fpath_data3x3_noheader, fpath_data3x1_noheader, fpath_dataEmpty,
                    fpath_data3x6_noheader, fpath_data3x2_noheader],
                   combo1ExpectedDistinctSampleK1P40[1..$]);
+
+    /* Generating random weights. */
+    testTsvSample(["test-c15", "--header", "--static-seed", "--gen-random-inorder",
+                   fpath_data3x0, fpath_data3x3, fpath_data3x1, fpath_dataEmpty, fpath_data3x6, fpath_data3x2],
+                  combo1ExpectedNoWtProbsInorder);
+    testTsvSample(["test-c16", "--static-seed", "--gen-random-inorder",
+                   fpath_data3x3_noheader, fpath_data3x1_noheader,
+                   fpath_dataEmpty, fpath_data3x6_noheader, fpath_data3x2_noheader],
+                  combo1ExpectedNoWtProbsInorder[1..$]);
+
 
     /* Single column file. */
     testTsvSample(["test-d1", "-H", "-s", fpath_data1x10], data1x10ExpectedNoWt);
@@ -1478,6 +1534,12 @@ unittest
 
         testTsvSample([format("test-f14_%d", n), "-s", "-k", "1,3", "-r", "0.6", "-n", n.to!string,
                        fpath_data3x6_noheader], data3x6ExpectedDistinctSampleK1K3P60[1..distinctExpectedLength]);
+
+        testTsvSample([format("test-f15_%d", n), "-s", "--gen-random-inorder", "-n", n.to!string,
+                       "-H", fpath_data3x6], data3x6ExpectedProbsStreamSampleP100[0..expectedLength]);
+
+        testTsvSample([format("test-f15_%d", n), "-s", "--gen-random-inorder", "-n", n.to!string,
+                       fpath_data3x6_noheader], data3x6ExpectedProbsStreamSampleP100[1..expectedLength]);
     }
 
     /* Similar tests with the 1x10 data set. */
