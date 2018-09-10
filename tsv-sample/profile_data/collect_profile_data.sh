@@ -46,6 +46,7 @@ $prog profile_data_2.tsv -w 4 > /dev/null
 $prog profile_data_2.tsv -w 2 > /dev/null
 $prog profile_data_2.tsv -w 2 -n 400 > /dev/null
 $prog profile_data_2.tsv -w 3 --gen-random-inorder > /dev/null
+$prog profile_data_2.tsv --gen-random-inorder > /dev/null
 $prog profile_data_2.tsv -r 0.25 > /dev/null
 $prog profile_data_2.tsv -r 0.75 -n 200 > /dev/null
 $prog profile_data_2.tsv -n 250 > /dev/null

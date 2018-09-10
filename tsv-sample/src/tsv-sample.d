@@ -269,7 +269,10 @@ struct TsvSampleOptions
 
                 if (hasWeightField) throw new Exception("--w|weight-field and --r|rate cannot be used together.");
                 if (genRandomInorder && !useDistinctSampling) throw new Exception("--q|gen-random-inorder and --r|rate can only be used together if --k|key-fields is also used.");
-
+            }
+            else if (genRandomInorder && !hasWeightField)
+            {
+                useStreamSampling = true;
             }
 
             if (randomValueHeader.length == 0 || randomValueHeader.canFind('\n') ||
@@ -301,18 +304,20 @@ struct TsvSampleOptions
  */
 void tsvSample(OutputRange)(TsvSampleOptions cmdopt, OutputRange outputStream)
 {
-    if (cmdopt.genRandomInorder && !cmdopt.useDistinctSampling)
+    if (cmdopt.useStreamSampling)
     {
-        /* Note: distinctSampling has its own support for genRandomInorder. */
-        generateRandomWeightsInorder(cmdopt, outputStream);
-    }
-    else if (cmdopt.useStreamSampling)
-    {
-        streamSampling(cmdopt, outputStream);
+        if (cmdopt.genRandomInorder) streamSampling!(Yes.generateRandomAll)(cmdopt, outputStream);
+        else streamSampling!(No.generateRandomAll)(cmdopt, outputStream);
     }
     else if (cmdopt.useDistinctSampling)
     {
-        distinctSampling(cmdopt, outputStream);
+        if (cmdopt.genRandomInorder) distinctSampling!(Yes.generateRandomAll)(cmdopt, outputStream);
+        else distinctSampling!(No.generateRandomAll)(cmdopt, outputStream);
+    }
+    else if (cmdopt.genRandomInorder)
+    {
+        assert(cmdopt.hasWeightField);
+        generateWeightedRandomValuesInorder(cmdopt, outputStream);
     }
     else if (cmdopt.sampleSize == 0)
     {
@@ -321,64 +326,6 @@ void tsvSample(OutputRange)(TsvSampleOptions cmdopt, OutputRange outputStream)
     else
     {
         reservoirSampling!(No.permuteAll)(cmdopt, outputStream);
-    }
-}
-
-/** generateRandomWeights produces randomized weights for each line in the input stream. Wieghts
- * for both uniform sampling and weighted sampling are supported.
- */
-void generateRandomWeightsInorder(OutputRange)(TsvSampleOptions cmdopt, OutputRange outputStream)
-    if (isOutputRange!(OutputRange, char))
-{
-    import std.format : format;
-    import std.random : Random, uniform01;
-    import tsvutil : throwIfWindowsNewlineOnUnix;
-
-    auto randomGenerator = Random(cmdopt.seed);
-
-    /* Process each line. */
-    bool headerWritten = false;
-    size_t numLinesWritten = 0;
-    foreach (filename; cmdopt.files)
-    {
-        auto inputStream = (filename == "-") ? stdin : filename.File();
-        foreach (fileLineNum, line; inputStream.byLine(KeepTerminator.no).enumerate(1))
-        {
-            if (fileLineNum == 1) throwIfWindowsNewlineOnUnix(line, filename, fileLineNum);
-            if (fileLineNum == 1 && cmdopt.hasHeader)
-            {
-                if (!headerWritten)
-                {
-                    outputStream.put(cmdopt.randomValueHeader);
-                    outputStream.put(cmdopt.delim);
-                    outputStream.put(line);
-                    outputStream.put("\n");
-                    headerWritten = true;
-                }
-            }
-            else
-            {
-                double lineWeight =
-                    cmdopt.hasWeightField
-                    ? getFieldValue!double(line, cmdopt.weightField, cmdopt.delim, filename, fileLineNum)
-                    : 1.0;
-                double lineScore =
-                    (lineWeight > 0.0)
-                    ? uniform01(randomGenerator) ^^ (1.0 / lineWeight)
-                    : 0.0;
-
-                outputStream.put(format("%.17g", lineScore));
-                outputStream.put(cmdopt.delim);
-                outputStream.put(line);
-                outputStream.put("\n");
-
-                if (cmdopt.sampleSize != 0)
-                {
-                    ++numLinesWritten;
-                    if (numLinesWritten == cmdopt.sampleSize) return;
-                }
-            }
-        }
     }
 }
 
@@ -394,11 +341,16 @@ void generateRandomWeightsInorder(OutputRange)(TsvSampleOptions cmdopt, OutputRa
  * random weights assigned to each element would change based on the sampling.
  * Printed weights would no longer be consistent run-to-run.
  */
-void streamSampling(OutputRange)(TsvSampleOptions cmdopt, OutputRange outputStream)
+void streamSampling(Flag!"generateRandomAll" generateRandomAll, OutputRange)
+    (TsvSampleOptions cmdopt, OutputRange outputStream)
     if (isOutputRange!(OutputRange, char))
 {
+    import std.format;
     import std.random : Random, uniform01;
     import tsvutil : throwIfWindowsNewlineOnUnix;
+
+    static if (generateRandomAll) assert(cmdopt.genRandomInorder);
+    else assert(!cmdopt.genRandomInorder);
 
     auto randomGenerator = Random(cmdopt.seed);
 
@@ -415,11 +367,17 @@ void streamSampling(OutputRange)(TsvSampleOptions cmdopt, OutputRange outputStre
             {
                 if (!headerWritten)
                 {
-                    if (cmdopt.printRandom)
+                    static if (generateRandomAll)
                     {
                         outputStream.put(cmdopt.randomValueHeader);
                         outputStream.put(cmdopt.delim);
                     }
+                    else if (cmdopt.printRandom)
+                    {
+                        outputStream.put(cmdopt.randomValueHeader);
+                        outputStream.put(cmdopt.delim);
+                    }
+
                     outputStream.put(line);
                     outputStream.put("\n");
                     headerWritten = true;
@@ -428,11 +386,24 @@ void streamSampling(OutputRange)(TsvSampleOptions cmdopt, OutputRange outputStre
             else
             {
                 double lineScore = uniform01(randomGenerator);
-                if (lineScore < cmdopt.sampleRate)
+
+                static if (generateRandomAll)
+                {
+                    outputStream.put(format("%.17g", lineScore));
+                    outputStream.put(cmdopt.delim);
+                    outputStream.put(line);
+                    outputStream.put("\n");
+
+                    if (cmdopt.sampleSize != 0)
+                    {
+                        ++numLinesWritten;
+                        if (numLinesWritten == cmdopt.sampleSize) return;
+                    }
+                }
+                else if (lineScore < cmdopt.sampleRate)
                 {
                     if (cmdopt.printRandom)
                     {
-                        import std.format;
                         outputStream.put(format("%.17g", lineScore));
                         outputStream.put(cmdopt.delim);
                     }
@@ -462,7 +433,8 @@ void streamSampling(OutputRange)(TsvSampleOptions cmdopt, OutputRange outputStre
  * supported. However, printing the buckets of all lines may be useful, so
  * TsvSampleOptions.genRandomInorder is supported.
  */
-void distinctSampling(OutputRange)(TsvSampleOptions cmdopt, OutputRange outputStream)
+void distinctSampling(Flag!"generateRandomAll" generateRandomAll, OutputRange)
+    (TsvSampleOptions cmdopt, OutputRange outputStream)
     if (isOutputRange!(OutputRange, char))
 {
     import std.algorithm : splitter;
@@ -470,6 +442,9 @@ void distinctSampling(OutputRange)(TsvSampleOptions cmdopt, OutputRange outputSt
     import std.digest.murmurhash;
     import std.math : lrint;
     import tsvutil : InputFieldReordering, throwIfWindowsNewlineOnUnix;
+
+    static if (generateRandomAll) assert(cmdopt.genRandomInorder);
+    else assert(!cmdopt.genRandomInorder);
 
     assert(cmdopt.keyFields.length > 0);
     assert(0.0 < cmdopt.sampleRate && cmdopt.sampleRate <= 1.0);
@@ -494,11 +469,17 @@ void distinctSampling(OutputRange)(TsvSampleOptions cmdopt, OutputRange outputSt
             {
                 if (!headerWritten)
                 {
-                    if (cmdopt.genRandomInorder || cmdopt.printRandom)
+                    static if (generateRandomAll)
                     {
                         outputStream.put(cmdopt.randomValueHeader);
                         outputStream.put(cmdopt.delim);
                     }
+                    else if (cmdopt.printRandom)
+                    {
+                        outputStream.put(cmdopt.randomValueHeader);
+                        outputStream.put(cmdopt.delim);
+                    }
+
                     outputStream.put(line);
                     outputStream.put("\n");
                     headerWritten = true;
@@ -529,7 +510,8 @@ void distinctSampling(OutputRange)(TsvSampleOptions cmdopt, OutputRange outputSt
                     hasher.put(cast(ubyte[]) key);
                 }
                 hasher.finish;
-                if (cmdopt.genRandomInorder)
+
+                static if (generateRandomAll)
                 {
                     import std.conv : to;
                     outputStream.put((hasher.get % numBuckets).to!string);
@@ -722,6 +704,67 @@ void reservoirSampling(Flag!"permuteAll" permuteAll, OutputRange)
         while (!reservoir.empty) reservoir.removeFront;
         assert(numLines == dataStore.length);
         foreach (entry; dataStore) printEntry(entry);
+    }
+}
+
+/** Generates weighted random values for all input lines, preserving input order.
+ *
+ * This complements weighted reservoir sampling, but instead of using a reservoir it
+ * simply iterates over the input lines generating the values. The weighted random
+ * values are generated with the same formula used by reservoirSampling.
+ */
+void generateWeightedRandomValuesInorder(OutputRange)(TsvSampleOptions cmdopt, OutputRange outputStream)
+    if (isOutputRange!(OutputRange, char))
+{
+    import std.format : format;
+    import std.random : Random, uniform01;
+    import tsvutil : throwIfWindowsNewlineOnUnix;
+
+    assert(cmdopt.hasWeightField);
+
+    auto randomGenerator = Random(cmdopt.seed);
+
+    /* Process each line. */
+    bool headerWritten = false;
+    size_t numLinesWritten = 0;
+    foreach (filename; cmdopt.files)
+    {
+        auto inputStream = (filename == "-") ? stdin : filename.File();
+        foreach (fileLineNum, line; inputStream.byLine(KeepTerminator.no).enumerate(1))
+        {
+            if (fileLineNum == 1) throwIfWindowsNewlineOnUnix(line, filename, fileLineNum);
+            if (fileLineNum == 1 && cmdopt.hasHeader)
+            {
+                if (!headerWritten)
+                {
+                    outputStream.put(cmdopt.randomValueHeader);
+                    outputStream.put(cmdopt.delim);
+                    outputStream.put(line);
+                    outputStream.put("\n");
+                    headerWritten = true;
+                }
+            }
+            else
+            {
+                double lineWeight = getFieldValue!double(line, cmdopt.weightField, cmdopt.delim,
+                                                         filename, fileLineNum);
+                double lineScore =
+                    (lineWeight > 0.0)
+                    ? uniform01(randomGenerator) ^^ (1.0 / lineWeight)
+                    : 0.0;
+
+                outputStream.put(format("%.17g", lineScore));
+                outputStream.put(cmdopt.delim);
+                outputStream.put(line);
+                outputStream.put("\n");
+
+                if (cmdopt.sampleSize != 0)
+                {
+                    ++numLinesWritten;
+                    if (numLinesWritten == cmdopt.sampleSize) return;
+                }
+            }
+        }
     }
 }
 
