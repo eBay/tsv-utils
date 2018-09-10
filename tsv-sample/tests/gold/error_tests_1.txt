@@ -10,16 +10,6 @@ Error [tsv-sample]: Cannot open file `no_such_file.tsv' in mode `rb' (No such fi
 ====[tsv-sample -d ß input3x25.tsv]====
 [tsv-sample] Error processing command line arguments: Invalid UTF-8 sequence (at index 1)
 
-====[tsv-sample -H -w 2 input3x25.tsv]====
-Error [tsv-sample]: Could not process line: no digits seen for input "Белые ночи".
-  File: input3x25.tsv Line: 2
-line	title	weight
-
-====[tsv-sample -w 3 input3x25.tsv]====
-Error [tsv-sample]: Could not process line: no digits seen for input "weight".
-  File: input3x25.tsv Line: 1
-  Is this a header line? Use --H|header to skip.
-
 ====[tsv-sample -H -w 11 input3x25.tsv]====
 Error [tsv-sample]: Could not process line: Not enough fields on line. Number required: 11; Number found: 3
   File: input3x25.tsv Line: 2
@@ -54,9 +44,6 @@ Error [tsv-sample]: Windows/DOS line ending found. Convert file to Unix newlines
 ====[tsv-sample -r -0.5 -k 1 input4x50.tsv input4x15.tsv]====
 [tsv-sample] Error processing command line arguments: Invalid --r|rate option: -0.5. Must satisfy 0.0 < rate <= 1.0.
 
-====[tsv-sample -r -v 10 -k 1 input4x50.tsv input4x15.tsv]====
-[tsv-sample] Error processing command line arguments: no digits seen for input "-v".
-
 ====[tsv-sample -r 0.5 -v -10 -k 1 input4x50.tsv input4x15.tsv]====
 [tsv-sample] Error processing command line arguments: Unexpected '-' when converting from type string to type uint
 
@@ -71,4 +58,4 @@ Error [tsv-sample]: Not enough fields in line. File: input4x50.tsv, Line: 2
 c-1	c-2	c-3	c-4
 
 ====[tsv-sample -H -r 0.5 --gen-random-inorder input4x50.tsv input4x15.tsv]====
-[tsv-sample] Error processing command line arguments: --q|gen-random-inorder and --r|rate cannot be used together.
+[tsv-sample] Error processing command line arguments: --q|gen-random-inorder and --r|rate can only be used together if --k|key-fields is also used.

@@ -40,7 +40,7 @@ line	title	weight
 1	Álomvilág: Elbeszélések	41
 
 ====[tsv-sample -H -s --print-random input3x10.tsv input3x25.tsv]====
-random_weight	line	title	weight
+random_value	line	title	weight
 0.97088520275428891	8	Door het land der Skipetaren	30
 0.96959374798461795	11	Il "Damo viennese"	23
 0.96055546286515892	4	Soitannollisia satuja ja jutelmia	44
@@ -78,7 +78,7 @@ random_weight	line	title	weight
 0.010968807619065046	1	Álomvilág: Elbeszélések	41
 
 ====[tsv-sample -H -s -p --weight-field 3 input3x10.tsv input3x25.tsv]====
-random_weight	line	title	weight
+random_value	line	title	weight
 0.99908579189996327	4	Soitannollisia satuja ja jutelmia	44
 0.99901558340711527	8	Door het land der Skipetaren	30
 0.99879172703983321	23	佛說四十二章經	81
@@ -116,7 +116,7 @@ random_weight	line	title	weight
 0.66008988429865523	8	Διδαχή των Δώδεκα αποστόλων	2
 
 ====[tsv-sample -H -s -p -w 3 --num 15 input3x10.tsv input3x25.tsv]====
-random_weight	line	title	weight
+random_value	line	title	weight
 0.99908579189996327	4	Soitannollisia satuja ja jutelmia	44
 0.99901558340711527	8	Door het land der Skipetaren	30
 0.99879172703983321	23	佛說四十二章經	81
@@ -134,7 +134,7 @@ random_weight	line	title	weight
 0.987495574821046	20	羅生門	87
 
 ====[tsv-sample -H -s -p -n 15 input3x10.tsv input3x25.tsv]====
-random_weight	line	title	weight
+random_value	line	title	weight
 0.97088520275428891	8	Door het land der Skipetaren	30
 0.96959374798461795	11	Il "Damo viennese"	23
 0.96055546286515892	4	Soitannollisia satuja ja jutelmia	44
@@ -190,7 +190,7 @@ line	title	weight
 1	Álomvilág: Elbeszélések	41
 
 ====[tsv-sample -H -s --gen-random-inorder --weight-field 3 input3x10.tsv input3x25.tsv]====
-random_weight	line	title	weight
+random_value	line	title	weight
 0.8957751497221651	1	Álomvilág: Elbeszélések	41
 0.81537111358515613	2	Grimm testvérek összegyüjtött meséi	9
 0.96524374479329644	3	Mesék és regék	20
@@ -228,7 +228,7 @@ random_weight	line	title	weight
 0.96121719801032457	25	Don Quijote	88
 
 ====[tsv-sample -H -s --gen-random-inorder -n 15 --weight-field 3 input3x10.tsv input3x25.tsv]====
-random_weight	line	title	weight
+random_value	line	title	weight
 0.8957751497221651	1	Álomvilág: Elbeszélések	41
 0.81537111358515613	2	Grimm testvérek összegyüjtött meséi	9
 0.96524374479329644	3	Mesék és regék	20
@@ -246,7 +246,7 @@ random_weight	line	title	weight
 0.97312744859010325	5	Märchen für Kinder	73
 
 ====[tsv-sample -H -s -q input3x10.tsv input3x25.tsv]====
-random_weight	line	title	weight
+random_value	line	title	weight
 0.010968807619065046	1	Álomvilág: Elbeszélések	41
 0.15929344086907804	2	Grimm testvérek összegyüjtött meséi	9
 0.49287854949943721	3	Mesék és regék	20
@@ -284,7 +284,7 @@ random_weight	line	title	weight
 0.030781860463321209	25	Don Quijote	88
 
 ====[tsv-sample -H -s --gen-random-inorder -n 15 input3x10.tsv input3x25.tsv]====
-random_weight	line	title	weight
+random_value	line	title	weight
 0.010968807619065046	1	Álomvilág: Elbeszélések	41
 0.15929344086907804	2	Grimm testvérek összegyüjtött meséi	9
 0.49287854949943721	3	Mesék és regék	20
@@ -302,7 +302,7 @@ random_weight	line	title	weight
 0.13689568405970931	5	Märchen für Kinder	73
 
 ====[tsv-sample -H -s --rate 1.0 --print-random input3x10.tsv input3x25.tsv]====
-random_weight	line	title	weight
+random_value	line	title	weight
 0.010968807619065046	1	Álomvilág: Elbeszélések	41
 0.15929344086907804	2	Grimm testvérek összegyüjtött meséi	9
 0.49287854949943721	3	Mesék és regék	20
@@ -547,6 +547,41 @@ jaune	2104	Tüpfelsumpfhuhn	1
 dorado	2147	Tüpfelsumpfhuhn	1
 jaune	2097	Purpurreiher	4
 
+====[tsv-sample -H -s -r .2 -k 3 --print-random input4x50.tsv input4x15.tsv]====
+random_value	c-1	c-2	c-3	c-4
+0	Cerise	2076	Malvasía Cabeciblanca	4
+0	暗紅色/暗赤色	2015	Malvasía Cabeciblanca	2
+0	marrón	2102	Weißwangengans	1
+0	Cerise	2119	Malvasía Cabeciblanca	4
+0	noir	2082	Weißwangengans	1
+0	noir	2094	Weißwangengans	4
+0	красный	2049	Weißwangengans	3
+0	noir	2115	Weißwangengans	2
+0	marrón	2034	Weißwangengans	1
+0	ébène	2142	Орёл	2
+0	jaune	2090	Weißwangengans	4
+
+====[tsv-sample -H -s -r .2 -k 3 --print-random -n 5 input4x50.tsv input4x15.tsv]====
+random_value	c-1	c-2	c-3	c-4
+0	Cerise	2076	Malvasía Cabeciblanca	4
+0	暗紅色/暗赤色	2015	Malvasía Cabeciblanca	2
+0	marrón	2102	Weißwangengans	1
+0	Cerise	2119	Malvasía Cabeciblanca	4
+0	noir	2082	Weißwangengans	1
+
+====[tsv-sample -H -s -r .2 -k 3 --gen-random-inorder -n 10 input4x50.tsv input4x15.tsv]====
+random_value	c-1	c-2	c-3	c-4
+3	púrpura	2088	Macuco	1
+3	blutrot	2142	Tüpfelsumpfhuhn	1
+2	Indigo	2056	Голубь	1
+2	Indigo	2141	Голубь	1
+3	blutrot	2118	Tüpfelsumpfhuhn	4
+0	Cerise	2076	Malvasía Cabeciblanca	4
+3	schneeweiß	2117	Porrón Islándico	4
+2	café	2088	Purpurreiher	2
+2	Orange-red	2089	Purpurreiher	1
+0	暗紅色/暗赤色	2015	Malvasía Cabeciblanca	2
+
 ====[tsv-sample --static-seed input2x10_noheader.tsv input2x5_noheader.tsv]====
 0.20987466	殘唐五代史演義傳
 0.67881307	Burning Daylight
@@ -681,7 +716,7 @@ Ephemerides Barometricae Mutinenses@5869
 友情@5992
 
 ====[tsv-sample -d @ -H -s -p input2x7_atsign.tsv]====
-random_weight@title@weight
+random_value@title@weight
 0.96055546286515892@幽霊書店@5903
 0.7571015392895788@Aristophanis Lysistrata@5464
 0.52525980887003243@マルチン・ルターの小信仰問答書@5489
@@ -691,7 +726,7 @@ random_weight@title@weight
 0.010968807619065046@友情@5992
 
 ====[tsv-sample -d @ -H -s -p -w 2 input2x7_atsign.tsv]====
-random_weight@title@weight
+random_value@title@weight
 0.9999931825482774@幽霊書店@5903
 0.99994907561939606@Aristophanis Lysistrata@5464
 0.99988270641217591@マルチン・ルターの小信仰問答書@5489
@@ -701,13 +736,13 @@ random_weight@title@weight
 0.99924716274568337@友情@5992
 
 ====[tsv-sample -d @ -H -s -p -w 2 -n 3 input2x7_atsign.tsv]====
-random_weight@title@weight
+random_value@title@weight
 0.9999931825482774@幽霊書店@5903
 0.99994907561939606@Aristophanis Lysistrata@5464
 0.99988270641217591@マルチン・ルターの小信仰問答書@5489
 
 ====[tsv-sample -d @ -H -s -p -n 20 input2x7_atsign.tsv]====
-random_weight@title@weight
+random_value@title@weight
 0.96055546286515892@幽霊書店@5903
 0.7571015392895788@Aristophanis Lysistrata@5464
 0.52525980887003243@マルチン・ルターの小信仰問答書@5489
@@ -717,7 +752,7 @@ random_weight@title@weight
 0.010968807619065046@友情@5992
 
 ====[tsv-sample -d @ -H -s -p --rate 1.0 input2x7_atsign.tsv]====
-random_weight@title@weight
+random_value@title@weight
 0.010968807619065046@友情@5992
 0.15929344086907804@法螺男爵旅土産@5803
 0.49287854949943721@續惡魔@5815

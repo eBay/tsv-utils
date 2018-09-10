@@ -1,0 +1,15 @@
+Error test set 2
+----------------
+
+====[tsv-sample -H -w 2 input3x25.tsv]====
+Error [tsv-sample]: Could not process line: no digits seen for input "Белые ночи".
+  File: input3x25.tsv Line: 2
+line	title	weight
+
+====[tsv-sample -w 3 input3x25.tsv]====
+Error [tsv-sample]: Could not process line: no digits seen for input "weight".
+  File: input3x25.tsv Line: 1
+  Is this a header line? Use --H|header to skip.
+
+====[tsv-sample -r -v 10 -k 1 input4x50.tsv input4x15.tsv]====
+[tsv-sample] Error processing command line arguments: no digits seen for input "-v".

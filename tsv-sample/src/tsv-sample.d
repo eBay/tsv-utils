@@ -70,7 +70,7 @@ are available:
   weighted random sampling, with the weight taken from a field. Lines
   are output in the weighted sample selection order, reordering the lines.
 
-The '--n|num' option limits the sample sized produced. It speeds up line
+The '--n|num' option limits the sample size produced. It speeds up line
 order randomization and weighted sampling significantly.
 
 Use '--help-verbose' for detailed information.
@@ -95,7 +95,7 @@ are available:
   weighted random sampling, with the weight taken from a field. Lines
   are output in the weighted sample selection order, reordering the lines.
 
-Sample size: The '--n|num' option limits the sample sized produced. This
+Sample size: The '--n|num' option limits the sample size produced. This
 speeds up line order randomization and weighted sampling significantly
 (details below).
 
@@ -105,18 +105,6 @@ multiple runs produce the same results. This works by using the same
 random seed each run. The random seed can be specified using
 '--v|seed-value'. This takes a non-zero, 32-bit positive integer. (A zero
 value is a no-op and ignored.)
-
-Generating random weights: These algorithms work by generating a random
-weight for each line. These values can be output using the
-'--p|print-random' option. The random weight is prepended to the line
-separated by TAB or the --d|delimiter char. The '--q|gen-random-inorder'
-option takes this one step further, generating random weights for all
-input lines without changing the input order. There is no sampling or
-line order randomization when this option is used, only generation of
-weights. Weights are in the interval [0,1]. The open/closed aspects of
-the interval (including/excluding 0.0 and 1.0) are subject to change and
-should not be relied on. Note that when using weighted random sampling
-the values form a partial ordering, not a probability.
 
 Reservoir sampling: Input line randomization and weighted sampling are
 implemented using reservoir sampling. This means all lines output must be
@@ -146,6 +134,24 @@ info on the sampling approach see:
 * "Weighted Random Sampling over Data Streams", Pavlos S. Efraimidis
   (https://arxiv.org/abs/1012.0256)
 
+Printing random values: These algorithms work by generating a random
+value for each line. The nature of these values depends on the sampling
+algorithm. They are used for both line selection and output ordering. The
+'--p|print-random' option can be used to print these values. The random
+value is prepended to the line separated by the --d|delimiter char (TAB by
+default). The '--q|gen-random-inorder' option takes this one step further,
+generating random values for all input lines without changing the input
+order. The types of values currently used by these sampling algorithms:
+* Unweighted sampling: Uniform random value in the interval [0,1]. This
+  includes stream sampling and unweighted line order randomization.
+* Weighted sampling: Value in the interval [0,1]. Distribution depends on
+  the values in the weight field. It is used as a partial ordering.
+* Distinct sampling: An integer, zero and up, representing a selection
+  group. The sampling rate determines the number of selection groups.
+
+The specifics behind these random values are subject to change in future
+releases. At present no changes are planned or expected.
+
 Options:
 EOS";
 
@@ -156,15 +162,16 @@ struct TsvSampleOptions
     string programName;
     string[] files;
     bool helpVerbose = false;         // --help-verbose
-    double sampleRate = double.nan;   // --r|rate - Sampling rate
-    size_t sampleSize = 0;            // --n|num - Size of the desired sample
-    size_t weightField = 0;           // --w|weight-field - Field holding the weight
-    size_t[] keyFields;               // --k|key-fields - Used with sampling rate
     bool hasHeader = false;           // --H|header
-    bool printRandom = false;         // --p|print-random
-    bool genRandomInorder = false;    // --q|gen-random-inorder
+    size_t sampleSize = 0;            // --n|num - Size of the desired sample
+    double sampleRate = double.nan;   // --r|rate - Sampling rate
+    size_t[] keyFields;               // --k|key-fields - Used with sampling rate
+    size_t weightField = 0;           // --w|weight-field - Field holding the weight
     bool staticSeed = false;          // --s|static-seed
     uint seedValueOptionArg = 0;      // --v|seed-value
+    bool printRandom = false;         // --p|print-random
+    bool genRandomInorder = false;    // --q|gen-random-inorder
+    string randomValueHeader = "random_value";  // --random-value-header
     char delim = '\t';                // --d|delimiter
     bool versionWanted = false;       // --V|version
     bool hasWeightField = false;      // Derived.
@@ -174,6 +181,7 @@ struct TsvSampleOptions
 
     auto processArgs(ref string[] cmdArgs)
     {
+        import std.algorithm : canFind;
         import std.getopt;
         import std.math : isNaN;
         import std.path : baseName, stripExtension;
@@ -188,23 +196,27 @@ struct TsvSampleOptions
             auto r = getopt(
                 cmdArgs,
                 "help-verbose",    "     Print more detailed help.", &helpVerbose,
+
                 std.getopt.config.caseSensitive,
                 "H|header",        "     Treat the first line of each file as a header.", &hasHeader,
                 std.getopt.config.caseInsensitive,
-                "n|num",           "NUM  Number of lines to output. All lines are output if not provided or zero.", &sampleSize,
-                "r|rate",          "NUM  Sampling rating (0.0 < NUM <= 1.0). This sampling mode outputs a random subset of lines. Line order is not changed.", &sampleRate,
+
+                "n|num",           "NUM  Maximim number of lines to output. All selected lines are output if not provided or zero.", &sampleSize,
+                "r|rate",          "NUM  Sampling rating (0.0 < NUM <= 1.0). The desired portion of lines to include in the random subset.", &sampleRate,
 
                 "k|key-fields",    "<field-list>  Fields to use as key for distinct sampling. Use with --r|rate.",
                 keyFields.makeFieldListOptionHandler!(size_t, Yes.convertToZeroBasedIndex),
-                "w|weight-field",         "NUM  Field containing weights. All lines get equal weight if not provided or zero.", &weightField,
 
-                "p|print-random",  "     Include the assigned random value (prepended) when writing output lines.", &printRandom,
-                "q|gen-random-inorder", "     Output all lines with assigned random values prepended, no changes to the order of input.", &genRandomInorder,
+                "w|weight-field",  "NUM  Field containing weights. All lines get equal weight if not provided or zero.", &weightField,
                 "s|static-seed",   "     Use the same random seed every run.", &staticSeed,
 
                 std.getopt.config.caseSensitive,
                 "v|seed-value",    "NUM  Sets the initial random seed. Use a non-zero, 32 bit positive integer. Zero is a no-op.", &seedValueOptionArg,
                 std.getopt.config.caseInsensitive,
+
+                "p|print-random",       "     Include the assigned random value (prepended) when writing output lines.", &printRandom,
+                "q|gen-random-inorder", "     Output all lines with assigned random values prepended, no changes to the order of input.", &genRandomInorder,
+                "random-value-header",  "     Header to use with --p|print-random and --q|gen-random-inorder. Default: 'random_value'.", &randomValueHeader,
 
                 "d|delimiter",     "CHR  Field delimiter.", &delim,
 
@@ -240,7 +252,6 @@ struct TsvSampleOptions
             if (keyFields.length > 0)
             {
                 if (sampleRate.isNaN) throw new Exception("--r|rate is required when using --k|key-fields.");
-                if (genRandomInorder) throw new Exception("--q|gen-random-inorder and --k|key-fields cannot be used together.");
             }
 
             /* Sample rate (--r|rate) is used for both stream sampling and distinct sampling. */
@@ -253,11 +264,18 @@ struct TsvSampleOptions
                         format("Invalid --r|rate option: %g. Must satisfy 0.0 < rate <= 1.0.", sampleRate));
                 }
 
-                if (hasWeightField) throw new Exception("--w|weight-field and --r|rate cannot be used together.");
-                if (genRandomInorder) throw new Exception("--q|gen-random-inorder and --r|rate cannot be used together.");
-
                 if (keyFields.length > 0) useDistinctSampling = true;
                 else useStreamSampling = true;
+
+                if (hasWeightField) throw new Exception("--w|weight-field and --r|rate cannot be used together.");
+                if (genRandomInorder && !useDistinctSampling) throw new Exception("--q|gen-random-inorder and --r|rate can only be used together if --k|key-fields is also used.");
+
+            }
+
+            if (randomValueHeader.length == 0 || randomValueHeader.canFind('\n') ||
+                randomValueHeader.canFind(delim))
+            {
+                throw new Exception("--randomValueHeader string must be at least one character and not contain field delimiters or newlines.");
             }
 
             /* Seed. */
@@ -283,8 +301,9 @@ struct TsvSampleOptions
  */
 void tsvSample(OutputRange)(TsvSampleOptions cmdopt, OutputRange outputStream)
 {
-    if (cmdopt.genRandomInorder)
+    if (cmdopt.genRandomInorder && !cmdopt.useDistinctSampling)
     {
+        /* Note: distinctSampling has its own support for genRandomInorder. */
         generateRandomWeightsInorder(cmdopt, outputStream);
     }
     else if (cmdopt.useStreamSampling)
@@ -330,7 +349,7 @@ void generateRandomWeightsInorder(OutputRange)(TsvSampleOptions cmdopt, OutputRa
             {
                 if (!headerWritten)
                 {
-                    outputStream.put("random_weight");
+                    outputStream.put(cmdopt.randomValueHeader);
                     outputStream.put(cmdopt.delim);
                     outputStream.put(line);
                     outputStream.put("\n");
@@ -398,7 +417,7 @@ void streamSampling(OutputRange)(TsvSampleOptions cmdopt, OutputRange outputStre
                 {
                     if (cmdopt.printRandom)
                     {
-                        outputStream.put("random_weight");
+                        outputStream.put(cmdopt.randomValueHeader);
                         outputStream.put(cmdopt.delim);
                     }
                     outputStream.put(line);
@@ -436,6 +455,12 @@ void streamSampling(OutputRange)(TsvSampleOptions cmdopt, OutputRange outputStre
  * Distinct sampling is done by hashing the key and mapping the hash value into
  * buckets matching the sampling rate size. Records having a key mapping to bucket
  * zero are output.
+ *
+ * Regarding generation of random values: Distinct sampling operates on random buckets
+ * indexes, not random numbers. In normal mode all selected lines have the same bucket
+ * index, it doesn't make sense to print them. So TsvSampleOptions.printRandom is not
+ * supported. However, printing the buckets of all lines may be useful, so
+ * TsvSampleOptions.genRandomInorder is supported.
  */
 void distinctSampling(OutputRange)(TsvSampleOptions cmdopt, OutputRange outputStream)
     if (isOutputRange!(OutputRange, char))
@@ -469,6 +494,11 @@ void distinctSampling(OutputRange)(TsvSampleOptions cmdopt, OutputRange outputSt
             {
                 if (!headerWritten)
                 {
+                    if (cmdopt.genRandomInorder || cmdopt.printRandom)
+                    {
+                        outputStream.put(cmdopt.randomValueHeader);
+                        outputStream.put(cmdopt.delim);
+                    }
                     outputStream.put(line);
                     outputStream.put("\n");
                     headerWritten = true;
@@ -499,8 +529,27 @@ void distinctSampling(OutputRange)(TsvSampleOptions cmdopt, OutputRange outputSt
                     hasher.put(cast(ubyte[]) key);
                 }
                 hasher.finish;
-                if (hasher.get % numBuckets == 0)
+                if (cmdopt.genRandomInorder)
                 {
+                    import std.conv : to;
+                    outputStream.put((hasher.get % numBuckets).to!string);
+                    outputStream.put(cmdopt.delim);
+                    outputStream.put(line);
+                    outputStream.put("\n");
+
+                    if (cmdopt.sampleSize != 0)
+                    {
+                        ++numLinesWritten;
+                        if (numLinesWritten == cmdopt.sampleSize) return;
+                    }
+                }
+                else if (hasher.get % numBuckets == 0)
+                {
+                    if (cmdopt.printRandom)
+                    {
+                        outputStream.put('0');
+                        outputStream.put(cmdopt.delim);
+                    }
                     outputStream.put(line);
                     outputStream.put("\n");
 
@@ -601,7 +650,7 @@ void reservoirSampling(Flag!"permuteAll" permuteAll, OutputRange)
                 {
                     if (cmdopt.printRandom)
                     {
-                        outputStream.put("random_weight");
+                        outputStream.put(cmdopt.randomValueHeader);
                         outputStream.put(cmdopt.delim);
                     }
                     outputStream.put(line);
@@ -873,7 +922,7 @@ unittest
          ["red", "赤", "23.8"]];
 
     string[][] data3x6ExpectedNoWtProbs =
-        [["random_weight", "field_a", "field_b", "field_c"],
+        [["random_value", "field_a", "field_b", "field_c"],
          ["0.96055546286515892", "yellow", "黄", "12"],
          ["0.7571015392895788", "black", "黒", "0.983"],
          ["0.52525980887003243", "blue", "青", "12"],
@@ -882,7 +931,7 @@ unittest
          ["0.010968807619065046", "red", "赤", "23.8"]];
 
     string[][] data3x6ExpectedProbsStreamSampleP100 =
-        [["random_weight", "field_a", "field_b", "field_c"],
+        [["random_value", "field_a", "field_b", "field_c"],
          ["0.010968807619065046", "red", "赤", "23.8"],
          ["0.15929344086907804", "green", "緑", "0.0072"],
          ["0.49287854949943721", "white", "白", "1.65"],
@@ -891,7 +940,7 @@ unittest
          ["0.7571015392895788", "black", "黒", "0.983"]];
 
     string[][] data3x6ExpectedProbsStreamSampleP60 =
-        [["random_weight", "field_a", "field_b", "field_c"],
+        [["random_value", "field_a", "field_b", "field_c"],
          ["0.010968807619065046", "red", "赤", "23.8"],
          ["0.15929344086907804", "green", "緑", "0.0072"],
          ["0.49287854949943721", "white", "白", "1.65"],
@@ -910,8 +959,29 @@ unittest
          ["white", "白", "1.65"],
          ["blue", "青", "12"]];
 
+    string[][] data3x6ExpectedDistinctSampleK1K3P60Probs =
+        [["random_value", "field_a", "field_b", "field_c"],
+         ["0", "green", "緑", "0.0072"],
+         ["0", "white", "白", "1.65"],
+         ["0", "blue", "青", "12"]];
+
+    string[][] data3x6ExpectedDistinctSampleK1K3P60ProbsRVCustom =
+        [["custom_random_value_header", "field_a", "field_b", "field_c"],
+         ["0", "green", "緑", "0.0072"],
+         ["0", "white", "白", "1.65"],
+         ["0", "blue", "青", "12"]];
+
+    string[][] data3x6ExpectedDistinctSampleK2P2ProbsInorder =
+        [["random_value", "field_a", "field_b", "field_c"],
+         ["1", "red", "赤", "23.8"],
+         ["0", "green", "緑", "0.0072"],
+         ["0", "white", "白", "1.65"],
+         ["1", "yellow", "黄", "12"],
+         ["3", "blue", "青", "12"],
+         ["2", "black", "黒", "0.983"]];
+
     string[][] data3x6ExpectedWt3Probs =
-        [["random_weight", "field_a", "field_b", "field_c"],
+        [["random_value", "field_a", "field_b", "field_c"],
          ["0.9966519875764539", "yellow", "黄", "12"],
          ["0.94775884809836686", "blue", "青", "12"],
          ["0.82728234682286661", "red", "赤", "23.8"],
@@ -920,7 +990,7 @@ unittest
          ["1.5636943712879866e-111", "green", "緑", "0.0072"]];
 
     string[][] data3x6ExpectedWt3ProbsInorder =
-        [["random_weight", "field_a", "field_b", "field_c"],
+        [["random_value", "field_a", "field_b", "field_c"],
          ["0.82728234682286661", "red", "赤", "23.8"],
          ["1.5636943712879866e-111", "green", "緑", "0.0072"],
          ["0.65130103496422487", "white", "白", "1.65"],
@@ -939,7 +1009,7 @@ unittest
 
     /* Using a different static seed. */
     string[][] data3x6ExpectedNoWtV41Probs =
-        [["random_weight", "field_a", "field_b", "field_c"],
+        [["random_value", "field_a", "field_b", "field_c"],
          ["0.68057272653095424", "green", "緑", "0.0072"],
          ["0.67681624367833138", "blue", "青", "12"],
          ["0.32097338931635022", "yellow", "黄", "12"],
@@ -948,14 +1018,14 @@ unittest
          ["0.04609582107514143", "white", "白", "1.65"]];
 
     string[][] data3x6ExpectedV41ProbsStreamSampleP60 =
-        [["random_weight", "field_a", "field_b", "field_c"],
+        [["random_value", "field_a", "field_b", "field_c"],
          ["0.25092361867427826", "red", "赤", "23.8"],
          ["0.04609582107514143", "white", "白", "1.65"],
          ["0.32097338931635022", "yellow", "黄", "12"],
          ["0.15535934292711318", "black", "黒", "0.983"]];
 
     string[][] data3x6ExpectedWt3V41Probs =
-        [["random_weight", "field_a", "field_b", "field_c"],
+        [["random_value", "field_a", "field_b", "field_c"],
          ["0.96799377498910666", "blue", "青", "12"],
          ["0.94356245792573568", "red", "赤", "23.8"],
          ["0.90964601024271996", "yellow", "黄", "12"],
@@ -964,7 +1034,7 @@ unittest
          ["6.1394674830701461e-24", "green", "緑", "0.0072"]];
 
     string[][] data3x6ExpectedWt3V41ProbsInorder =
-        [["random_weight", "field_a", "field_b", "field_c"],
+        [["random_value", "field_a", "field_b", "field_c"],
          ["0.94356245792573568", "red", "赤", "23.8"],
          ["6.1394674830701461e-24", "green", "緑", "0.0072"],
          ["0.15491658409260103", "white", "白", "1.65"],
@@ -990,7 +1060,7 @@ unittest
          ["orange", "オレンジ", "2.5"]];
 
     string[][] combo1ExpectedNoWtProbs =
-        [["random_weight", "field_a", "field_b", "field_c"],
+        [["random_value", "field_a", "field_b", "field_c"],
          ["0.97088520275428891", "yellow", "黄", "12"],
          ["0.96055546286515892", "tan", "タン", "8.5"],
          ["0.81756894313730299", "brown", "褐色", "29.2"],
@@ -1006,7 +1076,7 @@ unittest
 
     /* Combo 1: 3x3, 3x1, 3x6, 3x2. No data files, only expected results. */
     string[][] combo1ExpectedNoWtProbsInorder =
-        [["random_weight", "field_a", "field_b", "field_c"],
+        [["random_value", "field_a", "field_b", "field_c"],
          ["0.010968807619065046", "orange", "オレンジ", "2.5"],
          ["0.15929344086907804", "pink", "ピンク", "1.1"],
          ["0.49287854949943721", "purple", "紫の", "42"],
@@ -1021,7 +1091,7 @@ unittest
          ["0.29215990612283349", "gray", "グレー", "6.2"]];
 
     string[][] combo1ExpectedProbsStreamSampleP50 =
-        [["random_weight", "field_a", "field_b", "field_c"],
+        [["random_value", "field_a", "field_b", "field_c"],
          ["0.010968807619065046", "orange", "オレンジ", "2.5"],
          ["0.15929344086907804", "pink", "ピンク", "1.1"],
          ["0.49287854949943721", "purple", "紫の", "42"],
@@ -1047,7 +1117,7 @@ unittest
          ["black", "黒", "0.983"]];
 
     string[][] combo1ExpectedWt3Probs =
-        [["random_weight", "field_a", "field_b", "field_c"],
+        [["random_value", "field_a", "field_b", "field_c"],
          ["0.99754077523718754", "yellow", "黄", "12"],
          ["0.99527665440088786", "tan", "タン", "8.5"],
          ["0.99312578945741659", "brown", "褐色", "29.2"],
@@ -1108,7 +1178,7 @@ unittest
     writeUnittestTsvFile(fpath_data2x10a, data2x10a);
 
     string[][] data2x10aExpectedWt2Probs =
-        [["random_weight", "line", "weight"],
+        [["random_value", "line", "weight"],
          ["0.96833865494543658", "8", "0.91836862"],
          ["0.91856842054413923", "4", "0.47379424"],
          ["0.25730832087795091", "7", "0.70529242"],
@@ -1138,7 +1208,7 @@ unittest
     writeUnittestTsvFile(fpath_data2x10b, data2x10b);
 
     string[][] data2x10bExpectedWt2Probs =
-        [["random_weight", "line", "weight"],
+        [["random_value", "line", "weight"],
          ["0.99996486739067969", "8", "841"],
          ["0.99991017467137211", "4", "448"],
          ["0.99960871524873662", "6", "711"],
@@ -1168,7 +1238,7 @@ unittest
     writeUnittestTsvFile(fpath_data2x10c, data2x10c);
 
     string[][] data2x10cExpectedWt2Probs =
-        [["random_weight", "line", "weight"],
+        [["random_value", "line", "weight"],
          ["0.99998939008709697", "6", "26226.08"],
          ["0.99995951291695517", "9", "35213.81"],
          ["0.99991666907613541", "8", "354.56"],
@@ -1198,7 +1268,7 @@ unittest
     writeUnittestTsvFile(fpath_data2x10d, data2x10d);
 
     string[][] data2x10dExpectedWt2Probs =
-        [["random_weight", "line", "weight"],
+        [["random_value", "line", "weight"],
          ["0.99999830221846353", "8", "17403.31"],
          ["0.99997860834041397", "10", "35213.81"],
          ["0.99994563828986716", "9", "26226.08"],
@@ -1227,7 +1297,7 @@ unittest
     writeUnittestTsvFile(fpath_data2x10e, data2x10e);
 
     string[][] data2x10eExpectedWt2Probs =
-        [["random_weight", "line", "weight"],
+        [["random_value", "line", "weight"],
          ["0.99998493348975237", "4", "2671.04"],
          ["0.99995934807202624", "3", "17403.31"],
          ["0.99992995739727453", "2", "26226.08"],
@@ -1351,14 +1421,23 @@ unittest
     testTsvSample(["test-a24", "--header", "--static-seed", "--rate", "0.001", "--key-fields", "1", fpath_data3x0], data3x0);
     testTsvSample(["test-a25", "-H", "-s", "-r", "1.0", "-k", "2", fpath_data3x1], data3x1);
     testTsvSample(["test-a26", "-H", "-s", "-r", "1.0", "-k", "2", fpath_data3x6], data3x6);
+    testTsvSample(["test-a27", "-H", "-s", "-r", "0.6", "-k", "1,3", fpath_data3x6], data3x6ExpectedDistinctSampleK1K3P60);
 
     /* Generating random weights. Use stream sampling test set at prob 100% for uniform sampling.
      * For weighted sampling, use the weighted cases, but with expected using the original ordering.
      */
-    testTsvSample(["test-a27", "-H", "-s", "--gen-random-inorder", fpath_data3x6], data3x6ExpectedProbsStreamSampleP100);
-    testTsvSample(["test-a28", "-H", "-s", "-q", fpath_data3x6], data3x6ExpectedProbsStreamSampleP100);
-    testTsvSample(["test-a29", "-H", "-s", "--gen-random-inorder", "--weight-field", "3", fpath_data3x6], data3x6ExpectedWt3ProbsInorder);
-    testTsvSample(["test-a30", "-H", "-v", "41", "--gen-random-inorder", "--weight-field", "3", fpath_data3x6], data3x6ExpectedWt3V41ProbsInorder);
+    testTsvSample(["test-a28", "-H", "-s", "--gen-random-inorder", fpath_data3x6], data3x6ExpectedProbsStreamSampleP100);
+    testTsvSample(["test-a29", "-H", "-s", "-q", fpath_data3x6], data3x6ExpectedProbsStreamSampleP100);
+    testTsvSample(["test-a30", "-H", "-s", "--gen-random-inorder", "--weight-field", "3", fpath_data3x6],
+                  data3x6ExpectedWt3ProbsInorder);
+    testTsvSample(["test-a31", "-H", "-v", "41", "--gen-random-inorder", "--weight-field", "3", fpath_data3x6],
+                  data3x6ExpectedWt3V41ProbsInorder);
+    testTsvSample(["test-a32", "-H", "-s", "-r", "0.6", "-k", "1,3", "--print-random", fpath_data3x6],
+                  data3x6ExpectedDistinctSampleK1K3P60Probs);
+    testTsvSample(["test-a33", "-H", "-s", "-r", "0.6", "-k", "1,3", "--print-random", "--random-value-header",
+                   "custom_random_value_header", fpath_data3x6], data3x6ExpectedDistinctSampleK1K3P60ProbsRVCustom);
+    testTsvSample(["test-a34", "-H", "-s", "-r", "0.2", "-k", "2", "--gen-random-inorder", fpath_data3x6],
+                  data3x6ExpectedDistinctSampleK2P2ProbsInorder);
 
     /* Basic tests, without headers. */
     testTsvSample(["test-b1", "-s", fpath_data3x1_noheader], data3x1[1..$]);
@@ -1388,6 +1467,10 @@ unittest
     /* Generating random weights. Reuse stream sampling tests at prob 100%. */
     testTsvSample(["test-b20", "-s", "--gen-random-inorder", fpath_data3x6_noheader], data3x6ExpectedProbsStreamSampleP100[1..$]);
     testTsvSample(["test-b23", "-v", "41", "--gen-random-inorder", "--weight-field", "3", fpath_data3x6_noheader], data3x6ExpectedWt3V41ProbsInorder[1..$]);
+    testTsvSample(["test-b24", "-s", "-r", "0.6", "-k", "1,3", "--print-random", fpath_data3x6_noheader],
+                  data3x6ExpectedDistinctSampleK1K3P60Probs[1..$]);
+    testTsvSample(["test-b24", "-s", "-r", "0.2", "-k", "2", "--gen-random-inorder", fpath_data3x6_noheader],
+                  data3x6ExpectedDistinctSampleK2P2ProbsInorder[1..$]);
 
     /* Multi-file tests. */
     testTsvSample(["test-c1", "--header", "--static-seed",

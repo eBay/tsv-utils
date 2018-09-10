@@ -4,9 +4,12 @@
             "name" : "basic_tests_1.txt"
         },
         {
-            "name" : "error_tests_1.txt",
+            "name" : "error_tests_1.txt"
+        },
+        {
+            "name" : "error_tests_2.txt",
             "versions" : [
-                "error_tests_1.2081.txt"
+                "error_tests_2.2081.txt"
             ]
         }
     ]
