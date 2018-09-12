@@ -40,116 +40,116 @@ line	title	weight
 1	Álomvilág: Elbeszélések	41
 
 ====[tsv-sample -H -s --print-random input3x10.tsv input3x25.tsv]====
-random_weight	line	title	weight
-0.970885202754289	8	Door het land der Skipetaren	30
-0.969593747984618	11	Il "Damo viennese"	23
-0.960555462865159	4	Soitannollisia satuja ja jutelmia	44
-0.906713020289317	23	佛說四十二章經	81
-0.839732071151957	24	La Navidad en las Montañas	100
-0.817568943137303	1	Белые ночи	98
-0.757101539289579	6	Piepkuikentje	17
-0.726618220796809	19	Annie Laurie and Azalea	85
-0.65936282207258	6	Große und kleine Welt	91
-0.62307748827152	14	Pasáček Ali: Pověst z východu	64
-0.59256785036996	18	Right Half Hollins	67
-0.567146313842386	12	הצופה לבית ישראל	91
-0.525259808870032	5	Pinocchion seikkailut	19
-0.524572343332693	16	Leabhráin an Irisleabhair—III	53
-0.503459493629634	22	豆棚閒話	73
-0.492878549499437	3	Mesék és regék	20
-0.470815070671961	10	Platero y yo	2
-0.435718655353412	8	Διδαχή των Δώδεκα αποστόλων	2
-0.394461805233732	17	Diné yázhí ba'áłchíní	88
-0.383881829213351	7	Oude Egyptische Legenden	28
-0.362185555044562	15	Zápisky z mrtvého domu	52
-0.336118975421414	9	Nanà a Milano	41
-0.334625287912786	20	羅生門	87
-0.327229688875377	21	入れかわった男	33
-0.292159906122833	2	Детство	4
-0.277428285917267	3	Записки из подполья	78
-0.240332160145044	9	Las Fábulas de Esopo	45
-0.193436801200733	13	בית נכות ההלכות	47
-0.159293440869078	2	Grimm testvérek összegyüjtött meséi	9
-0.144992069806904	10	L'olmo e l'edera	78
-0.137705907225609	7	Arabische Nächte	66
-0.136895684059709	5	Märchen für Kinder	73
-0.135690446943045	4	Fru Inger til Østråt	26
-0.0307818604633212	25	Don Quijote	88
-0.010968807619065	1	Álomvilág: Elbeszélések	41
+random_value	line	title	weight
+0.97088520275428891	8	Door het land der Skipetaren	30
+0.96959374798461795	11	Il "Damo viennese"	23
+0.96055546286515892	4	Soitannollisia satuja ja jutelmia	44
+0.90671302028931677	23	佛說四十二章經	81
+0.83973207115195692	24	La Navidad en las Montañas	100
+0.81756894313730299	1	Белые ночи	98
+0.7571015392895788	6	Piepkuikentje	17
+0.7266182207968086	19	Annie Laurie and Azalea	85
+0.65936282207258046	6	Große und kleine Welt	91
+0.62307748827151954	14	Pasáček Ali: Pověst z východu	64
+0.59256785036996007	18	Right Half Hollins	67
+0.56714631384238601	12	הצופה לבית ישראל	91
+0.52525980887003243	5	Pinocchion seikkailut	19
+0.52457234333269298	16	Leabhráin an Irisleabhair—III	53
+0.50345949362963438	22	豆棚閒話	73
+0.49287854949943721	3	Mesék és regék	20
+0.47081507067196071	10	Platero y yo	2
+0.43571865535341203	8	Διδαχή των Δώδεκα αποστόλων	2
+0.39446180523373187	17	Diné yázhí ba'áłchíní	88
+0.38388182921335101	7	Oude Egyptische Legenden	28
+0.36218555504456162	15	Zápisky z mrtvého domu	52
+0.33611897542141378	9	Nanà a Milano	41
+0.33462528791278601	20	羅生門	87
+0.32722968887537718	21	入れかわった男	33
+0.29215990612283349	2	Детство	4
+0.2774282859172672	3	Записки из подполья	78
+0.24033216014504433	9	Las Fábulas de Esopo	45
+0.19343680120073259	13	בית נכות ההלכות	47
+0.15929344086907804	2	Grimm testvérek összegyüjtött meséi	9
+0.1449920698069036	10	L'olmo e l'edera	78
+0.13770590722560883	7	Arabische Nächte	66
+0.13689568405970931	5	Märchen für Kinder	73
+0.13569044694304466	4	Fru Inger til Østråt	26
+0.030781860463321209	25	Don Quijote	88
+0.010968807619065046	1	Álomvilág: Elbeszélések	41
 
 ====[tsv-sample -H -s -p --weight-field 3 input3x10.tsv input3x25.tsv]====
-random_weight	line	title	weight
-0.999085791899963	4	Soitannollisia satuja ja jutelmia	44
-0.999015583407115	8	Door het land der Skipetaren	30
-0.998791727039833	23	佛說四十二章經	81
-0.998658374189001	11	Il "Damo viennese"	23
-0.998254800625162	24	La Navidad en las Montañas	100
-0.997946804107992	1	Белые ночи	98
-0.996249942239627	19	Annie Laurie and Azalea	85
-0.995433739286886	6	Große und kleine Welt	91
-0.993787095138968	12	הצופה לבית ישראל	91
-0.992635309648981	14	Pasáček Ali: Pověst z východu	64
-0.99222012414636	18	Right Half Hollins	67
-0.990643335963332	22	豆棚閒話	73
-0.989484845756327	17	Diné yázhí ba'áłchíní	88
-0.987900736580526	16	Leabhráin an Irisleabhair—III	53
+random_value	line	title	weight
+0.99908579189996327	4	Soitannollisia satuja ja jutelmia	44
+0.99901558340711527	8	Door het land der Skipetaren	30
+0.99879172703983321	23	佛說四十二章經	81
+0.99865837418900094	11	Il "Damo viennese"	23
+0.99825480062516203	24	La Navidad en las Montañas	100
+0.99794680410799219	1	Белые ночи	98
+0.99624994223962704	19	Annie Laurie and Azalea	85
+0.99543373928688561	6	Große und kleine Welt	91
+0.99378709513896757	12	הצופה לבית ישראל	91
+0.9926353096489805	14	Pasáček Ali: Pověst z východu	64
+0.99222012414636029	18	Right Half Hollins	67
+0.99064333596333232	22	豆棚閒話	73
+0.98948484575632678	17	Diné yázhí ba'áłchíní	88
+0.98790073658052613	16	Leabhráin an Irisleabhair—III	53
 0.987495574821046	20	羅生門	87
-0.983765117837751	6	Piepkuikentje	17
-0.983696003358939	3	Записки из подполья	78
-0.980658746720264	15	Zápisky z mrtvého domu	52
-0.97554656305988	10	L'olmo e l'edera	78
-0.973758024338811	9	Nanà a Milano	41
-0.973127448590103	5	Märchen für Kinder	73
-0.970406790387845	7	Arabische Nächte	66
-0.968813683676808	9	Las Fábulas de Esopo	45
-0.966715243270872	21	入れかわった男	33
-0.966680262017004	5	Pinocchion seikkailut	19
-0.966384404509873	7	Oude Egyptische Legenden	28
-0.965650524877013	13	בית נכות ההלכות	47
-0.965243744793296	3	Mesék és regék	20
-0.961217198010325	25	Don Quijote	88
-0.926054423322965	4	Fru Inger til Østråt	26
-0.895775149722165	1	Álomvilág: Elbeszélések	41
-0.815371113585156	2	Grimm testvérek összegyüjtött meséi	9
-0.735199417145797	2	Детство	4
-0.686159653923167	10	Platero y yo	2
-0.660089884298655	8	Διδαχή των Δώδεκα αποστόλων	2
+0.98376511783775056	6	Piepkuikentje	17
+0.98369600335893936	3	Записки из подполья	78
+0.98065874672026443	15	Zápisky z mrtvého domu	52
+0.9755465630598803	10	L'olmo e l'edera	78
+0.97375802433881131	9	Nanà a Milano	41
+0.97312744859010325	5	Märchen für Kinder	73
+0.97040679038784505	7	Arabische Nächte	66
+0.96881368367680809	9	Las Fábulas de Esopo	45
+0.96671524327087166	21	入れかわった男	33
+0.96668026201700386	5	Pinocchion seikkailut	19
+0.96638440450987295	7	Oude Egyptische Legenden	28
+0.96565052487701286	13	בית נכות ההלכות	47
+0.96524374479329644	3	Mesék és regék	20
+0.96121719801032457	25	Don Quijote	88
+0.92605442332296461	4	Fru Inger til Østråt	26
+0.8957751497221651	1	Álomvilág: Elbeszélések	41
+0.81537111358515613	2	Grimm testvérek összegyüjtött meséi	9
+0.73519941714579717	2	Детство	4
+0.68615965392316725	10	Platero y yo	2
+0.66008988429865523	8	Διδαχή των Δώδεκα αποστόλων	2
 
 ====[tsv-sample -H -s -p -w 3 --num 15 input3x10.tsv input3x25.tsv]====
-random_weight	line	title	weight
-0.999085791899963	4	Soitannollisia satuja ja jutelmia	44
-0.999015583407115	8	Door het land der Skipetaren	30
-0.998791727039833	23	佛說四十二章經	81
-0.998658374189001	11	Il "Damo viennese"	23
-0.998254800625162	24	La Navidad en las Montañas	100
-0.997946804107992	1	Белые ночи	98
-0.996249942239627	19	Annie Laurie and Azalea	85
-0.995433739286886	6	Große und kleine Welt	91
-0.993787095138968	12	הצופה לבית ישראל	91
-0.992635309648981	14	Pasáček Ali: Pověst z východu	64
-0.99222012414636	18	Right Half Hollins	67
-0.990643335963332	22	豆棚閒話	73
-0.989484845756327	17	Diné yázhí ba'áłchíní	88
-0.987900736580526	16	Leabhráin an Irisleabhair—III	53
+random_value	line	title	weight
+0.99908579189996327	4	Soitannollisia satuja ja jutelmia	44
+0.99901558340711527	8	Door het land der Skipetaren	30
+0.99879172703983321	23	佛說四十二章經	81
+0.99865837418900094	11	Il "Damo viennese"	23
+0.99825480062516203	24	La Navidad en las Montañas	100
+0.99794680410799219	1	Белые ночи	98
+0.99624994223962704	19	Annie Laurie and Azalea	85
+0.99543373928688561	6	Große und kleine Welt	91
+0.99378709513896757	12	הצופה לבית ישראל	91
+0.9926353096489805	14	Pasáček Ali: Pověst z východu	64
+0.99222012414636029	18	Right Half Hollins	67
+0.99064333596333232	22	豆棚閒話	73
+0.98948484575632678	17	Diné yázhí ba'áłchíní	88
+0.98790073658052613	16	Leabhráin an Irisleabhair—III	53
 0.987495574821046	20	羅生門	87
 
 ====[tsv-sample -H -s -p -n 15 input3x10.tsv input3x25.tsv]====
-random_weight	line	title	weight
-0.970885202754289	8	Door het land der Skipetaren	30
-0.969593747984618	11	Il "Damo viennese"	23
-0.960555462865159	4	Soitannollisia satuja ja jutelmia	44
-0.906713020289317	23	佛說四十二章經	81
-0.839732071151957	24	La Navidad en las Montañas	100
-0.817568943137303	1	Белые ночи	98
-0.757101539289579	6	Piepkuikentje	17
-0.726618220796809	19	Annie Laurie and Azalea	85
-0.65936282207258	6	Große und kleine Welt	91
-0.62307748827152	14	Pasáček Ali: Pověst z východu	64
-0.59256785036996	18	Right Half Hollins	67
-0.567146313842386	12	הצופה לבית ישראל	91
-0.525259808870032	5	Pinocchion seikkailut	19
-0.524572343332693	16	Leabhráin an Irisleabhair—III	53
-0.503459493629634	22	豆棚閒話	73
+random_value	line	title	weight
+0.97088520275428891	8	Door het land der Skipetaren	30
+0.96959374798461795	11	Il "Damo viennese"	23
+0.96055546286515892	4	Soitannollisia satuja ja jutelmia	44
+0.90671302028931677	23	佛說四十二章經	81
+0.83973207115195692	24	La Navidad en las Montañas	100
+0.81756894313730299	1	Белые ночи	98
+0.7571015392895788	6	Piepkuikentje	17
+0.7266182207968086	19	Annie Laurie and Azalea	85
+0.65936282207258046	6	Große und kleine Welt	91
+0.62307748827151954	14	Pasáček Ali: Pověst z východu	64
+0.59256785036996007	18	Right Half Hollins	67
+0.56714631384238601	12	הצופה לבית ישראל	91
+0.52525980887003243	5	Pinocchion seikkailut	19
+0.52457234333269298	16	Leabhráin an Irisleabhair—III	53
+0.50345949362963438	22	豆棚閒話	73
 
 ====[tsv-sample -H -s -n 100 input3x10.tsv input3x25.tsv]====
 line	title	weight
@@ -189,43 +189,155 @@ line	title	weight
 25	Don Quijote	88
 1	Álomvilág: Elbeszélések	41
 
+====[tsv-sample -H -s --gen-random-inorder --weight-field 3 input3x10.tsv input3x25.tsv]====
+random_value	line	title	weight
+0.8957751497221651	1	Álomvilág: Elbeszélések	41
+0.81537111358515613	2	Grimm testvérek összegyüjtött meséi	9
+0.96524374479329644	3	Mesék és regék	20
+0.99908579189996327	4	Soitannollisia satuja ja jutelmia	44
+0.96668026201700386	5	Pinocchion seikkailut	19
+0.98376511783775056	6	Piepkuikentje	17
+0.96638440450987295	7	Oude Egyptische Legenden	28
+0.99901558340711527	8	Door het land der Skipetaren	30
+0.96881368367680809	9	Las Fábulas de Esopo	45
+0.68615965392316725	10	Platero y yo	2
+0.99794680410799219	1	Белые ночи	98
+0.73519941714579717	2	Детство	4
+0.98369600335893936	3	Записки из подполья	78
+0.92605442332296461	4	Fru Inger til Østråt	26
+0.97312744859010325	5	Märchen für Kinder	73
+0.99543373928688561	6	Große und kleine Welt	91
+0.97040679038784505	7	Arabische Nächte	66
+0.66008988429865523	8	Διδαχή των Δώδεκα αποστόλων	2
+0.97375802433881131	9	Nanà a Milano	41
+0.9755465630598803	10	L'olmo e l'edera	78
+0.99865837418900094	11	Il "Damo viennese"	23
+0.99378709513896757	12	הצופה לבית ישראל	91
+0.96565052487701286	13	בית נכות ההלכות	47
+0.9926353096489805	14	Pasáček Ali: Pověst z východu	64
+0.98065874672026443	15	Zápisky z mrtvého domu	52
+0.98790073658052613	16	Leabhráin an Irisleabhair—III	53
+0.98948484575632678	17	Diné yázhí ba'áłchíní	88
+0.99222012414636029	18	Right Half Hollins	67
+0.99624994223962704	19	Annie Laurie and Azalea	85
+0.987495574821046	20	羅生門	87
+0.96671524327087166	21	入れかわった男	33
+0.99064333596333232	22	豆棚閒話	73
+0.99879172703983321	23	佛說四十二章經	81
+0.99825480062516203	24	La Navidad en las Montañas	100
+0.96121719801032457	25	Don Quijote	88
+
+====[tsv-sample -H -s --gen-random-inorder -n 15 --weight-field 3 input3x10.tsv input3x25.tsv]====
+random_value	line	title	weight
+0.8957751497221651	1	Álomvilág: Elbeszélések	41
+0.81537111358515613	2	Grimm testvérek összegyüjtött meséi	9
+0.96524374479329644	3	Mesék és regék	20
+0.99908579189996327	4	Soitannollisia satuja ja jutelmia	44
+0.96668026201700386	5	Pinocchion seikkailut	19
+0.98376511783775056	6	Piepkuikentje	17
+0.96638440450987295	7	Oude Egyptische Legenden	28
+0.99901558340711527	8	Door het land der Skipetaren	30
+0.96881368367680809	9	Las Fábulas de Esopo	45
+0.68615965392316725	10	Platero y yo	2
+0.99794680410799219	1	Белые ночи	98
+0.73519941714579717	2	Детство	4
+0.98369600335893936	3	Записки из подполья	78
+0.92605442332296461	4	Fru Inger til Østråt	26
+0.97312744859010325	5	Märchen für Kinder	73
+
+====[tsv-sample -H -s -q input3x10.tsv input3x25.tsv]====
+random_value	line	title	weight
+0.010968807619065046	1	Álomvilág: Elbeszélések	41
+0.15929344086907804	2	Grimm testvérek összegyüjtött meséi	9
+0.49287854949943721	3	Mesék és regék	20
+0.96055546286515892	4	Soitannollisia satuja ja jutelmia	44
+0.52525980887003243	5	Pinocchion seikkailut	19
+0.7571015392895788	6	Piepkuikentje	17
+0.38388182921335101	7	Oude Egyptische Legenden	28
+0.97088520275428891	8	Door het land der Skipetaren	30
+0.24033216014504433	9	Las Fábulas de Esopo	45
+0.47081507067196071	10	Platero y yo	2
+0.81756894313730299	1	Белые ночи	98
+0.29215990612283349	2	Детство	4
+0.2774282859172672	3	Записки из подполья	78
+0.13569044694304466	4	Fru Inger til Østråt	26
+0.13689568405970931	5	Märchen für Kinder	73
+0.65936282207258046	6	Große und kleine Welt	91
+0.13770590722560883	7	Arabische Nächte	66
+0.43571865535341203	8	Διδαχή των Δώδεκα αποστόλων	2
+0.33611897542141378	9	Nanà a Milano	41
+0.1449920698069036	10	L'olmo e l'edera	78
+0.96959374798461795	11	Il "Damo viennese"	23
+0.56714631384238601	12	הצופה לבית ישראל	91
+0.19343680120073259	13	בית נכות ההלכות	47
+0.62307748827151954	14	Pasáček Ali: Pověst z východu	64
+0.36218555504456162	15	Zápisky z mrtvého domu	52
+0.52457234333269298	16	Leabhráin an Irisleabhair—III	53
+0.39446180523373187	17	Diné yázhí ba'áłchíní	88
+0.59256785036996007	18	Right Half Hollins	67
+0.7266182207968086	19	Annie Laurie and Azalea	85
+0.33462528791278601	20	羅生門	87
+0.32722968887537718	21	入れかわった男	33
+0.50345949362963438	22	豆棚閒話	73
+0.90671302028931677	23	佛說四十二章經	81
+0.83973207115195692	24	La Navidad en las Montañas	100
+0.030781860463321209	25	Don Quijote	88
+
+====[tsv-sample -H -s --gen-random-inorder -n 15 input3x10.tsv input3x25.tsv]====
+random_value	line	title	weight
+0.010968807619065046	1	Álomvilág: Elbeszélések	41
+0.15929344086907804	2	Grimm testvérek összegyüjtött meséi	9
+0.49287854949943721	3	Mesék és regék	20
+0.96055546286515892	4	Soitannollisia satuja ja jutelmia	44
+0.52525980887003243	5	Pinocchion seikkailut	19
+0.7571015392895788	6	Piepkuikentje	17
+0.38388182921335101	7	Oude Egyptische Legenden	28
+0.97088520275428891	8	Door het land der Skipetaren	30
+0.24033216014504433	9	Las Fábulas de Esopo	45
+0.47081507067196071	10	Platero y yo	2
+0.81756894313730299	1	Белые ночи	98
+0.29215990612283349	2	Детство	4
+0.2774282859172672	3	Записки из подполья	78
+0.13569044694304466	4	Fru Inger til Østråt	26
+0.13689568405970931	5	Märchen für Kinder	73
+
 ====[tsv-sample -H -s --rate 1.0 --print-random input3x10.tsv input3x25.tsv]====
-random_weight	line	title	weight
-0.010968807619065	1	Álomvilág: Elbeszélések	41
-0.159293440869078	2	Grimm testvérek összegyüjtött meséi	9
-0.492878549499437	3	Mesék és regék	20
-0.960555462865159	4	Soitannollisia satuja ja jutelmia	44
-0.525259808870032	5	Pinocchion seikkailut	19
-0.757101539289579	6	Piepkuikentje	17
-0.383881829213351	7	Oude Egyptische Legenden	28
-0.970885202754289	8	Door het land der Skipetaren	30
-0.240332160145044	9	Las Fábulas de Esopo	45
-0.470815070671961	10	Platero y yo	2
-0.817568943137303	1	Белые ночи	98
-0.292159906122833	2	Детство	4
-0.277428285917267	3	Записки из подполья	78
-0.135690446943045	4	Fru Inger til Østråt	26
-0.136895684059709	5	Märchen für Kinder	73
-0.65936282207258	6	Große und kleine Welt	91
-0.137705907225609	7	Arabische Nächte	66
-0.435718655353412	8	Διδαχή των Δώδεκα αποστόλων	2
-0.336118975421414	9	Nanà a Milano	41
-0.144992069806904	10	L'olmo e l'edera	78
-0.969593747984618	11	Il "Damo viennese"	23
-0.567146313842386	12	הצופה לבית ישראל	91
-0.193436801200733	13	בית נכות ההלכות	47
-0.62307748827152	14	Pasáček Ali: Pověst z východu	64
-0.362185555044562	15	Zápisky z mrtvého domu	52
-0.524572343332693	16	Leabhráin an Irisleabhair—III	53
-0.394461805233732	17	Diné yázhí ba'áłchíní	88
-0.59256785036996	18	Right Half Hollins	67
-0.726618220796809	19	Annie Laurie and Azalea	85
-0.334625287912786	20	羅生門	87
-0.327229688875377	21	入れかわった男	33
-0.503459493629634	22	豆棚閒話	73
-0.906713020289317	23	佛說四十二章經	81
-0.839732071151957	24	La Navidad en las Montañas	100
-0.0307818604633212	25	Don Quijote	88
+random_value	line	title	weight
+0.010968807619065046	1	Álomvilág: Elbeszélések	41
+0.15929344086907804	2	Grimm testvérek összegyüjtött meséi	9
+0.49287854949943721	3	Mesék és regék	20
+0.96055546286515892	4	Soitannollisia satuja ja jutelmia	44
+0.52525980887003243	5	Pinocchion seikkailut	19
+0.7571015392895788	6	Piepkuikentje	17
+0.38388182921335101	7	Oude Egyptische Legenden	28
+0.97088520275428891	8	Door het land der Skipetaren	30
+0.24033216014504433	9	Las Fábulas de Esopo	45
+0.47081507067196071	10	Platero y yo	2
+0.81756894313730299	1	Белые ночи	98
+0.29215990612283349	2	Детство	4
+0.2774282859172672	3	Записки из подполья	78
+0.13569044694304466	4	Fru Inger til Østråt	26
+0.13689568405970931	5	Märchen für Kinder	73
+0.65936282207258046	6	Große und kleine Welt	91
+0.13770590722560883	7	Arabische Nächte	66
+0.43571865535341203	8	Διδαχή των Δώδεκα αποστόλων	2
+0.33611897542141378	9	Nanà a Milano	41
+0.1449920698069036	10	L'olmo e l'edera	78
+0.96959374798461795	11	Il "Damo viennese"	23
+0.56714631384238601	12	הצופה לבית ישראל	91
+0.19343680120073259	13	בית נכות ההלכות	47
+0.62307748827151954	14	Pasáček Ali: Pověst z východu	64
+0.36218555504456162	15	Zápisky z mrtvého domu	52
+0.52457234333269298	16	Leabhráin an Irisleabhair—III	53
+0.39446180523373187	17	Diné yázhí ba'áłchíní	88
+0.59256785036996007	18	Right Half Hollins	67
+0.7266182207968086	19	Annie Laurie and Azalea	85
+0.33462528791278601	20	羅生門	87
+0.32722968887537718	21	入れかわった男	33
+0.50345949362963438	22	豆棚閒話	73
+0.90671302028931677	23	佛說四十二章經	81
+0.83973207115195692	24	La Navidad en las Montañas	100
+0.030781860463321209	25	Don Quijote	88
 
 ====[tsv-sample -H -s -r 0.25 input3x10.tsv input3x25.tsv]====
 line	title	weight
@@ -435,6 +547,41 @@ jaune	2104	Tüpfelsumpfhuhn	1
 dorado	2147	Tüpfelsumpfhuhn	1
 jaune	2097	Purpurreiher	4
 
+====[tsv-sample -H -s -r .2 -k 3 --print-random input4x50.tsv input4x15.tsv]====
+random_value	c-1	c-2	c-3	c-4
+0	Cerise	2076	Malvasía Cabeciblanca	4
+0	暗紅色/暗赤色	2015	Malvasía Cabeciblanca	2
+0	marrón	2102	Weißwangengans	1
+0	Cerise	2119	Malvasía Cabeciblanca	4
+0	noir	2082	Weißwangengans	1
+0	noir	2094	Weißwangengans	4
+0	красный	2049	Weißwangengans	3
+0	noir	2115	Weißwangengans	2
+0	marrón	2034	Weißwangengans	1
+0	ébène	2142	Орёл	2
+0	jaune	2090	Weißwangengans	4
+
+====[tsv-sample -H -s -r .2 -k 3 --print-random -n 5 input4x50.tsv input4x15.tsv]====
+random_value	c-1	c-2	c-3	c-4
+0	Cerise	2076	Malvasía Cabeciblanca	4
+0	暗紅色/暗赤色	2015	Malvasía Cabeciblanca	2
+0	marrón	2102	Weißwangengans	1
+0	Cerise	2119	Malvasía Cabeciblanca	4
+0	noir	2082	Weißwangengans	1
+
+====[tsv-sample -H -s -r .2 -k 3 --gen-random-inorder -n 10 input4x50.tsv input4x15.tsv]====
+random_value	c-1	c-2	c-3	c-4
+3	púrpura	2088	Macuco	1
+3	blutrot	2142	Tüpfelsumpfhuhn	1
+2	Indigo	2056	Голубь	1
+2	Indigo	2141	Голубь	1
+3	blutrot	2118	Tüpfelsumpfhuhn	4
+0	Cerise	2076	Malvasía Cabeciblanca	4
+3	schneeweiß	2117	Porrón Islándico	4
+2	café	2088	Purpurreiher	2
+2	Orange-red	2089	Purpurreiher	1
+0	暗紅色/暗赤色	2015	Malvasía Cabeciblanca	2
+
 ====[tsv-sample --static-seed input2x10_noheader.tsv input2x5_noheader.tsv]====
 0.20987466	殘唐五代史演義傳
 0.67881307	Burning Daylight
@@ -453,62 +600,62 @@ jaune	2097	Purpurreiher	4
 0.90391933	Folk-Lore of West and Mid-Wales
 
 ====[tsv-sample -s --print-random input2x10_noheader.tsv input2x5_noheader.tsv]====
-0.970885202754289	0.20987466	殘唐五代史演義傳
-0.960555462865159	0.67881307	Burning Daylight
-0.817568943137303	0.157876295	Jacques le fataliste et son maître
-0.757101539289579	0.03235488	海上花列傳
-0.525259808870032	0.13769566	Eva's Adventures in Shadow-Land
-0.492878549499437	0.30956877	The Courting Of Lady Jane
-0.470815070671961	0.20948332	歡喜冤家
-0.383881829213351	0.37116598	三國志演義
-0.292159906122833	0.008718457	L'influence d'un livre
-0.277428285917267	0.788170018	Les stratagèmes
-0.240332160145044	0.78401827	青箱雜記
-0.159293440869078	0.48032209	A Book of Christian Sonnets
-0.136895684059709	0.767664821	Buntong Hininga
-0.135690446943045	0.656434250	Bulalakaw ng Pag-asa
-0.010968807619065	0.90391933	Folk-Lore of West and Mid-Wales
+0.97088520275428891	0.20987466	殘唐五代史演義傳
+0.96055546286515892	0.67881307	Burning Daylight
+0.81756894313730299	0.157876295	Jacques le fataliste et son maître
+0.7571015392895788	0.03235488	海上花列傳
+0.52525980887003243	0.13769566	Eva's Adventures in Shadow-Land
+0.49287854949943721	0.30956877	The Courting Of Lady Jane
+0.47081507067196071	0.20948332	歡喜冤家
+0.38388182921335101	0.37116598	三國志演義
+0.29215990612283349	0.008718457	L'influence d'un livre
+0.2774282859172672	0.788170018	Les stratagèmes
+0.24033216014504433	0.78401827	青箱雜記
+0.15929344086907804	0.48032209	A Book of Christian Sonnets
+0.13689568405970931	0.767664821	Buntong Hininga
+0.13569044694304466	0.656434250	Bulalakaw ng Pag-asa
+0.010968807619065046	0.90391933	Folk-Lore of West and Mid-Wales
 
 ====[tsv-sample -s -p --weight-field 1 input2x10_noheader.tsv input2x5_noheader.tsv]====
-0.942437966848233	0.67881307	Burning Daylight
-0.868676721429664	0.20987466	殘唐五代史演義傳
-0.279204915793009	0.157876295	Jacques le fataliste et son maître
-0.196558095896027	0.788170018	Les stratagèmes
-0.162269781626043	0.78401827	青箱雜記
-0.101732040122742	0.30956877	The Courting Of Lady Jane
-0.0758123366276511	0.37116598	三國志演義
-0.0749922730503976	0.767664821	Buntong Hininga
-0.047702521501272	0.656434250	Bulalakaw ng Pag-asa
-0.0274348241644644	0.20948332	歡喜冤家
-0.0218286473984863	0.48032209	A Book of Christian Sonnets
-0.0093163829870438	0.13769566	Eva's Adventures in Shadow-Land
-0.00678955446763223	0.90391933	Folk-Lore of West and Mid-Wales
-0.000184072038298519	0.03235488	海上花列傳
-5.09465567909741e-62	0.008718457	L'influence d'un livre
+0.94243796684823311	0.67881307	Burning Daylight
+0.8686767214296639	0.20987466	殘唐五代史演義傳
+0.27920491579300888	0.157876295	Jacques le fataliste et son maître
+0.19655809589602655	0.788170018	Les stratagèmes
+0.16226978162604291	0.78401827	青箱雜記
+0.1017320401227417	0.30956877	The Courting Of Lady Jane
+0.075812336627651078	0.37116598	三國志演義
+0.074992273050397601	0.767664821	Buntong Hininga
+0.047702521501272049	0.656434250	Bulalakaw ng Pag-asa
+0.027434824164464369	0.20948332	歡喜冤家
+0.021828647398486285	0.48032209	A Book of Christian Sonnets
+0.0093163829870438006	0.13769566	Eva's Adventures in Shadow-Land
+0.0067895544676322295	0.90391933	Folk-Lore of West and Mid-Wales
+0.00018407203829851903	0.03235488	海上花列傳
+5.0946556790974114e-62	0.008718457	L'influence d'un livre
 
 ====[tsv-sample -s -p -w 1 --num 15 input2x10_noheader.tsv input2x5_noheader.tsv]====
-0.942437966848233	0.67881307	Burning Daylight
-0.868676721429664	0.20987466	殘唐五代史演義傳
-0.279204915793009	0.157876295	Jacques le fataliste et son maître
-0.196558095896027	0.788170018	Les stratagèmes
-0.162269781626043	0.78401827	青箱雜記
-0.101732040122742	0.30956877	The Courting Of Lady Jane
-0.0758123366276511	0.37116598	三國志演義
-0.0749922730503976	0.767664821	Buntong Hininga
-0.047702521501272	0.656434250	Bulalakaw ng Pag-asa
-0.0274348241644644	0.20948332	歡喜冤家
-0.0218286473984863	0.48032209	A Book of Christian Sonnets
-0.0093163829870438	0.13769566	Eva's Adventures in Shadow-Land
-0.00678955446763223	0.90391933	Folk-Lore of West and Mid-Wales
-0.000184072038298519	0.03235488	海上花列傳
-5.09465567909741e-62	0.008718457	L'influence d'un livre
+0.94243796684823311	0.67881307	Burning Daylight
+0.8686767214296639	0.20987466	殘唐五代史演義傳
+0.27920491579300888	0.157876295	Jacques le fataliste et son maître
+0.19655809589602655	0.788170018	Les stratagèmes
+0.16226978162604291	0.78401827	青箱雜記
+0.1017320401227417	0.30956877	The Courting Of Lady Jane
+0.075812336627651078	0.37116598	三國志演義
+0.074992273050397601	0.767664821	Buntong Hininga
+0.047702521501272049	0.656434250	Bulalakaw ng Pag-asa
+0.027434824164464369	0.20948332	歡喜冤家
+0.021828647398486285	0.48032209	A Book of Christian Sonnets
+0.0093163829870438006	0.13769566	Eva's Adventures in Shadow-Land
+0.0067895544676322295	0.90391933	Folk-Lore of West and Mid-Wales
+0.00018407203829851903	0.03235488	海上花列傳
+5.0946556790974114e-62	0.008718457	L'influence d'un livre
 
 ====[tsv-sample -s -p -n 5 input2x10_noheader.tsv input2x5_noheader.tsv]====
-0.970885202754289	0.20987466	殘唐五代史演義傳
-0.960555462865159	0.67881307	Burning Daylight
-0.817568943137303	0.157876295	Jacques le fataliste et son maître
-0.757101539289579	0.03235488	海上花列傳
-0.525259808870032	0.13769566	Eva's Adventures in Shadow-Land
+0.97088520275428891	0.20987466	殘唐五代史演義傳
+0.96055546286515892	0.67881307	Burning Daylight
+0.81756894313730299	0.157876295	Jacques le fataliste et son maître
+0.7571015392895788	0.03235488	海上花列傳
+0.52525980887003243	0.13769566	Eva's Adventures in Shadow-Land
 
 ====[tsv-sample -s -n 100 input2x10_noheader.tsv input2x5_noheader.tsv]====
 0.20987466	殘唐五代史演義傳
@@ -528,21 +675,21 @@ jaune	2097	Purpurreiher	4
 0.90391933	Folk-Lore of West and Mid-Wales
 
 ====[tsv-sample -s --rate 1 -p input2x10_noheader.tsv input2x5_noheader.tsv]====
-0.010968807619065	0.90391933	Folk-Lore of West and Mid-Wales
-0.159293440869078	0.48032209	A Book of Christian Sonnets
-0.492878549499437	0.30956877	The Courting Of Lady Jane
-0.960555462865159	0.67881307	Burning Daylight
-0.525259808870032	0.13769566	Eva's Adventures in Shadow-Land
-0.757101539289579	0.03235488	海上花列傳
-0.383881829213351	0.37116598	三國志演義
-0.970885202754289	0.20987466	殘唐五代史演義傳
-0.240332160145044	0.78401827	青箱雜記
-0.470815070671961	0.20948332	歡喜冤家
-0.817568943137303	0.157876295	Jacques le fataliste et son maître
-0.292159906122833	0.008718457	L'influence d'un livre
-0.277428285917267	0.788170018	Les stratagèmes
-0.135690446943045	0.656434250	Bulalakaw ng Pag-asa
-0.136895684059709	0.767664821	Buntong Hininga
+0.010968807619065046	0.90391933	Folk-Lore of West and Mid-Wales
+0.15929344086907804	0.48032209	A Book of Christian Sonnets
+0.49287854949943721	0.30956877	The Courting Of Lady Jane
+0.96055546286515892	0.67881307	Burning Daylight
+0.52525980887003243	0.13769566	Eva's Adventures in Shadow-Land
+0.7571015392895788	0.03235488	海上花列傳
+0.38388182921335101	0.37116598	三國志演義
+0.97088520275428891	0.20987466	殘唐五代史演義傳
+0.24033216014504433	0.78401827	青箱雜記
+0.47081507067196071	0.20948332	歡喜冤家
+0.81756894313730299	0.157876295	Jacques le fataliste et son maître
+0.29215990612283349	0.008718457	L'influence d'un livre
+0.2774282859172672	0.788170018	Les stratagèmes
+0.13569044694304466	0.656434250	Bulalakaw ng Pag-asa
+0.13689568405970931	0.767664821	Buntong Hininga
 
 ====[tsv-sample -s -r .25 input2x10_noheader.tsv input2x5_noheader.tsv]====
 0.90391933	Folk-Lore of West and Mid-Wales
@@ -569,50 +716,50 @@ Ephemerides Barometricae Mutinenses@5869
 友情@5992
 
 ====[tsv-sample -d @ -H -s -p input2x7_atsign.tsv]====
-random_weight@title@weight
-0.960555462865159@幽霊書店@5903
-0.757101539289579@Aristophanis Lysistrata@5464
-0.525259808870032@マルチン・ルターの小信仰問答書@5489
-0.492878549499437@續惡魔@5815
-0.383881829213351@Ephemerides Barometricae Mutinenses@5869
-0.159293440869078@法螺男爵旅土産@5803
-0.010968807619065@友情@5992
+random_value@title@weight
+0.96055546286515892@幽霊書店@5903
+0.7571015392895788@Aristophanis Lysistrata@5464
+0.52525980887003243@マルチン・ルターの小信仰問答書@5489
+0.49287854949943721@續惡魔@5815
+0.38388182921335101@Ephemerides Barometricae Mutinenses@5869
+0.15929344086907804@法螺男爵旅土産@5803
+0.010968807619065046@友情@5992
 
 ====[tsv-sample -d @ -H -s -p -w 2 input2x7_atsign.tsv]====
-random_weight@title@weight
-0.999993182548277@幽霊書店@5903
-0.999949075619396@Aristophanis Lysistrata@5464
-0.999882706412176@マルチン・ルターの小信仰問答書@5489
-0.999878340593679@續惡魔@5815
-0.999836881509361@Ephemerides Barometricae Mutinenses@5869
-0.999683488453338@法螺男爵旅土産@5803
-0.999247162745683@友情@5992
+random_value@title@weight
+0.9999931825482774@幽霊書店@5903
+0.99994907561939606@Aristophanis Lysistrata@5464
+0.99988270641217591@マルチン・ルターの小信仰問答書@5489
+0.99987834059367886@續惡魔@5815
+0.9998368815093609@Ephemerides Barometricae Mutinenses@5869
+0.99968348845333754@法螺男爵旅土産@5803
+0.99924716274568337@友情@5992
 
 ====[tsv-sample -d @ -H -s -p -w 2 -n 3 input2x7_atsign.tsv]====
-random_weight@title@weight
-0.999993182548277@幽霊書店@5903
-0.999949075619396@Aristophanis Lysistrata@5464
-0.999882706412176@マルチン・ルターの小信仰問答書@5489
+random_value@title@weight
+0.9999931825482774@幽霊書店@5903
+0.99994907561939606@Aristophanis Lysistrata@5464
+0.99988270641217591@マルチン・ルターの小信仰問答書@5489
 
 ====[tsv-sample -d @ -H -s -p -n 20 input2x7_atsign.tsv]====
-random_weight@title@weight
-0.960555462865159@幽霊書店@5903
-0.757101539289579@Aristophanis Lysistrata@5464
-0.525259808870032@マルチン・ルターの小信仰問答書@5489
-0.492878549499437@續惡魔@5815
-0.383881829213351@Ephemerides Barometricae Mutinenses@5869
-0.159293440869078@法螺男爵旅土産@5803
-0.010968807619065@友情@5992
+random_value@title@weight
+0.96055546286515892@幽霊書店@5903
+0.7571015392895788@Aristophanis Lysistrata@5464
+0.52525980887003243@マルチン・ルターの小信仰問答書@5489
+0.49287854949943721@續惡魔@5815
+0.38388182921335101@Ephemerides Barometricae Mutinenses@5869
+0.15929344086907804@法螺男爵旅土産@5803
+0.010968807619065046@友情@5992
 
 ====[tsv-sample -d @ -H -s -p --rate 1.0 input2x7_atsign.tsv]====
-random_weight@title@weight
-0.010968807619065@友情@5992
-0.159293440869078@法螺男爵旅土産@5803
-0.492878549499437@續惡魔@5815
-0.960555462865159@幽霊書店@5903
-0.525259808870032@マルチン・ルターの小信仰問答書@5489
-0.757101539289579@Aristophanis Lysistrata@5464
-0.383881829213351@Ephemerides Barometricae Mutinenses@5869
+random_value@title@weight
+0.010968807619065046@友情@5992
+0.15929344086907804@法螺男爵旅土産@5803
+0.49287854949943721@續惡魔@5815
+0.96055546286515892@幽霊書店@5903
+0.52525980887003243@マルチン・ルターの小信仰問答書@5489
+0.7571015392895788@Aristophanis Lysistrata@5464
+0.38388182921335101@Ephemerides Barometricae Mutinenses@5869
 
 ====[tsv-sample -H input3x10.tsv | wc -l | tr -d ' ']====
 11

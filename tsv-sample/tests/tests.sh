@@ -45,6 +45,11 @@ runtest ${prog} "-H -s -p --weight-field 3 input3x10.tsv input3x25.tsv" ${basic_
 runtest ${prog} "-H -s -p -w 3 --num 15 input3x10.tsv input3x25.tsv" ${basic_tests_1}
 runtest ${prog} "-H -s -p -n 15 input3x10.tsv input3x25.tsv" ${basic_tests_1}
 runtest ${prog} "-H -s -n 100 input3x10.tsv input3x25.tsv" ${basic_tests_1}
+runtest ${prog} "-H -s --gen-random-inorder --weight-field 3 input3x10.tsv input3x25.tsv" ${basic_tests_1}
+runtest ${prog} "-H -s --gen-random-inorder -n 15 --weight-field 3 input3x10.tsv input3x25.tsv" ${basic_tests_1}
+runtest ${prog} "-H -s -q input3x10.tsv input3x25.tsv" ${basic_tests_1}
+runtest ${prog} "-H -s --gen-random-inorder -n 15 input3x10.tsv input3x25.tsv" ${basic_tests_1}
+
 # Stream sampling
 runtest ${prog} "-H -s --rate 1.0 --print-random input3x10.tsv input3x25.tsv" ${basic_tests_1}
 runtest ${prog} "-H -s -r 0.25 input3x10.tsv input3x25.tsv" ${basic_tests_1}
@@ -58,6 +63,9 @@ runtest ${prog} "-H -s -r .25 -k 1 -n 5 input4x50.tsv input4x15.tsv" ${basic_tes
 runtest ${prog} "-s -r .25 -k 1,3 input4x50.tsv input4x15.tsv" ${basic_tests_1}
 runtest ${prog} "-s -r .25 -k 3,1 input4x50.tsv input4x15.tsv" ${basic_tests_1}
 runtest ${prog} "-s -r 1 -k 3,1 input4x50.tsv input4x15.tsv" ${basic_tests_1}
+runtest ${prog} "-H -s -r .2 -k 3 --print-random input4x50.tsv input4x15.tsv" ${basic_tests_1}
+runtest ${prog} "-H -s -r .2 -k 3 --print-random -n 5 input4x50.tsv input4x15.tsv" ${basic_tests_1}
+runtest ${prog} "-H -s -r .2 -k 3 --gen-random-inorder -n 10 input4x50.tsv input4x15.tsv" ${basic_tests_1}
 
 runtest ${prog} "--static-seed input2x10_noheader.tsv input2x5_noheader.tsv" ${basic_tests_1}
 runtest ${prog} "-s --print-random input2x10_noheader.tsv input2x5_noheader.tsv" ${basic_tests_1}
@@ -114,28 +122,38 @@ ${prog} -V 2>&1 | grep -c 'tsv-sample (eBay/tsv-utils)' >> ${basic_tests_1} 2>&1
 
 ## Error cases
 
-error_tests_1=${odir}/error_tests_1.txt
+error_tests=${odir}/error_tests_1.txt
 
-echo "Error test set 1" > ${error_tests_1}
-echo "----------------" >> ${error_tests_1}
+echo "Error test set 1" > ${error_tests}
+echo "----------------" >> ${error_tests}
 
-runtest ${prog} "no_such_file.tsv" ${error_tests_1}
-runtest ${prog} "--no-such-param input3x25.tsv" ${error_tests_1}
-runtest ${prog} "-d ß input3x25.tsv" ${error_tests_1}
-runtest ${prog} "-H -w 2 input3x25.tsv" ${error_tests_1}
-runtest ${prog} "-w 3 input3x25.tsv" ${error_tests_1}
-runtest ${prog} "-H -w 11 input3x25.tsv" ${error_tests_1}
-runtest ${prog} "-H -w 3 input3x25_dos.tsv" ${error_tests_1}
-runtest ${prog} "-w 1 input2x5_noheader_dos.tsv" ${error_tests_1}
-runtest ${prog} "--rate 0.5 --weight-field 3 input3x25.tsv" ${error_tests_1}
-runtest ${prog} "--rate 0 input3x25.tsv" ${error_tests_1}
-runtest ${prog} "--rate 1.00001 input3x25.tsv" ${error_tests_1}
-runtest ${prog} "-r .1 -k 0 input4x50.tsv input4x15.tsv" ${error_tests_1}
-runtest ${prog} "-r .1 -k -1 input4x50.tsv input4x15.tsv" ${error_tests_1}
-runtest ${prog} "-r 0 -k 1 input4x50.tsv input4x15.tsv" ${error_tests_1}
-runtest ${prog} "-r -0.5 -k 1 input4x50.tsv input4x15.tsv" ${error_tests_1}
-runtest ${prog} "-r -v 10 -k 1 input4x50.tsv input4x15.tsv" ${error_tests_1}
-runtest ${prog} "-r 0.5 -v -10 -k 1 input4x50.tsv input4x15.tsv" ${error_tests_1}
-runtest ${prog} "-k 1 input4x50.tsv input4x15.tsv" ${error_tests_1}
-runtest ${prog} "-r 0.5 -k 5 input4x50.tsv input4x15.tsv" ${error_tests_1}
-runtest ${prog} "-H -r 0.5 -k 5 input4x50.tsv input4x15.tsv" ${error_tests_1}
+runtest ${prog} "no_such_file.tsv" ${error_tests}
+runtest ${prog} "--no-such-param input3x25.tsv" ${error_tests}
+runtest ${prog} "-d ß input3x25.tsv" ${error_tests}
+runtest ${prog} "-H -w 11 input3x25.tsv" ${error_tests}
+runtest ${prog} "-H -w 3 input3x25_dos.tsv" ${error_tests}
+runtest ${prog} "-w 1 input2x5_noheader_dos.tsv" ${error_tests}
+runtest ${prog} "--rate 0.5 --weight-field 3 input3x25.tsv" ${error_tests}
+runtest ${prog} "--rate 0 input3x25.tsv" ${error_tests}
+runtest ${prog} "--rate 1.00001 input3x25.tsv" ${error_tests}
+runtest ${prog} "-r .1 -k 0 input4x50.tsv input4x15.tsv" ${error_tests}
+runtest ${prog} "-r .1 -k -1 input4x50.tsv input4x15.tsv" ${error_tests}
+runtest ${prog} "-r 0 -k 1 input4x50.tsv input4x15.tsv" ${error_tests}
+runtest ${prog} "-r -0.5 -k 1 input4x50.tsv input4x15.tsv" ${error_tests}
+runtest ${prog} "-r 0.5 -v -10 -k 1 input4x50.tsv input4x15.tsv" ${error_tests}
+runtest ${prog} "-k 1 input4x50.tsv input4x15.tsv" ${error_tests}
+runtest ${prog} "-r 0.5 -k 5 input4x50.tsv input4x15.tsv" ${error_tests}
+runtest ${prog} "-H -r 0.5 -k 5 input4x50.tsv input4x15.tsv" ${error_tests}
+runtest ${prog} "-H -r 0.5 --gen-random-inorder input4x50.tsv input4x15.tsv" ${error_tests}
+
+# Error tests 2 are tests that are compiler version dependent. There are multiple
+# version files in test-config.json.
+
+error_tests=${odir}/error_tests_2.txt
+
+echo "Error test set 2" > ${error_tests}
+echo "----------------" >> ${error_tests}
+
+runtest ${prog} "-H -w 2 input3x25.tsv" ${error_tests}
+runtest ${prog} "-w 3 input3x25.tsv" ${error_tests}
+runtest ${prog} "-r -v 10 -k 1 input4x50.tsv input4x15.tsv" ${error_tests}
