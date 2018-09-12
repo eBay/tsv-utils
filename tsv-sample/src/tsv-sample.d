@@ -58,8 +58,8 @@ Synopsis: tsv-sample [options] [file...]
 
 Sample input lines or randomize their order. Several modes of operation
 are available:
-* Randomizing line order (the default): All input lines are output in a
-  random order.
+* Line order randomizing (the default): All input lines are output in a
+  random order. All orderings are equally likely.
 * Stream sampling (--r|rate): A random subset of lines is output based on
   a sampling rate. The order of the lines is unchanged.
 * Distinct sampling (--k|key-fields, --r|rate): Input lines are sampled
@@ -83,8 +83,8 @@ Synopsis: tsv-sample [options] [file...]
 
 Sample input lines or randomize their order. Several modes of operation
 are available:
-* Randomizing line order (the default): All input lines are output in a
-  random order.
+* Line order randomizing (the default): All input lines are output in a
+  random order. All orderings are equally likely.
 * Stream sampling (--r|rate): A random subset of lines is output based on
   a sampling rate. The order of the lines is unchanged.
 * Distinct sampling (--k|key-fields, --r|rate): Input lines are sampled

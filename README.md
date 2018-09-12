@@ -46,7 +46,7 @@ The rest of this section contains a short description of each tool. There is mor
 * [tsv-filter](#tsv-filter) - Filter data file rows via numeric and string comparisons.
 * [tsv-select](#tsv-select) - Keep a subset of columns (fields). Like `cut`, but with field reordering.
 * [tsv-summarize](#tsv-summarize) - Summary statistics on selected fields, against the full data set or grouped by key.
-* [tsv-sample](#tsv-sample) - Sampling and permutation of input lines. Several sampling methods are available.
+* [tsv-sample](#tsv-sample) - Subsample input lines or randomize their order. Several sampling methods are available.
 * [tsv-join](#tsv-join) - Join lines from multiple files using fields as a key.
 * [tsv-uniq](#tsv-uniq) - Filter out duplicate lines using fields as a key.
 * [tsv-append](#tsv-append) - Concatenate TSV files. Header-aware; supports source file tracking.
@@ -109,7 +109,7 @@ See the [tsv-summarize reference](docs/ToolReference.md#tsv-summarize-reference)
 
 ### tsv-sample
 
-`tsv-sample` randomizes or sample lines from input data. Several sampling methods are available, including simple random sampling, weighted random sampling, and distinct sampling. Simple random sampling works on any line oriented data format, weighted random sampling and distinct sampling are specific to TSV format.
+`tsv-sample` subsamples input lines or randomizes their order. Several sampling methods are available, including simple random sampling, weighted random sampling, and distinct sampling. Simple random sampling works on any line oriented data format, weighted random sampling and distinct sampling are specific to TSV format data.
 
 Simple random sampling operates in the customary fashion, randomly selecting lines with equal probability. When reordering a file, lines are randomly selected from the entire file and output in the order selected. In streaming mode, a subset of input lines are selected and output. This occurs in the order of the input. Streaming mode operates on arbitrary large inputs.
 
