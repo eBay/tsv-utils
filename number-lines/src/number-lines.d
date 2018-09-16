@@ -32,8 +32,7 @@ Examples:
 Options:
 EOS";
 
-/**
-Container for command line options.
+/** Container for command line options.
  */
 struct NumberLinesOptions
 {
@@ -98,6 +97,7 @@ struct NumberLinesOptions
     }
 }
 
+/** Main program. */
 int main(string[] cmdArgs)
 {
     /* When running in DMD code coverage mode, turn on report merging. */
@@ -120,6 +120,11 @@ int main(string[] cmdArgs)
     return 0;
 }
 
+/** Implements the primary logic behind number lines.
+ *
+ * Reads lines lines from each file, outputing each with a line number prepended. The
+ * header from the first file is written, the header from subsequent files is dropped.
+ */
 void numberLines(in NumberLinesOptions cmdopt, in string[] inputFiles)
 {
     import std.conv : to;

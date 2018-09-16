@@ -19,6 +19,9 @@ version(unittest)
 }
 else
 {
+    /** Main program. Invokes command line arg processing and tsv-pretty to perform
+     * the real work. Any errors are caught and reported.
+     */
     int main(string[] cmdArgs)
     {
         /* When running in DMD code coverage mode, turn on report merging. */
@@ -94,7 +97,7 @@ Floating points numbers are aligned on the decimal point when feasible.
 Options:
 EOS";
 
-/* TsvPrettyOptions is used to process and store command line options. */
+/** TsvPrettyOptions is used to process and store command line options. */
 struct TsvPrettyOptions
 {
     string programName;
@@ -218,12 +221,13 @@ struct TsvPrettyOptions
     }
 }
 
-/** tsvPretty - Main loop, operating on input files and passing control to a
- * TSVPrettyProccessor instance. This separates physical I/O sources and sinks
- * from the underlying processing algorithm, which operates on generic ranges.
+/** tsvPretty is the main loop, operating on input files and passing control to a
+ * TSVPrettyProccessor instance.
  *
- * A lockingTextWriter is created and released on every input line. This has
- * effect flushing standard output every line, desirable in command line tools.
+ * This separates physical I/O sources and sinks from the underlying processing
+ * algorithm, which operates on generic ranges. A lockingTextWriter is created and
+ * released on every input line. This has effect flushing standard output every line,
+ * desirable in command line tools.
  */
 void tsvPretty(in ref TsvPrettyOptions options, string[] files)
 {
@@ -251,7 +255,7 @@ void tsvPretty(in ref TsvPrettyOptions options, string[] files)
     tpp.finish(outputRangeObject!(char, char[])(stdout.lockingTextWriter));
 }
 
-/** TsvPrettyProcessor - Maintains state of processing and exposes operations for
+/** TsvPrettyProcessor maintains state of processing and exposes operations for
  * processing individual input lines.
  *
  * TsvPrettyProcessor knows that input is file-based, but doesn't deal with actual
@@ -260,13 +264,13 @@ void tsvPretty(in ref TsvPrettyOptions options, string[] files)
  * order received, that is an assumption built-into the its processing.
  *
  * In addition to the constructor, there are four API methods:
- *   * processPreambleLine - Called to process a preamble line occurring before
- *     the header line or first line of data.
- *   * processFileFirstLine - Called to process the first line of each file. This
- *     enables header processing.
- *   * processLine - Called to process all lines except for the first line a file.
- *   * finish - Called at the end of all processing. This is needed in case the
- *     look-ahead cache is still being filled when input terminates.
+ *  - processPreambleLine - Called to process a preamble line occurring before
+ *    the header line or first line of data.
+ *  - processFileFirstLine - Called to process the first line of each file. This
+ *    enables header processing.
+ *  - processLine - Called to process all lines except for the first line a file.
+ *  - finish - Called at the end of all processing. This is needed in case the
+ *    look-ahead cache is still being filled when input terminates.
  */
 
 struct TsvPrettyProcessor
@@ -285,6 +289,7 @@ private:
     private FieldFormat[] _fieldVector;
     private AutoDetectHeaderResult _autoDetectHeaderResult = AutoDetectHeaderResult.none;
 
+    /** Constructor. */
     this(const TsvPrettyOptions options) @safe pure nothrow @nogc
     {
         _options = options;
@@ -298,6 +303,9 @@ private:
                _lookaheadCache.data.length < _options.lookahead);
     }
 
+    /** Called to process a preamble line occurring before the header line or first
+     * line of data.
+     */
     void processPreambleLine(OutputRange!char outputStream, const char[] line)
     {
         if (_fileCount == 0)
@@ -307,6 +315,7 @@ private:
         }
     }
 
+    /** Called to process the first line of each file. This enables header processing. */
     void processFileFirstLine(OutputRange!char outputStream, const char[] line)
     {
         import std.conv : to;
@@ -368,12 +377,16 @@ private:
         }
     }
 
+    /** Called to process all lines except for the first line a file. */
     void processLine(OutputRange!char outputStream, const char[] line)
     {
         if (_stillCaching) cacheDataLine(outputStream, line);
         else outputDataLine(outputStream, line);
     }
 
+    /** Called at the end of all processing. This is needed in case the look-ahead cache
+     * is still being filled when input terminates.
+     */
     void finish(OutputRange!char outputStream)
     {
         if (_stillCaching) outputLookaheadCache(outputStream);
@@ -573,26 +586,29 @@ private:
     }
 }
 
+/** Field types recognized and tracked by tsv-pretty processing. */
+enum FieldType { unknown, text, integer, floatingPoint, exponent };
+
+/** Field alignments used by tsv-pretty processing. */
+enum FieldAlignment { left, right };
+
 /** FieldFormat holds all the formatting info needed to format data values in a specific
  * column. e.g. Field 1 may be text, field 2 may be a float, etc. This is calculated
  * during the caching phase. Each FieldFormat instance is part of a vector representing
  * the full row, so each includes the start position on the line and similar data.
  *
  * APIs used during the caching phase to gather field value samples
- * - this - Initial construction. Takes the field index.
- * - setHeader - Used to set the header text.
- * - updateForFieldValue - Used to add the next field value sample.
- * - finalizeFormatting - Used at the end of caching to finalize the format choices.
+ *  - this - Initial construction. Takes the field index.
+ *  - setHeader - Used to set the header text.
+ *  - updateForFieldValue - Used to add the next field value sample.
+ *  - finalizeFormatting - Used at the end of caching to finalize the format choices.
  *
  * APIs used after caching is finished (after finalizeFormatting):
- * - startPosition - Returns the expected start position for the field.
- * - endPosition - Returns the expected end position for the field.
- * - writeHeader - Outputs the header, properly aligned.
- * - writeFieldValue - Outputs the current field value, properly aligned.
+ *  - startPosition - Returns the expected start position for the field.
+ *  - endPosition - Returns the expected end position for the field.
+ *  - writeHeader - Outputs the header, properly aligned.
+ *  - writeFieldValue - Outputs the current field value, properly aligned.
  */
-
-enum FieldType { unknown, text, integer, floatingPoint, exponent };
-enum FieldAlignment { left, right };
 
 struct FieldFormat
 {
@@ -614,12 +630,14 @@ private:
     size_t _maxSignificantDigits = 0;  // Digits to include in exponential notation
 
 public:
+
+    /** Initial construction. Takes a field index. */
     this(size_t fieldIndex) @safe pure nothrow @nogc
     {
         _fieldIndex = fieldIndex;
     }
 
-    /* setHeader is called to set the header text. */
+    /** Sets the header text. */
     void setHeader(const char[] header) @safe
     {
         import std.conv : to;
@@ -628,22 +646,25 @@ public:
         _headerPrintWidth = _header.monospacePrintWidth;
     }
 
+    /** Returns the expected start position for the field. */
     size_t startPosition() nothrow pure @safe @property
     {
         return _startPosition;
     }
 
+    /** Returns the expected end position for the field. */
     size_t endPosition() nothrow pure @safe @property
     {
         return _startPosition + _printWidth;
     }
 
+    /** Returns the type of field. */
     FieldType fieldType() nothrow pure @safe @property
     {
         return _type;
     }
 
-    /** writeHeader - Writes the field header or underline characters to the output stream.
+    /** Writes the field header or underline characters to the output stream.
      *
      * The current output position should have been written up to the field's start position,
      * including any spaces between fields. Unlike data fields, there is no need to correct
@@ -696,9 +717,10 @@ public:
         return positionsWritten;
     }
 
-    /* writeFieldValue writes the field value for the current column The caller needs
-     * to generate output at least to the column's start position, but can go beyond
-     * if previous fields have run long.
+    /** Writes the field value for the current column.
+     *
+     * The caller needs to generate output at least to the column's start position, but
+     * can go beyond if previous fields have run long.
      *
      * The field value is aligned properly in the field. Either left aligned (text) or
      * right aligned (numeric). Floating point fields are both right aligned and
@@ -797,7 +819,7 @@ public:
         return printValuePrintWidth + leadingSpaces;
     }
 
-    /** updateForFieldValue updates type and format given a new field value.
+    /** Updates type and format given a new field value.
      *
      * This is called during look-ahead caching to register a new sample value for the
      * column. The key components updates are field type and print width.
@@ -920,9 +942,9 @@ public:
         }
     }
 
-    /* finalizeFormatting updates field formatting info based on the current state. It is
-     * expected to be called after adding field entries via updateForFieldValue(). It
-     * returns its new end position.
+    /** Updates field formatting info based on the current state. It is expected to be
+     * called after adding field entries via updateForFieldValue(). It returns its new
+     * end position.
      */
     size_t finalizeFormatting (size_t startPosition, in ref TsvPrettyOptions options) @safe pure @nogc nothrow
     {
@@ -966,7 +988,7 @@ public:
     }
 }
 
-/** formatFloatingPointValue - Returns the printed representation of a raw value
+/** formatFloatingPointValue returns the printed representation of a raw value
  * formatted as a fixed precision floating number. This includes zero padding or
  * truncation of trailing digits as necessary to meet the desired precision.
  *
@@ -1049,7 +1071,7 @@ string formatFloatingPointValue(const char[] value, size_t precision) @safe
     assert("1.1E+100".formatFloatingPointValue(2) == "1.1E+100");
 }
 
-/** formatExponentValue - Returns the printed representation of a raw value formatted
+/** formatExponentValue returns the printed representation of a raw value formatted
  * using exponential notation and a specific precision. If the value cannot be interpreted
  * as a double then the a copy of the original value is returned.
  *
@@ -1127,7 +1149,7 @@ string formatExponentValue(const char[] value, size_t precision) @safe
     assert("1.0001e+06".formatExponentValue(5) == "1.00010e+06");
 }
 
-/** significantDigits - Returns the number of significant digits in a numeric string.
+/** Returns the number of significant digits in a numeric string.
  *
  * Significant digits are those needed to represent a number in exponential notation.
  * Examples:
@@ -1183,8 +1205,8 @@ size_t significantDigits(const char[] numericString) @safe pure
     assert("6.005e+06".significantDigits == 4);
 }
 
-/* precisionDigits - Returns the number of digits to the right of the decimal point in
- * a numeric string. This routine includes trailing zeros in the count.
+/** Returns the number of digits to the right of the decimal point in a numeric string.
+ * This routine includes trailing zeros in the count.
  */
 size_t precisionDigits(const char[] numericString) @safe pure
 {
@@ -1218,8 +1240,7 @@ size_t precisionDigits(const char[] numericString) @safe pure
     assert("-.5401".precisionDigits == 4);
 }
 
-/** monospacePrintWidth - Calculates the expected print width of a string in monospace
- *  (fixed-width) fonts.
+/** Calculates the expected print width of a string in monospace (fixed-width) fonts.
  */
 size_t monospacePrintWidth(const char[] str) @safe nothrow
 {

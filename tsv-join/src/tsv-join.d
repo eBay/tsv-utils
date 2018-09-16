@@ -265,8 +265,7 @@ struct TsvJoinOptions
     }
 }
 
-/**
-Main program.
+/** Main program.
  */
 int main(string[] cmdArgs)
 {
