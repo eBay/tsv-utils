@@ -343,7 +343,7 @@ void streamSampling(Flag!"generateRandomAll" generateRandomAll, OutputRange)
     (TsvSampleOptions cmdopt, OutputRange outputStream)
     if (isOutputRange!(OutputRange, char))
 {
-    import std.format;
+    import std.format : formatValue, singleSpec;
     import std.random : Random, uniform01;
     import tsvutil : throwIfWindowsNewlineOnUnix;
 
@@ -351,6 +351,7 @@ void streamSampling(Flag!"generateRandomAll" generateRandomAll, OutputRange)
     else assert(!cmdopt.genRandomInorder);
 
     auto randomGenerator = Random(cmdopt.seed);
+    immutable randomValueFormatSpec = singleSpec("%.17g");
 
     /* Process each line. */
     bool headerWritten = false;
@@ -387,7 +388,7 @@ void streamSampling(Flag!"generateRandomAll" generateRandomAll, OutputRange)
 
                 static if (generateRandomAll)
                 {
-                    outputStream.put(format("%.17g", lineScore));
+                    outputStream.formatValue(lineScore, randomValueFormatSpec);
                     outputStream.put(cmdopt.delim);
                     outputStream.put(line);
                     outputStream.put("\n");
@@ -402,7 +403,7 @@ void streamSampling(Flag!"generateRandomAll" generateRandomAll, OutputRange)
                 {
                     if (cmdopt.printRandom)
                     {
-                        outputStream.put(format("%.17g", lineScore));
+                        outputStream.formatValue(lineScore, randomValueFormatSpec);
                         outputStream.put(cmdopt.delim);
                     }
                     outputStream.put(line);
@@ -446,6 +447,12 @@ void distinctSampling(Flag!"generateRandomAll" generateRandomAll, OutputRange)
 
     assert(cmdopt.keyFields.length > 0);
     assert(0.0 < cmdopt.sampleRate && cmdopt.sampleRate <= 1.0);
+
+    static if (generateRandomAll)
+    {
+        import std.format : formatValue, singleSpec;
+        immutable randomValueFormatSpec = singleSpec("%d");
+    }
 
     immutable ubyte[1] delimArray = [cmdopt.delim]; // For assembling multi-field hash keys.
 
@@ -512,7 +519,7 @@ void distinctSampling(Flag!"generateRandomAll" generateRandomAll, OutputRange)
                 static if (generateRandomAll)
                 {
                     import std.conv : to;
-                    outputStream.put((hasher.get % numBuckets).to!string);
+                    outputStream.formatValue(hasher.get % numBuckets, randomValueFormatSpec);
                     outputStream.put(cmdopt.delim);
                     outputStream.put(line);
                     outputStream.put("\n");
@@ -679,8 +686,10 @@ void reservoirSampling(Flag!"permuteAll" permuteAll, OutputRange)
     {
         if (cmdopt.printRandom)
         {
-            import std.format;
-            outputStream.put(format("%.17g", entry.score));
+            import std.format : formatValue, singleSpec;
+
+            immutable randomValueFormatSpec = singleSpec("%.17g");
+            outputStream.formatValue(entry.score, randomValueFormatSpec);
             outputStream.put(cmdopt.delim);
         }
         outputStream.put(entry.line);
@@ -714,13 +723,14 @@ void reservoirSampling(Flag!"permuteAll" permuteAll, OutputRange)
 void generateWeightedRandomValuesInorder(OutputRange)(TsvSampleOptions cmdopt, OutputRange outputStream)
     if (isOutputRange!(OutputRange, char))
 {
-    import std.format : format;
+    import std.format : formatValue, singleSpec;
     import std.random : Random, uniform01;
     import tsvutil : throwIfWindowsNewlineOnUnix;
 
     assert(cmdopt.hasWeightField);
 
     auto randomGenerator = Random(cmdopt.seed);
+    immutable randomValueFormatSpec = singleSpec("%.17g");
 
     /* Process each line. */
     bool headerWritten = false;
@@ -751,7 +761,7 @@ void generateWeightedRandomValuesInorder(OutputRange)(TsvSampleOptions cmdopt, O
                     ? uniform01(randomGenerator) ^^ (1.0 / lineWeight)
                     : 0.0;
 
-                outputStream.put(format("%.17g", lineScore));
+                outputStream.formatValue(lineScore, randomValueFormatSpec);
                 outputStream.put(cmdopt.delim);
                 outputStream.put(line);
                 outputStream.put("\n");
