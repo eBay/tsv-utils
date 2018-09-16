@@ -299,8 +299,7 @@ struct TsvSampleOptions
         return tuple(true, 0);
     }
 }
-/** tsvSample invokes the appropriate sampling routine based on the command line
- * arguments.
+/** Invokes the appropriate sampling routine based on the command line arguments.
  */
 void tsvSample(OutputRange)(TsvSampleOptions cmdopt, OutputRange outputStream)
 {
@@ -329,10 +328,9 @@ void tsvSample(OutputRange)(TsvSampleOptions cmdopt, OutputRange outputStream)
     }
 }
 
-/** streamSampling does simple bernoulli sampling on the input stream.
- *
- * Each input line is a assigned a random value and output if less than the sampling
- * rate.
+/** Simple random sampling on the input stream. Each input line is a assigned a random
+ * value and output if less than the sampling rate. The order of the lines is not
+ * changed.
  *
  * Design note: Performance tests show that skip sampling is faster when the sampling
  * rate is approximately 4-5% or less. A performance optimization would be to create
@@ -421,7 +419,7 @@ void streamSampling(Flag!"generateRandomAll" generateRandomAll, OutputRange)
     }
 }
 
-/** distinctSampling samples a portion of the unique values from the key fields.
+/** Sample a subset of the unique values from the key fields.
  *
  * Distinct sampling is done by hashing the key and mapping the hash value into
  * buckets matching the sampling rate size. Records having a key mapping to bucket
@@ -768,7 +766,7 @@ void generateWeightedRandomValuesInorder(OutputRange)(TsvSampleOptions cmdopt, O
     }
 }
 
-/** A convenience function for extracting a single field from a line. See getTsvFieldValue in
+/** Convenience function for extracting a single field from a line. See getTsvFieldValue in
  * common/src/tsvutils.d for details. This wrapper creates error text tailored for this program.
  */
 import std.traits : isSomeChar;

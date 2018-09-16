@@ -67,8 +67,7 @@ both are specified, the occurrences between 'at-least' and 'max' are output.
 Options:
 EOS";
 
-/**
-Container for command line options.
+/** Container for command line options.
  */
 struct TsvUniqOptions
 {
@@ -209,6 +208,9 @@ struct TsvUniqOptions
     }
 }
 
+/** Main program. Processes command line arguments and calls tsvUniq which implements
+ * the main processing logic.
+ */
 int main(string[] cmdArgs)
 {
     /* When running in DMD code coverage mode, turn on report merging. */
@@ -230,6 +232,12 @@ int main(string[] cmdArgs)
     return 0;
 }
 
+/** Outputs the unique lines from all the input files.
+ *
+ * Processes the lines in each input file. All lines are added to an associated array.
+ * The first time a line is seen it is output. If key fields are being used these are
+ * used as the basis for the associative array entries rather than the full line.
+ */
 void tsvUniq(in TsvUniqOptions cmdopt, in string[] inputFiles)
 {
     import tsvutil : InputFieldReordering, BufferedOutputRange;

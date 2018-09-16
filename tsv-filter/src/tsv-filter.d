@@ -28,6 +28,9 @@ import std.uni: asLowerCase, toLower;
  * a lengthy set, one for each test.
  */
 
+/** Main program. Invokes command line arg processing and tsv-filter to perform
+ * the real work. Any errors are caught and reported.
+ */
 int main(string[] cmdArgs)
 {
     /* When running in DMD code coverage mode, turn on report merging. */
@@ -151,10 +154,9 @@ Synopsis: tsv-filter [options] [file...]
 Options:
 EOS";
 
-/**
-The next blocks of code define the structure of the boolean tests run against input lines.
-This includes function and delegate (closure) signatures, creation mechanisms, option
-handlers, etc. Command line arg processing to build the test structure.
+/* The next blocks of code define the structure of the boolean tests run against input lines.
+ * This includes function and delegate (closure) signatures, creation mechanisms, option
+ * handlers, etc. Command line arg processing to build the test structure.
 */
 
 /* FieldsPredicate delegate signature - Each input line is run against a set of boolean
@@ -587,7 +589,7 @@ void fieldFieldNumOptionHandler(
     maxFieldIndex = max(maxFieldIndex, zeroBasedIndex1, zeroBasedIndex2);
 }
 
-/* Command line options - This struct holds the results of command line option processing.
+/** Command line options - This struct holds the results of command line option processing.
  * It also has a method, processArgs, that invokes command line arg processing.
  */
 struct TsvFilterOptions

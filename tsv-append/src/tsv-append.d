@@ -20,6 +20,9 @@ version(unittest)
 }
 else
 {
+    /** Main program. Invokes command line arg processing and tsv-append to perform
+     * the real work. Any errors are caught and reported.
+     */
     int main(string[] cmdArgs)
     {
         import tsvutil : BufferedOutputRange;
@@ -90,6 +93,8 @@ indicator of original file to each row of input.
 Options:
 EOS";
 
+/** Container for command line options.
+*/
 struct TsvAppendOptions
 {
     string programName;
@@ -120,7 +125,9 @@ struct TsvAppendOptions
         fileSourceNames[filepath] = source;
     }
 
-    /* Returns a tuple. First value is true if command line arguments were successfully
+    /** Command line argument processing.
+     *
+     * Returns a tuple. First value is true if command line arguments were successfully
      * processed and execution should continue, or false if an error occurred or the user
      * asked for help. If false, the second value is the appropriate exit code (0 or 1).
      *
@@ -196,6 +203,8 @@ struct TsvAppendOptions
     }
 }
 
+/** tsvAppend implements the basic functionality of the tsv-append program.
+ */
 void tsvAppend(OutputRange)(TsvAppendOptions cmdopt, OutputRange outputStream)
     if (isOutputRange!(OutputRange, char))
 {

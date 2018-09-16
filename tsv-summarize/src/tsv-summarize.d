@@ -542,7 +542,7 @@ void tsvSummarize(TsvSummarizeOptions cmdopt, in string[] inputFiles)
     summarizer.writeSummaryBody(stdoutWriter, printOptions);
 }
 
-/* The default field header. This is used when the input doesn't have field headers,
+/** The default field header. This is used when the input doesn't have field headers,
  * but field headers are used in the output. The default is "fieldN", where N is the
  * 1-upped field number.
  */
@@ -558,10 +558,12 @@ unittest
     assert(fieldHeaderFromIndex(10) == "field11");
 }
 
-/* Produce a summary header from a field header. The result has the form
- * "<fieldHeader>_<operation>". e.g. If the field header is "length" and the operation is
- * "max", the summary header is "length_max". The field header typically comes a
- * header line in the input data or was constructed by fieldHeaderFromIndex().
+/** Produce a summary header from a field header.
+ *
+ * The result has the form `<fieldHeader>_<operation>`. e.g. If the field header is
+ * "length" and the operation is "max", the summary header is "length_max". The field
+ * header typically comes a header line in the input data or was constructed by
+ * fieldHeaderFromIndex().
  *
  * If operationName is the empty string, then fieldHeader is used unchanged. This supports
  * the Retain operator.
@@ -577,7 +579,7 @@ unittest
     assert(summaryHeaderFromFieldHeader("originalfield", "") == "originalfield");
 }
 
-/* SummarizerPrintOptions holds printing options for Summarizers and Calculators. Typically
+/** SummarizerPrintOptions holds printing options for Summarizers and Calculators. Typically
  * specified with command line options, it is separated out for modularity.
  */
 struct SummarizerPrintOptions
@@ -595,29 +597,44 @@ struct SummarizerPrintOptions
     }
 }
 
-/* A Summarizer maintains the state of the summarization and performs basic processing.
- * Handling of files and input lines is left to the caller.
- * API:
- * - addOperator - Called after initializing the object for each operator to be processed.
- * - processHeaderLine - Called to process the header line of each file. Returns true if
+/** A Summarizer object maintains the state of the summarization and performs basic
+ * processing. Handling of files and input lines is left to the caller.
+ *
+ * Classes supporting the Summarizer must implement the methods:
+ *  - setOperators - Called after initializing the object for each operator to be processed.
+ *  - processHeaderLine - Called to process the header line of each file. Returns true if
  *   it was the first header line processed (used when reading multiple files).
  * - processNextLine - Called to process non-header lines.
  * - writeSummaryHeader - Called to write the header line.
  * - writeSummaryBody - Called to write the result lines.
+ *
  */
 interface Summarizer(OutputRange)
 {
+    /** Called after initializing the object for each operator to be processed. */
     void setOperators(InputRange!Operator op);
+
+    /** Called to process the header line of each file. Returns true if it was the
+     *  first header line processed (used when reading multiple files).
+     */
     bool processHeaderLine(const char[][] lineFields);
+
+    /** Called to process non-header lines. */
     void processNextLine(const char[][] lineFields);
+
+    /** Called to write the header line. */
     void writeSummaryHeader(ref OutputRange outputStream, const ref SummarizerPrintOptions);
+
+    /** Called to write the result lines. */
     void writeSummaryBody(ref OutputRange outputStream, const ref SummarizerPrintOptions);
 }
 
-/* SummarizerBase performs work shared by all sumarizers, most everything except for
- * handling of unique keys. The base class handles creation, allocates storage for
- * Operators and SharedFieldValues, and similar. Derived classes deal primarily with
- * unique keys and the associated Calculators and UniqueKeyValuesLists.
+/** SummarizerBase performs work shared by all sumarizers, most everything except for
+ * handling of unique keys.
+ *
+ * The base class handles creation, allocates storage for Operators and SharedFieldValues,
+ * and similar. Derived classes deal primarily with unique keys and the associated Calculators
+ * and UniqueKeyValuesLists.
  */
 class SummarizerBase(OutputRange) : Summarizer!OutputRange
 {
@@ -639,7 +656,7 @@ class SummarizerBase(OutputRange) : Summarizer!OutputRange
         return _inputFieldDelimiter;
     }
 
-    /* Sets the Operators used by the Summarizer. Called after construction. */
+    /** Sets the Operators used by the Summarizer. Called after construction. */
     void setOperators(InputRange!Operator operators)
     {
         foreach (op; operators)
@@ -661,6 +678,9 @@ class SummarizerBase(OutputRange) : Summarizer!OutputRange
         }
     }
 
+    /** Called to process the header line of each file. Returns true if it was the
+     *  first header line processed (used when reading multiple files).
+     */
     bool processHeaderLine(const char[][] lineFields)
     {
         if (!_hasProcessedFirstHeaderLine)
@@ -687,7 +707,7 @@ class SummarizerBase(OutputRange) : Summarizer!OutputRange
     abstract void writeSummaryBody(ref OutputRange outputStream, const ref SummarizerPrintOptions);
 }
 
-/* The NoKeySummarizer is used when summarizing values across the entire input.
+/** The NoKeySummarizer is used when summarizing values across the entire input.
  *
  * Note: NoKeySummarizer is used in Operator unit tests and gets extensive testing
  * through that mechanism.
@@ -702,26 +722,31 @@ class NoKeySummarizer(OutputRange) : SummarizerBase!OutputRange
         super(inputFieldDelimiter, missingPolicy);
     }
 
-    /* Only one Calculator per Operation, so create them as Operators are added. */
+    /** Called after initializing the object for each operator to be processed. */
     override void setOperators(InputRange!Operator operators)
     {
         super.setOperators(operators);
+
+        /* Only one Calculator per Operation, so create them as Operators are added. */
         foreach (op; operators) _calculators ~= op.makeCalculator;
         _valueLists = super.makeUniqueKeyValuesLists();
     }
 
+     /** Called to process non-header lines. */
     override void processNextLine(const char[][] lineFields)
     {
         _calculators.each!(x => x.processNextLine(lineFields));
         if (_valueLists !is null) _valueLists.processNextLine(lineFields, _missingPolicy);
     }
 
+    /** Called to write the header line. */
     override void writeSummaryHeader(ref OutputRange outputStream, const ref SummarizerPrintOptions printOptions)
     {
         put(outputStream, _operators[].map!(op => op.header).join(printOptions.fieldDelimiter));
         put(outputStream, '\n');
     }
 
+    /** Called to write the result lines. */
     override void writeSummaryBody(ref OutputRange outputStream, const ref SummarizerPrintOptions printOptions)
     {
         put(outputStream,
@@ -732,10 +757,11 @@ class NoKeySummarizer(OutputRange) : SummarizerBase!OutputRange
     }
 }
 
-/* KeySummarizerBase does work shared by the single key and multi-key summarizers. The
- * primary difference between those two is the formation of the key. The primary reason
- * for separating those into two separate classes is to simplify (speed-up) handling of
- * single field keys, which are the most common use case.
+/** KeySummarizerBase does work shared by the single key and multi-key summarizers.
+ *
+ * The primary difference between those two is the formation of the key. The primary
+ * reason for separating those into two separate classes is to simplify (speed-up)
+ * handling of single field keys, which are the most common use case.
  */
 class KeySummarizerBase(OutputRange) : SummarizerBase!OutputRange
 {
@@ -807,7 +833,7 @@ class KeySummarizerBase(OutputRange) : SummarizerBase!OutputRange
     abstract string keyFieldHeader() const @property;
 }
 
-/* This Summarizer is for the case where the unique key is based on exactly one field.
+/** This Summarizer is for the case where the unique key is based on exactly one field.
  */
 class OneKeySummarizer(OutputRange) : KeySummarizerBase!OutputRange
 {
@@ -846,7 +872,7 @@ class OneKeySummarizer(OutputRange) : KeySummarizerBase!OutputRange
     }
 }
 
-/* This Summarizer is for the case where the unique key is based on multiple fields.
+/** This Summarizer is for the case where the unique key is based on multiple fields.
  */
 class MultiKeySummarizer(OutputRange) : KeySummarizerBase!OutputRange
 {
@@ -1613,6 +1639,9 @@ unittest
  * Calculators access thier operator's policy struct.
  */
 
+/** An Operator represents a summary calculation specified on the command line.
+ *  e.g. '--mean 5'.
+ */
 interface Operator
 {
     @property string header();
@@ -1623,12 +1652,17 @@ interface Operator
     Calculator makeCalculator();
 }
 
+/** Calculators are responsible for the calculation of a single computation. They
+ *  process each line and produce the final value when all processing is finished.
+ */
 interface Calculator
 {
     void processNextLine(const char[][] fields);
     string calculate(UniqueKeyValuesLists valuesLists, const ref SummarizerPrintOptions printOptions);
 }
 
+/** This class describes processing behavior when a missing value is encountered.
+ */
 class MissingFieldPolicy
 {
     private bool _useMissing = true;          // True if missing values are processed unchanged.
@@ -1899,7 +1933,7 @@ class UniqueKeyValuesLists
     }
 }
 
-/* SingleFieldOperator is a base class for single field operators, the most common
+/** SingleFieldOperator is a base class for single field operators, the most common
  * Operator. Derived classes implement makeCalculator and the Calculator class it returns.
  */
 class SingleFieldOperator : Operator
@@ -2003,7 +2037,7 @@ class SingleFieldOperator : Operator
     abstract SingleFieldCalculator makeCalculator();
 }
 
-/* SingleFieldCalculator is a base class for the common case of calculators using a single
+/** SingleFieldCalculator is a base class for the common case of calculators using a single
  * field. Derived classes implement processNextField() rather than processNextLine().
  */
 class SingleFieldCalculator : Calculator
@@ -2228,7 +2262,7 @@ version(unittest)
     }
 }
 
-/* ZeroFieldOperator is a base class for operators that take no input. The main use
+/** ZeroFieldOperator is a base class for operators that take no input. The main use
  * case is the CountOperator, which counts the occurrences of each unique key. Other
  * uses are possible, for example, weighted random number assignment.
  *
@@ -2291,7 +2325,7 @@ class ZeroFieldOperator : Operator
     abstract ZeroFieldCalculator makeCalculator();
 }
 
-/* ZeroFieldCalculator is a base class for operators that don't use fields as input.
+/** ZeroFieldCalculator is a base class for operators that don't use fields as input.
  * In particular, the Count operator. It is a companion to the ZeroFieldOperator class.
  *
  * Derived classes implement processNextEntry() rather than processNextLine(), and the
@@ -2318,7 +2352,7 @@ class ZeroFieldCalculator : Calculator
 
 version(unittest)
 {
-    /** A helper for ZeroFieldOperator unit tests.
+    /* A helper for ZeroFieldOperator unit tests.
      *
      * testZeroFieldOperator takes a set of split file values, a default header, and a
      * set of expected values. The expected values array contains the expected values
@@ -2709,7 +2743,7 @@ unittest // LastOperator
                                           new MissingFieldPolicy(false, "NA"));  // Replace missing
 }
 
-/* MinOperator output the minimum value for the field. This is a numeric operator.
+/** MinOperator output the minimum value for the field. This is a numeric operator.
  */
 class MinOperator : SingleFieldOperator
 {
@@ -2779,7 +2813,7 @@ unittest // MinOperator
                                           new MissingFieldPolicy(false, "5"));  // Replace missing
 }
 
-/* MaxOperator output the maximum value for the field. This is a numeric operator.
+/** MaxOperator output the maximum value for the field. This is a numeric operator.
  */
 class MaxOperator : SingleFieldOperator
 {
@@ -2849,9 +2883,10 @@ unittest // MaxOperator
                                           new MissingFieldPolicy(false, "5"));  // Replace missing
 }
 
-/* RangeOperator outputs the difference between the minimum and maximum values. If there
- * is a single value, or all values are the same, the range is zero. This is a numeric
- * operator.
+/** RangeOperator outputs the difference between the minimum and maximum values.
+ *
+ * If there is a single value, or all values are the same, the range is zero. This is
+ * a numeric operator.
  */
 class RangeOperator : SingleFieldOperator
 {
@@ -2926,7 +2961,7 @@ unittest // RangeOperator
                                           new MissingFieldPolicy(false, "5.5"));  // Replace missing
 }
 
-/* SumOperator produces the sum of all the values. This is a numeric operator.
+/** SumOperator produces the sum of all the values. This is a numeric operator.
  */
 class SumOperator : SingleFieldOperator
 {
@@ -2986,7 +3021,7 @@ unittest // SumOperator
                                           new MissingFieldPolicy(false, "1.5"));  // Replace missing
 }
 
-/* MeanOperator produces the mean (average) of all the values. This is a numeric operator.
+/** MeanOperator produces the mean (average) of all the values. This is a numeric operator.
  */
 class MeanOperator : SingleFieldOperator
 {
@@ -3049,7 +3084,7 @@ unittest // MeanOperator
                                           new MissingFieldPolicy(false, "0"));  // Replace missing
 }
 
-/* MedianOperator produces the median of all the values. This is a numeric operator.
+/** MedianOperator produces the median of all the values. This is a numeric operator.
  *
  * All the field values are stored in memory as part of this calculation. This is
  * handled by unique key value lists.
@@ -3110,7 +3145,7 @@ unittest // MedianOperator
                                           new MissingFieldPolicy(false, "0"));  // Replace missing
 }
 
-/* QuantileOperator produces the value representing the data at a cummulative probability.
+/** QuantileOperator produces the value representing the data at a cummulative probability.
  * This is a numeric operation.
  *
  * As an example, quantiles might be produced for the 0.25, 0.5, and 0.75 probabilities
@@ -3205,7 +3240,7 @@ unittest // QuantileOperator
                                                  new MissingFieldPolicy(false, "0"), 0.5);  // Replace missing
 }
 
-/* MadOperator produces the median absolute deviation from the median. This is a numeric
+/** MadOperator produces the median absolute deviation from the median. This is a numeric
  * operation.
  *
  * The result is the raw MAD value, without a normalization applied.
@@ -3278,6 +3313,8 @@ unittest // MadOperator
                                           new MissingFieldPolicy(false, "0"));  // Replace missing
 }
 
+/** Generates the variance of the fields values. This is a numeric operator.
+ */
 class VarianceOperator : SingleFieldOperator
 {
     this(size_t fieldIndex, MissingFieldPolicy missingPolicy)
@@ -3343,6 +3380,8 @@ unittest // VarianceOperator
                                           new MissingFieldPolicy(false, "15"));  // Replace missing
 }
 
+/** Generates the standard deviation of the fields values. This is a numeric operator.
+ */
 class StDevOperator : SingleFieldOperator
 {
     this(size_t fieldIndex, MissingFieldPolicy missingPolicy)
@@ -3411,7 +3450,7 @@ unittest
                                           new MissingFieldPolicy(false, "7"));  // Replace missing
 }
 
-/* UniqueCountOperator generates the number of unique values. Unique values are
+/** UniqueCountOperator generates the number of unique values. Unique values are
  * based on exact text match calculation, not a numeric comparison.
  *
  * All the unique field values are stored in memory as part of this calculation.
@@ -3476,7 +3515,7 @@ unittest // UniqueCount
                                                 new MissingFieldPolicy(false, "XYZ"));  // Replace missing
 }
 
-/* MissingCountOperator generates the number of missing values. This overrides
+/** MissingCountOperator generates the number of missing values. This overrides
  * the global missingFieldsPolicy.
  */
 class MissingCountOperator : SingleFieldOperator
@@ -3551,7 +3590,7 @@ unittest // MissingCount
     testSingleFieldOperator!MissingCountOperator(col3File, 2, "missing_count", ["0", "0", "0", "1"], replaceMissing);
 }
 
-/* NotMissingCountOperator generates the number of not-missing values. This overrides
+/** NotMissingCountOperator generates the number of not-missing values. This overrides
  * the global missingFieldsPolicy.
  */
 class NotMissingCountOperator : SingleFieldOperator
@@ -3626,7 +3665,7 @@ unittest // NotMissingCount
     testSingleFieldOperator!NotMissingCountOperator(col3File, 2, "not_missing_count", ["0", "1", "2", "2"], replaceMissing);
 }
 
-/* ModeOperator outputs the most frequent value seen. In the event of a tie, the
+/** ModeOperator outputs the most frequent value seen. In the event of a tie, the
  * first value seen is produced.
  *
  * All the field values are stored in memory as part of this calculation.
@@ -3720,7 +3759,7 @@ unittest // ModeOperator
                                          new MissingFieldPolicy(false, "X"));  // Replace missing
 }
 
-/* ModeCountOperator outputs the count of the most frequent value seen.
+/** ModeCountOperator outputs the count of the most frequent value seen.
  *
  * All the field values are stored in memory as part of this calculation.
  *
@@ -3797,7 +3836,7 @@ unittest // ModeCountOperator
                                               new MissingFieldPolicy(false, "X"));  // Replace missing
 }
 
-/* ValuesOperator outputs each value delimited by an alternate delimiter character.
+/** ValuesOperator outputs each value delimited by an alternate delimiter character.
  *
  * All the field values are stored in memory as part of this calculation. This is
  * handled by unique key value lists.
@@ -3860,7 +3899,7 @@ unittest // ValuesOperator
                                          new MissingFieldPolicy(false, "X"));  // Replace missing
 }
 
-/* UniqueValuesOperator outputs each unique value delimited by an alternate delimiter
+/** UniqueValuesOperator outputs each unique value delimited by an alternate delimiter
  * character. Values are output in the order seen.
  *
  * All unique field values are stored in memory as part of this calculation.

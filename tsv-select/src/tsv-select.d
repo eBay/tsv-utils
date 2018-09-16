@@ -18,8 +18,7 @@ Initially written by Jon Degenhardt
 License: Boost Licence 1.0 (http://boost.org/LICENSE_1_0.txt)
 */
 
-// Module name defaults to file name, but hyphens not allowed, so set it here.
-module tsv_select;
+module tsv_select;   // Module name defaults to file name, but hyphens not allowed, so set it here.
 
 // Imports used by multiple routines. Others imports made in local context.
 import std.stdio;
@@ -48,8 +47,7 @@ Examples:
 Options:
 EOS";
 
-/**
-Container for command line options.
+/** Container for command line options.
  */
 struct TsvSelectOptions
 {
@@ -130,8 +128,7 @@ struct TsvSelectOptions
     }
 }
 
-/**
-Main program.
+/** Main program.
  */
 int main(string[] cmdArgs)
 {
@@ -180,28 +177,26 @@ int main(string[] cmdArgs)
 
 // tsvSelect
 
-/**
-Enumeration of the different specializations of the tsvSelect template.
-
-CTERestLocation is logically equivalent to the TsvSelectOptions.RestOptionVal enum. It
-is used by main to choose the appropriate tsvSelect template instantiation to call. It
-is distinct from the TsvSelectOptions enum to separate it from the end-user UI. The
-TsvSelectOptions version specifies the text of allowed values in command line arguments.
-*/
+/** Enumeration of the different specializations of the tsvSelect template.
+ *
+ * CTERestLocation is logically equivalent to the TsvSelectOptions.RestOptionVal enum. It
+ * is used by main to choose the appropriate tsvSelect template instantiation to call. It
+ * is distinct from the TsvSelectOptions enum to separate it from the end-user UI. The
+ * TsvSelectOptions version specifies the text of allowed values in command line arguments.
+ */
 enum CTERestLocation { none, first, last };
 
-/**
-tsvSelect does the primary work of the tsv-select program.
-
-Input is read line by line, extracting the listed fields and writing them out in the order
-specified. An exception is thrown on error.
-
-This function is templatized with instantiations for the different --rest options. This
-avoids repeatedly running the same if-tests inside the inner loop. The main function
-instantiates this function three times, once for each of the --rest options. It results
-in a larger program, but is faster. Run-time improvements of 25% were measured compared
-to the non-templatized version. (Note: 'cte' stands for 'compile time evaluation'.)
-*/
+/** tsvSelect does the primary work of the tsv-select program.
+ *
+ * Input is read line by line, extracting the listed fields and writing them out in the order
+ * specified. An exception is thrown on error.
+ *
+ * This function is templatized with instantiations for the different --rest options. This
+ * avoids repeatedly running the same if-tests inside the inner loop. The main function
+ * instantiates this function three times, once for each of the --rest options. It results
+ * in a larger program, but is faster. Run-time improvements of 25% were measured compared
+ * to the non-templatized version. (Note: 'cte' stands for 'compile time evaluation'.)
+ */
 void tsvSelect(CTERestLocation cteRest)(in TsvSelectOptions cmdopt, in string[] inputFiles)
 {
     import tsvutil: BufferedOutputRange, InputFieldReordering, throwIfWindowsNewlineOnUnix;

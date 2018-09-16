@@ -9,6 +9,8 @@ Initially written by Jon Degenhardt
 License: Boost Licence 1.0 (http://boost.org/LICENSE_1_0.txt)
 */
 
+module csv2tsv;
+
 import std.stdio;
 import std.format : format;
 import std.range;
@@ -64,8 +66,7 @@ UTF-8 input is assumed. Convert other encodings prior to invoking this tool.
 Options:
 EOS";
 
-/**
-Container for command line options.
+/** Container for command line options.
  */
 struct Csv2tsvOptions
 {
@@ -159,6 +160,7 @@ struct Csv2tsvOptions
         return tuple(true, 0);
     }
 }
+
 version(unittest)
 {
     // No main in unittest
@@ -198,9 +200,9 @@ else
 /* This uses a D feature where a type can reserve a single value to represent null. */
 alias NullableSizeT = Nullable!(size_t, size_t.max);
 
-/**
-csv2tsvFiles reads multiple files and standard input and writes the results to standard
-output.
+
+/** csv2tsvFiles reads multiple files and standard input and writes the results to
+ * standard output. 
  */
 void csv2tsvFiles(in Csv2tsvOptions cmdopt, in string[] inputFiles)
 {
@@ -242,27 +244,26 @@ void csv2tsvFiles(in Csv2tsvOptions cmdopt, in string[] inputFiles)
     }
 }
 
-/**
-Read CSV from an input source, convert to TSV and write to an output source.
-
-Params:
-   InputRange          =  A ubyte input range to read CSV text from. A ubyte range
-                          matches byChunk. It also avoids conversion to dchar by front().
-   OutputRange         =  An output range to write TSV text to.
-   filename            =  Name of file to use when reporting errors. A descriptive name can
-                          be used in lieu of a file name.
-   currFileLineNumber  =  First line being processed. Used when reporting errors. Needed
-                          only when part of the input has already been processed.
-   csvQuote            =  The quoting character used in the input CSV file.
-   csvDelim            =  The field delimiter character used in the input CSV file.
-   tsvDelim            =  The field delimiter character to use in the generated TSV file.
-   tsvDelimReplacement =  A string to use when replacing newlines and TSV field delimiters
-                          occurring in CSV fields.
-   maxRecords          =  The maximum number of records to process (output lines). This is
-                          intended to support processing the header line separately.
-
-Throws: Exception on finding inconsistent CSV. Exception text includes the filename and
-        line number where the error was identified.
+/** Read CSV from an input source, covert to TSV and write to an output source.
+ *
+ * Params:
+ *   InputRange          =  A ubyte input range to read CSV text from. A ubyte range
+ *                          matched byChunck. It also avoids convesion to dchar by front().
+ *   OutputRange         =  An output range to write TSV text to.
+ *   filename            =  Name of file to use when reporting errors. A descriptive name
+ *                       =  can be used in lieu of a file name.
+ *   currFileLineNumber  =  First line being processed. Used when reporting errors. Needed
+ *                          only when part of the input has already been processed.
+ *   csvQuote            =  The quoting character used in the input CSV file.
+ *   csvDelim            =  The field delimiter character used in the input CSV file.
+ *   tsvDelim            =  The field delimiter character to use in the generated TSV file.
+ *   tsvDelimReplacement =  A string to use when replacing newlines and TSV field delimiters
+ *                          occurring in CSV fields.
+ *   maxRecords          =  The maximum number of records to process (output lines). This is
+ *                          intended to support processing the header line separately.
+ *
+ * Throws: Exception on finding inconsistent CSV. Exception text includes the filename and
+ *         line number where the error was identified.
  */
 void csv2tsv(InputRange, OutputRange)
     (ref InputRange inputStream, ref OutputRange outputStream,
