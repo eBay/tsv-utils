@@ -318,13 +318,14 @@ void tsvSample(OutputRange)(TsvSampleOptions cmdopt, OutputRange outputStream)
         assert(cmdopt.hasWeightField);
         generateWeightedRandomValuesInorder(cmdopt, outputStream);
     }
-    else if (cmdopt.sampleSize == 0)
+    else if (cmdopt.sampleSize != 0)
     {
-        reservoirSampling!(Yes.permuteAll)(cmdopt, outputStream);
+        reservoirSampling!(No.permuteAll)(cmdopt, outputStream);
     }
     else
     {
-        reservoirSampling!(No.permuteAll)(cmdopt, outputStream);
+        if (cmdopt.hasWeightField) randomizeLines!(Yes.isWeighted)(cmdopt, outputStream);
+        else randomizeLines!(No.isWeighted)(cmdopt, outputStream);
     }
 }
 
@@ -753,7 +754,7 @@ void generateWeightedRandomValuesInorder(OutputRange)(TsvSampleOptions cmdopt, O
                 }
             }
             else
-            {
+               {
                 double lineWeight = getFieldValue!double(line, cmdopt.weightField, cmdopt.delim,
                                                          filename, fileLineNum);
                 double lineScore =
@@ -773,6 +774,134 @@ void generateWeightedRandomValuesInorder(OutputRange)(TsvSampleOptions cmdopt, O
                 }
             }
         }
+    }
+}
+
+/** Randomize all the lines in files or standard input.
+ *
+ * All lines in files and/or standard input are read in and written out in random
+ * order. Both simple random sampling and weighted sampling are supported.
+ *
+ * Input data size is limited by available memory. Disk oriented techniques are needed
+ * when data sizes are larger. For example, generating random values line-by-line (ala
+ * --gen-random-inorder) and sorting with a disk-backed sort program like GNU sort.
+ *
+ * This approach is significantly faster than reading line-by-line with a heap the
+ * way reservoir sampling does, effectively acknowledging that both approaches
+ * need to read all data into memory when randomizing all lines.
+ */
+void randomizeLines(Flag!"isWeighted" isWeighted, OutputRange)(TsvSampleOptions cmdopt, OutputRange outputStream)
+    if (isOutputRange!(OutputRange, char))
+{
+    import std.algorithm : sort, splitter;
+    import std.array : appender;
+    import std.file : read;
+    import std.format : formatValue, singleSpec;
+    import std.random : Random, uniform01;
+    import tsvutil : throwIfWindowsNewlineOnUnix;
+
+    static if (isWeighted) assert(cmdopt.hasWeightField);
+    else assert(!cmdopt.hasWeightField);
+
+    assert(cmdopt.sampleSize == 0);
+
+    struct FileData
+    {
+        string filename;
+        char[] data;
+    }
+
+    auto fileData = new FileData[cmdopt.files.length];
+
+    /*
+     * Read all file data into memory.
+     */
+    foreach (fileNum, filename; cmdopt.files)
+    {
+        fileData[fileNum].filename = filename;
+        if (filename == "-")
+        {
+            auto stdinData = appender(&(fileData[fileNum].data));
+            ubyte[1024 * 1024] fileRawBuf;
+            foreach (ref ubyte[] buffer; stdin.byChunk(fileRawBuf)) stdinData.put(cast(char[]) buffer);
+        }
+        else
+        {
+            fileData[fileNum].data = cast(char[]) filename.read;
+        }
+    }
+
+    /*
+     * Split the data into lines and assign a random value to each line.
+     */
+    struct Entry
+    {
+        double score;
+        char[] line;
+    }
+
+    auto scoredLines = appender!(Entry[]);
+    auto randomGenerator = Random(cmdopt.seed);
+    bool headerWritten = false;
+
+    foreach (fd; fileData)
+    {
+        /* Drop the last newline to avoid adding an extra empty line. */
+        auto data = (fd.data.length > 0 && fd.data[$ - 1] == '\n') ? fd.data[0 .. $ - 1] : fd.data;
+        foreach (fileLineNum, line; data.splitter('\n').enumerate(1))
+        {
+            if (fileLineNum == 1) throwIfWindowsNewlineOnUnix(line, fd.filename, fileLineNum);
+            if (fileLineNum == 1 && cmdopt.hasHeader)
+            {
+                if (!headerWritten)
+                {
+                    if (cmdopt.printRandom)
+                    {
+                        outputStream.put(cmdopt.randomValueHeader);
+                        outputStream.put(cmdopt.delim);
+                    }
+                    outputStream.put(line);
+                    outputStream.put("\n");
+                    headerWritten = true;
+                }
+            }
+            else
+            {
+                static if (!isWeighted)
+                {
+                    double lineScore = uniform01(randomGenerator);
+                }
+                else
+                    {
+                        double lineWeight =
+                            getFieldValue!double(line, cmdopt.weightField, cmdopt.delim, fd.filename, fileLineNum);
+                        double lineScore =
+                            (lineWeight > 0.0)
+                            ? uniform01(randomGenerator) ^^ (1.0 / lineWeight)
+                            : 0.0;
+                    }
+
+                scoredLines.put(Entry(lineScore, line));
+            }
+        }
+    }
+
+    /*
+     * Sort by the weight and output the lines.
+     */
+    scoredLines.data.sort!((a, b) => a.score > b.score);
+
+    immutable randomValueFormatSpec = singleSpec("%.17g");
+
+    foreach (lineEntry; scoredLines.data)
+    {
+        if (cmdopt.printRandom)
+        {
+            outputStream.formatValue(lineEntry.score, randomValueFormatSpec);
+            outputStream.put(cmdopt.delim);
+        }
+        outputStream.put(lineEntry.line);
+        outputStream.put("\n");
     }
 }
 
