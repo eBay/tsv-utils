@@ -761,6 +761,116 @@ random_value@title@weight
 0.7571015392895788@Aristophanis Lysistrata@5464
 0.38388182921335101@Ephemerides Barometricae Mutinenses@5869
 
+====[cat input3x10.tsv tsv-sample -v 99]====
+3	Mesék és regék	20
+4	Soitannollisia satuja ja jutelmia	44
+8	Door het land der Skipetaren	30
+5	Pinocchion seikkailut	19
+1	Álomvilág: Elbeszélések	41
+7	Oude Egyptische Legenden	28
+line	title	weight
+10	Platero y yo	2
+2	Grimm testvérek összegyüjtött meséi	9
+9	Las Fábulas de Esopo	45
+6	Piepkuikentje	17
+
+====[cat input3x10.tsv tsv-sample -H -v 99]====
+line	title	weight
+4	Soitannollisia satuja ja jutelmia	44
+5	Pinocchion seikkailut	19
+9	Las Fábulas de Esopo	45
+6	Piepkuikentje	17
+2	Grimm testvérek összegyüjtött meséi	9
+8	Door het land der Skipetaren	30
+1	Álomvilág: Elbeszélések	41
+3	Mesék és regék	20
+10	Platero y yo	2
+7	Oude Egyptische Legenden	28
+
+====[cat input3x10.tsv tsv-sample -H -v 99 -p]====
+random_value	line	title	weight
+0.83194808103144169	4	Soitannollisia satuja ja jutelmia	44
+0.82549517066217959	5	Pinocchion seikkailut	19
+0.80804996308870614	9	Las Fábulas de Esopo	45
+0.73406260646879673	6	Piepkuikentje	17
+0.72253967146389186	2	Grimm testvérek összegyüjtött meséi	9
+0.7010090509429574	8	Door het land der Skipetaren	30
+0.67227855348028243	1	Álomvilág: Elbeszélések	41
+0.48807839886285365	3	Mesék és regék	20
+0.19331310410052538	10	Platero y yo	2
+0.031446386594325304	7	Oude Egyptische Legenden	28
+
+====[cat input3x10.tsv tsv-sample -H -s -- - input3x3.tsv input3x4.tsv]====
+line	title	weight
+8	Door het land der Skipetaren	30
+4	Soitannollisia satuja ja jutelmia	44
+1	Thérèse Desqueyroux	43
+6	Piepkuikentje	17
+3	The Catcher in the Rye	19
+5	Pinocchion seikkailut	19
+3	Mesék és regék	20
+10	Platero y yo	2
+7	Oude Egyptische Legenden	28
+2	Bonjour Tristesse	3
+3	Le Silence de la mer	72
+9	Las Fábulas de Esopo	45
+2	Grimm testvérek összegyüjtött meséi	9
+4	Ficciones	23
+2	A Room of One's Own	62
+1	Aurélien	36
+1	Álomvilág: Elbeszélések	41
+
+====[cat input3x10.tsv tsv-sample -H -s -- input3x3.tsv - input3x4.tsv]====
+line	title	weight
+5	Pinocchion seikkailut	19
+1	Álomvilág: Elbeszélések	41
+8	Door het land der Skipetaren	30
+3	Mesék és regék	20
+3	The Catcher in the Rye	19
+2	Grimm testvérek összegyüjtött meséi	9
+3	Le Silence de la mer	72
+7	Oude Egyptische Legenden	28
+4	Soitannollisia satuja ja jutelmia	44
+9	Las Fábulas de Esopo	45
+10	Platero y yo	2
+6	Piepkuikentje	17
+2	Bonjour Tristesse	3
+4	Ficciones	23
+2	A Room of One's Own	62
+1	Aurélien	36
+1	Thérèse Desqueyroux	43
+
+====[cat input3x10.tsv tsv-sample -s -- input3x3.tsv input3x4.tsv -]====
+2	Bonjour Tristesse	3
+3	The Catcher in the Rye	19
+line	title	weight
+4	Ficciones	23
+2	A Room of One's Own	62
+1	Thérèse Desqueyroux	43
+3	Le Silence de la mer	72
+1	Aurélien	36
+line	title	weight
+
+====[cat input3x10.tsv tsv-sample -H -s -w 3 -- input3x3.tsv - input3x4.tsv]====
+line	title	weight
+1	Álomvilág: Elbeszélések	41
+5	Pinocchion seikkailut	19
+8	Door het land der Skipetaren	30
+3	Le Silence de la mer	72
+3	Mesék és regék	20
+4	Soitannollisia satuja ja jutelmia	44
+3	The Catcher in the Rye	19
+7	Oude Egyptische Legenden	28
+9	Las Fábulas de Esopo	45
+2	A Room of One's Own	62
+1	Aurélien	36
+2	Grimm testvérek összegyüjtött meséi	9
+6	Piepkuikentje	17
+4	Ficciones	23
+1	Thérèse Desqueyroux	43
+2	Bonjour Tristesse	3
+10	Platero y yo	2
+
 ====[tsv-sample -H input3x10.tsv | wc -l | tr -d ' ']====
 11
 

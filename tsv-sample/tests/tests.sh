@@ -85,6 +85,29 @@ runtest ${prog} "-d @ -H -s -p -w 2 -n 3 input2x7_atsign.tsv" ${basic_tests_1}
 runtest ${prog} "-d @ -H -s -p -n 20 input2x7_atsign.tsv" ${basic_tests_1}
 runtest ${prog} "-d @ -H -s -p --rate 1.0 input2x7_atsign.tsv" ${basic_tests_1}
 
+## Line order randomization with standard input and multiple files. These deserve specific tests
+## due to special handling of these in the code. runtest can do these, so write out by hand.
+echo "" >> ${basic_tests_1}; echo "====[cat input3x10.tsv tsv-sample -v 99]====" >> ${basic_tests_1}
+cat input3x10.tsv | ${prog} -v 99 >> ${basic_tests_1} 2>&1
+
+echo "" >> ${basic_tests_1}; echo "====[cat input3x10.tsv tsv-sample -H -v 99]====" >> ${basic_tests_1}
+cat input3x10.tsv | ${prog} -H -v 99 >> ${basic_tests_1} 2>&1
+
+echo "" >> ${basic_tests_1}; echo "====[cat input3x10.tsv tsv-sample -H -v 99 -p]====" >> ${basic_tests_1}
+cat input3x10.tsv | ${prog} -H -v 99 -p >> ${basic_tests_1} 2>&1
+
+echo "" >> ${basic_tests_1}; echo "====[cat input3x10.tsv tsv-sample -H -s -- - input3x3.tsv input3x4.tsv]====" >> ${basic_tests_1}
+cat input3x10.tsv | ${prog} -H -s -- - input3x3.tsv input3x4.tsv >> ${basic_tests_1} 2>&1
+
+echo "" >> ${basic_tests_1}; echo "====[cat input3x10.tsv tsv-sample -H -s -- input3x3.tsv - input3x4.tsv]====" >> ${basic_tests_1}
+cat input3x10.tsv | ${prog} -H -s -- input3x3.tsv - input3x4.tsv >> ${basic_tests_1} 2>&1
+
+echo "" >> ${basic_tests_1}; echo "====[cat input3x10.tsv tsv-sample -s -- input3x3.tsv input3x4.tsv -]====" >> ${basic_tests_1}
+cat input3x3.tsv | ${prog} -s -- input3x4.tsv - >> ${basic_tests_1} 2>&1
+
+echo "" >> ${basic_tests_1}; echo "====[cat input3x10.tsv tsv-sample -H -s -w 3 -- input3x3.tsv - input3x4.tsv]====" >> ${basic_tests_1}
+cat input3x10.tsv | ${prog} -H -s -w 3 -- input3x3.tsv - input3x4.tsv >> ${basic_tests_1} 2>&1
+
 ## Need to run at least one test with the unpredictable seed. Can't compare the
 ## results, so check the number of lines returned. Check standard input also.
 ## runtest can't do these, write these out by hand.
