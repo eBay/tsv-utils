@@ -278,7 +278,7 @@ struct TsvSampleOptions
             if (randomValueHeader.length == 0 || randomValueHeader.canFind('\n') ||
                 randomValueHeader.canFind(delim))
             {
-                throw new Exception("--randomValueHeader string must be at least one character and not contain field delimiters or newlines.");
+                throw new Exception("--randomValueHeader must be at least one character and not contain field delimiters or newlines.");
             }
 
             /* Seed. */

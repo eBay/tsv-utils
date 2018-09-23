@@ -59,3 +59,6 @@ c-1	c-2	c-3	c-4
 
 ====[tsv-sample -H -r 0.5 --gen-random-inorder input4x50.tsv input4x15.tsv]====
 [tsv-sample] Error processing command line arguments: --q|gen-random-inorder and --r|rate can only be used together if --k|key-fields is also used.
+
+====[tsv-sample -H --gen-random-inorder -d , --random-value-header abc,def input3x25.tsv]====
+[tsv-sample] Error processing command line arguments: --randomValueHeader must be at least one character and not contain field delimiters or newlines.

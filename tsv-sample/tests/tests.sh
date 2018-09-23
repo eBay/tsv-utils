@@ -85,8 +85,16 @@ runtest ${prog} "-d @ -H -s -p -w 2 -n 3 input2x7_atsign.tsv" ${basic_tests_1}
 runtest ${prog} "-d @ -H -s -p -n 20 input2x7_atsign.tsv" ${basic_tests_1}
 runtest ${prog} "-d @ -H -s -p --rate 1.0 input2x7_atsign.tsv" ${basic_tests_1}
 
+## Tests with a negative weight. Negative weight entry should be last.
+runtest ${prog} "-H -w 3 -v 777 input3x25_negative_wt.tsv" ${basic_tests_1}
+runtest ${prog} "-H -w 3 -v 888 input3x25_negative_wt.tsv" ${basic_tests_1}
+runtest ${prog} "-H -w 3 -v 777 -n 24 input3x25_negative_wt.tsv" ${basic_tests_1}
+runtest ${prog} "-H -w 3 -v 888 -n 24 input3x25_negative_wt.tsv" ${basic_tests_1}
+runtest ${prog} "-H --gen-random-inorder -w 3 -v 777 input3x25_negative_wt.tsv" ${basic_tests_1}
+runtest ${prog} "-H --gen-random-inorder -w 3 -v 888 input3x25_negative_wt.tsv" ${basic_tests_1}
+
 ## Line order randomization with standard input and multiple files. These deserve specific tests
-## due to special handling of these in the code. runtest can do these, so write out by hand.
+## due to special handling of these in the code. runtest cannot do these, so write out by hand.
 echo "" >> ${basic_tests_1}; echo "====[cat input3x10.tsv tsv-sample -v 99]====" >> ${basic_tests_1}
 cat input3x10.tsv | ${prog} -v 99 >> ${basic_tests_1} 2>&1
 
@@ -168,6 +176,7 @@ runtest ${prog} "-k 1 input4x50.tsv input4x15.tsv" ${error_tests}
 runtest ${prog} "-r 0.5 -k 5 input4x50.tsv input4x15.tsv" ${error_tests}
 runtest ${prog} "-H -r 0.5 -k 5 input4x50.tsv input4x15.tsv" ${error_tests}
 runtest ${prog} "-H -r 0.5 --gen-random-inorder input4x50.tsv input4x15.tsv" ${error_tests}
+runtest ${prog} "-H --gen-random-inorder -d , --random-value-header abc,def input3x25.tsv" ${error_tests}
 
 # Error tests 2 are tests that are compiler version dependent. There are multiple
 # version files in test-config.json.
