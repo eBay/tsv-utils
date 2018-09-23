@@ -177,6 +177,7 @@ struct TsvSampleOptions
     bool hasWeightField = false;      // Derived.
     bool useStreamSampling = false;   // Derived.
     bool useDistinctSampling = false; // Derived.
+    bool usingUnpredictableSeed = true;  // Derived from --static-seed, --seed-value
     uint seed = 0;                    // Derived from --static-seed, --seed-value
 
     auto processArgs(ref string[] cmdArgs)
@@ -283,9 +284,13 @@ struct TsvSampleOptions
 
             /* Seed. */
             import std.random : unpredictableSeed;
-            seed = (seedValueOptionArg != 0) ? seedValueOptionArg
-                : staticSeed ? 2438424139
-                : unpredictableSeed;
+
+            usingUnpredictableSeed = (!staticSeed && seedValueOptionArg == 0);
+
+            if (usingUnpredictableSeed) seed = unpredictableSeed;
+            else if (seedValueOptionArg != 0) seed = seedValueOptionArg;
+            else if (staticSeed) seed = 2438424139;
+            else assert(0, "Internal error, invalid seed option states.");
 
             /* Assume remaining args are files. Use standard input if files were not provided. */
             files ~= (cmdArgs.length > 1) ? cmdArgs[1..$] : ["-"];
@@ -589,6 +594,7 @@ void reservoirSampling(Flag!"isWeighted" isWeighted, OutputRange)
 {
     import std.container.array;
     import std.container.binaryheap;
+    import std.format : formatValue, singleSpec;
     import std.random : Random, uniform01;
     import tsvutil : throwIfWindowsNewlineOnUnix;
 
@@ -669,34 +675,36 @@ void reservoirSampling(Flag!"isWeighted" isWeighted, OutputRange)
         }
     }
 
-    /* All entries are in the reservoir. Time to print. Entries are printed ordered
-     * by assigned weights. This could sped up by simply printing the backing store
-     * array, but there is value in printing in weight order.
+    /* All entries are in the reservoir. Time to print. The heap is in reverse order
+     * of assigned weights. Need to reverse it if using weighted sampling or a static
+     * seed. Reversing order is done by removing all elements from the heap, this
+     * leaves the backing store in the correct order.
+     *
+     * The asserts here avoid issues with the current binaryheap implementation. They
+     * detect use of backing stores having a length not synchronized to the reservoir.
      */
+    size_t numLines = reservoir.length;
+    assert(numLines == dataStore.length);
 
-    void printEntry(Entry entry)
+    if (cmdopt.hasWeightField || !cmdopt.usingUnpredictableSeed)
+    {
+        /* Reorder the data store by extracting all the elements. */
+        while (!reservoir.empty) reservoir.removeFront;
+        assert(numLines == dataStore.length);
+    }
+
+    immutable randomValueFormatSpec = singleSpec("%.17g");
+
+    foreach (entry; dataStore)
     {
         if (cmdopt.printRandom)
         {
-            import std.format : formatValue, singleSpec;
-
-            immutable randomValueFormatSpec = singleSpec("%.17g");
             outputStream.formatValue(entry.score, randomValueFormatSpec);
             outputStream.put(cmdopt.delim);
         }
         outputStream.put(entry.line);
         outputStream.put("\n");
     }
-
-    /* Sampling/top-n case: Reorder the data store by extracting all the elements.
-     * Asserts are chosen to avoid issues in the current binaryheap implementation.
-     */
-    size_t numLines = reservoir.length;
-    assert(numLines == dataStore.length);
-
-    while (!reservoir.empty) reservoir.removeFront;
-    assert(numLines == dataStore.length);
-    foreach (entry; dataStore) printEntry(entry);
  }
 
 /** Generates weighted random values for all input lines, preserving input order.

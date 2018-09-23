@@ -116,12 +116,21 @@ cat input3x3.tsv | ${prog} -s -- input3x4.tsv - >> ${basic_tests_1} 2>&1
 echo "" >> ${basic_tests_1}; echo "====[cat input3x10.tsv tsv-sample -H -s -w 3 -- input3x3.tsv - input3x4.tsv]====" >> ${basic_tests_1}
 cat input3x10.tsv | ${prog} -H -s -w 3 -- input3x3.tsv - input3x4.tsv >> ${basic_tests_1} 2>&1
 
-## Need to run at least one test with the unpredictable seed. Can't compare the
-## results, so check the number of lines returned. Check standard input also.
-## runtest can't do these, write these out by hand.
+## Need to run a few tests with the unpredictable seed. Can't compare the results
+## so check the number of lines returned. Some standard input tests are also in
+## this section. runtest can't do these, write these out by hand.
 ## Note: The "tr -d ' '" construct strips whitespace, which differs between 'wc -l' implementations.
 echo "" >> ${basic_tests_1}; echo "====[tsv-sample -H input3x10.tsv | wc -l | tr -d ' ']====" >> ${basic_tests_1}
 ${prog} -H input3x10.tsv | wc -l | tr -d ' ' >> ${basic_tests_1} 2>&1
+
+echo "" >> ${basic_tests_1}; echo "====[tsv-sample -H -n 9 input3x25.tsv | wc -l | tr -d ' ']====" >> ${basic_tests_1}
+${prog} -H -n 9 input3x25.tsv | wc -l | tr -d ' ' >> ${basic_tests_1} 2>&1
+
+echo "" >> ${basic_tests_1}; echo "====[tsv-sample -H -n 25 input3x25.tsv input3x10.tsv | wc -l | tr -d ' ']====" >> ${basic_tests_1}
+${prog} -H -n 25 input3x25.tsv input3x10.tsv| wc -l | tr -d ' ' >> ${basic_tests_1} 2>&1
+
+echo "" >> ${basic_tests_1}; echo "====[tsv-sample -H -n 9 -w 3 input3x25.tsv | wc -l | tr -d ' ']====" >> ${basic_tests_1}
+${prog} -H -n 9 -w 3 input3x25.tsv | wc -l | tr -d ' ' >> ${basic_tests_1} 2>&1
 
 echo "" >> ${basic_tests_1}; echo "====[cat input3x10.tsv tsv-sample -H -p | wc -l | tr -d ' ']====" >> ${basic_tests_1}
 cat input3x10.tsv | ${prog} -H -p | wc -l | tr -d ' ' >> ${basic_tests_1} 2>&1
