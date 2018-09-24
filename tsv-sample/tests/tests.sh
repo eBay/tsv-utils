@@ -85,12 +85,52 @@ runtest ${prog} "-d @ -H -s -p -w 2 -n 3 input2x7_atsign.tsv" ${basic_tests_1}
 runtest ${prog} "-d @ -H -s -p -n 20 input2x7_atsign.tsv" ${basic_tests_1}
 runtest ${prog} "-d @ -H -s -p --rate 1.0 input2x7_atsign.tsv" ${basic_tests_1}
 
-## Need to run at least one test with the unpredictable seed. Can't compare the
-## results, so check the number of lines returned. Check standard input also.
-## runtest can't do these, write these out by hand.
+## Tests with a negative weight. Negative weight entry should be last.
+runtest ${prog} "-H -w 3 -v 777 input3x25_negative_wt.tsv" ${basic_tests_1}
+runtest ${prog} "-H -w 3 -v 888 input3x25_negative_wt.tsv" ${basic_tests_1}
+runtest ${prog} "-H -w 3 -v 777 -n 24 input3x25_negative_wt.tsv" ${basic_tests_1}
+runtest ${prog} "-H -w 3 -v 888 -n 24 input3x25_negative_wt.tsv" ${basic_tests_1}
+runtest ${prog} "-H --gen-random-inorder -w 3 -v 777 input3x25_negative_wt.tsv" ${basic_tests_1}
+runtest ${prog} "-H --gen-random-inorder -w 3 -v 888 input3x25_negative_wt.tsv" ${basic_tests_1}
+
+## Line order randomization with standard input and multiple files. These deserve specific tests
+## due to special handling of these in the code. runtest cannot do these, so write out by hand.
+echo "" >> ${basic_tests_1}; echo "====[cat input3x10.tsv tsv-sample -v 99]====" >> ${basic_tests_1}
+cat input3x10.tsv | ${prog} -v 99 >> ${basic_tests_1} 2>&1
+
+echo "" >> ${basic_tests_1}; echo "====[cat input3x10.tsv tsv-sample -H -v 99]====" >> ${basic_tests_1}
+cat input3x10.tsv | ${prog} -H -v 99 >> ${basic_tests_1} 2>&1
+
+echo "" >> ${basic_tests_1}; echo "====[cat input3x10.tsv tsv-sample -H -v 99 -p]====" >> ${basic_tests_1}
+cat input3x10.tsv | ${prog} -H -v 99 -p >> ${basic_tests_1} 2>&1
+
+echo "" >> ${basic_tests_1}; echo "====[cat input3x10.tsv tsv-sample -H -s -- - input3x3.tsv input3x4.tsv]====" >> ${basic_tests_1}
+cat input3x10.tsv | ${prog} -H -s -- - input3x3.tsv input3x4.tsv >> ${basic_tests_1} 2>&1
+
+echo "" >> ${basic_tests_1}; echo "====[cat input3x10.tsv tsv-sample -H -s -- input3x3.tsv - input3x4.tsv]====" >> ${basic_tests_1}
+cat input3x10.tsv | ${prog} -H -s -- input3x3.tsv - input3x4.tsv >> ${basic_tests_1} 2>&1
+
+echo "" >> ${basic_tests_1}; echo "====[cat input3x10.tsv tsv-sample -s -- input3x3.tsv input3x4.tsv -]====" >> ${basic_tests_1}
+cat input3x3.tsv | ${prog} -s -- input3x4.tsv - >> ${basic_tests_1} 2>&1
+
+echo "" >> ${basic_tests_1}; echo "====[cat input3x10.tsv tsv-sample -H -s -w 3 -- input3x3.tsv - input3x4.tsv]====" >> ${basic_tests_1}
+cat input3x10.tsv | ${prog} -H -s -w 3 -- input3x3.tsv - input3x4.tsv >> ${basic_tests_1} 2>&1
+
+## Need to run a few tests with the unpredictable seed. Can't compare the results
+## so check the number of lines returned. Some standard input tests are also in
+## this section. runtest can't do these, write these out by hand.
 ## Note: The "tr -d ' '" construct strips whitespace, which differs between 'wc -l' implementations.
 echo "" >> ${basic_tests_1}; echo "====[tsv-sample -H input3x10.tsv | wc -l | tr -d ' ']====" >> ${basic_tests_1}
 ${prog} -H input3x10.tsv | wc -l | tr -d ' ' >> ${basic_tests_1} 2>&1
+
+echo "" >> ${basic_tests_1}; echo "====[tsv-sample -H -n 9 input3x25.tsv | wc -l | tr -d ' ']====" >> ${basic_tests_1}
+${prog} -H -n 9 input3x25.tsv | wc -l | tr -d ' ' >> ${basic_tests_1} 2>&1
+
+echo "" >> ${basic_tests_1}; echo "====[tsv-sample -H -n 25 input3x25.tsv input3x10.tsv | wc -l | tr -d ' ']====" >> ${basic_tests_1}
+${prog} -H -n 25 input3x25.tsv input3x10.tsv| wc -l | tr -d ' ' >> ${basic_tests_1} 2>&1
+
+echo "" >> ${basic_tests_1}; echo "====[tsv-sample -H -n 9 -w 3 input3x25.tsv | wc -l | tr -d ' ']====" >> ${basic_tests_1}
+${prog} -H -n 9 -w 3 input3x25.tsv | wc -l | tr -d ' ' >> ${basic_tests_1} 2>&1
 
 echo "" >> ${basic_tests_1}; echo "====[cat input3x10.tsv tsv-sample -H -p | wc -l | tr -d ' ']====" >> ${basic_tests_1}
 cat input3x10.tsv | ${prog} -H -p | wc -l | tr -d ' ' >> ${basic_tests_1} 2>&1
@@ -145,6 +185,7 @@ runtest ${prog} "-k 1 input4x50.tsv input4x15.tsv" ${error_tests}
 runtest ${prog} "-r 0.5 -k 5 input4x50.tsv input4x15.tsv" ${error_tests}
 runtest ${prog} "-H -r 0.5 -k 5 input4x50.tsv input4x15.tsv" ${error_tests}
 runtest ${prog} "-H -r 0.5 --gen-random-inorder input4x50.tsv input4x15.tsv" ${error_tests}
+runtest ${prog} "-H --gen-random-inorder -d , --random-value-header abc,def input3x25.tsv" ${error_tests}
 
 # Error tests 2 are tests that are compiler version dependent. There are multiple
 # version files in test-config.json.

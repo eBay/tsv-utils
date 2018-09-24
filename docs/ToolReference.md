@@ -391,8 +391,6 @@ _**Tip:**_ Bash completion is very helpful when using commands like `tsv-summari
 
 **Performance**: `tsv-sample` is designed for large data sets. Algorithms make one pass over the data, using reservoir sampling and hashing when possible to limit the memory required. Stream sampling and distinct sampling make immediate decisions on each line, with no memory accumulation. They can operate on arbitrary length data streams. Line order randomization algorithms need to hold the entire output set in memory. The memory required can be reduced significantly by limiting the output set (`--n|num`). Notice that both `tsv-sample -n <num>` and  `tsv-sample | head -n <num>` produce the same results, but the former is faster and can operate on arbitrary size input streams.
 
-Alternative to reservoir sampling for very large result sets: Reservoir sampling works fine most of the time, but becomes problematic when the result set is so large it won't fit in available memory. An alternative is to use the `--q|gen-random-inorder` option (described below) to generate the random values for each line, then use a 'sort' program to sort by the random values. This works because most sort programs use both RAM and disk to process large data sets.
-
 **Controlling randomization**: Each run produces a different randomization. Using `--s|static-seed` changes this so multiple runs produce the same randomization. This works by using the same random seed each run. The random seed can be specified using `--v|seed-value`. This takes a non-zero, 32-bit positive integer. (A zero value is a no-op and ignored.)
 
 **Weighted sampling**: Weighted line order randomization is done using an algorithm described by Efraimidis and Spirakis. Weights should be positive values representing the relative weight of the entry in the collection. Counts and similar can be used as weights, it is *not* necessary to normalize to a [0,1] interval. Negative values are not meaningful and given the value zero. Input order is not retained, instead lines are output ordered by the randomized weight that was assigned. This means that a smaller valid sample can be produced by taking the first N lines of output. For more info on the sampling approach see:
@@ -402,14 +400,10 @@ Alternative to reservoir sampling for very large result sets: Reservoir sampling
 
 **Distinct sampling**: Distinct sampling selects a subset based on a key in data. Consider a query log with records consisting of <user, query, clicked-url> triples. Simple random sampling selects a random subset of all records. Distinct sampling selects all records matching a subset of values from one of fields. For example, all events for ten percent of the users. This is important for certain types of statistical analysis. The term "distinct sampling" originates from algorithms estimating the number of distinct elements in extremely large data sets.
 
-**Printing random values**: These algorithms work by generating a random value for each line. The nature of these values depends on the sampling algorithm. They are used for both line selection and output ordering. The `--p|print-random` option can be used to print these values. The random
-value is prepended to the line separated by the `--d|delimiter` char (TAB by default). The `--q|gen-random-inorder` option takes this one step further, generating random values for all input lines without changing the input order. The types of values currently used by these sampling algorithms:
-* Unweighted sampling: Uniform random value in the interval [0,1]. This
-  includes stream sampling and unweighted line order randomization.
-* Weighted sampling: Value in the interval [0,1]. Distribution depends on
-  the values in the weight field. It is used as a partial ordering.
-* Distinct sampling: An integer, zero and up, representing a selection
-  group. The sampling rate determines the number of selection groups.
+**Printing random values**: These algorithms work by generating a random value for each line. The nature of these values depends on the sampling algorithm. They are used for both line selection and output ordering. The `--p|print-random` option can be used to print these values. The random value is prepended to the line separated by the `--d|delimiter` char (TAB by default). The `--q|gen-random-inorder` option takes this one step further, generating random values for all input lines without changing the input order. The types of values currently used by these sampling algorithms:
+* Unweighted sampling: Uniform random value in the interval [0,1]. This includes stream sampling and unweighted line order randomization.
+* Weighted sampling: Value in the interval [0,1]. Distribution depends on the values in the weight field. It is used as a partial ordering.
+* Distinct sampling: An integer, zero and up, representing a selection group. The sampling rate determines the number of selection groups.
 
 The specifics behind these random values are subject to change in future releases. At present no changes are planned or expected.
 

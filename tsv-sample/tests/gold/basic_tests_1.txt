@@ -761,8 +761,293 @@ random_value@title@weight
 0.7571015392895788@Aristophanis Lysistrata@5464
 0.38388182921335101@Ephemerides Barometricae Mutinenses@5869
 
+====[tsv-sample -H -w 3 -v 777 input3x25_negative_wt.tsv]====
+line	title	weight
+12	הצופה לבית ישראל	2.3
+16	Leabhráin an Irisleabhair—III	5.3
+14	Pasáček Ali: Pověst z východu	6.4
+10	L'olmo e l'edera	2.5
+11	Il "Damo viennese"	6.5
+13	בית נכות ההלכות	4.7
+2	Детство	4
+17	Diné yázhí ba'áłchíní	0.88
+25	Don Quijote	3.4
+18	Right Half Hollins	6.7
+6	Große und kleine Welt	2
+21	入れかわった男	3.3
+1	Белые ночи	5
+8	Διδαχή των Δώδεκα αποστόλων	2
+3	Записки из подполья	3
+15	Zápisky z mrtvého domu	.52
+9	Nanà a Milano	1.5
+4	Fru Inger til Østråt	1
+23	佛說四十二章經	0.55
+19	Annie Laurie and Azalea	0.5
+24	La Navidad en las Montañas	1.0
+5	Märchen für Kinder	0.77
+22	豆棚閒話	0.23
+20	羅生門	0.01
+7	Arabische Nächte	-1
+
+====[tsv-sample -H -w 3 -v 888 input3x25_negative_wt.tsv]====
+line	title	weight
+14	Pasáček Ali: Pověst z východu	6.4
+11	Il "Damo viennese"	6.5
+1	Белые ночи	5
+8	Διδαχή των Δώδεκα αποστόλων	2
+16	Leabhráin an Irisleabhair—III	5.3
+21	入れかわった男	3.3
+2	Детство	4
+6	Große und kleine Welt	2
+25	Don Quijote	3.4
+4	Fru Inger til Østråt	1
+19	Annie Laurie and Azalea	0.5
+18	Right Half Hollins	6.7
+10	L'olmo e l'edera	2.5
+22	豆棚閒話	0.23
+13	בית נכות ההלכות	4.7
+3	Записки из подполья	3
+5	Märchen für Kinder	0.77
+17	Diné yázhí ba'áłchíní	0.88
+12	הצופה לבית ישראל	2.3
+24	La Navidad en las Montañas	1.0
+9	Nanà a Milano	1.5
+15	Zápisky z mrtvého domu	.52
+23	佛說四十二章經	0.55
+20	羅生門	0.01
+7	Arabische Nächte	-1
+
+====[tsv-sample -H -w 3 -v 777 -n 24 input3x25_negative_wt.tsv]====
+line	title	weight
+12	הצופה לבית ישראל	2.3
+16	Leabhráin an Irisleabhair—III	5.3
+14	Pasáček Ali: Pověst z východu	6.4
+10	L'olmo e l'edera	2.5
+11	Il "Damo viennese"	6.5
+13	בית נכות ההלכות	4.7
+2	Детство	4
+17	Diné yázhí ba'áłchíní	0.88
+25	Don Quijote	3.4
+18	Right Half Hollins	6.7
+6	Große und kleine Welt	2
+21	入れかわった男	3.3
+1	Белые ночи	5
+8	Διδαχή των Δώδεκα αποστόλων	2
+3	Записки из подполья	3
+15	Zápisky z mrtvého domu	.52
+9	Nanà a Milano	1.5
+4	Fru Inger til Østråt	1
+23	佛說四十二章經	0.55
+19	Annie Laurie and Azalea	0.5
+24	La Navidad en las Montañas	1.0
+5	Märchen für Kinder	0.77
+22	豆棚閒話	0.23
+20	羅生門	0.01
+
+====[tsv-sample -H -w 3 -v 888 -n 24 input3x25_negative_wt.tsv]====
+line	title	weight
+14	Pasáček Ali: Pověst z východu	6.4
+11	Il "Damo viennese"	6.5
+1	Белые ночи	5
+8	Διδαχή των Δώδεκα αποστόλων	2
+16	Leabhráin an Irisleabhair—III	5.3
+21	入れかわった男	3.3
+2	Детство	4
+6	Große und kleine Welt	2
+25	Don Quijote	3.4
+4	Fru Inger til Østråt	1
+19	Annie Laurie and Azalea	0.5
+18	Right Half Hollins	6.7
+10	L'olmo e l'edera	2.5
+22	豆棚閒話	0.23
+13	בית נכות ההלכות	4.7
+3	Записки из подполья	3
+5	Märchen für Kinder	0.77
+17	Diné yázhí ba'áłchíní	0.88
+12	הצופה לבית ישראל	2.3
+24	La Navidad en las Montañas	1.0
+9	Nanà a Milano	1.5
+15	Zápisky z mrtvého domu	.52
+23	佛說四十二章經	0.55
+20	羅生門	0.01
+
+====[tsv-sample -H --gen-random-inorder -w 3 -v 777 input3x25_negative_wt.tsv]====
+random_value	line	title	weight
+0.68666857849162088	1	Белые ночи	5
+0.89667217646257946	2	Детство	4
+0.67118126392466049	3	Записки из подполья	3
+0.20072624972090125	4	Fru Inger til Østråt	1
+0.027040124983911267	5	Märchen für Kinder	0.77
+0.7976554972005705	6	Große und kleine Welt	2
+0	7	Arabische Nächte	-1
+0.67813003280388251	8	Διδαχή των Δώδεκα αποστόλων	2
+0.39479420646125346	9	Nanà a Milano	1.5
+0.93052339869046641	10	L'olmo e l'edera	2.5
+0.91554444334869234	11	Il "Damo viennese"	6.5
+0.96757856547882737	12	הצופה לבית ישראל	2.3
+0.90070466214374911	13	בית נכות ההלכות	4.7
+0.95140126221473753	14	Pasáček Ali: Pověst z východu	6.4
+0.58446178416798122	15	Zápisky z mrtvého domu	.52
+0.95153105987748066	16	Leabhráin an Irisleabhair—III	5.3
+0.86788999486133767	17	Diné yázhí ba'áłchíní	0.88
+0.82212488799879835	18	Right Half Hollins	6.7
+0.15053372006694177	19	Annie Laurie and Azalea	0.5
+7.7725246263259531e-20	20	羅生門	0.01
+0.72575164589694319	21	入れかわった男	3.3
+3.3320124957996695e-05	22	豆棚閒話	0.23
+0.17846995728442866	23	佛說四十二章經	0.55
+0.079685885924845934	24	La Navidad en las Montañas	1.0
+0.82523927097185135	25	Don Quijote	3.4
+
+====[tsv-sample -H --gen-random-inorder -w 3 -v 888 input3x25_negative_wt.tsv]====
+random_value	line	title	weight
+0.97018666470990478	1	Белые ночи	5
+0.88871354995415763	2	Детство	4
+0.54800321970140786	3	Записки из подполья	3
+0.76490622363053262	4	Fru Inger til Østråt	1
+0.389132272854326	5	Märchen für Kinder	0.77
+0.88341604377492322	6	Große und kleine Welt	2
+0	7	Arabische Nächte	-1
+0.95970165526527873	8	Διδαχή των Δώδεκα αποστόλων	2
+0.20877653717970285	9	Nanà a Milano	1.5
+0.71253009214339824	10	L'olmo e l'edera	2.5
+0.97941027913717427	11	Il "Damo viennese"	6.5
+0.28879791989601505	12	הצופה לבית ישראל	2.3
+0.5781280582033107	13	בית נכות ההלכות	4.7
+0.98789364409392921	14	Pasáček Ali: Pověst z východu	6.4
+0.060333625346348514	15	Zápisky z mrtvého domu	.52
+0.92396040878070085	16	Leabhráin an Irisleabhair—III	5.3
+0.36416921214345954	17	Diné yázhí ba'áłchíní	0.88
+0.73996060464028912	18	Right Half Hollins	6.7
+0.74621704759647101	19	Annie Laurie and Azalea	0.5
+5.1201690030166238e-28	20	羅生門	0.01
+0.90749384511112885	21	入れかわった男	3.3
+0.63089642863010076	22	豆棚閒話	0.23
+0.049140627884192802	23	佛說四十二章經	0.55
+0.24836496124044061	24	La Navidad en las Montañas	1.0
+0.78125915210564301	25	Don Quijote	3.4
+
+====[cat input3x10.tsv tsv-sample -v 99]====
+3	Mesék és regék	20
+4	Soitannollisia satuja ja jutelmia	44
+8	Door het land der Skipetaren	30
+5	Pinocchion seikkailut	19
+1	Álomvilág: Elbeszélések	41
+7	Oude Egyptische Legenden	28
+line	title	weight
+10	Platero y yo	2
+2	Grimm testvérek összegyüjtött meséi	9
+9	Las Fábulas de Esopo	45
+6	Piepkuikentje	17
+
+====[cat input3x10.tsv tsv-sample -H -v 99]====
+line	title	weight
+4	Soitannollisia satuja ja jutelmia	44
+5	Pinocchion seikkailut	19
+9	Las Fábulas de Esopo	45
+6	Piepkuikentje	17
+2	Grimm testvérek összegyüjtött meséi	9
+8	Door het land der Skipetaren	30
+1	Álomvilág: Elbeszélések	41
+3	Mesék és regék	20
+10	Platero y yo	2
+7	Oude Egyptische Legenden	28
+
+====[cat input3x10.tsv tsv-sample -H -v 99 -p]====
+random_value	line	title	weight
+0.83194808103144169	4	Soitannollisia satuja ja jutelmia	44
+0.82549517066217959	5	Pinocchion seikkailut	19
+0.80804996308870614	9	Las Fábulas de Esopo	45
+0.73406260646879673	6	Piepkuikentje	17
+0.72253967146389186	2	Grimm testvérek összegyüjtött meséi	9
+0.7010090509429574	8	Door het land der Skipetaren	30
+0.67227855348028243	1	Álomvilág: Elbeszélések	41
+0.48807839886285365	3	Mesék és regék	20
+0.19331310410052538	10	Platero y yo	2
+0.031446386594325304	7	Oude Egyptische Legenden	28
+
+====[cat input3x10.tsv tsv-sample -H -s -- - input3x3.tsv input3x4.tsv]====
+line	title	weight
+8	Door het land der Skipetaren	30
+4	Soitannollisia satuja ja jutelmia	44
+1	Thérèse Desqueyroux	43
+6	Piepkuikentje	17
+3	The Catcher in the Rye	19
+5	Pinocchion seikkailut	19
+3	Mesék és regék	20
+10	Platero y yo	2
+7	Oude Egyptische Legenden	28
+2	Bonjour Tristesse	3
+3	Le Silence de la mer	72
+9	Las Fábulas de Esopo	45
+2	Grimm testvérek összegyüjtött meséi	9
+4	Ficciones	23
+2	A Room of One's Own	62
+1	Aurélien	36
+1	Álomvilág: Elbeszélések	41
+
+====[cat input3x10.tsv tsv-sample -H -s -- input3x3.tsv - input3x4.tsv]====
+line	title	weight
+5	Pinocchion seikkailut	19
+1	Álomvilág: Elbeszélések	41
+8	Door het land der Skipetaren	30
+3	Mesék és regék	20
+3	The Catcher in the Rye	19
+2	Grimm testvérek összegyüjtött meséi	9
+3	Le Silence de la mer	72
+7	Oude Egyptische Legenden	28
+4	Soitannollisia satuja ja jutelmia	44
+9	Las Fábulas de Esopo	45
+10	Platero y yo	2
+6	Piepkuikentje	17
+2	Bonjour Tristesse	3
+4	Ficciones	23
+2	A Room of One's Own	62
+1	Aurélien	36
+1	Thérèse Desqueyroux	43
+
+====[cat input3x10.tsv tsv-sample -s -- input3x3.tsv input3x4.tsv -]====
+2	Bonjour Tristesse	3
+3	The Catcher in the Rye	19
+line	title	weight
+4	Ficciones	23
+2	A Room of One's Own	62
+1	Thérèse Desqueyroux	43
+3	Le Silence de la mer	72
+1	Aurélien	36
+line	title	weight
+
+====[cat input3x10.tsv tsv-sample -H -s -w 3 -- input3x3.tsv - input3x4.tsv]====
+line	title	weight
+1	Álomvilág: Elbeszélések	41
+5	Pinocchion seikkailut	19
+8	Door het land der Skipetaren	30
+3	Le Silence de la mer	72
+3	Mesék és regék	20
+4	Soitannollisia satuja ja jutelmia	44
+3	The Catcher in the Rye	19
+7	Oude Egyptische Legenden	28
+9	Las Fábulas de Esopo	45
+2	A Room of One's Own	62
+1	Aurélien	36
+2	Grimm testvérek összegyüjtött meséi	9
+6	Piepkuikentje	17
+4	Ficciones	23
+1	Thérèse Desqueyroux	43
+2	Bonjour Tristesse	3
+10	Platero y yo	2
+
 ====[tsv-sample -H input3x10.tsv | wc -l | tr -d ' ']====
 11
+
+====[tsv-sample -H -n 9 input3x25.tsv | wc -l | tr -d ' ']====
+10
+
+====[tsv-sample -H -n 25 input3x25.tsv input3x10.tsv | wc -l | tr -d ' ']====
+26
+
+====[tsv-sample -H -n 9 -w 3 input3x25.tsv | wc -l | tr -d ' ']====
+10
 
 ====[cat input3x10.tsv tsv-sample -H -p | wc -l | tr -d ' ']====
 11

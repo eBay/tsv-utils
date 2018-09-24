@@ -106,20 +106,15 @@ random seed each run. The random seed can be specified using
 '--v|seed-value'. This takes a non-zero, 32-bit positive integer. (A zero
 value is a no-op and ignored.)
 
-Reservoir sampling: Input line randomization and weighted sampling are
-implemented using reservoir sampling. This means all lines output must be
-held in memory. Memory needed for large input streams can reduced
-significantly using a sample size. Both 'tsv-sample -n 1000' and
-'tsv-sample | head -n 1000' produce the same results, but the former is
-quite a bit faster.
-
-Alternative to reservoir sampling for very large result sets: Reservoir
-sampling works fine most of the time, but becomes problematic when the
-result set is so large it won't fit in available memory. An alternative
-is to use the '--q|gen-random-inorder' option to generate the random
-values for each line, then use a 'sort' program to sort by the random
-values. This works because most sort programs use both RAM and disk to
-process large data sets.
+Memory use: Stream sampling and distinct sampling make decisions on each
+line as they are read and have limited memory needs. Line order
+randomization and weighted sampling need to hold the full output set in
+memory prior to generating results. This ultimately limits the size of
+the output set. The simplest way to reduce memory needs is to use a
+sample size (--n|num). This engages reservior sampling for line order
+randomization and weighted sampling. This does not affect the result
+order. Both 'tsv-sample -n 1000' and 'tsv-sample | head -n 1000' produce
+the same results, but the former is quite a bit faster.
 
 Weighted sampling: Weighted random sampling is done using an algorithm
 described by Efraimidis and Spirakis. Weights should be positive values
@@ -177,6 +172,7 @@ struct TsvSampleOptions
     bool hasWeightField = false;      // Derived.
     bool useStreamSampling = false;   // Derived.
     bool useDistinctSampling = false; // Derived.
+    bool usingUnpredictableSeed = true;  // Derived from --static-seed, --seed-value
     uint seed = 0;                    // Derived from --static-seed, --seed-value
 
     auto processArgs(ref string[] cmdArgs)
@@ -278,14 +274,18 @@ struct TsvSampleOptions
             if (randomValueHeader.length == 0 || randomValueHeader.canFind('\n') ||
                 randomValueHeader.canFind(delim))
             {
-                throw new Exception("--randomValueHeader string must be at least one character and not contain field delimiters or newlines.");
+                throw new Exception("--randomValueHeader must be at least one character and not contain field delimiters or newlines.");
             }
 
             /* Seed. */
             import std.random : unpredictableSeed;
-            seed = (seedValueOptionArg != 0) ? seedValueOptionArg
-                : staticSeed ? 2438424139
-                : unpredictableSeed;
+
+            usingUnpredictableSeed = (!staticSeed && seedValueOptionArg == 0);
+
+            if (usingUnpredictableSeed) seed = unpredictableSeed;
+            else if (seedValueOptionArg != 0) seed = seedValueOptionArg;
+            else if (staticSeed) seed = 2438424139;
+            else assert(0, "Internal error, invalid seed option states.");
 
             /* Assume remaining args are files. Use standard input if files were not provided. */
             files ~= (cmdArgs.length > 1) ? cmdArgs[1..$] : ["-"];
@@ -318,13 +318,15 @@ void tsvSample(OutputRange)(TsvSampleOptions cmdopt, OutputRange outputStream)
         assert(cmdopt.hasWeightField);
         generateWeightedRandomValuesInorder(cmdopt, outputStream);
     }
-    else if (cmdopt.sampleSize == 0)
+    else if (cmdopt.sampleSize != 0)
     {
-        reservoirSampling!(Yes.permuteAll)(cmdopt, outputStream);
+        if (cmdopt.hasWeightField) reservoirSampling!(Yes.isWeighted)(cmdopt, outputStream);
+        else reservoirSampling!(No.isWeighted)(cmdopt, outputStream);
     }
     else
     {
-        reservoirSampling!(No.permuteAll)(cmdopt, outputStream);
+        if (cmdopt.hasWeightField) randomizeLines!(Yes.isWeighted)(cmdopt, outputStream);
+        else randomizeLines!(No.isWeighted)(cmdopt, outputStream);
     }
 }
 
@@ -559,27 +561,47 @@ void distinctSampling(Flag!"generateRandomAll" generateRandomAll, OutputRange)
  * Pavlos S. Efraimidis, https://arxiv.org/abs/1012.0256). In the unweighted case weights
  * are simply set to one.
  *
- * Both sampling and full permutation of input lines are supported, but the implementations
- * differ. Both use a heap (priority queue). A "max" heap is used when permuting all lines,
- * as it leaves the heap in the correct order for output. However, a "min" heap is used
- * when sampling. When sampling the role of the heap is to indentify the top-k elements.
- * Adding a new item means dropping the "min" item. When done reading all lines, the "min"
- * heap is in the opposite order needed for output. The desired order is obtained
- * by removing each element one at at time from the heap. The underlying data store will
- * have the elements in correct order. The other notable difference is that the backing
- * store can be pre-allocated when sampling, but must be grown when permuting all lines.
+ * The implementation uses a heap (priority queue) large enough to hold the desired
+ * number of lines. Input is read line-by-line, assigned a random value, and added to the
+ * heap. The role of the identify the lines with the highest assigned random values. Once
+ * the heap is full, adding a new line means dropping the line with the lowest score. A
+ * "min" heap used for this reason.
+ *
+ * When done reading all lines, the "min" heap is in the opposite order needed for output.
+ * The desired order is obtained by removing each element one at at time from the heap.
+ * The underlying data store will have the elements in correct order.
+ *
+ * Generating output in weighted order matters for several reasons:
+ *  - For weighted sampling, it preserves the property that smaller valid subsets can be
+ *    created by taking the first N lines.
+ *  - For unweighted sampling, it ensures that all output permutations are possible, and
+ *    are not influences by input order or the heap data structure used.
+ *  - Order consistency when making repeated use of the same random seeds, but with
+ *    different sample sizes.
+ *
+ * There are use cases where only the selection set matters, for these some performance
+ * could be gained by skipping the reordering and simply printing the backing store
+ * array in-order, but making this distinction seems an unnecessary complication.
+ *
+ * Note: In tsv-sample versions 1.2.1 and earlier this routine also supported
+ * randomization of all input lines. This was dropped in version 1.2.2 in favor of the
+ * approach used in randomizeLines. The latter has significant advantages given that all
+ * data must be read into memory.
  */
-void reservoirSampling(Flag!"permuteAll" permuteAll, OutputRange)
+void reservoirSampling(Flag!"isWeighted" isWeighted, OutputRange)
     (TsvSampleOptions cmdopt, OutputRange outputStream)
     if (isOutputRange!(OutputRange, char))
 {
-    import std.random : Random, uniform01;
+    import std.container.array;
     import std.container.binaryheap;
+    import std.format : formatValue, singleSpec;
+    import std.random : Random, uniform01;
     import tsvutil : throwIfWindowsNewlineOnUnix;
 
-    /* Ensure the correct version of the template was called. */
-    static if (permuteAll) assert(cmdopt.sampleSize == 0);
-    else assert(cmdopt.sampleSize > 0);
+    static if (isWeighted) assert(cmdopt.hasWeightField);
+    else assert(!cmdopt.hasWeightField);
+
+    assert(cmdopt.sampleSize > 0);
 
     auto randomGenerator = Random(cmdopt.seed);
 
@@ -589,39 +611,19 @@ void reservoirSampling(Flag!"permuteAll" permuteAll, OutputRange)
         char[] line;
     }
 
-    /* Create the heap and backing data store. A min or max heap is used as described
-     * above. The backing store has some complications resulting from the current
-     * standard library implementation:
-     * - Built-in arrays appear to have better memory bevavior when appending than
-     *   std.container.array Arrays. However, built-in arrays cannot be used with
-     *   binaryheaps until Phobos version 2.072.
-     * - std.container.array Arrays with pre-allocated storage can be used to
-     *   efficiently reverse the heap, but a bug prevents this from working for other
-     *   data store use cases. Info: https://issues.dlang.org/show_bug.cgi?id=17094
-     * - Result: Use a built-in array if request is for permuteAll and Phobos version
-     *   is 2.072 or later. Otherwise use a std.container.array Array.
+    /* Create the heap and backing data store.
+     *
+     * Note: An std.container.array is used as the backing store to avoid some issues in
+     * the standard library (Phobos) binaryheap implementation. Specifically, when an
+     * std.container.array is used as backing store, the heap can efficiently reversed by
+     * removing the heap elements. This leaves the backing store in the reversed order.
+     * However, the current binaryheap implementation does not support this for all
+     * backing stores. See: https://issues.dlang.org/show_bug.cgi?id=17094.
      */
 
-    static if (permuteAll && __VERSION__ >= 2072)
-    {
-        Entry[] dataStore;
-    }
-    else
-    {
-        import std.container.array;
-        Array!Entry dataStore;
-    }
-
+    Array!Entry dataStore;
     dataStore.reserve(cmdopt.sampleSize);
-
-    static if (permuteAll)
-    {
-        auto reservoir = dataStore.heapify!("a.score < b.score")(0);  // Max binaryheap
-    }
-    else
-    {
-        auto reservoir = dataStore.heapify!("a.score > b.score")(0);  // Min binaryheap
-    }
+    auto reservoir = dataStore.heapify!("a.score > b.score")(0);  // Min binaryheap
 
     /* Process each line. */
     bool headerWritten = false;
@@ -647,72 +649,58 @@ void reservoirSampling(Flag!"permuteAll" permuteAll, OutputRange)
             }
             else
             {
-                double lineWeight =
-                    cmdopt.hasWeightField
-                    ? getFieldValue!double(line, cmdopt.weightField, cmdopt.delim, filename, fileLineNum)
-                    : 1.0;
-                double lineScore =
-                    (lineWeight > 0.0)
-                    ? uniform01(randomGenerator) ^^ (1.0 / lineWeight)
-                    : 0.0;
-
-                static if (permuteAll)
+                static if (!isWeighted)
                 {
-                    reservoir.insert(Entry(lineScore, line.dup));
+                    double lineScore = uniform01(randomGenerator);
                 }
                 else
                 {
-                    if (reservoir.length < cmdopt.sampleSize)
-                    {
-                        reservoir.insert(Entry(lineScore, line.dup));
-                    }
-                    else if (reservoir.front.score < lineScore)
-                    {
-                        reservoir.replaceFront(Entry(lineScore, line.dup));
-                    }
+                    double lineWeight =
+                        getFieldValue!double(line, cmdopt.weightField, cmdopt.delim, filename, fileLineNum);
+                    double lineScore =
+                        (lineWeight > 0.0)
+                        ? uniform01(randomGenerator) ^^ (1.0 / lineWeight)
+                        : 0.0;
+                }
+
+                if (reservoir.length < cmdopt.sampleSize)
+                {
+                    reservoir.insert(Entry(lineScore, line.dup));
+                }
+                else if (reservoir.front.score < lineScore)
+                {
+                    reservoir.replaceFront(Entry(lineScore, line.dup));
                 }
             }
         }
     }
 
-    /* All entries are in the reservoir. Time to print. Entries are printed ordered
-     * by assigned weights. In the sampling/top-k cases this could sped up a little
-     * by simply printing the backing store array. However, there is real value in
-     * having a weighted order. This is especially true for weighted sampling, but
-     * there is also value in the unweighted case, especially when using static seeds.
+    /* All entries are in the reservoir. Time to print. The heap is in reverse order
+     * of assigned weights. Reversing order is done by removing all elements from the
+     * heap, this leaves the backing store in the correct order for output.
+     *
+     * The asserts here avoid issues with the current binaryheap implementation. They
+     * detect use of backing stores having a length not synchronized to the reservoir.
      */
+    size_t numLines = reservoir.length;
+    assert(numLines == dataStore.length);
 
-    void printEntry(Entry entry)
+    while (!reservoir.empty) reservoir.removeFront;
+    assert(numLines == dataStore.length);
+
+    immutable randomValueFormatSpec = singleSpec("%.17g");
+
+    foreach (entry; dataStore)
     {
         if (cmdopt.printRandom)
         {
-            import std.format : formatValue, singleSpec;
-
-            immutable randomValueFormatSpec = singleSpec("%.17g");
             outputStream.formatValue(entry.score, randomValueFormatSpec);
             outputStream.put(cmdopt.delim);
         }
         outputStream.put(entry.line);
         outputStream.put("\n");
     }
-
-    static if (permuteAll)
-    {
-        foreach (entry; reservoir) printEntry(entry);  // Walk the max-heap
-    }
-    else
-    {
-        /* Sampling/top-n case: Reorder the data store by extracting all the elements.
-         * Note: Asserts are chosen to avoid issues in the current binaryheap implementation.
-         */
-        size_t numLines = reservoir.length;
-        assert(numLines == dataStore.length);
-
-        while (!reservoir.empty) reservoir.removeFront;
-        assert(numLines == dataStore.length);
-        foreach (entry; dataStore) printEntry(entry);
-    }
-}
+ }
 
 /** Generates weighted random values for all input lines, preserving input order.
  *
@@ -753,7 +741,7 @@ void generateWeightedRandomValuesInorder(OutputRange)(TsvSampleOptions cmdopt, O
                 }
             }
             else
-            {
+               {
                 double lineWeight = getFieldValue!double(line, cmdopt.weightField, cmdopt.delim,
                                                          filename, fileLineNum);
                 double lineScore =
@@ -773,6 +761,134 @@ void generateWeightedRandomValuesInorder(OutputRange)(TsvSampleOptions cmdopt, O
                 }
             }
         }
+    }
+}
+
+/** Randomize all the lines in files or standard input.
+ *
+ * All lines in files and/or standard input are read in and written out in random
+ * order. Both simple random sampling and weighted sampling are supported.
+ *
+ * Input data size is limited by available memory. Disk oriented techniques are needed
+ * when data sizes are larger. For example, generating random values line-by-line (ala
+ * --gen-random-inorder) and sorting with a disk-backed sort program like GNU sort.
+ *
+ * This approach is significantly faster than reading line-by-line with a heap the
+ * way reservoir sampling does, effectively acknowledging that both approaches
+ * need to read all data into memory when randomizing all lines.
+ */
+void randomizeLines(Flag!"isWeighted" isWeighted, OutputRange)(TsvSampleOptions cmdopt, OutputRange outputStream)
+    if (isOutputRange!(OutputRange, char))
+{
+    import std.algorithm : sort, splitter;
+    import std.array : appender;
+    import std.file : read;
+    import std.format : formatValue, singleSpec;
+    import std.random : Random, uniform01;
+    import tsvutil : throwIfWindowsNewlineOnUnix;
+
+    static if (isWeighted) assert(cmdopt.hasWeightField);
+    else assert(!cmdopt.hasWeightField);
+
+    assert(cmdopt.sampleSize == 0);
+
+    struct FileData
+    {
+        string filename;
+        char[] data;
+    }
+
+    auto fileData = new FileData[cmdopt.files.length];
+
+    /*
+     * Read all file data into memory.
+     */
+    foreach (fileNum, filename; cmdopt.files)
+    {
+        fileData[fileNum].filename = filename;
+        if (filename == "-")
+        {
+            auto stdinData = appender(&(fileData[fileNum].data));
+            ubyte[1024 * 1024] fileRawBuf;
+            foreach (ref ubyte[] buffer; stdin.byChunk(fileRawBuf)) stdinData.put(cast(char[]) buffer);
+        }
+        else
+        {
+            fileData[fileNum].data = cast(char[]) filename.read;
+        }
+    }
+
+    /*
+     * Split the data into lines and assign a random value to each line.
+     */
+    struct Entry
+    {
+        double score;
+        char[] line;
+    }
+
+    auto scoredLines = appender!(Entry[]);
+    auto randomGenerator = Random(cmdopt.seed);
+    bool headerWritten = false;
+
+    foreach (fd; fileData)
+    {
+        /* Drop the last newline to avoid adding an extra empty line. */
+        auto data = (fd.data.length > 0 && fd.data[$ - 1] == '\n') ? fd.data[0 .. $ - 1] : fd.data;
+        foreach (fileLineNum, line; data.splitter('\n').enumerate(1))
+        {
+            if (fileLineNum == 1) throwIfWindowsNewlineOnUnix(line, fd.filename, fileLineNum);
+            if (fileLineNum == 1 && cmdopt.hasHeader)
+            {
+                if (!headerWritten)
+                {
+                    if (cmdopt.printRandom)
+                    {
+                        outputStream.put(cmdopt.randomValueHeader);
+                        outputStream.put(cmdopt.delim);
+                    }
+                    outputStream.put(line);
+                    outputStream.put("\n");
+                    headerWritten = true;
+                }
+            }
+            else
+            {
+                static if (!isWeighted)
+                {
+                    double lineScore = uniform01(randomGenerator);
+                }
+                else
+                {
+                    double lineWeight =
+                        getFieldValue!double(line, cmdopt.weightField, cmdopt.delim, fd.filename, fileLineNum);
+                    double lineScore =
+                        (lineWeight > 0.0)
+                        ? uniform01(randomGenerator) ^^ (1.0 / lineWeight)
+                        : 0.0;
+                }
+
+                scoredLines.put(Entry(lineScore, line));
+            }
+        }
+    }
+
+    /*
+     * Sort by the weight and output the lines.
+     */
+    scoredLines.data.sort!((a, b) => a.score > b.score);
+
+    immutable randomValueFormatSpec = singleSpec("%.17g");
+
+    foreach (lineEntry; scoredLines.data)
+    {
+        if (cmdopt.printRandom)
+        {
+            outputStream.formatValue(lineEntry.score, randomValueFormatSpec);
+            outputStream.put(cmdopt.delim);
+        }
+        outputStream.put(lineEntry.line);
+        outputStream.put("\n");
     }
 }
 

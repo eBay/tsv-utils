@@ -1,6 +1,6 @@
 {
     "name": "tsv-sample",
-    "description": "Weighted reservoir sampling on delimited data files.",
+    "description": "Randomize or sample lines from input data. Several sampling methods are available, including simple random sampling, weighted random sampling, and distinct sampling.",
     "homepage": "https://github.com/eBay/tsv-utils",
     "authors": ["Jon Degenhardt"],
     "copyright": "Copyright (c) 2017-2018, eBay Software Foundation",
