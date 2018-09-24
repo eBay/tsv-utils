@@ -106,20 +106,15 @@ random seed each run. The random seed can be specified using
 '--v|seed-value'. This takes a non-zero, 32-bit positive integer. (A zero
 value is a no-op and ignored.)
 
-Reservoir sampling: Input line randomization and weighted sampling are
-implemented using reservoir sampling. This means all lines output must be
-held in memory. Memory needed for large input streams can reduced
-significantly using a sample size. Both 'tsv-sample -n 1000' and
-'tsv-sample | head -n 1000' produce the same results, but the former is
-quite a bit faster.
-
-Alternative to reservoir sampling for very large result sets: Reservoir
-sampling works fine most of the time, but becomes problematic when the
-result set is so large it won't fit in available memory. An alternative
-is to use the '--q|gen-random-inorder' option to generate the random
-values for each line, then use a 'sort' program to sort by the random
-values. This works because most sort programs use both RAM and disk to
-process large data sets.
+Memory use: Stream sampling and distinct sampling make decisions on each
+line as they are read and have limited memory needs. Line order
+randomization and weighted sampling need to hold the full output set in
+memory prior to generating results. This ultimately limits the size of
+the output set. The simplest way to reduce memory needs is to use a
+sample size (--n|num). This engages reservior sampling for line order
+randomization and weighted sampling. This does not affect the result
+order. Both 'tsv-sample -n 1000' and 'tsv-sample | head -n 1000' produce
+the same results, but the former is quite a bit faster.
 
 Weighted sampling: Weighted random sampling is done using an algorithm
 described by Efraimidis and Spirakis. Weights should be positive values
