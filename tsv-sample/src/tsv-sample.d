@@ -576,12 +576,17 @@ void distinctSampling(Flag!"generateRandomAll" generateRandomAll, OutputRange)
  * The desired order is obtained by removing each element one at at time from the heap.
  * The underlying data store will have the elements in correct order.
  *
- * This last step of re-ordering the results in weighted order is often useful in the
- * case of weighted sampling. The results in an order where smaller, valid weighted
- * samples can be created simply by taking the results from the beginning of the file.
- * Though less important, it is occassionally useful in the unweighted case to have
- * consistent result orders when using known seeds. However, some performance can be
- * gained by dispensing with this last step.
+ * Generating output in weighted order matters for several reasons:
+ *  - For weighted sampling, it preserves the property that smaller valid subsets can be
+ *    created by taking the first N lines.
+ *  - For unweighted sampling, it ensures that all output permutations are possible, and
+ *    are not influences by input order or the heap data structure used.
+ *  - Order consistency when making repeated use of the same random seeds, but with
+ *    different sample sizes.
+ *
+ * There are use cases where only the selection set matters, for these some performance
+ * could be gained by skipping the reordering and simply printing the backing store
+ * array in-order, but making this distinction seems an unnecessary complication.
  *
  * Note: In tsv-sample versions 1.2.1 and earlier this routine also supported
  * randomization of all input lines. This was dropped in version 1.2.2 in favor of the
@@ -676,9 +681,8 @@ void reservoirSampling(Flag!"isWeighted" isWeighted, OutputRange)
     }
 
     /* All entries are in the reservoir. Time to print. The heap is in reverse order
-     * of assigned weights. Need to reverse it if using weighted sampling or a static
-     * seed. Reversing order is done by removing all elements from the heap, this
-     * leaves the backing store in the correct order.
+     * of assigned weights. Reversing order is done by removing all elements from the
+     * heap, this leaves the backing store in the correct order for output.
      *
      * The asserts here avoid issues with the current binaryheap implementation. They
      * detect use of backing stores having a length not synchronized to the reservoir.
@@ -686,12 +690,8 @@ void reservoirSampling(Flag!"isWeighted" isWeighted, OutputRange)
     size_t numLines = reservoir.length;
     assert(numLines == dataStore.length);
 
-    if (cmdopt.hasWeightField || !cmdopt.usingUnpredictableSeed)
-    {
-        /* Reorder the data store by extracting all the elements. */
-        while (!reservoir.empty) reservoir.removeFront;
-        assert(numLines == dataStore.length);
-    }
+    while (!reservoir.empty) reservoir.removeFront;
+    assert(numLines == dataStore.length);
 
     immutable randomValueFormatSpec = singleSpec("%.17g");
 
