@@ -343,7 +343,7 @@ void tsvSample(OutputRange)(TsvSampleOptions cmdopt, OutputRange outputStream)
  */
 void streamSampling(Flag!"generateRandomAll" generateRandomAll, OutputRange)
     (TsvSampleOptions cmdopt, OutputRange outputStream)
-    if (isOutputRange!(OutputRange, char))
+if (isOutputRange!(OutputRange, char))
 {
     import std.format : formatValue, singleSpec;
     import std.random : Random, uniform01;
@@ -436,7 +436,7 @@ void streamSampling(Flag!"generateRandomAll" generateRandomAll, OutputRange)
  */
 void distinctSampling(Flag!"generateRandomAll" generateRandomAll, OutputRange)
     (TsvSampleOptions cmdopt, OutputRange outputStream)
-    if (isOutputRange!(OutputRange, char))
+if (isOutputRange!(OutputRange, char))
 {
     import std.algorithm : splitter;
     import std.conv : to;
@@ -590,7 +590,7 @@ void distinctSampling(Flag!"generateRandomAll" generateRandomAll, OutputRange)
  */
 void reservoirSampling(Flag!"isWeighted" isWeighted, OutputRange)
     (TsvSampleOptions cmdopt, OutputRange outputStream)
-    if (isOutputRange!(OutputRange, char))
+if (isOutputRange!(OutputRange, char))
 {
     import std.container.array;
     import std.container.binaryheap;
@@ -709,7 +709,7 @@ void reservoirSampling(Flag!"isWeighted" isWeighted, OutputRange)
  * values are generated with the same formula used by reservoirSampling.
  */
 void generateWeightedRandomValuesInorder(OutputRange)(TsvSampleOptions cmdopt, OutputRange outputStream)
-    if (isOutputRange!(OutputRange, char))
+if (isOutputRange!(OutputRange, char))
 {
     import std.format : formatValue, singleSpec;
     import std.random : Random, uniform01;
@@ -778,7 +778,7 @@ void generateWeightedRandomValuesInorder(OutputRange)(TsvSampleOptions cmdopt, O
  * need to read all data into memory when randomizing all lines.
  */
 void randomizeLines(Flag!"isWeighted" isWeighted, OutputRange)(TsvSampleOptions cmdopt, OutputRange outputStream)
-    if (isOutputRange!(OutputRange, char))
+if (isOutputRange!(OutputRange, char))
 {
     import std.algorithm : sort, splitter;
     import std.array : appender;
@@ -896,9 +896,8 @@ void randomizeLines(Flag!"isWeighted" isWeighted, OutputRange)(TsvSampleOptions 
  * common/src/tsvutils.d for details. This wrapper creates error text tailored for this program.
  */
 import std.traits : isSomeChar;
-T getFieldValue(T, C)(const C[] line, size_t fieldIndex, C delim, string filename, size_t lineNum)
-    pure @safe
-    if (isSomeChar!C)
+T getFieldValue(T, C)(const C[] line, size_t fieldIndex, C delim, string filename, size_t lineNum) pure @safe
+if (isSomeChar!C)
 {
     import std.conv : ConvException, to;
     import std.format : format;

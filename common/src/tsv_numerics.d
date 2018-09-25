@@ -36,7 +36,7 @@ follows:
 import std.traits : isFloatingPoint, isIntegral, Unqual;
 
 auto formatNumber(T, size_t readablePrecisionMax = 6)(T num, const size_t floatPrecision = 12)
-    if (isFloatingPoint!T || isIntegral!T)
+if (isFloatingPoint!T || isIntegral!T)
 {
     alias UT = Unqual!T;
 
@@ -431,7 +431,7 @@ else
 }
 
 auto rangeMedian (Range) (Range r)
-    if (isRandomAccessRange!Range && hasLength!Range && hasSlicing!Range)
+if (isRandomAccessRange!Range && hasLength!Range && hasSlicing!Range)
 {
     version(rangeMedianViaSort)
     {
@@ -573,8 +573,8 @@ import std.range;
 
 double quantile(ProbType, Range)
     (const ProbType prob, Range data, QuantileInterpolation method = QuantileInterpolation.R7)
-    if (isRandomAccessRange!Range && hasLength!Range && isNumeric!(ElementType!Range) &&
-        isFloatingPoint!ProbType)
+if (isRandomAccessRange!Range && hasLength!Range && isNumeric!(ElementType!Range) &&
+    isFloatingPoint!ProbType)
 in
 {
     import std.algorithm : isSorted;

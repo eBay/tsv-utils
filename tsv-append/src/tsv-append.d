@@ -206,7 +206,7 @@ struct TsvAppendOptions
 /** tsvAppend implements the basic functionality of the tsv-append program.
  */
 void tsvAppend(OutputRange)(TsvAppendOptions cmdopt, OutputRange outputStream)
-    if (isOutputRange!(OutputRange, char))
+if (isOutputRange!(OutputRange, char))
 {
     bool headerWritten = false;
     foreach (filename; (cmdopt.files.length > 0) ? cmdopt.files : ["-"])

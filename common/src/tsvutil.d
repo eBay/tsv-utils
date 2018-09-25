@@ -89,7 +89,7 @@ instantiated with EnablePartialLines.yes. This will ensure that any fields not f
 are empty strings in the outputFields return.
 */
 class InputFieldReordering(C, EnablePartialLines partialLinesOk = EnablePartialLines.no)
-    if (isSomeChar!C)
+if (isSomeChar!C)
 {
     /* Implementation: The class works by creating an array of tuples mapping the input
      * field index to the location in the outputFields array. The 'fromToMap' array is
@@ -397,7 +397,7 @@ import std.range : isOutputRange;
 import std.traits : Unqual;
 
 struct BufferedOutputRange(OutputTarget)
-    if (isFileHandle!(Unqual!OutputTarget) || isOutputRange!(Unqual!OutputTarget, char))
+if (isFileHandle!(Unqual!OutputTarget) || isOutputRange!(Unqual!OutputTarget, char))
 {
     import std.range : isOutputRange;
     import std.array : appender;
@@ -490,9 +490,9 @@ struct BufferedOutputRange(OutputTarget)
      * This form is quite a bit faster, 40%+ on some benchmarks.
      */
     void joinAppend(InputRange, E)(InputRange inputRange, E delimiter)
-        if (isInputRange!InputRange &&
-            is(ElementType!InputRange : const C[]) &&
-            (is(E : const C[]) || is(E : const C)))
+    if (isInputRange!InputRange &&
+        is(ElementType!InputRange : const C[]) &&
+        (is(E : const C[]) || is(E : const C)))
     {
         if (!inputRange.empty)
         {
@@ -669,7 +669,7 @@ unittest
      */
 
     void outputStuffAsRef(T)(ref T range)
-        if (isOutputRange!(T, char))
+    if (isOutputRange!(T, char))
     {
         range.put('1');
         put(range, "23");
@@ -680,7 +680,7 @@ unittest
     }
 
     void outputStuffAsVal(T)(T range)
-        if (isOutputRange!(T, char))
+    if (isOutputRange!(T, char))
     {
         put(range, '1');
         range.put("23");
@@ -785,13 +785,13 @@ uses a similar technique to buffer multiple lines.
  */
 OutputRange joinAppend(InputRange, OutputRange, E)
     (InputRange inputRange, ref OutputRange outputRange, E delimiter)
-    if (isInputRange!InputRange &&
-        (is(ElementType!InputRange : const E[]) &&
-         isOutputRange!(OutputRange, E[]))
-        ||
-        (is(ElementType!InputRange : const E) &&
-         isOutputRange!(OutputRange, E))
-        )
+if (isInputRange!InputRange &&
+    (is(ElementType!InputRange : const E[]) &&
+     isOutputRange!(OutputRange, E[]))
+     ||
+    (is(ElementType!InputRange : const E) &&
+     isOutputRange!(OutputRange, E))
+    )
 {
     if (!inputRange.empty)
     {
@@ -871,7 +871,7 @@ failure. If not enough fields, the exception text is generated referencing 1-upp
 field numbers as would be provided by command line users.
  */
 T getTsvFieldValue(T, C)(const C[] line, size_t fieldIndex, C delim) pure @safe
-    if (isSomeChar!C)
+if (isSomeChar!C)
 {
     import std.algorithm : splitter;
     import std.conv : to;
@@ -1047,11 +1047,11 @@ makeFieldListOptionHandler creates a std.getopt option hander for processing fie
 entered on the command line. A field list is as defined by parseFieldList.
 */
 OptionHandlerDelegate makeFieldListOptionHandler(
-    T,
-    ConvertToZeroBasedIndex convertToZero = No.convertToZeroBasedIndex,
-    AllowFieldNumZero allowZero = No.allowFieldNumZero)
+                                                 T,
+                                                 ConvertToZeroBasedIndex convertToZero = No.convertToZeroBasedIndex,
+                                                 AllowFieldNumZero allowZero = No.allowFieldNumZero)
     (ref T[] fieldsArray)
-    if (isIntegral!T && (!allowZero || !convertToZero || !isUnsigned!T))
+if (isIntegral!T && (!allowZero || !convertToZero || !isUnsigned!T))
 {
     void fieldListOptionHandler(ref T[] fieldArray, string option, string value)
     {
@@ -1231,7 +1231,7 @@ auto parseFieldList(T = size_t,
                     ConvertToZeroBasedIndex convertToZero = No.convertToZeroBasedIndex,
                     AllowFieldNumZero allowZero = No.allowFieldNumZero)
     (string fieldList, char delim = ',')
-    if (isIntegral!T && (!allowZero || !convertToZero || !isUnsigned!T))
+if (isIntegral!T && (!allowZero || !convertToZero || !isUnsigned!T))
 {
     import std.algorithm : splitter;
 
@@ -1352,7 +1352,7 @@ private auto parseFieldRange(T = size_t,
                              ConvertToZeroBasedIndex convertToZero = No.convertToZeroBasedIndex,
                              AllowFieldNumZero allowZero = No.allowFieldNumZero)
     (string fieldRange)
-    if (isIntegral!T && (!allowZero || !convertToZero || !isUnsigned!T))
+if (isIntegral!T && (!allowZero || !convertToZero || !isUnsigned!T))
 {
     import std.algorithm : findSplit;
     import std.conv : to;
