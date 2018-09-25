@@ -589,8 +589,9 @@ struct SummarizerPrintOptions
     size_t floatPrecision = 12;
 
     import std.traits : isFloatingPoint, isIntegral;
+
     auto formatNumber(T)(T n) const
-        if (isFloatingPoint!T || isIntegral!T)
+    if (isFloatingPoint!T || isIntegral!T)
     {
         import tsv_numerics : formatNumber;
         return formatNumber!T(n, floatPrecision);

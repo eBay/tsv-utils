@@ -202,7 +202,7 @@ alias NullableSizeT = Nullable!(size_t, size_t.max);
 
 
 /** csv2tsvFiles reads multiple files and standard input and writes the results to
- * standard output. 
+ * standard output.
  */
 void csv2tsvFiles(in Csv2tsvOptions cmdopt, in string[] inputFiles)
 {
@@ -271,9 +271,9 @@ void csv2tsv(InputRange, OutputRange)
      const char csvQuote = '"', const char csvDelim = ',', const char tsvDelim = '\t',
      string tsvDelimReplacement = " ",
      NullableSizeT maxRecords=NullableSizeT.init,
-        )
-    if (isInputRange!InputRange && isOutputRange!(OutputRange, char) &&
-        is(Unqual!(ElementType!InputRange) == ubyte))
+     )
+if (isInputRange!InputRange && isOutputRange!(OutputRange, char) &&
+    is(Unqual!(ElementType!InputRange) == ubyte))
 {
     enum State { FieldEnd, NonQuotedField, QuotedField, QuoteInQuotedField }
 
