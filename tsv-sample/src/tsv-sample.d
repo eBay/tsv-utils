@@ -780,9 +780,8 @@ if (isOutputRange!(OutputRange, char))
 void randomizeLines(Flag!"isWeighted" isWeighted, OutputRange)(TsvSampleOptions cmdopt, OutputRange outputStream)
 if (isOutputRange!(OutputRange, char))
 {
-    import std.algorithm : sort, splitter;
+    import std.algorithm : min, sort, splitter;
     import std.array : appender;
-    import std.file : read;
     import std.format : formatValue, singleSpec;
     import std.random : Random, uniform01;
     import tsvutil : throwIfWindowsNewlineOnUnix;
@@ -803,19 +802,20 @@ if (isOutputRange!(OutputRange, char))
     /*
      * Read all file data into memory.
      */
+    ubyte[1024 * 128] fileRawBuf;
     foreach (fileNum, filename; cmdopt.files)
     {
         fileData[fileNum].filename = filename;
-        if (filename == "-")
+        auto dataAppender = appender(&(fileData[fileNum].data));
+        auto ifile = (filename == "-") ? stdin : filename.File;
+
+        if (filename != "-")
         {
-            auto stdinData = appender(&(fileData[fileNum].data));
-            ubyte[1024 * 1024] fileRawBuf;
-            foreach (ref ubyte[] buffer; stdin.byChunk(fileRawBuf)) stdinData.put(cast(char[]) buffer);
+            ulong filesize = ifile.size;
+            if (filesize < ulong.max) dataAppender.reserve(min(filesize, size_t.max));
         }
-        else
-        {
-            fileData[fileNum].data = cast(char[]) filename.read;
-        }
+
+        foreach (ref ubyte[] buffer; ifile.byChunk(fileRawBuf)) dataAppender.put(cast(char[]) buffer);
     }
 
     /*
