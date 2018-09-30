@@ -60,15 +60,16 @@ Sample input lines or randomize their order. Several modes of operation
 are available:
 * Line order randomizing (the default): All input lines are output in a
   random order. All orderings are equally likely.
-* Stream sampling (--r|rate): A random subset of lines is output based on
-  a sampling rate. The order of the lines is unchanged.
+* Weighted line order randomization (--w|weight-field): Lines are selected
+  using weighted random sampling, with the weight taken from a field.
+  Lines are output in weighted selection order, reordering the lines.
+* Bernoulli sampling (--r|rate): A random subset of lines is output based
+  on a sampling rate. This is a streaming operation. A selection decision
+  is made on each line as is it read. The order of the lines is unchanged.
 * Distinct sampling (--k|key-fields, --r|rate): Input lines are sampled
   based on the values in the key field. A subset of the keys are chosen
   based on the sampling rate (a 'distinct' set of keys). All lines with
   one of the selected keys are output. Line order is not changed.
-* Weighted sampling (--w|weight-field): Input lines are selected using
-  weighted random sampling, with the weight taken from a field. Lines
-  are output in the weighted sample selection order, reordering the lines.
 
 The '--n|num' option limits the sample size produced. It speeds up line
 order randomization and weighted sampling significantly.
@@ -85,15 +86,16 @@ Sample input lines or randomize their order. Several modes of operation
 are available:
 * Line order randomizing (the default): All input lines are output in a
   random order. All orderings are equally likely.
-* Stream sampling (--r|rate): A random subset of lines is output based on
-  a sampling rate. The order of the lines is unchanged.
+* Weighted line order randomization (--w|weight-field): Lines are selected
+  using weighted random sampling, with the weight taken from a field.
+  Lines are output in weighted selection order, reordering the lines.
+* Bernoulli sampling (--r|rate): A random subset of lines is output based
+  on a sampling rate. This is a streaming operation. A selection decision
+  is made on each line as is it read. The order of the lines is unchanged.
 * Distinct sampling (--k|key-fields, --r|rate): Input lines are sampled
   based on the values in the key field. A subset of the keys are chosen
   based on the sampling rate (a 'distinct' set of keys). All lines with
   one of the selected keys are output. Line order is not changed.
-* Weighted sampling (--w|weight-field): Input lines are selected using
-  weighted random sampling, with the weight taken from a field. Lines
-  are output in the weighted sample selection order, reordering the lines.
 
 Sample size: The '--n|num' option limits the sample size produced. This
 speeds up line order randomization and weighted sampling significantly
