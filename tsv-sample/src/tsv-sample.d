@@ -1,7 +1,7 @@
 /**
 Command line tool for randomizing or sampling lines from input streams. Several
 sampling methods are available, including simple random sampling, weighted random
-sampling, and distinct sampling.
+sampling, Bernoulli sampling, and distinct sampling.
 
 Copyright (c) 2017-2018, eBay Software Foundation
 Initially written by Jon Degenhardt
@@ -119,14 +119,14 @@ order. Both 'tsv-sample -n 1000' and 'tsv-sample | head -n 1000' produce
 the same results, but the former is quite a bit faster.
 
 Weighted sampling: Weighted random sampling is done using an algorithm
-described by Efraimidis and Spirakis. Weights should be positive values
-representing the relative weight of the entry in the collection. Counts
-and similar can be used as weights, it is *not* necessary to normalize to
-a [0,1] interval. Negative values are not meaningful and given the value
-zero. Input order is not retained, instead lines are output ordered by
-the randomized weight that was assigned. This means that a smaller valid
-sample can be produced by taking the first N lines of output. For more
-info on the sampling approach see:
+described by Pavlos Efraimidis and Paul Spirakis. Weights should be
+positive values representing the relative weight of the entry in the
+collection. Counts and similar can be used as weights, it is *not*
+necessary to normalize to a [0,1] interval. Negative values are not
+meaningful and given the value zero. Input order is not retained, instead
+lines are output ordered by the randomized weight that was assigned. This
+means that a smaller valid sample can be produced by taking the first N
+lines of output. For more info on the sampling approach see:
 * Wikipedia: https://en.wikipedia.org/wiki/Reservoir_sampling
 * "Weighted Random Sampling over Data Streams", Pavlos S. Efraimidis
   (https://arxiv.org/abs/1012.0256)
@@ -172,7 +172,7 @@ struct TsvSampleOptions
     char delim = '\t';                // --d|delimiter
     bool versionWanted = false;       // --V|version
     bool hasWeightField = false;      // Derived.
-    bool useStreamSampling = false;   // Derived.
+    bool useBernoulliSampling = false;   // Derived.
     bool useDistinctSampling = false; // Derived.
     bool usingUnpredictableSeed = true;  // Derived from --static-seed, --seed-value
     uint seed = 0;                    // Derived from --static-seed, --seed-value
@@ -263,14 +263,14 @@ struct TsvSampleOptions
                 }
 
                 if (keyFields.length > 0) useDistinctSampling = true;
-                else useStreamSampling = true;
+                else useBernoulliSampling = true;
 
                 if (hasWeightField) throw new Exception("--w|weight-field and --r|rate cannot be used together.");
                 if (genRandomInorder && !useDistinctSampling) throw new Exception("--q|gen-random-inorder and --r|rate can only be used together if --k|key-fields is also used.");
             }
             else if (genRandomInorder && !hasWeightField)
             {
-                useStreamSampling = true;
+                useBernoulliSampling = true;
             }
 
             if (randomValueHeader.length == 0 || randomValueHeader.canFind('\n') ||
@@ -305,10 +305,10 @@ struct TsvSampleOptions
  */
 void tsvSample(OutputRange)(TsvSampleOptions cmdopt, OutputRange outputStream)
 {
-    if (cmdopt.useStreamSampling)
+    if (cmdopt.useBernoulliSampling)
     {
-        if (cmdopt.genRandomInorder) streamSampling!(Yes.generateRandomAll)(cmdopt, outputStream);
-        else streamSampling!(No.generateRandomAll)(cmdopt, outputStream);
+        if (cmdopt.genRandomInorder) bernoulliSampling!(Yes.generateRandomAll)(cmdopt, outputStream);
+        else bernoulliSampling!(No.generateRandomAll)(cmdopt, outputStream);
     }
     else if (cmdopt.useDistinctSampling)
     {
@@ -332,7 +332,7 @@ void tsvSample(OutputRange)(TsvSampleOptions cmdopt, OutputRange outputStream)
     }
 }
 
-/** Simple random sampling on the input stream. Each input line is a assigned a random
+/** Bernoulli sampling on the input stream. Each input line is a assigned a random
  * value and output if less than the sampling rate. The order of the lines is not
  * changed.
  *
@@ -343,7 +343,7 @@ void tsvSample(OutputRange)(TsvSampleOptions cmdopt, OutputRange outputStream)
  * random weights assigned to each element would change based on the sampling.
  * Printed weights would no longer be consistent run-to-run.
  */
-void streamSampling(Flag!"generateRandomAll" generateRandomAll, OutputRange)
+void bernoulliSampling(Flag!"generateRandomAll" generateRandomAll, OutputRange)
     (TsvSampleOptions cmdopt, OutputRange outputStream)
 if (isOutputRange!(OutputRange, char))
 {
@@ -559,9 +559,9 @@ if (isOutputRange!(OutputRange, char))
  * are supported.
  *
  * Both weighted and uniform random sampling are implemented using the one-pass algorithm
- * described by Efraimidis and Spirakis ("Weighted Random Sampling over Data Streams",
- * Pavlos S. Efraimidis, https://arxiv.org/abs/1012.0256). In the unweighted case weights
- * are simply set to one.
+ * described by Pavlos Efraimidis and Paul Spirakis ("Weighted Random Sampling over Data
+ * Streams", Pavlos S. Efraimidis, https://arxiv.org/abs/1012.0256). In the unweighted
+ * case weights are simply set to one.
  *
  * The implementation uses a heap (priority queue) large enough to hold the desired
  * number of lines. Input is read line-by-line, assigned a random value, and added to the
