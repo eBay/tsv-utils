@@ -108,8 +108,8 @@ random seed each run. The random seed can be specified using
 '--v|seed-value'. This takes a non-zero, 32-bit positive integer. (A zero
 value is a no-op and ignored.)
 
-Memory use: Stream sampling and distinct sampling make decisions on each
-line as they are read and have limited memory needs. Line order
+Memory use: Bernoulli sampling and distinct sampling make decisions on
+each line as they are read and have limited memory needs. Line order
 randomization and weighted sampling need to hold the full output set in
 memory prior to generating results. This ultimately limits the size of
 the output set. The simplest way to reduce memory needs is to use a
@@ -140,7 +140,7 @@ default). The '--q|gen-random-inorder' option takes this one step further,
 generating random values for all input lines without changing the input
 order. The types of values currently used by these sampling algorithms:
 * Unweighted sampling: Uniform random value in the interval [0,1]. This
-  includes stream sampling and unweighted line order randomization.
+  includes Bernoulli sampling and unweighted line order randomization.
 * Weighted sampling: Value in the interval [0,1]. Distribution depends on
   the values in the weight field. It is used as a partial ordering.
 * Distinct sampling: An integer, zero and up, representing a selection
@@ -252,7 +252,7 @@ struct TsvSampleOptions
                 if (sampleRate.isNaN) throw new Exception("--r|rate is required when using --k|key-fields.");
             }
 
-            /* Sample rate (--r|rate) is used for both stream sampling and distinct sampling. */
+            /* Sample rate (--r|rate) is used for both Bernoulli sampling and distinct sampling. */
             if (!sampleRate.isNaN)
             {
                 if (sampleRate <= 0.0 || sampleRate > 1.0)
@@ -1098,7 +1098,7 @@ unittest
          ["0.15929344086907804", "green", "緑", "0.0072"],
          ["0.010968807619065046", "red", "赤", "23.8"]];
 
-    string[][] data3x6ExpectedProbsStreamSampleP100 =
+    string[][] data3x6ExpectedProbsBernoulliSampleP100 =
         [["random_value", "field_a", "field_b", "field_c"],
          ["0.010968807619065046", "red", "赤", "23.8"],
          ["0.15929344086907804", "green", "緑", "0.0072"],
@@ -1107,14 +1107,14 @@ unittest
          ["0.52525980887003243", "blue", "青", "12"],
          ["0.7571015392895788", "black", "黒", "0.983"]];
 
-    string[][] data3x6ExpectedProbsStreamSampleP60 =
+    string[][] data3x6ExpectedProbsBernoulliSampleP60 =
         [["random_value", "field_a", "field_b", "field_c"],
          ["0.010968807619065046", "red", "赤", "23.8"],
          ["0.15929344086907804", "green", "緑", "0.0072"],
          ["0.49287854949943721", "white", "白", "1.65"],
          ["0.52525980887003243", "blue", "青", "12"]];
 
-    string[][] data3x6ExpectedStreamSampleP60 =
+    string[][] data3x6ExpectedBernoulliSampleP60 =
         [["field_a", "field_b", "field_c"],
          ["red", "赤", "23.8"],
          ["green", "緑", "0.0072"],
@@ -1185,7 +1185,7 @@ unittest
          ["0.15535934292711318", "black", "黒", "0.983"],
          ["0.04609582107514143", "white", "白", "1.65"]];
 
-    string[][] data3x6ExpectedV41ProbsStreamSampleP60 =
+    string[][] data3x6ExpectedV41ProbsBernoulliSampleP60 =
         [["random_value", "field_a", "field_b", "field_c"],
          ["0.25092361867427826", "red", "赤", "23.8"],
          ["0.04609582107514143", "white", "白", "1.65"],
@@ -1258,7 +1258,7 @@ unittest
          ["0.81756894313730299", "brown", "褐色", "29.2"],
          ["0.29215990612283349", "gray", "グレー", "6.2"]];
 
-    string[][] combo1ExpectedProbsStreamSampleP50 =
+    string[][] combo1ExpectedProbsBernoulliSampleP50 =
         [["random_value", "field_a", "field_b", "field_c"],
          ["0.010968807619065046", "orange", "オレンジ", "2.5"],
          ["0.15929344086907804", "pink", "ピンク", "1.1"],
@@ -1268,7 +1268,7 @@ unittest
          ["0.47081507067196071", "black", "黒", "0.983"],
          ["0.29215990612283349", "gray", "グレー", "6.2"]];
 
-    string[][] combo1ExpectedStreamSampleP40 =
+    string[][] combo1ExpectedBernoulliSampleP40 =
         [["field_a", "field_b", "field_c"],
          ["orange", "オレンジ", "2.5"],
          ["pink", "ピンク", "1.1"],
@@ -1573,16 +1573,16 @@ unittest
     testTsvSample(["test-a12", "-H", "-s", "-v", "0", "-p", fpath_data3x6], data3x6ExpectedNoWtProbs);
     testTsvSample(["test-a13", "-H", "-v", "41", "-w", "3", "-p", fpath_data3x6], data3x6ExpectedWt3V41Probs);
 
-    /* Stream sampling cases. */
+    /* Bernoulli sampling cases. */
     testTsvSample(["test-a14", "--header", "--static-seed", "--rate", "0.001", fpath_dataEmpty], dataEmpty);
     testTsvSample(["test-a15", "--header", "--static-seed", "--rate", "0.001", fpath_data3x0], data3x0);
     testTsvSample(["test-a16", "-H", "-s", "-r", "1.0", fpath_data3x1], data3x1);
     testTsvSample(["test-a17", "-H", "-s", "-r", "1.0", fpath_data3x6], data3x6);
     testTsvSample(["test-a18", "-H", "-r", "1.0", fpath_data3x6], data3x6);
-    testTsvSample(["test-a19", "-H", "-s", "--rate", "1.0", "-p", fpath_data3x6], data3x6ExpectedProbsStreamSampleP100);
-    testTsvSample(["test-a20", "-H", "-s", "--rate", "0.60", "-p", fpath_data3x6], data3x6ExpectedProbsStreamSampleP60);
-    testTsvSample(["test-a21", "-H", "-s", "--rate", "0.60", fpath_data3x6], data3x6ExpectedStreamSampleP60);
-    testTsvSample(["test-a22", "-H", "-v", "41", "--rate", "0.60", "-p", fpath_data3x6], data3x6ExpectedV41ProbsStreamSampleP60);
+    testTsvSample(["test-a19", "-H", "-s", "--rate", "1.0", "-p", fpath_data3x6], data3x6ExpectedProbsBernoulliSampleP100);
+    testTsvSample(["test-a20", "-H", "-s", "--rate", "0.60", "-p", fpath_data3x6], data3x6ExpectedProbsBernoulliSampleP60);
+    testTsvSample(["test-a21", "-H", "-s", "--rate", "0.60", fpath_data3x6], data3x6ExpectedBernoulliSampleP60);
+    testTsvSample(["test-a22", "-H", "-v", "41", "--rate", "0.60", "-p", fpath_data3x6], data3x6ExpectedV41ProbsBernoulliSampleP60);
 
     /* Distinct sampling cases. */
     testTsvSample(["test-a23", "--header", "--static-seed", "--rate", "0.001", "--key-fields", "1", fpath_dataEmpty], dataEmpty);
@@ -1591,11 +1591,11 @@ unittest
     testTsvSample(["test-a26", "-H", "-s", "-r", "1.0", "-k", "2", fpath_data3x6], data3x6);
     testTsvSample(["test-a27", "-H", "-s", "-r", "0.6", "-k", "1,3", fpath_data3x6], data3x6ExpectedDistinctSampleK1K3P60);
 
-    /* Generating random weights. Use stream sampling test set at prob 100% for uniform sampling.
+    /* Generating random weights. Use Bernoulli sampling test set at prob 100% for uniform sampling.
      * For weighted sampling, use the weighted cases, but with expected using the original ordering.
      */
-    testTsvSample(["test-a28", "-H", "-s", "--gen-random-inorder", fpath_data3x6], data3x6ExpectedProbsStreamSampleP100);
-    testTsvSample(["test-a29", "-H", "-s", "-q", fpath_data3x6], data3x6ExpectedProbsStreamSampleP100);
+    testTsvSample(["test-a28", "-H", "-s", "--gen-random-inorder", fpath_data3x6], data3x6ExpectedProbsBernoulliSampleP100);
+    testTsvSample(["test-a29", "-H", "-s", "-q", fpath_data3x6], data3x6ExpectedProbsBernoulliSampleP100);
     testTsvSample(["test-a30", "-H", "-s", "--gen-random-inorder", "--weight-field", "3", fpath_data3x6],
                   data3x6ExpectedWt3ProbsInorder);
     testTsvSample(["test-a31", "-H", "-v", "41", "--gen-random-inorder", "--weight-field", "3", fpath_data3x6],
@@ -1618,13 +1618,13 @@ unittest
     testTsvSample(["test-b8", "-v", "41", "-p", fpath_data3x6_noheader], data3x6ExpectedNoWtV41Probs[1..$]);
     testTsvSample(["test-b9", "-v", "41", "-w", "3", "-p", fpath_data3x6_noheader], data3x6ExpectedWt3V41Probs[1..$]);
 
-    /* Stream sampling cases. */
+    /* Bernoulli sampling cases. */
     testTsvSample(["test-b10", "-s", "-r", "1.0", fpath_data3x1_noheader], data3x1[1..$]);
     testTsvSample(["test-b11", "-s", "-r", "1.0", fpath_data3x6_noheader], data3x6[1..$]);
     testTsvSample(["test-b12", "-r", "1.0", fpath_data3x6_noheader], data3x6[1..$]);
-    testTsvSample(["test-b13", "-s", "--rate", "1.0", "-p", fpath_data3x6_noheader], data3x6ExpectedProbsStreamSampleP100[1..$]);
-    testTsvSample(["test-b14", "-s", "--rate", "0.60", "-p", fpath_data3x6_noheader], data3x6ExpectedProbsStreamSampleP60[1..$]);
-    testTsvSample(["test-b15", "-v", "41", "--rate", "0.60", "-p", fpath_data3x6_noheader], data3x6ExpectedV41ProbsStreamSampleP60[1..$]);
+    testTsvSample(["test-b13", "-s", "--rate", "1.0", "-p", fpath_data3x6_noheader], data3x6ExpectedProbsBernoulliSampleP100[1..$]);
+    testTsvSample(["test-b14", "-s", "--rate", "0.60", "-p", fpath_data3x6_noheader], data3x6ExpectedProbsBernoulliSampleP60[1..$]);
+    testTsvSample(["test-b15", "-v", "41", "--rate", "0.60", "-p", fpath_data3x6_noheader], data3x6ExpectedV41ProbsBernoulliSampleP60[1..$]);
 
     /* Distinct sampling cases. */
     testTsvSample(["test-b16", "-s", "-r", "1.0", "-k", "2", fpath_data3x1_noheader], data3x1[1..$]);
@@ -1632,8 +1632,8 @@ unittest
     testTsvSample(["test-b18", "-r", "1.0", "-k", "2", fpath_data3x6_noheader], data3x6[1..$]);
     testTsvSample(["test-b19", "-v", "71563", "-r", "1.0", "-k", "2", fpath_data3x6_noheader], data3x6[1..$]);
 
-    /* Generating random weights. Reuse stream sampling tests at prob 100%. */
-    testTsvSample(["test-b20", "-s", "--gen-random-inorder", fpath_data3x6_noheader], data3x6ExpectedProbsStreamSampleP100[1..$]);
+    /* Generating random weights. Reuse Bernoulli sampling tests at prob 100%. */
+    testTsvSample(["test-b20", "-s", "--gen-random-inorder", fpath_data3x6_noheader], data3x6ExpectedProbsBernoulliSampleP100[1..$]);
     testTsvSample(["test-b23", "-v", "41", "--gen-random-inorder", "--weight-field", "3", fpath_data3x6_noheader], data3x6ExpectedWt3V41ProbsInorder[1..$]);
     testTsvSample(["test-b24", "-s", "-r", "0.6", "-k", "1,3", "--print-random", fpath_data3x6_noheader],
                   data3x6ExpectedDistinctSampleK1K3P60Probs[1..$]);
@@ -1672,21 +1672,21 @@ unittest
                    fpath_data3x6_noheader, fpath_data3x2_noheader],
                   combo1ExpectedWt3[1..$]);
 
-    /* Stream sampling cases. */
+    /* Bernoulli sampling cases. */
     testTsvSample(["test-c9", "--header", "--static-seed", "--print-random", "--rate", ".5",
                    fpath_data3x0, fpath_data3x3, fpath_data3x1, fpath_dataEmpty, fpath_data3x6, fpath_data3x2],
-                  combo1ExpectedProbsStreamSampleP50);
+                  combo1ExpectedProbsBernoulliSampleP50);
     testTsvSample(["test-c10", "--header", "--static-seed", "--rate", ".4",
                    fpath_data3x0, fpath_data3x3, fpath_data3x1, fpath_dataEmpty, fpath_data3x6, fpath_data3x2],
-                  combo1ExpectedStreamSampleP40);
+                  combo1ExpectedBernoulliSampleP40);
     testTsvSample(["test-c11", "--static-seed", "--print-random", "--rate", ".5",
                    fpath_data3x3_noheader, fpath_data3x1_noheader, fpath_dataEmpty,
                    fpath_data3x6_noheader, fpath_data3x2_noheader],
-                  combo1ExpectedProbsStreamSampleP50[1..$]);
+                  combo1ExpectedProbsBernoulliSampleP50[1..$]);
     testTsvSample(["test-c12", "--static-seed", "--rate", ".4",
                    fpath_data3x3_noheader, fpath_data3x1_noheader, fpath_dataEmpty,
                    fpath_data3x6_noheader, fpath_data3x2_noheader],
-                  combo1ExpectedStreamSampleP40[1..$]);
+                  combo1ExpectedBernoulliSampleP40[1..$]);
 
     /* Distinct sampling cases. */
     testTsvSample(["test-c13", "--header", "--static-seed", "--key-fields", "1", "--rate", ".4",
@@ -1752,19 +1752,19 @@ unittest
                        "-p", "-w", "3", fpath_data3x6_noheader], data3x6ExpectedWt3Probs[1..expectedLength]);
 
         import std.algorithm : min;
-        size_t sampleExpectedLength = min(expectedLength, data3x6ExpectedProbsStreamSampleP60.length);
+        size_t sampleExpectedLength = min(expectedLength, data3x6ExpectedProbsBernoulliSampleP60.length);
 
         testTsvSample([format("test-f9_%d", n), "-s", "-r", "0.6", "-n", n.to!string,
-                       "-H", "-p", fpath_data3x6], data3x6ExpectedProbsStreamSampleP60[0..sampleExpectedLength]);
+                       "-H", "-p", fpath_data3x6], data3x6ExpectedProbsBernoulliSampleP60[0..sampleExpectedLength]);
 
         testTsvSample([format("test-f10_%d", n), "-s", "-r", "0.6", "-n", n.to!string,
-                       "-H", fpath_data3x6], data3x6ExpectedStreamSampleP60[0..sampleExpectedLength]);
+                       "-H", fpath_data3x6], data3x6ExpectedBernoulliSampleP60[0..sampleExpectedLength]);
 
         testTsvSample([format("test-f11_%d", n), "-s", "-r", "0.6", "-n", n.to!string,
-                       "-p", fpath_data3x6_noheader], data3x6ExpectedProbsStreamSampleP60[1..sampleExpectedLength]);
+                       "-p", fpath_data3x6_noheader], data3x6ExpectedProbsBernoulliSampleP60[1..sampleExpectedLength]);
 
         testTsvSample([format("test-f12_%d", n), "-s", "-r", "0.6", "-n", n.to!string,
-                       fpath_data3x6_noheader], data3x6ExpectedStreamSampleP60[1..sampleExpectedLength]);
+                       fpath_data3x6_noheader], data3x6ExpectedBernoulliSampleP60[1..sampleExpectedLength]);
 
         size_t distinctExpectedLength = min(expectedLength, data3x6ExpectedDistinctSampleK1K3P60.length);
 
@@ -1775,10 +1775,10 @@ unittest
                        fpath_data3x6_noheader], data3x6ExpectedDistinctSampleK1K3P60[1..distinctExpectedLength]);
 
         testTsvSample([format("test-f15_%d", n), "-s", "--gen-random-inorder", "-n", n.to!string,
-                       "-H", fpath_data3x6], data3x6ExpectedProbsStreamSampleP100[0..expectedLength]);
+                       "-H", fpath_data3x6], data3x6ExpectedProbsBernoulliSampleP100[0..expectedLength]);
 
         testTsvSample([format("test-f15_%d", n), "-s", "--gen-random-inorder", "-n", n.to!string,
-                       fpath_data3x6_noheader], data3x6ExpectedProbsStreamSampleP100[1..expectedLength]);
+                       fpath_data3x6_noheader], data3x6ExpectedProbsBernoulliSampleP100[1..expectedLength]);
     }
 
     /* Similar tests with the 1x10 data set. */

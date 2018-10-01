@@ -382,7 +382,7 @@ _**Tip:**_ Bash completion is very helpful when using commands like `tsv-summari
 
 **Synopsis:** tsv-sample [options] [file...]
 
-`tsv-sample` subsamples input lines or randomizes their order. Several sampling methods are used: simple random sampling,weighted random sampling, Bernoulli sampling, and distinct sampling. These are made available through several different modes operation:
+`tsv-sample` subsamples input lines or randomizes their order. Several sampling methods are used: simple random sampling, weighted random sampling, Bernoulli sampling, and distinct sampling. These are made available through several different modes operation:
 
 * Line order randomization (the default): All input lines are output in a random order. All orderings are equally likely (simple random sampling). Use `--n|num` to limit the sample size and produce a randomly ordered subsample. This is a form of simple random sampling.
 * Weighted line order randomization (`--w|weight-field`): Input lines are selected using weighted random sampling, with the weight taken from a field. Lines are output in the weighted sample selection order, reordering the lines. Use `--n|num` to produce a subsample.
