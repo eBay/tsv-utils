@@ -404,7 +404,7 @@ _**Tip:**_ Bash completion is very helpful when using commands like `tsv-summari
 * Weighted sampling: Value in the interval [0,1]. Distribution depends on the values in the weight field. It is used as a partial ordering.
 * Distinct sampling: An integer, zero and up, representing a selection group. The sampling rate determines the number of selection groups.
 
-The specifics behind these random values are subject to change in future releases. At present no changes are planned or expected.
+The specifics behind these random values are subject to change in future releases.
 
 **Options:**
 
