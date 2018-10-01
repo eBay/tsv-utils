@@ -147,7 +147,7 @@ order. The types of values currently used by these sampling algorithms:
   group. The sampling rate determines the number of selection groups.
 
 The specifics behind these random values are subject to change in future
-releases. At present no changes are planned or expected.
+releases.
 
 Options:
 EOS";
@@ -336,7 +336,7 @@ void tsvSample(OutputRange)(TsvSampleOptions cmdopt, OutputRange outputStream)
  * value and output if less than the sampling rate. The order of the lines is not
  * changed.
  *
- * Design note: Performance tests show that skip sampling is faster when the sampling
+ * Note: Performance tests show that skip sampling is faster when the sampling
  * rate is approximately 4-5% or less. A performance optimization would be to create
  * a separate function for cases when the sampling rate is small and the random
  * weights are not being output with each line. A disadvantage would be that the
@@ -585,10 +585,19 @@ if (isOutputRange!(OutputRange, char))
  * could be gained by skipping the reordering and simply printing the backing store
  * array in-order, but making this distinction seems an unnecessary complication.
  *
- * Note: In tsv-sample versions 1.2.1 and earlier this routine also supported
- * randomization of all input lines. This was dropped in version 1.2.2 in favor of the
- * approach used in randomizeLines. The latter has significant advantages given that all
- * data must be read into memory.
+ * Notes:
+ *  - In tsv-sample versions 1.2.1 and earlier this routine also supported randomization
+ *    of all input lines. This was dropped in version 1.2.2 in favor of the approach
+ *    used in randomizeLines. The latter has significant advantages given that all data
+ *    data must be read into memory.
+ *  - The unweighted case could be sped up by adopting what is commonly known as
+ *    "Algorithm R" followed by a random walk on the resulting reservoir (e.g.
+ *    std.random.randomCover in the D standard library). This is faster than reversing
+ *    the heap prior to output. The downsides are that the result order would not be
+ *    consistent with the other routines and that random number printing does not make
+ *    sense. Order consistency matters only in the rare case when multiple randomizations
+ *    are being done with the same static seed. For a description of Algorithm R see:
+ *    https://en.wikipedia.org/wiki/Reservoir_sampling#Algorithm_R.
  */
 void reservoirSampling(Flag!"isWeighted" isWeighted, OutputRange)
     (TsvSampleOptions cmdopt, OutputRange outputStream)
@@ -778,6 +787,13 @@ if (isOutputRange!(OutputRange, char))
  * This approach is significantly faster than reading line-by-line with a heap the
  * way reservoir sampling does, effectively acknowledging that both approaches
  * need to read all data into memory when randomizing all lines.
+ *
+ * Note: The unweighted case could be sped up by using std.random.randomShuffle from
+ * the D standard library. This uses an O(n) swapping algorithm to perform the shuffle
+ * rather than the O(n log n) sort approach used here. The downsides are that the
+ * result order would not be consistent with the other routines and that random number
+ * printing does not make sense. Order consistency matters only in the rare case when
+ * multiple randomizations are being done with the same static seed.
  */
 void randomizeLines(Flag!"isWeighted" isWeighted, OutputRange)(TsvSampleOptions cmdopt, OutputRange outputStream)
 if (isOutputRange!(OutputRange, char))
