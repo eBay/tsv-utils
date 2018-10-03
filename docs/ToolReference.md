@@ -386,7 +386,8 @@ _**Tip:**_ Bash completion is very helpful when using commands like `tsv-summari
 
 * Line order randomization (the default): All input lines are output in a random order. All orderings are equally likely (simple random sampling). Use `--n|num` to limit the sample size and produce a randomly ordered subsample. This is a form of simple random sampling.
 * Weighted line order randomization (`--w|weight-field`): Input lines are selected using weighted random sampling, with the weight taken from a field. Lines are output in the weighted sample selection order, reordering the lines. Use `--n|num` to produce a subsample.
-* Bernoulli sampling (`--r|rate`): Lines are read one-at-a-time in a streaming fashion and a random subset is output based on a sampling rate. e.g. `--rate 0.2` gives each line a 20% chance of being selected. All lines have an equal likelihood of being selected. The order of the lines is unchanged.
+* Sampling with replacement (`--r|replace`): All lines are read into memory, then lines are selected one at a time at random and output. Lines can be output multiple times. Output continues until `-n|--num` samples have been output. Lines are output indefinitely if a sample size is not specified.
+* Bernoulli sampling (`--p|prob`): Lines are read one-at-a-time in a streaming fashion and a random subset is output based on a sampling rate. e.g. `--rate 0.2` gives each line a 20% chance of being selected. All lines have an equal likelihood of being selected. The order of the lines is unchanged.
 * Distinct sampling (`--k|key-fields`, `--r|rate`): Input lines are sampled based on the values in a key field. A subset of the keys are chosen based on the sampling rate (a 'distinct' set of keys). All lines with one of the selected keys are output. This is a streaming operation; a decision is made on each line as it is read. The order of the lines is not changed.
 
 **Performance**: `tsv-sample` is designed for large data sets. Algorithms make one pass over the data, using reservoir sampling and hashing when possible to limit the memory required. Bernoulli sampling and distinct sampling make immediate decisions on each line, with no memory accumulation. They can operate on arbitrary length data streams. Line order randomization algorithms need to hold the entire output set in memory. The memory required can be reduced significantly by limiting the output set (`--n|num`). Notice that both `tsv-sample -n <num>` and  `tsv-sample | head -n <num>` produce the same results, but the former is faster and can operate on arbitrary size input streams.
@@ -413,14 +414,15 @@ The specifics behind these random values are subject to change in future release
 * `--V|version` - Print version information and exit.
 * `--H|header` - Treat the first line of each file as a header.
 * `--n|num NUM` - Maximum number of lines to output. All selected lines are output if not provided or zero.
-* `--r|rate NUM`  Sampling rating (0.0 < NUM <= 1.0). The desired portion of lines to include in the random subset.
+* `--p|prob NUM`  Sampling rating (0.0 < NUM <= 1.0). The desired portion of lines to include in the random subset.
 * `--k|key-fields <field-list>` - Fields to use as key for distinct sampling. Use with `--r|rate`.
 * `--w|weight-field NUM` - Field containing weights. All lines get equal weight if not provided or zero.
+* `--r|replace` - Simple Random Sampling With Replacement. Use `--n|num` to specify the sample size.
 * `--s|static-seed` - Use the same random seed every run.
 * `--v|seed-value NUM` - Sets the initial random seed. Use a non-zero, 32 bit positive integer. Zero is a no-op.
-* `--p|print-random` - Output the random values that were assigned.
-* `--q|gen-random-inorder` - Output all lines with assigned random values prepended, no changes to the order of input.
-* `--random-value-header` - Header to use with `--p|print-random` and `--q|gen-random-inorder`. Default: `random_value`.
+* `--print-random` - Output the random values that were assigned.
+* `--gen-random-inorder` - Output all lines with assigned random values prepended, no changes to the order of input.
+* `--random-value-header` - Header to use with `--print-random` and `--gen-random-inorder`. Default: `random_value`.
 * `--d|delimiter CHR` - Field delimiter.
 
 ---

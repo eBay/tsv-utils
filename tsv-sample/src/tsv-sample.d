@@ -63,6 +63,11 @@ are available:
 * Weighted line order randomization (--w|weight-field): Lines are selected
   using weighted random sampling, with the weight taken from a field.
   Lines are output in weighted selection order, reordering the lines.
+* Sampling with replacement (--r|replace): All input lines are read in,
+  then lines are repeated selected at random and output. Lines can be
+  output multiple times. Lines can be selected multiple times. Output
+  continues until --n|num samples are output. Output continues
+  indefinitely if a sample size is not specified.
 * Bernoulli sampling (--p|prob): A random subset of lines is output based
   on an inclusion probability. This is a streaming operation. A selection
   decision is made on each line as is it read. Line order is not changed.
@@ -89,6 +94,11 @@ are available:
 * Weighted line order randomization (--w|weight-field): Lines are selected
   using weighted random sampling, with the weight taken from a field.
   Lines are output in weighted selection order, reordering the lines.
+* Sampling with replacement (--r|replace): All input lines are read in,
+  then lines are repeated selected at random and output. Lines can be
+  output multiple times. Lines can be selected multiple times. Output
+  continues until --n|num samples have been output. Output continues
+  indefinitely if a sample size is not specified.
 * Bernoulli sampling (--p|prob): A random subset of lines is output based
   on an inclusion probability. This is a streaming operation. A selection
   decision is made on each line as is it read. Lines order is not changed.
@@ -164,10 +174,11 @@ struct TsvSampleOptions
     double inclusionProbability = double.nan;  // --p|prob - Inclusion probability
     size_t[] keyFields;                        // --k|key-fields - Used with inclusion probability
     size_t weightField = 0;                    // --w|weight-field - Field holding the weight
+    bool srsWithReplacement = false;           // --r|replace
     bool staticSeed = false;                   // --s|static-seed
     uint seedValueOptionArg = 0;               // --v|seed-value
-    bool printRandom = false;                  // --p|print-random
-    bool genRandomInorder = false;             // --q|gen-random-inorder
+    bool printRandom = false;                  // --print-random
+    bool genRandomInorder = false;             // --gen-random-inorder
     string randomValueHeader = "random_value"; // --random-value-header
     char delim = '\t';                         // --d|delimiter
     bool versionWanted = false;                // --V|version
@@ -206,6 +217,7 @@ struct TsvSampleOptions
                 keyFields.makeFieldListOptionHandler!(size_t, Yes.convertToZeroBasedIndex),
 
                 "w|weight-field",  "NUM  Field containing weights. All lines get equal weight if not provided or zero.", &weightField,
+                "r|replace",       "     Simple Random Sampling With Replacement. Use --n|num to specify the sample size.", &srsWithReplacement,
                 "s|static-seed",   "     Use the same random seed every run.", &staticSeed,
 
                 std.getopt.config.caseSensitive,
@@ -214,7 +226,7 @@ struct TsvSampleOptions
 
                 "print-random",       "     Include the assigned random value (prepended) when writing output lines.", &printRandom,
                 "gen-random-inorder", "     Output all lines with assigned random values prepended, no changes to the order of input.", &genRandomInorder,
-                "random-value-header",  "     Header to use with --p|print-random and --q|gen-random-inorder. Default: 'random_value'.", &randomValueHeader,
+                "random-value-header",  "     Header to use with --print-random and --gen-random-inorder. Default: 'random_value'.", &randomValueHeader,
 
                 "d|delimiter",     "CHR  Field delimiter.", &delim,
 
@@ -245,6 +257,26 @@ struct TsvSampleOptions
             {
                 hasWeightField = true;
                 weightField--;    // Switch to zero-based indexes.
+            }
+
+            if (srsWithReplacement)
+            {
+                if (hasWeightField)
+                {
+                    throw new Exception("Sampling with replacement (--r|replace) does not support wieghts (--w|weight-field).");
+                }
+                else if (!inclusionProbability.isNaN)
+                {
+                    throw new Exception("Sampling with replacement (--r|replace) cannot be used with inclusion probabilities (--p|prob).");
+                }
+                else if (keyFields.length > 0)
+                {
+                    throw new Exception("Sampling with replacement (--r|replace) cannot be used with distinct sampling (--k|key-fields).");
+                }
+                else if (printRandom || genRandomInorder)
+                {
+                    throw new Exception("Sampling with replacement (--r|replace) does not support random value printing (--print-random, --gen-random-inorder).");
+                }
             }
 
             if (keyFields.length > 0)
@@ -305,7 +337,11 @@ struct TsvSampleOptions
  */
 void tsvSample(OutputRange)(TsvSampleOptions cmdopt, OutputRange outputStream)
 {
-    if (cmdopt.useBernoulliSampling)
+    if (cmdopt.srsWithReplacement)
+    {
+        simpleRandomSamplingWithReplacement(cmdopt, outputStream);
+    }
+    else if (cmdopt.useBernoulliSampling)
     {
         if (cmdopt.genRandomInorder) bernoulliSampling!(Yes.generateRandomAll)(cmdopt, outputStream);
         else bernoulliSampling!(No.generateRandomAll)(cmdopt, outputStream);
@@ -903,6 +939,95 @@ if (isOutputRange!(OutputRange, char))
         outputStream.put("\n");
     }
 }
+
+/** Simple random sampling with replacement.
+ */
+void simpleRandomSamplingWithReplacement(OutputRange)(TsvSampleOptions cmdopt, OutputRange outputStream)
+if (isOutputRange!(OutputRange, char))
+{
+    import std.algorithm : each, min, sort, splitter;
+    import std.array : appender;
+    import std.format : formatValue, singleSpec;
+    import std.random : Random, uniform;
+    import tsvutil : throwIfWindowsNewlineOnUnix;
+
+    struct FileData
+    {
+        string filename;
+        char[] data;
+    }
+
+    auto fileData = new FileData[cmdopt.files.length];
+
+    /*
+     * Read all file data into memory.
+     */
+    ubyte[1024 * 128] fileRawBuf;
+    foreach (fileNum, filename; cmdopt.files)
+    {
+        fileData[fileNum].filename = filename;
+        auto dataAppender = appender(&(fileData[fileNum].data));
+        auto ifile = (filename == "-") ? stdin : filename.File;
+
+        if (filename != "-")
+        {
+            ulong filesize = ifile.size;
+            if (filesize < ulong.max) dataAppender.reserve(min(filesize, size_t.max));
+        }
+
+        foreach (ref ubyte[] buffer; ifile.byChunk(fileRawBuf)) dataAppender.put(cast(char[]) buffer);
+    }
+
+    /*
+     * Split the data into lines.
+     */
+    struct Entry
+    {
+        char[] line;
+    }
+
+    auto lines = appender!(Entry[]);
+    bool headerWritten = false;
+
+    foreach (fd; fileData)
+    {
+        /* Drop the last newline to avoid adding an extra empty line. */
+        auto data = (fd.data.length > 0 && fd.data[$ - 1] == '\n') ? fd.data[0 .. $ - 1] : fd.data;
+        foreach (fileLineNum, line; data.splitter('\n').enumerate(1))
+        {
+            if (fileLineNum == 1) throwIfWindowsNewlineOnUnix(line, fd.filename, fileLineNum);
+            if (fileLineNum == 1 && cmdopt.hasHeader)
+            {
+                if (!headerWritten)
+                {
+                    outputStream.put(line);
+                    outputStream.put("\n");
+                    headerWritten = true;
+                }
+            }
+            else
+            {
+                lines.put(Entry(line));
+            }
+        }
+    }
+
+    if (lines.data.length > 0)
+    {
+        auto randomGenerator = Random(cmdopt.seed);
+
+        /* Repeat forever is sampleSize is zero, otherwise print sampleSize lines. */
+        size_t numLeft = (cmdopt.sampleSize == 0) ? 1 : cmdopt.sampleSize;
+        while (numLeft != 0)
+        {
+            size_t index = uniform(0, lines.data.length, randomGenerator);
+            outputStream.put(lines.data[index].line);
+            outputStream.put("\n");
+            if (cmdopt.sampleSize != 0) numLeft--;
+        }
+    }
+}
+
 
 /** Convenience function for extracting a single field from a line. See getTsvFieldValue in
  * common/src/tsvutils.d for details. This wrapper creates error text tailored for this program.
