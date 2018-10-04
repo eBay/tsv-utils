@@ -941,6 +941,11 @@ if (isOutputRange!(OutputRange, char))
 }
 
 /** Simple random sampling with replacement.
+ *
+ * All lines in files and/or standard input are read in. Then random lines are selected
+ * one at a time and output. Lines can be selected multiple times. This process continues
+ * until the desired number of samples (--n|num) has been output. Output continues
+ * indefinitely if a sample size was not provided.
  */
 void simpleRandomSamplingWithReplacement(OutputRange)(TsvSampleOptions cmdopt, OutputRange outputStream)
 if (isOutputRange!(OutputRange, char))
@@ -1167,12 +1172,18 @@ unittest
     writeUnittestTsvFile(fpath_data3x1, data3x1);
     writeUnittestTsvFile(fpath_data3x1_noheader, data3x1[1..$]);
 
+    string[][] data3x1ExpectedReplace3 =
+        [["field_a", "field_b", "field_c"],
+         ["tan", "タン", "8.5"],
+         ["tan", "タン", "8.5"],
+         ["tan", "タン", "8.5"]];
+
+    /* 3x2 */
     string[][] data3x2 =
         [["field_a", "field_b", "field_c"],
          ["brown", "褐色", "29.2"],
          ["gray", "グレー", "6.2"]];
 
-    /* 3x2 */
     string fpath_data3x2 = buildPath(testDir, "data3x2.tsv");
     string fpath_data3x2_noheader = buildPath(testDir, "data3x2_noheader.tsv");
     writeUnittestTsvFile(fpath_data3x2, data3x2);
@@ -1309,6 +1320,34 @@ unittest
          ["black", "黒", "0.983"],
          ["white", "白", "1.65"],
          ["green", "緑", "0.0072"]];
+
+    string[][] data3x6ExpectedReplace10 =
+        [["field_a", "field_b", "field_c"],
+         ["black", "黒", "0.983"],
+         ["green", "緑", "0.0072"],
+         ["green", "緑", "0.0072"],
+         ["red", "赤", "23.8"],
+         ["yellow", "黄", "12"],
+         ["red", "赤", "23.8"],
+         ["white", "白", "1.65"],
+         ["yellow", "黄", "12"],
+         ["yellow", "黄", "12"],
+         ["white", "白", "1.65"],
+        ];
+
+    string[][] data3x6ExpectedReplace10V77 =
+        [["field_a", "field_b", "field_c"],
+         ["black", "黒", "0.983"],
+         ["red", "赤", "23.8"],
+         ["black", "黒", "0.983"],
+         ["yellow", "黄", "12"],
+         ["green", "緑", "0.0072"],
+         ["green", "緑", "0.0072"],
+         ["green", "緑", "0.0072"],
+         ["yellow", "黄", "12"],
+         ["blue", "青", "12"],
+         ["white", "白", "1.65"],
+        ];
 
     /* Using a different static seed. */
     string[][] data3x6ExpectedNoWtV41Probs =
@@ -1448,6 +1487,19 @@ unittest
          ["pink", "ピンク", "1.1"],
          ["orange", "オレンジ", "2.5"],
          ["green", "緑", "0.0072"]];
+
+    string[][] combo1ExpectedReplace10 =
+        [["field_a", "field_b", "field_c"],
+         ["gray", "グレー", "6.2"],
+         ["yellow", "黄", "12"],
+         ["yellow", "黄", "12"],
+         ["white", "白", "1.65"],
+         ["tan", "タン", "8.5"],
+         ["white", "白", "1.65"],
+         ["blue", "青", "12"],
+         ["black", "黒", "0.983"],
+         ["tan", "タン", "8.5"],
+         ["purple", "紫の", "42"]];
 
     /* 1x10 - Simple 1-column file. */
     string[][] data1x10 =
@@ -1742,6 +1794,15 @@ unittest
     testTsvSample(["test-a34", "-H", "-s", "-p", "0.2", "-k", "2", "--gen-random-inorder", fpath_data3x6],
                   data3x6ExpectedDistinctSampleK2P2ProbsInorder);
 
+    /* Simple random sampling with replacement. */
+    testTsvSample(["test-a35", "-H", "-s", "--replace", fpath_dataEmpty], dataEmpty);
+    testTsvSample(["test-a36", "-H", "-s", "--replace", "--num", "3", fpath_dataEmpty], dataEmpty);
+    testTsvSample(["test-a37", "-H", "-s", "--replace", fpath_data3x0], data3x0);
+    testTsvSample(["test-a38", "-H", "-s", "--replace", "--num", "3", fpath_data3x0], data3x0);
+    testTsvSample(["test-a39", "-H", "-s", "--replace", "--num", "3", fpath_data3x1], data3x1ExpectedReplace3);
+    testTsvSample(["test-a40", "-H", "-s", "--replace", "--num", "10", fpath_data3x6], data3x6ExpectedReplace10);
+    testTsvSample(["test-a41", "-H", "-s", "-v", "77", "--replace", "--num", "10", fpath_data3x6], data3x6ExpectedReplace10V77);
+
     /* Basic tests, without headers. */
     testTsvSample(["test-b1", "-s", fpath_data3x1_noheader], data3x1[1..$]);
     testTsvSample(["test-b2", "-s", fpath_data3x2_noheader], data3x2ExpectedNoWt[1..$]);
@@ -1774,6 +1835,13 @@ unittest
                   data3x6ExpectedDistinctSampleK1K3P60Probs[1..$]);
     testTsvSample(["test-b24", "-s", "-p", "0.2", "-k", "2", "--gen-random-inorder", fpath_data3x6_noheader],
                   data3x6ExpectedDistinctSampleK2P2ProbsInorder[1..$]);
+
+    /* Simple random sampling with replacement. */
+    testTsvSample(["test-b25", "-s", "--replace", fpath_dataEmpty], dataEmpty);
+    testTsvSample(["test-b26", "-s", "-r", "--num", "3", fpath_dataEmpty], dataEmpty);
+    testTsvSample(["test-b27", "-s", "-r", "-n", "3", fpath_data3x1_noheader], data3x1ExpectedReplace3[1..$]);
+    testTsvSample(["test-b28", "-s", "--replace", "-n", "10", fpath_data3x6_noheader], data3x6ExpectedReplace10[1..$]);
+    testTsvSample(["test-b29", "-s", "-v", "77", "--replace", "--num", "10", fpath_data3x6_noheader], data3x6ExpectedReplace10V77[1..$]);
 
     /* Multi-file tests. */
     testTsvSample(["test-c1", "--header", "--static-seed",
@@ -1841,6 +1909,15 @@ unittest
                    fpath_dataEmpty, fpath_data3x6_noheader, fpath_data3x2_noheader],
                   combo1ExpectedNoWtProbsInorder[1..$]);
 
+    /* Simple random sampling with replacement. */
+    testTsvSample(["test-c17", "--header", "--static-seed", "--replace", "--num", "10",
+                   fpath_data3x0, fpath_data3x3, fpath_data3x1, fpath_dataEmpty, fpath_data3x6, fpath_data3x2],
+                  combo1ExpectedReplace10);
+
+    testTsvSample(["test-c18", "--static-seed", "--replace", "--num", "10",
+                   fpath_data3x3_noheader, fpath_data3x1_noheader, fpath_dataEmpty,
+                   fpath_data3x6_noheader, fpath_data3x2_noheader],
+                  combo1ExpectedReplace10[1..$]);
 
     /* Single column file. */
     testTsvSample(["test-d1", "-H", "-s", fpath_data1x10], data1x10ExpectedNoWt);
