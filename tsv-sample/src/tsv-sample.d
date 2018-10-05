@@ -2010,22 +2010,32 @@ unittest
                        "-w", "1", fpath_data1x10_noheader], data1x10ExpectedWt1[1..expectedLength]);
     }
 
+    /* Simple random sampling with replacement: ensure sample size doesn't change order. */
+    for (size_t n = data3x6ExpectedReplace10.length - 1; n >= 1; n--)
+    {
+        testTsvSample([format("test-h1_%d", n), "-s", "--replace", "-n", n.to!string, "-H", fpath_data3x6],
+                      data3x6ExpectedReplace10[0 .. n + 1]);
+
+        testTsvSample([format("test-h2_%d", n), "-s", "--replace", "-n", n.to!string, fpath_data3x6_noheader],
+                      data3x6ExpectedReplace10[1 .. n + 1]);
+    }
+
     /* Distinct sampling tests. */
-    testTsvSample(["h1", "--header", "--static-seed", "--prob", "0.40", "--key-fields", "2", fpath_data5x25],
+    testTsvSample(["test-i1", "--header", "--static-seed", "--prob", "0.40", "--key-fields", "2", fpath_data5x25],
                   data5x25ExpectedDistinctSampleK2P40);
 
-    testTsvSample(["h2", "-H", "-s", "-p", "0.20", "-k", "2,4", fpath_data5x25],
+    testTsvSample(["test-i2", "-H", "-s", "-p", "0.20", "-k", "2,4", fpath_data5x25],
                   data5x25ExpectedDistinctSampleK2K4P20);
 
-    testTsvSample(["h3", "-H", "-s", "-p", "0.20", "-k", "2-4", fpath_data5x25],
+    testTsvSample(["test-i3", "-H", "-s", "-p", "0.20", "-k", "2-4", fpath_data5x25],
                   data5x25ExpectedDistinctSampleK2K3K4P20);
 
-    testTsvSample(["h4", "--static-seed", "--prob", "0.40", "--key-fields", "2", fpath_data5x25_noheader],
+    testTsvSample(["test-i4", "--static-seed", "--prob", "0.40", "--key-fields", "2", fpath_data5x25_noheader],
                   data5x25ExpectedDistinctSampleK2P40[1..$]);
 
-    testTsvSample(["h5", "-s", "-p", "0.20", "-k", "2,4", fpath_data5x25_noheader],
+    testTsvSample(["test-i5", "-s", "-p", "0.20", "-k", "2,4", fpath_data5x25_noheader],
                   data5x25ExpectedDistinctSampleK2K4P20[1..$]);
 
-    testTsvSample(["h6", "-s", "-p", "0.20", "-k", "2-4", fpath_data5x25_noheader],
+    testTsvSample(["test-i6", "-s", "-p", "0.20", "-k", "2-4", fpath_data5x25_noheader],
                   data5x25ExpectedDistinctSampleK2K3K4P20[1..$]);
 }
