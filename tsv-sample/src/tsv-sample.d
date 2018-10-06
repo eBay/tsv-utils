@@ -267,7 +267,7 @@ struct TsvSampleOptions
                 }
                 else if (!inclusionProbability.isNaN)
                 {
-                    throw new Exception("Sampling with replacement (--r|replace) cannot be used with inclusion probabilities (--p|prob).");
+                    throw new Exception("Sampling with replacement (--r|replace) cannot be used with probabilities (--p|prob).");
                 }
                 else if (keyFields.length > 0)
                 {

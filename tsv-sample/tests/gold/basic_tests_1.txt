@@ -384,6 +384,23 @@ café	2019	Marreca-cabocla	1
 blutrot	2093	Araqua-pintado	2
 blutrot	2137	Marreca-cabocla	1
 
+====[tsv-sample -H -s --replace input3x3.tsv --num 5]====
+line	title	weight
+3	Le Silence de la mer	72
+2	Bonjour Tristesse	3
+2	Bonjour Tristesse	3
+1	Thérèse Desqueyroux	43
+1	Thérèse Desqueyroux	43
+
+====[tsv-sample -s --r input2x5_noheader.tsv --num 7]====
+0.767664821	Buntong Hininga
+0.157876295	Jacques le fataliste et son maître
+0.788170018	Les stratagèmes
+0.008718457	L'influence d'un livre
+0.767664821	Buntong Hininga
+0.157876295	Jacques le fataliste et son maître
+0.788170018	Les stratagèmes
+
 ====[tsv-sample -H -s --prob .25 -k 3,1 input4x50.tsv input4x15.tsv]====
 c-1	c-2	c-3	c-4
 púrpura	2088	Macuco	1
@@ -1036,6 +1053,44 @@ line	title	weight
 1	Thérèse Desqueyroux	43
 2	Bonjour Tristesse	3
 10	Platero y yo	2
+
+====[cat input3x10.tsv tsv-sample -H -s --replace --num 10]====
+line	title	weight
+10	Platero y yo	2
+6	Piepkuikentje	17
+8	Door het land der Skipetaren	30
+7	Oude Egyptische Legenden	28
+10	Platero y yo	2
+1	Álomvilág: Elbeszélések	41
+3	Mesék és regék	20
+4	Soitannollisia satuja ja jutelmia	44
+4	Soitannollisia satuja ja jutelmia	44
+1	Álomvilág: Elbeszélések	41
+
+====[cat input3x10.tsv tsv-sample -H -s --replace --num 10 -- input3x3.tsv - input3x4.tsv]====
+line	title	weight
+1	Aurélien	36
+4	Soitannollisia satuja ja jutelmia	44
+1	Thérèse Desqueyroux	43
+1	Aurélien	36
+1	Álomvilág: Elbeszélések	41
+1	Thérèse Desqueyroux	43
+2	Bonjour Tristesse	3
+2	A Room of One's Own	62
+2	Bonjour Tristesse	3
+1	Thérèse Desqueyroux	43
+
+====[cat input3x10.tsv tsv-sample -H -s --replace | head -n 1000 | tail]====
+4	Soitannollisia satuja ja jutelmia	44
+8	Door het land der Skipetaren	30
+2	Grimm testvérek összegyüjtött meséi	9
+5	Pinocchion seikkailut	19
+8	Door het land der Skipetaren	30
+6	Piepkuikentje	17
+7	Oude Egyptische Legenden	28
+9	Las Fábulas de Esopo	45
+2	Grimm testvérek összegyüjtött meséi	9
+1	Álomvilág: Elbeszélések	41
 
 ====[tsv-sample -H input3x10.tsv | wc -l | tr -d ' ']====
 11

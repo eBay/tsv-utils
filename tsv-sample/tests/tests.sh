@@ -50,11 +50,16 @@ runtest ${prog} "-H -s --gen-random-inorder -n 15 --weight-field 3 input3x10.tsv
 runtest ${prog} "-H -s --gen-random-inorder input3x10.tsv input3x25.tsv" ${basic_tests_1}
 runtest ${prog} "-H -s --gen-random-inorder -n 15 input3x10.tsv input3x25.tsv" ${basic_tests_1}
 
-# Stream sampling
+# Bernoulli sampling
 runtest ${prog} "-H -s --prob 1.0 --print-random input3x10.tsv input3x25.tsv" ${basic_tests_1}
 runtest ${prog} "-H -s -p 0.25 input3x10.tsv input3x25.tsv" ${basic_tests_1}
 runtest ${prog} "-H -s -p 0.75 -n 5 input3x10.tsv input3x25.tsv" ${basic_tests_1}
 runtest ${prog} "-H -s -p .25 --key-fields 1 input4x50.tsv input4x15.tsv" ${basic_tests_1}
+
+# Simple random sampling with replacement
+runtest ${prog} "-H -s --replace input3x3.tsv --num 5" ${basic_tests_1}
+runtest ${prog} "-s --r input2x5_noheader.tsv --num 7" ${basic_tests_1}
+
 # Distinct Sampling
 runtest ${prog} "-H -s --prob .25 -k 3,1 input4x50.tsv input4x15.tsv" ${basic_tests_1}
 runtest ${prog} "-H -s -p .25 -k 1,3 input4x50.tsv input4x15.tsv" ${basic_tests_1}
@@ -115,6 +120,17 @@ cat input3x3.tsv | ${prog} -s -- input3x4.tsv - >> ${basic_tests_1} 2>&1
 
 echo "" >> ${basic_tests_1}; echo "====[cat input3x10.tsv tsv-sample -H -s -w 3 -- input3x3.tsv - input3x4.tsv]====" >> ${basic_tests_1}
 cat input3x10.tsv | ${prog} -H -s -w 3 -- input3x3.tsv - input3x4.tsv >> ${basic_tests_1} 2>&1
+
+
+echo "" >> ${basic_tests_1}; echo "====[cat input3x10.tsv tsv-sample -H -s --replace --num 10]====" >> ${basic_tests_1}
+cat input3x10.tsv | ${prog} -H -s --replace --num 10 >> ${basic_tests_1} 2>&1
+
+echo "" >> ${basic_tests_1}; echo "====[cat input3x10.tsv tsv-sample -H -s --replace --num 10 -- input3x3.tsv - input3x4.tsv]====" >> ${basic_tests_1}
+cat input3x10.tsv | ${prog} -H -s --replace --num 10 -- input3x3.tsv - input3x4.tsv >> ${basic_tests_1} 2>&1
+
+## Random sample with infinite output - control with head.
+echo "" >> ${basic_tests_1}; echo "====[cat input3x10.tsv tsv-sample -H -s --replace | head -n 1000 | tail]====" >> ${basic_tests_1}
+cat input3x10.tsv | ${prog} -H -s --replace | head -n 1000 | tail >> ${basic_tests_1} 2>&1
 
 ## Need to run a few tests with the unpredictable seed. Can't compare the results
 ## so check the number of lines returned. Some standard input tests are also in
@@ -186,6 +202,11 @@ runtest ${prog} "-p 0.5 -k 5 input4x50.tsv input4x15.tsv" ${error_tests}
 runtest ${prog} "-H -p 0.5 -k 5 input4x50.tsv input4x15.tsv" ${error_tests}
 runtest ${prog} "-H -p 0.5 --gen-random-inorder input4x50.tsv input4x15.tsv" ${error_tests}
 runtest ${prog} "-H --gen-random-inorder -d , --random-value-header abc,def input3x25.tsv" ${error_tests}
+runtest ${prog} "--replace -n 5 --weight-field 2 input3x25.tsv" ${error_tests}
+runtest ${prog} "--replace -n 5 --prob 0.5 input3x25.tsv" ${error_tests}
+runtest ${prog} "--replace -n 5 --key-fields 2 input3x25.tsv" ${error_tests}
+runtest ${prog} "--replace -n 5 --print-random input3x25.tsv" ${error_tests}
+runtest ${prog} "--replace -n 5 --gen-random-inorder input3x25.tsv" ${error_tests}
 
 # Error tests 2 are tests that are compiler version dependent. There are multiple
 # version files in test-config.json.
