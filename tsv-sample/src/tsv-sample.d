@@ -58,16 +58,15 @@ Synopsis: tsv-sample [options] [file...]
 
 Sample input lines or randomize their order. Several modes of operation
 are available:
-* Line order randomizing (the default): All input lines are output in a
+* Line order randomization (the default): All input lines are output in a
   random order. All orderings are equally likely.
 * Weighted line order randomization (--w|weight-field): Lines are selected
   using weighted random sampling, with the weight taken from a field.
   Lines are output in weighted selection order, reordering the lines.
-* Sampling with replacement (--r|replace): All input lines are read in,
-  then lines are repeated selected at random and output. Lines can be
-  output multiple times. Lines can be selected multiple times. Output
-  continues until --n|num samples are output. Output continues
-  indefinitely if a sample size is not specified.
+* Sampling with replacement (--r|replace, --n|num): All input is read into
+  memory, then lines are repeatedly selected at random and written out. This
+  continues until --n|num samples are output. Lines can be selected multiple
+  times. Output continues forever if --n|num is zero or not specified.
 * Bernoulli sampling (--p|prob): A random subset of lines is output based
   on an inclusion probability. This is a streaming operation. A selection
   decision is made on each line as is it read. Line order is not changed.
@@ -77,7 +76,8 @@ are available:
   with one of the selected keys are output. Line order is not changed.
 
 The '--n|num' option limits the sample size produced. It speeds up line
-order randomization and weighted sampling significantly.
+order randomization and weighted sampling significantly. It is also used
+to terminate sampling with replacement.
 
 Use '--help-verbose' for detailed information.
 
@@ -89,16 +89,15 @@ Synopsis: tsv-sample [options] [file...]
 
 Sample input lines or randomize their order. Several modes of operation
 are available:
-* Line order randomizing (the default): All input lines are output in a
+* Line order randomization (the default): All input lines are output in a
   random order. All orderings are equally likely.
 * Weighted line order randomization (--w|weight-field): Lines are selected
   using weighted random sampling, with the weight taken from a field.
   Lines are output in weighted selection order, reordering the lines.
-* Sampling with replacement (--r|replace): All input lines are read in,
-  then lines are repeated selected at random and output. Lines can be
-  output multiple times. Lines can be selected multiple times. Output
-  continues until --n|num samples have been output. Output continues
-  indefinitely if a sample size is not specified.
+* Sampling with replacement (--r|replace, --n|num): All input is read into
+  memory, then lines are repeatedly selected at random and written out. This
+  continues until --n|num samples are output. Lines can be selected multiple
+  times. Output continues forever if --n|num is zero or not specified.
 * Bernoulli sampling (--p|prob): A random subset of lines is output based
   on an inclusion probability. This is a streaming operation. A selection
   decision is made on each line as is it read. Lines order is not changed.
@@ -109,7 +108,7 @@ are available:
 
 Sample size: The '--n|num' option limits the sample size produced. This
 speeds up line order randomization and weighted sampling significantly
-(details below).
+(details below). It is also used to terminate sampling with replacement.
 
 Controlling the random seed: By default, each run produces a different
 randomization or sampling. Using '--s|static-seed' changes this so
@@ -119,14 +118,15 @@ random seed each run. The random seed can be specified using
 value is a no-op and ignored.)
 
 Memory use: Bernoulli sampling and distinct sampling make decisions on
-each line as they are read and have limited memory needs. Line order
-randomization and weighted sampling need to hold the full output set in
-memory prior to generating results. This ultimately limits the size of
-the output set. The simplest way to reduce memory needs is to use a
-sample size (--n|num). This engages reservior sampling for line order
-randomization and weighted sampling. This does not affect the result
-order. Both 'tsv-sample -n 1000' and 'tsv-sample | head -n 1000' produce
-the same results, but the former is quite a bit faster.
+each line as it is read, so there is no memory accumulation. These
+algorithms support arbitrary size inputs. Sampling with replacement reads
+all lines into memory and is limited by available memory. The line order
+randomization algorithms hold the full output set in memory prior to
+generating results. This ultimately limits the size of the output set. For
+these memory needs can be reduced by using a sample size (--n|num). This
+engages reservior sampling. Output order is not affected. Both
+'tsv-sample -n 1000' and 'tsv-sample | head -n 1000' produce the same
+results, but the former is quite a bit faster.
 
 Weighted sampling: Weighted random sampling is done using an algorithm
 described by Pavlos Efraimidis and Paul Spirakis. Weights should be
@@ -141,7 +141,7 @@ lines of output. For more info on the sampling approach see:
 * "Weighted Random Sampling over Data Streams", Pavlos S. Efraimidis
   (https://arxiv.org/abs/1012.0256)
 
-Printing random values: These algorithms work by generating a random
+Printing random values: Most of the algorithms work by generating a random
 value for each line. The nature of these values depends on the sampling
 algorithm. They are used for both line selection and output ordering. The
 '--p|print-random' option can be used to print these values. The random
@@ -155,6 +155,7 @@ order. The types of values currently used by these sampling algorithms:
   the values in the weight field. It is used as a partial ordering.
 * Distinct sampling: An integer, zero and up, representing a selection
   group. The inclusion probability determines the number of selection groups.
+* Sampling with replacement: Random value printing is not supported.
 
 The specifics behind these random values are subject to change in future
 releases.
@@ -211,17 +212,17 @@ struct TsvSampleOptions
                 std.getopt.config.caseInsensitive,
 
                 "n|num",           "NUM  Maximim number of lines to output. All selected lines are output if not provided or zero.", &sampleSize,
-                "p|prob",          "NUM  Sampling rating (0.0 < NUM <= 1.0). The desired portion of lines to include in the random subset.", &inclusionProbability,
+                "p|prob",          "NUM  Inclusion probability (0.0 < NUM <= 1.0). For Bernoulli sampling, the probability each line is selected output. For distinct sampling, the probability each unique key is selected for output.", &inclusionProbability,
 
                 "k|key-fields",    "<field-list>  Fields to use as key for distinct sampling. Use with --p|prob.",
                 keyFields.makeFieldListOptionHandler!(size_t, Yes.convertToZeroBasedIndex),
 
                 "w|weight-field",  "NUM  Field containing weights. All lines get equal weight if not provided or zero.", &weightField,
-                "r|replace",       "     Simple Random Sampling With Replacement. Use --n|num to specify the sample size.", &srsWithReplacement,
+                "r|replace",       "     Simple random sampling with replacement. Use --n|num to specify the sample size.", &srsWithReplacement,
                 "s|static-seed",   "     Use the same random seed every run.", &staticSeed,
 
                 std.getopt.config.caseSensitive,
-                "v|seed-value",    "NUM  Sets the initial random seed. Use a non-zero, 32 bit positive integer. Zero is a no-op.", &seedValueOptionArg,
+                "v|seed-value",    "NUM  Sets the random seed. Use a non-zero, 32 bit positive integer. Zero is a no-op.", &seedValueOptionArg,
                 std.getopt.config.caseInsensitive,
 
                 "print-random",       "     Include the assigned random value (prepended) when writing output lines.", &printRandom,

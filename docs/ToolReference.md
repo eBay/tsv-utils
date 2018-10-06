@@ -390,7 +390,7 @@ _**Tip:**_ Bash completion is very helpful when using commands like `tsv-summari
 * Bernoulli sampling (`--p|prob`): Lines are read one-at-a-time in a streaming fashion and a random subset is output based on a sampling rate. e.g. `--rate 0.2` gives each line a 20% chance of being selected. All lines have an equal likelihood of being selected. The order of the lines is unchanged.
 * Distinct sampling (`--k|key-fields`, `--r|rate`): Input lines are sampled based on the values in a key field. A subset of the keys are chosen based on the sampling rate (a 'distinct' set of keys). All lines with one of the selected keys are output. This is a streaming operation; a decision is made on each line as it is read. The order of the lines is not changed.
 
-**Performance**: `tsv-sample` is designed for large data sets. Algorithms make one pass over the data, using reservoir sampling and hashing when possible to limit the memory required. Bernoulli sampling and distinct sampling make immediate decisions on each line, with no memory accumulation. They can operate on arbitrary length data streams. Line order randomization algorithms need to hold the entire output set in memory. The memory required can be reduced significantly by limiting the output set (`--n|num`). Notice that both `tsv-sample -n <num>` and  `tsv-sample | head -n <num>` produce the same results, but the former is faster and can operate on arbitrary size input streams.
+**Performance**: `tsv-sample` is designed for large data sets. Algorithms make one pass over the data, using reservoir sampling and hashing when possible to limit the memory required. Bernoulli sampling and distinct sampling make immediate decisions on each line, with no memory accumulation. They can operate on arbitrary length data streams. Sampling with replacement all lines into memory and is limited by available memory. Line order randomization algorithms hold the entire output set in memory. The memory required can be reduced significantly by limiting the output set (`--n|num`). Notice that both `tsv-sample -n <num>` and  `tsv-sample | head -n <num>` produce the same results, but the former is faster and can operate on arbitrary size input streams.
 
 **Controlling randomization**: Each run produces a different randomization. Using `--s|static-seed` changes this so multiple runs produce the same randomization. This works by using the same random seed each run. The random seed can be specified using `--v|seed-value`. This takes a non-zero, 32-bit positive integer. (A zero value is a no-op and ignored.)
 
@@ -400,10 +400,11 @@ _**Tip:**_ Bash completion is very helpful when using commands like `tsv-summari
 
 **Distinct sampling**: Distinct sampling selects a subset based on a key in data. Consider a query log with records consisting of <user, query, clicked-url> triples. Distinct sampling selects all records matching a subset of values from one of fields. For example, all events for ten percent of the users. This is important for certain types of analysis. The term "distinct sampling" originates from algorithms estimating the number of distinct elements in extremely large data sets.
 
-**Printing random values**: These algorithms work by generating a random value for each line. The nature of these values depends on the sampling algorithm. They are used for both line selection and output ordering. The `--p|print-random` option can be used to print these values. The random value is prepended to the line separated by the `--d|delimiter` char (TAB by default). The `--q|gen-random-inorder` option takes this one step further, generating random values for all input lines without changing the input order. The types of values currently used by these sampling algorithms:
+**Printing random values**: Most of these algorithms work by generating a random value for each line. The nature of these values depends on the sampling algorithm. They are used for both line selection and output ordering. The `--p|print-random` option can be used to print these values. The random value is prepended to the line separated by the `--d|delimiter` char (TAB by default). The `--q|gen-random-inorder` option takes this one step further, generating random values for all input lines without changing the input order. The types of values currently used by these sampling algorithms:
 * Unweighted sampling: Uniform random value in the interval [0,1]. This includes stream sampling and unweighted line order randomization.
 * Weighted sampling: Value in the interval [0,1]. Distribution depends on the values in the weight field. It is used as a partial ordering.
 * Distinct sampling: An integer, zero and up, representing a selection group. The sampling rate determines the number of selection groups.
+* Sampling with replacement: Random value printing is not supported.
 
 The specifics behind these random values are subject to change in future releases.
 
@@ -414,7 +415,7 @@ The specifics behind these random values are subject to change in future release
 * `--V|version` - Print version information and exit.
 * `--H|header` - Treat the first line of each file as a header.
 * `--n|num NUM` - Maximum number of lines to output. All selected lines are output if not provided or zero.
-* `--p|prob NUM`  Sampling rating (0.0 < NUM <= 1.0). The desired portion of lines to include in the random subset.
+* `--p|prob NUM` - Inclusion probability (0.0 < NUM <= 1.0). For Bernoulli sampling, the probability each line is selected output. For distinct sampling, the probability each unique key is selected for output.
 * `--k|key-fields <field-list>` - Fields to use as key for distinct sampling. Use with `--r|rate`.
 * `--w|weight-field NUM` - Field containing weights. All lines get equal weight if not provided or zero.
 * `--r|replace` - Simple Random Sampling With Replacement. Use `--n|num` to specify the sample size.
