@@ -336,7 +336,8 @@ struct TsvSampleOptions
 }
 /** Invokes the appropriate sampling routine based on the command line arguments.
  */
-void tsvSample(OutputRange)(TsvSampleOptions cmdopt, ref OutputRange outputStream)
+void tsvSample(OutputRange)(TsvSampleOptions cmdopt, auto ref OutputRange outputStream)
+if (isOutputRange!(OutputRange, char))
 {
     if (cmdopt.srsWithReplacement)
     {
@@ -381,7 +382,7 @@ void tsvSample(OutputRange)(TsvSampleOptions cmdopt, ref OutputRange outputStrea
  * weights would no longer be consistent run-to-run.
  */
 void bernoulliSampling(Flag!"generateRandomAll" generateRandomAll, OutputRange)
-    (TsvSampleOptions cmdopt, ref OutputRange outputStream)
+    (TsvSampleOptions cmdopt, auto ref OutputRange outputStream)
 if (isOutputRange!(OutputRange, char))
 {
     import std.format : formatValue, singleSpec;
@@ -468,7 +469,7 @@ if (isOutputRange!(OutputRange, char))
  * zero are output.
  */
 void distinctSampling(Flag!"generateRandomAll" generateRandomAll, OutputRange)
-    (TsvSampleOptions cmdopt, ref OutputRange outputStream)
+    (TsvSampleOptions cmdopt, auto ref OutputRange outputStream)
 if (isOutputRange!(OutputRange, char))
 {
     import std.algorithm : splitter;
@@ -631,7 +632,7 @@ if (isOutputRange!(OutputRange, char))
  *    https://en.wikipedia.org/wiki/Reservoir_sampling#Algorithm_R.
  */
 void reservoirSampling(Flag!"isWeighted" isWeighted, OutputRange)
-    (TsvSampleOptions cmdopt, ref OutputRange outputStream)
+    (TsvSampleOptions cmdopt, auto ref OutputRange outputStream)
 if (isOutputRange!(OutputRange, char))
 {
     import std.container.array;
@@ -750,7 +751,7 @@ if (isOutputRange!(OutputRange, char))
  * simply iterates over the input lines generating the values. The weighted random
  * values are generated with the same formula used by reservoirSampling.
  */
-void generateWeightedRandomValuesInorder(OutputRange)(TsvSampleOptions cmdopt, ref OutputRange outputStream)
+void generateWeightedRandomValuesInorder(OutputRange)(TsvSampleOptions cmdopt, auto ref OutputRange outputStream)
 if (isOutputRange!(OutputRange, char))
 {
     import std.format : formatValue, singleSpec;
@@ -826,7 +827,7 @@ if (isOutputRange!(OutputRange, char))
  * printing does not make sense. Order consistency matters only in the rare case when
  * multiple randomizations are being done with the same static seed.
  */
-void randomizeLines(Flag!"isWeighted" isWeighted, OutputRange)(TsvSampleOptions cmdopt, ref OutputRange outputStream)
+void randomizeLines(Flag!"isWeighted" isWeighted, OutputRange)(TsvSampleOptions cmdopt, auto ref OutputRange outputStream)
 if (isOutputRange!(OutputRange, char))
 {
     import std.algorithm : min, sort, splitter;
@@ -948,7 +949,7 @@ if (isOutputRange!(OutputRange, char))
  * until the desired number of samples (--n|num) has been output. Output continues
  * indefinitely if a sample size was not provided.
  */
-void simpleRandomSamplingWithReplacement(OutputRange)(TsvSampleOptions cmdopt, ref OutputRange outputStream)
+void simpleRandomSamplingWithReplacement(OutputRange)(TsvSampleOptions cmdopt, auto ref OutputRange outputStream)
 if (isOutputRange!(OutputRange, char))
 {
     import std.algorithm : each, min, sort, splitter;

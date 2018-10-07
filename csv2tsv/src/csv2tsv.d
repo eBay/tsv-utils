@@ -266,7 +266,7 @@ void csv2tsvFiles(in Csv2tsvOptions cmdopt, in string[] inputFiles)
  *         line number where the error was identified.
  */
 void csv2tsv(InputRange, OutputRange)
-    (ref InputRange inputStream, ref OutputRange outputStream,
+    (auto ref InputRange inputStream, auto ref OutputRange outputStream,
      string filename = "(none)", size_t currFileLineNumber = 0,
      const char csvQuote = '"', const char csvDelim = ',', const char tsvDelim = '\t',
      string tsvDelimReplacement = " ",
