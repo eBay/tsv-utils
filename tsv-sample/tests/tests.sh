@@ -41,49 +41,54 @@ echo "-----------------" >> ${basic_tests_1}
 
 runtest ${prog} "--header --static-seed input3x10.tsv input3x25.tsv" ${basic_tests_1}
 runtest ${prog} "-H -s --print-random input3x10.tsv input3x25.tsv" ${basic_tests_1}
-runtest ${prog} "-H -s -p --weight-field 3 input3x10.tsv input3x25.tsv" ${basic_tests_1}
-runtest ${prog} "-H -s -p -w 3 --num 15 input3x10.tsv input3x25.tsv" ${basic_tests_1}
-runtest ${prog} "-H -s -p -n 15 input3x10.tsv input3x25.tsv" ${basic_tests_1}
+runtest ${prog} "-H -s --print-random --weight-field 3 input3x10.tsv input3x25.tsv" ${basic_tests_1}
+runtest ${prog} "-H -s --print-random -w 3 --num 15 input3x10.tsv input3x25.tsv" ${basic_tests_1}
+runtest ${prog} "-H -s --print-random -n 15 input3x10.tsv input3x25.tsv" ${basic_tests_1}
 runtest ${prog} "-H -s -n 100 input3x10.tsv input3x25.tsv" ${basic_tests_1}
 runtest ${prog} "-H -s --gen-random-inorder --weight-field 3 input3x10.tsv input3x25.tsv" ${basic_tests_1}
 runtest ${prog} "-H -s --gen-random-inorder -n 15 --weight-field 3 input3x10.tsv input3x25.tsv" ${basic_tests_1}
-runtest ${prog} "-H -s -q input3x10.tsv input3x25.tsv" ${basic_tests_1}
+runtest ${prog} "-H -s --gen-random-inorder input3x10.tsv input3x25.tsv" ${basic_tests_1}
 runtest ${prog} "-H -s --gen-random-inorder -n 15 input3x10.tsv input3x25.tsv" ${basic_tests_1}
 
-# Stream sampling
-runtest ${prog} "-H -s --rate 1.0 --print-random input3x10.tsv input3x25.tsv" ${basic_tests_1}
-runtest ${prog} "-H -s -r 0.25 input3x10.tsv input3x25.tsv" ${basic_tests_1}
-runtest ${prog} "-H -s -r 0.75 -n 5 input3x10.tsv input3x25.tsv" ${basic_tests_1}
-runtest ${prog} "-H -s -r .25 --key-fields 1 input4x50.tsv input4x15.tsv" ${basic_tests_1}
+# Bernoulli sampling
+runtest ${prog} "-H -s --prob 1.0 --print-random input3x10.tsv input3x25.tsv" ${basic_tests_1}
+runtest ${prog} "-H -s -p 0.25 input3x10.tsv input3x25.tsv" ${basic_tests_1}
+runtest ${prog} "-H -s -p 0.75 -n 5 input3x10.tsv input3x25.tsv" ${basic_tests_1}
+runtest ${prog} "-H -s -p .25 --key-fields 1 input4x50.tsv input4x15.tsv" ${basic_tests_1}
+
+# Simple random sampling with replacement
+runtest ${prog} "-H -s --replace input3x3.tsv --num 5" ${basic_tests_1}
+runtest ${prog} "-s --r input2x5_noheader.tsv --num 7" ${basic_tests_1}
+
 # Distinct Sampling
-runtest ${prog} "-H -s --rate .25 -k 3,1 input4x50.tsv input4x15.tsv" ${basic_tests_1}
-runtest ${prog} "-H -s -r .25 -k 1,3 input4x50.tsv input4x15.tsv" ${basic_tests_1}
-runtest ${prog} "-H -s -r .25 -k 1,1 input4x50.tsv input4x15.tsv" ${basic_tests_1}
-runtest ${prog} "-H -s -r .25 -k 1 -n 5 input4x50.tsv input4x15.tsv" ${basic_tests_1}
-runtest ${prog} "-s -r .25 -k 1,3 input4x50.tsv input4x15.tsv" ${basic_tests_1}
-runtest ${prog} "-s -r .25 -k 3,1 input4x50.tsv input4x15.tsv" ${basic_tests_1}
-runtest ${prog} "-s -r 1 -k 3,1 input4x50.tsv input4x15.tsv" ${basic_tests_1}
-runtest ${prog} "-H -s -r .2 -k 3 --print-random input4x50.tsv input4x15.tsv" ${basic_tests_1}
-runtest ${prog} "-H -s -r .2 -k 3 --print-random -n 5 input4x50.tsv input4x15.tsv" ${basic_tests_1}
-runtest ${prog} "-H -s -r .2 -k 3 --gen-random-inorder -n 10 input4x50.tsv input4x15.tsv" ${basic_tests_1}
+runtest ${prog} "-H -s --prob .25 -k 3,1 input4x50.tsv input4x15.tsv" ${basic_tests_1}
+runtest ${prog} "-H -s -p .25 -k 1,3 input4x50.tsv input4x15.tsv" ${basic_tests_1}
+runtest ${prog} "-H -s -p .25 -k 1,1 input4x50.tsv input4x15.tsv" ${basic_tests_1}
+runtest ${prog} "-H -s -p .25 -k 1 -n 5 input4x50.tsv input4x15.tsv" ${basic_tests_1}
+runtest ${prog} "-s -p .25 -k 1,3 input4x50.tsv input4x15.tsv" ${basic_tests_1}
+runtest ${prog} "-s -p .25 -k 3,1 input4x50.tsv input4x15.tsv" ${basic_tests_1}
+runtest ${prog} "-s -p 1 -k 3,1 input4x50.tsv input4x15.tsv" ${basic_tests_1}
+runtest ${prog} "-H -s -p .2 -k 3 --print-random input4x50.tsv input4x15.tsv" ${basic_tests_1}
+runtest ${prog} "-H -s -p .2 -k 3 --print-random -n 5 input4x50.tsv input4x15.tsv" ${basic_tests_1}
+runtest ${prog} "-H -s -p .2 -k 3 --gen-random-inorder -n 10 input4x50.tsv input4x15.tsv" ${basic_tests_1}
 
 runtest ${prog} "--static-seed input2x10_noheader.tsv input2x5_noheader.tsv" ${basic_tests_1}
 runtest ${prog} "-s --print-random input2x10_noheader.tsv input2x5_noheader.tsv" ${basic_tests_1}
-runtest ${prog} "-s -p --weight-field 1 input2x10_noheader.tsv input2x5_noheader.tsv" ${basic_tests_1}
-runtest ${prog} "-s -p -w 1 --num 15 input2x10_noheader.tsv input2x5_noheader.tsv" ${basic_tests_1}
-runtest ${prog} "-s -p -n 5 input2x10_noheader.tsv input2x5_noheader.tsv" ${basic_tests_1}
+runtest ${prog} "-s --print-random --weight-field 1 input2x10_noheader.tsv input2x5_noheader.tsv" ${basic_tests_1}
+runtest ${prog} "-s --print-random -w 1 --num 15 input2x10_noheader.tsv input2x5_noheader.tsv" ${basic_tests_1}
+runtest ${prog} "-s --print-random -n 5 input2x10_noheader.tsv input2x5_noheader.tsv" ${basic_tests_1}
 runtest ${prog} "-s -n 100 input2x10_noheader.tsv input2x5_noheader.tsv" ${basic_tests_1}
 
-runtest ${prog} "-s --rate 1 -p input2x10_noheader.tsv input2x5_noheader.tsv" ${basic_tests_1}
-runtest ${prog} "-s -r .25 input2x10_noheader.tsv input2x5_noheader.tsv" ${basic_tests_1}
-runtest ${prog} "-s -r .75 -n 5 input2x10_noheader.tsv input2x5_noheader.tsv" ${basic_tests_1}
+runtest ${prog} "-s --prob 1 --print-random input2x10_noheader.tsv input2x5_noheader.tsv" ${basic_tests_1}
+runtest ${prog} "-s -p .25 input2x10_noheader.tsv input2x5_noheader.tsv" ${basic_tests_1}
+runtest ${prog} "-s -p .75 -n 5 input2x10_noheader.tsv input2x5_noheader.tsv" ${basic_tests_1}
 
 runtest ${prog} "--delimiter @ -H --static-seed input2x7_atsign.tsv" ${basic_tests_1}
-runtest ${prog} "-d @ -H -s -p input2x7_atsign.tsv" ${basic_tests_1}
-runtest ${prog} "-d @ -H -s -p -w 2 input2x7_atsign.tsv" ${basic_tests_1}
-runtest ${prog} "-d @ -H -s -p -w 2 -n 3 input2x7_atsign.tsv" ${basic_tests_1}
-runtest ${prog} "-d @ -H -s -p -n 20 input2x7_atsign.tsv" ${basic_tests_1}
-runtest ${prog} "-d @ -H -s -p --rate 1.0 input2x7_atsign.tsv" ${basic_tests_1}
+runtest ${prog} "-d @ -H -s --print-random input2x7_atsign.tsv" ${basic_tests_1}
+runtest ${prog} "-d @ -H -s --print-random -w 2 input2x7_atsign.tsv" ${basic_tests_1}
+runtest ${prog} "-d @ -H -s --print-random -w 2 -n 3 input2x7_atsign.tsv" ${basic_tests_1}
+runtest ${prog} "-d @ -H -s --print-random -n 20 input2x7_atsign.tsv" ${basic_tests_1}
+runtest ${prog} "-d @ -H -s --print-random --prob 1.0 input2x7_atsign.tsv" ${basic_tests_1}
 
 ## Tests with a negative weight. Negative weight entry should be last.
 runtest ${prog} "-H -w 3 -v 777 input3x25_negative_wt.tsv" ${basic_tests_1}
@@ -101,8 +106,8 @@ cat input3x10.tsv | ${prog} -v 99 >> ${basic_tests_1} 2>&1
 echo "" >> ${basic_tests_1}; echo "====[cat input3x10.tsv tsv-sample -H -v 99]====" >> ${basic_tests_1}
 cat input3x10.tsv | ${prog} -H -v 99 >> ${basic_tests_1} 2>&1
 
-echo "" >> ${basic_tests_1}; echo "====[cat input3x10.tsv tsv-sample -H -v 99 -p]====" >> ${basic_tests_1}
-cat input3x10.tsv | ${prog} -H -v 99 -p >> ${basic_tests_1} 2>&1
+echo "" >> ${basic_tests_1}; echo "====[cat input3x10.tsv tsv-sample -H -v 99 --print-random]====" >> ${basic_tests_1}
+cat input3x10.tsv | ${prog} -H -v 99 --print-random >> ${basic_tests_1} 2>&1
 
 echo "" >> ${basic_tests_1}; echo "====[cat input3x10.tsv tsv-sample -H -s -- - input3x3.tsv input3x4.tsv]====" >> ${basic_tests_1}
 cat input3x10.tsv | ${prog} -H -s -- - input3x3.tsv input3x4.tsv >> ${basic_tests_1} 2>&1
@@ -115,6 +120,17 @@ cat input3x3.tsv | ${prog} -s -- input3x4.tsv - >> ${basic_tests_1} 2>&1
 
 echo "" >> ${basic_tests_1}; echo "====[cat input3x10.tsv tsv-sample -H -s -w 3 -- input3x3.tsv - input3x4.tsv]====" >> ${basic_tests_1}
 cat input3x10.tsv | ${prog} -H -s -w 3 -- input3x3.tsv - input3x4.tsv >> ${basic_tests_1} 2>&1
+
+
+echo "" >> ${basic_tests_1}; echo "====[cat input3x10.tsv tsv-sample -H -s --replace --num 10]====" >> ${basic_tests_1}
+cat input3x10.tsv | ${prog} -H -s --replace --num 10 >> ${basic_tests_1} 2>&1
+
+echo "" >> ${basic_tests_1}; echo "====[cat input3x10.tsv tsv-sample -H -s --replace --num 10 -- input3x3.tsv - input3x4.tsv]====" >> ${basic_tests_1}
+cat input3x10.tsv | ${prog} -H -s --replace --num 10 -- input3x3.tsv - input3x4.tsv >> ${basic_tests_1} 2>&1
+
+## Random sample with infinite output - control with head.
+echo "" >> ${basic_tests_1}; echo "====[cat input3x10.tsv tsv-sample -H -s --replace | head -n 1000 | tail]====" >> ${basic_tests_1}
+cat input3x10.tsv | ${prog} -H -s --replace | head -n 1000 | tail >> ${basic_tests_1} 2>&1
 
 ## Need to run a few tests with the unpredictable seed. Can't compare the results
 ## so check the number of lines returned. Some standard input tests are also in
@@ -132,14 +148,14 @@ ${prog} -H -n 25 input3x25.tsv input3x10.tsv| wc -l | tr -d ' ' >> ${basic_tests
 echo "" >> ${basic_tests_1}; echo "====[tsv-sample -H -n 9 -w 3 input3x25.tsv | wc -l | tr -d ' ']====" >> ${basic_tests_1}
 ${prog} -H -n 9 -w 3 input3x25.tsv | wc -l | tr -d ' ' >> ${basic_tests_1} 2>&1
 
-echo "" >> ${basic_tests_1}; echo "====[cat input3x10.tsv tsv-sample -H -p | wc -l | tr -d ' ']====" >> ${basic_tests_1}
-cat input3x10.tsv | ${prog} -H -p | wc -l | tr -d ' ' >> ${basic_tests_1} 2>&1
+echo "" >> ${basic_tests_1}; echo "====[cat input3x10.tsv tsv-sample -H --print-random | wc -l | tr -d ' ']====" >> ${basic_tests_1}
+cat input3x10.tsv | ${prog} -H --print-random | wc -l | tr -d ' ' >> ${basic_tests_1} 2>&1
 
-echo "" >> ${basic_tests_1}; echo "====[cat input3x10.tsv tsv-sample -H -p -w 3 -- - input3x25.tsv | wc -l | tr -d ' ']====" >> ${basic_tests_1}
-cat input3x10.tsv | ${prog} -H -p -w 3 -- - input3x25.tsv | wc -l | tr -d ' ' >> ${basic_tests_1} 2>&1
+echo "" >> ${basic_tests_1}; echo "====[cat input3x10.tsv tsv-sample -H --print-random -w 3 -- - input3x25.tsv | wc -l | tr -d ' ']====" >> ${basic_tests_1}
+cat input3x10.tsv | ${prog} -H --print-random -w 3 -- - input3x25.tsv | wc -l | tr -d ' ' >> ${basic_tests_1} 2>&1
 
-echo "" >> ${basic_tests_1}; echo "====[cat input3x10.tsv tsv-sample -H -p -w 3 -n 10 -- - input3x25.tsv | wc -l | tr -d ' ']====" >> ${basic_tests_1}
-cat input3x10.tsv | ${prog} -H -p -w 3 -n 10 -- - input3x25.tsv | wc -l | tr -d ' ' >> ${basic_tests_1} 2>&1
+echo "" >> ${basic_tests_1}; echo "====[cat input3x10.tsv tsv-sample -H --print-random -w 3 -n 10 -- - input3x25.tsv | wc -l | tr -d ' ']====" >> ${basic_tests_1}
+cat input3x10.tsv | ${prog} -H --print-random -w 3 -n 10 -- - input3x25.tsv | wc -l | tr -d ' ' >> ${basic_tests_1} 2>&1
 
 ## Help and Version printing
 
@@ -173,19 +189,24 @@ runtest ${prog} "-d ß input3x25.tsv" ${error_tests}
 runtest ${prog} "-H -w 11 input3x25.tsv" ${error_tests}
 runtest ${prog} "-H -w 3 input3x25_dos.tsv" ${error_tests}
 runtest ${prog} "-w 1 input2x5_noheader_dos.tsv" ${error_tests}
-runtest ${prog} "--rate 0.5 --weight-field 3 input3x25.tsv" ${error_tests}
-runtest ${prog} "--rate 0 input3x25.tsv" ${error_tests}
-runtest ${prog} "--rate 1.00001 input3x25.tsv" ${error_tests}
-runtest ${prog} "-r .1 -k 0 input4x50.tsv input4x15.tsv" ${error_tests}
-runtest ${prog} "-r .1 -k -1 input4x50.tsv input4x15.tsv" ${error_tests}
-runtest ${prog} "-r 0 -k 1 input4x50.tsv input4x15.tsv" ${error_tests}
-runtest ${prog} "-r -0.5 -k 1 input4x50.tsv input4x15.tsv" ${error_tests}
-runtest ${prog} "-r 0.5 -v -10 -k 1 input4x50.tsv input4x15.tsv" ${error_tests}
+runtest ${prog} "--prob 0.5 --weight-field 3 input3x25.tsv" ${error_tests}
+runtest ${prog} "--prob 0 input3x25.tsv" ${error_tests}
+runtest ${prog} "--prob 1.00001 input3x25.tsv" ${error_tests}
+runtest ${prog} "-p .1 -k 0 input4x50.tsv input4x15.tsv" ${error_tests}
+runtest ${prog} "-p .1 -k -1 input4x50.tsv input4x15.tsv" ${error_tests}
+runtest ${prog} "-p 0 -k 1 input4x50.tsv input4x15.tsv" ${error_tests}
+runtest ${prog} "-p -0.5 -k 1 input4x50.tsv input4x15.tsv" ${error_tests}
+runtest ${prog} "-p 0.5 -v -10 -k 1 input4x50.tsv input4x15.tsv" ${error_tests}
 runtest ${prog} "-k 1 input4x50.tsv input4x15.tsv" ${error_tests}
-runtest ${prog} "-r 0.5 -k 5 input4x50.tsv input4x15.tsv" ${error_tests}
-runtest ${prog} "-H -r 0.5 -k 5 input4x50.tsv input4x15.tsv" ${error_tests}
-runtest ${prog} "-H -r 0.5 --gen-random-inorder input4x50.tsv input4x15.tsv" ${error_tests}
+runtest ${prog} "-p 0.5 -k 5 input4x50.tsv input4x15.tsv" ${error_tests}
+runtest ${prog} "-H -p 0.5 -k 5 input4x50.tsv input4x15.tsv" ${error_tests}
+runtest ${prog} "-H -p 0.5 --gen-random-inorder input4x50.tsv input4x15.tsv" ${error_tests}
 runtest ${prog} "-H --gen-random-inorder -d , --random-value-header abc,def input3x25.tsv" ${error_tests}
+runtest ${prog} "--replace -n 5 --weight-field 2 input3x25.tsv" ${error_tests}
+runtest ${prog} "--replace -n 5 --prob 0.5 input3x25.tsv" ${error_tests}
+runtest ${prog} "--replace -n 5 --key-fields 2 input3x25.tsv" ${error_tests}
+runtest ${prog} "--replace -n 5 --print-random input3x25.tsv" ${error_tests}
+runtest ${prog} "--replace -n 5 --gen-random-inorder input3x25.tsv" ${error_tests}
 
 # Error tests 2 are tests that are compiler version dependent. There are multiple
 # version files in test-config.json.
@@ -197,4 +218,4 @@ echo "----------------" >> ${error_tests}
 
 runtest ${prog} "-H -w 2 input3x25.tsv" ${error_tests}
 runtest ${prog} "-w 3 input3x25.tsv" ${error_tests}
-runtest ${prog} "-r -v 10 -k 1 input4x50.tsv input4x15.tsv" ${error_tests}
+runtest ${prog} "-p -v 10 -k 1 input4x50.tsv input4x15.tsv" ${error_tests}

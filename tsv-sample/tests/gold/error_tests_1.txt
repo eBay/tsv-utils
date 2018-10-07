@@ -23,42 +23,57 @@ Error [tsv-sample]: Windows/DOS line ending found. Convert file to Unix newlines
 Error [tsv-sample]: Windows/DOS line ending found. Convert file to Unix newlines before processing (e.g. 'dos2unix').
   File: input2x5_noheader_dos.tsv, Line: 1
 
-====[tsv-sample --rate 0.5 --weight-field 3 input3x25.tsv]====
-[tsv-sample] Error processing command line arguments: --w|weight-field and --r|rate cannot be used together.
+====[tsv-sample --prob 0.5 --weight-field 3 input3x25.tsv]====
+[tsv-sample] Error processing command line arguments: --w|weight-field and --p|prob cannot be used together.
 
-====[tsv-sample --rate 0 input3x25.tsv]====
-[tsv-sample] Error processing command line arguments: Invalid --r|rate option: 0. Must satisfy 0.0 < rate <= 1.0.
+====[tsv-sample --prob 0 input3x25.tsv]====
+[tsv-sample] Error processing command line arguments: Invalid --p|prob option: 0. Must satisfy 0.0 < prob <= 1.0.
 
-====[tsv-sample --rate 1.00001 input3x25.tsv]====
-[tsv-sample] Error processing command line arguments: Invalid --r|rate option: 1.00001. Must satisfy 0.0 < rate <= 1.0.
+====[tsv-sample --prob 1.00001 input3x25.tsv]====
+[tsv-sample] Error processing command line arguments: Invalid --p|prob option: 1.00001. Must satisfy 0.0 < prob <= 1.0.
 
-====[tsv-sample -r .1 -k 0 input4x50.tsv input4x15.tsv]====
+====[tsv-sample -p .1 -k 0 input4x50.tsv input4x15.tsv]====
 [tsv-sample] Error processing command line arguments: [--k|key-fields] Field numbers must be greater than zero: '0'
 
-====[tsv-sample -r .1 -k -1 input4x50.tsv input4x15.tsv]====
+====[tsv-sample -p .1 -k -1 input4x50.tsv input4x15.tsv]====
 [tsv-sample] Error processing command line arguments: [--k|key-fields] Incomplete ranges are not supported: '-1'
 
-====[tsv-sample -r 0 -k 1 input4x50.tsv input4x15.tsv]====
-[tsv-sample] Error processing command line arguments: Invalid --r|rate option: 0. Must satisfy 0.0 < rate <= 1.0.
+====[tsv-sample -p 0 -k 1 input4x50.tsv input4x15.tsv]====
+[tsv-sample] Error processing command line arguments: Invalid --p|prob option: 0. Must satisfy 0.0 < prob <= 1.0.
 
-====[tsv-sample -r -0.5 -k 1 input4x50.tsv input4x15.tsv]====
-[tsv-sample] Error processing command line arguments: Invalid --r|rate option: -0.5. Must satisfy 0.0 < rate <= 1.0.
+====[tsv-sample -p -0.5 -k 1 input4x50.tsv input4x15.tsv]====
+[tsv-sample] Error processing command line arguments: Invalid --p|prob option: -0.5. Must satisfy 0.0 < prob <= 1.0.
 
-====[tsv-sample -r 0.5 -v -10 -k 1 input4x50.tsv input4x15.tsv]====
+====[tsv-sample -p 0.5 -v -10 -k 1 input4x50.tsv input4x15.tsv]====
 [tsv-sample] Error processing command line arguments: Unexpected '-' when converting from type string to type uint
 
 ====[tsv-sample -k 1 input4x50.tsv input4x15.tsv]====
-[tsv-sample] Error processing command line arguments: --r|rate is required when using --k|key-fields.
+[tsv-sample] Error processing command line arguments: --p|prob is required when using --k|key-fields.
 
-====[tsv-sample -r 0.5 -k 5 input4x50.tsv input4x15.tsv]====
+====[tsv-sample -p 0.5 -k 5 input4x50.tsv input4x15.tsv]====
 Error [tsv-sample]: Not enough fields in line. File: input4x50.tsv, Line: 1
 
-====[tsv-sample -H -r 0.5 -k 5 input4x50.tsv input4x15.tsv]====
+====[tsv-sample -H -p 0.5 -k 5 input4x50.tsv input4x15.tsv]====
 Error [tsv-sample]: Not enough fields in line. File: input4x50.tsv, Line: 2
 c-1	c-2	c-3	c-4
 
-====[tsv-sample -H -r 0.5 --gen-random-inorder input4x50.tsv input4x15.tsv]====
-[tsv-sample] Error processing command line arguments: --q|gen-random-inorder and --r|rate can only be used together if --k|key-fields is also used.
+====[tsv-sample -H -p 0.5 --gen-random-inorder input4x50.tsv input4x15.tsv]====
+[tsv-sample] Error processing command line arguments: --q|gen-random-inorder and --p|prob can only be used together if --k|key-fields is also used.
 
 ====[tsv-sample -H --gen-random-inorder -d , --random-value-header abc,def input3x25.tsv]====
 [tsv-sample] Error processing command line arguments: --randomValueHeader must be at least one character and not contain field delimiters or newlines.
+
+====[tsv-sample --replace -n 5 --weight-field 2 input3x25.tsv]====
+[tsv-sample] Error processing command line arguments: Sampling with replacement (--r|replace) does not support wieghts (--w|weight-field).
+
+====[tsv-sample --replace -n 5 --prob 0.5 input3x25.tsv]====
+[tsv-sample] Error processing command line arguments: Sampling with replacement (--r|replace) cannot be used with probabilities (--p|prob).
+
+====[tsv-sample --replace -n 5 --key-fields 2 input3x25.tsv]====
+[tsv-sample] Error processing command line arguments: Sampling with replacement (--r|replace) cannot be used with distinct sampling (--k|key-fields).
+
+====[tsv-sample --replace -n 5 --print-random input3x25.tsv]====
+[tsv-sample] Error processing command line arguments: Sampling with replacement (--r|replace) does not support random value printing (--print-random, --gen-random-inorder).
+
+====[tsv-sample --replace -n 5 --gen-random-inorder input3x25.tsv]====
+[tsv-sample] Error processing command line arguments: Sampling with replacement (--r|replace) does not support random value printing (--print-random, --gen-random-inorder).
