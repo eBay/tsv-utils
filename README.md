@@ -115,6 +115,8 @@ See the [tsv-summarize reference](docs/ToolReference.md#tsv-summarize-reference)
 
 * Weighted line order randomization - This extends the previous method to weighted random sampling by the use of a weight taken from each line. The weight field is specified with the `-w|--weight-field` option.
 
+* Sampling with replacement - All lines are read into memory, then lines are selected one at a time at random and output. Lines can be output multiple times. Output continues until `-n|--num` samples have been output.
+
 * Bernoulli sampling - Sampling can be done in streaming mode by using the `-r|rate` option. This specifies the desired portion of lines that should be included in the sample. e.g. `-r 0.1` specifies that 10% of lines should be included in the sample. In this mode lines are read one at a time, a random selection choice made, and those lines selected are immediately output. All lines have an equal likelihood of being output.
 
 * Distinct sampling - This is another streaming mode form of sampling. However, instead of each line being subject to an independent selection choice, lines are selected based on a key contained in each line. A portion of keys are randomly selected for output, and every line containing a selected key is included in the output. Consider a query log with records consisting of <user, query, clicked-url> triples. It may be desirable to sample records for one percent of the users, but include all records for the selected users. Distinct sampling is specified using the `-k|--key-fields` and `-r|--rate` options.
