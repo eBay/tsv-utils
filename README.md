@@ -14,6 +14,7 @@ File an [issue](https://github.com/eBay/tsv-utils/issues) if you have problems, 
 
 **Additional documents:**
 * [Tool reference](docs/ToolReference.md)
+* [Release notes (releases page)](https://github.com/eBay/tsv-utils/releases)
 * [Tips and tricks](docs/TipsAndTricks.md)
 * [Performance Studies](docs/Performance.md) (quick access: [2018 Comparative Benchmarks](docs/comparative-benchmarks-2018.md))
 * [Comparing TSV and CSV formats](docs/comparing-tsv-and-csv.md)
