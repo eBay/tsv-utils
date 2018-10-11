@@ -366,7 +366,8 @@ if (isOutputRange!(OutputRange, char))
     else
     {
         if (cmdopt.hasWeightField) randomizeLines!(Yes.isWeighted)(cmdopt, outputStream);
-        else randomizeLines!(No.isWeighted)(cmdopt, outputStream);
+        else if (cmdopt.printRandom) randomizeLines!(No.isWeighted)(cmdopt, outputStream);
+        else randomizeLinesFast(cmdopt, outputStream);
     }
 }
 
@@ -830,33 +831,142 @@ if (isOutputRange!(OutputRange, char))
 void randomizeLines(Flag!"isWeighted" isWeighted, OutputRange)(TsvSampleOptions cmdopt, auto ref OutputRange outputStream)
 if (isOutputRange!(OutputRange, char))
 {
-    import std.algorithm : min, sort, splitter;
-    import std.array : appender;
+    import std.algorithm : map, sort;
     import std.format : formatValue, singleSpec;
-    import std.random : Random = Mt19937, uniform01;
-    import tsvutil : throwIfWindowsNewlineOnUnix;
 
     static if (isWeighted) assert(cmdopt.hasWeightField);
     else assert(!cmdopt.hasWeightField);
 
     assert(cmdopt.sampleSize == 0);
 
-    struct FileData
-    {
-        string filename;
-        char[] data;
-    }
-
-    auto fileData = new FileData[cmdopt.files.length];
+    /*
+     * Read all file data into memory. Then split the data into lines and assign a
+     * random value to each line. identifyFileLines also writes the first header line.
+     */
+    auto fileData = cmdopt.files.map!FileData.array;
+    auto inputLines = fileData.identifyFileLines!(Yes.hasRandomValue, isWeighted)(cmdopt, outputStream);
 
     /*
-     * Read all file data into memory.
+     * Sort by the weight and output the lines.
      */
-    ubyte[1024 * 128] fileRawBuf;
-    foreach (fileNum, filename; cmdopt.files)
+    inputLines.sort!((a, b) => a.randomValue > b.randomValue);
+
+    immutable randomValueFormatSpec = singleSpec("%.17g");
+
+    foreach (lineEntry; inputLines)
     {
-        fileData[fileNum].filename = filename;
-        auto dataAppender = appender(&(fileData[fileNum].data));
+        if (cmdopt.printRandom)
+        {
+            outputStream.formatValue(lineEntry.randomValue, randomValueFormatSpec);
+            outputStream.put(cmdopt.delim);
+        }
+        outputStream.put(lineEntry.data);
+        outputStream.put("\n");
+    }
+}
+
+/** Randomize all the lines in files or standard input.
+ *
+ * All lines in files and/or standard input are read in and written out in random
+ * order.
+ *
+ * This is a faster version of randomizeLines, one that can be used in the unweighted
+ * case, when it is not necessary to print random values and compatibility with other
+ * sampling invocations is not necessary.
+ */
+void randomizeLinesFast(OutputRange)(TsvSampleOptions cmdopt, auto ref OutputRange outputStream)
+if (isOutputRange!(OutputRange, char))
+{
+    import std.algorithm : map;
+    import std.random : Random = Mt19937, randomShuffle;
+
+    assert(cmdopt.sampleSize == 0);
+    assert(!cmdopt.hasWeightField);
+    assert(!cmdopt.printRandom);
+    assert(!cmdopt.genRandomInorder);
+
+    /*
+     * Read all file data into memory and split into lines.
+     */
+    auto fileData = cmdopt.files.map!FileData.array;
+    auto inputLines = fileData.identifyFileLines!(No.hasRandomValue, No.isWeighted)(cmdopt, outputStream);
+
+    /*
+     * Randomly shuffle and print each line.
+     *
+     * Note: Also tried randomCover, but that was exceedingly slow.
+     */
+    import std.random : randomShuffle;
+
+    auto randomGenerator = Random(cmdopt.seed);
+    auto shuffled = inputLines.randomShuffle(randomGenerator);
+
+    foreach (ref line; shuffled)
+    {
+        outputStream.put(line.data);
+        outputStream.put("\n");
+    }
+}
+
+/** Simple random sampling with replacement.
+ *
+ * All lines in files and/or standard input are read in. Then random lines are selected
+ * one at a time and output. Lines can be selected multiple times. This process continues
+ * until the desired number of samples (--n|num) has been output. Output continues
+ * indefinitely if a sample size was not provided.
+ */
+void simpleRandomSamplingWithReplacement(OutputRange)(TsvSampleOptions cmdopt, auto ref OutputRange outputStream)
+if (isOutputRange!(OutputRange, char))
+{
+    import std.algorithm : map;
+    import std.format : formatValue, singleSpec;
+    import std.random : Random = Mt19937, uniform;
+
+    /*
+     * Read all file data into memory and split the data into lines.
+     */
+    auto fileData = cmdopt.files.map!FileData.array;
+    auto inputLines = fileData.identifyFileLines!(No.hasRandomValue, No.isWeighted)(cmdopt, outputStream);
+
+    if (inputLines.length > 0)
+    {
+        auto randomGenerator = Random(cmdopt.seed);
+
+        /* Repeat forever is sampleSize is zero, otherwise print sampleSize lines. */
+        size_t numLeft = (cmdopt.sampleSize == 0) ? 1 : cmdopt.sampleSize;
+        while (numLeft != 0)
+        {
+            size_t index = uniform(0, inputLines.length, randomGenerator);
+            outputStream.put(inputLines[index].data);
+            outputStream.put("\n");
+            if (cmdopt.sampleSize != 0) numLeft--;
+        }
+    }
+}
+
+/** A container and reader data form a file or standard input.
+ *
+ * The FileData struct is used to read data from a file or standard input. It is used
+ * by passing a filename to the constructor. The constructor reads the file data.
+ * If the filename is a single hyphen ('-') then data is read from standard input.
+ *
+ * The struct make the data available through two members: 'filename', which is the
+ * filename, and 'data', which is a character array of the data.
+ */
+struct FileData
+{
+    string filename;
+    char[] data;
+
+    this(string fname)
+    {
+        import std.algorithm : min;
+        import std.array : appender;
+
+        filename = fname;
+
+        ubyte[1024 * 128] fileRawBuf;
+        auto dataAppender = appender(&data);
         auto ifile = (filename == "-") ? stdin : filename.File;
 
         if (filename != "-")
@@ -867,25 +977,60 @@ if (isOutputRange!(OutputRange, char))
 
         foreach (ref ubyte[] buffer; ifile.byChunk(fileRawBuf)) dataAppender.put(cast(char[]) buffer);
     }
+}
 
-    /*
-     * Split the data into lines and assign a random value to each line.
-     */
-    struct Entry
-    {
-        double score;
-        char[] line;
-    }
+/** HasRandomValue is a boolean flag used at compile time by identifyFileLines to
+ * distinguish use cases needing random value assignments from those that don't.
+ */
+alias HasRandomValue = Flag!"hasRandomValue";
 
-    auto scoredLines = appender!(Entry[]);
-    auto randomGenerator = Random(cmdopt.seed);
+/** An InputLine array is returned by identifyFileLines to represent each non-header line
+ * line found in a FileData array. The 'data' element contains the line. A 'randomValue'
+ * line is included if random values are being generated.
+ */
+struct InputLine(HasRandomValue hasRandomValue)
+{
+    char[] data;
+    static if (hasRandomValue) double randomValue;
+}
+
+/** identifyFileLines is used by algorithms that read all files into memory prior to
+ * processing. It does the initial processing of the file data.
+ *
+ * Three primary tasks are performed. One is splitting all input data into lines. The
+ * second is writting the header line from the first file to the output stream. Header
+ * lines from subsequent files are ignored. Third is assigning a random value to the
+ * line, if random values are being generated.
+ *
+ * The key input is a FileData array, one element for each file. The FileData reads
+ * the file when instantiated.
+ *
+ * The return value is an array of InputLine structs. The struct will have a 'randomValue'
+ * member if random values are being assigned.
+ */
+InputLine!hasRandomValue[] identifyFileLines(HasRandomValue hasRandomValue, Flag!"isWeighted" isWeighted, OutputRange)
+(ref FileData[] fileData, TsvSampleOptions cmdopt, auto ref OutputRange outputStream)
+if (isOutputRange!(OutputRange, char))
+{
+    import std.algorithm : splitter;
+    import std.array : appender;
+    import std.random : Random = Mt19937, uniform01;
+    import tsvutil : throwIfWindowsNewlineOnUnix;
+
+    static assert(hasRandomValue || !isWeighted);
+    static if(!hasRandomValue) assert(!cmdopt.printRandom);
+
+    InputLine!hasRandomValue[] inputLines;
+
+    auto linesAppender = appender(&inputLines);
+    static if (hasRandomValue) auto randomGenerator = Random(cmdopt.seed);
     bool headerWritten = false;
 
     foreach (fd; fileData)
     {
         /* Drop the last newline to avoid adding an extra empty line. */
         auto data = (fd.data.length > 0 && fd.data[$ - 1] == '\n') ? fd.data[0 .. $ - 1] : fd.data;
-        foreach (fileLineNum, line; data.splitter('\n').enumerate(1))
+        foreach (fileLineNum, ref line; data.splitter('\n').enumerate(1))
         {
             if (fileLineNum == 1) throwIfWindowsNewlineOnUnix(line, fd.filename, fileLineNum);
             if (fileLineNum == 1 && cmdopt.hasHeader)
@@ -904,135 +1049,33 @@ if (isOutputRange!(OutputRange, char))
             }
             else
             {
-                static if (!isWeighted)
+                static if (!hasRandomValue)
                 {
-                    double lineScore = uniform01(randomGenerator);
+                    linesAppender.put(InputLine!hasRandomValue(line));
                 }
                 else
                 {
-                    double lineWeight =
-                        getFieldValue!double(line, cmdopt.weightField, cmdopt.delim, fd.filename, fileLineNum);
-                    double lineScore =
-                        (lineWeight > 0.0)
-                        ? uniform01(randomGenerator) ^^ (1.0 / lineWeight)
-                        : 0.0;
-                }
+                    static if (!isWeighted)
+                    {
+                        double randomValue = uniform01(randomGenerator);
+                    }
+                    else
+                    {
+                        double lineWeight =
+                            getFieldValue!double(line, cmdopt.weightField, cmdopt.delim, fd.filename, fileLineNum);
+                        double randomValue =
+                            (lineWeight > 0.0)
+                            ? uniform01(randomGenerator) ^^ (1.0 / lineWeight)
+                            : 0.0;
+                    }
 
-                scoredLines.put(Entry(lineScore, line));
-            }
-        }
-    }
-
-    /*
-     * Sort by the weight and output the lines.
-     */
-    scoredLines.data.sort!((a, b) => a.score > b.score);
-
-    immutable randomValueFormatSpec = singleSpec("%.17g");
-
-    foreach (lineEntry; scoredLines.data)
-    {
-        if (cmdopt.printRandom)
-        {
-            outputStream.formatValue(lineEntry.score, randomValueFormatSpec);
-            outputStream.put(cmdopt.delim);
-        }
-        outputStream.put(lineEntry.line);
-        outputStream.put("\n");
-    }
-}
-
-/** Simple random sampling with replacement.
- *
- * All lines in files and/or standard input are read in. Then random lines are selected
- * one at a time and output. Lines can be selected multiple times. This process continues
- * until the desired number of samples (--n|num) has been output. Output continues
- * indefinitely if a sample size was not provided.
- */
-void simpleRandomSamplingWithReplacement(OutputRange)(TsvSampleOptions cmdopt, auto ref OutputRange outputStream)
-if (isOutputRange!(OutputRange, char))
-{
-    import std.algorithm : each, min, sort, splitter;
-    import std.array : appender;
-    import std.format : formatValue, singleSpec;
-    import std.random : Random = Mt19937, uniform;
-    import tsvutil : throwIfWindowsNewlineOnUnix;
-
-    struct FileData
-    {
-        string filename;
-        char[] data;
-    }
-
-    auto fileData = new FileData[cmdopt.files.length];
-
-    /*
-     * Read all file data into memory.
-     */
-    ubyte[1024 * 128] fileRawBuf;
-    foreach (fileNum, filename; cmdopt.files)
-    {
-        fileData[fileNum].filename = filename;
-        auto dataAppender = appender(&(fileData[fileNum].data));
-        auto ifile = (filename == "-") ? stdin : filename.File;
-
-        if (filename != "-")
-        {
-            ulong filesize = ifile.size;
-            if (filesize < ulong.max) dataAppender.reserve(min(filesize, size_t.max));
-        }
-
-        foreach (ref ubyte[] buffer; ifile.byChunk(fileRawBuf)) dataAppender.put(cast(char[]) buffer);
-    }
-
-    /*
-     * Split the data into lines.
-     */
-    struct Entry
-    {
-        char[] line;
-    }
-
-    auto lines = appender!(Entry[]);
-    bool headerWritten = false;
-
-    foreach (fd; fileData)
-    {
-        /* Drop the last newline to avoid adding an extra empty line. */
-        auto data = (fd.data.length > 0 && fd.data[$ - 1] == '\n') ? fd.data[0 .. $ - 1] : fd.data;
-        foreach (fileLineNum, line; data.splitter('\n').enumerate(1))
-        {
-            if (fileLineNum == 1) throwIfWindowsNewlineOnUnix(line, fd.filename, fileLineNum);
-            if (fileLineNum == 1 && cmdopt.hasHeader)
-            {
-                if (!headerWritten)
-                {
-                    outputStream.put(line);
-                    outputStream.put("\n");
-                    headerWritten = true;
+                    linesAppender.put(InputLine!hasRandomValue(line, randomValue));
                 }
             }
-            else
-            {
-                lines.put(Entry(line));
-            }
         }
     }
 
-    if (lines.data.length > 0)
-    {
-        auto randomGenerator = Random(cmdopt.seed);
-
-        /* Repeat forever is sampleSize is zero, otherwise print sampleSize lines. */
-        size_t numLeft = (cmdopt.sampleSize == 0) ? 1 : cmdopt.sampleSize;
-        while (numLeft != 0)
-        {
-            size_t index = uniform(0, lines.data.length, randomGenerator);
-            outputStream.put(lines.data[index].line);
-            outputStream.put("\n");
-            if (cmdopt.sampleSize != 0) numLeft--;
-        }
-    }
+    return inputLines;
 }
 
 
