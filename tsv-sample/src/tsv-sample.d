@@ -1279,6 +1279,11 @@ unittest
          ["gray", "グレー", "6.2"],
          ["brown", "褐色", "29.2"]];
 
+    string[][] data3x2NoCompatExpectedNoWt =
+        [["field_a", "field_b", "field_c"],
+         ["gray", "グレー", "6.2"],
+         ["brown", "褐色", "29.2"]];
+
     /* 3x3 */
     string[][] data3x3 =
         [["field_a", "field_b", "field_c"],
@@ -1296,6 +1301,12 @@ unittest
          ["purple", "紫の", "42"],
          ["pink", "ピンク", "1.1"],
          ["orange", "オレンジ", "2.5"]];
+
+    string[][] data3x3NoCompatExpectedNoWt =
+        [["field_a", "field_b", "field_c"],
+         ["purple", "紫の", "42"],
+         ["orange", "オレンジ", "2.5"],
+         ["pink", "ピンク", "1.1"]];
 
     /* 3x6 */
     string[][] data3x6 =
@@ -1319,6 +1330,15 @@ unittest
          ["white", "白", "1.65"],
          ["green", "緑", "0.0072"],
          ["red", "赤", "23.8"]];
+
+    string[][] data3x6NoCompatExpectedNoWt =
+        [["field_a", "field_b", "field_c"],
+         ["black", "黒", "0.983"],
+         ["green", "緑", "0.0072"],
+         ["red", "赤", "23.8"],
+         ["yellow", "黄", "12"],
+         ["white", "白", "1.65"],
+         ["blue", "青", "12"]];
 
     string[][] data3x6ExpectedNoWtProbs =
         [["random_value", "field_a", "field_b", "field_c"],
@@ -1845,7 +1865,16 @@ unittest
     testTsvSample(["test-a12", "-H", "-s", "-v", "0", "--print-random", fpath_data3x6], data3x6ExpectedNoWtProbs);
     testTsvSample(["test-a13", "-H", "-v", "41", "-w", "3", "--print-random", fpath_data3x6], data3x6ExpectedWt3V41Probs);
 
-    /* Permutations, without compatibility mode. */
+    /* Permutations, without compatibility mode, or with both compatibility and printing. */
+    testTsvSample(["test-aa1", "--header", "--static-seed", fpath_dataEmpty], dataEmpty);
+    testTsvSample(["test-aa2", "--header", "--static-seed", fpath_data3x0], data3x0);
+    testTsvSample(["test-aa3", "-H", "-s", fpath_data3x1], data3x1);
+    testTsvSample(["test-aa4", "-H", "-s", fpath_data3x2], data3x2NoCompatExpectedNoWt);
+    testTsvSample(["test-aa5", "-H", "-s", fpath_data3x3], data3x3NoCompatExpectedNoWt);
+    testTsvSample(["test-aa6", "-H", "-s", fpath_data3x6], data3x6NoCompatExpectedNoWt);
+    testTsvSample(["test-aa8", "-H", "-s", "--weight-field", "3", fpath_data3x6], data3x6ExpectedWt3);
+    testTsvSample(["test-aa9", "-H", "-s", "--print-random", "-w", "3", "--compatibility-mode", fpath_data3x6], data3x6ExpectedWt3Probs);
+    testTsvSample(["test-aa10", "-H", "--seed-value", "41", "--print-random", "--compatibility-mode", fpath_data3x6], data3x6ExpectedNoWtV41Probs);
 
     /* Bernoulli sampling cases. */
     testTsvSample(["test-a14", "--header", "--static-seed", "--prob", "0.001", fpath_dataEmpty], dataEmpty);
@@ -1900,6 +1929,15 @@ unittest
     testTsvSample(["test-b7", "-s", "--print-random", "-w", "3", fpath_data3x6_noheader], data3x6ExpectedWt3Probs[1..$]);
     testTsvSample(["test-b8", "-v", "41", "--print-random", fpath_data3x6_noheader], data3x6ExpectedNoWtV41Probs[1..$]);
     testTsvSample(["test-b9", "-v", "41", "-w", "3", "--print-random", fpath_data3x6_noheader], data3x6ExpectedWt3V41Probs[1..$]);
+
+    /* Permutations, no headers, without compatibility mode, or with printing and compatibility mode. */
+    testTsvSample(["test-bb1", "-s", fpath_data3x1_noheader], data3x1[1..$]);
+    testTsvSample(["test-bb2", "-s", fpath_data3x2_noheader], data3x2NoCompatExpectedNoWt[1..$]);
+    testTsvSample(["test-bb3", "-s", fpath_data3x3_noheader], data3x3NoCompatExpectedNoWt[1..$]);
+    testTsvSample(["test-bb4", "-s", fpath_data3x6_noheader], data3x6NoCompatExpectedNoWt[1..$]);
+    testTsvSample(["test-bb5", "-s", "--weight-field", "3", fpath_data3x6_noheader], data3x6ExpectedWt3[1..$]);
+    testTsvSample(["test-bb6", "-s", "--print-random", "-w", "3", "--compatibility-mode", fpath_data3x6_noheader], data3x6ExpectedWt3Probs[1..$]);
+    testTsvSample(["test-bb7", "-v", "41", "--print-random", "--compatibility-mode", fpath_data3x6_noheader], data3x6ExpectedNoWtV41Probs[1..$]);
 
     /* Bernoulli sampling cases. */
     testTsvSample(["test-b10", "-s", "-p", "1.0", fpath_data3x1_noheader], data3x1[1..$]);
