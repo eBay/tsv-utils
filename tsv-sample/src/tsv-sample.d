@@ -386,7 +386,7 @@ void bernoulliSampling(Flag!"generateRandomAll" generateRandomAll, OutputRange)
 if (isOutputRange!(OutputRange, char))
 {
     import std.format : formatValue, singleSpec;
-    import std.random : Random, uniform01;
+    import std.random : Random = Mt19937, uniform01;
     import tsvutil : throwIfWindowsNewlineOnUnix;
 
     static if (generateRandomAll) assert(cmdopt.genRandomInorder);
@@ -638,7 +638,7 @@ if (isOutputRange!(OutputRange, char))
     import std.container.array;
     import std.container.binaryheap;
     import std.format : formatValue, singleSpec;
-    import std.random : Random, uniform01;
+    import std.random : Random = Mt19937, uniform01;
     import tsvutil : throwIfWindowsNewlineOnUnix;
 
     static if (isWeighted) assert(cmdopt.hasWeightField);
@@ -755,7 +755,7 @@ void generateWeightedRandomValuesInorder(OutputRange)(TsvSampleOptions cmdopt, a
 if (isOutputRange!(OutputRange, char))
 {
     import std.format : formatValue, singleSpec;
-    import std.random : Random, uniform01;
+    import std.random : Random = Mt19937, uniform01;
     import tsvutil : throwIfWindowsNewlineOnUnix;
 
     assert(cmdopt.hasWeightField);
@@ -833,7 +833,7 @@ if (isOutputRange!(OutputRange, char))
     import std.algorithm : min, sort, splitter;
     import std.array : appender;
     import std.format : formatValue, singleSpec;
-    import std.random : Random, uniform01;
+    import std.random : Random = Mt19937, uniform01;
     import tsvutil : throwIfWindowsNewlineOnUnix;
 
     static if (isWeighted) assert(cmdopt.hasWeightField);
@@ -955,7 +955,7 @@ if (isOutputRange!(OutputRange, char))
     import std.algorithm : each, min, sort, splitter;
     import std.array : appender;
     import std.format : formatValue, singleSpec;
-    import std.random : Random, uniform;
+    import std.random : Random = Mt19937, uniform;
     import tsvutil : throwIfWindowsNewlineOnUnix;
 
     struct FileData
