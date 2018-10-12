@@ -939,9 +939,9 @@ if (isOutputRange!(OutputRange, char))
     import std.random : randomShuffle;
 
     auto randomGenerator = Random(cmdopt.seed);
-    auto shuffled = inputLines.randomShuffle(randomGenerator);
+    inputLines.randomShuffle(randomGenerator);
 
-    foreach (ref line; shuffled)
+    foreach (ref line; inputLines)
     {
         outputStream.put(line.data);
         outputStream.put("\n");
