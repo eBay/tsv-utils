@@ -1800,6 +1800,22 @@ unittest
          ["072"],
          ["181"]];
 
+    /* Combo 2, for bernoulli skip sampling: 3x0, 3x1, 1x200, empty, 1x10. No data files,
+     * only expected results. The header is from 3x0, the results are offset 1-position
+     * from data1x200ExpectedV333Prob03 due to insertion of a single preceding line.
+     */
+    string[][] combo2ExpectedV333Prob03 =
+        [["field_a", "field_b", "field_c"],
+         ["024"],
+         ["038"],
+         ["081"],
+         ["106"],
+         ["107"],
+         ["121"],
+         ["135"],
+         ["165"],
+         ["181"]];
+
 
     /* 1x10 - Simple 1-column file. */
     string[][] data1x10 =
@@ -2227,6 +2243,14 @@ unittest
                    fpath_data3x6_noheader, fpath_data3x2_noheader],
                   combo1ExpectedBernoulliSampleP40[1..$]);
 
+    /* Bernoulli sampling with probabilities in skip sampling range. */
+    testTsvSample(["test-cc1", "-H", "-v", "333", "-p", "0.03",
+                   fpath_data3x0, fpath_data3x1, fpath_data1x200, fpath_dataEmpty, fpath_data1x10],
+                  combo2ExpectedV333Prob03);
+    testTsvSample(["test-cc1", "-v", "333", "-p", "0.03",
+                   fpath_data3x1_noheader, fpath_data1x200_noheader, fpath_dataEmpty, fpath_data1x10_noheader],
+                  combo2ExpectedV333Prob03[1..$]);
+
     /* Distinct sampling cases. */
     testTsvSample(["test-c13", "--header", "--static-seed", "--key-fields", "1", "--prob", ".4",
                    fpath_data3x0, fpath_data3x3, fpath_data3x1, fpath_dataEmpty, fpath_data3x6, fpath_data3x2],
@@ -2356,22 +2380,35 @@ unittest
                       data3x6ExpectedReplace10[1 .. n + 1]);
     }
 
+    /* Bernoulli skip sampling. Test with lengths both greater than and less than expected. */
+    for (size_t n = data1x200ExpectedV333Prob03.length + 2; n >= 1; n--)
+    {
+        size_t expectedLength = min(data1x200ExpectedV333Prob03.length, n + 1);
+
+        testTsvSample([format("test-i1_%d", n), "-v", "333", "-p", "0.03", "-n", n.to!string,
+                       "-H", fpath_data1x200], data1x200ExpectedV333Prob03[0..expectedLength]);
+
+        testTsvSample([format("test-i2_%d", n), "-v", "333", "-p", "0.03", "-n", n.to!string,
+                       fpath_data1x200_noheader], data1x200ExpectedV333Prob03[1..expectedLength]);
+}
+
+
     /* Distinct sampling tests. */
-    testTsvSample(["test-i1", "--header", "--static-seed", "--prob", "0.40", "--key-fields", "2", fpath_data5x25],
+    testTsvSample(["test-j1", "--header", "--static-seed", "--prob", "0.40", "--key-fields", "2", fpath_data5x25],
                   data5x25ExpectedDistinctSampleK2P40);
 
-    testTsvSample(["test-i2", "-H", "-s", "-p", "0.20", "-k", "2,4", fpath_data5x25],
+    testTsvSample(["test-j2", "-H", "-s", "-p", "0.20", "-k", "2,4", fpath_data5x25],
                   data5x25ExpectedDistinctSampleK2K4P20);
 
-    testTsvSample(["test-i3", "-H", "-s", "-p", "0.20", "-k", "2-4", fpath_data5x25],
+    testTsvSample(["test-j3", "-H", "-s", "-p", "0.20", "-k", "2-4", fpath_data5x25],
                   data5x25ExpectedDistinctSampleK2K3K4P20);
 
-    testTsvSample(["test-i4", "--static-seed", "--prob", "0.40", "--key-fields", "2", fpath_data5x25_noheader],
+    testTsvSample(["test-j4", "--static-seed", "--prob", "0.40", "--key-fields", "2", fpath_data5x25_noheader],
                   data5x25ExpectedDistinctSampleK2P40[1..$]);
 
-    testTsvSample(["test-i5", "-s", "-p", "0.20", "-k", "2,4", fpath_data5x25_noheader],
+    testTsvSample(["test-j5", "-s", "-p", "0.20", "-k", "2,4", fpath_data5x25_noheader],
                   data5x25ExpectedDistinctSampleK2K4P20[1..$]);
 
-    testTsvSample(["test-i6", "-s", "-p", "0.20", "-k", "2-4", fpath_data5x25_noheader],
+    testTsvSample(["test-j6", "-s", "-p", "0.20", "-k", "2-4", fpath_data5x25_noheader],
                   data5x25ExpectedDistinctSampleK2K3K4P20[1..$]);
 }

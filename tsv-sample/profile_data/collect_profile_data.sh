@@ -94,6 +94,6 @@ $prog profile_data_2.tsv profile_data_3.tsv profile_data_1.tsv > /dev/null
 $prog profile_data_3.tsv -H profile_data_1.tsv profile_data_2.tsv > /dev/null
 
 $prog --prob 0.01 profile_data_3.tsv profile_data_1.tsv profile_data_2.tsv > /dev/null
-$prog -H --prob 0.01 profile_data_2.tsv profile_data_3.tsv profile_data_1.tsv > /dev/null
+$prog -H -v 7 --prob 0.02 --num 25 profile_data_2.tsv profile_data_3.tsv profile_data_1.tsv > /dev/null
 
 ${ldc_profdata_tool} merge -o app.profdata profile.*.raw
