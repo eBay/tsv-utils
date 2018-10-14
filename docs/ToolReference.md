@@ -426,6 +426,7 @@ The specifics behind these random values are subject to change in future release
 * `--print-random` - Output the random values that were assigned.
 * `--gen-random-inorder` - Output all lines with assigned random values prepended, no changes to the order of input.
 * `--random-value-header` - Header to use with `--print-random` and `--gen-random-inorder`. Default: `random_value`.
+* `--compatibility-mode` - Turns on "compatibility mode".
 * `--d|delimiter CHR` - Field delimiter.
 
 ---
