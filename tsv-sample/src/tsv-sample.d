@@ -366,8 +366,7 @@ if (isOutputRange!(OutputRange, char))
     }
     else if (cmdopt.useBernoulliSampling)
     {
-        if (cmdopt.genRandomInorder) bernoulliSampling!(Yes.generateRandomAll)(cmdopt, outputStream);
-        else bernoulliSampling!(No.generateRandomAll)(cmdopt, outputStream);
+        bernoulliSamplingCommand(cmdopt, outputStream);
     }
     else if (cmdopt.useDistinctSampling)
     {
@@ -390,16 +389,44 @@ if (isOutputRange!(OutputRange, char))
     }
 }
 
-/** Bernoulli sampling on the input stream. Each input line is a assigned a random
- * value and output if less than the inclusion probability. The order of the lines
- * is not changed.
+/** Bernoulli sampling on the input stream.
  *
- * Note: Performance tests show that skip sampling is faster when the inclusion
- * probability is approximately 4-5% or less. A performance optimization would be to
- * create a separate function for cases when the probability is small and the random
- * weights are not being output with each line. A disadvantage would be that the
- * random weights assigned to each element would change based on the sampling. Printed
- * weights would no longer be consistent run-to-run.
+ * This routine selects the appropriate bernoulli sampling function and template instantiation
+ * to use based on the command line arguments.
+ *
+ * See the bernoulliSkipSampling routine for a discussion of the choices behind the
+ * skipSamplingProbabilityThreshold used here.
+ */
+void bernoulliSamplingCommand(OutputRange)(TsvSampleOptions cmdopt, auto ref OutputRange outputStream)
+if (isOutputRange!(OutputRange, char))
+{
+    assert(!cmdopt.hasWeightField);
+
+    immutable double skipSamplingProbabilityThreshold = 0.04;
+
+    if (cmdopt.compatibilityMode || cmdopt.inclusionProbability > skipSamplingProbabilityThreshold)
+    {
+        if (cmdopt.genRandomInorder)
+        {
+            bernoulliSampling!(Yes.generateRandomAll)(cmdopt, outputStream);
+        }
+        else
+        {
+            bernoulliSampling!(No.generateRandomAll)(cmdopt, outputStream);
+        }
+    }
+    else
+    {
+        bernoulliSkipSampling(cmdopt, outputStream);
+    }
+}
+
+/** Bernoulli sampling on the input stream.
+ *
+ * Each input line is a assigned a random value and output if less than
+ * cmdopt.inclusionProbability. The order of the lines is not changed.
+ *
+ * This routine supports random value printing and gen-random-inorder value printing.
  */
 void bernoulliSampling(Flag!"generateRandomAll" generateRandomAll, OutputRange)
     (TsvSampleOptions cmdopt, auto ref OutputRange outputStream)
@@ -477,6 +504,101 @@ if (isOutputRange!(OutputRange, char))
                         if (numLinesWritten == cmdopt.sampleSize) return;
                     }
                 }
+            }
+        }
+    }
+}
+
+/* bernoulliSkipSampling is an alternate implementation of bernoulliSampling that
+ * uses skip sampling.
+ *
+ * Skip sampling works by skipping a random number of lines between selections. This
+ * can be faster than assigning a random value to each line when the inclusion
+ * probability is low, as it reduces the number of calls to the random number
+ * generator. Both the random number generator and the log() function as called when
+ * calculating the next skip size. These additional log() calls add up as the
+ * probability increases.
+ *
+ * Performance tests indicate the break-even point is about 4-5% (--prob 0.04) for
+ * file-oriented line sampling. This is obviously environment specific. In the
+ * environments this implementation has been tested in the perfmance improvements
+ * remain small, less than 7%, even with an inclusion probability as low as 0.0001.
+ *
+ * The algorithm does not assign random values to individual lines. This makes it
+ * incompatible with random value printing. It is not suitable for compatibility mode
+ * either. As an example, in compatibility mode a line selected with '--prob 0.2' should
+ * also be selected with '--prob 0.3' (assuming the same random seed). Skip sampling
+ * does not have this property.
+ *
+ * The algorithm for calculating the skip size has been described by multiple sources.
+ * There are two key variants depending on whether the total number of lines in the
+ * data set is known in advance. (This implementation does not know the total.)
+ * Useful references:
+ * - Jeffrey Scott Vitter, "An Efficient Algorithm for Sequential Random Sampling",
+ *   ACM Trans on Mathematical Software, 1987. On-line:
+ *   http://www.ittc.ku.edu/~jsv/Papers/Vit87.RandomSampling.pdf
+ * - P.J. Haas, "Data-Stream Sampling: Basic Techniques and Results", from the book
+ *   "Data Stream Management", Springer-Verlag, 2016. On-line:
+ *   https://www.springer.com/cda/content/document/cda_downloaddocument/9783540286073-c2.pdf
+ * - Erik Erlandson, "Faster Random Samples With Gap Sampling", 2014. On-line:
+ *   http://erikerlandson.github.io/blog/2014/09/11/faster-random-samples-with-gap-sampling/
+ */
+void bernoulliSkipSampling(OutputRange)(TsvSampleOptions cmdopt, OutputRange outputStream)
+    if (isOutputRange!(OutputRange, char))
+{
+    import std.conv : to;
+    import std.math : log, trunc;
+    import std.random : Random = Mt19937, uniform01;
+    import tsvutil : throwIfWindowsNewlineOnUnix;
+
+    assert(cmdopt.inclusionProbability > 0.0 && cmdopt.inclusionProbability < 1.0);
+    assert(!cmdopt.printRandom);
+    assert(!cmdopt.compatibilityMode);
+
+    auto randomGenerator = Random(cmdopt.seed);
+
+    immutable double discardRate = 1.0 - cmdopt.inclusionProbability;
+    immutable double logDiscardRate = log(discardRate);
+
+    /* Note: The '1.0 - uniform01(randomGenerator)' expression flips the half closed
+     * interval to (0.0, 1.0], excluding 0.0.
+     */
+    size_t remainingSkips = (log(1.0 - uniform01(randomGenerator)) / logDiscardRate).trunc.to!size_t;
+
+    /* Process each line. */
+    bool headerWritten = false;
+    size_t numLinesWritten = 0;
+    foreach (filename; cmdopt.files)
+    {
+        auto inputStream = (filename == "-") ? stdin : filename.File();
+        foreach (fileLineNum, line; inputStream.byLine(KeepTerminator.no).enumerate(1))
+        {
+            if (fileLineNum == 1) throwIfWindowsNewlineOnUnix(line, filename, fileLineNum);
+            if (fileLineNum == 1 && cmdopt.hasHeader)
+            {
+                if (!headerWritten)
+                {
+                    outputStream.put(line);
+                    outputStream.put("\n");
+                    headerWritten = true;
+                }
+            }
+            else if (remainingSkips > 0)
+            {
+                --remainingSkips;
+            }
+            else
+            {
+                outputStream.put(line);
+                outputStream.put("\n");
+
+                if (cmdopt.sampleSize != 0)
+                {
+                    ++numLinesWritten;
+                    if (numLinesWritten == cmdopt.sampleSize) return;
+                }
+
+                remainingSkips = (log(1.0 - uniform01(randomGenerator)) / logDiscardRate).trunc.to!size_t;
             }
         }
     }
@@ -829,10 +951,11 @@ if (isOutputRange!(OutputRange, char))
 
 /** Randomize all the lines in files or standard input.
  *
- * This routine selects the appropriate randomize-lines function and template instastion
- * to use based on the command line arguments. The
+ * This routine selects the appropriate randomize-lines function and template instantiation
+ * to use based on the command line arguments.
  */
 void randomizeLinesCommand(OutputRange)(TsvSampleOptions cmdopt, auto ref OutputRange outputStream)
+if (isOutputRange!(OutputRange, char))
 {
     if (cmdopt.hasWeightField)
     {
@@ -1606,6 +1729,78 @@ unittest
          ["tan", "タン", "8.5"],
          ["purple", "紫の", "42"]];
 
+    /* 1x200 - Needed for testing bernoulliSkipSampling, invoked with prob < 0.04. */
+    string[][] data1x200 =
+        [["field_a"],
+         ["000"], ["001"], ["002"], ["003"], ["004"], ["005"], ["006"], ["007"], ["008"], ["009"],
+         ["010"], ["011"], ["012"], ["013"], ["014"], ["015"], ["016"], ["017"], ["018"], ["019"],
+         ["020"], ["021"], ["022"], ["023"], ["024"], ["025"], ["026"], ["027"], ["028"], ["029"],
+         ["030"], ["031"], ["032"], ["033"], ["034"], ["035"], ["036"], ["037"], ["038"], ["039"],
+         ["040"], ["041"], ["042"], ["043"], ["044"], ["045"], ["046"], ["047"], ["048"], ["049"],
+         ["050"], ["051"], ["052"], ["053"], ["054"], ["055"], ["056"], ["057"], ["058"], ["059"],
+         ["060"], ["061"], ["062"], ["063"], ["064"], ["065"], ["066"], ["067"], ["068"], ["069"],
+         ["070"], ["071"], ["072"], ["073"], ["074"], ["075"], ["076"], ["077"], ["078"], ["079"],
+         ["080"], ["081"], ["082"], ["083"], ["084"], ["085"], ["086"], ["087"], ["088"], ["089"],
+         ["090"], ["091"], ["092"], ["093"], ["094"], ["095"], ["096"], ["097"], ["098"], ["099"],
+         ["100"], ["101"], ["102"], ["103"], ["104"], ["105"], ["106"], ["107"], ["108"], ["109"],
+         ["110"], ["111"], ["112"], ["113"], ["114"], ["115"], ["116"], ["117"], ["118"], ["119"],
+         ["120"], ["121"], ["122"], ["123"], ["124"], ["125"], ["126"], ["127"], ["128"], ["129"],
+         ["130"], ["131"], ["132"], ["133"], ["134"], ["135"], ["136"], ["137"], ["138"], ["139"],
+         ["140"], ["141"], ["142"], ["143"], ["144"], ["145"], ["146"], ["147"], ["148"], ["149"],
+         ["150"], ["151"], ["152"], ["153"], ["154"], ["155"], ["156"], ["157"], ["158"], ["159"],
+         ["160"], ["161"], ["162"], ["163"], ["164"], ["165"], ["166"], ["167"], ["168"], ["169"],
+         ["170"], ["171"], ["172"], ["173"], ["174"], ["175"], ["176"], ["177"], ["178"], ["179"],
+         ["180"], ["181"], ["182"], ["183"], ["184"], ["185"], ["186"], ["187"], ["188"], ["189"],
+         ["190"], ["191"], ["192"], ["193"], ["194"], ["195"], ["196"], ["197"], ["198"], ["199"],
+        ];
+
+    string fpath_data1x200 = buildPath(testDir, "data1x200.tsv");
+    string fpath_data1x200_noheader = buildPath(testDir, "data1x200_noheader.tsv");
+    writeUnittestTsvFile(fpath_data1x200, data1x200);
+    writeUnittestTsvFile(fpath_data1x200_noheader, data1x200[1..$]);
+
+    string[][] data1x200ExpectedV333Prob01 =
+        [["field_a"],
+         ["077"],
+         ["119"]];
+
+    string[][] data1x200ExpectedV333Prob02 =
+        [["field_a"],
+         ["038"],
+         ["059"],
+         ["124"],
+         ["161"],
+         ["162"],
+         ["183"]];
+
+    string[][] data1x200ExpectedV333Prob03 =
+        [["field_a"],
+         ["025"],
+         ["039"],
+         ["082"],
+         ["107"],
+         ["108"],
+         ["122"],
+         ["136"],
+         ["166"],
+         ["182"]];
+
+    string[][] data1x200ExpectedV333CompatProb01 =
+        [["field_a"],
+         ["072"]];
+
+    string[][] data1x200ExpectedV333CompatProb02 =
+        [["field_a"],
+         ["004"],
+         ["072"]];
+
+    string[][] data1x200ExpectedV333CompatProb03 =
+        [["field_a"],
+         ["004"],
+         ["072"],
+         ["181"]];
+
+
     /* 1x10 - Simple 1-column file. */
     string[][] data1x10 =
         [["field_a"], ["1"], ["2"], ["3"], ["4"], ["5"], ["6"], ["7"], ["8"], ["9"], ["10"]];
@@ -1797,7 +1992,7 @@ unittest
          ["23", "circle", "green", "S", "20"],
          ["24", "square", "green", "L", "20"],
          ["25", "circle", "red", "S", "10"],
-            ];
+        ];
 
     string fpath_data5x25 = buildPath(testDir, "data5x25.tsv");
     string fpath_data5x25_noheader = buildPath(testDir, "data5x25_noheader.tsv");
@@ -1817,7 +2012,7 @@ unittest
          ["19", "square", "black", "L", "20"],
          ["21", "ellipse", "black", "L", "30"],
          ["24", "square", "green", "L", "20"],
-            ];
+        ];
 
     string[][] data5x25ExpectedDistinctSampleK2K4P20 =
         [["ID", "Shape", "Color", "Size", "Weight"],
@@ -1831,7 +2026,7 @@ unittest
          ["19", "square", "black", "L", "20"],
          ["22", "triangle", "red", "L", "30"],
          ["24", "square", "green", "L", "20"],
-            ];
+        ];
 
     string[][] data5x25ExpectedDistinctSampleK2K3K4P20 =
         [["ID", "Shape", "Color", "Size", "Weight"],
@@ -1844,7 +2039,7 @@ unittest
          ["16", "square", "red", "S", "10"],
          ["18", "square", "red", "S", "20"],
          ["22", "triangle", "red", "L", "30"],
-            ];
+        ];
 
     /*
      * Enough setup! Actually run some tests!
@@ -1886,6 +2081,14 @@ unittest
     testTsvSample(["test-a20", "-H", "-s", "--prob", "0.60", "--print-random", fpath_data3x6], data3x6ExpectedProbsBernoulliSampleP60);
     testTsvSample(["test-a21", "-H", "-s", "--prob", "0.60", fpath_data3x6], data3x6ExpectedBernoulliSampleP60);
     testTsvSample(["test-a22", "-H", "-v", "41", "--prob", "0.60", "--print-random", fpath_data3x6], data3x6ExpectedV41ProbsBernoulliSampleP60);
+
+    /* Bernoulli sampling with probabilities in skip sampling range. */
+    testTsvSample(["test-ab1", "-H", "--seed-value", "333", "--prob", "0.01", fpath_data1x200], data1x200ExpectedV333Prob01);
+    testTsvSample(["test-ab2", "-H", "--seed-value", "333", "--prob", "0.02", fpath_data1x200], data1x200ExpectedV333Prob02);
+    testTsvSample(["test-ab3", "-H", "--seed-value", "333", "--prob", "0.03", fpath_data1x200], data1x200ExpectedV333Prob03);
+    testTsvSample(["test-ab4", "-H", "--seed-value", "333", "--prob", "0.01", "--compatibility-mode", fpath_data1x200], data1x200ExpectedV333CompatProb01);
+    testTsvSample(["test-ab5", "-H", "--seed-value", "333", "--prob", "0.02", "--compatibility-mode", fpath_data1x200], data1x200ExpectedV333CompatProb02);
+    testTsvSample(["test-ab6", "-H", "--seed-value", "333", "--prob", "0.03", "--compatibility-mode", fpath_data1x200], data1x200ExpectedV333CompatProb03);
 
     /* Distinct sampling cases. */
     testTsvSample(["test-a23", "--header", "--static-seed", "--prob", "0.001", "--key-fields", "1", fpath_dataEmpty], dataEmpty);
@@ -1946,6 +2149,14 @@ unittest
     testTsvSample(["test-b13", "-s", "--prob", "1.0", "--print-random", fpath_data3x6_noheader], data3x6ExpectedProbsBernoulliSampleP100[1..$]);
     testTsvSample(["test-b14", "-s", "--prob", "0.60", "--print-random", fpath_data3x6_noheader], data3x6ExpectedProbsBernoulliSampleP60[1..$]);
     testTsvSample(["test-b15", "-v", "41", "--prob", "0.60", "--print-random", fpath_data3x6_noheader], data3x6ExpectedV41ProbsBernoulliSampleP60[1..$]);
+
+    /* Bernoulli sampling with probabilities in skip sampling range. */
+    testTsvSample(["test-bb1", "-v", "333", "-p", "0.01", fpath_data1x200_noheader], data1x200ExpectedV333Prob01[1..$]);
+    testTsvSample(["test-bb2", "-v", "333", "-p", "0.02", fpath_data1x200_noheader], data1x200ExpectedV333Prob02[1..$]);
+    testTsvSample(["test-bb3", "-v", "333", "-p", "0.03", fpath_data1x200_noheader], data1x200ExpectedV333Prob03[1..$]);
+    testTsvSample(["test-bb4", "-v", "333", "-p", "0.01", "--compatibility-mode", fpath_data1x200_noheader], data1x200ExpectedV333CompatProb01[1..$]);
+    testTsvSample(["test-bb5", "-v", "333", "-p", "0.02", "--compatibility-mode", fpath_data1x200_noheader], data1x200ExpectedV333CompatProb02[1..$]);
+    testTsvSample(["test-bb6", "-v", "333", "-p", "0.03", "--compatibility-mode", fpath_data1x200_noheader], data1x200ExpectedV333CompatProb03[1..$]);
 
     /* Distinct sampling cases. */
     testTsvSample(["test-b16", "-s", "-p", "1.0", "-k", "2", fpath_data3x1_noheader], data3x1[1..$]);

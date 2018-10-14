@@ -31,6 +31,7 @@ $prog profile_data_1.tsv -H --compatibility-mode > /dev/null
 $prog profile_data_1.tsv --compatibility-mode > /dev/null
 $prog profile_data_1.tsv -H -n 100 > /dev/null
 $prog profile_data_1.tsv -H -p 0.05 > /dev/null
+$prog profile_data_1.tsv -H -p 0.01 > /dev/null
 $prog profile_data_1.tsv -p 0.25 > /dev/null
 $prog profile_data_1.tsv -H -p 0.10 -n 50 > /dev/null
 $prog profile_data_1.tsv -H -k 1 -p 0.20 > /dev/null
@@ -45,6 +46,7 @@ $prog profile_data_2.tsv --compatibility-mode > /dev/null
 $prog profile_data_2.tsv -n 200 > /dev/null
 $prog profile_data_2.tsv -H -n 300 > /dev/null
 $prog profile_data_2.tsv -p 0.10 > /dev/null
+$prog profile_data_2.tsv -p 0.01 > /dev/null
 $prog profile_data_2.tsv -k 1 -p 0.30 > /dev/null
 $prog profile_data_2.tsv -w 3 -n 250 > /dev/null
 $prog profile_data_2.tsv -w 4 > /dev/null
@@ -63,6 +65,7 @@ $prog profile_data_3.tsv > /dev/null
 $prog profile_data_3.tsv --compatibility-mode > /dev/null
 $prog profile_data_3.tsv -H -n 500 > /dev/null
 $prog profile_data_3.tsv -H -p 0.01 > /dev/null
+$prog profile_data_3.tsv -H -p 0.001 > /dev/null
 $prog profile_data_3.tsv -p 0.5 > /dev/null
 $prog profile_data_3.tsv -H -p 0.05 > /dev/null
 $prog profile_data_3.tsv -H -k 1,3 -p 0.20 > /dev/null
@@ -88,6 +91,9 @@ cat profile_data_1.tsv | $prog -n 500 --replace -- - profile_data_2.tsv profile_
 
 $prog profile_data_1.tsv profile_data_2.tsv profile_data_3.tsv > /dev/null
 $prog profile_data_2.tsv profile_data_3.tsv profile_data_1.tsv > /dev/null
-$prog profile_data_3.tsv profile_data_1.tsv profile_data_2.tsv > /dev/null
+$prog profile_data_3.tsv -H profile_data_1.tsv profile_data_2.tsv > /dev/null
+
+$prog --prob 0.01 profile_data_3.tsv profile_data_1.tsv profile_data_2.tsv > /dev/null
+$prog -H --prob 0.01 profile_data_2.tsv profile_data_3.tsv profile_data_1.tsv > /dev/null
 
 ${ldc_profdata_tool} merge -o app.profdata profile.*.raw

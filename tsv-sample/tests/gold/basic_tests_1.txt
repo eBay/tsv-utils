@@ -359,30 +359,16 @@ line	title	weight
 5	Pinocchion seikkailut	19
 7	Oude Egyptische Legenden	28
 
-====[tsv-sample -H -s -p .25 --key-fields 1 --compatibility-mode input4x50.tsv input4x15.tsv]====
+====[tsv-sample -H -s -p 0.02 input4x50.tsv input4x15.tsv]====
 c-1	c-2	c-3	c-4
 púrpura	2088	Macuco	1
-blutrot	2142	Tüpfelsumpfhuhn	1
-blutrot	2118	Tüpfelsumpfhuhn	4
-Cerise	2076	Malvasía Cabeciblanca	4
-café	2088	Purpurreiher	2
-púrpura	2070	Macreuse à bec jaune	2
-blutrot	2121	Воробей	4
-púrpura	2092	Macreuse à bec jaune	4
-blutrot	2117	Tüpfelsumpfhuhn	0
-púrpura	2093	Macreuse à bec jaune	4
-café	2062	Purpurreiher	4
-Cerise	2119	Malvasía Cabeciblanca	4
-café	2100	Purpurreiher	2
-blutrot	2143	Tüpfelsumpfhuhn	4
-púrpura	2119	Macuco	4
-púrpura	2145	Macreuse à bec jaune	2
-blutrot	2149	Tüpfelsumpfhuhn	1
-blutrot	2120	Tüpfelsumpfhuhn	1
-café	2041	Purpurreiher	4
-café	2019	Marreca-cabocla	1
-blutrot	2093	Araqua-pintado	2
-blutrot	2137	Marreca-cabocla	1
+暗紅色/暗赤色	2015	Malvasía Cabeciblanca	2
+blanc	2038	Голубь	0
+
+====[tsv-sample -s -p 0.02 input4x50.tsv input4x15.tsv]====
+c-1	c-2	c-3	c-4
+Orange-red	2089	Purpurreiher	1
+Grünspan	2053	Pipit de Godlewski	4
 
 ====[tsv-sample -H -s --replace --compatibility-mode input3x3.tsv --num 5]====
 line	title	weight
@@ -451,6 +437,31 @@ marrón	2034	Weißwangengans	1
 ébène	2142	Орёл	2
 marrón	2121	Marreca-cabocla	2
 dorado	2147	Tüpfelsumpfhuhn	1
+
+====[tsv-sample -H -s -p .25 --key-fields 1 --compatibility-mode input4x50.tsv input4x15.tsv]====
+c-1	c-2	c-3	c-4
+púrpura	2088	Macuco	1
+blutrot	2142	Tüpfelsumpfhuhn	1
+blutrot	2118	Tüpfelsumpfhuhn	4
+Cerise	2076	Malvasía Cabeciblanca	4
+café	2088	Purpurreiher	2
+púrpura	2070	Macreuse à bec jaune	2
+blutrot	2121	Воробей	4
+púrpura	2092	Macreuse à bec jaune	4
+blutrot	2117	Tüpfelsumpfhuhn	0
+púrpura	2093	Macreuse à bec jaune	4
+café	2062	Purpurreiher	4
+Cerise	2119	Malvasía Cabeciblanca	4
+café	2100	Purpurreiher	2
+blutrot	2143	Tüpfelsumpfhuhn	4
+púrpura	2119	Macuco	4
+púrpura	2145	Macreuse à bec jaune	2
+blutrot	2149	Tüpfelsumpfhuhn	1
+blutrot	2120	Tüpfelsumpfhuhn	1
+café	2041	Purpurreiher	4
+café	2019	Marreca-cabocla	1
+blutrot	2093	Araqua-pintado	2
+blutrot	2137	Marreca-cabocla	1
 
 ====[tsv-sample -H -s -p .25 -k 1 -n 5 --compatibility-mode input4x50.tsv input4x15.tsv]====
 c-1	c-2	c-3	c-4

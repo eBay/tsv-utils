@@ -400,13 +400,15 @@ _**Tip:**_ Bash completion is very helpful when using commands like `tsv-summari
 
 **Distinct sampling**: Distinct sampling selects a subset based on a key in data. Consider a query log with records consisting of <user, query, clicked-url> triples. Distinct sampling selects all records matching a subset of values from one of fields. For example, all events for ten percent of the users. This is important for certain types of analysis. The term "distinct sampling" originates from algorithms estimating the number of distinct elements in extremely large data sets.
 
-**Printing random values**: Most of these algorithms work by generating a random value for each line. The nature of these values depends on the sampling algorithm. They are used for both line selection and output ordering. The `--p|print-random` option can be used to print these values. The random value is prepended to the line separated by the `--d|delimiter` char (TAB by default). The `--q|gen-random-inorder` option takes this one step further, generating random values for all input lines without changing the input order. The types of values currently used by these sampling algorithms:
+**Printing random values**: Most of these algorithms work by generating a random value for each line. (See also "Compatibility mode" below.) The nature of these values depends on the sampling algorithm. They are used for both line selection and output ordering. The `--p|print-random` option can be used to print these values. The random value is prepended to the line separated by the `--d|delimiter` char (TAB by default). The `--q|gen-random-inorder` option takes this one step further, generating random values for all input lines without changing the input order. The types of values currently used by these sampling algorithms:
 * Unweighted sampling: Uniform random value in the interval [0,1]. This includes stream sampling and unweighted line order randomization.
 * Weighted sampling: Value in the interval [0,1]. Distribution depends on the values in the weight field. It is used as a partial ordering.
 * Distinct sampling: An integer, zero and up, representing a selection group. The sampling rate determines the number of selection groups.
 * Sampling with replacement: Random value printing is not supported.
 
 The specifics behind these random values are subject to change in future releases.
+
+**Compatibility mode**: As described above, many of the sampling algorithms assign a random value to each line. This is useful when printing random values. It has another occasionally useful property: repeated runs with the same static seed but different selection parameters are more compatible with each other, as each line gets assigned the same random value on every run. For example, if Bernoulli sampling is run with `--prob 0.2 --static-seed`, then run again with `--prob 0.3 --static-seed`, all the lines selected in the first run will be selected in the second. This comes at a cost: in some cases there are faster algorithms that don't preserve this property. By default, `tsv-sample` will use faster algorithms when available. However, the `--compatibility-mode` option switches to algorithms that assign a random value per line. Printing random values also engages compatibility mode.
 
 **Options:**
 

@@ -54,7 +54,8 @@ runtest ${prog} "-H -s --gen-random-inorder -n 15 input3x10.tsv input3x25.tsv" $
 runtest ${prog} "-H -s --prob 1.0 --print-random input3x10.tsv input3x25.tsv" ${basic_tests_1}
 runtest ${prog} "-H -s -p 0.25 --compatibility-mode input3x10.tsv input3x25.tsv" ${basic_tests_1}
 runtest ${prog} "-H -s -p 0.75 -n 5 --compatibility-mode input3x10.tsv input3x25.tsv" ${basic_tests_1}
-runtest ${prog} "-H -s -p .25 --key-fields 1 --compatibility-mode input4x50.tsv input4x15.tsv" ${basic_tests_1}
+runtest ${prog} "-H -s -p 0.02 input4x50.tsv input4x15.tsv" ${basic_tests_1}
+runtest ${prog} "-s -p 0.02 input4x50.tsv input4x15.tsv" ${basic_tests_1}
 
 # Simple random sampling with replacement
 runtest ${prog} "-H -s --replace --compatibility-mode input3x3.tsv --num 5" ${basic_tests_1}
@@ -64,6 +65,7 @@ runtest ${prog} "-s --r input2x5_noheader.tsv --num 7 --compatibility-mode" ${ba
 runtest ${prog} "-H -s --prob .25 -k 3,1 --compatibility-mode input4x50.tsv input4x15.tsv" ${basic_tests_1}
 runtest ${prog} "-H -s -p .25 -k 1,3 --compatibility-mode input4x50.tsv input4x15.tsv" ${basic_tests_1}
 runtest ${prog} "-H -s -p .25 -k 1,1 --compatibility-mode input4x50.tsv input4x15.tsv" ${basic_tests_1}
+runtest ${prog} "-H -s -p .25 --key-fields 1 --compatibility-mode input4x50.tsv input4x15.tsv" ${basic_tests_1}
 runtest ${prog} "-H -s -p .25 -k 1 -n 5 --compatibility-mode input4x50.tsv input4x15.tsv" ${basic_tests_1}
 runtest ${prog} "-s -p .25 -k 1,3 --compatibility-mode input4x50.tsv input4x15.tsv" ${basic_tests_1}
 runtest ${prog} "-s -p .25 -k 3,1 --compatibility-mode input4x50.tsv input4x15.tsv" ${basic_tests_1}
