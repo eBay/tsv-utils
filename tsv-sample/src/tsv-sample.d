@@ -199,6 +199,8 @@ struct TsvSampleOptions
     bool compatibilityMode = false;            // --compatibility-mode
     char delim = '\t';                         // --d|delimiter
     bool versionWanted = false;                // --V|version
+    bool preferSkipSampling = false;           // --prefer-skip-sampling
+    bool preferAlgorithmR = false;             // --prefer-algorithm-r
     bool hasWeightField = false;               // Derived.
     bool useBernoulliSampling = false;         // Derived.
     bool useDistinctSampling = false;          // Derived.
@@ -251,6 +253,12 @@ struct TsvSampleOptions
                 std.getopt.config.caseSensitive,
                 "V|version",       "     Print version information and exit.", &versionWanted,
                 std.getopt.config.caseInsensitive,
+
+                "prefer-skip-sampling", "     (Internal) Prefer the skip-sampling algorithm for Bernoulli sampling. Used for testing and diagnostics.",
+                &preferSkipSampling,
+
+                "prefer-algorithm-r",   "     (Internal) Prefer Algorithm R for unweighted line order randomization. Used for testing and diagnostics.",
+                &preferAlgorithmR,
                 );
 
             if (r.helpWanted)
@@ -317,7 +325,10 @@ struct TsvSampleOptions
 
                 if (hasWeightField) throw new Exception("--w|weight-field and --p|prob cannot be used together.");
 
-                if (genRandomInorder && !useDistinctSampling) throw new Exception("--q|gen-random-inorder and --p|prob can only be used together if --k|key-fields is also used.");
+                if (genRandomInorder && !useDistinctSampling)
+                {
+                    throw new Exception("--q|gen-random-inorder and --p|prob can only be used together if --k|key-fields is also used.");
+                }
             }
             else if (genRandomInorder && !hasWeightField)
             {
@@ -375,13 +386,15 @@ if (isOutputRange!(OutputRange, char))
     }
     else if (cmdopt.genRandomInorder)
     {
+        /* Note that the preceeding cases handle gen-random-inorder themselves (Bernoulli,
+         * Distinct), or don't handle it (SRS w/ Replacement).
+         */
         assert(cmdopt.hasWeightField);
         generateWeightedRandomValuesInorder(cmdopt, outputStream);
     }
     else if (cmdopt.sampleSize != 0)
     {
-        if (cmdopt.hasWeightField) reservoirSampling!(Yes.isWeighted)(cmdopt, outputStream);
-        else reservoirSampling!(No.isWeighted)(cmdopt, outputStream);
+        reservoirSamplingCommand(cmdopt, outputStream);
     }
     else
     {
@@ -391,8 +404,8 @@ if (isOutputRange!(OutputRange, char))
 
 /** Bernoulli sampling on the input stream.
  *
- * This routine selects the appropriate bernoulli sampling function and template instantiation
- * to use based on the command line arguments.
+ * This routine selects the appropriate bernoulli sampling function and template
+ * instantiation to use based on the command line arguments.
  *
  * See the bernoulliSkipSampling routine for a discussion of the choices behind the
  * skipSamplingProbabilityThreshold used here.
@@ -404,7 +417,8 @@ if (isOutputRange!(OutputRange, char))
 
     immutable double skipSamplingProbabilityThreshold = 0.04;
 
-    if (cmdopt.compatibilityMode || cmdopt.inclusionProbability > skipSamplingProbabilityThreshold)
+    if (cmdopt.compatibilityMode ||
+        (cmdopt.inclusionProbability > skipSamplingProbabilityThreshold && !cmdopt.preferSkipSampling))
     {
         if (cmdopt.genRandomInorder)
         {
@@ -609,6 +623,8 @@ void bernoulliSkipSampling(OutputRange)(TsvSampleOptions cmdopt, OutputRange out
  * Distinct sampling is done by hashing the key and mapping the hash value into
  * buckets matching the inclusion probability. Records having a key mapping to bucket
  * zero are output.
+ *
+ * TODO: Add whole line as key.
  */
 void distinctSampling(Flag!"generateRandomAll" generateRandomAll, OutputRange)
     (TsvSampleOptions cmdopt, auto ref OutputRange outputStream)
@@ -729,23 +745,60 @@ if (isOutputRange!(OutputRange, char))
     }
 }
 
-/** An implementation of reservior sampling. Both weighted and uniform random sampling
- * are supported.
+/** Reservoir sampling on the input stream.
  *
- * Both weighted and uniform random sampling are implemented using the one-pass algorithm
- * described by Pavlos Efraimidis and Paul Spirakis ("Weighted Random Sampling over Data
- * Streams", Pavlos S. Efraimidis, https://arxiv.org/abs/1012.0256). In the unweighted
- * case weights are simply set to one.
+ * This routine selects the appropriate reservior sampling function and template
+ * instantiation to use based on the command line arguments.
+ *
+ * Reservoir sampling is used when a fixed size sample is being pulled from an input
+ * stream. Weighted and unweighted sampling is supported. These routines also
+ * randomize the order of the selected lines. This is consistent with line order
+ * randomization of the entire input stream (handled by randomizeLinesCommand).
+ *
+ * For unweighted sampling, there is a performance tradeoff choice between the two
+ * available implementations. See the reservoirSampling documentation for
+ * information. The threshold used here was chosen based on performance tests.
+ */
+
+void reservoirSamplingCommand(OutputRange)(TsvSampleOptions cmdopt, auto ref OutputRange outputStream)
+if (isOutputRange!(OutputRange, char))
+{
+    assert(cmdopt.sampleSize != 0);
+
+    immutable size_t algorithmRSampleSizeThreshold = 128 * 1024;
+
+    if (cmdopt.hasWeightField)
+    {
+        reservoirSamplingViaHeap!(Yes.isWeighted)(cmdopt, outputStream);
+    }
+    else if (cmdopt.compatibilityMode ||
+             (cmdopt.sampleSize < algorithmRSampleSizeThreshold && !cmdopt.preferAlgorithmR))
+    {
+        reservoirSamplingViaHeap!(No.isWeighted)(cmdopt, outputStream);
+    }
+    else
+    {
+        reservoirSamplingAlgorithmR(cmdopt, outputStream);
+    }
+}
+
+/** Reservior sampling using a heap. Both weighted and unweighted random sampling are
+ * supported.
+ *
+ * The algorithm used here is based on the one-pass algorithm described by Pavlos
+ * Efraimidis and Paul Spirakis ("Weighted Random Sampling over Data Streams", Pavlos S.
+ * Efraimidis, https://arxiv.org/abs/1012.0256). In the unweighted case weights are
+ * simply set to one.
  *
  * The implementation uses a heap (priority queue) large enough to hold the desired
- * number of lines. Input is read line-by-line, assigned a random value, and added to the
- * heap. The role of the identify the lines with the highest assigned random values. Once
- * the heap is full, adding a new line means dropping the line with the lowest score. A
- * "min" heap used for this reason.
+ * number of lines. Input is read line-by-line, assigned a random value, and added to
+ * the heap. The role of the identify the lines with the highest assigned random
+ * values. Once the heap is full, adding a new line means dropping the line with the
+ * lowest score. A "min" heap used for this reason.
  *
- * When done reading all lines, the "min" heap is in the opposite order needed for output.
- * The desired order is obtained by removing each element one at at time from the heap.
- * The underlying data store will have the elements in correct order.
+ * When done reading all lines, the "min" heap is in the opposite order needed for
+ * output. The desired order is obtained by removing each element one at at time from
+ * the heap. The underlying data store will have the elements in correct order.
  *
  * Generating output in weighted order matters for several reasons:
  *  - For weighted sampling, it preserves the property that smaller valid subsets can be
@@ -764,16 +817,10 @@ if (isOutputRange!(OutputRange, char))
  *    of all input lines. This was dropped in version 1.2.2 in favor of the approach
  *    used in randomizeLines. The latter has significant advantages given that all data
  *    data must be read into memory.
- *  - The unweighted case could be sped up by adopting what is commonly known as
- *    "Algorithm R" followed by a random walk on the resulting reservoir (e.g.
- *    std.random.randomCover in the D standard library). This is faster than reversing
- *    the heap prior to output. The downsides are that the result order would not be
- *    consistent with the other routines and that random number printing does not make
- *    sense. Order consistency matters only in the rare case when multiple randomizations
- *    are being done with the same static seed. For a description of Algorithm R see:
- *    https://en.wikipedia.org/wiki/Reservoir_sampling#Algorithm_R.
+ *  - For larger reservoir sizes better performance can be achieved by using
+ *    reservoirSamplingAlgorithmR. See the documentation for that function for details.
  */
-void reservoirSampling(Flag!"isWeighted" isWeighted, OutputRange)
+void reservoirSamplingViaHeap(Flag!"isWeighted" isWeighted, OutputRange)
     (TsvSampleOptions cmdopt, auto ref OutputRange outputStream)
 if (isOutputRange!(OutputRange, char))
 {
@@ -946,6 +993,109 @@ if (isOutputRange!(OutputRange, char))
                 }
             }
         }
+    }
+}
+
+/** Reservoir sampling, Algorithm R
+ *
+ * This is an implementation of reservoir sampling using what is commonly known as
+ * "Algorithm R", credited to Alan Waterman by Donald Knuth in the "The Art of
+ * Computer Programming, Volume 2: Seminumerical Algorithms". More information about
+ * the algorithm can be found in Jeffrey Vitter's classic paper "Random Sampling with
+ * a Reservoir" (1985) as well as the Wikipedia article "Reservoir Sampling"
+ * (https://en.wikipedia.org/wiki/Reservoir_sampling#Algorithm_R).
+ *
+ * Algorithm R is used for unweighted sampling without replacement. The heap-based
+ * algorithm in reservoirSamplingViaHeap is used for weighted sampling.
+ *
+ * The classic algorithm stops after identifying the selected set of items. This
+ * implementation goes one step further and randomizes the order of the selected
+ * lines. This supports the tsv-sample use-case, which is line order randomization.
+ *
+ * This algorithm is faster than reservoirSamplingViaHeap when the sample size
+ * (reservoir size) is large. Heap insertion is O(log k), where k is the sample size.
+ * Insertion in this algorithm is O(1). Similarly, generating the random order in the
+ * heap is O(k * log k), while in this algorithm the final randomization step is O(k).
+ *
+ * This speed advantage may be offset a certain amount by using a more expensive random
+ * value generator. reservoirSamplingViaHeap generates values between zero and one,
+ * whereas reservoirSamplingAlgorithR generates random integers over and ever growing
+ * interval. The latter is expected to be more expensive. This is consistent with
+ * performance test indicating that reservoirSamplingViaHeap is faster when using
+ * small-to-medium size reservoirs and large input streams.
+ */
+void reservoirSamplingAlgorithmR(OutputRange)(TsvSampleOptions cmdopt, auto ref OutputRange outputStream)
+if (isOutputRange!(OutputRange, char))
+{
+    import std.random : Random = Mt19937, randomShuffle, uniform;
+    import tsvutil : throwIfWindowsNewlineOnUnix;
+
+    assert(cmdopt.sampleSize > 0);
+    assert(!cmdopt.hasWeightField);
+    assert(!cmdopt.compatibilityMode);
+    assert(!cmdopt.printRandom);
+    assert(!cmdopt.genRandomInorder);
+
+    string[] reservoir;
+    auto reservoirAppender = appender(&reservoir);
+    reservoirAppender.reserve(cmdopt.sampleSize);
+
+    auto randomGenerator = Random(cmdopt.seed);
+
+    /* Process each line. */
+
+    bool headerWritten = false;
+    size_t totalLineNum = 0;
+    foreach (filename; cmdopt.files)
+    {
+        auto inputStream = (filename == "-") ? stdin : filename.File();
+        foreach (fileLineNum, line; inputStream.byLine(KeepTerminator.no).enumerate(1))
+        {
+            if (fileLineNum == 1) throwIfWindowsNewlineOnUnix(line, filename, fileLineNum);
+            if (fileLineNum == 1 && cmdopt.hasHeader)
+            {
+                if (!headerWritten)
+                {
+                    if (cmdopt.printRandom)
+                    {
+                        outputStream.put(cmdopt.randomValueHeader);
+                        outputStream.put(cmdopt.delim);
+                    }
+                    outputStream.put(line);
+                    outputStream.put("\n");
+                    headerWritten = true;
+                }
+            }
+            else
+            {
+                /* Add lines to the reservoir until the reservoir is filled.
+                 * After that lines are added with decreasing likelihood, based on
+                 * the total number of lines seen. If added to the reservoir, the
+                 * line replaces a randomly chosen existing line.
+                 */
+                if (totalLineNum < cmdopt.sampleSize)
+                {
+                    reservoirAppender ~= line.idup;
+                }
+                else
+                {
+                    size_t i = uniform(0, totalLineNum, randomGenerator);
+                    if (i < reservoir.length) reservoir[i] = line.idup;
+                }
+
+                ++totalLineNum;
+            }
+        }
+    }
+
+    /* The random sample is now in the reservior. Shuffle it and print. */
+
+    reservoir.randomShuffle(randomGenerator);
+
+    foreach (ref line; reservoir)
+    {
+        outputStream.put(line);
+        outputStream.put("\n");
     }
 }
 
@@ -1445,6 +1595,7 @@ unittest
     writeUnittestTsvFile(fpath_data3x6, data3x6);
     writeUnittestTsvFile(fpath_data3x6_noheader, data3x6[1..$]);
 
+    // Randomization, all lines
     string[][] data3x6ExpectedNoWt =
         [["field_a", "field_b", "field_c"],
          ["yellow", "黄", "12"],
@@ -1471,6 +1622,49 @@ unittest
          ["0.49287854949943721", "white", "白", "1.65"],
          ["0.15929344086907804", "green", "緑", "0.0072"],
          ["0.010968807619065046", "red", "赤", "23.8"]];
+
+    /* Note: data3x6ExpectedAlgoRNum6 is identical to data3x6NoCompatExpectedNoWt because
+     * both are effectively the same algorithm given that --num is data length. Both read
+     * in the full data in order then call randomShuffle.
+     */
+    string[][] data3x6ExpectedAlgoRNum6 =
+        [["field_a", "field_b", "field_c"],
+         ["black", "黒", "0.983"],
+         ["green", "緑", "0.0072"],
+         ["red", "赤", "23.8"],
+         ["yellow", "黄", "12"],
+         ["white", "白", "1.65"],
+         ["blue", "青", "12"]];
+
+    string[][] data3x6ExpectedAlgoRNum5 =
+        [["field_a", "field_b", "field_c"],
+         ["red", "赤", "23.8"],
+         ["black", "黒", "0.983"],
+         ["white", "白", "1.65"],
+         ["green", "緑", "0.0072"],
+         ["yellow", "黄", "12"]];
+
+    string[][] data3x6ExpectedAlgoRNum4 =
+        [["field_a", "field_b", "field_c"],
+         ["blue", "青", "12"],
+         ["green", "緑", "0.0072"],
+         ["black", "黒", "0.983"],
+         ["white", "白", "1.65"]];
+
+    string[][] data3x6ExpectedAlgoRNum3 =
+        [["field_a", "field_b", "field_c"],
+         ["red", "赤", "23.8"],
+         ["black", "黒", "0.983"],
+         ["green", "緑", "0.0072"]];
+
+    string[][] data3x6ExpectedAlgoRNum2 =
+        [["field_a", "field_b", "field_c"],
+         ["black", "黒", "0.983"],
+         ["red", "赤", "23.8"]];
+
+    string[][] data3x6ExpectedAlgoRNum1 =
+        [["field_a", "field_b", "field_c"],
+         ["green", "緑", "0.0072"]];
 
     string[][] data3x6ExpectedProbsBernoulliSampleP100 =
         [["random_value", "field_a", "field_b", "field_c"],
@@ -2083,9 +2277,28 @@ unittest
     testTsvSample(["test-aa4", "-H", "-s", fpath_data3x2], data3x2NoCompatExpectedNoWt);
     testTsvSample(["test-aa5", "-H", "-s", fpath_data3x3], data3x3NoCompatExpectedNoWt);
     testTsvSample(["test-aa6", "-H", "-s", fpath_data3x6], data3x6NoCompatExpectedNoWt);
-    testTsvSample(["test-aa8", "-H", "-s", "--weight-field", "3", fpath_data3x6], data3x6ExpectedWt3);
-    testTsvSample(["test-aa9", "-H", "-s", "--print-random", "-w", "3", "--compatibility-mode", fpath_data3x6], data3x6ExpectedWt3Probs);
-    testTsvSample(["test-aa10", "-H", "--seed-value", "41", "--print-random", "--compatibility-mode", fpath_data3x6], data3x6ExpectedNoWtV41Probs);
+    testTsvSample(["test-aa7", "-H", "-s", "--weight-field", "3", fpath_data3x6], data3x6ExpectedWt3);
+    testTsvSample(["test-aa8", "-H", "-s", "--print-random", "-w", "3", "--compatibility-mode", fpath_data3x6], data3x6ExpectedWt3Probs);
+    testTsvSample(["test-aa9", "-H", "--seed-value", "41", "--print-random", "--compatibility-mode", fpath_data3x6], data3x6ExpectedNoWtV41Probs);
+
+    /* Reservoir sampling using Algorithm R.
+     * (Note: reservoirSamplingViaHeap is tested later in the length-based iteration loops.)
+     */
+
+    testTsvSample(["test-aa10", "--prefer-algorithm-r", "--header", "--static-seed", "--num", "1", fpath_dataEmpty], dataEmpty);
+    testTsvSample(["test-aa11", "--prefer-algorithm-r", "--header", "--static-seed", "--num", "2", fpath_dataEmpty], dataEmpty);
+    testTsvSample(["test-aa12", "--prefer-algorithm-r", "-H", "-s", "--num", "1", fpath_data3x0], data3x0);
+    testTsvSample(["test-aa13", "--prefer-algorithm-r", "-H", "-s", "--num", "2", fpath_data3x0], data3x0);
+    testTsvSample(["test-aa14", "--prefer-algorithm-r", "-H", "-s", "--num", "1", fpath_data3x1], data3x1);
+    testTsvSample(["test-aa15", "--prefer-algorithm-r", "-H", "-s", "--num", "2", fpath_data3x1], data3x1);
+    testTsvSample(["test-aa16", "--prefer-algorithm-r", "-H", "-s", "--num", "7", fpath_data3x6], data3x6ExpectedAlgoRNum6);
+    testTsvSample(["test-aa17", "--prefer-algorithm-r", "-H", "-s", "--num", "6", fpath_data3x6], data3x6ExpectedAlgoRNum6);
+    testTsvSample(["test-aa18", "--prefer-algorithm-r", "-H", "-s", "--num", "5", fpath_data3x6], data3x6ExpectedAlgoRNum5);
+    testTsvSample(["test-aa19", "--prefer-algorithm-r", "-H", "-s", "--num", "4", fpath_data3x6], data3x6ExpectedAlgoRNum4);
+    testTsvSample(["test-aa20", "--prefer-algorithm-r", "-H", "-s", "--num", "3", fpath_data3x6], data3x6ExpectedAlgoRNum3);
+    testTsvSample(["test-aa21", "--prefer-algorithm-r", "-H", "-s", "--num", "2", fpath_data3x6], data3x6ExpectedAlgoRNum2);
+    testTsvSample(["test-aa22", "--prefer-algorithm-r", "-H", "-s", "--num", "1", fpath_data3x6], data3x6ExpectedAlgoRNum1);
+
 
     /* Bernoulli sampling cases. */
     testTsvSample(["test-a14", "--header", "--static-seed", "--prob", "0.001", fpath_dataEmpty], dataEmpty);
@@ -2298,58 +2511,67 @@ unittest
     import std.algorithm : min;
     for (size_t n = data3x6.length + 2; n >= 1; n--)
     {
+        /* reservoirSamplingViaHeap.
+         */
         size_t expectedLength = min(data3x6.length, n + 1);
         testTsvSample([format("test-f1_%d", n), "-s", "-n", n.to!string,
                        "-H", fpath_data3x6], data3x6ExpectedNoWt[0..expectedLength]);
 
         testTsvSample([format("test-f2_%d", n), "-s", "-n", n.to!string,
-                       "-H", "--print-random", fpath_data3x6], data3x6ExpectedNoWtProbs[0..expectedLength]);
+                       "-H", "--compatibility-mode", fpath_data3x6], data3x6ExpectedNoWt[0..expectedLength]);
 
         testTsvSample([format("test-f3_%d", n), "-s", "-n", n.to!string,
-                       "-H", "-w", "3", fpath_data3x6], data3x6ExpectedWt3[0..expectedLength]);
+                       "-H", "--print-random", fpath_data3x6], data3x6ExpectedNoWtProbs[0..expectedLength]);
 
         testTsvSample([format("test-f4_%d", n), "-s", "-n", n.to!string,
-                       "-H", "--print-random", "-w", "3", fpath_data3x6], data3x6ExpectedWt3Probs[0..expectedLength]);
+                       "-H", "-w", "3", fpath_data3x6], data3x6ExpectedWt3[0..expectedLength]);
 
         testTsvSample([format("test-f5_%d", n), "-s", "-n", n.to!string,
-                       fpath_data3x6_noheader], data3x6ExpectedNoWt[1..expectedLength]);
+                       "-H", "--print-random", "-w", "3", fpath_data3x6], data3x6ExpectedWt3Probs[0..expectedLength]);
 
         testTsvSample([format("test-f6_%d", n), "-s", "-n", n.to!string,
-                       "--print-random", fpath_data3x6_noheader], data3x6ExpectedNoWtProbs[1..expectedLength]);
+                       fpath_data3x6_noheader], data3x6ExpectedNoWt[1..expectedLength]);
 
         testTsvSample([format("test-f7_%d", n), "-s", "-n", n.to!string,
-                       "-w", "3", fpath_data3x6_noheader], data3x6ExpectedWt3[1..expectedLength]);
+                       "--print-random", fpath_data3x6_noheader], data3x6ExpectedNoWtProbs[1..expectedLength]);
 
         testTsvSample([format("test-f8_%d", n), "-s", "-n", n.to!string,
+                       "-w", "3", fpath_data3x6_noheader], data3x6ExpectedWt3[1..expectedLength]);
+
+        testTsvSample([format("test-f9_%d", n), "-s", "-n", n.to!string,
                        "--print-random", "-w", "3", fpath_data3x6_noheader], data3x6ExpectedWt3Probs[1..expectedLength]);
 
+        /* Bernoulli sampling.
+         */
         import std.algorithm : min;
         size_t sampleExpectedLength = min(expectedLength, data3x6ExpectedProbsBernoulliSampleP60.length);
 
-        testTsvSample([format("test-f9_%d", n), "-s", "-p", "0.6", "-n", n.to!string,
+        testTsvSample([format("test-f10_%d", n), "-s", "-p", "0.6", "-n", n.to!string,
                        "-H", "--print-random", fpath_data3x6], data3x6ExpectedProbsBernoulliSampleP60[0..sampleExpectedLength]);
 
-        testTsvSample([format("test-f10_%d", n), "-s", "-p", "0.6", "-n", n.to!string,
+        testTsvSample([format("test-f11_%d", n), "-s", "-p", "0.6", "-n", n.to!string,
                        "-H", fpath_data3x6], data3x6ExpectedBernoulliSampleP60[0..sampleExpectedLength]);
 
-        testTsvSample([format("test-f11_%d", n), "-s", "-p", "0.6", "-n", n.to!string,
+        testTsvSample([format("test-f12_%d", n), "-s", "-p", "0.6", "-n", n.to!string,
                        "--print-random", fpath_data3x6_noheader], data3x6ExpectedProbsBernoulliSampleP60[1..sampleExpectedLength]);
 
-        testTsvSample([format("test-f12_%d", n), "-s", "-p", "0.6", "-n", n.to!string,
+        testTsvSample([format("test-f13_%d", n), "-s", "-p", "0.6", "-n", n.to!string,
                        fpath_data3x6_noheader], data3x6ExpectedBernoulliSampleP60[1..sampleExpectedLength]);
 
+        /* Distinct Sampling.
+         */
         size_t distinctExpectedLength = min(expectedLength, data3x6ExpectedDistinctSampleK1K3P60.length);
 
-        testTsvSample([format("test-f13_%d", n), "-s", "-k", "1,3", "-p", "0.6", "-n", n.to!string,
+        testTsvSample([format("test-f14_%d", n), "-s", "-k", "1,3", "-p", "0.6", "-n", n.to!string,
                        "-H", fpath_data3x6], data3x6ExpectedDistinctSampleK1K3P60[0..distinctExpectedLength]);
 
-        testTsvSample([format("test-f14_%d", n), "-s", "-k", "1,3", "-p", "0.6", "-n", n.to!string,
+        testTsvSample([format("test-f15_%d", n), "-s", "-k", "1,3", "-p", "0.6", "-n", n.to!string,
                        fpath_data3x6_noheader], data3x6ExpectedDistinctSampleK1K3P60[1..distinctExpectedLength]);
 
-        testTsvSample([format("test-f15_%d", n), "-s", "--gen-random-inorder", "-n", n.to!string,
+        testTsvSample([format("test-f16_%d", n), "-s", "--gen-random-inorder", "-n", n.to!string,
                        "-H", fpath_data3x6], data3x6ExpectedProbsBernoulliSampleP100[0..expectedLength]);
 
-        testTsvSample([format("test-f15_%d", n), "-s", "--gen-random-inorder", "-n", n.to!string,
+        testTsvSample([format("test-f17_%d", n), "-s", "--gen-random-inorder", "-n", n.to!string,
                        fpath_data3x6_noheader], data3x6ExpectedProbsBernoulliSampleP100[1..expectedLength]);
     }
 
