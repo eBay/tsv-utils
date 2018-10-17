@@ -1056,11 +1056,6 @@ if (isOutputRange!(OutputRange, char))
             {
                 if (!headerWritten)
                 {
-                    if (cmdopt.printRandom)
-                    {
-                        outputStream.put(cmdopt.randomValueHeader);
-                        outputStream.put(cmdopt.delim);
-                    }
                     outputStream.put(line);
                     outputStream.put("\n");
                     headerWritten = true;
