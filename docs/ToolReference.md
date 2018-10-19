@@ -428,6 +428,8 @@ The specifics behind these random values are subject to change in future release
 * `--random-value-header` - Header to use with `--print-random` and `--gen-random-inorder`. Default: `random_value`.
 * `--compatibility-mode` - Turns on "compatibility mode".
 * `--d|delimiter CHR` - Field delimiter.
+* `--prefer-skip-sampling` - (Internal) Prefer the skip-sampling algorithm for Bernoulli sampling. Used for testing and diagnostics.
+* `--prefer-algorithm-r` - (Internal) Prefer Algorithm R for unweighted line order randomization. Used for testing and diagnostics.
 
 ---
 

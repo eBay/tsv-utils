@@ -179,10 +179,10 @@ _tsv_sample()
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
-    opts="--help --help-verbose --version --header --num --prob --weight-field --key-fields --replace --print-random --gen-random-inorder --compatibility-mode --static-seed --seed-value --delimiter"
+    opts="--help --help-verbose --version --header --num --prob --weight-field --key-fields --replace --print-random --gen-random-inorder --compatibility-mode --static-seed --seed-value --delimiter --prefer-skip-sampling --prefer-algorithm-r"
 
     case $prev in
-         -h|--help|--help-verbose|-V|--version|-n|--num|-p|--prob|-w|--weight-field|-k|--key-fields|-r|--replace|-v|--seed-value|-d|--delimiter)
+         -h|--help|--help-verbose|-V|--version|-n|--num|-p|--prob|-w|--weight-field|-k|--key-fields|-r|--replace|-v|--seed-value|-d|--delimiter|--prefer-skip-sampling|--prefer-algorithm-r)
           return
           ;;
     esac

@@ -1538,7 +1538,7 @@ unittest
     writeUnittestTsvFile(fpath_data3x1, data3x1);
     writeUnittestTsvFile(fpath_data3x1_noheader, data3x1[1..$]);
 
-    string[][] data3x1ExpectedReplaceN3 =
+    string[][] data3x1ExpectedReplaceNum3 =
         [["field_a", "field_b", "field_c"],
          ["tan", "タン", "8.5"],
          ["tan", "タン", "8.5"],
@@ -1674,7 +1674,7 @@ unittest
         [["field_a", "field_b", "field_c"],
          ["green", "緑", "0.0072"]];
 
-    string[][] data3x6ExpectedBernoulliCompatProbsP100 =
+    string[][] data3x6ExpectedBernoulliProbsP100 =
         [["random_value", "field_a", "field_b", "field_c"],
          ["0.010968807619065046", "red", "赤", "23.8"],
          ["0.15929344086907804", "green", "緑", "0.0072"],
@@ -1689,6 +1689,12 @@ unittest
          ["0.15929344086907804", "green", "緑", "0.0072"],
          ["0.49287854949943721", "white", "白", "1.65"],
          ["0.52525980887003243", "blue", "青", "12"]];
+
+    string[][] data3x6ExpectedBernoulliSkipP40 =
+        [["field_a", "field_b", "field_c"],
+         ["red", "赤", "23.8"],
+         ["green", "緑", "0.0072"],
+         ["yellow", "黄", "12"]];
 
     string[][] data3x6ExpectedBernoulliCompatP60 =
         [["field_a", "field_b", "field_c"],
@@ -1917,6 +1923,13 @@ unittest
          ["pink", "ピンク", "1.1"],
          ["orange", "オレンジ", "2.5"],
          ["green", "緑", "0.0072"]];
+
+        string[][] combo1ExpectedPermuteAlgoRNum4 =
+        [["field_a", "field_b", "field_c"],
+         ["blue", "青", "12"],
+         ["gray", "グレー", "6.2"],
+         ["brown", "褐色", "29.2"],
+         ["white", "白", "1.65"]];
 
     string[][] combo1ExpectedReplaceNum10 =
         [["field_a", "field_b", "field_c"],
@@ -2292,7 +2305,6 @@ unittest
     /* Reservoir sampling using Algorithm R.
      * (Note: reservoirSamplingViaHeap is tested later in the length-based iteration loops.)
      */
-
     testTsvSample(["test-aa10", "--prefer-algorithm-r", "--header", "--static-seed", "--num", "1", fpath_dataEmpty], dataEmpty);
     testTsvSample(["test-aa11", "--prefer-algorithm-r", "--header", "--static-seed", "--num", "2", fpath_dataEmpty], dataEmpty);
     testTsvSample(["test-aa12", "--prefer-algorithm-r", "-H", "-s", "--num", "1", fpath_data3x0], data3x0);
@@ -2307,25 +2319,25 @@ unittest
     testTsvSample(["test-aa21", "--prefer-algorithm-r", "-H", "-s", "--num", "2", fpath_data3x6], data3x6ExpectedPermuteAlgoRNum2);
     testTsvSample(["test-aa22", "--prefer-algorithm-r", "-H", "-s", "--num", "1", fpath_data3x6], data3x6ExpectedPermuteAlgoRNum1);
 
-
     /* Bernoulli sampling cases. */
     testTsvSample(["test-a14", "--header", "--static-seed", "--prob", "0.001", fpath_dataEmpty], dataEmpty);
     testTsvSample(["test-a15", "--header", "--static-seed", "--prob", "0.001", fpath_data3x0], data3x0);
     testTsvSample(["test-a16", "-H", "-s", "-p", "1.0", fpath_data3x1], data3x1);
     testTsvSample(["test-a17", "-H", "-s", "-p", "1.0", fpath_data3x6], data3x6);
     testTsvSample(["test-a18", "-H", "-p", "1.0", fpath_data3x6], data3x6);
-    testTsvSample(["test-a19", "-H", "-s", "--prob", "1.0", "--print-random", fpath_data3x6], data3x6ExpectedBernoulliCompatProbsP100);
+    testTsvSample(["test-a19", "-H", "-s", "--prob", "1.0", "--print-random", fpath_data3x6], data3x6ExpectedBernoulliProbsP100);
     testTsvSample(["test-a20", "-H", "-s", "--prob", "0.60", "--print-random", fpath_data3x6], data3x6ExpectedBernoulliCompatProbsP60);
     testTsvSample(["test-a21", "-H", "-s", "--prob", "0.60", fpath_data3x6], data3x6ExpectedBernoulliCompatP60);
     testTsvSample(["test-a22", "-H", "-v", "41", "--prob", "0.60", "--print-random", fpath_data3x6], data3x6ExpectedBernoulliCompatP60V41Probs);
 
-    /* Bernoulli sampling with probabilities in skip sampling range. */
+    /* Bernoulli sampling with probabilities in skip sampling range or preferring skip sampling. */
     testTsvSample(["test-ab1", "-H", "--seed-value", "333", "--prob", "0.01", fpath_data1x200], data1x200ExpectedBernoulliSkipV333P01);
     testTsvSample(["test-ab2", "-H", "--seed-value", "333", "--prob", "0.02", fpath_data1x200], data1x200ExpectedBernoulliSkipV333P02);
     testTsvSample(["test-ab3", "-H", "--seed-value", "333", "--prob", "0.03", fpath_data1x200], data1x200ExpectedBernoulliSkipV333P03);
     testTsvSample(["test-ab4", "-H", "--seed-value", "333", "--prob", "0.01", "--compatibility-mode", fpath_data1x200], data1x200ExpectedBernoulliCompatV333P01);
     testTsvSample(["test-ab5", "-H", "--seed-value", "333", "--prob", "0.02", "--compatibility-mode", fpath_data1x200], data1x200ExpectedBernoulliCompatV333P02);
     testTsvSample(["test-ab6", "-H", "--seed-value", "333", "--prob", "0.03", "--compatibility-mode", fpath_data1x200], data1x200ExpectedBernoulliCompatV333P03);
+    testTsvSample(["test-ab7", "-H", "-s", "-p", "0.40", "--prefer-skip-sampling", fpath_data3x6], data3x6ExpectedBernoulliSkipP40);
 
     /* Distinct sampling cases. */
     testTsvSample(["test-a23", "--header", "--static-seed", "--prob", "0.001", "--key-fields", "1", fpath_dataEmpty], dataEmpty);
@@ -2337,8 +2349,8 @@ unittest
     /* Generating random weights. Use Bernoulli sampling test set at prob 100% for uniform sampling.
      * For weighted sampling, use the weighted cases, but with expected using the original ordering.
      */
-    testTsvSample(["test-a28", "-H", "-s", "--gen-random-inorder", fpath_data3x6], data3x6ExpectedBernoulliCompatProbsP100);
-    testTsvSample(["test-a29", "-H", "-s", "--gen-random-inorder", fpath_data3x6], data3x6ExpectedBernoulliCompatProbsP100);
+    testTsvSample(["test-a28", "-H", "-s", "--gen-random-inorder", fpath_data3x6], data3x6ExpectedBernoulliProbsP100);
+    testTsvSample(["test-a29", "-H", "-s", "--gen-random-inorder", fpath_data3x6], data3x6ExpectedBernoulliProbsP100);
     testTsvSample(["test-a30", "-H", "-s", "--gen-random-inorder", "--weight-field", "3", fpath_data3x6],
                   data3x6ExpectedWt3ProbsInorder);
     testTsvSample(["test-a31", "-H", "-v", "41", "--gen-random-inorder", "--weight-field", "3", fpath_data3x6],
@@ -2355,7 +2367,7 @@ unittest
     testTsvSample(["test-a36", "-H", "-s", "--replace", "--num", "3", fpath_dataEmpty], dataEmpty);
     testTsvSample(["test-a37", "-H", "-s", "--replace", fpath_data3x0], data3x0);
     testTsvSample(["test-a38", "-H", "-s", "--replace", "--num", "3", fpath_data3x0], data3x0);
-    testTsvSample(["test-a39", "-H", "-s", "--replace", "--num", "3", fpath_data3x1], data3x1ExpectedReplaceN3);
+    testTsvSample(["test-a39", "-H", "-s", "--replace", "--num", "3", fpath_data3x1], data3x1ExpectedReplaceNum3);
     testTsvSample(["test-a40", "-H", "-s", "--replace", "--num", "10", fpath_data3x6], data3x6ExpectedReplaceNum10);
     testTsvSample(["test-a41", "-H", "-s", "-v", "77", "--replace", "--num", "10", fpath_data3x6], data3x6ExpectedReplaceNum10V77);
 
@@ -2379,11 +2391,24 @@ unittest
     testTsvSample(["test-bb6", "-s", "--print-random", "-w", "3", "--compatibility-mode", fpath_data3x6_noheader], data3x6ExpectedPermuteWt3Probs[1..$]);
     testTsvSample(["test-bb7", "-v", "41", "--print-random", "--compatibility-mode", fpath_data3x6_noheader], data3x6ExpectedPermuteCompatV41Probs[1..$]);
 
+    /* Reservoir sampling using Algorithm R, no headers. */
+    testTsvSample(["test-aa10", "--prefer-algorithm-r", "--static-seed", "--num", "1", fpath_dataEmpty], dataEmpty);
+    testTsvSample(["test-aa11", "--prefer-algorithm-r", "--static-seed", "--num", "2", fpath_dataEmpty], dataEmpty);
+    testTsvSample(["test-aa14", "--prefer-algorithm-r", "-s", "--num", "1", fpath_data3x1_noheader], data3x1[1..$]);
+    testTsvSample(["test-aa15", "--prefer-algorithm-r", "-s", "--num", "2", fpath_data3x1_noheader], data3x1[1..$]);
+    testTsvSample(["test-aa16", "--prefer-algorithm-r", "-s", "--num", "7", fpath_data3x6_noheader], data3x6ExpectedPermuteAlgoRNum6[1..$]);
+    testTsvSample(["test-aa17", "--prefer-algorithm-r", "-s", "--num", "6", fpath_data3x6_noheader], data3x6ExpectedPermuteAlgoRNum6[1..$]);
+    testTsvSample(["test-aa18", "--prefer-algorithm-r", "-s", "--num", "5", fpath_data3x6_noheader], data3x6ExpectedPermuteAlgoRNum5[1..$]);
+    testTsvSample(["test-aa19", "--prefer-algorithm-r", "-s", "--num", "4", fpath_data3x6_noheader], data3x6ExpectedPermuteAlgoRNum4[1..$]);
+    testTsvSample(["test-aa20", "--prefer-algorithm-r", "-s", "--num", "3", fpath_data3x6_noheader], data3x6ExpectedPermuteAlgoRNum3[1..$]);
+    testTsvSample(["test-aa21", "--prefer-algorithm-r", "-s", "--num", "2", fpath_data3x6_noheader], data3x6ExpectedPermuteAlgoRNum2[1..$]);
+    testTsvSample(["test-aa22", "--prefer-algorithm-r", "-s", "--num", "1", fpath_data3x6_noheader], data3x6ExpectedPermuteAlgoRNum1[1..$]);
+
     /* Bernoulli sampling cases. */
     testTsvSample(["test-b10", "-s", "-p", "1.0", fpath_data3x1_noheader], data3x1[1..$]);
     testTsvSample(["test-b11", "-s", "-p", "1.0", fpath_data3x6_noheader], data3x6[1..$]);
     testTsvSample(["test-b12", "-p", "1.0", fpath_data3x6_noheader], data3x6[1..$]);
-    testTsvSample(["test-b13", "-s", "--prob", "1.0", "--print-random", fpath_data3x6_noheader], data3x6ExpectedBernoulliCompatProbsP100[1..$]);
+    testTsvSample(["test-b13", "-s", "--prob", "1.0", "--print-random", fpath_data3x6_noheader], data3x6ExpectedBernoulliProbsP100[1..$]);
     testTsvSample(["test-b14", "-s", "--prob", "0.60", "--print-random", fpath_data3x6_noheader], data3x6ExpectedBernoulliCompatProbsP60[1..$]);
     testTsvSample(["test-b15", "-v", "41", "--prob", "0.60", "--print-random", fpath_data3x6_noheader], data3x6ExpectedBernoulliCompatP60V41Probs[1..$]);
 
@@ -2394,6 +2419,7 @@ unittest
     testTsvSample(["test-bb4", "-v", "333", "-p", "0.01", "--compatibility-mode", fpath_data1x200_noheader], data1x200ExpectedBernoulliCompatV333P01[1..$]);
     testTsvSample(["test-bb5", "-v", "333", "-p", "0.02", "--compatibility-mode", fpath_data1x200_noheader], data1x200ExpectedBernoulliCompatV333P02[1..$]);
     testTsvSample(["test-bb6", "-v", "333", "-p", "0.03", "--compatibility-mode", fpath_data1x200_noheader], data1x200ExpectedBernoulliCompatV333P03[1..$]);
+    testTsvSample(["test-bb7", "-s", "-p", "0.40", "--prefer-skip-sampling", fpath_data3x6_noheader], data3x6ExpectedBernoulliSkipP40[1..$]);
 
     /* Distinct sampling cases. */
     testTsvSample(["test-b16", "-s", "-p", "1.0", "-k", "2", fpath_data3x1_noheader], data3x1[1..$]);
@@ -2402,7 +2428,7 @@ unittest
     testTsvSample(["test-b19", "-v", "71563", "-p", "1.0", "-k", "2", fpath_data3x6_noheader], data3x6[1..$]);
 
     /* Generating random weights. Reuse Bernoulli sampling tests at prob 100%. */
-    testTsvSample(["test-b20", "-s", "--gen-random-inorder", fpath_data3x6_noheader], data3x6ExpectedBernoulliCompatProbsP100[1..$]);
+    testTsvSample(["test-b20", "-s", "--gen-random-inorder", fpath_data3x6_noheader], data3x6ExpectedBernoulliProbsP100[1..$]);
     testTsvSample(["test-b23", "-v", "41", "--gen-random-inorder", "--weight-field", "3", fpath_data3x6_noheader], data3x6ExpectedWt3V41ProbsInorder[1..$]);
     testTsvSample(["test-b24", "-s", "-p", "0.6", "-k", "1,3", "--print-random", fpath_data3x6_noheader],
                   data3x6ExpectedDistinctK1K3P60Probs[1..$]);
@@ -2412,7 +2438,7 @@ unittest
     /* Simple random sampling with replacement. */
     testTsvSample(["test-b25", "-s", "--replace", fpath_dataEmpty], dataEmpty);
     testTsvSample(["test-b26", "-s", "-r", "--num", "3", fpath_dataEmpty], dataEmpty);
-    testTsvSample(["test-b27", "-s", "-r", "-n", "3", fpath_data3x1_noheader], data3x1ExpectedReplaceN3[1..$]);
+    testTsvSample(["test-b27", "-s", "-r", "-n", "3", fpath_data3x1_noheader], data3x1ExpectedReplaceNum3[1..$]);
     testTsvSample(["test-b28", "-s", "--replace", "-n", "10", fpath_data3x6_noheader], data3x6ExpectedReplaceNum10[1..$]);
     testTsvSample(["test-b29", "-s", "-v", "77", "--replace", "--num", "10", fpath_data3x6_noheader], data3x6ExpectedReplaceNum10V77[1..$]);
 
@@ -2429,37 +2455,44 @@ unittest
     testTsvSample(["test-c4", "--header", "--static-seed", "--weight-field", "3", "--compatibility-mode",
                    fpath_data3x0, fpath_data3x3, fpath_data3x1, fpath_dataEmpty, fpath_data3x6, fpath_data3x2],
                   combo1ExpectedPermuteWt3);
+    testTsvSample(["test-c5", "--header", "--static-seed", "--prefer-algorithm-r", "--num", "4",
+                   fpath_data3x0, fpath_data3x3, fpath_data3x1, fpath_dataEmpty, fpath_data3x6, fpath_data3x2],
+                  combo1ExpectedPermuteAlgoRNum4);
 
     /* Multi-file, no headers. */
-    testTsvSample(["test-c5", "--static-seed", "--compatibility-mode",
+    testTsvSample(["test-c6", "--static-seed", "--compatibility-mode",
                    fpath_data3x3_noheader, fpath_data3x1_noheader, fpath_dataEmpty,
                    fpath_data3x6_noheader, fpath_data3x2_noheader],
                   combo1ExpectedPermuteCompat[1..$]);
-    testTsvSample(["test-c6", "--static-seed", "--print-random",
+    testTsvSample(["test-c7", "--static-seed", "--print-random",
                    fpath_data3x3_noheader, fpath_data3x1_noheader, fpath_dataEmpty,
                    fpath_data3x6_noheader, fpath_data3x2_noheader],
                   combo1ExpectedPermuteCompatProbs[1..$]);
-    testTsvSample(["test-c7", "--static-seed", "--print-random", "--weight-field", "3",
+    testTsvSample(["test-c8", "--static-seed", "--print-random", "--weight-field", "3",
                    fpath_data3x3_noheader, fpath_data3x1_noheader, fpath_dataEmpty,
                    fpath_data3x6_noheader, fpath_data3x2_noheader],
                   combo1ExpectedPermuteWt3Probs[1..$]);
-    testTsvSample(["test-c8", "--static-seed", "--weight-field", "3", "--compatibility-mode",
+    testTsvSample(["test-c9", "--static-seed", "--weight-field", "3", "--compatibility-mode",
                    fpath_data3x3_noheader, fpath_data3x1_noheader, fpath_dataEmpty,
                    fpath_data3x6_noheader, fpath_data3x2_noheader],
                   combo1ExpectedPermuteWt3[1..$]);
+    testTsvSample(["test-c10", "--static-seed", "--prefer-algorithm-r", "--num", "4",
+                   fpath_data3x3_noheader, fpath_data3x1_noheader, fpath_dataEmpty,
+                   fpath_data3x6_noheader, fpath_data3x2_noheader],
+                  combo1ExpectedPermuteAlgoRNum4[1..$]);
 
     /* Bernoulli sampling cases. */
-    testTsvSample(["test-c9", "--header", "--static-seed", "--print-random", "--prob", ".5",
+    testTsvSample(["test-c11", "--header", "--static-seed", "--print-random", "--prob", ".5",
                    fpath_data3x0, fpath_data3x3, fpath_data3x1, fpath_dataEmpty, fpath_data3x6, fpath_data3x2],
                   combo1ExpectedBernoulliCompatP50Probs);
-    testTsvSample(["test-c10", "--header", "--static-seed", "--prob", ".4",
+    testTsvSample(["test-c12", "--header", "--static-seed", "--prob", ".4",
                    fpath_data3x0, fpath_data3x3, fpath_data3x1, fpath_dataEmpty, fpath_data3x6, fpath_data3x2],
                   combo1ExpectedBernoulliCompatP40);
-    testTsvSample(["test-c11", "--static-seed", "--print-random", "--prob", ".5",
+    testTsvSample(["test-c13", "--static-seed", "--print-random", "--prob", ".5",
                    fpath_data3x3_noheader, fpath_data3x1_noheader, fpath_dataEmpty,
                    fpath_data3x6_noheader, fpath_data3x2_noheader],
                   combo1ExpectedBernoulliCompatP50Probs[1..$]);
-    testTsvSample(["test-c12", "--static-seed", "--prob", ".4",
+    testTsvSample(["test-c14", "--static-seed", "--prob", ".4",
                    fpath_data3x3_noheader, fpath_data3x1_noheader, fpath_dataEmpty,
                    fpath_data3x6_noheader, fpath_data3x2_noheader],
                   combo1ExpectedBernoulliCompatP40[1..$]);
@@ -2577,10 +2610,10 @@ unittest
                        fpath_data3x6_noheader], data3x6ExpectedDistinctK1K3P60[1..distinctExpectedLength]);
 
         testTsvSample([format("test-f16_%d", n), "-s", "--gen-random-inorder", "-n", n.to!string,
-                       "-H", fpath_data3x6], data3x6ExpectedBernoulliCompatProbsP100[0..expectedLength]);
+                       "-H", fpath_data3x6], data3x6ExpectedBernoulliProbsP100[0..expectedLength]);
 
         testTsvSample([format("test-f17_%d", n), "-s", "--gen-random-inorder", "-n", n.to!string,
-                       fpath_data3x6_noheader], data3x6ExpectedBernoulliCompatProbsP100[1..expectedLength]);
+                       fpath_data3x6_noheader], data3x6ExpectedBernoulliProbsP100[1..expectedLength]);
     }
 
     /* Similar tests with the 1x10 data set. */
