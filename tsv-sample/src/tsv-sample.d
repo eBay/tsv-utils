@@ -1104,39 +1104,34 @@ if (isOutputRange!(OutputRange, char))
 {
     if (cmdopt.hasWeightField)
     {
-        randomizeLines!(Yes.isWeighted)(cmdopt, outputStream);
+        randomizeLinesViaSort!(Yes.isWeighted)(cmdopt, outputStream);
     }
     else if (cmdopt.compatibilityMode)
     {
-        randomizeLines!(No.isWeighted)(cmdopt, outputStream);
+        randomizeLinesViaSort!(No.isWeighted)(cmdopt, outputStream);
     }
     else
     {
-        randomizeLinesFast(cmdopt, outputStream);
+        randomizeLinesViaShuffle(cmdopt, outputStream);
     }
 }
 
 /** Randomize all the lines in files or standard input.
  *
  * All lines in files and/or standard input are read in and written out in random
- * order. Both simple random sampling and weighted sampling are supported.
+ * order. This algorithm assigns a random value to each line and sorts. This approach
+ * supports both weighted sampling and simple random sampling (unweighted).
+ *
+ * This is significantly faster than heap-based reservoir sampling in the case where
+ * the entire file is being read. See also randomizeLinesViaShuffle for the unweighted
+ * case, as it is a little faster, at the cost not supporting random value printing or
+ * compatibility-mode.
  *
  * Input data size is limited by available memory. Disk oriented techniques are needed
  * when data sizes are larger. For example, generating random values line-by-line (ala
  * --gen-random-inorder) and sorting with a disk-backed sort program like GNU sort.
- *
- * This approach is significantly faster than reading line-by-line with a heap the
- * way reservoir sampling does, effectively acknowledging that both approaches
- * need to read all data into memory when randomizing all lines.
- *
- * Note: The unweighted case could be sped up by using std.random.randomShuffle from
- * the D standard library. This uses an O(n) swapping algorithm to perform the shuffle
- * rather than the O(n log n) sort approach used here. The downsides are that the
- * result order would not be consistent with the other routines and that random number
- * printing does not make sense. Order consistency matters only in the rare case when
- * multiple randomizations are being done with the same static seed.
  */
-void randomizeLines(Flag!"isWeighted" isWeighted, OutputRange)(TsvSampleOptions cmdopt, auto ref OutputRange outputStream)
+void randomizeLinesViaSort(Flag!"isWeighted" isWeighted, OutputRange)(TsvSampleOptions cmdopt, auto ref OutputRange outputStream)
 if (isOutputRange!(OutputRange, char))
 {
     import std.algorithm : map, sort;
@@ -1176,13 +1171,17 @@ if (isOutputRange!(OutputRange, char))
 /** Randomize all the lines in files or standard input.
  *
  * All lines in files and/or standard input are read in and written out in random
- * order.
+ * order. This routine uses array shuffling, which is faster than sorting. This makes
+ * this routine a good alternative to randomizeLinesViaSort when doing unweighted
+ * randomization.
  *
- * This is a faster version of randomizeLines, one that can be used in the unweighted
- * case, when it is not necessary to print random values and compatibility with other
- * sampling invocations is not necessary.
+ * Input data size is limited by available memory. Disk oriented techniques are needed
+ * when data sizes are larger. For example, generating random values line-by-line (ala
+ * --gen-random-inorder) and sorting with a disk-backed sort program like GNU sort.
+ *
+ * This routine does not support random value printing or compatibility-mode.
  */
-void randomizeLinesFast(OutputRange)(TsvSampleOptions cmdopt, auto ref OutputRange outputStream)
+void randomizeLinesViaShuffle(OutputRange)(TsvSampleOptions cmdopt, auto ref OutputRange outputStream)
 if (isOutputRange!(OutputRange, char))
 {
     import std.algorithm : map;
@@ -1370,7 +1369,8 @@ if (isOutputRange!(OutputRange, char))
                     else
                     {
                         double lineWeight =
-                            getFieldValue!double(line, cmdopt.weightField, cmdopt.delim, fd.filename, fileLineNum);
+                            getFieldValue!double(line, cmdopt.weightField, cmdopt.delim,
+                                                 fd.filename, fileLineNum);
                         double randomValue =
                             (lineWeight > 0.0)
                             ? uniform01(randomGenerator) ^^ (1.0 / lineWeight)
