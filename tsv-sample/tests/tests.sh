@@ -39,12 +39,12 @@ basic_tests_1=${odir}/basic_tests_1.txt
 echo "Basic tests set 1" > ${basic_tests_1}
 echo "-----------------" >> ${basic_tests_1}
 
-runtest ${prog} "--header --static-seed input3x10.tsv input3x25.tsv" ${basic_tests_1}
+runtest ${prog} "--header --static-seed --compatibility-mode input3x10.tsv input3x25.tsv" ${basic_tests_1}
 runtest ${prog} "-H -s --print-random input3x10.tsv input3x25.tsv" ${basic_tests_1}
 runtest ${prog} "-H -s --print-random --weight-field 3 input3x10.tsv input3x25.tsv" ${basic_tests_1}
 runtest ${prog} "-H -s --print-random -w 3 --num 15 input3x10.tsv input3x25.tsv" ${basic_tests_1}
 runtest ${prog} "-H -s --print-random -n 15 input3x10.tsv input3x25.tsv" ${basic_tests_1}
-runtest ${prog} "-H -s -n 100 input3x10.tsv input3x25.tsv" ${basic_tests_1}
+runtest ${prog} "-H -s -n 100  --compatibility-mode input3x10.tsv input3x25.tsv" ${basic_tests_1}
 runtest ${prog} "-H -s --gen-random-inorder --weight-field 3 input3x10.tsv input3x25.tsv" ${basic_tests_1}
 runtest ${prog} "-H -s --gen-random-inorder -n 15 --weight-field 3 input3x10.tsv input3x25.tsv" ${basic_tests_1}
 runtest ${prog} "-H -s --gen-random-inorder input3x10.tsv input3x25.tsv" ${basic_tests_1}
@@ -52,38 +52,40 @@ runtest ${prog} "-H -s --gen-random-inorder -n 15 input3x10.tsv input3x25.tsv" $
 
 # Bernoulli sampling
 runtest ${prog} "-H -s --prob 1.0 --print-random input3x10.tsv input3x25.tsv" ${basic_tests_1}
-runtest ${prog} "-H -s -p 0.25 input3x10.tsv input3x25.tsv" ${basic_tests_1}
-runtest ${prog} "-H -s -p 0.75 -n 5 input3x10.tsv input3x25.tsv" ${basic_tests_1}
-runtest ${prog} "-H -s -p .25 --key-fields 1 input4x50.tsv input4x15.tsv" ${basic_tests_1}
+runtest ${prog} "-H -s -p 0.25 --compatibility-mode input3x10.tsv input3x25.tsv" ${basic_tests_1}
+runtest ${prog} "-H -s -p 0.75 -n 5 --compatibility-mode input3x10.tsv input3x25.tsv" ${basic_tests_1}
+runtest ${prog} "-H -s -p 0.02 input4x50.tsv input4x15.tsv" ${basic_tests_1}
+runtest ${prog} "-s -p 0.02 input4x50.tsv input4x15.tsv" ${basic_tests_1}
 
 # Simple random sampling with replacement
-runtest ${prog} "-H -s --replace input3x3.tsv --num 5" ${basic_tests_1}
-runtest ${prog} "-s --r input2x5_noheader.tsv --num 7" ${basic_tests_1}
+runtest ${prog} "-H -s --replace --compatibility-mode input3x3.tsv --num 5" ${basic_tests_1}
+runtest ${prog} "-s --r input2x5_noheader.tsv --num 7 --compatibility-mode" ${basic_tests_1}
 
 # Distinct Sampling
-runtest ${prog} "-H -s --prob .25 -k 3,1 input4x50.tsv input4x15.tsv" ${basic_tests_1}
-runtest ${prog} "-H -s -p .25 -k 1,3 input4x50.tsv input4x15.tsv" ${basic_tests_1}
-runtest ${prog} "-H -s -p .25 -k 1,1 input4x50.tsv input4x15.tsv" ${basic_tests_1}
-runtest ${prog} "-H -s -p .25 -k 1 -n 5 input4x50.tsv input4x15.tsv" ${basic_tests_1}
-runtest ${prog} "-s -p .25 -k 1,3 input4x50.tsv input4x15.tsv" ${basic_tests_1}
-runtest ${prog} "-s -p .25 -k 3,1 input4x50.tsv input4x15.tsv" ${basic_tests_1}
-runtest ${prog} "-s -p 1 -k 3,1 input4x50.tsv input4x15.tsv" ${basic_tests_1}
+runtest ${prog} "-H -s --prob .25 -k 3,1 --compatibility-mode input4x50.tsv input4x15.tsv" ${basic_tests_1}
+runtest ${prog} "-H -s -p .25 -k 1,3 --compatibility-mode input4x50.tsv input4x15.tsv" ${basic_tests_1}
+runtest ${prog} "-H -s -p .25 -k 1,1 --compatibility-mode input4x50.tsv input4x15.tsv" ${basic_tests_1}
+runtest ${prog} "-H -s -p .25 --key-fields 1 --compatibility-mode input4x50.tsv input4x15.tsv" ${basic_tests_1}
+runtest ${prog} "-H -s -p .25 -k 1 -n 5 --compatibility-mode input4x50.tsv input4x15.tsv" ${basic_tests_1}
+runtest ${prog} "-s -p .25 -k 1,3 --compatibility-mode input4x50.tsv input4x15.tsv" ${basic_tests_1}
+runtest ${prog} "-s -p .25 -k 3,1 --compatibility-mode input4x50.tsv input4x15.tsv" ${basic_tests_1}
+runtest ${prog} "-s -p 1 -k 3,1 --compatibility-mode input4x50.tsv input4x15.tsv" ${basic_tests_1}
 runtest ${prog} "-H -s -p .2 -k 3 --print-random input4x50.tsv input4x15.tsv" ${basic_tests_1}
 runtest ${prog} "-H -s -p .2 -k 3 --print-random -n 5 input4x50.tsv input4x15.tsv" ${basic_tests_1}
 runtest ${prog} "-H -s -p .2 -k 3 --gen-random-inorder -n 10 input4x50.tsv input4x15.tsv" ${basic_tests_1}
 
-runtest ${prog} "--static-seed input2x10_noheader.tsv input2x5_noheader.tsv" ${basic_tests_1}
+runtest ${prog} "--static-seed --compatibility-mode input2x10_noheader.tsv input2x5_noheader.tsv" ${basic_tests_1}
 runtest ${prog} "-s --print-random input2x10_noheader.tsv input2x5_noheader.tsv" ${basic_tests_1}
 runtest ${prog} "-s --print-random --weight-field 1 input2x10_noheader.tsv input2x5_noheader.tsv" ${basic_tests_1}
 runtest ${prog} "-s --print-random -w 1 --num 15 input2x10_noheader.tsv input2x5_noheader.tsv" ${basic_tests_1}
 runtest ${prog} "-s --print-random -n 5 input2x10_noheader.tsv input2x5_noheader.tsv" ${basic_tests_1}
-runtest ${prog} "-s -n 100 input2x10_noheader.tsv input2x5_noheader.tsv" ${basic_tests_1}
+runtest ${prog} "-s -n 100 --compatibility-mode input2x10_noheader.tsv input2x5_noheader.tsv" ${basic_tests_1}
 
 runtest ${prog} "-s --prob 1 --print-random input2x10_noheader.tsv input2x5_noheader.tsv" ${basic_tests_1}
-runtest ${prog} "-s -p .25 input2x10_noheader.tsv input2x5_noheader.tsv" ${basic_tests_1}
-runtest ${prog} "-s -p .75 -n 5 input2x10_noheader.tsv input2x5_noheader.tsv" ${basic_tests_1}
+runtest ${prog} "-s -p .25 --compatibility-mode input2x10_noheader.tsv input2x5_noheader.tsv" ${basic_tests_1}
+runtest ${prog} "-s -p .75 -n 5 --compatibility-mode input2x10_noheader.tsv input2x5_noheader.tsv" ${basic_tests_1}
 
-runtest ${prog} "--delimiter @ -H --static-seed input2x7_atsign.tsv" ${basic_tests_1}
+runtest ${prog} "--delimiter @ -H --static-seed --compatibility-mode input2x7_atsign.tsv" ${basic_tests_1}
 runtest ${prog} "-d @ -H -s --print-random input2x7_atsign.tsv" ${basic_tests_1}
 runtest ${prog} "-d @ -H -s --print-random -w 2 input2x7_atsign.tsv" ${basic_tests_1}
 runtest ${prog} "-d @ -H -s --print-random -w 2 -n 3 input2x7_atsign.tsv" ${basic_tests_1}
@@ -91,46 +93,46 @@ runtest ${prog} "-d @ -H -s --print-random -n 20 input2x7_atsign.tsv" ${basic_te
 runtest ${prog} "-d @ -H -s --print-random --prob 1.0 input2x7_atsign.tsv" ${basic_tests_1}
 
 ## Tests with a negative weight. Negative weight entry should be last.
-runtest ${prog} "-H -w 3 -v 777 input3x25_negative_wt.tsv" ${basic_tests_1}
-runtest ${prog} "-H -w 3 -v 888 input3x25_negative_wt.tsv" ${basic_tests_1}
-runtest ${prog} "-H -w 3 -v 777 -n 24 input3x25_negative_wt.tsv" ${basic_tests_1}
-runtest ${prog} "-H -w 3 -v 888 -n 24 input3x25_negative_wt.tsv" ${basic_tests_1}
-runtest ${prog} "-H --gen-random-inorder -w 3 -v 777 input3x25_negative_wt.tsv" ${basic_tests_1}
-runtest ${prog} "-H --gen-random-inorder -w 3 -v 888 input3x25_negative_wt.tsv" ${basic_tests_1}
+runtest ${prog} "-H -w 3 -v 777 --compatibility-mode input3x25_negative_wt.tsv" ${basic_tests_1}
+runtest ${prog} "-H -w 3 -v 888 --compatibility-mode input3x25_negative_wt.tsv" ${basic_tests_1}
+runtest ${prog} "-H -w 3 -v 777 -n 24 --compatibility-mode input3x25_negative_wt.tsv" ${basic_tests_1}
+runtest ${prog} "-H -w 3 -v 888 -n 24 --compatibility-mode input3x25_negative_wt.tsv" ${basic_tests_1}
+runtest ${prog} "-H --gen-random-inorder -w 3 -v 777 --compatibility-mode input3x25_negative_wt.tsv" ${basic_tests_1}
+runtest ${prog} "-H --gen-random-inorder -w 3 -v 888 --compatibility-mode input3x25_negative_wt.tsv" ${basic_tests_1}
 
 ## Line order randomization with standard input and multiple files. These deserve specific tests
 ## due to special handling of these in the code. runtest cannot do these, so write out by hand.
-echo "" >> ${basic_tests_1}; echo "====[cat input3x10.tsv tsv-sample -v 99]====" >> ${basic_tests_1}
-cat input3x10.tsv | ${prog} -v 99 >> ${basic_tests_1} 2>&1
+echo "" >> ${basic_tests_1}; echo "====[cat input3x10.tsv tsv-sample -v 99 --compatibility-mode]====" >> ${basic_tests_1}
+cat input3x10.tsv | ${prog} -v 99 --compatibility-mode >> ${basic_tests_1} 2>&1
 
-echo "" >> ${basic_tests_1}; echo "====[cat input3x10.tsv tsv-sample -H -v 99]====" >> ${basic_tests_1}
-cat input3x10.tsv | ${prog} -H -v 99 >> ${basic_tests_1} 2>&1
+echo "" >> ${basic_tests_1}; echo "====[cat input3x10.tsv tsv-sample -H -v 99 --compatibility-mode]====" >> ${basic_tests_1}
+cat input3x10.tsv | ${prog} -H -v 99 --compatibility-mode >> ${basic_tests_1} 2>&1
 
 echo "" >> ${basic_tests_1}; echo "====[cat input3x10.tsv tsv-sample -H -v 99 --print-random]====" >> ${basic_tests_1}
 cat input3x10.tsv | ${prog} -H -v 99 --print-random >> ${basic_tests_1} 2>&1
 
-echo "" >> ${basic_tests_1}; echo "====[cat input3x10.tsv tsv-sample -H -s -- - input3x3.tsv input3x4.tsv]====" >> ${basic_tests_1}
-cat input3x10.tsv | ${prog} -H -s -- - input3x3.tsv input3x4.tsv >> ${basic_tests_1} 2>&1
+echo "" >> ${basic_tests_1}; echo "====[cat input3x10.tsv tsv-sample -H -s --compatibility-mode -- - input3x3.tsv input3x4.tsv]====" >> ${basic_tests_1}
+cat input3x10.tsv | ${prog} -H -s --compatibility-mode -- - input3x3.tsv input3x4.tsv >> ${basic_tests_1} 2>&1
 
-echo "" >> ${basic_tests_1}; echo "====[cat input3x10.tsv tsv-sample -H -s -- input3x3.tsv - input3x4.tsv]====" >> ${basic_tests_1}
-cat input3x10.tsv | ${prog} -H -s -- input3x3.tsv - input3x4.tsv >> ${basic_tests_1} 2>&1
+echo "" >> ${basic_tests_1}; echo "====[cat input3x10.tsv tsv-sample -H -s --compatibility-mode -- input3x3.tsv - input3x4.tsv]====" >> ${basic_tests_1}
+cat input3x10.tsv | ${prog} -H -s --compatibility-mode -- input3x3.tsv - input3x4.tsv >> ${basic_tests_1} 2>&1
 
-echo "" >> ${basic_tests_1}; echo "====[cat input3x10.tsv tsv-sample -s -- input3x3.tsv input3x4.tsv -]====" >> ${basic_tests_1}
-cat input3x3.tsv | ${prog} -s -- input3x4.tsv - >> ${basic_tests_1} 2>&1
+echo "" >> ${basic_tests_1}; echo "====[cat input3x10.tsv tsv-sample -s --compatibility-mode -- input3x3.tsv input3x4.tsv -]====" >> ${basic_tests_1}
+cat input3x3.tsv | ${prog} -s --compatibility-mode -- input3x4.tsv - >> ${basic_tests_1} 2>&1
 
-echo "" >> ${basic_tests_1}; echo "====[cat input3x10.tsv tsv-sample -H -s -w 3 -- input3x3.tsv - input3x4.tsv]====" >> ${basic_tests_1}
-cat input3x10.tsv | ${prog} -H -s -w 3 -- input3x3.tsv - input3x4.tsv >> ${basic_tests_1} 2>&1
+echo "" >> ${basic_tests_1}; echo "====[cat input3x10.tsv tsv-sample -H -s -w 3 --compatibility-mode -- input3x3.tsv - input3x4.tsv]====" >> ${basic_tests_1}
+cat input3x10.tsv | ${prog} -H -s -w 3 --compatibility-mode -- input3x3.tsv - input3x4.tsv >> ${basic_tests_1} 2>&1
 
 
-echo "" >> ${basic_tests_1}; echo "====[cat input3x10.tsv tsv-sample -H -s --replace --num 10]====" >> ${basic_tests_1}
-cat input3x10.tsv | ${prog} -H -s --replace --num 10 >> ${basic_tests_1} 2>&1
+echo "" >> ${basic_tests_1}; echo "====[cat input3x10.tsv tsv-sample -H -s --replace --num 10 --compatibility-mode]====" >> ${basic_tests_1}
+cat input3x10.tsv | ${prog} -H -s --replace --num 10 --compatibility-mode >> ${basic_tests_1} 2>&1
 
-echo "" >> ${basic_tests_1}; echo "====[cat input3x10.tsv tsv-sample -H -s --replace --num 10 -- input3x3.tsv - input3x4.tsv]====" >> ${basic_tests_1}
-cat input3x10.tsv | ${prog} -H -s --replace --num 10 -- input3x3.tsv - input3x4.tsv >> ${basic_tests_1} 2>&1
+echo "" >> ${basic_tests_1}; echo "====[cat input3x10.tsv tsv-sample -H -s --replace --num 10 --compatibility-mode -- input3x3.tsv - input3x4.tsv]====" >> ${basic_tests_1}
+cat input3x10.tsv | ${prog} -H -s --replace --num 10 --compatibility-mode -- input3x3.tsv - input3x4.tsv >> ${basic_tests_1} 2>&1
 
 ## Random sample with infinite output - control with head.
-echo "" >> ${basic_tests_1}; echo "====[cat input3x10.tsv tsv-sample -H -s --replace | head -n 1000 | tail]====" >> ${basic_tests_1}
-cat input3x10.tsv | ${prog} -H -s --replace | head -n 1000 | tail >> ${basic_tests_1} 2>&1
+echo "" >> ${basic_tests_1}; echo "====[cat input3x10.tsv tsv-sample -H -s --replace --compatibility-mode | head -n 1000 | tail]====" >> ${basic_tests_1}
+cat input3x10.tsv | ${prog} -H -s --replace --compatibility-mode | head -n 1000 | tail >> ${basic_tests_1} 2>&1
 
 ## Need to run a few tests with the unpredictable seed. Can't compare the results
 ## so check the number of lines returned. Some standard input tests are also in

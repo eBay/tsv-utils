@@ -141,14 +141,15 @@ lines of output. For more info on the sampling approach see:
 * "Weighted Random Sampling over Data Streams", Pavlos S. Efraimidis
   (https://arxiv.org/abs/1012.0256)
 
-Printing random values: Most of the algorithms work by generating a random
-value for each line. The nature of these values depends on the sampling
-algorithm. They are used for both line selection and output ordering. The
-'--p|print-random' option can be used to print these values. The random
-value is prepended to the line separated by the --d|delimiter char (TAB by
-default). The '--q|gen-random-inorder' option takes this one step further,
-generating random values for all input lines without changing the input
-order. The types of values currently used by these sampling algorithms:
+Printing random values: Most of the sampling algorithms work by generating
+a random value for each line. (See "Compatibility mode" below.) The nature
+of these values depends on the sampling algorithm. They are used for both
+line selection and output ordering. The '--p|print-random' option can be
+used to print these values. The random value is prepended to the line
+separated by the --d|delimiter char (TAB by default). The
+'--q|gen-random-inorder' option takes this one step further, generating
+random values for all input lines without changing the input order. The
+types of values currently used by these sampling algorithms:
 * Unweighted sampling: Uniform random value in the interval [0,1]. This
   includes Bernoulli sampling and unweighted line order randomization.
 * Weighted sampling: Value in the interval [0,1]. Distribution depends on
@@ -159,6 +160,20 @@ order. The types of values currently used by these sampling algorithms:
 
 The specifics behind these random values are subject to change in future
 releases.
+
+Compatibility mode: As described above, many of the sampling algorithms
+assign a random value to each line. This is useful when printing random
+values. It has another occasionally useful property: repeated runs with
+the same static seed but different selection parameters are more
+compatible with each other, as each line gets assigned the same random
+value on every run. For example, if Bernoulli sampling is run with
+'--prob 0.2 --static-seed', then run again with '--prob 0.3 --static-seed',
+all the lines selected in the first run will be selected in the second.
+This comes at a cost: in some cases there are faster algorithms that don't
+preserve this property. By default, tsv-sample will use faster algorithms
+when available. However, the '--compatibility-mode' option switches to
+algorithms that assign a random value per line. Printing random values
+also engages compatibility mode.
 
 Options:
 EOS";
@@ -181,8 +196,11 @@ struct TsvSampleOptions
     bool printRandom = false;                  // --print-random
     bool genRandomInorder = false;             // --gen-random-inorder
     string randomValueHeader = "random_value"; // --random-value-header
+    bool compatibilityMode = false;            // --compatibility-mode
     char delim = '\t';                         // --d|delimiter
     bool versionWanted = false;                // --V|version
+    bool preferSkipSampling = false;           // --prefer-skip-sampling
+    bool preferAlgorithmR = false;             // --prefer-algorithm-r
     bool hasWeightField = false;               // Derived.
     bool useBernoulliSampling = false;         // Derived.
     bool useDistinctSampling = false;          // Derived.
@@ -228,12 +246,19 @@ struct TsvSampleOptions
                 "print-random",       "     Include the assigned random value (prepended) when writing output lines.", &printRandom,
                 "gen-random-inorder", "     Output all lines with assigned random values prepended, no changes to the order of input.", &genRandomInorder,
                 "random-value-header",  "     Header to use with --print-random and --gen-random-inorder. Default: 'random_value'.", &randomValueHeader,
+                "compatibility-mode", "     Turns on 'compatibility-mode'. Use --help-verbose for information.", &compatibilityMode,
 
                 "d|delimiter",     "CHR  Field delimiter.", &delim,
 
                 std.getopt.config.caseSensitive,
                 "V|version",       "     Print version information and exit.", &versionWanted,
                 std.getopt.config.caseInsensitive,
+
+                "prefer-skip-sampling", "     (Internal) Prefer the skip-sampling algorithm for Bernoulli sampling. Used for testing and diagnostics.",
+                &preferSkipSampling,
+
+                "prefer-algorithm-r",   "     (Internal) Prefer Algorithm R for unweighted line order randomization. Used for testing and diagnostics.",
+                &preferAlgorithmR,
                 );
 
             if (r.helpWanted)
@@ -299,7 +324,11 @@ struct TsvSampleOptions
                 else useBernoulliSampling = true;
 
                 if (hasWeightField) throw new Exception("--w|weight-field and --p|prob cannot be used together.");
-                if (genRandomInorder && !useDistinctSampling) throw new Exception("--q|gen-random-inorder and --p|prob can only be used together if --k|key-fields is also used.");
+
+                if (genRandomInorder && !useDistinctSampling)
+                {
+                    throw new Exception("--q|gen-random-inorder and --p|prob can only be used together if --k|key-fields is also used.");
+                }
             }
             else if (genRandomInorder && !hasWeightField)
             {
@@ -311,6 +340,9 @@ struct TsvSampleOptions
             {
                 throw new Exception("--randomValueHeader must be at least one character and not contain field delimiters or newlines.");
             }
+
+            /* Random value printing implies compatibility-mode, otherwise user's selection is used. */
+            if (printRandom || genRandomInorder) compatibilityMode = true;
 
             /* Seed. */
             import std.random : unpredictableSeed;
@@ -345,8 +377,7 @@ if (isOutputRange!(OutputRange, char))
     }
     else if (cmdopt.useBernoulliSampling)
     {
-        if (cmdopt.genRandomInorder) bernoulliSampling!(Yes.generateRandomAll)(cmdopt, outputStream);
-        else bernoulliSampling!(No.generateRandomAll)(cmdopt, outputStream);
+        bernoulliSamplingCommand(cmdopt, outputStream);
     }
     else if (cmdopt.useDistinctSampling)
     {
@@ -355,31 +386,61 @@ if (isOutputRange!(OutputRange, char))
     }
     else if (cmdopt.genRandomInorder)
     {
+        /* Note that the preceeding cases handle gen-random-inorder themselves (Bernoulli,
+         * Distinct), or don't handle it (SRS w/ Replacement).
+         */
         assert(cmdopt.hasWeightField);
         generateWeightedRandomValuesInorder(cmdopt, outputStream);
     }
     else if (cmdopt.sampleSize != 0)
     {
-        if (cmdopt.hasWeightField) reservoirSampling!(Yes.isWeighted)(cmdopt, outputStream);
-        else reservoirSampling!(No.isWeighted)(cmdopt, outputStream);
+        reservoirSamplingCommand(cmdopt, outputStream);
     }
     else
     {
-        if (cmdopt.hasWeightField) randomizeLines!(Yes.isWeighted)(cmdopt, outputStream);
-        else randomizeLines!(No.isWeighted)(cmdopt, outputStream);
+        randomizeLinesCommand(cmdopt, outputStream);
     }
 }
 
-/** Bernoulli sampling on the input stream. Each input line is a assigned a random
- * value and output if less than the inclusion probability. The order of the lines
- * is not changed.
+/** Bernoulli sampling on the input stream.
  *
- * Note: Performance tests show that skip sampling is faster when the inclusion
- * probability is approximately 4-5% or less. A performance optimization would be to
- * create a separate function for cases when the probability is small and the random
- * weights are not being output with each line. A disadvantage would be that the
- * random weights assigned to each element would change based on the sampling. Printed
- * weights would no longer be consistent run-to-run.
+ * This routine selects the appropriate bernoulli sampling function and template
+ * instantiation to use based on the command line arguments.
+ *
+ * See the bernoulliSkipSampling routine for a discussion of the choices behind the
+ * skipSamplingProbabilityThreshold used here.
+ */
+void bernoulliSamplingCommand(OutputRange)(TsvSampleOptions cmdopt, auto ref OutputRange outputStream)
+if (isOutputRange!(OutputRange, char))
+{
+    assert(!cmdopt.hasWeightField);
+
+    immutable double skipSamplingProbabilityThreshold = 0.04;
+
+    if (cmdopt.compatibilityMode ||
+        (cmdopt.inclusionProbability > skipSamplingProbabilityThreshold && !cmdopt.preferSkipSampling))
+    {
+        if (cmdopt.genRandomInorder)
+        {
+            bernoulliSampling!(Yes.generateRandomAll)(cmdopt, outputStream);
+        }
+        else
+        {
+            bernoulliSampling!(No.generateRandomAll)(cmdopt, outputStream);
+        }
+    }
+    else
+    {
+        bernoulliSkipSampling(cmdopt, outputStream);
+    }
+}
+
+/** Bernoulli sampling on the input stream.
+ *
+ * Each input line is a assigned a random value and output if less than
+ * cmdopt.inclusionProbability. The order of the lines is not changed.
+ *
+ * This routine supports random value printing and gen-random-inorder value printing.
  */
 void bernoulliSampling(Flag!"generateRandomAll" generateRandomAll, OutputRange)
     (TsvSampleOptions cmdopt, auto ref OutputRange outputStream)
@@ -462,11 +523,108 @@ if (isOutputRange!(OutputRange, char))
     }
 }
 
+/* bernoulliSkipSampling is an alternate implementation of bernoulliSampling that
+ * uses skip sampling.
+ *
+ * Skip sampling works by skipping a random number of lines between selections. This
+ * can be faster than assigning a random value to each line when the inclusion
+ * probability is low, as it reduces the number of calls to the random number
+ * generator. Both the random number generator and the log() function as called when
+ * calculating the next skip size. These additional log() calls add up as the
+ * probability increases.
+ *
+ * Performance tests indicate the break-even point is about 4-5% (--prob 0.04) for
+ * file-oriented line sampling. This is obviously environment specific. In the
+ * environments this implementation has been tested in the perfmance improvements
+ * remain small, less than 7%, even with an inclusion probability as low as 0.0001.
+ *
+ * The algorithm does not assign random values to individual lines. This makes it
+ * incompatible with random value printing. It is not suitable for compatibility mode
+ * either. As an example, in compatibility mode a line selected with '--prob 0.2' should
+ * also be selected with '--prob 0.3' (assuming the same random seed). Skip sampling
+ * does not have this property.
+ *
+ * The algorithm for calculating the skip size has been described by multiple sources.
+ * There are two key variants depending on whether the total number of lines in the
+ * data set is known in advance. (This implementation does not know the total.)
+ * Useful references:
+ * - Jeffrey Scott Vitter, "An Efficient Algorithm for Sequential Random Sampling",
+ *   ACM Trans on Mathematical Software, 1987. On-line:
+ *   http://www.ittc.ku.edu/~jsv/Papers/Vit87.RandomSampling.pdf
+ * - P.J. Haas, "Data-Stream Sampling: Basic Techniques and Results", from the book
+ *   "Data Stream Management", Springer-Verlag, 2016. On-line:
+ *   https://www.springer.com/cda/content/document/cda_downloaddocument/9783540286073-c2.pdf
+ * - Erik Erlandson, "Faster Random Samples With Gap Sampling", 2014. On-line:
+ *   http://erikerlandson.github.io/blog/2014/09/11/faster-random-samples-with-gap-sampling/
+ */
+void bernoulliSkipSampling(OutputRange)(TsvSampleOptions cmdopt, OutputRange outputStream)
+    if (isOutputRange!(OutputRange, char))
+{
+    import std.conv : to;
+    import std.math : log, trunc;
+    import std.random : Random = Mt19937, uniform01;
+    import tsvutil : throwIfWindowsNewlineOnUnix;
+
+    assert(cmdopt.inclusionProbability > 0.0 && cmdopt.inclusionProbability < 1.0);
+    assert(!cmdopt.printRandom);
+    assert(!cmdopt.compatibilityMode);
+
+    auto randomGenerator = Random(cmdopt.seed);
+
+    immutable double discardRate = 1.0 - cmdopt.inclusionProbability;
+    immutable double logDiscardRate = log(discardRate);
+
+    /* Note: The '1.0 - uniform01(randomGenerator)' expression flips the half closed
+     * interval to (0.0, 1.0], excluding 0.0.
+     */
+    size_t remainingSkips = (log(1.0 - uniform01(randomGenerator)) / logDiscardRate).trunc.to!size_t;
+
+    /* Process each line. */
+    bool headerWritten = false;
+    size_t numLinesWritten = 0;
+    foreach (filename; cmdopt.files)
+    {
+        auto inputStream = (filename == "-") ? stdin : filename.File();
+        foreach (fileLineNum, line; inputStream.byLine(KeepTerminator.no).enumerate(1))
+        {
+            if (fileLineNum == 1) throwIfWindowsNewlineOnUnix(line, filename, fileLineNum);
+            if (fileLineNum == 1 && cmdopt.hasHeader)
+            {
+                if (!headerWritten)
+                {
+                    outputStream.put(line);
+                    outputStream.put("\n");
+                    headerWritten = true;
+                }
+            }
+            else if (remainingSkips > 0)
+            {
+                --remainingSkips;
+            }
+            else
+            {
+                outputStream.put(line);
+                outputStream.put("\n");
+
+                if (cmdopt.sampleSize != 0)
+                {
+                    ++numLinesWritten;
+                    if (numLinesWritten == cmdopt.sampleSize) return;
+                }
+
+                remainingSkips = (log(1.0 - uniform01(randomGenerator)) / logDiscardRate).trunc.to!size_t;
+            }
+        }
+    }
+}
+
 /** Sample a subset of the unique values from the key fields.
  *
  * Distinct sampling is done by hashing the key and mapping the hash value into
  * buckets matching the inclusion probability. Records having a key mapping to bucket
  * zero are output.
+ *
+ * TODO: Add whole line as key.
  */
 void distinctSampling(Flag!"generateRandomAll" generateRandomAll, OutputRange)
     (TsvSampleOptions cmdopt, auto ref OutputRange outputStream)
@@ -587,23 +745,60 @@ if (isOutputRange!(OutputRange, char))
     }
 }
 
-/** An implementation of reservior sampling. Both weighted and uniform random sampling
- * are supported.
+/** Reservoir sampling on the input stream.
  *
- * Both weighted and uniform random sampling are implemented using the one-pass algorithm
- * described by Pavlos Efraimidis and Paul Spirakis ("Weighted Random Sampling over Data
- * Streams", Pavlos S. Efraimidis, https://arxiv.org/abs/1012.0256). In the unweighted
- * case weights are simply set to one.
+ * This routine selects the appropriate reservior sampling function and template
+ * instantiation to use based on the command line arguments.
+ *
+ * Reservoir sampling is used when a fixed size sample is being pulled from an input
+ * stream. Weighted and unweighted sampling is supported. These routines also
+ * randomize the order of the selected lines. This is consistent with line order
+ * randomization of the entire input stream (handled by randomizeLinesCommand).
+ *
+ * For unweighted sampling, there is a performance tradeoff choice between the two
+ * available implementations. See the reservoirSampling documentation for
+ * information. The threshold used here was chosen based on performance tests.
+ */
+
+void reservoirSamplingCommand(OutputRange)(TsvSampleOptions cmdopt, auto ref OutputRange outputStream)
+if (isOutputRange!(OutputRange, char))
+{
+    assert(cmdopt.sampleSize != 0);
+
+    immutable size_t algorithmRSampleSizeThreshold = 128 * 1024;
+
+    if (cmdopt.hasWeightField)
+    {
+        reservoirSamplingViaHeap!(Yes.isWeighted)(cmdopt, outputStream);
+    }
+    else if (cmdopt.compatibilityMode ||
+             (cmdopt.sampleSize < algorithmRSampleSizeThreshold && !cmdopt.preferAlgorithmR))
+    {
+        reservoirSamplingViaHeap!(No.isWeighted)(cmdopt, outputStream);
+    }
+    else
+    {
+        reservoirSamplingAlgorithmR(cmdopt, outputStream);
+    }
+}
+
+/** Reservior sampling using a heap. Both weighted and unweighted random sampling are
+ * supported.
+ *
+ * The algorithm used here is based on the one-pass algorithm described by Pavlos
+ * Efraimidis and Paul Spirakis ("Weighted Random Sampling over Data Streams", Pavlos S.
+ * Efraimidis, https://arxiv.org/abs/1012.0256). In the unweighted case weights are
+ * simply set to one.
  *
  * The implementation uses a heap (priority queue) large enough to hold the desired
- * number of lines. Input is read line-by-line, assigned a random value, and added to the
- * heap. The role of the identify the lines with the highest assigned random values. Once
- * the heap is full, adding a new line means dropping the line with the lowest score. A
- * "min" heap used for this reason.
+ * number of lines. Input is read line-by-line, assigned a random value, and added to
+ * the heap. The role of the identify the lines with the highest assigned random
+ * values. Once the heap is full, adding a new line means dropping the line with the
+ * lowest score. A "min" heap used for this reason.
  *
- * When done reading all lines, the "min" heap is in the opposite order needed for output.
- * The desired order is obtained by removing each element one at at time from the heap.
- * The underlying data store will have the elements in correct order.
+ * When done reading all lines, the "min" heap is in the opposite order needed for
+ * output. The desired order is obtained by removing each element one at at time from
+ * the heap. The underlying data store will have the elements in correct order.
  *
  * Generating output in weighted order matters for several reasons:
  *  - For weighted sampling, it preserves the property that smaller valid subsets can be
@@ -622,16 +817,10 @@ if (isOutputRange!(OutputRange, char))
  *    of all input lines. This was dropped in version 1.2.2 in favor of the approach
  *    used in randomizeLines. The latter has significant advantages given that all data
  *    data must be read into memory.
- *  - The unweighted case could be sped up by adopting what is commonly known as
- *    "Algorithm R" followed by a random walk on the resulting reservoir (e.g.
- *    std.random.randomCover in the D standard library). This is faster than reversing
- *    the heap prior to output. The downsides are that the result order would not be
- *    consistent with the other routines and that random number printing does not make
- *    sense. Order consistency matters only in the rare case when multiple randomizations
- *    are being done with the same static seed. For a description of Algorithm R see:
- *    https://en.wikipedia.org/wiki/Reservoir_sampling#Algorithm_R.
+ *  - For larger reservoir sizes better performance can be achieved by using
+ *    reservoirSamplingAlgorithmR. See the documentation for that function for details.
  */
-void reservoirSampling(Flag!"isWeighted" isWeighted, OutputRange)
+void reservoirSamplingViaHeap(Flag!"isWeighted" isWeighted, OutputRange)
     (TsvSampleOptions cmdopt, auto ref OutputRange outputStream)
 if (isOutputRange!(OutputRange, char))
 {
@@ -807,56 +996,284 @@ if (isOutputRange!(OutputRange, char))
     }
 }
 
+/** Reservoir sampling, Algorithm R
+ *
+ * This is an implementation of reservoir sampling using what is commonly known as
+ * "Algorithm R", credited to Alan Waterman by Donald Knuth in the "The Art of
+ * Computer Programming, Volume 2: Seminumerical Algorithms". More information about
+ * the algorithm can be found in Jeffrey Vitter's classic paper "Random Sampling with
+ * a Reservoir" (1985) as well as the Wikipedia article "Reservoir Sampling"
+ * (https://en.wikipedia.org/wiki/Reservoir_sampling#Algorithm_R).
+ *
+ * Algorithm R is used for unweighted sampling without replacement. The heap-based
+ * algorithm in reservoirSamplingViaHeap is used for weighted sampling.
+ *
+ * The classic algorithm stops after identifying the selected set of items. This
+ * implementation goes one step further and randomizes the order of the selected
+ * lines. This supports the tsv-sample use-case, which is line order randomization.
+ *
+ * This algorithm is faster than reservoirSamplingViaHeap when the sample size
+ * (reservoir size) is large. Heap insertion is O(log k), where k is the sample size.
+ * Insertion in this algorithm is O(1). Similarly, generating the random order in the
+ * heap is O(k * log k), while in this algorithm the final randomization step is O(k).
+ *
+ * This speed advantage may be offset a certain amount by using a more expensive random
+ * value generator. reservoirSamplingViaHeap generates values between zero and one,
+ * whereas reservoirSamplingAlgorithR generates random integers over and ever growing
+ * interval. The latter is expected to be more expensive. This is consistent with
+ * performance test indicating that reservoirSamplingViaHeap is faster when using
+ * small-to-medium size reservoirs and large input streams.
+ */
+void reservoirSamplingAlgorithmR(OutputRange)(TsvSampleOptions cmdopt, auto ref OutputRange outputStream)
+if (isOutputRange!(OutputRange, char))
+{
+    import std.random : Random = Mt19937, randomShuffle, uniform;
+    import tsvutil : throwIfWindowsNewlineOnUnix;
+
+    assert(cmdopt.sampleSize > 0);
+    assert(!cmdopt.hasWeightField);
+    assert(!cmdopt.compatibilityMode);
+    assert(!cmdopt.printRandom);
+    assert(!cmdopt.genRandomInorder);
+
+    string[] reservoir;
+    auto reservoirAppender = appender(&reservoir);
+    reservoirAppender.reserve(cmdopt.sampleSize);
+
+    auto randomGenerator = Random(cmdopt.seed);
+
+    /* Process each line. */
+
+    bool headerWritten = false;
+    size_t totalLineNum = 0;
+    foreach (filename; cmdopt.files)
+    {
+        auto inputStream = (filename == "-") ? stdin : filename.File();
+        foreach (fileLineNum, line; inputStream.byLine(KeepTerminator.no).enumerate(1))
+        {
+            if (fileLineNum == 1) throwIfWindowsNewlineOnUnix(line, filename, fileLineNum);
+            if (fileLineNum == 1 && cmdopt.hasHeader)
+            {
+                if (!headerWritten)
+                {
+                    outputStream.put(line);
+                    outputStream.put("\n");
+                    headerWritten = true;
+                }
+            }
+            else
+            {
+                /* Add lines to the reservoir until the reservoir is filled.
+                 * After that lines are added with decreasing likelihood, based on
+                 * the total number of lines seen. If added to the reservoir, the
+                 * line replaces a randomly chosen existing line.
+                 */
+                if (totalLineNum < cmdopt.sampleSize)
+                {
+                    reservoirAppender ~= line.idup;
+                }
+                else
+                {
+                    size_t i = uniform(0, totalLineNum, randomGenerator);
+                    if (i < reservoir.length) reservoir[i] = line.idup;
+                }
+
+                ++totalLineNum;
+            }
+        }
+    }
+
+    /* The random sample is now in the reservior. Shuffle it and print. */
+
+    reservoir.randomShuffle(randomGenerator);
+
+    foreach (ref line; reservoir)
+    {
+        outputStream.put(line);
+        outputStream.put("\n");
+    }
+}
+
+/** Randomize all the lines in files or standard input.
+ *
+ * This routine selects the appropriate randomize-lines function and template instantiation
+ * to use based on the command line arguments.
+ */
+void randomizeLinesCommand(OutputRange)(TsvSampleOptions cmdopt, auto ref OutputRange outputStream)
+if (isOutputRange!(OutputRange, char))
+{
+    if (cmdopt.hasWeightField)
+    {
+        randomizeLinesViaSort!(Yes.isWeighted)(cmdopt, outputStream);
+    }
+    else if (cmdopt.compatibilityMode)
+    {
+        randomizeLinesViaSort!(No.isWeighted)(cmdopt, outputStream);
+    }
+    else
+    {
+        randomizeLinesViaShuffle(cmdopt, outputStream);
+    }
+}
+
 /** Randomize all the lines in files or standard input.
  *
  * All lines in files and/or standard input are read in and written out in random
- * order. Both simple random sampling and weighted sampling are supported.
+ * order. This algorithm assigns a random value to each line and sorts. This approach
+ * supports both weighted sampling and simple random sampling (unweighted).
+ *
+ * This is significantly faster than heap-based reservoir sampling in the case where
+ * the entire file is being read. See also randomizeLinesViaShuffle for the unweighted
+ * case, as it is a little faster, at the cost not supporting random value printing or
+ * compatibility-mode.
  *
  * Input data size is limited by available memory. Disk oriented techniques are needed
  * when data sizes are larger. For example, generating random values line-by-line (ala
  * --gen-random-inorder) and sorting with a disk-backed sort program like GNU sort.
- *
- * This approach is significantly faster than reading line-by-line with a heap the
- * way reservoir sampling does, effectively acknowledging that both approaches
- * need to read all data into memory when randomizing all lines.
- *
- * Note: The unweighted case could be sped up by using std.random.randomShuffle from
- * the D standard library. This uses an O(n) swapping algorithm to perform the shuffle
- * rather than the O(n log n) sort approach used here. The downsides are that the
- * result order would not be consistent with the other routines and that random number
- * printing does not make sense. Order consistency matters only in the rare case when
- * multiple randomizations are being done with the same static seed.
  */
-void randomizeLines(Flag!"isWeighted" isWeighted, OutputRange)(TsvSampleOptions cmdopt, auto ref OutputRange outputStream)
+void randomizeLinesViaSort(Flag!"isWeighted" isWeighted, OutputRange)(TsvSampleOptions cmdopt, auto ref OutputRange outputStream)
 if (isOutputRange!(OutputRange, char))
 {
-    import std.algorithm : min, sort, splitter;
-    import std.array : appender;
+    import std.algorithm : map, sort;
     import std.format : formatValue, singleSpec;
-    import std.random : Random = Mt19937, uniform01;
-    import tsvutil : throwIfWindowsNewlineOnUnix;
 
     static if (isWeighted) assert(cmdopt.hasWeightField);
     else assert(!cmdopt.hasWeightField);
 
     assert(cmdopt.sampleSize == 0);
 
-    struct FileData
-    {
-        string filename;
-        char[] data;
-    }
-
-    auto fileData = new FileData[cmdopt.files.length];
+    /*
+     * Read all file data into memory. Then split the data into lines and assign a
+     * random value to each line. identifyFileLines also writes the first header line.
+     */
+    auto fileData = cmdopt.files.map!FileData.array;
+    auto inputLines = fileData.identifyFileLines!(Yes.hasRandomValue, isWeighted)(cmdopt, outputStream);
 
     /*
-     * Read all file data into memory.
+     * Sort by the weight and output the lines.
      */
-    ubyte[1024 * 128] fileRawBuf;
-    foreach (fileNum, filename; cmdopt.files)
+    inputLines.sort!((a, b) => a.randomValue > b.randomValue);
+
+    immutable randomValueFormatSpec = singleSpec("%.17g");
+
+    foreach (lineEntry; inputLines)
     {
-        fileData[fileNum].filename = filename;
-        auto dataAppender = appender(&(fileData[fileNum].data));
+        if (cmdopt.printRandom)
+        {
+            outputStream.formatValue(lineEntry.randomValue, randomValueFormatSpec);
+            outputStream.put(cmdopt.delim);
+        }
+        outputStream.put(lineEntry.data);
+        outputStream.put("\n");
+    }
+}
+
+/** Randomize all the lines in files or standard input.
+ *
+ * All lines in files and/or standard input are read in and written out in random
+ * order. This routine uses array shuffling, which is faster than sorting. This makes
+ * this routine a good alternative to randomizeLinesViaSort when doing unweighted
+ * randomization.
+ *
+ * Input data size is limited by available memory. Disk oriented techniques are needed
+ * when data sizes are larger. For example, generating random values line-by-line (ala
+ * --gen-random-inorder) and sorting with a disk-backed sort program like GNU sort.
+ *
+ * This routine does not support random value printing or compatibility-mode.
+ */
+void randomizeLinesViaShuffle(OutputRange)(TsvSampleOptions cmdopt, auto ref OutputRange outputStream)
+if (isOutputRange!(OutputRange, char))
+{
+    import std.algorithm : map;
+    import std.random : Random = Mt19937, randomShuffle;
+
+    assert(cmdopt.sampleSize == 0);
+    assert(!cmdopt.hasWeightField);
+    assert(!cmdopt.printRandom);
+    assert(!cmdopt.genRandomInorder);
+
+    /*
+     * Read all file data into memory and split into lines.
+     */
+    auto fileData = cmdopt.files.map!FileData.array;
+    auto inputLines = fileData.identifyFileLines!(No.hasRandomValue, No.isWeighted)(cmdopt, outputStream);
+
+    /*
+     * Randomly shuffle and print each line.
+     *
+     * Note: Also tried randomCover, but that was exceedingly slow.
+     */
+    import std.random : randomShuffle;
+
+    auto randomGenerator = Random(cmdopt.seed);
+    inputLines.randomShuffle(randomGenerator);
+
+    foreach (ref line; inputLines)
+    {
+        outputStream.put(line.data);
+        outputStream.put("\n");
+    }
+}
+
+/** Simple random sampling with replacement.
+ *
+ * All lines in files and/or standard input are read in. Then random lines are selected
+ * one at a time and output. Lines can be selected multiple times. This process continues
+ * until the desired number of samples (--n|num) has been output. Output continues
+ * indefinitely if a sample size was not provided.
+ */
+void simpleRandomSamplingWithReplacement(OutputRange)(TsvSampleOptions cmdopt, auto ref OutputRange outputStream)
+if (isOutputRange!(OutputRange, char))
+{
+    import std.algorithm : map;
+    import std.format : formatValue, singleSpec;
+    import std.random : Random = Mt19937, uniform;
+
+    /*
+     * Read all file data into memory and split the data into lines.
+     */
+    auto fileData = cmdopt.files.map!FileData.array;
+    auto inputLines = fileData.identifyFileLines!(No.hasRandomValue, No.isWeighted)(cmdopt, outputStream);
+
+    if (inputLines.length > 0)
+    {
+        auto randomGenerator = Random(cmdopt.seed);
+
+        /* Repeat forever is sampleSize is zero, otherwise print sampleSize lines. */
+        size_t numLeft = (cmdopt.sampleSize == 0) ? 1 : cmdopt.sampleSize;
+        while (numLeft != 0)
+        {
+            size_t index = uniform(0, inputLines.length, randomGenerator);
+            outputStream.put(inputLines[index].data);
+            outputStream.put("\n");
+            if (cmdopt.sampleSize != 0) numLeft--;
+        }
+    }
+}
+
+/** A container and reader data form a file or standard input.
+ *
+ * The FileData struct is used to read data from a file or standard input. It is used
+ * by passing a filename to the constructor. The constructor reads the file data.
+ * If the filename is a single hyphen ('-') then data is read from standard input.
+ *
+ * The struct make the data available through two members: 'filename', which is the
+ * filename, and 'data', which is a character array of the data.
+ */
+struct FileData
+{
+    string filename;
+    char[] data;
+
+    this(string fname)
+    {
+        import std.algorithm : min;
+        import std.array : appender;
+
+        filename = fname;
+
+        ubyte[1024 * 128] fileRawBuf;
+        auto dataAppender = appender(&data);
         auto ifile = (filename == "-") ? stdin : filename.File;
 
         if (filename != "-")
@@ -867,25 +1284,60 @@ if (isOutputRange!(OutputRange, char))
 
         foreach (ref ubyte[] buffer; ifile.byChunk(fileRawBuf)) dataAppender.put(cast(char[]) buffer);
     }
+}
 
-    /*
-     * Split the data into lines and assign a random value to each line.
-     */
-    struct Entry
-    {
-        double score;
-        char[] line;
-    }
+/** HasRandomValue is a boolean flag used at compile time by identifyFileLines to
+ * distinguish use cases needing random value assignments from those that don't.
+ */
+alias HasRandomValue = Flag!"hasRandomValue";
 
-    auto scoredLines = appender!(Entry[]);
-    auto randomGenerator = Random(cmdopt.seed);
+/** An InputLine array is returned by identifyFileLines to represent each non-header line
+ * line found in a FileData array. The 'data' element contains the line. A 'randomValue'
+ * line is included if random values are being generated.
+ */
+struct InputLine(HasRandomValue hasRandomValue)
+{
+    char[] data;
+    static if (hasRandomValue) double randomValue;
+}
+
+/** identifyFileLines is used by algorithms that read all files into memory prior to
+ * processing. It does the initial processing of the file data.
+ *
+ * Three primary tasks are performed. One is splitting all input data into lines. The
+ * second is writting the header line from the first file to the output stream. Header
+ * lines from subsequent files are ignored. Third is assigning a random value to the
+ * line, if random values are being generated.
+ *
+ * The key input is a FileData array, one element for each file. The FileData reads
+ * the file when instantiated.
+ *
+ * The return value is an array of InputLine structs. The struct will have a 'randomValue'
+ * member if random values are being assigned.
+ */
+InputLine!hasRandomValue[] identifyFileLines(HasRandomValue hasRandomValue, Flag!"isWeighted" isWeighted, OutputRange)
+(ref FileData[] fileData, TsvSampleOptions cmdopt, auto ref OutputRange outputStream)
+if (isOutputRange!(OutputRange, char))
+{
+    import std.algorithm : splitter;
+    import std.array : appender;
+    import std.random : Random = Mt19937, uniform01;
+    import tsvutil : throwIfWindowsNewlineOnUnix;
+
+    static assert(hasRandomValue || !isWeighted);
+    static if(!hasRandomValue) assert(!cmdopt.printRandom);
+
+    InputLine!hasRandomValue[] inputLines;
+
+    auto linesAppender = appender(&inputLines);
+    static if (hasRandomValue) auto randomGenerator = Random(cmdopt.seed);
     bool headerWritten = false;
 
     foreach (fd; fileData)
     {
         /* Drop the last newline to avoid adding an extra empty line. */
         auto data = (fd.data.length > 0 && fd.data[$ - 1] == '\n') ? fd.data[0 .. $ - 1] : fd.data;
-        foreach (fileLineNum, line; data.splitter('\n').enumerate(1))
+        foreach (fileLineNum, ref line; data.splitter('\n').enumerate(1))
         {
             if (fileLineNum == 1) throwIfWindowsNewlineOnUnix(line, fd.filename, fileLineNum);
             if (fileLineNum == 1 && cmdopt.hasHeader)
@@ -904,135 +1356,34 @@ if (isOutputRange!(OutputRange, char))
             }
             else
             {
-                static if (!isWeighted)
+                static if (!hasRandomValue)
                 {
-                    double lineScore = uniform01(randomGenerator);
+                    linesAppender.put(InputLine!hasRandomValue(line));
                 }
                 else
                 {
-                    double lineWeight =
-                        getFieldValue!double(line, cmdopt.weightField, cmdopt.delim, fd.filename, fileLineNum);
-                    double lineScore =
-                        (lineWeight > 0.0)
-                        ? uniform01(randomGenerator) ^^ (1.0 / lineWeight)
-                        : 0.0;
-                }
+                    static if (!isWeighted)
+                    {
+                        double randomValue = uniform01(randomGenerator);
+                    }
+                    else
+                    {
+                        double lineWeight =
+                            getFieldValue!double(line, cmdopt.weightField, cmdopt.delim,
+                                                 fd.filename, fileLineNum);
+                        double randomValue =
+                            (lineWeight > 0.0)
+                            ? uniform01(randomGenerator) ^^ (1.0 / lineWeight)
+                            : 0.0;
+                    }
 
-                scoredLines.put(Entry(lineScore, line));
-            }
-        }
-    }
-
-    /*
-     * Sort by the weight and output the lines.
-     */
-    scoredLines.data.sort!((a, b) => a.score > b.score);
-
-    immutable randomValueFormatSpec = singleSpec("%.17g");
-
-    foreach (lineEntry; scoredLines.data)
-    {
-        if (cmdopt.printRandom)
-        {
-            outputStream.formatValue(lineEntry.score, randomValueFormatSpec);
-            outputStream.put(cmdopt.delim);
-        }
-        outputStream.put(lineEntry.line);
-        outputStream.put("\n");
-    }
-}
-
-/** Simple random sampling with replacement.
- *
- * All lines in files and/or standard input are read in. Then random lines are selected
- * one at a time and output. Lines can be selected multiple times. This process continues
- * until the desired number of samples (--n|num) has been output. Output continues
- * indefinitely if a sample size was not provided.
- */
-void simpleRandomSamplingWithReplacement(OutputRange)(TsvSampleOptions cmdopt, auto ref OutputRange outputStream)
-if (isOutputRange!(OutputRange, char))
-{
-    import std.algorithm : each, min, sort, splitter;
-    import std.array : appender;
-    import std.format : formatValue, singleSpec;
-    import std.random : Random = Mt19937, uniform;
-    import tsvutil : throwIfWindowsNewlineOnUnix;
-
-    struct FileData
-    {
-        string filename;
-        char[] data;
-    }
-
-    auto fileData = new FileData[cmdopt.files.length];
-
-    /*
-     * Read all file data into memory.
-     */
-    ubyte[1024 * 128] fileRawBuf;
-    foreach (fileNum, filename; cmdopt.files)
-    {
-        fileData[fileNum].filename = filename;
-        auto dataAppender = appender(&(fileData[fileNum].data));
-        auto ifile = (filename == "-") ? stdin : filename.File;
-
-        if (filename != "-")
-        {
-            ulong filesize = ifile.size;
-            if (filesize < ulong.max) dataAppender.reserve(min(filesize, size_t.max));
-        }
-
-        foreach (ref ubyte[] buffer; ifile.byChunk(fileRawBuf)) dataAppender.put(cast(char[]) buffer);
-    }
-
-    /*
-     * Split the data into lines.
-     */
-    struct Entry
-    {
-        char[] line;
-    }
-
-    auto lines = appender!(Entry[]);
-    bool headerWritten = false;
-
-    foreach (fd; fileData)
-    {
-        /* Drop the last newline to avoid adding an extra empty line. */
-        auto data = (fd.data.length > 0 && fd.data[$ - 1] == '\n') ? fd.data[0 .. $ - 1] : fd.data;
-        foreach (fileLineNum, line; data.splitter('\n').enumerate(1))
-        {
-            if (fileLineNum == 1) throwIfWindowsNewlineOnUnix(line, fd.filename, fileLineNum);
-            if (fileLineNum == 1 && cmdopt.hasHeader)
-            {
-                if (!headerWritten)
-                {
-                    outputStream.put(line);
-                    outputStream.put("\n");
-                    headerWritten = true;
+                    linesAppender.put(InputLine!hasRandomValue(line, randomValue));
                 }
             }
-            else
-            {
-                lines.put(Entry(line));
-            }
         }
     }
 
-    if (lines.data.length > 0)
-    {
-        auto randomGenerator = Random(cmdopt.seed);
-
-        /* Repeat forever is sampleSize is zero, otherwise print sampleSize lines. */
-        size_t numLeft = (cmdopt.sampleSize == 0) ? 1 : cmdopt.sampleSize;
-        while (numLeft != 0)
-        {
-            size_t index = uniform(0, lines.data.length, randomGenerator);
-            outputStream.put(lines.data[index].line);
-            outputStream.put("\n");
-            if (cmdopt.sampleSize != 0) numLeft--;
-        }
-    }
+    return inputLines;
 }
 
 
@@ -1152,6 +1503,19 @@ unittest
      *
      * The initial part of this section is simply setting up data files and
      * expected results.
+     *
+     * Expected results naming conventions:
+     *  - Prefix: dataNxMExpected. N and M are numbers. e.g. data3x6Expected
+     *  - Sampling Type (required): Permute, Replace, Bernoulli, Distinct
+     *  - Compatibility: Compat, AlgoR, Skip, Swap
+     *  - Weight Field: Wt<num>, e.g. Wt3
+     *  - Sample Size: Num<num>, eg. Num3
+     *  - Seed Value: V<num>, eg. V77
+     *  - Key Field: K<num>, e.g. K2
+     *  - Probability: P<num>, e.g P05 (5%)
+     *  - Printing Probalities: Probs
+     *  - Printing Probs in order: ProbsInorder
+     *  - Printing Probs with custom header: RVCustom
      */
 
     /* Empty file. */
@@ -1174,7 +1538,7 @@ unittest
     writeUnittestTsvFile(fpath_data3x1, data3x1);
     writeUnittestTsvFile(fpath_data3x1_noheader, data3x1[1..$]);
 
-    string[][] data3x1ExpectedReplace3 =
+    string[][] data3x1ExpectedReplaceNum3 =
         [["field_a", "field_b", "field_c"],
          ["tan", "タン", "8.5"],
          ["tan", "タン", "8.5"],
@@ -1191,7 +1555,12 @@ unittest
     writeUnittestTsvFile(fpath_data3x2, data3x2);
     writeUnittestTsvFile(fpath_data3x2_noheader, data3x2[1..$]);
 
-    string[][] data3x2ExpectedNoWt =
+    string[][] data3x2PermuteCompat =
+        [["field_a", "field_b", "field_c"],
+         ["gray", "グレー", "6.2"],
+         ["brown", "褐色", "29.2"]];
+
+    string[][] data3x2PermuteShuffle =
         [["field_a", "field_b", "field_c"],
          ["gray", "グレー", "6.2"],
          ["brown", "褐色", "29.2"]];
@@ -1208,11 +1577,17 @@ unittest
     writeUnittestTsvFile(fpath_data3x3, data3x3);
     writeUnittestTsvFile(fpath_data3x3_noheader, data3x3[1..$]);
 
-    string[][] data3x3ExpectedNoWt =
+    string[][] data3x3ExpectedPermuteCompat =
         [["field_a", "field_b", "field_c"],
          ["purple", "紫の", "42"],
          ["pink", "ピンク", "1.1"],
          ["orange", "オレンジ", "2.5"]];
+
+    string[][] data3x3ExpectedPermuteSwap =
+        [["field_a", "field_b", "field_c"],
+         ["purple", "紫の", "42"],
+         ["orange", "オレンジ", "2.5"],
+         ["pink", "ピンク", "1.1"]];
 
     /* 3x6 */
     string[][] data3x6 =
@@ -1228,7 +1603,8 @@ unittest
     writeUnittestTsvFile(fpath_data3x6, data3x6);
     writeUnittestTsvFile(fpath_data3x6_noheader, data3x6[1..$]);
 
-    string[][] data3x6ExpectedNoWt =
+    // Randomization, all lines
+    string[][] data3x6ExpectedPermuteCompat =
         [["field_a", "field_b", "field_c"],
          ["yellow", "黄", "12"],
          ["black", "黒", "0.983"],
@@ -1237,7 +1613,16 @@ unittest
          ["green", "緑", "0.0072"],
          ["red", "赤", "23.8"]];
 
-    string[][] data3x6ExpectedNoWtProbs =
+    string[][] data3x6ExpectedPermuteSwap =
+        [["field_a", "field_b", "field_c"],
+         ["black", "黒", "0.983"],
+         ["green", "緑", "0.0072"],
+         ["red", "赤", "23.8"],
+         ["yellow", "黄", "12"],
+         ["white", "白", "1.65"],
+         ["blue", "青", "12"]];
+
+    string[][] data3x6ExpectedPermuteCompatProbs =
         [["random_value", "field_a", "field_b", "field_c"],
          ["0.96055546286515892", "yellow", "黄", "12"],
          ["0.7571015392895788", "black", "黒", "0.983"],
@@ -1246,7 +1631,50 @@ unittest
          ["0.15929344086907804", "green", "緑", "0.0072"],
          ["0.010968807619065046", "red", "赤", "23.8"]];
 
-    string[][] data3x6ExpectedProbsBernoulliSampleP100 =
+    /* Note: data3x6ExpectedAlgoRNum6 is identical to data3x6ExpectedPermuteSwap because
+     * both are effectively the same algorithm given that --num is data length. Both read
+     * in the full data in order then call randomShuffle.
+     */
+    string[][] data3x6ExpectedPermuteAlgoRNum6 =
+        [["field_a", "field_b", "field_c"],
+         ["black", "黒", "0.983"],
+         ["green", "緑", "0.0072"],
+         ["red", "赤", "23.8"],
+         ["yellow", "黄", "12"],
+         ["white", "白", "1.65"],
+         ["blue", "青", "12"]];
+
+    string[][] data3x6ExpectedPermuteAlgoRNum5 =
+        [["field_a", "field_b", "field_c"],
+         ["red", "赤", "23.8"],
+         ["black", "黒", "0.983"],
+         ["white", "白", "1.65"],
+         ["green", "緑", "0.0072"],
+         ["yellow", "黄", "12"]];
+
+    string[][] data3x6ExpectedPermuteAlgoRNum4 =
+        [["field_a", "field_b", "field_c"],
+         ["blue", "青", "12"],
+         ["green", "緑", "0.0072"],
+         ["black", "黒", "0.983"],
+         ["white", "白", "1.65"]];
+
+    string[][] data3x6ExpectedPermuteAlgoRNum3 =
+        [["field_a", "field_b", "field_c"],
+         ["red", "赤", "23.8"],
+         ["black", "黒", "0.983"],
+         ["green", "緑", "0.0072"]];
+
+    string[][] data3x6ExpectedPermuteAlgoRNum2 =
+        [["field_a", "field_b", "field_c"],
+         ["black", "黒", "0.983"],
+         ["red", "赤", "23.8"]];
+
+    string[][] data3x6ExpectedPermuteAlgoRNum1 =
+        [["field_a", "field_b", "field_c"],
+         ["green", "緑", "0.0072"]];
+
+    string[][] data3x6ExpectedBernoulliProbsP100 =
         [["random_value", "field_a", "field_b", "field_c"],
          ["0.010968807619065046", "red", "赤", "23.8"],
          ["0.15929344086907804", "green", "緑", "0.0072"],
@@ -1255,39 +1683,45 @@ unittest
          ["0.52525980887003243", "blue", "青", "12"],
          ["0.7571015392895788", "black", "黒", "0.983"]];
 
-    string[][] data3x6ExpectedProbsBernoulliSampleP60 =
+    string[][] data3x6ExpectedBernoulliCompatProbsP60 =
         [["random_value", "field_a", "field_b", "field_c"],
          ["0.010968807619065046", "red", "赤", "23.8"],
          ["0.15929344086907804", "green", "緑", "0.0072"],
          ["0.49287854949943721", "white", "白", "1.65"],
          ["0.52525980887003243", "blue", "青", "12"]];
 
-    string[][] data3x6ExpectedBernoulliSampleP60 =
+    string[][] data3x6ExpectedBernoulliSkipP40 =
+        [["field_a", "field_b", "field_c"],
+         ["red", "赤", "23.8"],
+         ["green", "緑", "0.0072"],
+         ["yellow", "黄", "12"]];
+
+    string[][] data3x6ExpectedBernoulliCompatP60 =
         [["field_a", "field_b", "field_c"],
          ["red", "赤", "23.8"],
          ["green", "緑", "0.0072"],
          ["white", "白", "1.65"],
          ["blue", "青", "12"]];
 
-    string[][] data3x6ExpectedDistinctSampleK1K3P60 =
+    string[][] data3x6ExpectedDistinctK1K3P60 =
         [["field_a", "field_b", "field_c"],
          ["green", "緑", "0.0072"],
          ["white", "白", "1.65"],
          ["blue", "青", "12"]];
 
-    string[][] data3x6ExpectedDistinctSampleK1K3P60Probs =
+    string[][] data3x6ExpectedDistinctK1K3P60Probs =
         [["random_value", "field_a", "field_b", "field_c"],
          ["0", "green", "緑", "0.0072"],
          ["0", "white", "白", "1.65"],
          ["0", "blue", "青", "12"]];
 
-    string[][] data3x6ExpectedDistinctSampleK1K3P60ProbsRVCustom =
+    string[][] data3x6ExpectedDistinctK1K3P60ProbsRVCustom =
         [["custom_random_value_header", "field_a", "field_b", "field_c"],
          ["0", "green", "緑", "0.0072"],
          ["0", "white", "白", "1.65"],
          ["0", "blue", "青", "12"]];
 
-    string[][] data3x6ExpectedDistinctSampleK2P2ProbsInorder =
+    string[][] data3x6ExpectedDistinctK2P2ProbsInorder =
         [["random_value", "field_a", "field_b", "field_c"],
          ["1", "red", "赤", "23.8"],
          ["0", "green", "緑", "0.0072"],
@@ -1296,7 +1730,7 @@ unittest
          ["3", "blue", "青", "12"],
          ["2", "black", "黒", "0.983"]];
 
-    string[][] data3x6ExpectedWt3Probs =
+    string[][] data3x6ExpectedPermuteWt3Probs =
         [["random_value", "field_a", "field_b", "field_c"],
          ["0.9966519875764539", "yellow", "黄", "12"],
          ["0.94775884809836686", "blue", "青", "12"],
@@ -1314,7 +1748,7 @@ unittest
          ["0.94775884809836686", "blue", "青", "12"],
          ["0.75346697377181959", "black", "黒", "0.983"]];
 
-    string[][] data3x6ExpectedWt3 =
+    string[][] data3x6ExpectedPermuteWt3 =
         [["field_a", "field_b", "field_c"],
          ["yellow", "黄", "12"],
          ["blue", "青", "12"],
@@ -1323,7 +1757,7 @@ unittest
          ["white", "白", "1.65"],
          ["green", "緑", "0.0072"]];
 
-    string[][] data3x6ExpectedReplace10 =
+    string[][] data3x6ExpectedReplaceNum10 =
         [["field_a", "field_b", "field_c"],
          ["black", "黒", "0.983"],
          ["green", "緑", "0.0072"],
@@ -1337,7 +1771,7 @@ unittest
          ["white", "白", "1.65"],
         ];
 
-    string[][] data3x6ExpectedReplace10V77 =
+    string[][] data3x6ExpectedReplaceNum10V77 =
         [["field_a", "field_b", "field_c"],
          ["black", "黒", "0.983"],
          ["red", "赤", "23.8"],
@@ -1352,7 +1786,7 @@ unittest
         ];
 
     /* Using a different static seed. */
-    string[][] data3x6ExpectedNoWtV41Probs =
+    string[][] data3x6ExpectedPermuteCompatV41Probs =
         [["random_value", "field_a", "field_b", "field_c"],
          ["0.68057272653095424", "green", "緑", "0.0072"],
          ["0.67681624367833138", "blue", "青", "12"],
@@ -1361,14 +1795,14 @@ unittest
          ["0.15535934292711318", "black", "黒", "0.983"],
          ["0.04609582107514143", "white", "白", "1.65"]];
 
-    string[][] data3x6ExpectedV41ProbsBernoulliSampleP60 =
+    string[][] data3x6ExpectedBernoulliCompatP60V41Probs =
         [["random_value", "field_a", "field_b", "field_c"],
          ["0.25092361867427826", "red", "赤", "23.8"],
          ["0.04609582107514143", "white", "白", "1.65"],
          ["0.32097338931635022", "yellow", "黄", "12"],
          ["0.15535934292711318", "black", "黒", "0.983"]];
 
-    string[][] data3x6ExpectedWt3V41Probs =
+    string[][] data3x6ExpectedPermuteWt3V41Probs =
         [["random_value", "field_a", "field_b", "field_c"],
          ["0.96799377498910666", "blue", "青", "12"],
          ["0.94356245792573568", "red", "赤", "23.8"],
@@ -1388,7 +1822,7 @@ unittest
 
 
     /* Combo 1: 3x3, 3x1, 3x6, 3x2. No data files, only expected results. */
-    string[][] combo1ExpectedNoWt =
+    string[][] combo1ExpectedPermuteCompat =
         [["field_a", "field_b", "field_c"],
          ["yellow", "黄", "12"],
          ["tan", "タン", "8.5"],
@@ -1403,7 +1837,7 @@ unittest
          ["pink", "ピンク", "1.1"],
          ["orange", "オレンジ", "2.5"]];
 
-    string[][] combo1ExpectedNoWtProbs =
+    string[][] combo1ExpectedPermuteCompatProbs =
         [["random_value", "field_a", "field_b", "field_c"],
          ["0.97088520275428891", "yellow", "黄", "12"],
          ["0.96055546286515892", "tan", "タン", "8.5"],
@@ -1419,7 +1853,7 @@ unittest
          ["0.010968807619065046", "orange", "オレンジ", "2.5"]];
 
     /* Combo 1: 3x3, 3x1, 3x6, 3x2. No data files, only expected results. */
-    string[][] combo1ExpectedNoWtProbsInorder =
+    string[][] combo1ExpectedProbsInorder =
         [["random_value", "field_a", "field_b", "field_c"],
          ["0.010968807619065046", "orange", "オレンジ", "2.5"],
          ["0.15929344086907804", "pink", "ピンク", "1.1"],
@@ -1434,7 +1868,7 @@ unittest
          ["0.81756894313730299", "brown", "褐色", "29.2"],
          ["0.29215990612283349", "gray", "グレー", "6.2"]];
 
-    string[][] combo1ExpectedProbsBernoulliSampleP50 =
+    string[][] combo1ExpectedBernoulliCompatP50Probs =
         [["random_value", "field_a", "field_b", "field_c"],
          ["0.010968807619065046", "orange", "オレンジ", "2.5"],
          ["0.15929344086907804", "pink", "ピンク", "1.1"],
@@ -1444,7 +1878,7 @@ unittest
          ["0.47081507067196071", "black", "黒", "0.983"],
          ["0.29215990612283349", "gray", "グレー", "6.2"]];
 
-    string[][] combo1ExpectedBernoulliSampleP40 =
+    string[][] combo1ExpectedBernoulliCompatP40 =
         [["field_a", "field_b", "field_c"],
          ["orange", "オレンジ", "2.5"],
          ["pink", "ピンク", "1.1"],
@@ -1452,7 +1886,7 @@ unittest
          ["blue", "青", "12"],
          ["gray", "グレー", "6.2"]];
 
-    string[][] combo1ExpectedDistinctSampleK1P40 =
+    string[][] combo1ExpectedDistinctK1P40 =
         [["field_a", "field_b", "field_c"],
          ["orange", "オレンジ", "2.5"],
          ["red", "赤", "23.8"],
@@ -1460,7 +1894,7 @@ unittest
          ["blue", "青", "12"],
          ["black", "黒", "0.983"]];
 
-    string[][] combo1ExpectedWt3Probs =
+    string[][] combo1ExpectedPermuteWt3Probs =
         [["random_value", "field_a", "field_b", "field_c"],
          ["0.99754077523718754", "yellow", "黄", "12"],
          ["0.99527665440088786", "tan", "タン", "8.5"],
@@ -1475,7 +1909,7 @@ unittest
          ["0.1644613185329992", "orange", "オレンジ", "2.5"],
          ["1.6438086931020549e-17", "green", "緑", "0.0072"]];
 
-    string[][] combo1ExpectedWt3 =
+    string[][] combo1ExpectedPermuteWt3 =
         [["field_a", "field_b", "field_c"],
          ["yellow", "黄", "12"],
          ["tan", "タン", "8.5"],
@@ -1490,7 +1924,14 @@ unittest
          ["orange", "オレンジ", "2.5"],
          ["green", "緑", "0.0072"]];
 
-    string[][] combo1ExpectedReplace10 =
+        string[][] combo1ExpectedPermuteAlgoRNum4 =
+        [["field_a", "field_b", "field_c"],
+         ["blue", "青", "12"],
+         ["gray", "グレー", "6.2"],
+         ["brown", "褐色", "29.2"],
+         ["white", "白", "1.65"]];
+
+    string[][] combo1ExpectedReplaceNum10 =
         [["field_a", "field_b", "field_c"],
          ["gray", "グレー", "6.2"],
          ["yellow", "黄", "12"],
@@ -1503,6 +1944,94 @@ unittest
          ["tan", "タン", "8.5"],
          ["purple", "紫の", "42"]];
 
+    /* 1x200 - Needed for testing bernoulliSkipSampling, invoked with prob < 0.04. */
+    string[][] data1x200 =
+        [["field_a"],
+         ["000"], ["001"], ["002"], ["003"], ["004"], ["005"], ["006"], ["007"], ["008"], ["009"],
+         ["010"], ["011"], ["012"], ["013"], ["014"], ["015"], ["016"], ["017"], ["018"], ["019"],
+         ["020"], ["021"], ["022"], ["023"], ["024"], ["025"], ["026"], ["027"], ["028"], ["029"],
+         ["030"], ["031"], ["032"], ["033"], ["034"], ["035"], ["036"], ["037"], ["038"], ["039"],
+         ["040"], ["041"], ["042"], ["043"], ["044"], ["045"], ["046"], ["047"], ["048"], ["049"],
+         ["050"], ["051"], ["052"], ["053"], ["054"], ["055"], ["056"], ["057"], ["058"], ["059"],
+         ["060"], ["061"], ["062"], ["063"], ["064"], ["065"], ["066"], ["067"], ["068"], ["069"],
+         ["070"], ["071"], ["072"], ["073"], ["074"], ["075"], ["076"], ["077"], ["078"], ["079"],
+         ["080"], ["081"], ["082"], ["083"], ["084"], ["085"], ["086"], ["087"], ["088"], ["089"],
+         ["090"], ["091"], ["092"], ["093"], ["094"], ["095"], ["096"], ["097"], ["098"], ["099"],
+         ["100"], ["101"], ["102"], ["103"], ["104"], ["105"], ["106"], ["107"], ["108"], ["109"],
+         ["110"], ["111"], ["112"], ["113"], ["114"], ["115"], ["116"], ["117"], ["118"], ["119"],
+         ["120"], ["121"], ["122"], ["123"], ["124"], ["125"], ["126"], ["127"], ["128"], ["129"],
+         ["130"], ["131"], ["132"], ["133"], ["134"], ["135"], ["136"], ["137"], ["138"], ["139"],
+         ["140"], ["141"], ["142"], ["143"], ["144"], ["145"], ["146"], ["147"], ["148"], ["149"],
+         ["150"], ["151"], ["152"], ["153"], ["154"], ["155"], ["156"], ["157"], ["158"], ["159"],
+         ["160"], ["161"], ["162"], ["163"], ["164"], ["165"], ["166"], ["167"], ["168"], ["169"],
+         ["170"], ["171"], ["172"], ["173"], ["174"], ["175"], ["176"], ["177"], ["178"], ["179"],
+         ["180"], ["181"], ["182"], ["183"], ["184"], ["185"], ["186"], ["187"], ["188"], ["189"],
+         ["190"], ["191"], ["192"], ["193"], ["194"], ["195"], ["196"], ["197"], ["198"], ["199"],
+        ];
+
+    string fpath_data1x200 = buildPath(testDir, "data1x200.tsv");
+    string fpath_data1x200_noheader = buildPath(testDir, "data1x200_noheader.tsv");
+    writeUnittestTsvFile(fpath_data1x200, data1x200);
+    writeUnittestTsvFile(fpath_data1x200_noheader, data1x200[1..$]);
+
+    string[][] data1x200ExpectedBernoulliSkipV333P01 =
+        [["field_a"],
+         ["077"],
+         ["119"]];
+
+    string[][] data1x200ExpectedBernoulliSkipV333P02 =
+        [["field_a"],
+         ["038"],
+         ["059"],
+         ["124"],
+         ["161"],
+         ["162"],
+         ["183"]];
+
+    string[][] data1x200ExpectedBernoulliSkipV333P03 =
+        [["field_a"],
+         ["025"],
+         ["039"],
+         ["082"],
+         ["107"],
+         ["108"],
+         ["122"],
+         ["136"],
+         ["166"],
+         ["182"]];
+
+    string[][] data1x200ExpectedBernoulliCompatV333P01 =
+        [["field_a"],
+         ["072"]];
+
+    string[][] data1x200ExpectedBernoulliCompatV333P02 =
+        [["field_a"],
+         ["004"],
+         ["072"]];
+
+    string[][] data1x200ExpectedBernoulliCompatV333P03 =
+        [["field_a"],
+         ["004"],
+         ["072"],
+         ["181"]];
+
+    /* Combo 2, for bernoulli skip sampling: 3x0, 3x1, 1x200, empty, 1x10. No data files,
+     * only expected results. The header is from 3x0, the results are offset 1-position
+     * from data1x200ExpectedBernoulliSkipV333P03 due to insertion of a single preceding line.
+     */
+    string[][] combo2ExpectedBernoulliSkipV333P03 =
+        [["field_a", "field_b", "field_c"],
+         ["024"],
+         ["038"],
+         ["081"],
+         ["106"],
+         ["107"],
+         ["121"],
+         ["135"],
+         ["165"],
+         ["181"]];
+
+
     /* 1x10 - Simple 1-column file. */
     string[][] data1x10 =
         [["field_a"], ["1"], ["2"], ["3"], ["4"], ["5"], ["6"], ["7"], ["8"], ["9"], ["10"]];
@@ -1511,10 +2040,10 @@ unittest
     writeUnittestTsvFile(fpath_data1x10, data1x10);
     writeUnittestTsvFile(fpath_data1x10_noheader, data1x10[1..$]);
 
-    string[][] data1x10ExpectedNoWt =
+    string[][] data1x10ExpectedPermuteCompat =
         [["field_a"], ["8"], ["4"], ["6"], ["5"], ["3"], ["10"], ["7"], ["9"], ["2"], ["1"]];
 
-    string[][] data1x10ExpectedWt1 =
+    string[][] data1x10ExpectedPermuteWt1 =
         [["field_a"], ["8"], ["4"], ["6"], ["10"], ["5"], ["7"], ["9"], ["3"], ["2"], ["1"]];
 
     /* 2x10a - Uniform distribution [0,1]. */
@@ -1534,7 +2063,7 @@ unittest
     string fpath_data2x10a = buildPath(testDir, "data2x10a.tsv");
     writeUnittestTsvFile(fpath_data2x10a, data2x10a);
 
-    string[][] data2x10aExpectedWt2Probs =
+    string[][] data2x10aExpectedPermuteWt2Probs =
         [["random_value", "line", "weight"],
          ["0.96833865494543658", "8", "0.91836862"],
          ["0.91856842054413923", "4", "0.47379424"],
@@ -1564,7 +2093,7 @@ unittest
     string fpath_data2x10b = buildPath(testDir, "data2x10b.tsv");
     writeUnittestTsvFile(fpath_data2x10b, data2x10b);
 
-    string[][] data2x10bExpectedWt2Probs =
+    string[][] data2x10bExpectedPermuteWt2Probs =
         [["random_value", "line", "weight"],
          ["0.99996486739067969", "8", "841"],
          ["0.99991017467137211", "4", "448"],
@@ -1594,7 +2123,7 @@ unittest
     string fpath_data2x10c = buildPath(testDir, "data2x10c.tsv");
     writeUnittestTsvFile(fpath_data2x10c, data2x10c);
 
-    string[][] data2x10cExpectedWt2Probs =
+    string[][] data2x10cExpectedPermuteWt2Probs =
         [["random_value", "line", "weight"],
          ["0.99998939008709697", "6", "26226.08"],
          ["0.99995951291695517", "9", "35213.81"],
@@ -1624,7 +2153,7 @@ unittest
     string fpath_data2x10d = buildPath(testDir, "data2x10d.tsv");
     writeUnittestTsvFile(fpath_data2x10d, data2x10d);
 
-    string[][] data2x10dExpectedWt2Probs =
+    string[][] data2x10dExpectedPermuteWt2Probs =
         [["random_value", "line", "weight"],
          ["0.99999830221846353", "8", "17403.31"],
          ["0.99997860834041397", "10", "35213.81"],
@@ -1653,7 +2182,7 @@ unittest
     string fpath_data2x10e = buildPath(testDir, "data2x10e.tsv");
     writeUnittestTsvFile(fpath_data2x10e, data2x10e);
 
-    string[][] data2x10eExpectedWt2Probs =
+    string[][] data2x10eExpectedPermuteWt2Probs =
         [["random_value", "line", "weight"],
          ["0.99998493348975237", "4", "2671.04"],
          ["0.99995934807202624", "3", "17403.31"],
@@ -1694,14 +2223,14 @@ unittest
          ["23", "circle", "green", "S", "20"],
          ["24", "square", "green", "L", "20"],
          ["25", "circle", "red", "S", "10"],
-            ];
+        ];
 
     string fpath_data5x25 = buildPath(testDir, "data5x25.tsv");
     string fpath_data5x25_noheader = buildPath(testDir, "data5x25_noheader.tsv");
     writeUnittestTsvFile(fpath_data5x25, data5x25);
     writeUnittestTsvFile(fpath_data5x25_noheader, data5x25[1..$]);
 
-    string[][] data5x25ExpectedDistinctSampleK2P40 =
+    string[][] data5x25ExpectedDistinctK2P40 =
         [["ID", "Shape", "Color", "Size", "Weight"],
          ["03", "square", "black", "L", "20"],
          ["05", "ellipse", "red", "S", "20"],
@@ -1714,9 +2243,9 @@ unittest
          ["19", "square", "black", "L", "20"],
          ["21", "ellipse", "black", "L", "30"],
          ["24", "square", "green", "L", "20"],
-            ];
+        ];
 
-    string[][] data5x25ExpectedDistinctSampleK2K4P20 =
+    string[][] data5x25ExpectedDistinctK2K4P20 =
         [["ID", "Shape", "Color", "Size", "Weight"],
          ["03", "square", "black", "L", "20"],
          ["07", "triangle", "red", "L", "20"],
@@ -1728,9 +2257,9 @@ unittest
          ["19", "square", "black", "L", "20"],
          ["22", "triangle", "red", "L", "30"],
          ["24", "square", "green", "L", "20"],
-            ];
+        ];
 
-    string[][] data5x25ExpectedDistinctSampleK2K3K4P20 =
+    string[][] data5x25ExpectedDistinctK2K3K4P20 =
         [["ID", "Shape", "Color", "Size", "Weight"],
          ["04", "circle", "green", "L", "30"],
          ["07", "triangle", "red", "L", "20"],
@@ -1741,26 +2270,54 @@ unittest
          ["16", "square", "red", "S", "10"],
          ["18", "square", "red", "S", "20"],
          ["22", "triangle", "red", "L", "30"],
-            ];
+        ];
 
     /*
      * Enough setup! Actually run some tests!
      */
 
-    /* Basic tests. Headers and static seed. With weights and without. */
-    testTsvSample(["test-a1", "--header", "--static-seed", fpath_dataEmpty], dataEmpty);
-    testTsvSample(["test-a2", "--header", "--static-seed", fpath_data3x0], data3x0);
-    testTsvSample(["test-a3", "-H", "-s", fpath_data3x1], data3x1);
-    testTsvSample(["test-a4", "-H", "-s", fpath_data3x2], data3x2ExpectedNoWt);
-    testTsvSample(["test-a5", "-H", "-s", fpath_data3x3], data3x3ExpectedNoWt);
-    testTsvSample(["test-a6", "-H", "-s", fpath_data3x6], data3x6ExpectedNoWt);
-    testTsvSample(["test-a7", "-H", "-s", "--print-random", fpath_data3x6], data3x6ExpectedNoWtProbs);
-    testTsvSample(["test-a8", "-H", "-s", "--weight-field", "3", fpath_data3x6], data3x6ExpectedWt3);
-    testTsvSample(["test-a9", "-H", "-s", "--print-random", "-w", "3", fpath_data3x6], data3x6ExpectedWt3Probs);
-    testTsvSample(["test-a10", "-H", "--seed-value", "41", "--print-random", fpath_data3x6], data3x6ExpectedNoWtV41Probs);
-    testTsvSample(["test-a11", "-H", "-s", "-v", "41", "--print-random", fpath_data3x6], data3x6ExpectedNoWtV41Probs);
-    testTsvSample(["test-a12", "-H", "-s", "-v", "0", "--print-random", fpath_data3x6], data3x6ExpectedNoWtProbs);
-    testTsvSample(["test-a13", "-H", "-v", "41", "-w", "3", "--print-random", fpath_data3x6], data3x6ExpectedWt3V41Probs);
+    /* Permutations. Headers, static seed, compatibility mode. With weights and without. */
+    testTsvSample(["test-a1", "--header", "--static-seed", "--compatibility-mode", fpath_dataEmpty], dataEmpty);
+    testTsvSample(["test-a2", "--header", "--static-seed", "--compatibility-mode", fpath_data3x0], data3x0);
+    testTsvSample(["test-a3", "-H", "-s", "--compatibility-mode", fpath_data3x1], data3x1);
+    testTsvSample(["test-a4", "-H", "-s", "--compatibility-mode", fpath_data3x2], data3x2PermuteCompat);
+    testTsvSample(["test-a5", "-H", "-s", "--compatibility-mode", fpath_data3x3], data3x3ExpectedPermuteCompat);
+    testTsvSample(["test-a6", "-H", "-s", "--compatibility-mode", fpath_data3x6], data3x6ExpectedPermuteCompat);
+    testTsvSample(["test-a7", "-H", "-s", "--print-random", fpath_data3x6], data3x6ExpectedPermuteCompatProbs);
+    testTsvSample(["test-a8", "-H", "-s", "--weight-field", "3", fpath_data3x6], data3x6ExpectedPermuteWt3);
+    testTsvSample(["test-a9", "-H", "-s", "--print-random", "-w", "3", fpath_data3x6], data3x6ExpectedPermuteWt3Probs);
+    testTsvSample(["test-a10", "-H", "--seed-value", "41", "--print-random", fpath_data3x6], data3x6ExpectedPermuteCompatV41Probs);
+    testTsvSample(["test-a11", "-H", "-s", "-v", "41", "--print-random", fpath_data3x6], data3x6ExpectedPermuteCompatV41Probs);
+    testTsvSample(["test-a12", "-H", "-s", "-v", "0", "--print-random", fpath_data3x6], data3x6ExpectedPermuteCompatProbs);
+    testTsvSample(["test-a13", "-H", "-v", "41", "-w", "3", "--print-random", fpath_data3x6], data3x6ExpectedPermuteWt3V41Probs);
+
+    /* Permutations, without compatibility mode, or with both compatibility and printing. */
+    testTsvSample(["test-aa1", "--header", "--static-seed", fpath_dataEmpty], dataEmpty);
+    testTsvSample(["test-aa2", "--header", "--static-seed", fpath_data3x0], data3x0);
+    testTsvSample(["test-aa3", "-H", "-s", fpath_data3x1], data3x1);
+    testTsvSample(["test-aa4", "-H", "-s", fpath_data3x2], data3x2PermuteShuffle);
+    testTsvSample(["test-aa5", "-H", "-s", fpath_data3x3], data3x3ExpectedPermuteSwap);
+    testTsvSample(["test-aa6", "-H", "-s", fpath_data3x6], data3x6ExpectedPermuteSwap);
+    testTsvSample(["test-aa7", "-H", "-s", "--weight-field", "3", fpath_data3x6], data3x6ExpectedPermuteWt3);
+    testTsvSample(["test-aa8", "-H", "-s", "--print-random", "-w", "3", "--compatibility-mode", fpath_data3x6], data3x6ExpectedPermuteWt3Probs);
+    testTsvSample(["test-aa9", "-H", "--seed-value", "41", "--print-random", "--compatibility-mode", fpath_data3x6], data3x6ExpectedPermuteCompatV41Probs);
+
+    /* Reservoir sampling using Algorithm R.
+     * (Note: reservoirSamplingViaHeap is tested later in the length-based iteration loops.)
+     */
+    testTsvSample(["test-aa10", "--prefer-algorithm-r", "--header", "--static-seed", "--num", "1", fpath_dataEmpty], dataEmpty);
+    testTsvSample(["test-aa11", "--prefer-algorithm-r", "--header", "--static-seed", "--num", "2", fpath_dataEmpty], dataEmpty);
+    testTsvSample(["test-aa12", "--prefer-algorithm-r", "-H", "-s", "--num", "1", fpath_data3x0], data3x0);
+    testTsvSample(["test-aa13", "--prefer-algorithm-r", "-H", "-s", "--num", "2", fpath_data3x0], data3x0);
+    testTsvSample(["test-aa14", "--prefer-algorithm-r", "-H", "-s", "--num", "1", fpath_data3x1], data3x1);
+    testTsvSample(["test-aa15", "--prefer-algorithm-r", "-H", "-s", "--num", "2", fpath_data3x1], data3x1);
+    testTsvSample(["test-aa16", "--prefer-algorithm-r", "-H", "-s", "--num", "7", fpath_data3x6], data3x6ExpectedPermuteAlgoRNum6);
+    testTsvSample(["test-aa17", "--prefer-algorithm-r", "-H", "-s", "--num", "6", fpath_data3x6], data3x6ExpectedPermuteAlgoRNum6);
+    testTsvSample(["test-aa18", "--prefer-algorithm-r", "-H", "-s", "--num", "5", fpath_data3x6], data3x6ExpectedPermuteAlgoRNum5);
+    testTsvSample(["test-aa19", "--prefer-algorithm-r", "-H", "-s", "--num", "4", fpath_data3x6], data3x6ExpectedPermuteAlgoRNum4);
+    testTsvSample(["test-aa20", "--prefer-algorithm-r", "-H", "-s", "--num", "3", fpath_data3x6], data3x6ExpectedPermuteAlgoRNum3);
+    testTsvSample(["test-aa21", "--prefer-algorithm-r", "-H", "-s", "--num", "2", fpath_data3x6], data3x6ExpectedPermuteAlgoRNum2);
+    testTsvSample(["test-aa22", "--prefer-algorithm-r", "-H", "-s", "--num", "1", fpath_data3x6], data3x6ExpectedPermuteAlgoRNum1);
 
     /* Bernoulli sampling cases. */
     testTsvSample(["test-a14", "--header", "--static-seed", "--prob", "0.001", fpath_dataEmpty], dataEmpty);
@@ -1768,61 +2325,101 @@ unittest
     testTsvSample(["test-a16", "-H", "-s", "-p", "1.0", fpath_data3x1], data3x1);
     testTsvSample(["test-a17", "-H", "-s", "-p", "1.0", fpath_data3x6], data3x6);
     testTsvSample(["test-a18", "-H", "-p", "1.0", fpath_data3x6], data3x6);
-    testTsvSample(["test-a19", "-H", "-s", "--prob", "1.0", "--print-random", fpath_data3x6], data3x6ExpectedProbsBernoulliSampleP100);
-    testTsvSample(["test-a20", "-H", "-s", "--prob", "0.60", "--print-random", fpath_data3x6], data3x6ExpectedProbsBernoulliSampleP60);
-    testTsvSample(["test-a21", "-H", "-s", "--prob", "0.60", fpath_data3x6], data3x6ExpectedBernoulliSampleP60);
-    testTsvSample(["test-a22", "-H", "-v", "41", "--prob", "0.60", "--print-random", fpath_data3x6], data3x6ExpectedV41ProbsBernoulliSampleP60);
+    testTsvSample(["test-a19", "-H", "-s", "--prob", "1.0", "--print-random", fpath_data3x6], data3x6ExpectedBernoulliProbsP100);
+    testTsvSample(["test-a20", "-H", "-s", "--prob", "0.60", "--print-random", fpath_data3x6], data3x6ExpectedBernoulliCompatProbsP60);
+    testTsvSample(["test-a21", "-H", "-s", "--prob", "0.60", fpath_data3x6], data3x6ExpectedBernoulliCompatP60);
+    testTsvSample(["test-a22", "-H", "-v", "41", "--prob", "0.60", "--print-random", fpath_data3x6], data3x6ExpectedBernoulliCompatP60V41Probs);
+
+    /* Bernoulli sampling with probabilities in skip sampling range or preferring skip sampling. */
+    testTsvSample(["test-ab1", "-H", "--seed-value", "333", "--prob", "0.01", fpath_data1x200], data1x200ExpectedBernoulliSkipV333P01);
+    testTsvSample(["test-ab2", "-H", "--seed-value", "333", "--prob", "0.02", fpath_data1x200], data1x200ExpectedBernoulliSkipV333P02);
+    testTsvSample(["test-ab3", "-H", "--seed-value", "333", "--prob", "0.03", fpath_data1x200], data1x200ExpectedBernoulliSkipV333P03);
+    testTsvSample(["test-ab4", "-H", "--seed-value", "333", "--prob", "0.01", "--compatibility-mode", fpath_data1x200], data1x200ExpectedBernoulliCompatV333P01);
+    testTsvSample(["test-ab5", "-H", "--seed-value", "333", "--prob", "0.02", "--compatibility-mode", fpath_data1x200], data1x200ExpectedBernoulliCompatV333P02);
+    testTsvSample(["test-ab6", "-H", "--seed-value", "333", "--prob", "0.03", "--compatibility-mode", fpath_data1x200], data1x200ExpectedBernoulliCompatV333P03);
+    testTsvSample(["test-ab7", "-H", "-s", "-p", "0.40", "--prefer-skip-sampling", fpath_data3x6], data3x6ExpectedBernoulliSkipP40);
 
     /* Distinct sampling cases. */
     testTsvSample(["test-a23", "--header", "--static-seed", "--prob", "0.001", "--key-fields", "1", fpath_dataEmpty], dataEmpty);
     testTsvSample(["test-a24", "--header", "--static-seed", "--prob", "0.001", "--key-fields", "1", fpath_data3x0], data3x0);
     testTsvSample(["test-a25", "-H", "-s", "-p", "1.0", "-k", "2", fpath_data3x1], data3x1);
     testTsvSample(["test-a26", "-H", "-s", "-p", "1.0", "-k", "2", fpath_data3x6], data3x6);
-    testTsvSample(["test-a27", "-H", "-s", "-p", "0.6", "-k", "1,3", fpath_data3x6], data3x6ExpectedDistinctSampleK1K3P60);
+    testTsvSample(["test-a27", "-H", "-s", "-p", "0.6", "-k", "1,3", fpath_data3x6], data3x6ExpectedDistinctK1K3P60);
 
     /* Generating random weights. Use Bernoulli sampling test set at prob 100% for uniform sampling.
      * For weighted sampling, use the weighted cases, but with expected using the original ordering.
      */
-    testTsvSample(["test-a28", "-H", "-s", "--gen-random-inorder", fpath_data3x6], data3x6ExpectedProbsBernoulliSampleP100);
-    testTsvSample(["test-a29", "-H", "-s", "--gen-random-inorder", fpath_data3x6], data3x6ExpectedProbsBernoulliSampleP100);
+    testTsvSample(["test-a28", "-H", "-s", "--gen-random-inorder", fpath_data3x6], data3x6ExpectedBernoulliProbsP100);
+    testTsvSample(["test-a29", "-H", "-s", "--gen-random-inorder", fpath_data3x6], data3x6ExpectedBernoulliProbsP100);
     testTsvSample(["test-a30", "-H", "-s", "--gen-random-inorder", "--weight-field", "3", fpath_data3x6],
                   data3x6ExpectedWt3ProbsInorder);
     testTsvSample(["test-a31", "-H", "-v", "41", "--gen-random-inorder", "--weight-field", "3", fpath_data3x6],
                   data3x6ExpectedWt3V41ProbsInorder);
     testTsvSample(["test-a32", "-H", "-s", "-p", "0.6", "-k", "1,3", "--print-random", fpath_data3x6],
-                  data3x6ExpectedDistinctSampleK1K3P60Probs);
+                  data3x6ExpectedDistinctK1K3P60Probs);
     testTsvSample(["test-a33", "-H", "-s", "-p", "0.6", "-k", "1,3", "--print-random", "--random-value-header",
-                   "custom_random_value_header", fpath_data3x6], data3x6ExpectedDistinctSampleK1K3P60ProbsRVCustom);
+                   "custom_random_value_header", fpath_data3x6], data3x6ExpectedDistinctK1K3P60ProbsRVCustom);
     testTsvSample(["test-a34", "-H", "-s", "-p", "0.2", "-k", "2", "--gen-random-inorder", fpath_data3x6],
-                  data3x6ExpectedDistinctSampleK2P2ProbsInorder);
+                  data3x6ExpectedDistinctK2P2ProbsInorder);
 
     /* Simple random sampling with replacement. */
     testTsvSample(["test-a35", "-H", "-s", "--replace", fpath_dataEmpty], dataEmpty);
     testTsvSample(["test-a36", "-H", "-s", "--replace", "--num", "3", fpath_dataEmpty], dataEmpty);
     testTsvSample(["test-a37", "-H", "-s", "--replace", fpath_data3x0], data3x0);
     testTsvSample(["test-a38", "-H", "-s", "--replace", "--num", "3", fpath_data3x0], data3x0);
-    testTsvSample(["test-a39", "-H", "-s", "--replace", "--num", "3", fpath_data3x1], data3x1ExpectedReplace3);
-    testTsvSample(["test-a40", "-H", "-s", "--replace", "--num", "10", fpath_data3x6], data3x6ExpectedReplace10);
-    testTsvSample(["test-a41", "-H", "-s", "-v", "77", "--replace", "--num", "10", fpath_data3x6], data3x6ExpectedReplace10V77);
+    testTsvSample(["test-a39", "-H", "-s", "--replace", "--num", "3", fpath_data3x1], data3x1ExpectedReplaceNum3);
+    testTsvSample(["test-a40", "-H", "-s", "--replace", "--num", "10", fpath_data3x6], data3x6ExpectedReplaceNum10);
+    testTsvSample(["test-a41", "-H", "-s", "-v", "77", "--replace", "--num", "10", fpath_data3x6], data3x6ExpectedReplaceNum10V77);
 
-    /* Basic tests, without headers. */
-    testTsvSample(["test-b1", "-s", fpath_data3x1_noheader], data3x1[1..$]);
-    testTsvSample(["test-b2", "-s", fpath_data3x2_noheader], data3x2ExpectedNoWt[1..$]);
-    testTsvSample(["test-b3", "-s", fpath_data3x3_noheader], data3x3ExpectedNoWt[1..$]);
-    testTsvSample(["test-b4", "-s", fpath_data3x6_noheader], data3x6ExpectedNoWt[1..$]);
-    testTsvSample(["test-b5", "-s", "--print-random", fpath_data3x6_noheader], data3x6ExpectedNoWtProbs[1..$]);
-    testTsvSample(["test-b6", "-s", "--weight-field", "3", fpath_data3x6_noheader], data3x6ExpectedWt3[1..$]);
-    testTsvSample(["test-b7", "-s", "--print-random", "-w", "3", fpath_data3x6_noheader], data3x6ExpectedWt3Probs[1..$]);
-    testTsvSample(["test-b8", "-v", "41", "--print-random", fpath_data3x6_noheader], data3x6ExpectedNoWtV41Probs[1..$]);
-    testTsvSample(["test-b9", "-v", "41", "-w", "3", "--print-random", fpath_data3x6_noheader], data3x6ExpectedWt3V41Probs[1..$]);
+    /* Permutations, compatibility mode, without headers. */
+    testTsvSample(["test-b1", "-s", "--compatibility-mode", fpath_data3x1_noheader], data3x1[1..$]);
+    testTsvSample(["test-b2", "-s", "--compatibility-mode", fpath_data3x2_noheader], data3x2PermuteCompat[1..$]);
+    testTsvSample(["test-b3", "-s", "--compatibility-mode", fpath_data3x3_noheader], data3x3ExpectedPermuteCompat[1..$]);
+    testTsvSample(["test-b4", "-s", "--compatibility-mode", fpath_data3x6_noheader], data3x6ExpectedPermuteCompat[1..$]);
+    testTsvSample(["test-b5", "-s", "--print-random", fpath_data3x6_noheader], data3x6ExpectedPermuteCompatProbs[1..$]);
+    testTsvSample(["test-b6", "-s", "--weight-field", "3", "--compatibility-mode", fpath_data3x6_noheader], data3x6ExpectedPermuteWt3[1..$]);
+    testTsvSample(["test-b7", "-s", "--print-random", "-w", "3", fpath_data3x6_noheader], data3x6ExpectedPermuteWt3Probs[1..$]);
+    testTsvSample(["test-b8", "-v", "41", "--print-random", fpath_data3x6_noheader], data3x6ExpectedPermuteCompatV41Probs[1..$]);
+    testTsvSample(["test-b9", "-v", "41", "-w", "3", "--print-random", fpath_data3x6_noheader], data3x6ExpectedPermuteWt3V41Probs[1..$]);
+
+    /* Permutations, no headers, without compatibility mode, or with printing and compatibility mode. */
+    testTsvSample(["test-bb1", "-s", fpath_data3x1_noheader], data3x1[1..$]);
+    testTsvSample(["test-bb2", "-s", fpath_data3x2_noheader], data3x2PermuteShuffle[1..$]);
+    testTsvSample(["test-bb3", "-s", fpath_data3x3_noheader], data3x3ExpectedPermuteSwap[1..$]);
+    testTsvSample(["test-bb4", "-s", fpath_data3x6_noheader], data3x6ExpectedPermuteSwap[1..$]);
+    testTsvSample(["test-bb5", "-s", "--weight-field", "3", fpath_data3x6_noheader], data3x6ExpectedPermuteWt3[1..$]);
+    testTsvSample(["test-bb6", "-s", "--print-random", "-w", "3", "--compatibility-mode", fpath_data3x6_noheader], data3x6ExpectedPermuteWt3Probs[1..$]);
+    testTsvSample(["test-bb7", "-v", "41", "--print-random", "--compatibility-mode", fpath_data3x6_noheader], data3x6ExpectedPermuteCompatV41Probs[1..$]);
+
+    /* Reservoir sampling using Algorithm R, no headers. */
+    testTsvSample(["test-aa10", "--prefer-algorithm-r", "--static-seed", "--num", "1", fpath_dataEmpty], dataEmpty);
+    testTsvSample(["test-aa11", "--prefer-algorithm-r", "--static-seed", "--num", "2", fpath_dataEmpty], dataEmpty);
+    testTsvSample(["test-aa14", "--prefer-algorithm-r", "-s", "--num", "1", fpath_data3x1_noheader], data3x1[1..$]);
+    testTsvSample(["test-aa15", "--prefer-algorithm-r", "-s", "--num", "2", fpath_data3x1_noheader], data3x1[1..$]);
+    testTsvSample(["test-aa16", "--prefer-algorithm-r", "-s", "--num", "7", fpath_data3x6_noheader], data3x6ExpectedPermuteAlgoRNum6[1..$]);
+    testTsvSample(["test-aa17", "--prefer-algorithm-r", "-s", "--num", "6", fpath_data3x6_noheader], data3x6ExpectedPermuteAlgoRNum6[1..$]);
+    testTsvSample(["test-aa18", "--prefer-algorithm-r", "-s", "--num", "5", fpath_data3x6_noheader], data3x6ExpectedPermuteAlgoRNum5[1..$]);
+    testTsvSample(["test-aa19", "--prefer-algorithm-r", "-s", "--num", "4", fpath_data3x6_noheader], data3x6ExpectedPermuteAlgoRNum4[1..$]);
+    testTsvSample(["test-aa20", "--prefer-algorithm-r", "-s", "--num", "3", fpath_data3x6_noheader], data3x6ExpectedPermuteAlgoRNum3[1..$]);
+    testTsvSample(["test-aa21", "--prefer-algorithm-r", "-s", "--num", "2", fpath_data3x6_noheader], data3x6ExpectedPermuteAlgoRNum2[1..$]);
+    testTsvSample(["test-aa22", "--prefer-algorithm-r", "-s", "--num", "1", fpath_data3x6_noheader], data3x6ExpectedPermuteAlgoRNum1[1..$]);
 
     /* Bernoulli sampling cases. */
     testTsvSample(["test-b10", "-s", "-p", "1.0", fpath_data3x1_noheader], data3x1[1..$]);
     testTsvSample(["test-b11", "-s", "-p", "1.0", fpath_data3x6_noheader], data3x6[1..$]);
     testTsvSample(["test-b12", "-p", "1.0", fpath_data3x6_noheader], data3x6[1..$]);
-    testTsvSample(["test-b13", "-s", "--prob", "1.0", "--print-random", fpath_data3x6_noheader], data3x6ExpectedProbsBernoulliSampleP100[1..$]);
-    testTsvSample(["test-b14", "-s", "--prob", "0.60", "--print-random", fpath_data3x6_noheader], data3x6ExpectedProbsBernoulliSampleP60[1..$]);
-    testTsvSample(["test-b15", "-v", "41", "--prob", "0.60", "--print-random", fpath_data3x6_noheader], data3x6ExpectedV41ProbsBernoulliSampleP60[1..$]);
+    testTsvSample(["test-b13", "-s", "--prob", "1.0", "--print-random", fpath_data3x6_noheader], data3x6ExpectedBernoulliProbsP100[1..$]);
+    testTsvSample(["test-b14", "-s", "--prob", "0.60", "--print-random", fpath_data3x6_noheader], data3x6ExpectedBernoulliCompatProbsP60[1..$]);
+    testTsvSample(["test-b15", "-v", "41", "--prob", "0.60", "--print-random", fpath_data3x6_noheader], data3x6ExpectedBernoulliCompatP60V41Probs[1..$]);
+
+    /* Bernoulli sampling with probabilities in skip sampling range. */
+    testTsvSample(["test-bb1", "-v", "333", "-p", "0.01", fpath_data1x200_noheader], data1x200ExpectedBernoulliSkipV333P01[1..$]);
+    testTsvSample(["test-bb2", "-v", "333", "-p", "0.02", fpath_data1x200_noheader], data1x200ExpectedBernoulliSkipV333P02[1..$]);
+    testTsvSample(["test-bb3", "-v", "333", "-p", "0.03", fpath_data1x200_noheader], data1x200ExpectedBernoulliSkipV333P03[1..$]);
+    testTsvSample(["test-bb4", "-v", "333", "-p", "0.01", "--compatibility-mode", fpath_data1x200_noheader], data1x200ExpectedBernoulliCompatV333P01[1..$]);
+    testTsvSample(["test-bb5", "-v", "333", "-p", "0.02", "--compatibility-mode", fpath_data1x200_noheader], data1x200ExpectedBernoulliCompatV333P02[1..$]);
+    testTsvSample(["test-bb6", "-v", "333", "-p", "0.03", "--compatibility-mode", fpath_data1x200_noheader], data1x200ExpectedBernoulliCompatV333P03[1..$]);
+    testTsvSample(["test-bb7", "-s", "-p", "0.40", "--prefer-skip-sampling", fpath_data3x6_noheader], data3x6ExpectedBernoulliSkipP40[1..$]);
 
     /* Distinct sampling cases. */
     testTsvSample(["test-b16", "-s", "-p", "1.0", "-k", "2", fpath_data3x1_noheader], data3x1[1..$]);
@@ -1831,106 +2428,121 @@ unittest
     testTsvSample(["test-b19", "-v", "71563", "-p", "1.0", "-k", "2", fpath_data3x6_noheader], data3x6[1..$]);
 
     /* Generating random weights. Reuse Bernoulli sampling tests at prob 100%. */
-    testTsvSample(["test-b20", "-s", "--gen-random-inorder", fpath_data3x6_noheader], data3x6ExpectedProbsBernoulliSampleP100[1..$]);
+    testTsvSample(["test-b20", "-s", "--gen-random-inorder", fpath_data3x6_noheader], data3x6ExpectedBernoulliProbsP100[1..$]);
     testTsvSample(["test-b23", "-v", "41", "--gen-random-inorder", "--weight-field", "3", fpath_data3x6_noheader], data3x6ExpectedWt3V41ProbsInorder[1..$]);
     testTsvSample(["test-b24", "-s", "-p", "0.6", "-k", "1,3", "--print-random", fpath_data3x6_noheader],
-                  data3x6ExpectedDistinctSampleK1K3P60Probs[1..$]);
+                  data3x6ExpectedDistinctK1K3P60Probs[1..$]);
     testTsvSample(["test-b24", "-s", "-p", "0.2", "-k", "2", "--gen-random-inorder", fpath_data3x6_noheader],
-                  data3x6ExpectedDistinctSampleK2P2ProbsInorder[1..$]);
+                  data3x6ExpectedDistinctK2P2ProbsInorder[1..$]);
 
     /* Simple random sampling with replacement. */
     testTsvSample(["test-b25", "-s", "--replace", fpath_dataEmpty], dataEmpty);
     testTsvSample(["test-b26", "-s", "-r", "--num", "3", fpath_dataEmpty], dataEmpty);
-    testTsvSample(["test-b27", "-s", "-r", "-n", "3", fpath_data3x1_noheader], data3x1ExpectedReplace3[1..$]);
-    testTsvSample(["test-b28", "-s", "--replace", "-n", "10", fpath_data3x6_noheader], data3x6ExpectedReplace10[1..$]);
-    testTsvSample(["test-b29", "-s", "-v", "77", "--replace", "--num", "10", fpath_data3x6_noheader], data3x6ExpectedReplace10V77[1..$]);
+    testTsvSample(["test-b27", "-s", "-r", "-n", "3", fpath_data3x1_noheader], data3x1ExpectedReplaceNum3[1..$]);
+    testTsvSample(["test-b28", "-s", "--replace", "-n", "10", fpath_data3x6_noheader], data3x6ExpectedReplaceNum10[1..$]);
+    testTsvSample(["test-b29", "-s", "-v", "77", "--replace", "--num", "10", fpath_data3x6_noheader], data3x6ExpectedReplaceNum10V77[1..$]);
 
     /* Multi-file tests. */
-    testTsvSample(["test-c1", "--header", "--static-seed",
+    testTsvSample(["test-c1", "--header", "--static-seed", "--compatibility-mode",
                    fpath_data3x0, fpath_data3x3, fpath_data3x1, fpath_dataEmpty, fpath_data3x6, fpath_data3x2],
-                  combo1ExpectedNoWt);
+                  combo1ExpectedPermuteCompat);
     testTsvSample(["test-c2", "--header", "--static-seed", "--print-random",
                    fpath_data3x0, fpath_data3x3, fpath_data3x1, fpath_dataEmpty, fpath_data3x6, fpath_data3x2],
-                  combo1ExpectedNoWtProbs);
+                  combo1ExpectedPermuteCompatProbs);
     testTsvSample(["test-c3", "--header", "--static-seed", "--print-random", "--weight-field", "3",
                    fpath_data3x0, fpath_data3x3, fpath_data3x1, fpath_dataEmpty, fpath_data3x6, fpath_data3x2],
-                  combo1ExpectedWt3Probs);
-    testTsvSample(["test-c4", "--header", "--static-seed", "--weight-field", "3",
+                  combo1ExpectedPermuteWt3Probs);
+    testTsvSample(["test-c4", "--header", "--static-seed", "--weight-field", "3", "--compatibility-mode",
                    fpath_data3x0, fpath_data3x3, fpath_data3x1, fpath_dataEmpty, fpath_data3x6, fpath_data3x2],
-                  combo1ExpectedWt3);
+                  combo1ExpectedPermuteWt3);
+    testTsvSample(["test-c5", "--header", "--static-seed", "--prefer-algorithm-r", "--num", "4",
+                   fpath_data3x0, fpath_data3x3, fpath_data3x1, fpath_dataEmpty, fpath_data3x6, fpath_data3x2],
+                  combo1ExpectedPermuteAlgoRNum4);
 
     /* Multi-file, no headers. */
-    testTsvSample(["test-c5", "--static-seed",
+    testTsvSample(["test-c6", "--static-seed", "--compatibility-mode",
                    fpath_data3x3_noheader, fpath_data3x1_noheader, fpath_dataEmpty,
                    fpath_data3x6_noheader, fpath_data3x2_noheader],
-                  combo1ExpectedNoWt[1..$]);
-    testTsvSample(["test-c6", "--static-seed", "--print-random",
+                  combo1ExpectedPermuteCompat[1..$]);
+    testTsvSample(["test-c7", "--static-seed", "--print-random",
                    fpath_data3x3_noheader, fpath_data3x1_noheader, fpath_dataEmpty,
                    fpath_data3x6_noheader, fpath_data3x2_noheader],
-                  combo1ExpectedNoWtProbs[1..$]);
-    testTsvSample(["test-c7", "--static-seed", "--print-random", "--weight-field", "3",
+                  combo1ExpectedPermuteCompatProbs[1..$]);
+    testTsvSample(["test-c8", "--static-seed", "--print-random", "--weight-field", "3",
                    fpath_data3x3_noheader, fpath_data3x1_noheader, fpath_dataEmpty,
                    fpath_data3x6_noheader, fpath_data3x2_noheader],
-                  combo1ExpectedWt3Probs[1..$]);
-    testTsvSample(["test-c8", "--static-seed", "--weight-field", "3",
+                  combo1ExpectedPermuteWt3Probs[1..$]);
+    testTsvSample(["test-c9", "--static-seed", "--weight-field", "3", "--compatibility-mode",
                    fpath_data3x3_noheader, fpath_data3x1_noheader, fpath_dataEmpty,
                    fpath_data3x6_noheader, fpath_data3x2_noheader],
-                  combo1ExpectedWt3[1..$]);
+                  combo1ExpectedPermuteWt3[1..$]);
+    testTsvSample(["test-c10", "--static-seed", "--prefer-algorithm-r", "--num", "4",
+                   fpath_data3x3_noheader, fpath_data3x1_noheader, fpath_dataEmpty,
+                   fpath_data3x6_noheader, fpath_data3x2_noheader],
+                  combo1ExpectedPermuteAlgoRNum4[1..$]);
 
     /* Bernoulli sampling cases. */
-    testTsvSample(["test-c9", "--header", "--static-seed", "--print-random", "--prob", ".5",
+    testTsvSample(["test-c11", "--header", "--static-seed", "--print-random", "--prob", ".5",
                    fpath_data3x0, fpath_data3x3, fpath_data3x1, fpath_dataEmpty, fpath_data3x6, fpath_data3x2],
-                  combo1ExpectedProbsBernoulliSampleP50);
-    testTsvSample(["test-c10", "--header", "--static-seed", "--prob", ".4",
+                  combo1ExpectedBernoulliCompatP50Probs);
+    testTsvSample(["test-c12", "--header", "--static-seed", "--prob", ".4",
                    fpath_data3x0, fpath_data3x3, fpath_data3x1, fpath_dataEmpty, fpath_data3x6, fpath_data3x2],
-                  combo1ExpectedBernoulliSampleP40);
-    testTsvSample(["test-c11", "--static-seed", "--print-random", "--prob", ".5",
+                  combo1ExpectedBernoulliCompatP40);
+    testTsvSample(["test-c13", "--static-seed", "--print-random", "--prob", ".5",
                    fpath_data3x3_noheader, fpath_data3x1_noheader, fpath_dataEmpty,
                    fpath_data3x6_noheader, fpath_data3x2_noheader],
-                  combo1ExpectedProbsBernoulliSampleP50[1..$]);
-    testTsvSample(["test-c12", "--static-seed", "--prob", ".4",
+                  combo1ExpectedBernoulliCompatP50Probs[1..$]);
+    testTsvSample(["test-c14", "--static-seed", "--prob", ".4",
                    fpath_data3x3_noheader, fpath_data3x1_noheader, fpath_dataEmpty,
                    fpath_data3x6_noheader, fpath_data3x2_noheader],
-                  combo1ExpectedBernoulliSampleP40[1..$]);
+                  combo1ExpectedBernoulliCompatP40[1..$]);
+
+    /* Bernoulli sampling with probabilities in skip sampling range. */
+    testTsvSample(["test-cc1", "-H", "-v", "333", "-p", "0.03",
+                   fpath_data3x0, fpath_data3x1, fpath_data1x200, fpath_dataEmpty, fpath_data1x10],
+                  combo2ExpectedBernoulliSkipV333P03);
+    testTsvSample(["test-cc1", "-v", "333", "-p", "0.03",
+                   fpath_data3x1_noheader, fpath_data1x200_noheader, fpath_dataEmpty, fpath_data1x10_noheader],
+                  combo2ExpectedBernoulliSkipV333P03[1..$]);
 
     /* Distinct sampling cases. */
     testTsvSample(["test-c13", "--header", "--static-seed", "--key-fields", "1", "--prob", ".4",
                    fpath_data3x0, fpath_data3x3, fpath_data3x1, fpath_dataEmpty, fpath_data3x6, fpath_data3x2],
-                  combo1ExpectedDistinctSampleK1P40);
+                  combo1ExpectedDistinctK1P40);
     testTsvSample(["test-c14", "--static-seed", "--key-fields", "1", "--prob", ".4",
                    fpath_data3x3_noheader, fpath_data3x1_noheader, fpath_dataEmpty,
                    fpath_data3x6_noheader, fpath_data3x2_noheader],
-                  combo1ExpectedDistinctSampleK1P40[1..$]);
+                  combo1ExpectedDistinctK1P40[1..$]);
 
     /* Generating random weights. */
     testTsvSample(["test-c15", "--header", "--static-seed", "--gen-random-inorder",
                    fpath_data3x0, fpath_data3x3, fpath_data3x1, fpath_dataEmpty, fpath_data3x6, fpath_data3x2],
-                  combo1ExpectedNoWtProbsInorder);
+                  combo1ExpectedProbsInorder);
     testTsvSample(["test-c16", "--static-seed", "--gen-random-inorder",
                    fpath_data3x3_noheader, fpath_data3x1_noheader,
                    fpath_dataEmpty, fpath_data3x6_noheader, fpath_data3x2_noheader],
-                  combo1ExpectedNoWtProbsInorder[1..$]);
+                  combo1ExpectedProbsInorder[1..$]);
 
     /* Simple random sampling with replacement. */
     testTsvSample(["test-c17", "--header", "--static-seed", "--replace", "--num", "10",
                    fpath_data3x0, fpath_data3x3, fpath_data3x1, fpath_dataEmpty, fpath_data3x6, fpath_data3x2],
-                  combo1ExpectedReplace10);
+                  combo1ExpectedReplaceNum10);
 
     testTsvSample(["test-c18", "--static-seed", "--replace", "--num", "10",
                    fpath_data3x3_noheader, fpath_data3x1_noheader, fpath_dataEmpty,
                    fpath_data3x6_noheader, fpath_data3x2_noheader],
-                  combo1ExpectedReplace10[1..$]);
+                  combo1ExpectedReplaceNum10[1..$]);
 
     /* Single column file. */
-    testTsvSample(["test-d1", "-H", "-s", fpath_data1x10], data1x10ExpectedNoWt);
-    testTsvSample(["test-d1", "-H", "-s", fpath_data1x10], data1x10ExpectedNoWt);
+    testTsvSample(["test-d1", "-H", "-s", "--compatibility-mode", fpath_data1x10], data1x10ExpectedPermuteCompat);
+    testTsvSample(["test-d2", "-H", "-s", "--compatibility-mode", fpath_data1x10], data1x10ExpectedPermuteCompat);
 
     /* Distributions. */
-    testTsvSample(["test-e1", "-H", "-s", "-w", "2", "--print-random", fpath_data2x10a], data2x10aExpectedWt2Probs);
-    testTsvSample(["test-e1", "-H", "-s", "-w", "2", "--print-random", fpath_data2x10b], data2x10bExpectedWt2Probs);
-    testTsvSample(["test-e1", "-H", "-s", "-w", "2", "--print-random", fpath_data2x10c], data2x10cExpectedWt2Probs);
-    testTsvSample(["test-e1", "-H", "-s", "-w", "2", "--print-random", fpath_data2x10d], data2x10dExpectedWt2Probs);
-    testTsvSample(["test-e1", "-H", "-s", "-w", "2", "--print-random", fpath_data2x10e], data2x10eExpectedWt2Probs);
+    testTsvSample(["test-e1", "-H", "-s", "-w", "2", "--print-random", fpath_data2x10a], data2x10aExpectedPermuteWt2Probs);
+    testTsvSample(["test-e2", "-H", "-s", "-w", "2", "--print-random", fpath_data2x10b], data2x10bExpectedPermuteWt2Probs);
+    testTsvSample(["test-e3", "-H", "-s", "-w", "2", "--print-random", fpath_data2x10c], data2x10cExpectedPermuteWt2Probs);
+    testTsvSample(["test-e4", "-H", "-s", "-w", "2", "--print-random", fpath_data2x10d], data2x10dExpectedPermuteWt2Probs);
+    testTsvSample(["test-e5", "-H", "-s", "-w", "2", "--print-random", fpath_data2x10e], data2x10eExpectedPermuteWt2Probs);
 
     /* Tests of subset sample (--n|num) field.
      *
@@ -1940,59 +2552,68 @@ unittest
     import std.algorithm : min;
     for (size_t n = data3x6.length + 2; n >= 1; n--)
     {
+        /* reservoirSamplingViaHeap.
+         */
         size_t expectedLength = min(data3x6.length, n + 1);
         testTsvSample([format("test-f1_%d", n), "-s", "-n", n.to!string,
-                       "-H", fpath_data3x6], data3x6ExpectedNoWt[0..expectedLength]);
+                       "-H", fpath_data3x6], data3x6ExpectedPermuteCompat[0..expectedLength]);
 
         testTsvSample([format("test-f2_%d", n), "-s", "-n", n.to!string,
-                       "-H", "--print-random", fpath_data3x6], data3x6ExpectedNoWtProbs[0..expectedLength]);
+                       "-H", "--compatibility-mode", fpath_data3x6], data3x6ExpectedPermuteCompat[0..expectedLength]);
 
         testTsvSample([format("test-f3_%d", n), "-s", "-n", n.to!string,
-                       "-H", "-w", "3", fpath_data3x6], data3x6ExpectedWt3[0..expectedLength]);
+                       "-H", "--print-random", fpath_data3x6], data3x6ExpectedPermuteCompatProbs[0..expectedLength]);
 
         testTsvSample([format("test-f4_%d", n), "-s", "-n", n.to!string,
-                       "-H", "--print-random", "-w", "3", fpath_data3x6], data3x6ExpectedWt3Probs[0..expectedLength]);
+                       "-H", "-w", "3", fpath_data3x6], data3x6ExpectedPermuteWt3[0..expectedLength]);
 
         testTsvSample([format("test-f5_%d", n), "-s", "-n", n.to!string,
-                       fpath_data3x6_noheader], data3x6ExpectedNoWt[1..expectedLength]);
+                       "-H", "--print-random", "-w", "3", fpath_data3x6], data3x6ExpectedPermuteWt3Probs[0..expectedLength]);
 
         testTsvSample([format("test-f6_%d", n), "-s", "-n", n.to!string,
-                       "--print-random", fpath_data3x6_noheader], data3x6ExpectedNoWtProbs[1..expectedLength]);
+                       fpath_data3x6_noheader], data3x6ExpectedPermuteCompat[1..expectedLength]);
 
         testTsvSample([format("test-f7_%d", n), "-s", "-n", n.to!string,
-                       "-w", "3", fpath_data3x6_noheader], data3x6ExpectedWt3[1..expectedLength]);
+                       "--print-random", fpath_data3x6_noheader], data3x6ExpectedPermuteCompatProbs[1..expectedLength]);
 
         testTsvSample([format("test-f8_%d", n), "-s", "-n", n.to!string,
-                       "--print-random", "-w", "3", fpath_data3x6_noheader], data3x6ExpectedWt3Probs[1..expectedLength]);
+                       "-w", "3", fpath_data3x6_noheader], data3x6ExpectedPermuteWt3[1..expectedLength]);
 
+        testTsvSample([format("test-f9_%d", n), "-s", "-n", n.to!string,
+                       "--print-random", "-w", "3", fpath_data3x6_noheader], data3x6ExpectedPermuteWt3Probs[1..expectedLength]);
+
+        /* Bernoulli sampling.
+         */
         import std.algorithm : min;
-        size_t sampleExpectedLength = min(expectedLength, data3x6ExpectedProbsBernoulliSampleP60.length);
-
-        testTsvSample([format("test-f9_%d", n), "-s", "-p", "0.6", "-n", n.to!string,
-                       "-H", "--print-random", fpath_data3x6], data3x6ExpectedProbsBernoulliSampleP60[0..sampleExpectedLength]);
+        size_t sampleExpectedLength = min(expectedLength, data3x6ExpectedBernoulliCompatProbsP60.length);
 
         testTsvSample([format("test-f10_%d", n), "-s", "-p", "0.6", "-n", n.to!string,
-                       "-H", fpath_data3x6], data3x6ExpectedBernoulliSampleP60[0..sampleExpectedLength]);
+                       "-H", "--print-random", fpath_data3x6], data3x6ExpectedBernoulliCompatProbsP60[0..sampleExpectedLength]);
 
         testTsvSample([format("test-f11_%d", n), "-s", "-p", "0.6", "-n", n.to!string,
-                       "--print-random", fpath_data3x6_noheader], data3x6ExpectedProbsBernoulliSampleP60[1..sampleExpectedLength]);
+                       "-H", fpath_data3x6], data3x6ExpectedBernoulliCompatP60[0..sampleExpectedLength]);
 
         testTsvSample([format("test-f12_%d", n), "-s", "-p", "0.6", "-n", n.to!string,
-                       fpath_data3x6_noheader], data3x6ExpectedBernoulliSampleP60[1..sampleExpectedLength]);
+                       "--print-random", fpath_data3x6_noheader], data3x6ExpectedBernoulliCompatProbsP60[1..sampleExpectedLength]);
 
-        size_t distinctExpectedLength = min(expectedLength, data3x6ExpectedDistinctSampleK1K3P60.length);
+        testTsvSample([format("test-f13_%d", n), "-s", "-p", "0.6", "-n", n.to!string,
+                       fpath_data3x6_noheader], data3x6ExpectedBernoulliCompatP60[1..sampleExpectedLength]);
 
-        testTsvSample([format("test-f13_%d", n), "-s", "-k", "1,3", "-p", "0.6", "-n", n.to!string,
-                       "-H", fpath_data3x6], data3x6ExpectedDistinctSampleK1K3P60[0..distinctExpectedLength]);
+        /* Distinct Sampling.
+         */
+        size_t distinctExpectedLength = min(expectedLength, data3x6ExpectedDistinctK1K3P60.length);
 
         testTsvSample([format("test-f14_%d", n), "-s", "-k", "1,3", "-p", "0.6", "-n", n.to!string,
-                       fpath_data3x6_noheader], data3x6ExpectedDistinctSampleK1K3P60[1..distinctExpectedLength]);
+                       "-H", fpath_data3x6], data3x6ExpectedDistinctK1K3P60[0..distinctExpectedLength]);
 
-        testTsvSample([format("test-f15_%d", n), "-s", "--gen-random-inorder", "-n", n.to!string,
-                       "-H", fpath_data3x6], data3x6ExpectedProbsBernoulliSampleP100[0..expectedLength]);
+        testTsvSample([format("test-f15_%d", n), "-s", "-k", "1,3", "-p", "0.6", "-n", n.to!string,
+                       fpath_data3x6_noheader], data3x6ExpectedDistinctK1K3P60[1..distinctExpectedLength]);
 
-        testTsvSample([format("test-f15_%d", n), "-s", "--gen-random-inorder", "-n", n.to!string,
-                       fpath_data3x6_noheader], data3x6ExpectedProbsBernoulliSampleP100[1..expectedLength]);
+        testTsvSample([format("test-f16_%d", n), "-s", "--gen-random-inorder", "-n", n.to!string,
+                       "-H", fpath_data3x6], data3x6ExpectedBernoulliProbsP100[0..expectedLength]);
+
+        testTsvSample([format("test-f17_%d", n), "-s", "--gen-random-inorder", "-n", n.to!string,
+                       fpath_data3x6_noheader], data3x6ExpectedBernoulliProbsP100[1..expectedLength]);
     }
 
     /* Similar tests with the 1x10 data set. */
@@ -2000,44 +2621,57 @@ unittest
     {
         size_t expectedLength = min(data1x10.length, n + 1);
         testTsvSample([format("test-g1_%d", n), "-s", "-n", n.to!string,
-                       "-H", fpath_data1x10], data1x10ExpectedNoWt[0..expectedLength]);
+                       "-H", fpath_data1x10], data1x10ExpectedPermuteCompat[0..expectedLength]);
 
         testTsvSample([format("test-g2_%d", n), "-s", "-n", n.to!string,
-                       "-H", "-w", "1", fpath_data1x10], data1x10ExpectedWt1[0..expectedLength]);
+                       "-H", "-w", "1", fpath_data1x10], data1x10ExpectedPermuteWt1[0..expectedLength]);
 
         testTsvSample([format("test-g3_%d", n), "-s", "-n", n.to!string,
-                       fpath_data1x10_noheader], data1x10ExpectedNoWt[1..expectedLength]);
+                       fpath_data1x10_noheader], data1x10ExpectedPermuteCompat[1..expectedLength]);
 
         testTsvSample([format("test-g4_%d", n), "-s", "-n", n.to!string,
-                       "-w", "1", fpath_data1x10_noheader], data1x10ExpectedWt1[1..expectedLength]);
+                       "-w", "1", fpath_data1x10_noheader], data1x10ExpectedPermuteWt1[1..expectedLength]);
     }
 
     /* Simple random sampling with replacement: ensure sample size doesn't change order. */
-    for (size_t n = data3x6ExpectedReplace10.length - 1; n >= 1; n--)
+    for (size_t n = data3x6ExpectedReplaceNum10.length - 1; n >= 1; n--)
     {
         testTsvSample([format("test-h1_%d", n), "-s", "--replace", "-n", n.to!string, "-H", fpath_data3x6],
-                      data3x6ExpectedReplace10[0 .. n + 1]);
+                      data3x6ExpectedReplaceNum10[0 .. n + 1]);
 
         testTsvSample([format("test-h2_%d", n), "-s", "--replace", "-n", n.to!string, fpath_data3x6_noheader],
-                      data3x6ExpectedReplace10[1 .. n + 1]);
+                      data3x6ExpectedReplaceNum10[1 .. n + 1]);
     }
 
+    /* Bernoulli skip sampling. Test with lengths both greater than and less than expected. */
+    for (size_t n = data1x200ExpectedBernoulliSkipV333P03.length + 2; n >= 1; n--)
+    {
+        size_t expectedLength = min(data1x200ExpectedBernoulliSkipV333P03.length, n + 1);
+
+        testTsvSample([format("test-i1_%d", n), "-v", "333", "-p", "0.03", "-n", n.to!string,
+                       "-H", fpath_data1x200], data1x200ExpectedBernoulliSkipV333P03[0..expectedLength]);
+
+        testTsvSample([format("test-i2_%d", n), "-v", "333", "-p", "0.03", "-n", n.to!string,
+                       fpath_data1x200_noheader], data1x200ExpectedBernoulliSkipV333P03[1..expectedLength]);
+}
+
+
     /* Distinct sampling tests. */
-    testTsvSample(["test-i1", "--header", "--static-seed", "--prob", "0.40", "--key-fields", "2", fpath_data5x25],
-                  data5x25ExpectedDistinctSampleK2P40);
+    testTsvSample(["test-j1", "--header", "--static-seed", "--prob", "0.40", "--key-fields", "2", fpath_data5x25],
+                  data5x25ExpectedDistinctK2P40);
 
-    testTsvSample(["test-i2", "-H", "-s", "-p", "0.20", "-k", "2,4", fpath_data5x25],
-                  data5x25ExpectedDistinctSampleK2K4P20);
+    testTsvSample(["test-j2", "-H", "-s", "-p", "0.20", "-k", "2,4", fpath_data5x25],
+                  data5x25ExpectedDistinctK2K4P20);
 
-    testTsvSample(["test-i3", "-H", "-s", "-p", "0.20", "-k", "2-4", fpath_data5x25],
-                  data5x25ExpectedDistinctSampleK2K3K4P20);
+    testTsvSample(["test-j3", "-H", "-s", "-p", "0.20", "-k", "2-4", fpath_data5x25],
+                  data5x25ExpectedDistinctK2K3K4P20);
 
-    testTsvSample(["test-i4", "--static-seed", "--prob", "0.40", "--key-fields", "2", fpath_data5x25_noheader],
-                  data5x25ExpectedDistinctSampleK2P40[1..$]);
+    testTsvSample(["test-j4", "--static-seed", "--prob", "0.40", "--key-fields", "2", fpath_data5x25_noheader],
+                  data5x25ExpectedDistinctK2P40[1..$]);
 
-    testTsvSample(["test-i5", "-s", "-p", "0.20", "-k", "2,4", fpath_data5x25_noheader],
-                  data5x25ExpectedDistinctSampleK2K4P20[1..$]);
+    testTsvSample(["test-j5", "-s", "-p", "0.20", "-k", "2,4", fpath_data5x25_noheader],
+                  data5x25ExpectedDistinctK2K4P20[1..$]);
 
-    testTsvSample(["test-i6", "-s", "-p", "0.20", "-k", "2-4", fpath_data5x25_noheader],
-                  data5x25ExpectedDistinctSampleK2K3K4P20[1..$]);
+    testTsvSample(["test-j6", "-s", "-p", "0.20", "-k", "2-4", fpath_data5x25_noheader],
+                  data5x25ExpectedDistinctK2K3K4P20[1..$]);
 }

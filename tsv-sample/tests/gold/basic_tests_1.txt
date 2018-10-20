@@ -1,7 +1,7 @@
 Basic tests set 1
 -----------------
 
-====[tsv-sample --header --static-seed input3x10.tsv input3x25.tsv]====
+====[tsv-sample --header --static-seed --compatibility-mode input3x10.tsv input3x25.tsv]====
 line	title	weight
 8	Door het land der Skipetaren	30
 11	Il "Damo viennese"	23
@@ -151,7 +151,7 @@ random_value	line	title	weight
 0.52457234333269298	16	Leabhráin an Irisleabhair—III	53
 0.50345949362963438	22	豆棚閒話	73
 
-====[tsv-sample -H -s -n 100 input3x10.tsv input3x25.tsv]====
+====[tsv-sample -H -s -n 100  --compatibility-mode input3x10.tsv input3x25.tsv]====
 line	title	weight
 8	Door het land der Skipetaren	30
 11	Il "Damo viennese"	23
@@ -339,7 +339,7 @@ random_value	line	title	weight
 0.83973207115195692	24	La Navidad en las Montañas	100
 0.030781860463321209	25	Don Quijote	88
 
-====[tsv-sample -H -s -p 0.25 input3x10.tsv input3x25.tsv]====
+====[tsv-sample -H -s -p 0.25 --compatibility-mode input3x10.tsv input3x25.tsv]====
 line	title	weight
 1	Álomvilág: Elbeszélések	41
 2	Grimm testvérek összegyüjtött meséi	9
@@ -351,7 +351,7 @@ line	title	weight
 13	בית נכות ההלכות	47
 25	Don Quijote	88
 
-====[tsv-sample -H -s -p 0.75 -n 5 input3x10.tsv input3x25.tsv]====
+====[tsv-sample -H -s -p 0.75 -n 5 --compatibility-mode input3x10.tsv input3x25.tsv]====
 line	title	weight
 1	Álomvilág: Elbeszélések	41
 2	Grimm testvérek összegyüjtött meséi	9
@@ -359,7 +359,86 @@ line	title	weight
 5	Pinocchion seikkailut	19
 7	Oude Egyptische Legenden	28
 
-====[tsv-sample -H -s -p .25 --key-fields 1 input4x50.tsv input4x15.tsv]====
+====[tsv-sample -H -s -p 0.02 input4x50.tsv input4x15.tsv]====
+c-1	c-2	c-3	c-4
+púrpura	2088	Macuco	1
+暗紅色/暗赤色	2015	Malvasía Cabeciblanca	2
+blanc	2038	Голубь	0
+
+====[tsv-sample -s -p 0.02 input4x50.tsv input4x15.tsv]====
+c-1	c-2	c-3	c-4
+Orange-red	2089	Purpurreiher	1
+Grünspan	2053	Pipit de Godlewski	4
+
+====[tsv-sample -H -s --replace --compatibility-mode input3x3.tsv --num 5]====
+line	title	weight
+3	Le Silence de la mer	72
+2	Bonjour Tristesse	3
+2	Bonjour Tristesse	3
+1	Thérèse Desqueyroux	43
+1	Thérèse Desqueyroux	43
+
+====[tsv-sample -s --r input2x5_noheader.tsv --num 7 --compatibility-mode]====
+0.767664821	Buntong Hininga
+0.157876295	Jacques le fataliste et son maître
+0.788170018	Les stratagèmes
+0.008718457	L'influence d'un livre
+0.767664821	Buntong Hininga
+0.157876295	Jacques le fataliste et son maître
+0.788170018	Les stratagèmes
+
+====[tsv-sample -H -s --prob .25 -k 3,1 --compatibility-mode input4x50.tsv input4x15.tsv]====
+c-1	c-2	c-3	c-4
+púrpura	2088	Macuco	1
+schneeweiß	2117	Porrón Islándico	4
+café	2088	Purpurreiher	2
+Orange-red	2089	Purpurreiher	1
+púrpura	2070	Macreuse à bec jaune	2
+púrpura	2092	Macreuse à bec jaune	4
+púrpura	2093	Macreuse à bec jaune	4
+schneeweiß	2121	Porrón Islándico	1
+café	2062	Purpurreiher	4
+café	2100	Purpurreiher	2
+красный	2049	Weißwangengans	3
+púrpura	2119	Macuco	4
+púrpura	2145	Macreuse à bec jaune	2
+café	2041	Purpurreiher	4
+café	2019	Marreca-cabocla	1
+blutrot	2093	Araqua-pintado	2
+jaune	2104	Tüpfelsumpfhuhn	1
+
+====[tsv-sample -H -s -p .25 -k 1,3 --compatibility-mode input4x50.tsv input4x15.tsv]====
+c-1	c-2	c-3	c-4
+púrpura	2088	Macuco	1
+blutrot	2142	Tüpfelsumpfhuhn	1
+Indigo	2056	Голубь	1
+Indigo	2141	Голубь	1
+blutrot	2118	Tüpfelsumpfhuhn	4
+Cerise	2076	Malvasía Cabeciblanca	4
+blutrot	2117	Tüpfelsumpfhuhn	0
+Cerise	2119	Malvasía Cabeciblanca	4
+blutrot	2143	Tüpfelsumpfhuhn	4
+púrpura	2119	Macuco	4
+blutrot	2149	Tüpfelsumpfhuhn	1
+blutrot	2120	Tüpfelsumpfhuhn	1
+Indigo	2138	Голубь	4
+jaune	2090	Weißwangengans	4
+marrón	2121	Marreca-cabocla	2
+
+====[tsv-sample -H -s -p .25 -k 1,1 --compatibility-mode input4x50.tsv input4x15.tsv]====
+c-1	c-2	c-3	c-4
+Indigo	2056	Голубь	1
+Indigo	2141	Голубь	1
+暗紅色/暗赤色	2015	Malvasía Cabeciblanca	2
+marrón	2102	Weißwangengans	1
+dorado	2045	Лебедь	2
+Indigo	2138	Голубь	4
+marrón	2034	Weißwangengans	1
+ébène	2142	Орёл	2
+marrón	2121	Marreca-cabocla	2
+dorado	2147	Tüpfelsumpfhuhn	1
+
+====[tsv-sample -H -s -p .25 --key-fields 1 --compatibility-mode input4x50.tsv input4x15.tsv]====
 c-1	c-2	c-3	c-4
 púrpura	2088	Macuco	1
 blutrot	2142	Tüpfelsumpfhuhn	1
@@ -384,25 +463,32 @@ café	2019	Marreca-cabocla	1
 blutrot	2093	Araqua-pintado	2
 blutrot	2137	Marreca-cabocla	1
 
-====[tsv-sample -H -s --replace input3x3.tsv --num 5]====
-line	title	weight
-3	Le Silence de la mer	72
-2	Bonjour Tristesse	3
-2	Bonjour Tristesse	3
-1	Thérèse Desqueyroux	43
-1	Thérèse Desqueyroux	43
-
-====[tsv-sample -s --r input2x5_noheader.tsv --num 7]====
-0.767664821	Buntong Hininga
-0.157876295	Jacques le fataliste et son maître
-0.788170018	Les stratagèmes
-0.008718457	L'influence d'un livre
-0.767664821	Buntong Hininga
-0.157876295	Jacques le fataliste et son maître
-0.788170018	Les stratagèmes
-
-====[tsv-sample -H -s --prob .25 -k 3,1 input4x50.tsv input4x15.tsv]====
+====[tsv-sample -H -s -p .25 -k 1 -n 5 --compatibility-mode input4x50.tsv input4x15.tsv]====
 c-1	c-2	c-3	c-4
+púrpura	2088	Macuco	1
+blutrot	2142	Tüpfelsumpfhuhn	1
+blutrot	2118	Tüpfelsumpfhuhn	4
+Cerise	2076	Malvasía Cabeciblanca	4
+café	2088	Purpurreiher	2
+
+====[tsv-sample -s -p .25 -k 1,3 --compatibility-mode input4x50.tsv input4x15.tsv]====
+púrpura	2088	Macuco	1
+blutrot	2142	Tüpfelsumpfhuhn	1
+Indigo	2056	Голубь	1
+Indigo	2141	Голубь	1
+blutrot	2118	Tüpfelsumpfhuhn	4
+Cerise	2076	Malvasía Cabeciblanca	4
+blutrot	2117	Tüpfelsumpfhuhn	0
+Cerise	2119	Malvasía Cabeciblanca	4
+blutrot	2143	Tüpfelsumpfhuhn	4
+púrpura	2119	Macuco	4
+blutrot	2149	Tüpfelsumpfhuhn	1
+blutrot	2120	Tüpfelsumpfhuhn	1
+Indigo	2138	Голубь	4
+jaune	2090	Weißwangengans	4
+marrón	2121	Marreca-cabocla	2
+
+====[tsv-sample -s -p .25 -k 3,1 --compatibility-mode input4x50.tsv input4x15.tsv]====
 púrpura	2088	Macuco	1
 schneeweiß	2117	Porrón Islándico	4
 café	2088	Purpurreiher	2
@@ -421,82 +507,7 @@ café	2019	Marreca-cabocla	1
 blutrot	2093	Araqua-pintado	2
 jaune	2104	Tüpfelsumpfhuhn	1
 
-====[tsv-sample -H -s -p .25 -k 1,3 input4x50.tsv input4x15.tsv]====
-c-1	c-2	c-3	c-4
-púrpura	2088	Macuco	1
-blutrot	2142	Tüpfelsumpfhuhn	1
-Indigo	2056	Голубь	1
-Indigo	2141	Голубь	1
-blutrot	2118	Tüpfelsumpfhuhn	4
-Cerise	2076	Malvasía Cabeciblanca	4
-blutrot	2117	Tüpfelsumpfhuhn	0
-Cerise	2119	Malvasía Cabeciblanca	4
-blutrot	2143	Tüpfelsumpfhuhn	4
-púrpura	2119	Macuco	4
-blutrot	2149	Tüpfelsumpfhuhn	1
-blutrot	2120	Tüpfelsumpfhuhn	1
-Indigo	2138	Голубь	4
-jaune	2090	Weißwangengans	4
-marrón	2121	Marreca-cabocla	2
-
-====[tsv-sample -H -s -p .25 -k 1,1 input4x50.tsv input4x15.tsv]====
-c-1	c-2	c-3	c-4
-Indigo	2056	Голубь	1
-Indigo	2141	Голубь	1
-暗紅色/暗赤色	2015	Malvasía Cabeciblanca	2
-marrón	2102	Weißwangengans	1
-dorado	2045	Лебедь	2
-Indigo	2138	Голубь	4
-marrón	2034	Weißwangengans	1
-ébène	2142	Орёл	2
-marrón	2121	Marreca-cabocla	2
-dorado	2147	Tüpfelsumpfhuhn	1
-
-====[tsv-sample -H -s -p .25 -k 1 -n 5 input4x50.tsv input4x15.tsv]====
-c-1	c-2	c-3	c-4
-púrpura	2088	Macuco	1
-blutrot	2142	Tüpfelsumpfhuhn	1
-blutrot	2118	Tüpfelsumpfhuhn	4
-Cerise	2076	Malvasía Cabeciblanca	4
-café	2088	Purpurreiher	2
-
-====[tsv-sample -s -p .25 -k 1,3 input4x50.tsv input4x15.tsv]====
-púrpura	2088	Macuco	1
-blutrot	2142	Tüpfelsumpfhuhn	1
-Indigo	2056	Голубь	1
-Indigo	2141	Голубь	1
-blutrot	2118	Tüpfelsumpfhuhn	4
-Cerise	2076	Malvasía Cabeciblanca	4
-blutrot	2117	Tüpfelsumpfhuhn	0
-Cerise	2119	Malvasía Cabeciblanca	4
-blutrot	2143	Tüpfelsumpfhuhn	4
-púrpura	2119	Macuco	4
-blutrot	2149	Tüpfelsumpfhuhn	1
-blutrot	2120	Tüpfelsumpfhuhn	1
-Indigo	2138	Голубь	4
-jaune	2090	Weißwangengans	4
-marrón	2121	Marreca-cabocla	2
-
-====[tsv-sample -s -p .25 -k 3,1 input4x50.tsv input4x15.tsv]====
-púrpura	2088	Macuco	1
-schneeweiß	2117	Porrón Islándico	4
-café	2088	Purpurreiher	2
-Orange-red	2089	Purpurreiher	1
-púrpura	2070	Macreuse à bec jaune	2
-púrpura	2092	Macreuse à bec jaune	4
-púrpura	2093	Macreuse à bec jaune	4
-schneeweiß	2121	Porrón Islándico	1
-café	2062	Purpurreiher	4
-café	2100	Purpurreiher	2
-красный	2049	Weißwangengans	3
-púrpura	2119	Macuco	4
-púrpura	2145	Macreuse à bec jaune	2
-café	2041	Purpurreiher	4
-café	2019	Marreca-cabocla	1
-blutrot	2093	Araqua-pintado	2
-jaune	2104	Tüpfelsumpfhuhn	1
-
-====[tsv-sample -s -p 1 -k 3,1 input4x50.tsv input4x15.tsv]====
+====[tsv-sample -s -p 1 -k 3,1 --compatibility-mode input4x50.tsv input4x15.tsv]====
 c-1	c-2	c-3	c-4
 púrpura	2088	Macuco	1
 blutrot	2142	Tüpfelsumpfhuhn	1
@@ -599,7 +610,7 @@ random_value	c-1	c-2	c-3	c-4
 2	Orange-red	2089	Purpurreiher	1
 0	暗紅色/暗赤色	2015	Malvasía Cabeciblanca	2
 
-====[tsv-sample --static-seed input2x10_noheader.tsv input2x5_noheader.tsv]====
+====[tsv-sample --static-seed --compatibility-mode input2x10_noheader.tsv input2x5_noheader.tsv]====
 0.20987466	殘唐五代史演義傳
 0.67881307	Burning Daylight
 0.157876295	Jacques le fataliste et son maître
@@ -674,7 +685,7 @@ random_value	c-1	c-2	c-3	c-4
 0.7571015392895788	0.03235488	海上花列傳
 0.52525980887003243	0.13769566	Eva's Adventures in Shadow-Land
 
-====[tsv-sample -s -n 100 input2x10_noheader.tsv input2x5_noheader.tsv]====
+====[tsv-sample -s -n 100 --compatibility-mode input2x10_noheader.tsv input2x5_noheader.tsv]====
 0.20987466	殘唐五代史演義傳
 0.67881307	Burning Daylight
 0.157876295	Jacques le fataliste et son maître
@@ -708,21 +719,21 @@ random_value	c-1	c-2	c-3	c-4
 0.13569044694304466	0.656434250	Bulalakaw ng Pag-asa
 0.13689568405970931	0.767664821	Buntong Hininga
 
-====[tsv-sample -s -p .25 input2x10_noheader.tsv input2x5_noheader.tsv]====
+====[tsv-sample -s -p .25 --compatibility-mode input2x10_noheader.tsv input2x5_noheader.tsv]====
 0.90391933	Folk-Lore of West and Mid-Wales
 0.48032209	A Book of Christian Sonnets
 0.78401827	青箱雜記
 0.656434250	Bulalakaw ng Pag-asa
 0.767664821	Buntong Hininga
 
-====[tsv-sample -s -p .75 -n 5 input2x10_noheader.tsv input2x5_noheader.tsv]====
+====[tsv-sample -s -p .75 -n 5 --compatibility-mode input2x10_noheader.tsv input2x5_noheader.tsv]====
 0.90391933	Folk-Lore of West and Mid-Wales
 0.48032209	A Book of Christian Sonnets
 0.30956877	The Courting Of Lady Jane
 0.13769566	Eva's Adventures in Shadow-Land
 0.37116598	三國志演義
 
-====[tsv-sample --delimiter @ -H --static-seed input2x7_atsign.tsv]====
+====[tsv-sample --delimiter @ -H --static-seed --compatibility-mode input2x7_atsign.tsv]====
 title@weight
 幽霊書店@5903
 Aristophanis Lysistrata@5464
@@ -778,7 +789,7 @@ random_value@title@weight
 0.7571015392895788@Aristophanis Lysistrata@5464
 0.38388182921335101@Ephemerides Barometricae Mutinenses@5869
 
-====[tsv-sample -H -w 3 -v 777 input3x25_negative_wt.tsv]====
+====[tsv-sample -H -w 3 -v 777 --compatibility-mode input3x25_negative_wt.tsv]====
 line	title	weight
 12	הצופה לבית ישראל	2.3
 16	Leabhráin an Irisleabhair—III	5.3
@@ -806,7 +817,7 @@ line	title	weight
 20	羅生門	0.01
 7	Arabische Nächte	-1
 
-====[tsv-sample -H -w 3 -v 888 input3x25_negative_wt.tsv]====
+====[tsv-sample -H -w 3 -v 888 --compatibility-mode input3x25_negative_wt.tsv]====
 line	title	weight
 14	Pasáček Ali: Pověst z východu	6.4
 11	Il "Damo viennese"	6.5
@@ -834,7 +845,7 @@ line	title	weight
 20	羅生門	0.01
 7	Arabische Nächte	-1
 
-====[tsv-sample -H -w 3 -v 777 -n 24 input3x25_negative_wt.tsv]====
+====[tsv-sample -H -w 3 -v 777 -n 24 --compatibility-mode input3x25_negative_wt.tsv]====
 line	title	weight
 12	הצופה לבית ישראל	2.3
 16	Leabhráin an Irisleabhair—III	5.3
@@ -861,7 +872,7 @@ line	title	weight
 22	豆棚閒話	0.23
 20	羅生門	0.01
 
-====[tsv-sample -H -w 3 -v 888 -n 24 input3x25_negative_wt.tsv]====
+====[tsv-sample -H -w 3 -v 888 -n 24 --compatibility-mode input3x25_negative_wt.tsv]====
 line	title	weight
 14	Pasáček Ali: Pověst z východu	6.4
 11	Il "Damo viennese"	6.5
@@ -888,7 +899,7 @@ line	title	weight
 23	佛說四十二章經	0.55
 20	羅生門	0.01
 
-====[tsv-sample -H --gen-random-inorder -w 3 -v 777 input3x25_negative_wt.tsv]====
+====[tsv-sample -H --gen-random-inorder -w 3 -v 777 --compatibility-mode input3x25_negative_wt.tsv]====
 random_value	line	title	weight
 0.68666857849162088	1	Белые ночи	5
 0.89667217646257946	2	Детство	4
@@ -916,7 +927,7 @@ random_value	line	title	weight
 0.079685885924845934	24	La Navidad en las Montañas	1.0
 0.82523927097185135	25	Don Quijote	3.4
 
-====[tsv-sample -H --gen-random-inorder -w 3 -v 888 input3x25_negative_wt.tsv]====
+====[tsv-sample -H --gen-random-inorder -w 3 -v 888 --compatibility-mode input3x25_negative_wt.tsv]====
 random_value	line	title	weight
 0.97018666470990478	1	Белые ночи	5
 0.88871354995415763	2	Детство	4
@@ -944,7 +955,7 @@ random_value	line	title	weight
 0.24836496124044061	24	La Navidad en las Montañas	1.0
 0.78125915210564301	25	Don Quijote	3.4
 
-====[cat input3x10.tsv tsv-sample -v 99]====
+====[cat input3x10.tsv tsv-sample -v 99 --compatibility-mode]====
 3	Mesék és regék	20
 4	Soitannollisia satuja ja jutelmia	44
 8	Door het land der Skipetaren	30
@@ -957,7 +968,7 @@ line	title	weight
 9	Las Fábulas de Esopo	45
 6	Piepkuikentje	17
 
-====[cat input3x10.tsv tsv-sample -H -v 99]====
+====[cat input3x10.tsv tsv-sample -H -v 99 --compatibility-mode]====
 line	title	weight
 4	Soitannollisia satuja ja jutelmia	44
 5	Pinocchion seikkailut	19
@@ -983,7 +994,7 @@ random_value	line	title	weight
 0.19331310410052538	10	Platero y yo	2
 0.031446386594325304	7	Oude Egyptische Legenden	28
 
-====[cat input3x10.tsv tsv-sample -H -s -- - input3x3.tsv input3x4.tsv]====
+====[cat input3x10.tsv tsv-sample -H -s --compatibility-mode -- - input3x3.tsv input3x4.tsv]====
 line	title	weight
 8	Door het land der Skipetaren	30
 4	Soitannollisia satuja ja jutelmia	44
@@ -1003,7 +1014,7 @@ line	title	weight
 1	Aurélien	36
 1	Álomvilág: Elbeszélések	41
 
-====[cat input3x10.tsv tsv-sample -H -s -- input3x3.tsv - input3x4.tsv]====
+====[cat input3x10.tsv tsv-sample -H -s --compatibility-mode -- input3x3.tsv - input3x4.tsv]====
 line	title	weight
 5	Pinocchion seikkailut	19
 1	Álomvilág: Elbeszélések	41
@@ -1023,7 +1034,7 @@ line	title	weight
 1	Aurélien	36
 1	Thérèse Desqueyroux	43
 
-====[cat input3x10.tsv tsv-sample -s -- input3x3.tsv input3x4.tsv -]====
+====[cat input3x10.tsv tsv-sample -s --compatibility-mode -- input3x3.tsv input3x4.tsv -]====
 2	Bonjour Tristesse	3
 3	The Catcher in the Rye	19
 line	title	weight
@@ -1034,7 +1045,7 @@ line	title	weight
 1	Aurélien	36
 line	title	weight
 
-====[cat input3x10.tsv tsv-sample -H -s -w 3 -- input3x3.tsv - input3x4.tsv]====
+====[cat input3x10.tsv tsv-sample -H -s -w 3 --compatibility-mode -- input3x3.tsv - input3x4.tsv]====
 line	title	weight
 1	Álomvilág: Elbeszélések	41
 5	Pinocchion seikkailut	19
@@ -1054,7 +1065,7 @@ line	title	weight
 2	Bonjour Tristesse	3
 10	Platero y yo	2
 
-====[cat input3x10.tsv tsv-sample -H -s --replace --num 10]====
+====[cat input3x10.tsv tsv-sample -H -s --replace --num 10 --compatibility-mode]====
 line	title	weight
 10	Platero y yo	2
 6	Piepkuikentje	17
@@ -1067,7 +1078,7 @@ line	title	weight
 4	Soitannollisia satuja ja jutelmia	44
 1	Álomvilág: Elbeszélések	41
 
-====[cat input3x10.tsv tsv-sample -H -s --replace --num 10 -- input3x3.tsv - input3x4.tsv]====
+====[cat input3x10.tsv tsv-sample -H -s --replace --num 10 --compatibility-mode -- input3x3.tsv - input3x4.tsv]====
 line	title	weight
 1	Aurélien	36
 4	Soitannollisia satuja ja jutelmia	44
@@ -1080,7 +1091,7 @@ line	title	weight
 2	Bonjour Tristesse	3
 1	Thérèse Desqueyroux	43
 
-====[cat input3x10.tsv tsv-sample -H -s --replace | head -n 1000 | tail]====
+====[cat input3x10.tsv tsv-sample -H -s --replace --compatibility-mode | head -n 1000 | tail]====
 4	Soitannollisia satuja ja jutelmia	44
 8	Door het land der Skipetaren	30
 2	Grimm testvérek összegyüjtött meséi	9
