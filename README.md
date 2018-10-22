@@ -42,7 +42,7 @@ The tools work like traditional Unix command line utilities such as `cut`, `sort
 
 Speed matters when processing large files, these tools are the fastest the author has found. See the [2018 Comparative Benchmarks Update](docs/comparative-benchmarks-2018.md) for comparisons with similar tools.
 
-The rest of this section contains a short description of each tool. There is more detail in the [tool reference](docs/ToolReference.md).
+The rest of this section contains a one line description of each tool followed by longer introductions. There is more detail in the [tool reference](docs/ToolReference.md).
 
 * [tsv-filter](#tsv-filter) - Filter data file rows via numeric and string comparisons.
 * [tsv-select](#tsv-select) - Keep a subset of columns (fields). Like `cut`, but with field reordering.
