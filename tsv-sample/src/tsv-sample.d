@@ -523,7 +523,7 @@ if (isOutputRange!(OutputRange, char))
     }
 }
 
-/* bernoulliSkipSampling is an alternate implementation of bernoulliSampling that
+/** bernoulliSkipSampling is an alternate implementation of bernoulliSampling that
  * uses skip sampling.
  *
  * Skip sampling works by skipping a random number of lines between selections. This

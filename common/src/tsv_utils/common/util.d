@@ -1,5 +1,6 @@
 /**
-Utilities used by TSV applications.
+Utilities used by tsv-utils applications. InputFieldReordering, BufferedOututRange,
+and a several others.
 
 Utilities in this file:
 * InputFieldReordering - A class that creates a reordered subset of fields from an
