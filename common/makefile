@@ -40,9 +40,9 @@ test-codecov: unittest-codecov
 unittest-codecov:
 	@echo '---> Running $(notdir $(basename $(CURDIR))) unit tests with code coverage.'
 	-rm ./*.lst
-	$(DCOMPILER) $(imports) $(unittest_utils_srcs) $(unittest_codecov_flags) $(srcdir)/tsvutil.d
+	$(DCOMPILER) $(imports) $(unittest_utils_srcs) $(unittest_codecov_flags) $(srcdir)/util.d
 	$(DCOMPILER) $(imports) $(unittest_utils_srcs) $(unittest_codecov_flags) $(srcdir)/getopt_inorder.d
-	$(DCOMPILER) $(imports) $(unittest_utils_srcs) $(unittest_codecov_flags) $(srcdir)/tsv_numerics.d
+	$(DCOMPILER) $(imports) $(unittest_utils_srcs) $(unittest_codecov_flags) $(srcdir)/numerics.d
 	$(DCOMPILER) $(imports) $(unittest_utils_srcs) $(unittest_codecov_flags) $(srcdir)/tsvutils_version.d
 	-rm ./__main.lst
 	@echo '---> Unit tests completed successfully (code coverage on).'
