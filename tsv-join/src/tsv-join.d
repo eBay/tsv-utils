@@ -95,7 +95,7 @@ struct TsvJoinOptions
         import std.getopt;
         import std.path : baseName, stripExtension;
         import std.typecons : Yes, No;
-        import tsvutil :  makeFieldListOptionHandler;
+        import tsv_utils.common.util :  makeFieldListOptionHandler;
 
         programName = (cmdArgs.length > 0) ? cmdArgs[0].stripExtension.baseName : "Unknown_program_name";
 
@@ -150,7 +150,7 @@ struct TsvJoinOptions
             }
             else if (versionWanted)
             {
-                import tsvutils_version;
+                import tsv_utils.common.tsvutils_version;
                 writeln(tsvutilsVersionNotice("tsv-join"));
                 return tuple(false, 0);
             }
@@ -292,7 +292,7 @@ int main(string[] cmdArgs)
  */
 void tsvJoin(in TsvJoinOptions cmdopt, in string[] inputFiles)
 {
-    import tsvutil : InputFieldReordering, BufferedOutputRange, throwIfWindowsNewlineOnUnix;
+    import tsv_utils.common.util : InputFieldReordering, BufferedOutputRange, throwIfWindowsNewlineOnUnix;
     import std.algorithm : splitter;
     import std.array : join;
     import std.range;

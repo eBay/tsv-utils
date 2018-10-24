@@ -39,7 +39,7 @@ else
         }
         try
         {
-            import tsvutil : BufferedOutputRange;
+            import tsv_utils.common.util : BufferedOutputRange;
             auto bufferedOutput = BufferedOutputRange!(typeof(stdout))(stdout);
 
             tsvSample(cmdopt, bufferedOutput);
@@ -214,7 +214,7 @@ struct TsvSampleOptions
         import std.math : isNaN;
         import std.path : baseName, stripExtension;
         import std.typecons : Yes, No;
-        import tsvutil : makeFieldListOptionHandler;
+        import tsv_utils.common.util : makeFieldListOptionHandler;
 
         programName = (cmdArgs.length > 0) ? cmdArgs[0].stripExtension.baseName : "Unknown_program_name";
 
@@ -273,7 +273,7 @@ struct TsvSampleOptions
             }
             else if (versionWanted)
             {
-                import tsvutils_version;
+                import tsv_utils.common.tsvutils_version;
                 writeln(tsvutilsVersionNotice("tsv-sample"));
                 return tuple(false, 0);
             }
@@ -448,7 +448,7 @@ if (isOutputRange!(OutputRange, char))
 {
     import std.format : formatValue, singleSpec;
     import std.random : Random = Mt19937, uniform01;
-    import tsvutil : throwIfWindowsNewlineOnUnix;
+    import tsv_utils.common.util : throwIfWindowsNewlineOnUnix;
 
     static if (generateRandomAll) assert(cmdopt.genRandomInorder);
     else assert(!cmdopt.genRandomInorder);
@@ -563,7 +563,7 @@ void bernoulliSkipSampling(OutputRange)(TsvSampleOptions cmdopt, OutputRange out
     import std.conv : to;
     import std.math : log, trunc;
     import std.random : Random = Mt19937, uniform01;
-    import tsvutil : throwIfWindowsNewlineOnUnix;
+    import tsv_utils.common.util : throwIfWindowsNewlineOnUnix;
 
     assert(cmdopt.inclusionProbability > 0.0 && cmdopt.inclusionProbability < 1.0);
     assert(!cmdopt.printRandom);
@@ -634,7 +634,7 @@ if (isOutputRange!(OutputRange, char))
     import std.conv : to;
     import std.digest.murmurhash;
     import std.math : lrint;
-    import tsvutil : InputFieldReordering, throwIfWindowsNewlineOnUnix;
+    import tsv_utils.common.util : InputFieldReordering, throwIfWindowsNewlineOnUnix;
 
     static if (generateRandomAll) assert(cmdopt.genRandomInorder);
     else assert(!cmdopt.genRandomInorder);
@@ -828,7 +828,7 @@ if (isOutputRange!(OutputRange, char))
     import std.container.binaryheap;
     import std.format : formatValue, singleSpec;
     import std.random : Random = Mt19937, uniform01;
-    import tsvutil : throwIfWindowsNewlineOnUnix;
+    import tsv_utils.common.util : throwIfWindowsNewlineOnUnix;
 
     static if (isWeighted) assert(cmdopt.hasWeightField);
     else assert(!cmdopt.hasWeightField);
@@ -945,7 +945,7 @@ if (isOutputRange!(OutputRange, char))
 {
     import std.format : formatValue, singleSpec;
     import std.random : Random = Mt19937, uniform01;
-    import tsvutil : throwIfWindowsNewlineOnUnix;
+    import tsv_utils.common.util : throwIfWindowsNewlineOnUnix;
 
     assert(cmdopt.hasWeightField);
 
@@ -1028,7 +1028,7 @@ void reservoirSamplingAlgorithmR(OutputRange)(TsvSampleOptions cmdopt, auto ref 
 if (isOutputRange!(OutputRange, char))
 {
     import std.random : Random = Mt19937, randomShuffle, uniform;
-    import tsvutil : throwIfWindowsNewlineOnUnix;
+    import tsv_utils.common.util : throwIfWindowsNewlineOnUnix;
 
     assert(cmdopt.sampleSize > 0);
     assert(!cmdopt.hasWeightField);
@@ -1322,7 +1322,7 @@ if (isOutputRange!(OutputRange, char))
     import std.algorithm : splitter;
     import std.array : appender;
     import std.random : Random = Mt19937, uniform01;
-    import tsvutil : throwIfWindowsNewlineOnUnix;
+    import tsv_utils.common.util : throwIfWindowsNewlineOnUnix;
 
     static assert(hasRandomValue || !isWeighted);
     static if(!hasRandomValue) assert(!cmdopt.printRandom);
@@ -1396,7 +1396,7 @@ if (isSomeChar!C)
 {
     import std.conv : ConvException, to;
     import std.format : format;
-    import tsvutil : getTsvFieldValue;
+    import tsv_utils.common.util : getTsvFieldValue;
 
     T val;
     try
@@ -1452,7 +1452,7 @@ version(unittest)
 {
     /* Unit test helper functions. */
 
-    import unittest_utils;   // tsv unit test helpers, from common/src/.
+    import tsv_utils.common.unittest_utils;   // tsv unit test helpers, from common/src/.
     import std.conv : to;
 
     void testTsvSample(string[] cmdArgs, string[][] expected)

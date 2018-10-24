@@ -1,7 +1,8 @@
 include ../makedefs.mk
 
-unittest_utils_srcs ?= $(CURDIR)/src/unittest_utils.d
-imports ?= -I$(CURDIR)/src
+srcdir = $(CURDIR)/src/tsv_utils/common
+unittest_utils_srcs ?= $(srcdir)/unittest_utils.d
+imports ?= -I$(srcdir)
 
 release: ;
 debug: ;
@@ -22,10 +23,10 @@ test: unittest
 .PHONY: unittest
 unittest:
 	@echo '---> Running $(notdir $(basename $(CURDIR))) unit tests'
-	$(DCOMPILER) $(imports) $(unittest_utils_srcs) $(unittest_flags) $(CURDIR)/src/tsvutil.d
-	$(DCOMPILER) $(imports) $(unittest_utils_srcs) $(unittest_flags) $(CURDIR)/src/getopt_inorder.d
-	$(DCOMPILER) $(imports) $(unittest_utils_srcs) $(unittest_flags) $(CURDIR)/src/tsv_numerics.d
-	$(DCOMPILER) $(imports) $(unittest_utils_srcs) $(unittest_flags) $(CURDIR)/src/tsvutils_version.d
+	$(DCOMPILER) $(imports) $(unittest_utils_srcs) $(unittest_flags) $(srcdir)/util.d
+	$(DCOMPILER) $(imports) $(unittest_utils_srcs) $(unittest_flags) $(srcdir)/getopt_inorder.d
+	$(DCOMPILER) $(imports) $(unittest_utils_srcs) $(unittest_flags) $(srcdir)/numerics.d
+	$(DCOMPILER) $(imports) $(unittest_utils_srcs) $(unittest_flags) $(srcdir)/tsvutils_version.d
 	@echo '---> Unit tests completed successfully.'
 
 test-debug: ;
@@ -39,10 +40,10 @@ test-codecov: unittest-codecov
 unittest-codecov:
 	@echo '---> Running $(notdir $(basename $(CURDIR))) unit tests with code coverage.'
 	-rm ./*.lst
-	$(DCOMPILER) $(imports) $(unittest_utils_srcs) $(unittest_codecov_flags) $(CURDIR)/src/tsvutil.d
-	$(DCOMPILER) $(imports) $(unittest_utils_srcs) $(unittest_codecov_flags) $(CURDIR)/src/getopt_inorder.d
-	$(DCOMPILER) $(imports) $(unittest_utils_srcs) $(unittest_codecov_flags) $(CURDIR)/src/tsv_numerics.d
-	$(DCOMPILER) $(imports) $(unittest_utils_srcs) $(unittest_codecov_flags) $(CURDIR)/src/tsvutils_version.d
+	$(DCOMPILER) $(imports) $(unittest_utils_srcs) $(unittest_codecov_flags) $(srcdir)/tsvutil.d
+	$(DCOMPILER) $(imports) $(unittest_utils_srcs) $(unittest_codecov_flags) $(srcdir)/getopt_inorder.d
+	$(DCOMPILER) $(imports) $(unittest_utils_srcs) $(unittest_codecov_flags) $(srcdir)/tsv_numerics.d
+	$(DCOMPILER) $(imports) $(unittest_utils_srcs) $(unittest_codecov_flags) $(srcdir)/tsvutils_version.d
 	-rm ./__main.lst
 	@echo '---> Unit tests completed successfully (code coverage on).'
 

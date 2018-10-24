@@ -616,7 +616,7 @@ struct TsvFilterOptions
     {
         import std.getopt;
         import std.path : baseName, stripExtension;
-        import getopt_inorder;
+        import tsv_utils.common.getopt_inorder;
 
         programName = (cmdArgs.length > 0) ? cmdArgs[0].stripExtension.baseName : "Unknown_program_name";
 
@@ -767,7 +767,7 @@ struct TsvFilterOptions
             }
             else if (versionWanted)
             {
-                import tsvutils_version;
+                import tsv_utils.common.tsvutils_version;
                 writeln(tsvutilsVersionNotice("tsv-filter"));
                 return tuple(false, 0);
             }
@@ -787,7 +787,7 @@ void tsvFilter(in TsvFilterOptions cmdopt, in string[] inputFiles)
 {
     import std.algorithm : all, any, splitter;
     import std.range;
-    import tsvutil : BufferedOutputRange, throwIfWindowsNewlineOnUnix;
+    import tsv_utils.common.util : BufferedOutputRange, throwIfWindowsNewlineOnUnix;
 
     /* BufferedOutputRange improves performance on narrow files with high percentages of
      * writes. Want responsive output if output is rare, so ensure the first matched

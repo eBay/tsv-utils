@@ -172,8 +172,8 @@ struct TsvSummarizeOptions {
         import std.getopt;
         import std.path : baseName, stripExtension;
         import std.typecons : Yes, No;
-        import getopt_inorder;
-        import tsvutil :  makeFieldListOptionHandler;
+        import tsv_utils.common.getopt_inorder;
+        import tsv_utils.common.util :  makeFieldListOptionHandler;
 
         programName = (cmdArgs.length > 0) ? cmdArgs[0].stripExtension.baseName : "Unknown_program_name";
 
@@ -237,7 +237,7 @@ struct TsvSummarizeOptions {
             }
             else if (versionWanted)
             {
-                import tsvutils_version;
+                import tsv_utils.common.tsvutils_version;
                 writeln(tsvutilsVersionNotice("tsv-summarize"));
                 return tuple(false, 0);
             }
@@ -262,7 +262,7 @@ struct TsvSummarizeOptions {
     {
         import std.range : enumerate;
         import std.typecons : Yes, No;
-        import tsvutil :  parseFieldList;
+        import tsv_utils.common.util :  parseFieldList;
 
         auto valSplit = findSplit(optionVal, ":");
 
@@ -312,7 +312,7 @@ struct TsvSummarizeOptions {
     private void quantileOperatorOptionHandler(string option, string optionVal)
     {
         import std.typecons : Yes, No;
-        import tsvutil :  parseFieldList;
+        import tsv_utils.common.util :  parseFieldList;
 
         auto formatErrorMsg(string option, string optionVal)
         {
@@ -435,7 +435,7 @@ struct TsvSummarizeOptions {
  */
 void tsvSummarize(TsvSummarizeOptions cmdopt, in string[] inputFiles)
 {
-    import tsvutil : throwIfWindowsNewlineOnUnix;
+    import tsv_utils.common.util : throwIfWindowsNewlineOnUnix;
 
     /* Pick the Summarizer based on the number of key-fields entered. */
     auto summarizer =
@@ -593,7 +593,7 @@ struct SummarizerPrintOptions
     auto formatNumber(T)(T n) const
     if (isFloatingPoint!T || isIntegral!T)
     {
-        import tsv_numerics : formatNumber;
+        import tsv_utils.common.numerics : formatNumber;
         return formatNumber!T(n, floatPrecision);
     }
 }
@@ -1924,7 +1924,7 @@ class UniqueKeyValuesLists
         {
             if (!_haveMedian)
             {
-                import tsv_numerics : rangeMedian;
+                import tsv_utils.common.numerics : rangeMedian;
                 _medianValue = _values.data.rangeMedian();
                 _haveMedian = true;
             }
@@ -3195,7 +3195,7 @@ class QuantileOperator : SingleFieldOperator
 
         final string calculate(UniqueKeyValuesLists valuesLists, const ref SummarizerPrintOptions printOptions)
         {
-            import tsv_numerics : quantile;
+            import tsv_utils.common.numerics : quantile;
             return printOptions.formatNumber(
                 quantile(this.outer._prob, valuesLists.numericValuesSorted(fieldIndex)));
         }
@@ -3281,7 +3281,7 @@ class MadOperator : SingleFieldOperator
         final string calculate(UniqueKeyValuesLists valuesLists, const ref SummarizerPrintOptions printOptions)
         {
             import std.math : abs;
-            import tsv_numerics : rangeMedian;
+            import tsv_utils.common.numerics : rangeMedian;
 
             auto median = valuesLists.numericValuesMedian(fieldIndex);
             auto values = valuesLists.numericValues(fieldIndex);

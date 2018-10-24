@@ -28,6 +28,8 @@ Initially written by Jon Degenhardt
 License: Boost Licence 1.0 (http://boost.org/LICENSE_1_0.txt)
 */
 
+module tsv_utils.common.util;
+
 import std.range;
 import std.traits : isIntegral, isSomeChar, isSomeString, isUnsigned;
 import std.typecons : Flag, No, Yes;
@@ -529,7 +531,7 @@ if (isFileHandle!(Unqual!OutputTarget) || isOutputRange!(Unqual!OutputTarget, ch
 
 unittest
 {
-    import unittest_utils;
+    import tsv_utils.common.unittest_utils;
     import std.file : rmdirRecurse, readText;
     import std.path : buildPath;
 

@@ -15,6 +15,8 @@ Initially written by Jon Degenhardt
 License: Boost Licence 1.0 (http://boost.org/LICENSE_1_0.txt)
 */
 
+module tsv_utils.common.numerics;
+
 /**
 formatNumber is an alternate way to print numbers. It is especially useful when representing
 both integral and floating point values with float point data types.

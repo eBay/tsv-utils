@@ -41,7 +41,7 @@ LDC_PGO_TYPE ?= AST
 ## Directory and file paths
 
 project_dir ?= $(realpath ..)
-common_srcdir = $(project_dir)/common/src
+common_srcdir = $(project_dir)/common/src/tsv_utils/common
 project_bindir = $(project_dir)/bin
 buildtools_dir = $(project_dir)/buildtools
 diff_test_result_dirs = $(buildtools_dir)/diff-test-result-dirs

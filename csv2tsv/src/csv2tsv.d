@@ -116,7 +116,7 @@ struct Csv2tsvOptions
             }
             else if (versionWanted)
             {
-                import tsvutils_version;
+                import tsv_utils.common.tsvutils_version;
                 writeln(tsvutilsVersionNotice("csv2tsv"));
                 return tuple(false, 0);
             }
@@ -207,7 +207,7 @@ alias NullableSizeT = Nullable!(size_t, size_t.max);
 void csv2tsvFiles(in Csv2tsvOptions cmdopt, in string[] inputFiles)
 {
     import std.algorithm : joiner;
-    import tsvutil : BufferedOutputRange;
+    import tsv_utils.common.util : BufferedOutputRange;
 
     ubyte[1024 * 1024] fileRawBuf;
     ubyte[] stdinRawBuf = fileRawBuf[0..1024];
