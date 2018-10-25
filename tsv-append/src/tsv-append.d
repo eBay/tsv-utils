@@ -25,7 +25,7 @@ else
      */
     int main(string[] cmdArgs)
     {
-        import tsv_utils.common.util : BufferedOutputRange;
+        import tsv_utils.common.utils : BufferedOutputRange;
         /* When running in DMD code coverage mode, turn on report merging. */
         version(D_Coverage) version(DigitalMars)
         {

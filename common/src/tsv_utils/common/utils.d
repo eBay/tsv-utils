@@ -29,7 +29,7 @@ Initially written by Jon Degenhardt
 License: Boost Licence 1.0 (http://boost.org/LICENSE_1_0.txt)
 */
 
-module tsv_utils.common.util;
+module tsv_utils.common.utils;
 
 import std.range;
 import std.traits : isIntegral, isSomeChar, isSomeString, isUnsigned;
@@ -59,7 +59,7 @@ below, which has a performance improvement over join used here.)
 
     int main(string[] args)
     {
-        import tsvutil;
+        import tsv_utils.common.utils;
         import std.algorithm, std.array, std.range, std.stdio;
         size_t[] fieldIndicies = [3, 0, 2];
         auto fieldReordering = new InputFieldReordering!char(fieldIndicies);

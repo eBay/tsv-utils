@@ -1,5 +1,5 @@
 app ?= $(notdir $(basename $(CURDIR)))
-common_srcs ?= $(common_srcdir)/util.d $(common_srcdir)/numerics.d $(common_srcdir)/getopt_inorder.d $(common_srcdir)/unittest_utils.d $(common_srcdir)/tsvutils_version.d
+common_srcs ?= $(common_srcdir)/utils.d $(common_srcdir)/numerics.d $(common_srcdir)/getopt_inorder.d $(common_srcdir)/unittest_utils.d $(common_srcdir)/tsvutils_version.d
 app_src ?= $(CURDIR)/src/$(app).d
 srcs ?= $(app_src) $(common_srcs)
 imports ?= -I$(common_srcdir)

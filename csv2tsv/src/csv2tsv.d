@@ -207,7 +207,7 @@ alias NullableSizeT = Nullable!(size_t, size_t.max);
 void csv2tsvFiles(in Csv2tsvOptions cmdopt, in string[] inputFiles)
 {
     import std.algorithm : joiner;
-    import tsv_utils.common.util : BufferedOutputRange;
+    import tsv_utils.common.utils : BufferedOutputRange;
 
     ubyte[1024 * 1024] fileRawBuf;
     ubyte[] stdinRawBuf = fileRawBuf[0..1024];

@@ -787,7 +787,7 @@ void tsvFilter(in TsvFilterOptions cmdopt, in string[] inputFiles)
 {
     import std.algorithm : all, any, splitter;
     import std.range;
-    import tsv_utils.common.util : BufferedOutputRange, throwIfWindowsNewlineOnUnix;
+    import tsv_utils.common.utils : BufferedOutputRange, throwIfWindowsNewlineOnUnix;
 
     /* BufferedOutputRange improves performance on narrow files with high percentages of
      * writes. Want responsive output if output is rare, so ensure the first matched

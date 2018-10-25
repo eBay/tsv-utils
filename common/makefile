@@ -23,7 +23,7 @@ test: unittest
 .PHONY: unittest
 unittest:
 	@echo '---> Running $(notdir $(basename $(CURDIR))) unit tests'
-	$(DCOMPILER) $(imports) $(unittest_utils_srcs) $(unittest_flags) $(srcdir)/util.d
+	$(DCOMPILER) $(imports) $(unittest_utils_srcs) $(unittest_flags) $(srcdir)/utils.d
 	$(DCOMPILER) $(imports) $(unittest_utils_srcs) $(unittest_flags) $(srcdir)/getopt_inorder.d
 	$(DCOMPILER) $(imports) $(unittest_utils_srcs) $(unittest_flags) $(srcdir)/numerics.d
 	$(DCOMPILER) $(imports) $(unittest_utils_srcs) $(unittest_flags) $(srcdir)/tsvutils_version.d
@@ -40,7 +40,7 @@ test-codecov: unittest-codecov
 unittest-codecov:
 	@echo '---> Running $(notdir $(basename $(CURDIR))) unit tests with code coverage.'
 	-rm ./*.lst
-	$(DCOMPILER) $(imports) $(unittest_utils_srcs) $(unittest_codecov_flags) $(srcdir)/util.d
+	$(DCOMPILER) $(imports) $(unittest_utils_srcs) $(unittest_codecov_flags) $(srcdir)/utils.d
 	$(DCOMPILER) $(imports) $(unittest_utils_srcs) $(unittest_codecov_flags) $(srcdir)/getopt_inorder.d
 	$(DCOMPILER) $(imports) $(unittest_utils_srcs) $(unittest_codecov_flags) $(srcdir)/numerics.d
 	$(DCOMPILER) $(imports) $(unittest_utils_srcs) $(unittest_codecov_flags) $(srcdir)/tsvutils_version.d

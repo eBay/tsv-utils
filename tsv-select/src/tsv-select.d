@@ -78,7 +78,7 @@ struct TsvSelectOptions
         import std.getopt;
         import std.path : baseName, stripExtension;
         import std.typecons : Yes, No;
-        import tsv_utils.common.util :  makeFieldListOptionHandler;
+        import tsv_utils.common.utils :  makeFieldListOptionHandler;
 
         programName = (cmdArgs.length > 0) ? cmdArgs[0].stripExtension.baseName : "Unknown_program_name";
 
@@ -199,7 +199,7 @@ enum CTERestLocation { none, first, last };
  */
 void tsvSelect(CTERestLocation cteRest)(in TsvSelectOptions cmdopt, in string[] inputFiles)
 {
-    import tsv_utils.common.util: BufferedOutputRange, InputFieldReordering, throwIfWindowsNewlineOnUnix;
+    import tsv_utils.common.utils: BufferedOutputRange, InputFieldReordering, throwIfWindowsNewlineOnUnix;
     import std.algorithm: splitter;
     import std.format: format;
     import std.range;

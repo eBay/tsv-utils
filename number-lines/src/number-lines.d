@@ -129,7 +129,7 @@ void numberLines(in NumberLinesOptions cmdopt, in string[] inputFiles)
 {
     import std.conv : to;
     import std.range;
-    import tsv_utils.common.util : BufferedOutputRange;
+    import tsv_utils.common.utils : BufferedOutputRange;
 
     auto bufferedOutput = BufferedOutputRange!(typeof(stdout))(stdout);
 
