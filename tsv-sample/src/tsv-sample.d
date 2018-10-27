@@ -204,12 +204,13 @@ struct TsvSampleOptions
     bool hasWeightField = false;               /// Derived.
     bool useBernoulliSampling = false;         /// Derived.
     bool useDistinctSampling = false;          /// Derived.
+    bool distinctKeyIsFullLine = false;        /// Derived. True if '--k|key-fields 0' is specfied.
     bool usingUnpredictableSeed = true;        /// Derived from --static-seed, --seed-value
     uint seed = 0;                             /// Derived from --static-seed, --seed-value
 
     auto processArgs(ref string[] cmdArgs)
     {
-        import std.algorithm : canFind;
+        import std.algorithm : any, canFind, each;
         import std.getopt;
         import std.math : isNaN;
         import std.path : baseName, stripExtension;
@@ -232,8 +233,8 @@ struct TsvSampleOptions
                 "n|num",           "NUM  Maximim number of lines to output. All selected lines are output if not provided or zero.", &sampleSize,
                 "p|prob",          "NUM  Inclusion probability (0.0 < NUM <= 1.0). For Bernoulli sampling, the probability each line is selected output. For distinct sampling, the probability each unique key is selected for output.", &inclusionProbability,
 
-                "k|key-fields",    "<field-list>  Fields to use as key for distinct sampling. Use with --p|prob.",
-                keyFields.makeFieldListOptionHandler!(size_t, Yes.convertToZeroBasedIndex),
+                "k|key-fields",    "<field-list>  Fields to use as key for distinct sampling. Use with '--p|prob'. Specify '--k|key-fields 0' to use the entire line as the key.",
+                keyFields.makeFieldListOptionHandler!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero),
 
                 "w|weight-field",  "NUM  Field containing weights. All lines get equal weight if not provided or zero.", &weightField,
                 "r|replace",       "     Simple random sampling with replacement. Use --n|num to specify the sample size.", &srsWithReplacement,
@@ -307,7 +308,23 @@ struct TsvSampleOptions
 
             if (keyFields.length > 0)
             {
+                /* Note: useDistinctSampling is set as part of the inclusion probability checks below. */
+
                 if (inclusionProbability.isNaN) throw new Exception("--p|prob is required when using --k|key-fields.");
+
+                if (keyFields.length == 1 && keyFields[0] == 0)
+                {
+                    distinctKeyIsFullLine = true;
+                }
+                else
+                {
+                    if (keyFields.length > 1 && keyFields.any!(x => x == 0))
+                    {
+                        throw new Exception("Whole line as key (--k|key-fields 0) cannot be combined with multiple fields.");
+                    }
+
+                    keyFields.each!((ref x) => --x);  // Convert to zero-based indexing.
+                }
             }
 
             /* Inclusion probability (--p|prob) is used for both Bernoulli sampling and distinct sampling. */
@@ -652,7 +669,7 @@ if (isOutputRange!(OutputRange, char))
     uint numBuckets = (1.0 / cmdopt.inclusionProbability).lrint.to!uint;
 
     /* Create a mapping for the key fields. */
-    auto keyFieldsReordering = new InputFieldReordering!char(cmdopt.keyFields);
+    auto keyFieldsReordering = cmdopt.distinctKeyIsFullLine ? null : new InputFieldReordering!char(cmdopt.keyFields);
 
     /* Process each line. */
     bool headerWritten = false;
@@ -685,28 +702,43 @@ if (isOutputRange!(OutputRange, char))
             }
             else
             {
-                /* Gather the key field values and assemble the key. */
-                keyFieldsReordering.initNewLine;
-                foreach (fieldIndex, fieldValue; line.splitter(cmdopt.delim).enumerate)
-                {
-                    keyFieldsReordering.processNextField(fieldIndex, fieldValue);
-                    if (keyFieldsReordering.allFieldsFilled) break;
-                }
-
-                if (!keyFieldsReordering.allFieldsFilled)
-                {
-                    import std.format : format;
-                    throw new Exception(
-                        format("Not enough fields in line. File: %s, Line: %s",
-                               (filename == "-") ? "Standard Input" : filename, fileLineNum));
-                }
-
+                /* Murmurhash works by successively adding individual keys, then finalizing.
+                 * Adding individual keys is simpler if the full-line-as-key and individual
+                 * fields as keys cases are separated.
+                 */
                 auto hasher = MurmurHash3!32(cmdopt.seed);
-                foreach (count, key; keyFieldsReordering.outputFields.enumerate)
+
+                if (cmdopt.distinctKeyIsFullLine)
                 {
-                    if (count > 0) hasher.put(delimArray);
-                    hasher.put(cast(ubyte[]) key);
+                    hasher.put(cast(ubyte[]) line);
                 }
+                else
+                {
+                    assert(keyFieldsReordering !is null);
+
+                    /* Gather the key field values and assemble the key. */
+                    keyFieldsReordering.initNewLine;
+                    foreach (fieldIndex, fieldValue; line.splitter(cmdopt.delim).enumerate)
+                    {
+                        keyFieldsReordering.processNextField(fieldIndex, fieldValue);
+                        if (keyFieldsReordering.allFieldsFilled) break;
+                    }
+
+                    if (!keyFieldsReordering.allFieldsFilled)
+                    {
+                        import std.format : format;
+                        throw new Exception(
+                            format("Not enough fields in line. File: %s, Line: %s",
+                                   (filename == "-") ? "Standard Input" : filename, fileLineNum));
+                    }
+
+                    foreach (count, key; keyFieldsReordering.outputFields.enumerate)
+                    {
+                        if (count > 0) hasher.put(delimArray);
+                        hasher.put(cast(ubyte[]) key);
+                    }
+                }
+
                 hasher.finish;
 
                 static if (generateRandomAll)
@@ -2275,6 +2307,142 @@ unittest
          ["22", "triangle", "red", "L", "30"],
         ];
 
+    /* Fields 2 and 4 from data5x25. Distinct rows should be the same for equiv keys. */
+    string[][] data2x25 =
+        [["Shape", "Size"],
+         ["circle", "S"],
+         ["circle", "L"],
+         ["square", "L"],
+         ["circle", "L"],
+         ["ellipse", "S"],
+         ["triangle", "S"],
+         ["triangle", "L"],
+         ["square", "S"],
+         ["circle", "S"],
+         ["square", "L"],
+         ["triangle", "L"],
+         ["circle", "L"],
+         ["ellipse", "S"],
+         ["circle", "L"],
+         ["ellipse", "L"],
+         ["square", "S"],
+         ["circle", "L"],
+         ["square", "S"],
+         ["square", "L"],
+         ["circle", "S"],
+         ["ellipse", "L"],
+         ["triangle", "L"],
+         ["circle", "S"],
+         ["square", "L"],
+         ["circle", "S"],
+        ];
+
+    string fpath_data2x25 = buildPath(testDir, "data2x25.tsv");
+    string fpath_data2x25_noheader = buildPath(testDir, "data2x25_noheader.tsv");
+    writeUnittestTsvFile(fpath_data2x25, data2x25);
+    writeUnittestTsvFile(fpath_data2x25_noheader, data2x25[1..$]);
+
+    string[][] data2x25ExpectedDistinctK1K2P20 =
+        [["Shape", "Size"],
+         ["square", "L"],
+         ["triangle", "L"],
+         ["square", "S"],
+         ["square", "L"],
+         ["triangle", "L"],
+         ["square", "S"],
+         ["square", "S"],
+         ["square", "L"],
+         ["triangle", "L"],
+         ["square", "L"],
+        ];
+
+    string[][] data1x25 =
+        [["Shape-Size"],
+         ["circle-S"],
+         ["circle-L"],
+         ["square-L"],
+         ["circle-L"],
+         ["ellipse-S"],
+         ["triangle-S"],
+         ["triangle-L"],
+         ["square-S"],
+         ["circle-S"],
+         ["square-L"],
+         ["triangle-L"],
+         ["circle-L"],
+         ["ellipse-S"],
+         ["circle-L"],
+         ["ellipse-L"],
+         ["square-S"],
+         ["circle-L"],
+         ["square-S"],
+         ["square-L"],
+         ["circle-S"],
+         ["ellipse-L"],
+         ["triangle-L"],
+         ["circle-S"],
+         ["square-L"],
+         ["circle-S"],
+        ];
+
+    string fpath_data1x25 = buildPath(testDir, "data1x25.tsv");
+    string fpath_data1x25_noheader = buildPath(testDir, "data1x25_noheader.tsv");
+    writeUnittestTsvFile(fpath_data1x25, data1x25);
+    writeUnittestTsvFile(fpath_data1x25_noheader, data1x25[1..$]);
+
+    string[][] data1x25ExpectedDistinctK1P20 =
+        [["Shape-Size"],
+         ["triangle-L"],
+         ["square-S"],
+         ["triangle-L"],
+         ["ellipse-L"],
+         ["square-S"],
+         ["square-S"],
+         ["ellipse-L"],
+         ["triangle-L"],
+        ];
+
+    string[][] data1x25ExpectedDistinctK1P20Probs =
+        [["random_value", "Shape-Size"],
+         ["0", "triangle-L"],
+         ["0", "square-S"],
+         ["0", "triangle-L"],
+         ["0", "ellipse-L"],
+         ["0", "square-S"],
+         ["0", "square-S"],
+         ["0", "ellipse-L"],
+         ["0", "triangle-L"],
+        ];
+
+    string[][] data1x25ExpectedDistinctK1P20ProbsInorder =
+        [["random_value", "Shape-Size"],
+         ["1", "circle-S"],
+         ["4", "circle-L"],
+         ["2", "square-L"],
+         ["4", "circle-L"],
+         ["2", "ellipse-S"],
+         ["1", "triangle-S"],
+         ["0", "triangle-L"],
+         ["0", "square-S"],
+         ["1", "circle-S"],
+         ["2", "square-L"],
+         ["0", "triangle-L"],
+         ["4", "circle-L"],
+         ["2", "ellipse-S"],
+         ["4", "circle-L"],
+         ["0", "ellipse-L"],
+         ["0", "square-S"],
+         ["4", "circle-L"],
+         ["0", "square-S"],
+         ["2", "square-L"],
+         ["1", "circle-S"],
+         ["0", "ellipse-L"],
+         ["0", "triangle-L"],
+         ["1", "circle-S"],
+         ["2", "square-L"],
+         ["1", "circle-S"],
+        ];
+
     /*
      * Enough setup! Actually run some tests!
      */
@@ -2348,6 +2516,8 @@ unittest
     testTsvSample(["test-a25", "-H", "-s", "-p", "1.0", "-k", "2", fpath_data3x1], data3x1);
     testTsvSample(["test-a26", "-H", "-s", "-p", "1.0", "-k", "2", fpath_data3x6], data3x6);
     testTsvSample(["test-a27", "-H", "-s", "-p", "0.6", "-k", "1,3", fpath_data3x6], data3x6ExpectedDistinctK1K3P60);
+
+
 
     /* Generating random weights. Use Bernoulli sampling test set at prob 100% for uniform sampling.
      * For weighted sampling, use the weighted cases, but with expected using the original ordering.
@@ -2677,4 +2847,61 @@ unittest
 
     testTsvSample(["test-j6", "-s", "-p", "0.20", "-k", "2-4", fpath_data5x25_noheader],
                   data5x25ExpectedDistinctK2K3K4P20[1..$]);
+
+
+    /* These distinct tests check that the whole line as '-k 0' and specifying all fields
+     * in order have the same result. Also that field numbers don't matter, as '-k 1,2'
+     * in data2x25 are the same keys as '-k 2,4' in data5x25.
+     */
+    testTsvSample(["test-j7", "-H", "-s", "-p", "0.20", "-k", "1,2", fpath_data2x25],
+                  data2x25ExpectedDistinctK1K2P20);
+
+    testTsvSample(["test-j8", "-H", "-s", "-p", "0.20", "-k", "0", fpath_data2x25],
+                  data2x25ExpectedDistinctK1K2P20);
+
+    testTsvSample(["test-j9", "-s", "-p", "0.20", "-k", "1,2", fpath_data2x25_noheader],
+                  data2x25ExpectedDistinctK1K2P20[1..$]);
+
+    testTsvSample(["test-j10", "-s", "-p", "0.20", "-k", "0", fpath_data2x25_noheader],
+                  data2x25ExpectedDistinctK1K2P20[1..$]);
+
+    /* Similar to the last set, but for a 1-column file. Also with random value printing. */
+    testTsvSample(["test-j11", "-H", "-s", "-p", "0.20", "-k", "1", fpath_data1x25],
+                  data1x25ExpectedDistinctK1P20);
+
+    testTsvSample(["test-j12", "-H", "-s", "-p", "0.20", "-k", "0", fpath_data1x25],
+                  data1x25ExpectedDistinctK1P20);
+
+    testTsvSample(["test-j13", "-s", "-p", "0.20", "-k", "1", fpath_data1x25_noheader],
+                  data1x25ExpectedDistinctK1P20[1..$]);
+
+    testTsvSample(["test-j14", "-s", "-p", "0.20", "-k", "0", fpath_data1x25_noheader],
+                  data1x25ExpectedDistinctK1P20[1..$]);
+
+
+    testTsvSample(["test-j15", "-H", "-s", "-p", "0.20", "-k", "1", "--print-random", fpath_data1x25],
+                  data1x25ExpectedDistinctK1P20Probs);
+
+    testTsvSample(["test-j16", "-H", "-s", "-p", "0.20", "-k", "0", "--print-random", fpath_data1x25],
+                  data1x25ExpectedDistinctK1P20Probs);
+
+    testTsvSample(["test-j17", "-s", "-p", "0.20", "-k", "1", "--print-random", fpath_data1x25_noheader],
+                  data1x25ExpectedDistinctK1P20Probs[1..$]);
+
+    testTsvSample(["test-j18", "-s", "-p", "0.20", "-k", "0", "--print-random", fpath_data1x25_noheader],
+                  data1x25ExpectedDistinctK1P20Probs[1..$]);
+
+
+    testTsvSample(["test-j19", "-H", "-s", "-p", "0.20", "-k", "1", "--gen-random-inorder", fpath_data1x25],
+                  data1x25ExpectedDistinctK1P20ProbsInorder);
+
+    testTsvSample(["test-j20", "-H", "-s", "-p", "0.20", "-k", "0", "--gen-random-inorder", fpath_data1x25],
+                  data1x25ExpectedDistinctK1P20ProbsInorder);
+
+    testTsvSample(["test-j21", "-s", "-p", "0.20", "-k", "1", "--gen-random-inorder", fpath_data1x25_noheader],
+                  data1x25ExpectedDistinctK1P20ProbsInorder[1..$]);
+
+    testTsvSample(["test-j22", "-s", "-p", "0.20", "-k", "0", "--gen-random-inorder", fpath_data1x25_noheader],
+                  data1x25ExpectedDistinctK1P20ProbsInorder[1..$]);
+
 }
