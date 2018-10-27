@@ -196,7 +196,7 @@ struct TsvUniqOptions
                 if (max != 0 || !equivMode) max = atLeast;
             }
 
-            fields.each!((ref x) => --x);  // Convert to 1-based indexing.
+            if (!keyIsFullLine) fields.each!((ref x) => --x);  // Convert to 1-based indexing.
 
         }
         catch (Exception exc)
@@ -248,7 +248,7 @@ void tsvUniq(in TsvUniqOptions cmdopt, in string[] inputFiles)
     import std.uni : toLower;
 
     /* InputFieldReordering maps the key fields from an input line to a separate buffer. */
-    auto keyFieldsReordering = new InputFieldReordering!char(cmdopt.fields);
+    auto keyFieldsReordering = cmdopt.keyIsFullLine ? null : new InputFieldReordering!char(cmdopt.fields);
 
     /* BufferedOutputRange is a performance enhancement for writing to stdout. */
     auto bufferedOutput = BufferedOutputRange!(typeof(stdout))(stdout);
@@ -292,6 +292,8 @@ void tsvUniq(in TsvUniqOptions cmdopt, in string[] inputFiles)
                 }
                 else
                 {
+                    assert(keyFieldsReordering !is null);
+
                     /* Copy the key fields to a new buffer. */
                     keyFieldsReordering.initNewLine;
                     foreach (fieldIndex, fieldValue; line.splitter(cmdopt.delim).enumerate)
