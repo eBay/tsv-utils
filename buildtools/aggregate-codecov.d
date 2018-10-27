@@ -1,9 +1,10 @@
 /**
-This tool aggregates D coverage files to a common directory.
+This tool aggregates D code coverage files to a common directory.
 
 D code coverage files are written to the directory where the test was initiated. When
 multiple tests are run from different directories, multiple output files are produced.
-This tool moves these files to a common directory, aggregating them in the process.
+This tool moves these files to a common directory, aggregating coverage files for the
+same source code file along the way.
 
 Copyright (c) 2017, eBay Software Foundation
 Initially written by Jon Degenhardt
@@ -44,7 +45,7 @@ int main(string[] cmdArgs)
             return 1;
         }
     }
-    
+
     foreach (cf; coverageFiles)
     {
         auto targetFile = buildPath(targetDir, cf.baseName);
@@ -73,7 +74,7 @@ void mergeCoverageFiles(string fromFile, string toFile)
     auto lines = appender!(LineCounter[])();
     string lastLine = "";
     long maxCounter = -1;
-    
+
     {   // Scope for file opens
         auto toInput = toFile.File;
         auto fromInput = fromFile.File;
@@ -114,7 +115,7 @@ void mergeCoverageFiles(string fromFile, string toFile)
                 (f1Counter == -1) ? f2Counter :
                 (f2Counter == -1) ? f1Counter :
                 f1Counter + f2Counter;
-            
+
             auto lc = LineCounter(counter, f1Split[2].to!string);
             lines ~= lc;
             if (counter > maxCounter) maxCounter = counter;
@@ -132,7 +133,7 @@ void mergeCoverageFiles(string fromFile, string toFile)
         blanks ~= ' ';
         zeros ~= '0';
     }
-    
+
     size_t codeLines = 0;
     size_t coveredCodeLines = 0;
     auto ofile = toFile.File("w");

@@ -1,5 +1,6 @@
 /**
-Utilities used by TSV applications.
+Utilities used by tsv-utils applications. InputFieldReordering, BufferedOututRange,
+and a several others.
 
 Utilities in this file:
 * InputFieldReordering - A class that creates a reordered subset of fields from an
@@ -27,6 +28,8 @@ Initially written by Jon Degenhardt
 
 License: Boost Licence 1.0 (http://boost.org/LICENSE_1_0.txt)
 */
+
+module tsv_utils.common.utils;
 
 import std.range;
 import std.traits : isIntegral, isSomeChar, isSomeString, isUnsigned;
@@ -56,7 +59,7 @@ below, which has a performance improvement over join used here.)
 
     int main(string[] args)
     {
-        import tsvutil;
+        import tsv_utils.common.utils;
         import std.algorithm, std.array, std.range, std.stdio;
         size_t[] fieldIndicies = [3, 0, 2];
         auto fieldReordering = new InputFieldReordering!char(fieldIndicies);
@@ -529,7 +532,7 @@ if (isFileHandle!(Unqual!OutputTarget) || isOutputRange!(Unqual!OutputTarget, ch
 
 unittest
 {
-    import unittest_utils;
+    import tsv_utils.common.unittest_utils;
     import std.file : rmdirRecurse, readText;
     import std.path : buildPath;
 

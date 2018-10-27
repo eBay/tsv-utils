@@ -1,3 +1,8 @@
+/** tsv-utils version file.
+ */
+
+module tsv_utils.common.tsvutils_version;
+
 enum string tsvutilsVersion = "v1.2.3";
 
 string tsvutilsVersionNotice (string toolName)

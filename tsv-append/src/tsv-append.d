@@ -25,7 +25,7 @@ else
      */
     int main(string[] cmdArgs)
     {
-        import tsvutil : BufferedOutputRange;
+        import tsv_utils.common.utils : BufferedOutputRange;
         /* When running in DMD code coverage mode, turn on report merging. */
         version(D_Coverage) version(DigitalMars)
         {
@@ -173,7 +173,7 @@ struct TsvAppendOptions
             }
             else if (versionWanted)
             {
-                import tsvutils_version;
+                import tsv_utils.common.tsvutils_version;
                 writeln(tsvutilsVersionNotice("tsv-append"));
                 return tuple(false, 0);
             }
@@ -247,7 +247,7 @@ version(unittest)
 {
     /* Unit test helper functions. */
 
-    import unittest_utils;   // tsv unit test helpers, from common/src/.
+    import tsv_utils.common.unittest_utils;   // tsv unit test helpers, from common/src/.
 
     void testTsvAppend(string[] cmdArgs, string[][] expected)
     {

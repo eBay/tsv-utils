@@ -115,7 +115,7 @@ struct TsvUniqOptions
         import std.getopt;
         import std.path : baseName, stripExtension;
         import std.typecons : Yes, No;
-        import tsvutil :  makeFieldListOptionHandler;
+        import tsv_utils.common.utils :  makeFieldListOptionHandler;
 
         programName = (cmdArgs.length > 0) ? cmdArgs[0].stripExtension.baseName : "Unknown_program_name";
 
@@ -155,7 +155,7 @@ struct TsvUniqOptions
             }
             else if (versionWanted)
             {
-                import tsvutils_version;
+                import tsv_utils.common.tsvutils_version;
                 writeln(tsvutilsVersionNotice("tsv-uniq"));
                 return tuple(false, 0);
             }
@@ -240,7 +240,7 @@ int main(string[] cmdArgs)
  */
 void tsvUniq(in TsvUniqOptions cmdopt, in string[] inputFiles)
 {
-    import tsvutil : InputFieldReordering, BufferedOutputRange;
+    import tsv_utils.common.utils : InputFieldReordering, BufferedOutputRange;
     import std.algorithm : splitter;
     import std.array : join;
     import std.conv : to;

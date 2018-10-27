@@ -1,5 +1,5 @@
 /**
-This tool coverts D code coverage files from absolute to relative paths.
+This tool converts D code coverage files from absolute to relative paths.
 
 D code coverage files are written using absolute path names if absolute paths are
 used in the build command. (This enables running coverage tests from a directory
@@ -44,7 +44,7 @@ int main(string[] cmdArgs)
             return 1;
         }
     }
-    
+
     foreach (cf; coverageFiles)
     {
         auto rootDir = cf.absolutePath.buildNormalizedPath.dirName;
@@ -59,7 +59,7 @@ int main(string[] cmdArgs)
             auto lastLineSplit = lastLine.findSplit(" ");
             auto lastLinePath = lastLineSplit[1].empty ? "" : lastLineSplit[0];
             auto lastLinePathNoExt = lastLinePath.stripExtension;
-            if (lastLinePath.isAbsolute && 
+            if (lastLinePath.isAbsolute &&
                 lastLinePathNoExt.tr("\\/", "--") == fileNameNoExt &&
                 rootDir.length + 1 <= lastLine.length &&
                 rootDir.length + 1 <= fileName.length)

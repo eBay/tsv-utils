@@ -39,7 +39,7 @@ else
         }
         try
         {
-            import tsvutil : BufferedOutputRange;
+            import tsv_utils.common.utils : BufferedOutputRange;
             auto bufferedOutput = BufferedOutputRange!(typeof(stdout))(stdout);
 
             tsvSample(cmdopt, bufferedOutput);
@@ -182,30 +182,30 @@ EOS";
  */
 struct TsvSampleOptions
 {
-    string programName;
-    string[] files;
-    bool helpVerbose = false;                  // --help-verbose
-    bool hasHeader = false;                    // --H|header
-    size_t sampleSize = 0;                     // --n|num - Size of the desired sample
-    double inclusionProbability = double.nan;  // --p|prob - Inclusion probability
-    size_t[] keyFields;                        // --k|key-fields - Used with inclusion probability
-    size_t weightField = 0;                    // --w|weight-field - Field holding the weight
-    bool srsWithReplacement = false;           // --r|replace
-    bool staticSeed = false;                   // --s|static-seed
-    uint seedValueOptionArg = 0;               // --v|seed-value
-    bool printRandom = false;                  // --print-random
-    bool genRandomInorder = false;             // --gen-random-inorder
-    string randomValueHeader = "random_value"; // --random-value-header
-    bool compatibilityMode = false;            // --compatibility-mode
-    char delim = '\t';                         // --d|delimiter
-    bool versionWanted = false;                // --V|version
-    bool preferSkipSampling = false;           // --prefer-skip-sampling
-    bool preferAlgorithmR = false;             // --prefer-algorithm-r
-    bool hasWeightField = false;               // Derived.
-    bool useBernoulliSampling = false;         // Derived.
-    bool useDistinctSampling = false;          // Derived.
-    bool usingUnpredictableSeed = true;        // Derived from --static-seed, --seed-value
-    uint seed = 0;                             // Derived from --static-seed, --seed-value
+    string programName;                        /// Program name
+    string[] files;                            /// Input files
+    bool helpVerbose = false;                  /// --help-verbose
+    bool hasHeader = false;                    /// --H|header
+    size_t sampleSize = 0;                     /// --n|num - Size of the desired sample
+    double inclusionProbability = double.nan;  /// --p|prob - Inclusion probability
+    size_t[] keyFields;                        /// --k|key-fields - Used with inclusion probability
+    size_t weightField = 0;                    /// --w|weight-field - Field holding the weight
+    bool srsWithReplacement = false;           /// --r|replace
+    bool staticSeed = false;                   /// --s|static-seed
+    uint seedValueOptionArg = 0;               /// --v|seed-value
+    bool printRandom = false;                  /// --print-random
+    bool genRandomInorder = false;             /// --gen-random-inorder
+    string randomValueHeader = "random_value"; /// --random-value-header
+    bool compatibilityMode = false;            /// --compatibility-mode
+    char delim = '\t';                         /// --d|delimiter
+    bool versionWanted = false;                /// --V|version
+    bool preferSkipSampling = false;           /// --prefer-skip-sampling
+    bool preferAlgorithmR = false;             /// --prefer-algorithm-r
+    bool hasWeightField = false;               /// Derived.
+    bool useBernoulliSampling = false;         /// Derived.
+    bool useDistinctSampling = false;          /// Derived.
+    bool usingUnpredictableSeed = true;        /// Derived from --static-seed, --seed-value
+    uint seed = 0;                             /// Derived from --static-seed, --seed-value
 
     auto processArgs(ref string[] cmdArgs)
     {
@@ -214,7 +214,7 @@ struct TsvSampleOptions
         import std.math : isNaN;
         import std.path : baseName, stripExtension;
         import std.typecons : Yes, No;
-        import tsvutil : makeFieldListOptionHandler;
+        import tsv_utils.common.utils : makeFieldListOptionHandler;
 
         programName = (cmdArgs.length > 0) ? cmdArgs[0].stripExtension.baseName : "Unknown_program_name";
 
@@ -273,7 +273,7 @@ struct TsvSampleOptions
             }
             else if (versionWanted)
             {
-                import tsvutils_version;
+                import tsv_utils.common.tsvutils_version;
                 writeln(tsvutilsVersionNotice("tsv-sample"));
                 return tuple(false, 0);
             }
@@ -402,7 +402,7 @@ if (isOutputRange!(OutputRange, char))
     }
 }
 
-/** Bernoulli sampling on the input stream.
+/** Invokes the appropriate Bernoulli sampling routine based on the command line arguments.
  *
  * This routine selects the appropriate bernoulli sampling function and template
  * instantiation to use based on the command line arguments.
@@ -435,7 +435,7 @@ if (isOutputRange!(OutputRange, char))
     }
 }
 
-/** Bernoulli sampling on the input stream.
+/** Bernoulli sampling of lines on the input stream.
  *
  * Each input line is a assigned a random value and output if less than
  * cmdopt.inclusionProbability. The order of the lines is not changed.
@@ -448,7 +448,7 @@ if (isOutputRange!(OutputRange, char))
 {
     import std.format : formatValue, singleSpec;
     import std.random : Random = Mt19937, uniform01;
-    import tsvutil : throwIfWindowsNewlineOnUnix;
+    import tsv_utils.common.utils : throwIfWindowsNewlineOnUnix;
 
     static if (generateRandomAll) assert(cmdopt.genRandomInorder);
     else assert(!cmdopt.genRandomInorder);
@@ -523,8 +523,7 @@ if (isOutputRange!(OutputRange, char))
     }
 }
 
-/* bernoulliSkipSampling is an alternate implementation of bernoulliSampling that
- * uses skip sampling.
+/** bernoulliSkipSampling is an implementation of Bernoulli sampling using skips.
  *
  * Skip sampling works by skipping a random number of lines between selections. This
  * can be faster than assigning a random value to each line when the inclusion
@@ -563,7 +562,7 @@ void bernoulliSkipSampling(OutputRange)(TsvSampleOptions cmdopt, OutputRange out
     import std.conv : to;
     import std.math : log, trunc;
     import std.random : Random = Mt19937, uniform01;
-    import tsvutil : throwIfWindowsNewlineOnUnix;
+    import tsv_utils.common.utils : throwIfWindowsNewlineOnUnix;
 
     assert(cmdopt.inclusionProbability > 0.0 && cmdopt.inclusionProbability < 1.0);
     assert(!cmdopt.printRandom);
@@ -634,7 +633,7 @@ if (isOutputRange!(OutputRange, char))
     import std.conv : to;
     import std.digest.murmurhash;
     import std.math : lrint;
-    import tsvutil : InputFieldReordering, throwIfWindowsNewlineOnUnix;
+    import tsv_utils.common.utils : InputFieldReordering, throwIfWindowsNewlineOnUnix;
 
     static if (generateRandomAll) assert(cmdopt.genRandomInorder);
     else assert(!cmdopt.genRandomInorder);
@@ -745,7 +744,8 @@ if (isOutputRange!(OutputRange, char))
     }
 }
 
-/** Reservoir sampling on the input stream.
+/** Invokes the appropriate reservoir sampling routine based on the command line
+ * arguments.
  *
  * This routine selects the appropriate reservior sampling function and template
  * instantiation to use based on the command line arguments.
@@ -828,7 +828,7 @@ if (isOutputRange!(OutputRange, char))
     import std.container.binaryheap;
     import std.format : formatValue, singleSpec;
     import std.random : Random = Mt19937, uniform01;
-    import tsvutil : throwIfWindowsNewlineOnUnix;
+    import tsv_utils.common.utils : throwIfWindowsNewlineOnUnix;
 
     static if (isWeighted) assert(cmdopt.hasWeightField);
     else assert(!cmdopt.hasWeightField);
@@ -945,7 +945,7 @@ if (isOutputRange!(OutputRange, char))
 {
     import std.format : formatValue, singleSpec;
     import std.random : Random = Mt19937, uniform01;
-    import tsvutil : throwIfWindowsNewlineOnUnix;
+    import tsv_utils.common.utils : throwIfWindowsNewlineOnUnix;
 
     assert(cmdopt.hasWeightField);
 
@@ -996,7 +996,7 @@ if (isOutputRange!(OutputRange, char))
     }
 }
 
-/** Reservoir sampling, Algorithm R
+/** Reservoir sampling via Algorithm R
  *
  * This is an implementation of reservoir sampling using what is commonly known as
  * "Algorithm R", credited to Alan Waterman by Donald Knuth in the "The Art of
@@ -1028,7 +1028,7 @@ void reservoirSamplingAlgorithmR(OutputRange)(TsvSampleOptions cmdopt, auto ref 
 if (isOutputRange!(OutputRange, char))
 {
     import std.random : Random = Mt19937, randomShuffle, uniform;
-    import tsvutil : throwIfWindowsNewlineOnUnix;
+    import tsv_utils.common.utils : throwIfWindowsNewlineOnUnix;
 
     assert(cmdopt.sampleSize > 0);
     assert(!cmdopt.hasWeightField);
@@ -1094,9 +1094,10 @@ if (isOutputRange!(OutputRange, char))
     }
 }
 
-/** Randomize all the lines in files or standard input.
+/** Invokes the appropriate routine to randomize input lines based on the command line
+ * arguments.
  *
- * This routine selects the appropriate randomize-lines function and template instantiation
+ * This routine selects the appropriate randomize lines function and template instantiation
  * to use based on the command line arguments.
  */
 void randomizeLinesCommand(OutputRange)(TsvSampleOptions cmdopt, auto ref OutputRange outputStream)
@@ -1116,7 +1117,8 @@ if (isOutputRange!(OutputRange, char))
     }
 }
 
-/** Randomize all the lines in files or standard input.
+/** Randomize all the lines in files or standard input using assigned random weights
+ * and sorting.
  *
  * All lines in files and/or standard input are read in and written out in random
  * order. This algorithm assigns a random value to each line and sorts. This approach
@@ -1168,7 +1170,7 @@ if (isOutputRange!(OutputRange, char))
     }
 }
 
-/** Randomize all the lines in files or standard input.
+/** Randomize all the lines in files or standard input using a shuffling algorithm.
  *
  * All lines in files and/or standard input are read in and written out in random
  * order. This routine uses array shuffling, which is faster than sorting. This makes
@@ -1322,7 +1324,7 @@ if (isOutputRange!(OutputRange, char))
     import std.algorithm : splitter;
     import std.array : appender;
     import std.random : Random = Mt19937, uniform01;
-    import tsvutil : throwIfWindowsNewlineOnUnix;
+    import tsv_utils.common.utils : throwIfWindowsNewlineOnUnix;
 
     static assert(hasRandomValue || !isWeighted);
     static if(!hasRandomValue) assert(!cmdopt.printRandom);
@@ -1387,8 +1389,9 @@ if (isOutputRange!(OutputRange, char))
 }
 
 
-/** Convenience function for extracting a single field from a line. See getTsvFieldValue in
- * common/src/tsvutils.d for details. This wrapper creates error text tailored for this program.
+/** Convenience function for extracting a single field from a line. See
+ * tsv_utils.common.utils.getTsvFieldValue for details. This wrapper creates error
+ * text tailored for this program.
  */
 import std.traits : isSomeChar;
 T getFieldValue(T, C)(const C[] line, size_t fieldIndex, C delim, string filename, size_t lineNum) pure @safe
@@ -1396,7 +1399,7 @@ if (isSomeChar!C)
 {
     import std.conv : ConvException, to;
     import std.format : format;
-    import tsvutil : getTsvFieldValue;
+    import tsv_utils.common.utils : getTsvFieldValue;
 
     T val;
     try
@@ -1452,7 +1455,7 @@ version(unittest)
 {
     /* Unit test helper functions. */
 
-    import unittest_utils;   // tsv unit test helpers, from common/src/.
+    import tsv_utils.common.unittest_utils;   // tsv unit test helpers, from common/src/.
     import std.conv : to;
 
     void testTsvSample(string[] cmdArgs, string[][] expected)

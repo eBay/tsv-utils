@@ -27,6 +27,8 @@ Acknowledgments:
   Copyright: 2008-2015 Andrei Alexandrescu
 */
 
+module tsv_utils.common.getopt_inorder;
+
 import std.getopt;
 
 /* checkForUnsupportedConfigOptions walks the option list looking for unsupported config

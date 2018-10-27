@@ -7,6 +7,8 @@ Initially written by Jon Degenhardt
 License: Boost License 1.0 (http://boost.org/LICENSE_1_0.txt)
 */
 
+module tsv_utils.common.unittest_utils;
+
 version(unittest)
 {
     /* Creates a temporary directory for writing unit test files. The path of the created

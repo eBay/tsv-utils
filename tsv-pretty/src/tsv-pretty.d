@@ -177,7 +177,7 @@ struct TsvPrettyOptions
             }
             else if (versionWanted)
             {
-                import tsvutils_version;
+                import tsv_utils.common.tsvutils_version;
                 writeln(tsvutilsVersionNotice("tsv-pretty"));
                 return tuple(false, 0);
             }
@@ -1164,6 +1164,7 @@ size_t significantDigits(const char[] numericString) @safe pure
     import std.math : isFinite;
     import std.string : isNumeric;
     import std.conv : to;
+
     assert (numericString.isNumeric);
 
     size_t significantDigits = 0;
@@ -1215,6 +1216,7 @@ size_t precisionDigits(const char[] numericString) @safe pure
     import std.math : isFinite;
     import std.string : isNumeric;
     import std.conv : to;
+
     assert (numericString.isNumeric);
 
     size_t precisionDigits = 0;

@@ -79,7 +79,7 @@ struct NumberLinesOptions
             }
             else if (versionWanted)
             {
-                import tsvutils_version;
+                import tsv_utils.common.tsvutils_version;
                 writeln(tsvutilsVersionNotice("number-lines"));
                 return tuple(false, 0);
             }
@@ -129,7 +129,7 @@ void numberLines(in NumberLinesOptions cmdopt, in string[] inputFiles)
 {
     import std.conv : to;
     import std.range;
-    import tsvutil : BufferedOutputRange;
+    import tsv_utils.common.utils : BufferedOutputRange;
 
     auto bufferedOutput = BufferedOutputRange!(typeof(stdout))(stdout);
 

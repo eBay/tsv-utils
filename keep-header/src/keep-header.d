@@ -66,7 +66,7 @@ int main(string[] args)
         else if (cmdArgs.length > 0 &&
                  (cmdArgs[0] == "-V" || cmdArgs[0] == "--V" ||  cmdArgs[0] == "--version"))
         {
-            import tsvutils_version;
+            import tsv_utils.common.tsvutils_version;
             stderr.writeln();
             stderr.writeln(tsvutilsVersionNotice("keep-header"));
         }
