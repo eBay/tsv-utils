@@ -32,8 +32,11 @@ Error [tsv-sample]: Windows/DOS line ending found. Convert file to Unix newlines
 ====[tsv-sample --prob 1.00001 input3x25.tsv]====
 [tsv-sample] Error processing command line arguments: Invalid --p|prob option: 1.00001. Must satisfy 0.0 < prob <= 1.0.
 
-====[tsv-sample -p .1 -k 0 input4x50.tsv input4x15.tsv]====
-[tsv-sample] Error processing command line arguments: [--k|key-fields] Field numbers must be greater than zero: '0'
+====[tsv-sample -p .1 -k 0,1 input4x50.tsv input4x15.tsv]====
+[tsv-sample] Error processing command line arguments: Whole line as key (--k|key-fields 0) cannot be combined with multiple fields.
+
+====[tsv-sample -p .1 -k 1,2,0 input4x50.tsv input4x15.tsv]====
+[tsv-sample] Error processing command line arguments: Whole line as key (--k|key-fields 0) cannot be combined with multiple fields.
 
 ====[tsv-sample -p .1 -k -1 input4x50.tsv input4x15.tsv]====
 [tsv-sample] Error processing command line arguments: [--k|key-fields] Incomplete ranges are not supported: '-1'

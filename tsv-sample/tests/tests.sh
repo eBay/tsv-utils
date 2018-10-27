@@ -194,7 +194,8 @@ runtest ${prog} "-w 1 input2x5_noheader_dos.tsv" ${error_tests}
 runtest ${prog} "--prob 0.5 --weight-field 3 input3x25.tsv" ${error_tests}
 runtest ${prog} "--prob 0 input3x25.tsv" ${error_tests}
 runtest ${prog} "--prob 1.00001 input3x25.tsv" ${error_tests}
-runtest ${prog} "-p .1 -k 0 input4x50.tsv input4x15.tsv" ${error_tests}
+runtest ${prog} "-p .1 -k 0,1 input4x50.tsv input4x15.tsv" ${error_tests}
+runtest ${prog} "-p .1 -k 1,2,0 input4x50.tsv input4x15.tsv" ${error_tests}
 runtest ${prog} "-p .1 -k -1 input4x50.tsv input4x15.tsv" ${error_tests}
 runtest ${prog} "-p 0 -k 1 input4x50.tsv input4x15.tsv" ${error_tests}
 runtest ${prog} "-p -0.5 -k 1 input4x50.tsv input4x15.tsv" ${error_tests}
