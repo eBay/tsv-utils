@@ -16,7 +16,7 @@ Initially written by Jon Degenhardt
 License: Boost License 1.0 (http://boost.org/LICENSE_1_0.txt)
 
 */
-module diff_test_result_dirs;
+module buildtools.diff_test_result_dirs;
 
 import std.conv : to;
 import std.range;

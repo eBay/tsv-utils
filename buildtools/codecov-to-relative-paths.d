@@ -12,7 +12,7 @@ Initially written by Jon Degenhardt
 License: Boost Licence 1.0 (http://boost.org/LICENSE_1_0.txt)
 
 **/
-module codecov_to_relative_path;
+module buildtools.codecov_to_relative_path;
 
 import std.algorithm : findSplit;
 import std.array : appender;

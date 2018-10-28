@@ -7,20 +7,6 @@
     "license": "BSL-1.0",
     "targetType": "executable",
     "#": "NOTE: Add new apps to dub_build.d also.",
-    "dependencies": {
-        "tsv-utils:common": "*",
-        "tsv-utils:csv2tsv": "*",
-        "tsv-utils:keep-header": "*",
-        "tsv-utils:number-lines": "*",
-        "tsv-utils:tsv-append": "*",
-        "tsv-utils:tsv-filter": "*",
-        "tsv-utils:tsv-join": "*",
-        "tsv-utils:tsv-pretty": "*",
-        "tsv-utils:tsv-sample": "*",
-        "tsv-utils:tsv-select": "*",
-        "tsv-utils:tsv-summarize": "*",
-        "tsv-utils:tsv-uniq": "*"
-    },
     "subPackages": [
         "./common/",
         "./csv2tsv/",
@@ -49,7 +35,6 @@
     "buildTypes": {
         "debug": { "buildOptions": ["debugMode", "optimize"] },
         "release": { "buildOptions": ["releaseMode", "optimize", "inline"],
-                     "dflags": ["-boundscheck=off"],
-                     "dflags-osx-ldc": ["-flto=thin"] }
+                     "dflags": ["-boundscheck=off"] }
     }
 }

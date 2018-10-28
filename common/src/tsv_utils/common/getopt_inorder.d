@@ -31,9 +31,11 @@ module tsv_utils.common.getopt_inorder;
 
 import std.getopt;
 
-/* checkForUnsupportedConfigOptions walks the option list looking for unsupported config
- * options. Currently everything except std.getopt.config.required is supported. An
- * exception is thrown if an unsupported config parameter is found.
+/** checkForUnsupportedConfigOptions walks the option list looking for unsupported config
+ * options.
+ *
+ * Currently everything except std.getopt.config.required is supported. An exception is
+ * thrown if an unsupported config parameter is found.
  *
  * Note: A compile-time check would be ideal. That does not appear doable, as values of
  * parameters cannot be read at compile-type, only the data type (template parameter part).
@@ -60,7 +62,7 @@ private void checkForUnsupportedConfigOptions(T...)(T opts)
     }
 }
 
-/* hasStopOnFirstNotOption walks the config list returns true if one of the
+/** hasStopOnFirstNotOption walks the config list returns true if one of the
  * options in is std.getopt.config.stopOnFirstNonOption.
  */
 private bool hasStopOnFirstNonOption(T...)(T opts)
@@ -119,7 +121,7 @@ unittest
                ));
 }
 
-/* getoptInorder is a cover to std.getopt that processes command line options in the
+/** getoptInorder is a cover to std.getopt that processes command line options in the
  * order on the command.
  *
  * This is intended for command line argument processing where the order of arguments
@@ -128,14 +130,18 @@ unittest
  * callback processing and array filling.
  *
  * Other changes from std.getopt:
- * - The std.getopt.config.required option is not supported.
- * - Single digits cannot be used as short options. e.g. '-1' cannot be an option.
- * - Non-numeric option arguments starting with a dash are not interpreted correctly,
- *   unless it looks like a negative number or is a single dash. Some examples,
- *   assuming ("--val") takes one argument:
- *      ["--val", "-9"] - Okay, "-9" is arg
- *      ["--val", "-"]  - Okay, "-" is arg
- *      ["--val", "-a"] - Not okay, "-a" is treated as separate option.
+ * $(LIST
+ *     * The std.getopt.config.required option is not supported.
+ *     * Single digits cannot be used as short options. e.g. '-1' cannot be an option.
+ *     * Non-numeric option arguments starting with a dash are not interpreted correctly,
+ *       unless it looks like a negative number or is a single dash. Some examples,
+ *       assuming ("--val") takes one argument:
+ *       $(LIST
+ *           * `["--val", "-9"]` - Okay, "-9" is arg
+ *           * `["--val", "-"]`  - Okay, "-" is arg
+ *           * `["--val", "-a"]` - Not okay, "-a" is treated as separate option.
+ *        )
+ *  )
  */
 GetoptResult getoptInorder(T...)(ref string[] args, T opts)
 {

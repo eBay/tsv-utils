@@ -11,9 +11,9 @@
             "name" : "executable",
             "targetName": "tsv-summarize",
             "targetPath": "../bin/",
-            "mainSourceFile": "src/tsv-summarize.d",
+            "mainSourceFile": "src/tsv_utils/tsv-summarize.d",
             "dependencies": {
-                "tsv-utils:common": "*"
+                "tsv-utils:common": { "path": ".." }
             }
         },
         {

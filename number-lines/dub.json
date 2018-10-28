@@ -11,9 +11,9 @@
             "name" : "executable",
             "targetName": "number-lines",
             "targetPath": "../bin/",
-            "mainSourceFile": "src/number-lines.d",
+            "mainSourceFile": "src/tsv_utils/number-lines.d",
             "dependencies": {
-                "tsv-utils:common": "*"
+                "tsv-utils:common": { "path": ".." }
             }
         },
         {

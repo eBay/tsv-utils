@@ -11,9 +11,9 @@
             "name" : "executable",
             "targetName": "tsv-join",
             "targetPath": "../bin/",
-            "mainSourceFile": "src/tsv-join.d",
+            "mainSourceFile": "src/tsv_utils/tsv-join.d",
             "dependencies": {
-                "tsv-utils:common": "*"
+                "tsv-utils:common": { "path": ".." }
             }
         },
         {

@@ -8,7 +8,7 @@ Initially written by Jon Degenhardt
 
 License: Boost License 1.0 (http://boost.org/LICENSE_1_0.txt)
 */
-module tsv_sample;
+module tsv_utils.tsv_sample;
 
 import std.range;
 import std.stdio;
@@ -564,14 +564,16 @@ if (isOutputRange!(OutputRange, char))
  * There are two key variants depending on whether the total number of lines in the
  * data set is known in advance. (This implementation does not know the total.)
  * Useful references:
- * - Jeffrey Scott Vitter, "An Efficient Algorithm for Sequential Random Sampling",
- *   ACM Trans on Mathematical Software, 1987. On-line:
- *   http://www.ittc.ku.edu/~jsv/Papers/Vit87.RandomSampling.pdf
- * - P.J. Haas, "Data-Stream Sampling: Basic Techniques and Results", from the book
- *   "Data Stream Management", Springer-Verlag, 2016. On-line:
- *   https://www.springer.com/cda/content/document/cda_downloaddocument/9783540286073-c2.pdf
- * - Erik Erlandson, "Faster Random Samples With Gap Sampling", 2014. On-line:
- *   http://erikerlandson.github.io/blog/2014/09/11/faster-random-samples-with-gap-sampling/
+ * $(LIST
+ *     * Jeffrey Scott Vitter, "An Efficient Algorithm for Sequential Random Sampling",
+ *       ACM Trans on Mathematical Software, 1987. On-line:
+ *       http://www.ittc.ku.edu/~jsv/Papers/Vit87.RandomSampling.pdf
+ *     * P.J. Haas, "Data-Stream Sampling: Basic Techniques and Results", from the book
+ *       "Data Stream Management", Springer-Verlag, 2016. On-line:
+ *       https://www.springer.com/cda/content/document/cda_downloaddocument/9783540286073-c2.pdf
+ *     * Erik Erlandson, "Faster Random Samples With Gap Sampling", 2014. On-line:
+ *       http://erikerlandson.github.io/blog/2014/09/11/faster-random-samples-with-gap-sampling/
+ * )
  */
 void bernoulliSkipSampling(OutputRange)(TsvSampleOptions cmdopt, OutputRange outputStream)
     if (isOutputRange!(OutputRange, char))
@@ -639,8 +641,6 @@ void bernoulliSkipSampling(OutputRange)(TsvSampleOptions cmdopt, OutputRange out
  * Distinct sampling is done by hashing the key and mapping the hash value into
  * buckets matching the inclusion probability. Records having a key mapping to bucket
  * zero are output.
- *
- * TODO: Add whole line as key.
  */
 void distinctSampling(Flag!"generateRandomAll" generateRandomAll, OutputRange)
     (TsvSampleOptions cmdopt, auto ref OutputRange outputStream)
@@ -845,12 +845,14 @@ if (isOutputRange!(OutputRange, char))
  * array in-order, but making this distinction seems an unnecessary complication.
  *
  * Notes:
- *  - In tsv-sample versions 1.2.1 and earlier this routine also supported randomization
- *    of all input lines. This was dropped in version 1.2.2 in favor of the approach
- *    used in randomizeLines. The latter has significant advantages given that all data
- *    data must be read into memory.
- *  - For larger reservoir sizes better performance can be achieved by using
- *    reservoirSamplingAlgorithmR. See the documentation for that function for details.
+ * $(LIST
+ *    * In tsv-sample versions 1.2.1 and earlier this routine also supported
+ *      randomization of all input lines. This was dropped in version 1.2.2 in favor
+ *      of the approach used in randomizeLines. The latter has significant advantages
+ *      given that all data data must be read into memory.
+ *    * For larger reservoir sizes better performance can be achieved by using
+ *      reservoirSamplingAlgorithmR. See the documentation of that function for details.
+ * )
  */
 void reservoirSamplingViaHeap(Flag!"isWeighted" isWeighted, OutputRange)
     (TsvSampleOptions cmdopt, auto ref OutputRange outputStream)
@@ -1422,7 +1424,7 @@ if (isOutputRange!(OutputRange, char))
 
 
 /** Convenience function for extracting a single field from a line. See
- * tsv_utils.common.utils.getTsvFieldValue for details. This wrapper creates error
+ * [tsv_utils.common.utils.getTsvFieldValue] for details. This wrapper creates error
  * text tailored for this program.
  */
 import std.traits : isSomeChar;

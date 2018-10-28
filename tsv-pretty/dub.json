@@ -11,9 +11,9 @@
             "name" : "executable",
             "targetName": "tsv-pretty",
             "targetPath": "../bin/",
-            "mainSourceFile": "src/tsv-pretty.d",
+            "mainSourceFile": "src/tsv_utils/tsv-pretty.d",
             "dependencies": {
-                "tsv-utils:common": "*"
+                "tsv-utils:common": { "path": ".." }
             }
         },
         {

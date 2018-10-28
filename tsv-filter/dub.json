@@ -12,9 +12,9 @@
             "name" : "executable",
             "targetName": "tsv-filter",
             "targetPath": "../bin/",
-            "mainSourceFile": "src/tsv-filter.d",
+            "mainSourceFile": "src/tsv_utils/tsv-filter.d",
             "dependencies": {
-                "tsv-utils:common": "*"
+                "tsv-utils:common": { "path": ".." }
             }
         },
         {
@@ -25,7 +25,6 @@
     "buildTypes": {
         "debug": { "buildOptions": ["debugMode", "optimize"] },
         "release": { "buildOptions": ["releaseMode", "optimize", "inline"],
-                     "dflags": ["-boundscheck=off"],
-                     "dflags-osx-ldc": ["-flto=thin"] }
+                     "dflags": ["-boundscheck=off"] }
     }
 }

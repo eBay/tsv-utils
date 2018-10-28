@@ -11,9 +11,9 @@
             "name" : "executable",
             "targetName": "tsv-sample",
             "targetPath": "../bin/",
-            "mainSourceFile": "src/tsv-sample.d",
+            "mainSourceFile": "src/tsv_utils/tsv-sample.d",
             "dependencies": {
-                "tsv-utils:common": "*"
+                "tsv-utils:common": { "path": ".." }
             }
         },
         {

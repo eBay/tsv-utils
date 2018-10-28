@@ -16,7 +16,7 @@ Initially written by Jon Degenhardt
 
 License: Boost Licence 1.0 (http://boost.org/LICENSE_1_0.txt)
 */
-module tsv_uniq;
+module tsv_utils.tsv_uniq;
 
 import std.stdio;
 import std.format : format;
