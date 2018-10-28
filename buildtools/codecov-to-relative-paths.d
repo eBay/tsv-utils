@@ -1,10 +1,13 @@
 /**
 This tool converts D code coverage files from absolute to relative paths.
 
-D code coverage files are written using absolute path names if absolute paths are
-used in the build command. (This enables running coverage tests from a directory
-other than the original build directory.) This tool converts the files to relative
-paths. This includes the file name and the name included in the file.
+D code coverage files are generated based on absolute path names if absolute paths are
+used in the build command. This is reflected in the file's actual name, which reflects all
+the path components. The absolute path is also listed at the end of the code coverage
+report.
+
+This tool checks a coverage file to see if absolute names where used. If so, it renames
+the file and updates the report to use a relative path.
 
 Copyright (c) 2017, eBay Software Foundation
 Initially written by Jon Degenhardt
@@ -12,7 +15,7 @@ Initially written by Jon Degenhardt
 License: Boost Licence 1.0 (http://boost.org/LICENSE_1_0.txt)
 
 **/
-module buildtools.codecov_to_relative_path;
+module buildtools.codecov_to_relative_paths;
 
 import std.algorithm : findSplit;
 import std.array : appender;
@@ -24,6 +27,12 @@ import std.range : empty;
 import std.stdio;
 import std.string : tr;
 
+/** Convert a D code coverage file to use relative paths.
+ *
+ * Files provides on the command line are checked to see if the name represents an
+ * absolute path. If so, the file is renamed to reflect the relative name and the
+ * last line of the coverage report is changed to reflect this as well.
+ */
 int main(string[] cmdArgs)
 {
     auto programName = (cmdArgs.length > 0) ? cmdArgs[0].stripExtension.baseName : "Unknown_program_name";
