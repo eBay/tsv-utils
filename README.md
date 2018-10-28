@@ -19,7 +19,7 @@ File an [issue](https://github.com/eBay/tsv-utils/issues) if you have problems, 
 * [Performance Studies](docs/Performance.md) (quick access: [2018 Comparative Benchmarks](docs/comparative-benchmarks-2018.md))
 * [Comparing TSV and CSV formats](docs/comparing-tsv-and-csv.md)
 * [Building with Link Time Optimization (LTO) and Profile Guided Optimization (PGO)](docs/BuildingWithLTO.md)
-* [About the code](docs/AboutTheCode.md)
+* [About the code](docs/AboutTheCode.md) (see also: [tsv-utils code documentation](https://tsv-utils.dpldocs.info/))
 * [Other toolkits](docs/OtherToolkits.md)
 
 **Talks and blog posts:**
