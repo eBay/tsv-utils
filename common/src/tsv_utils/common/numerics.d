@@ -2,12 +2,14 @@
 Numeric related utilities used by TSV Utilities.
 
 Utilities in this file:
-* formatNumber - An alternate print format for numbers, especially useful when doubles
-  are being used to represent integer and float values.
+$(LIST
+    * [formatNumber] - An alternate print format for numbers, especially useful when
+      doubles are being used to represent integer and float values.
 
-* rangeMedian - Finds the median value of a range.
+    * [rangeMedian] - Finds the median value of a range.
 
-* quantile - Generates quantile values for a data set.
+    * [quantile] - Generates quantile values for a data set.
+)
 
 Copyright (c) 2016-2018, eBay Software Foundation
 Initially written by Jon Degenhardt
@@ -18,22 +20,24 @@ License: Boost Licence 1.0 (http://boost.org/LICENSE_1_0.txt)
 module tsv_utils.common.numerics;
 
 /**
-formatNumber is an alternate way to print numbers. It is especially useful when representing
-both integral and floating point values with float point data types.
+formatNumber is an alternate way to print numbers. It is especially useful when
+representing both integral and floating point values with float point data types.
 
-formatNumber was created for tsv-summarize, where all calculations are done as doubles, but
-may be integers by nature. In addition, output may be either for human consumption or for
-additional machine processing. Integers are printed normally. Floating point is printed as
-follows:
+formatNumber was created for tsv-summarize, where all calculations are done as doubles,
+but may be integers by nature. In addition, output may be either for human consumption
+or for additional machine processing. Integers are printed normally. Floating point is
+printed as follows:
+$(LIST
+    * Values that are exact integral values are printed as integers, as long as they
+      are within the range of where all integers are represented exactly by the floating
+      point type. The practical effect is to avoid switching to exponential notion.
 
-- Values that are exact integral values are printed as integers, as long as they are within
-  the range of where all integers are represented exactly by the floating point type. The
-  practical effect is to avoid switching to exponential notion.
-
-- If the specified floatPrecision is between 0 and readablePrecisionMax, then floatPrecision
-  is used to set the significant digits following the decimal point. Otherwise, it is used
-  to set total significant digits. This does not apply to really large numbers, for doubles,
-  those larger than 2^53. Trailing zeros are chopped in all cases.
+    * If the specified floatPrecision is between 0 and readablePrecisionMax, then
+      floatPrecision is used to set the significant digits following the decimal point.
+      Otherwise, it is used to set total significant digits. This does not apply to
+      really large numbers, for doubles, those larger than 2^53. Trailing zeros are
+      chopped in all cases.
+)
 */
 import std.traits : isFloatingPoint, isIntegral, Unqual;
 
@@ -540,18 +544,20 @@ unittest
 
 /// Quantiles
 
-/** The different quantile interpolation methods. */
+/** The different quantile interpolation methods.
+ * See: https://stat.ethz.ch/R-manual/R-devel/library/stats/html/quantile.html
+ */
 enum QuantileInterpolation
 {
-    R1 = 1,
-    R2 = 2,
-    R3 = 3,
-    R4 = 4,
-    R5 = 5,
-    R6 = 6,
-    R7 = 7,
-    R8 = 8,
-    R9 = 9,
+    R1 = 1, /// R quantile type 1
+    R2 = 2, /// R quantile type 2
+    R3 = 3, /// R quantile type 3
+    R4 = 4, /// R quantile type 4
+    R5 = 5, /// R quantile type 5
+    R6 = 6, /// R quantile type 6
+    R7 = 7, /// R quantile type 7
+    R8 = 8, /// R quantile type 8
+    R9 = 9, /// R quantile type 9
 }
 
 /**
@@ -564,10 +570,12 @@ of statistical packages. See the R documentation or wikipedia for details
 (https://en.wikipedia.org/wiki/Quantile).
 
 Examples:
-   double data = [22, 57, 73, 97, 113];
-   double median = quantile(0.5, data);   // 73
-   auto q1 = [0.25, 0.5, 0.75].map!(p => p.quantile(data));  // 57, 73, 97
-   auto q2 = [0.25, 0.5, 0.75].map!(p => p.quantile(data), QuantileInterpolation.R8);  //45.3333, 73, 102.333
+----
+double data = [22, 57, 73, 97, 113];
+double median = quantile(0.5, data);   // 73
+auto q1 = [0.25, 0.5, 0.75].map!(p => p.quantile(data));  // 57, 73, 97
+auto q2 = [0.25, 0.5, 0.75].map!(p => p.quantile(data), QuantileInterpolation.R8);  //45.3333, 73, 102.333
+----
 */
 
 import std.traits : isFloatingPoint, isNumeric, Unqual;

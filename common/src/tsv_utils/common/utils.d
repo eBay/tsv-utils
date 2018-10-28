@@ -3,25 +3,28 @@ Utilities used by tsv-utils applications. InputFieldReordering, BufferedOututRan
 and a several others.
 
 Utilities in this file:
-* InputFieldReordering - A class that creates a reordered subset of fields from an
-  input line. Fields in the subset are accessed by array indicies. This is especially
-  useful when processing the subset in a specific order, such as the order listed on the
-  command-line at run-time.
+$(LIST
+    * [InputFieldReordering] - A class that creates a reordered subset of fields from
+      an input line. Fields in the subset are accessed by array indicies. This is
+      especially useful when processing the subset in a specific order, such as the
+      order listed on the command-line at run-time.
 
-* BufferedOutputRange - An OutputRange with an internal buffer used to buffer output.
-  Intended for use with stdout, it is a significant performance benefit.
+    * [BufferedOutputRange] - An OutputRange with an internal buffer used to buffer
+      output. Intended for use with stdout, it is a significant performance benefit.
 
-* joinAppend - A function that performs a join, but appending the join output to an
-  output stream. It is a performance improvement over using join or joiner with writeln.
+    * [joinAppend] - A function that performs a join, but appending the join output to
+      an output stream. It is a performance improvement over using join or joiner with
+      writeln.
 
-* getTsvFieldValue - A convenience function when only a single value is needed from an
-  input line.
+    * [getTsvFieldValue] - A convenience function when only a single value is needed from
+      an input line.
 
-* Field-lists: parseFieldList, makeFieldListOptionHandler - Helper functions for parsing
-  field-lists entered on the command line.
+    * Field-lists: [parseFieldList], [makeFieldListOptionHandler] - Helper functions for
+      parsing field-lists entered on the command line.
 
-* throwIfWindowsNewlineOnUnix - A utility for Unix platform builds to detecting Windows
-  newlines in input.
+    * [throwIfWindowsNewlineOnUnix] - A utility for Unix platform builds to detecting
+      Windows newlines in input.
+)
 
 Copyright (c) 2015-2018, eBay Software Foundation
 Initially written by Jon Degenhardt
@@ -57,31 +60,33 @@ is normally until reading the next input line. The program below illustrates the
 case. It reads stdin and outputs fields [3, 0, 2], in that order. (See also joinAppend,
 below, which has a performance improvement over join used here.)
 
-    int main(string[] args)
+---
+int main(string[] args)
+{
+    import tsv_utils.common.utils;
+    import std.algorithm, std.array, std.range, std.stdio;
+    size_t[] fieldIndicies = [3, 0, 2];
+    auto fieldReordering = new InputFieldReordering!char(fieldIndicies);
+    foreach (line; stdin.byLine)
     {
-        import tsv_utils.common.utils;
-        import std.algorithm, std.array, std.range, std.stdio;
-        size_t[] fieldIndicies = [3, 0, 2];
-        auto fieldReordering = new InputFieldReordering!char(fieldIndicies);
-        foreach (line; stdin.byLine)
+        fieldReordering.initNewLine;
+        foreach(fieldIndex, fieldValue; line.splitter('\t').enumerate)
         {
-            fieldReordering.initNewLine;
-            foreach(fieldIndex, fieldValue; line.splitter('\t').enumerate)
-            {
-                fieldReordering.processNextField(fieldIndex, fieldValue);
-                if (fieldReordering.allFieldsFilled) break;
-            }
-            if (fieldReordering.allFieldsFilled)
-            {
-                writeln(fieldReordering.outputFields.join('\t'));
-            }
-            else
-            {
-                writeln("Error: Insufficient number of field on the line.");
-            }
+            fieldReordering.processNextField(fieldIndex, fieldValue);
+            if (fieldReordering.allFieldsFilled) break;
         }
-        return 0;
+        if (fieldReordering.allFieldsFilled)
+        {
+            writeln(fieldReordering.outputFields.join('\t'));
+        }
+        else
+        {
+            writeln("Error: Insufficient number of field on the line.");
+        }
     }
+    return 0;
+}
+---
 
 Field indicies are zero-based. An individual field can be listed multiple times. The
 outputFields array is not valid until all the specified fields have been processed. The
@@ -376,20 +381,29 @@ runaway buffers.
 BufferedOutputRange has a put method allowing it to be used a range. It has a number
 of other methods providing additional control.
 
-* this(outputStream [, flushSize, reserveSize, maxSize]) - Constructor. Takes the output
-      stream, e.g. stdout. Other arguments are optional, defaults normally suffice.
-* append(stuff) - Append to the internal buffer.
-* appendln(stuff) - Append to the internal buffer, followed by a newline. The buffer is
-      flushed to the output stream if is has reached flushSize.
-* appendln() - Append a newline to the internal buffer. The buffer is flushed to the
+$(LIST
+    * `this(outputStream [, flushSize, reserveSize, maxSize])` - Constructor. Takes the
+      output stream, e.g. stdout. Other arguments are optional, defaults normally suffice.
+
+    * `append(stuff)` - Append to the internal buffer.
+
+    * `appendln(stuff)` - Append to the internal buffer, followed by a newline. The buffer
+      is flushed to the output stream if is has reached flushSize.
+
+    * `appendln()` - Append a newline to the internal buffer. The buffer is flushed to the
       output stream if is has reached flushSize.
-* joinAppend(inputRange, delim) - An optimization of append(inputRange.joiner(delim).
+
+    * `joinAppend(inputRange, delim)` - An optimization of `append(inputRange.joiner(delim))`.
       For reasons that are not clear, joiner is quite slow.
-* flushIfFull() - Flush the internal buffer to the output stream if flushSize has been
+
+    * `flushIfFull()` - Flush the internal buffer to the output stream if flushSize has been
       reached.
-* flush() - Write the internal buffer to the output stream.
-* put(stuff) - Appends to the internal buffer. Acts as appendln() if passed a single
-      newline character ('\n' or "\n").
+
+    * `flush()` - Write the internal buffer to the output stream.
+
+    * `put(stuff)` - Appends to the internal buffer. Acts as `appendln()` if passed a single
+      newline character, '\n' or "\n".
+)
 
 The internal buffer is automatically flushed when the BufferedOutputRange goes out of
 scope.
@@ -758,34 +772,36 @@ illustrates. It is a modification of the InputFieldReordering example. The role
 Appender plus joinAppend are playing is to buffer the output. BufferedOutputRange
 uses a similar technique to buffer multiple lines.
 
-    int main(string[] args)
+---
+int main(string[] args)
+{
+    import tsvutil;
+    import std.algorithm, std.array, std.range, std.stdio;
+    size_t[] fieldIndicies = [3, 0, 2];
+    auto fieldReordering = new InputFieldReordering!char(fieldIndicies);
+    auto outputBuffer = appender!(char[]);
+    foreach (line; stdin.byLine)
     {
-        import tsvutil;
-        import std.algorithm, std.array, std.range, std.stdio;
-        size_t[] fieldIndicies = [3, 0, 2];
-        auto fieldReordering = new InputFieldReordering!char(fieldIndicies);
-        auto outputBuffer = appender!(char[]);
-        foreach (line; stdin.byLine)
+        fieldReordering.initNewLine;
+        foreach(fieldIndex, fieldValue; line.splitter('\t').enumerate)
         {
-            fieldReordering.initNewLine;
-            foreach(fieldIndex, fieldValue; line.splitter('\t').enumerate)
-            {
-                fieldReordering.processNextField(fieldIndex, fieldValue);
-                if (fieldReordering.allFieldsFilled) break;
-            }
-            if (fieldReordering.allFieldsFilled)
-            {
-                outputBuffer.clear;
-                writeln(fieldReordering.outputFields.joinAppend(outputBuffer, ('\t')));
-            }
-            else
-            {
-                writeln("Error: Insufficient number of field on the line.");
-            }
+            fieldReordering.processNextField(fieldIndex, fieldValue);
+            if (fieldReordering.allFieldsFilled) break;
         }
-        return 0;
+        if (fieldReordering.allFieldsFilled)
+        {
+            outputBuffer.clear;
+            writeln(fieldReordering.outputFields.joinAppend(outputBuffer, ('\t')));
+        }
+        else
+        {
+            writeln("Error: Insufficient number of field on the line.");
+        }
     }
- */
+    return 0;
+}
+---
+*/
 OutputRange joinAppend(InputRange, OutputRange, E)
     (InputRange inputRange, ref OutputRange outputRange, E delimiter)
 if (isInputRange!InputRange &&
