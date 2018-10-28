@@ -12,7 +12,7 @@ Initially written by Jon Degenhardt
 License: Boost Licence 1.0 (http://boost.org/LICENSE_1_0.txt)
 
 **/
-module aggregate_codecov;
+module buildtools.aggregate_codecov;
 
 import std.file : exists, isDir, isFile, remove, rename;
 import std.path : baseName, buildPath, stripExtension;

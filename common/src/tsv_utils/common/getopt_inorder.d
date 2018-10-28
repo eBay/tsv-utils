@@ -119,7 +119,7 @@ unittest
                ));
 }
 
-/* getoptInorder is a cover to std.getopt that processes command line options in the
+/** getoptInorder is a cover to std.getopt that processes command line options in the
  * order on the command.
  *
  * This is intended for command line argument processing where the order of arguments
