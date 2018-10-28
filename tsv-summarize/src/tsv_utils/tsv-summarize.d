@@ -7,7 +7,7 @@ Initially written by Jon Degenhardt
 
 License: Boost License 1.0 (http://boost.org/LICENSE_1_0.txt)
 */
-module tsv_summarize;
+module tsv_utils.tsv_summarize;
 
 import std.algorithm : all, any, canFind, each, find, findSplit, map, joiner, splitter;
 import std.array : join;

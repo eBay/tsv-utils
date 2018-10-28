@@ -11,10 +11,10 @@
             "name" : "executable",
             "targetName": "tsv-select",
             "targetPath": "../bin/",
-            "mainSourceFile": "src/tsv-select.d",
+            "mainSourceFile": "src/tsv_utils/tsv-select.d",
             "excludedSourceFiles": ["src/tsv-select_no-template-version.d"],
             "dependencies": {
-                "tsv-utils:common": "*"
+                "tsv-utils:common": { "path": ".." }
             }
         },
         {

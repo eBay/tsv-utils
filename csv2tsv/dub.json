@@ -11,10 +11,11 @@
             "name" : "executable",
             "targetName": "csv2tsv",
             "targetPath": "../bin/",
-            "mainSourceFile": "src/csv2tsv.d",
+            "mainSourceFile": "src/tsv_utils/csv2tsv.d",
             "dependencies": {
-                "tsv-utils:common": "*"
+                "tsv-utils:common": { "path": ".." }
             }
+
         },
         {
             "name" : "unittest",

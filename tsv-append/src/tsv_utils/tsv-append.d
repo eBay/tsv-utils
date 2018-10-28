@@ -7,7 +7,7 @@ Initially written by Jon Degenhardt
 
 License: Boost License 1.0 (http://boost.org/LICENSE_1_0.txt)
 */
-module tsv_append;
+module tsv_utils.tsv_append;
 
 import std.conv : to;
 import std.range;

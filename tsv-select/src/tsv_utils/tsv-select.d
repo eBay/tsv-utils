@@ -18,7 +18,7 @@ Initially written by Jon Degenhardt
 License: Boost Licence 1.0 (http://boost.org/LICENSE_1_0.txt)
 */
 
-module tsv_select;   // Module name defaults to file name, but hyphens not allowed, so set it here.
+module tsv_utils.tsv_select;   // Module name defaults to file name, but hyphens not allowed, so set it here.
 
 // Imports used by multiple routines. Others imports made in local context.
 import std.stdio;

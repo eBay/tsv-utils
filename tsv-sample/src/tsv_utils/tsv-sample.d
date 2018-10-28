@@ -8,7 +8,7 @@ Initially written by Jon Degenhardt
 
 License: Boost License 1.0 (http://boost.org/LICENSE_1_0.txt)
 */
-module tsv_sample;
+module tsv_utils.tsv_sample;
 
 import std.range;
 import std.stdio;
