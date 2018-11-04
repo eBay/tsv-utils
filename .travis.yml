@@ -4,14 +4,16 @@
 #   CODECOV - Runs code coverage
 #   APPLTO=[default|off|thin|full] - make test with the setting
 #   ALLLTO=[default|thin|full] - make test LDC_BUILD_RUNTIME=1 and LTO value
+#   ALLLTO_V2=[default|thin|full] - make test LDC_LTO_RUNTIME=1 and LTO value (ldc 1.9+)
 #   LTOPGO=[default|thin|full] - Like ALLLTO, but adds LDC_PGO=2 flag
+#   LTOPGO_V2=[default|thin|full] - Like ALLLTO_V2, but adds LDC_PGO=2 flag
 #   DOCKERSPECIAL - Special dockerized build to run LDC with LTO, PGO and -static
 #   DEPLOY - Deploy if a tagged release.
 matrix:
   include:
 #==> Use only in Cron build until Travis has more OSX capacity
     - os: osx
-      osx_image: xcode10
+      osx_image: xcode10.1
       group: travis_latest
       language: d
       d: dmd
@@ -23,7 +25,7 @@ matrix:
       d: dmd
       env: DUBTEST=1 MAKETEST=1 CODECOV=1
 #    - os: osx
-#      osx_image: xcode10
+#      osx_image: xcode10.1
 #      group: travis_latest
 #      language: d
 #      d: ldc-1.4.0
@@ -38,7 +40,7 @@ matrix:
 #
 #==> Put back when Travis has more OSX capacity
 #    - os: osx
-#      osx_image: xcode10
+#      osx_image: xcode10.1
 #      group: travis_latest
 #      language: d
 #      d: ldc
@@ -46,13 +48,19 @@ matrix:
 #      if: type IN (pull_request, cron)
 #      if: fork = true
     - os: osx
-      osx_image: xcode10
+      osx_image: xcode10.1
       group: travis_latest
       language: d
       d: ldc
       env: LTOPGO=default
     - os: osx
-      osx_image: xcode10
+      osx_image: xcode10.1
+      group: travis_latest
+      language: d
+      d: ldc
+      env: LTOPGO_V2=default
+    - os: osx
+      osx_image: xcode10.1
       group: travis_latest
       language: d
       d: ldc-1.8.0
@@ -76,6 +84,11 @@ matrix:
       language: d
       d: ldc
       env: LTOPGO=default
+    - os: linux
+      group: travis_latest
+      language: d
+      d: ldc
+      env: LTOPGO_V2=default
     - os: linux
       dist: trusty
       sudo: required
@@ -123,12 +136,30 @@ script:
       && make clean;
     fi
   fi
+- if [[ ! -z "$ALLLTO_V2" ]]; then
+    if [[ "$ALLLTO_V2" == "default" ]]; then
+      make test DCOMPILER=$DC LDC_LTO_RUNTIME=1
+      && make clean;
+    else
+      make test DCOMPILER=$DC LDC_LTO_RUNTIME=1 LDC_LTO=$ALLLTO_V2
+      && make clean;
+    fi
+  fi
 - if [[ ! -z "$LTOPGO" ]]; then
     if [[ "$LTOPGO" == "default" ]]; then
       make test DCOMPILER=$DC LDC_BUILD_RUNTIME=1 LDC_PGO=2
       && make clean;
     else
       make test DCOMPILER=$DC LDC_BUILD_RUNTIME=1 LDC_LTO=$LTOPGO LDC_PGO=2
+      && make clean;
+    fi
+  fi
+- if [[ ! -z "$LTOPGO_V2" ]]; then
+    if [[ "$LTOPGO_V2" == "default" ]]; then
+      make test DCOMPILER=$DC LDC_LTO_RUNTIME=1 LDC_PGO=2
+      && make clean;
+    else
+      make test DCOMPILER=$DC LDC_LTO_RUNTIME=1 LDC_LTO=$LTOPGO_V2 LDC_PGO=2
       && make clean;
     fi
   fi
