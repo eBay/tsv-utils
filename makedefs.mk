@@ -13,19 +13,22 @@
 # - DFLAGS - Passed to the compiler on the command line.
 # - LDC_LTO - One of 'thin', 'full', 'off', or 'default'. An empty or undefined value
 #   is treated as 'default'. It is only used if DCOMPILER specifies an ldc compiler.
+# - LDC_LTO_RUNTIME - Turns on LTO for the runtime libraries (phobos, druntime). This is
+#   an alternative to LDC_BUILD_RUNTIME available starting with LDC 1.9. It uses LTO
+#   with LDC rather than downloading the library source and building.
 # - LDC_BUILD_RUNTIME - Used to enable building the druntime and phobos runtime libraries
 #   using LTO. If set to '1', builds the runtimes using the 'ldc-build-runtime' tool.
 #   Otherwise is expected to be a path to the tool. Available starting with ldc 1.5.
 # - LDC_PGO - If set to '1', uses the file at ./profile_data/app.profdata to profile
 #   instrumented profile data. At present PGO is only enabled for LDC release builds
-#   where LDC_BUILD_RUNTIME is also used. Normally this variable is set in the makefile
-#   of tools that have been setup for LTO.
+#   where LDC_LTO_RUNTIME or LDC_BUILD_RUNTIME is also used. Normally this variable is
+#   set in the makefile of tools that have been setup for LTO.
 #
 # Current LTO defaults when using LDC:
 # - OS X: thin
-# - OS X, LDC_BUILD_RUNTIME: thin
+# - OS X, LDC_LTO_RUNTIME or LDC_BUILD_RUNTIME: thin
 # - Linux: off
-# - Linux, LDC_BUILD_RUNTIME: full
+# - Linux, LDC_LTO_RUNTIME or LDC_BUILD_RUNTIME: full
 #
 # NOTE: Due to https://github.com/ldc-developers/ldc/issues/2208, LTO is only
 # on OS X in release mode. Issue seen in LDC 1.5.0-beta1 with tsv-filter.
@@ -34,6 +37,7 @@ DCOMPILER =
 DFLAGS =
 LDC_HOME =
 LDC_LTO =
+LDC_LTO_RUNTIME = 
 LDC_BUILD_RUNTIME =
 LDC_PGO =
 LDC_PGO_TYPE ?= AST
@@ -104,6 +108,9 @@ ifneq ($(compiler_type),ldc)
 	ifneq ($(LDC_LTO),)
                 $(error "Non-LDC compiler detected ($(compiler_type)) and LDC_LTO parameter set: '$(LDC_LTO)'.")
 	endif
+	ifneq ($(LDC_LTO_RUNTIME),)
+                $(error "Non-LDC compiler detected ($(compiler_type)) and LDC_LTO_RUNTIME parameter set: '$(LDC_LTO_RUNTIME)'.")
+	endif
 	ifneq ($(LDC_BUILD_RUNTIME),)
                 $(error "Non-LDC compiler detected ($(compiler_type)) and LDC_BUILD_RUNTIME parameter set: '$(LDC_BUILD_RUNTIME)'.")
 	endif
@@ -114,10 +121,12 @@ endif
 ##   ldc_build_runtime_tool - Path to the ldc-build-runtime tool
 ##   ldc_build_runtime_dir - Directory for the runtime (ldc-build-runtime.[thin|full].<version>)
 ##   ldc_build_runtime_dflags - Flags passed to ldc-build-runtime tool. eg. -flto=[thin|full]
+##   ldc_lto_with_runtime_libs - Set to 1 if either LDC_LTO_RUNTIME or LDC_BUILD_RUNTUME is 1.
 ##   lto_option - LTO option passed to ldc (-flto=[thin|full).
 ##   lto_release_option - LTO option passed to ldc (-flto=[thin|full) on release builds.
 ##   lto_link_flags - Additional linker flags to pass to compiler. Examples:
-##       * LTO includes runtime libs: -L-L$(ldc_build_runtime_dir)/lib -linker=gold
+##       * LTO with supplied runtime libs (LDC_LTO_RUNTIME): -defaultlib=phobos2-ldc-lto,druntime-ldc-lto
+##       * LTO with build-runtime libs (LDC_BUILD_RUNTIME): -L-L$(ldc_build_runtime_dir)/lib -linker=gold
 ##       * LTO without runtime libs: -linker=gold
 ##   pgo_link_flags - Additional linker flags to pass to the compiler. eg. -fprofile-use=...
 ##   pgo_generate_link_flags - Additional linker flags when generating an instrumented build
@@ -127,6 +136,7 @@ ldc_version =
 ldc_build_runtime_tool =
 ldc_build_runtime_dir = ldc-build-runtime.off
 ldc_build_runtime_dflags =
+ldc_lto_with_runtime_libs =
 lto_option =
 lto_release_option =
 lto_link_flags =
@@ -162,10 +172,24 @@ ifeq ($(compiler_type),ldc)
 		endif
 	endif
 
+	ifneq ($(LDC_LTO_RUNTIME),)
+		ifneq ($(LDC_LTO_RUNTIME),1)
+                        $(error "Invalid LDC_LTO_RUNTIME flag: '$(LDC_LTO_RUNTIME)'. Must be '1' or not set.")
+		endif
+		ifeq ($(LDC_LTO),off)
+                     $(error "LDC_LTO value 'off' inconsistent with LDC_LTO_RUNTIME value '$(LDC_LTO_RUNTIME)'")
+		endif
+		ldc_lto_with_runtime_libs = 1
+	endif
+
 	ifneq ($(LDC_BUILD_RUNTIME),)
+		ifneq ($(LDC_BUILD_RUNTIME),1)
+                        $(error "Invalid LDC_BUILD_RUNTIME flag: '$(LDC_BUILD_RUNTIME)'. Must be '1' or not set.")
+		endif
 		ifeq ($(LDC_LTO),off)
                      $(error "LDC_LTO value 'off' inconsistent with LDC_BUILD_RUNTIME value '$(LDC_BUILD_RUNTIME)'")
 		endif
+		ldc_lto_with_runtime_libs = 1
 	endif
 
 	# Set the ldc-build-tool path and select the LDC_LTO default
@@ -177,10 +201,7 @@ ifeq ($(compiler_type),ldc)
 		ldc_build_runtime_tool = $(LDC_HOME)/bin/$(ldc_build_runtime_tool_name)
 	endif
 
-	ifneq ($(LDC_BUILD_RUNTIME),)
-		ifneq ($(LDC_BUILD_RUNTIME),1)
-                        $(error "Invalid LDC_BUILD_RUNTIME flag: '$(LDC_BUILD_RUNTIME)'. Must be '1' or not set.")
-		endif
+	ifneq ($(ldc_lto_with_runtime_libs),)
 		ifeq ($(LDC_LTO),default)
 			ifeq ($(OS_NAME),Darwin)
 				override LDC_LTO = thin
@@ -188,7 +209,6 @@ ifeq ($(compiler_type),ldc)
 				override LDC_LTO = full
 			endif
 		endif
-
 		ifneq ($(LDC_PGO),)
 			ifneq ($(LDC_PGO),1)
 				ifneq ($(LDC_PGO),2)
@@ -261,7 +281,9 @@ ifeq ($(compiler_type),ldc)
 		ldc_build_runtime_dflags = -flto=$(LDC_LTO)
 	endif
 
-	ifneq ($(LDC_BUILD_RUNTIME),)
+	ifneq ($(LDC_LTO_RUNTIME),)
+		lto_link_flags = -defaultlib=phobos2-ldc-lto,druntime-ldc-lto
+	else ifneq ($(LDC_BUILD_RUNTIME),)
 		ifeq ($(OS_NAME),Darwin)
 			lto_link_flags = -L-L$(ldc_build_runtime_dir)/lib
 		else
