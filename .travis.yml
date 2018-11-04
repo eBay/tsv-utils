@@ -88,7 +88,7 @@ matrix:
       group: travis_latest
       language: d
       d: ldc
-      env: LTOPGO_V2=default
+      env: LTOPGO_V2=thin
     - os: linux
       dist: trusty
       sudo: required
