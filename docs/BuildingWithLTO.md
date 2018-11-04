@@ -78,16 +78,7 @@ $ cd tsv-utils-1.2.3/tsv-utils
 
 **Build with LTO enabled:**
 
-The command lines below use the LTO compiled druntime and phobos libraries shipped with LDC. This required LDC 1.9.0 or later and tsv-utils 1.2.4 or later. For tsv-utils 1.2.3 and earlier replace `LDC_LTO_RUNTIME=1` with `LDC_BUILD_RUNTIME=1`. This change is also needed for LDC 1.5.0 - LDC 1.8.0.
-
-```
-$ make DCOMPILER=ldc2 LDC_LTO_RUNTIME=1
-$ make test-nobuild
-```
-
-
-
-**Build with LTO enabled:**
+The command lines below use the LTO compiled druntime and phobos libraries shipped with LDC. This required LDC 1.9.0 or later and tsv-utils 1.2.4 or later. For tsv-utils 1.2.3 and earlier replace `LDC_LTO_RUNTIME=1` with `LDC_BUILD_RUNTIME=1`. This substitution is also needed when using LDC 1.5.0 - LDC 1.8.0.
 
 ```
 $ make DCOMPILER=ldc2 LDC_LTO_RUNTIME=1
@@ -158,9 +149,8 @@ Running the `make` commands shown above will display the LDC command lines. They
 ### LDC 1.9.0 and later
 
 Building with LTO became materially simpler in LDC 1.9.0. From the [release notes](https://github.com/ldc-developers/ldc/releases/tag/v1.9.0):
-```
-Prebuilt Linux and macOS packages now ship with LTO default libs (druntime & Phobos). Keep on using -flto=<thin|full> to restrict LTO to your code, or opt for -flto=<thin|full> -defaultlib=phobos2-ldc-lto,druntime-ldc-lto to include the default libs.
-```
+
+> Prebuilt Linux and macOS packages now ship with LTO default libs (druntime & Phobos). Keep on using -flto=<thin|full> to restrict LTO to your code, or opt for -flto=<thin|full> -defaultlib=phobos2-ldc-lto,druntime-ldc-lto to include the default libs.
 
 An example build command:
 ```
