@@ -90,11 +90,13 @@ matrix:
       language: d
       d: ldc
       env: LTOPGO_V2=default
-    - os: linux
-      group: travis_latest
-      language: d
-      d: ldc
-      env: LINUX_SPECIAL=1
+#
+# ===> Still fails on Ubuntu 14.04, even with thinLTO and LDC 1.12.0
+#    - os: linux
+#      group: travis_latest
+#      language: d
+#      d: ldc
+#      env: LINUX_SPECIAL=1
     - os: linux
       dist: trusty
       sudo: required
