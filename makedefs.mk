@@ -28,7 +28,8 @@
 # - OS X: thin
 # - OS X, LDC_LTO_RUNTIME or LDC_BUILD_RUNTIME: thin
 # - Linux: off
-# - Linux, LDC_LTO_RUNTIME or LDC_BUILD_RUNTIME: full
+# - Linux, LDC_LTO_RUNTIME: thin
+# - Linux, LDC_BUILD_RUNTIME: full
 #
 # NOTE: Due to https://github.com/ldc-developers/ldc/issues/2208, LTO is only
 # on OS X in release mode. Issue seen in LDC 1.5.0-beta1 with tsv-filter.
@@ -205,6 +206,8 @@ ifeq ($(compiler_type),ldc)
 		ifeq ($(LDC_LTO),default)
 			ifeq ($(OS_NAME),Darwin)
 				override LDC_LTO = thin
+			else ifeq ($(LDC_LTO_RUNTIME),1)
+				override LDC_LTO = thin
 			else
 				override LDC_LTO = full
 			endif
@@ -309,10 +312,10 @@ ifeq ($(compiler_type),dmd)
 else ifeq ($(compiler_type),ldc)
 	# NOTE: Due to https://github.com/ldc-developers/ldc/issues/2208, only
 	# use LTO on OS X in release mode. Issue seen in LDC 1.5.0-beta1 with tsv-filter.
-	# ifneq ($(OS_NAME),Darwin)
-	#	debug_compile_flags_base = $(lto_option)
-	#	debug_link_flags_base = $(lto_link_flags)
-	# endif
+	ifneq ($(OS_NAME),Darwin)
+		debug_compile_flags_base = $(lto_option)
+		debug_link_flags_base = $(lto_link_flags)
+	endif
 	# Compile flags currently the same for instrumented and final build. May need to separate
 	# in the future for IR-PGO. See: https://github.com/ldc-developers/ldc/issues/2582
 	release_compile_flags_base = -release -O3 -boundscheck=off -singleobj $(lto_release_option)
