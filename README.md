@@ -234,10 +234,10 @@ There are several ways to obtain the tools: [prebuilt binaries](#prebuilt-binari
 
 ### Prebuilt binaries
 
-Prebuilt binaries are available for Linux and Mac, these can be found on the [Github releases](https://github.com/eBay/tsv-utils/releases) page. Download and unpack the tar.gz file. Executables are in the `bin` directory. Add the `bin` directory or individual tools to the `PATH` environment variable. As an example, the 1.2.1 releases for Linux and MacOS can be downloaded and unpacked with these commands:
+Prebuilt binaries are available for Linux and Mac, these can be found on the [Github releases](https://github.com/eBay/tsv-utils/releases) page. Download and unpack the tar.gz file. Executables are in the `bin` directory. Add the `bin` directory or individual tools to the `PATH` environment variable. As an example, the 1.2.3 releases for Linux and MacOS can be downloaded and unpacked with these commands:
 ```
-$ curl -L https://github.com/eBay/tsv-utils/releases/download/v1.2.1/tsv-utils-v1.2.1_linux-x86_64_ldc2.tar.gz | tar xz
-$ curl -L https://github.com/eBay/tsv-utils/releases/download/v1.2.1/tsv-utils-v1.2.1_osx-x86_64_ldc2.tar.gz | tar xz
+$ curl -L https://github.com/eBay/tsv-utils/releases/download/v1.2.3/tsv-utils-v1.2.3_linux-x86_64_ldc2.tar.gz | tar xz
+$ curl -L https://github.com/eBay/tsv-utils/releases/download/v1.2.3/tsv-utils-v1.2.3_osx-x86_64_ldc2.tar.gz | tar xz
 ```
 
 See the [Github releases](https://github.com/eBay/tsv-utils/releases) page for the latest release.
@@ -263,14 +263,23 @@ Executables are written to `tsv-utils/bin`, place this directory or the executab
 
 The makefile supports other typical development tasks such as unit tests and code coverage reports. See [Building and makefile](docs/AboutTheCode.md#building-and-makefile) for more details.
 
-For fastest performance, use LDC with Link Time Optimization enabled (LTO). See [Building with Link Time Optimization](docs/BuildingWithLTO.md) for instructions. The prebuilt binaries are built using LTO, but it must be explicitly enabled when building from source. Several tools are configured to be built using Profile Guided Optimization (PGO). See [Building with Link Time Optimization](docs/BuildingWithLTO.md) for instructions turning this on.
+For fastest performance, use LDC with Link Time Optimization (LTO) and Profile Guided Optimization (PGO) enabled:
+```
+$ git clone https://github.com/eBay/tsv-utils.git
+$ cd tsv-utils
+$ make DCOMPILER=ldc2 LDC_LTO_RUNTIME=1 LDC_PGO=2
+$ # Run the test suite
+$ make test-nobuild DCOMPILER=ldc2
+```
+
+The above requires LDC 1.9.0 or later. See [Building with Link Time Optimization](docs/BuildingWithLTO.md) for more information. The prebuilt binaries are built using LTO and PGO, but these must be explicitly enabled when building from source. LTO and PGO are still early stage technologies, issues may surface in some system configurations. Running the test suite (`$ make test-nobuild`) is a good way to catch issues that may arise.
 
 ### Install using DUB
 
-If you are a D user you likely use DUB, the D package manager. DUB comes packaged with DMD starting with DMD 2.072. You can install and build using DUB as follows (replace `1.1.13` with the current version):
+If you are a D user you likely use DUB, the D package manager. DUB comes packaged with DMD starting with DMD 2.072. You can install and build using DUB as follows (replace `1.2.3` with the current version):
 ```
 $ dub fetch tsv-utils --cache=local
-$ cd tsv-utils-1.2.0/tsv-utils
+$ cd tsv-utils-1.2.3/tsv-utils
 $ dub run    # For LDC: dub run -- --compiler=ldc2
 ```
 
@@ -278,7 +287,7 @@ The `dub run` command compiles all the tools. The executables are written to `ts
 
 See [Building and makefile](docs/AboutTheCode.md#building-and-makefile) for more information about the DUB setup.
 
-The applications can be built with Link Time Optimization (LTO) enabled when source code is fetched by DUB. However, the DUB build system does not support this. `make` must be used instead.  [Building with Link Time Optimization](docs/BuildingWithLTO.md).
+The applications can be built with LTO and PGO when source code is fetched by DUB. However, the DUB build system does not support this. `make` must be used instead. See [Building with Link Time Optimization](docs/BuildingWithLTO.md).
 
 ### Setup customization
 
