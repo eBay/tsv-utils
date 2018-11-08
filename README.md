@@ -272,7 +272,7 @@ $ # Run the test suite
 $ make test-nobuild DCOMPILER=ldc2
 ```
 
-The above requires LDC 1.9.0 or later. See [Building with Link Time Optimization](docs/BuildingWithLTO.md) for more information. The prebuilt binaries are built using LTO and PGO, but these must be explicitly enabled when building from source. LTO and PGO are still early stage technologies, issues may surface in some system configurations. Running the test suite (`$ make test-nobuild`) is a good way to catch issues that may arise.
+The above requires LDC 1.9.0 or later. See [Building with Link Time Optimization](docs/BuildingWithLTO.md) for more information. The prebuilt binaries are built using LTO and PGO, but these must be explicitly enabled when building from source. LTO and PGO are still early stage technologies, issues may surface in some system configurations. Running the test suite (shown above) is a good way to detect issues that may arise.
 
 ### Install using DUB
 
