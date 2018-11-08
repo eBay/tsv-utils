@@ -12,7 +12,7 @@ Contents:
   * [Additional options](#additional-options)
   * [LDC command lines](#ldc-command-lines)
   
-Skip down to [Building the TSV Utilities with LTO and PGO](#building-the-tsv-utilities-with-lto-and-pgo) to get right to the build instructions.
+Just want the build command lines? Skip down to [Building the TSV Utilities with LTO and PGO](#building-the-tsv-utilities-with-lto-and-pgo).
 
 ## About Link Time Optimization (LTO)
 
@@ -22,13 +22,13 @@ When LTO is used, the compiler saves its intermediate representation code in `.o
 
 This is a powerful technique, but involves more complex cooperation between compiler and linker than the traditional compile-link cycle. It is only recently that LTO has started to become widely supported by software development toolchains.
 
-LDC has supported LTO for several releases, however, only macOS was fully supported out-of-the-box. With the LDC 1.5.0 release, LTO is now available out-of-the-box on both Linux and macOS. Windows LTO support is in progress.
+The LDC team introduced initial LTO support in LDC 1.1.0. LTO became available out-of-the-box on both Linux and macOS in LDC 1.5.0. Windows support was added in LDC 1.12.0.
 
 A valuable enhancement introduced in LDC 1.5.0 is support for compiling the D runtime library and standard library (Phobos) with LTO. This enables interprocedural optimizations spanning both D libraries and application code. For the TSV Utilities this produces materially faster executables.
 
-Compiling the D standard libraries with LTO is done using the `ldc-build-runtime` tool, included with the LDC 1.5.0 release. This tool downloads the source code for the D standard libraries and compiles it with user-specified compile flags. The `ldc-build-runtime` tool makes it easy to rebuild the D standard libraries with LTO enabled. These LTO compiled libraries can be included on the `ldc2` compile/link command when building the application for maximum LTO opportunities. Applications can also be built compiling just the application code with LTO, linking with the static versions of the D standard libraries shipped with LDC.
+LTO compiled versions of druntime and phobos are shipped with the LDC compiler. This started with LDC 1.9.0. Prior to that a tool called `ldc-build-runtime` was used. This tool was shipped with LDC starting with LDC 1.5.0. The TSV Utilities build system supports both methods.
 
-There are two different forms of LTO available: Full and Thin. To build the TSV Utilities with LTO is sufficient to know that they exist and are incompatible with each other. For information on the differences see the LLVM blog post [ThinLTO: Scalable and Incremental LTO](http://blog.llvm.org/2016/06/thinlto-scalable-and-incremental-lto.html).
+There are two different forms of LTO available: Full and Thin. To build the TSV Utilities with LTO is sufficient to know that they exist. For information on the differences see the LLVM blog post [ThinLTO: Scalable and Incremental LTO](http://blog.llvm.org/2016/06/thinlto-scalable-and-incremental-lto.html).
 
 ## About Profile Guided Optimization (PGO)
 
@@ -62,24 +62,26 @@ $ git clone https://github.com/eBay/tsv-utils.git
 $ cd tsv-utils
 ```
 
-Via DUB (replace `1.1.15` with the version retrieved):
+Via DUB (replace `1.2.3` with the version retrieved):
 
 ```
 $ dub fetch tsv-utils --cache=local
-$ cd tsv-utils-1.1.15
+$ cd tsv-utils-1.2.3
 ```
 
-Via the source from the GitHub [releases page](https://github.com/eBay/tsv-utils/releases) (replace `1.1.15` with the latest version):
+Via the source from the GitHub [releases page](https://github.com/eBay/tsv-utils/releases) (replace `1.2.3` with the latest version):
 
 ```
-$ curl -L https://github.com/eBay/tsv-utils/archive/v1.1.15.tar.gz | tar xz
-$ cd tsv-utils-1.1.15/tsv-utils
+$ curl -L https://github.com/eBay/tsv-utils/archive/v1.2.3.tar.gz | tar xz
+$ cd tsv-utils-1.2.3/tsv-utils
 ```
 
 **Build with LTO enabled:**
 
+The command lines below use the LTO compiled druntime and phobos libraries shipped with LDC. This required LDC 1.9.0 or later and tsv-utils 1.2.4 or later. For tsv-utils 1.2.3 and earlier replace `LDC_LTO_RUNTIME=1` with `LDC_BUILD_RUNTIME=1`. This substitution is also needed when using LDC 1.5.0 - LDC 1.8.0.
+
 ```
-$ make DCOMPILER=ldc2 LDC_BUILD_RUNTIME=1
+$ make DCOMPILER=ldc2 LDC_LTO_RUNTIME=1
 $ make test-nobuild
 ```
 
@@ -90,7 +92,7 @@ The above command builds with LTO on both the D libraries and the TSV Utilities 
 To use PGO, add either `LDC_PGO=1` or `LDC_PGO=2` to the above command:
 
 ```
-$ make DCOMPILER=ldc2 LDC_BUILD_RUNTIME=1 LDC_PGO=1
+$ make DCOMPILER=ldc2 LDC_LTO_RUNTIME=1 LDC_PGO=1
 $ make test-nobuild
 ```
 
@@ -126,7 +128,7 @@ $ make test-nobuild
 The prebuilt Linux binaries statically link the C runtime library. This increases portability at the expense of increased binary sizes. The earlier instructions dynamically link the C runtime library. To use static linking, add `DFLAGS=-static` to the build lines, as follows:
 
 ```
-$ make DCOMPILER=ldc2 LDC_BUILD_RUNTIME=1 DFLAGS=-static
+$ make DCOMPILER=ldc2 LDC_LTO_RUNTIME=1 DFLAGS=-static
 $ make test-nobuild
 ```
 
@@ -143,6 +145,26 @@ It is also possible to turn off LTO on macOS builds. For this use `LDC_LTO=off`.
 ## LDC command lines
 
 Running the `make` commands shown above will display the LDC command lines. They are a bit lengthy though. The examples below show the command lines for building a simple `helloworld` program with LTO enabled. See the [LDC documentation](https://github.com/ldc-developers/ldc) for up-to-date details. See the LDC documentation or  [Profile-Guided Optimization with LDC](https://johanengelen.github.io/ldc/2016/07/15/Profile-Guided-Optimization-with-LDC.html) (Johan Engelen's blog) for PGO build parameters.
+
+### LDC 1.9.0 and later
+
+Building with LTO became materially simpler in LDC 1.9.0. From the [release notes](https://github.com/ldc-developers/ldc/releases/tag/v1.9.0):
+
+> Prebuilt Linux and macOS packages now ship with LTO default libs (druntime & Phobos). Keep on using -flto=<thin|full> to restrict LTO to your code, or opt for -flto=<thin|full> -defaultlib=phobos2-ldc-lto,druntime-ldc-lto to include the default libs.
+
+An example build command:
+```
+$ ldc2 -flto=thin -defaultlib=phobos2-ldc-lto,druntime-ldc-lto helloworld.d
+```
+
+This can be combined with other build flags as well. For example, a release build might use:
+```
+$ ldc2 -O -release -flto=thin -defaultlib=phobos2-ldc-lto,druntime-ldc-lto helloworld.d
+```
+
+### LDC 1.5.0 - LDC 1.8.0
+
+These releases did not have LTO compiled runtime libraries shipped with them.
 
 There are two steps for building with LTO. The first is downloading and building the D library code, the second is to reference the LTO built library from the application build command.
 

@@ -74,6 +74,7 @@ $prog profile_data_3.tsv -p 0.5 > /dev/null
 $prog profile_data_3.tsv -H -p 0.05 > /dev/null
 $prog profile_data_3.tsv -H -k 1,3 -p 0.20 > /dev/null
 $prog profile_data_3.tsv -H -k 1 -p 0.25 > /dev/null
+$prog profile_data_3.tsv -H -k 0 -p 0.25 > /dev/null
 $prog profile_data_3.tsv -H -w 2 > /dev/null
 $prog profile_data_3.tsv -H -w 8 -n 400 > /dev/null
 $prog profile_data_3.tsv -H -k 1 -p 0.75 > /dev/null
