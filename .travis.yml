@@ -8,7 +8,8 @@
 #   LTOPGO=[default|thin|full] - Like ALLLTO, but adds LDC_PGO=2 flag
 #   LTOPGO_V2=[default|thin|full] - Like ALLLTO_V2, but adds LDC_PGO=2 flag
 #   LINUX_SPECIAL - Settings linux static build would use if docker wasn't needed.
-#   DOCKERSPECIAL - Special dockerized build to run LDC with LTO, PGO and -static
+#   DOCKERSPECIAL=[1|2] - Special dockerized build to run LDC with LTO, PGO and -static
+#       1 is the original. 2 was introduced Nov 2018 to use a docker image with an up-to-date LDC
 #   DEPLOY - Deploy if a tagged release.
 matrix:
   include:
@@ -105,11 +106,25 @@ matrix:
       d: ldc-1.7.0
       services: docker
       env: DOCKERSPECIAL=1 DEPLOY=1
+    - os: linux
+      dist: trusty
+      sudo: required
+      group: travis_latest
+      language: d
+      d: ldc-1.12.0
+      services: docker
+      env: DOCKERSPECIAL=2
 before_install:
   - if [[ "$DOCKERSPECIAL" == "1" ]]; then
       sudo apt-get -qq update
       && sudo apt-get -y -o Dpkg::Options::="--force-confnew" install docker-ce
       && docker pull dlanguage/ldc:1.7.0;
+      export UID=$(id -u);
+      export GID=$(id -g);
+    elif [[ "$DOCKERSPECIAL" == "2" ]]; then
+      sudo apt-get -qq update
+      && sudo apt-get -y -o Dpkg::Options::="--force-confnew" install docker-ce
+      && docker pull dlang2/ldc-ubuntu:1.12.0;
       export UID=$(id -u);
       export GID=$(id -g);
     fi
@@ -180,6 +195,11 @@ script:
     && sudo chown -R $UID:$GID $(pwd)
     && make test-nobuild DCOMPILER=ldc2
     && make clean;
+  elif [[ "$DOCKERSPECIAL" == "2" ]]; then
+    docker run --rm -ti -v $(pwd):/src -w /src dlang2/ldc-ubuntu:1.12.0 make test DCOMPILER=ldc2 LDC_LTO_RUNTIME=1 LDC_PGO=2 DFLAGS=-static
+    && sudo chown -R $UID:$GID $(pwd)
+    && make test-nobuild DCOMPILER=ldc2
+    && make clean;
   fi
 after_success:
 - if [[ "$CODECOV" == "1" ]]; then
@@ -193,6 +213,9 @@ before_deploy:
   fi
 - if [[ "$DOCKERSPECIAL" == "1" ]]; then
     docker run --rm -ti -v $(pwd):/src dlanguage/ldc:1.7.0 make package PKG_ROOT_DIR=tsv-utils DCOMPILER=$DC OS=$TRAVIS_OS_NAME APP_VERSION=$USE_VERSION LDC_BUILD_RUNTIME=1 LDC_PGO=2 DFLAGS=-static;
+    sudo chown -R $UID:$GID $(pwd);
+  elif [[ "$DOCKERSPECIAL" == "2" ]]; then
+    docker run --rm -ti -v $(pwd):/src -w /src dlang2/ldc-ubuntu:1.12.0 make package PKG_ROOT_DIR=tsv-utils DCOMPILER=$DC OS=$TRAVIS_OS_NAME APP_VERSION=$USE_VERSION LDC_BUILD_RUNTIME=1 LDC_PGO=2 DFLAGS=-static;
     sudo chown -R $UID:$GID $(pwd);
   else
     make package PKG_ROOT_DIR=tsv-utils DCOMPILER=$DC OS=$TRAVIS_OS_NAME APP_VERSION=$USE_VERSION LDC_BUILD_RUNTIME=1 LDC_PGO=2;
