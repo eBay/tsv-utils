@@ -61,12 +61,13 @@ matrix:
       language: d
       d: ldc
       env: LTOPGO_V2=default
+      if: type IN (pull_request, cron)
     - os: osx
       osx_image: xcode10.1
       group: travis_latest
       language: d
-      d: ldc-1.8.0
-      env: LTOPGO=default DEPLOY=1
+      d: ldc-1.12.0
+      env: LTOPGO_V2=default DEPLOY=1
     - os: linux
       group: travis_latest
       language: d
@@ -86,6 +87,7 @@ matrix:
       language: d
       d: ldc
       env: LTOPGO=default
+      if: type IN (pull_request, cron)
     - os: linux
       group: travis_latest
       language: d
@@ -105,7 +107,8 @@ matrix:
       language: d
       d: ldc-1.7.0
       services: docker
-      env: DOCKERSPECIAL=1 DEPLOY=1
+      env: DOCKERSPECIAL=1
+      if: type IN (pull_request, cron)
     - os: linux
       dist: trusty
       sudo: required
@@ -113,7 +116,7 @@ matrix:
       language: d
       d: ldc-1.12.0
       services: docker
-      env: DOCKERSPECIAL=2
+      env: DOCKERSPECIAL=2 DEPLOY=1
 before_install:
   - if [[ "$DOCKERSPECIAL" == "1" ]]; then
       sudo apt-get -qq update
