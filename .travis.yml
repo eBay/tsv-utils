@@ -218,7 +218,7 @@ before_deploy:
     docker run --rm -ti -v $(pwd):/src dlanguage/ldc:1.7.0 make package PKG_ROOT_DIR=tsv-utils DCOMPILER=$DC OS=$TRAVIS_OS_NAME APP_VERSION=$USE_VERSION LDC_BUILD_RUNTIME=1 LDC_PGO=2 DFLAGS=-static;
     sudo chown -R $UID:$GID $(pwd);
   elif [[ "$DOCKERSPECIAL" == "2" ]]; then
-    docker run --rm -ti -v $(pwd):/src -w /src dlang2/ldc-ubuntu:1.12.0 make package PKG_ROOT_DIR=tsv-utils DCOMPILER=$DC OS=$TRAVIS_OS_NAME APP_VERSION=$USE_VERSION LDC_BUILD_RUNTIME=1 LDC_PGO=2 DFLAGS=-static;
+    docker run --rm -ti -v $(pwd):/src -w /src dlang2/ldc-ubuntu:1.12.0 make package PKG_ROOT_DIR=tsv-utils DCOMPILER=$DC OS=$TRAVIS_OS_NAME APP_VERSION=$USE_VERSION LDC_LTO_RUNTIME=1 LDC_PGO=2 DFLAGS=-static;
     sudo chown -R $UID:$GID $(pwd);
   else
     make package PKG_ROOT_DIR=tsv-utils DCOMPILER=$DC OS=$TRAVIS_OS_NAME APP_VERSION=$USE_VERSION LDC_BUILD_RUNTIME=1 LDC_PGO=2;
