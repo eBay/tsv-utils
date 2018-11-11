@@ -62,23 +62,23 @@ $ git clone https://github.com/eBay/tsv-utils.git
 $ cd tsv-utils
 ```
 
-Via DUB (replace `1.3.0` with the version retrieved):
+Via DUB (replace `1.3.1` with the version retrieved):
 
 ```
 $ dub fetch tsv-utils --cache=local
-$ cd tsv-utils-1.3.0
+$ cd tsv-utils-1.3.1
 ```
 
-Via the source from the GitHub [releases page](https://github.com/eBay/tsv-utils/releases) (replace `1.3.0` with the latest version):
+Via the source from the GitHub [releases page](https://github.com/eBay/tsv-utils/releases) (replace `1.3.1` with the latest version):
 
 ```
-$ curl -L https://github.com/eBay/tsv-utils/archive/v1.3.0.tar.gz | tar xz
-$ cd tsv-utils-1.3.0/tsv-utils
+$ curl -L https://github.com/eBay/tsv-utils/archive/v1.3.1.tar.gz | tar xz
+$ cd tsv-utils-1.3.1/tsv-utils
 ```
 
 **Build with LTO enabled:**
 
-The command lines below use the LTO compiled druntime and phobos libraries shipped with LDC. This requires LDC 1.9.0 or later and tsv-utils 1.3.0 or later. For tsv-utils 1.2.3 and earlier replace `LDC_LTO_RUNTIME=1` with `LDC_BUILD_RUNTIME=1`. This substitution is also needed when using LDC 1.5.0 - LDC 1.8.0.
+The command lines below use the LTO compiled druntime and phobos libraries shipped with LDC. This requires LDC 1.9.0 or later and tsv-utils 1.3.1 or later. For tsv-utils 1.2.3 and earlier replace `LDC_LTO_RUNTIME=1` with `LDC_BUILD_RUNTIME=1`. This substitution is also needed when using LDC 1.5.0 - LDC 1.8.0.
 
 ```
 $ make DCOMPILER=ldc2 LDC_LTO_RUNTIME=1
