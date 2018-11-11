@@ -11,7 +11,7 @@ Contents:
   * [Building the TSV Utilities with LTO and PGO](#building-the-tsv-utilities-with-lto-and-pgo)
   * [Additional options](#additional-options)
   * [LDC command lines](#ldc-command-lines)
-  
+
 Just want the build command lines? Skip down to [Building the TSV Utilities with LTO and PGO](#building-the-tsv-utilities-with-lto-and-pgo).
 
 ## About Link Time Optimization (LTO)
@@ -62,23 +62,23 @@ $ git clone https://github.com/eBay/tsv-utils.git
 $ cd tsv-utils
 ```
 
-Via DUB (replace `1.2.3` with the version retrieved):
+Via DUB (replace `1.3.0` with the version retrieved):
 
 ```
 $ dub fetch tsv-utils --cache=local
-$ cd tsv-utils-1.2.3
+$ cd tsv-utils-1.3.0
 ```
 
-Via the source from the GitHub [releases page](https://github.com/eBay/tsv-utils/releases) (replace `1.2.3` with the latest version):
+Via the source from the GitHub [releases page](https://github.com/eBay/tsv-utils/releases) (replace `1.3.0` with the latest version):
 
 ```
-$ curl -L https://github.com/eBay/tsv-utils/archive/v1.2.3.tar.gz | tar xz
-$ cd tsv-utils-1.2.3/tsv-utils
+$ curl -L https://github.com/eBay/tsv-utils/archive/v1.3.0.tar.gz | tar xz
+$ cd tsv-utils-1.3.0/tsv-utils
 ```
 
 **Build with LTO enabled:**
 
-The command lines below use the LTO compiled druntime and phobos libraries shipped with LDC. This required LDC 1.9.0 or later and tsv-utils 1.2.4 or later. For tsv-utils 1.2.3 and earlier replace `LDC_LTO_RUNTIME=1` with `LDC_BUILD_RUNTIME=1`. This substitution is also needed when using LDC 1.5.0 - LDC 1.8.0.
+The command lines below use the LTO compiled druntime and phobos libraries shipped with LDC. This requires LDC 1.9.0 or later and tsv-utils 1.3.0 or later. For tsv-utils 1.2.3 and earlier replace `LDC_LTO_RUNTIME=1` with `LDC_BUILD_RUNTIME=1`. This substitution is also needed when using LDC 1.5.0 - LDC 1.8.0.
 
 ```
 $ make DCOMPILER=ldc2 LDC_LTO_RUNTIME=1
