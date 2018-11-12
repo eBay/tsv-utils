@@ -62,18 +62,18 @@ $ git clone https://github.com/eBay/tsv-utils.git
 $ cd tsv-utils
 ```
 
-Via DUB (replace `1.3.1` with the version retrieved):
+Via DUB (replace `1.3.2` with the version retrieved):
 
 ```
 $ dub fetch tsv-utils --cache=local
-$ cd tsv-utils-1.3.1
+$ cd tsv-utils-1.3.2
 ```
 
-Via the source from the GitHub [releases page](https://github.com/eBay/tsv-utils/releases) (replace `1.3.1` with the latest version):
+Via the source from the GitHub [releases page](https://github.com/eBay/tsv-utils/releases) (replace `1.3.2` with the latest version):
 
 ```
-$ curl -L https://github.com/eBay/tsv-utils/archive/v1.3.1.tar.gz | tar xz
-$ cd tsv-utils-1.3.1/tsv-utils
+$ curl -L https://github.com/eBay/tsv-utils/archive/v1.3.2.tar.gz | tar xz
+$ cd tsv-utils-1.3.2/tsv-utils
 ```
 
 **Build with LTO enabled:**
