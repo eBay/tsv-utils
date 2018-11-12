@@ -463,7 +463,6 @@ void bernoulliSampling(Flag!"generateRandomAll" generateRandomAll, OutputRange)
     (TsvSampleOptions cmdopt, auto ref OutputRange outputStream)
 if (isOutputRange!(OutputRange, char))
 {
-    import std.format : formatValue, singleSpec;
     import std.random : Random = Mt19937, uniform01;
     import tsv_utils.common.utils : throwIfWindowsNewlineOnUnix;
 
@@ -471,7 +470,6 @@ if (isOutputRange!(OutputRange, char))
     else assert(!cmdopt.genRandomInorder);
 
     auto randomGenerator = Random(cmdopt.seed);
-    immutable randomValueFormatSpec = singleSpec("%.17g");
 
     /* Process each line. */
     bool headerWritten = false;
@@ -508,7 +506,7 @@ if (isOutputRange!(OutputRange, char))
 
                 static if (generateRandomAll)
                 {
-                    outputStream.formatValue(lineScore, randomValueFormatSpec);
+                    outputStream.formatRandomValue(lineScore);
                     outputStream.put(cmdopt.delim);
                     outputStream.put(line);
                     outputStream.put("\n");
@@ -523,7 +521,7 @@ if (isOutputRange!(OutputRange, char))
                 {
                     if (cmdopt.printRandom)
                     {
-                        outputStream.formatValue(lineScore, randomValueFormatSpec);
+                        outputStream.formatRandomValue(lineScore);
                         outputStream.put(cmdopt.delim);
                     }
                     outputStream.put(line);
@@ -860,7 +858,6 @@ if (isOutputRange!(OutputRange, char))
 {
     import std.container.array;
     import std.container.binaryheap;
-    import std.format : formatValue, singleSpec;
     import std.random : Random = Mt19937, uniform01;
     import tsv_utils.common.utils : throwIfWindowsNewlineOnUnix;
 
@@ -954,13 +951,11 @@ if (isOutputRange!(OutputRange, char))
     while (!reservoir.empty) reservoir.removeFront;
     assert(numLines == dataStore.length);
 
-    immutable randomValueFormatSpec = singleSpec("%.17g");
-
     foreach (entry; dataStore)
     {
         if (cmdopt.printRandom)
         {
-            outputStream.formatValue(entry.score, randomValueFormatSpec);
+            outputStream.formatRandomValue(entry.score);
             outputStream.put(cmdopt.delim);
         }
         outputStream.put(entry.line);
@@ -977,14 +972,12 @@ if (isOutputRange!(OutputRange, char))
 void generateWeightedRandomValuesInorder(OutputRange)(TsvSampleOptions cmdopt, auto ref OutputRange outputStream)
 if (isOutputRange!(OutputRange, char))
 {
-    import std.format : formatValue, singleSpec;
     import std.random : Random = Mt19937, uniform01;
     import tsv_utils.common.utils : throwIfWindowsNewlineOnUnix;
 
     assert(cmdopt.hasWeightField);
 
     auto randomGenerator = Random(cmdopt.seed);
-    immutable randomValueFormatSpec = singleSpec("%.17g");
 
     /* Process each line. */
     bool headerWritten = false;
@@ -1015,7 +1008,7 @@ if (isOutputRange!(OutputRange, char))
                     ? uniform01(randomGenerator) ^^ (1.0 / lineWeight)
                     : 0.0;
 
-                outputStream.formatValue(lineScore, randomValueFormatSpec);
+                outputStream.formatRandomValue(lineScore);
                 outputStream.put(cmdopt.delim);
                 outputStream.put(line);
                 outputStream.put("\n");
@@ -1171,7 +1164,6 @@ void randomizeLinesViaSort(Flag!"isWeighted" isWeighted, OutputRange)(TsvSampleO
 if (isOutputRange!(OutputRange, char))
 {
     import std.algorithm : map, sort;
-    import std.format : formatValue, singleSpec;
 
     static if (isWeighted) assert(cmdopt.hasWeightField);
     else assert(!cmdopt.hasWeightField);
@@ -1190,13 +1182,11 @@ if (isOutputRange!(OutputRange, char))
      */
     inputLines.sort!((a, b) => a.randomValue > b.randomValue);
 
-    immutable randomValueFormatSpec = singleSpec("%.17g");
-
     foreach (lineEntry; inputLines)
     {
         if (cmdopt.printRandom)
         {
-            outputStream.formatValue(lineEntry.randomValue, randomValueFormatSpec);
+            outputStream.formatRandomValue(lineEntry.randomValue);
             outputStream.put(cmdopt.delim);
         }
         outputStream.put(lineEntry.data);
@@ -1262,7 +1252,6 @@ void simpleRandomSamplingWithReplacement(OutputRange)(TsvSampleOptions cmdopt, a
 if (isOutputRange!(OutputRange, char))
 {
     import std.algorithm : map;
-    import std.format : formatValue, singleSpec;
     import std.random : Random = Mt19937, uniform;
 
     /*
@@ -1420,6 +1409,107 @@ if (isOutputRange!(OutputRange, char))
     }
 
     return inputLines;
+}
+
+/** Write a floating point random value to an output stream.
+ *
+ * This routine is used for floating point random value printing. This routine writes
+ * 17 significant digits, the range available in doubles. This routine prefers decimal
+ * format, without exponents. It will generate somewhat large precision numbers,
+ * currently up to 28 digits, before switching to exponents.
+ *
+ * The primary reason for this approach is to enable faster sorting on random values
+ * by GNU sort and similar external sorting programs. GNU sort is dramatically faster
+ * on decimal format numeric sorts ('n' switch) than general numeric sorts ('g' switch).
+ * The 'general numeric' handles exponential notation. The difference is 5-10x.
+ *
+ * Random values generated by Bernoulli sampling are nearly always greater than 1e-12.
+ * No examples less than 1e-09 were seen in hundred of millions of trials. Similar
+ * results were seen with weighted sampling with integer weights. The same is not true
+ * with floating point weights. These produce quite large exponents. However, even
+ * for floating point weights this can be useful. For random weights [0,1] less than 5%
+ * will be less than 1e-12 and use exponential notation.
+ */
+void formatRandomValue(OutputRange)(auto ref OutputRange outputStream, double value)
+if (isOutputRange!(OutputRange, char))
+{
+    import std.format : formatValue, singleSpec;
+
+    immutable spec17f = singleSpec("%.17f");
+    immutable spec18f = singleSpec("%.18f");
+    immutable spec19f = singleSpec("%.19f");
+    immutable spec20f = singleSpec("%.20f");
+    immutable spec21f = singleSpec("%.21f");
+    immutable spec22f = singleSpec("%.22f");
+    immutable spec23f = singleSpec("%.23f");
+    immutable spec24f = singleSpec("%.24f");
+    immutable spec25f = singleSpec("%.25f");
+    immutable spec26f = singleSpec("%.26f");
+    immutable spec27f = singleSpec("%.27f");
+    immutable spec28f = singleSpec("%.28f");
+
+    immutable spec17g = singleSpec("%.17g");
+
+    auto formatSpec =
+        (value >= 1e-01) ? spec17f :
+        (value >= 1e-02) ? spec18f :
+        (value >= 1e-03) ? spec19f :
+        (value >= 1e-04) ? spec20f :
+        (value >= 1e-05) ? spec21f :
+        (value >= 1e-06) ? spec22f :
+        (value >= 1e-07) ? spec23f :
+        (value >= 1e-08) ? spec24f :
+        (value >= 1e-09) ? spec25f :
+        (value >= 1e-10) ? spec26f :
+        (value >= 1e-11) ? spec27f :
+        (value >= 1e-12) ? spec28f : spec17g;
+
+    outputStream.formatValue(value, formatSpec);
+}
+
+unittest
+{
+    void testFormatValue(double value, string expected)
+    {
+        import std.array : appender;
+        import std.format : format;
+
+        auto s = appender!string();
+        s.formatRandomValue(value);
+        assert(s.data == expected,
+               format("[testFormatValue] value: %g; expected: %s; actual: %s", value, expected, s.data));
+    }
+
+    testFormatValue(1.0,   "1.00000000000000000");
+    testFormatValue(0.1,   "0.10000000000000001");
+    testFormatValue(0.01,  "0.010000000000000000");
+    testFormatValue(1e-03, "0.0010000000000000000");
+    testFormatValue(1e-04, "0.00010000000000000000");
+    testFormatValue(1e-05, "0.000010000000000000001");
+    testFormatValue(1e-06, "0.0000010000000000000000");
+    testFormatValue(1e-07, "0.00000010000000000000000");
+    testFormatValue(1e-08, "0.000000010000000000000000");
+    testFormatValue(1e-09, "0.0000000010000000000000001");
+    testFormatValue(1e-10, "0.00000000010000000000000000");
+    testFormatValue(1e-11, "0.000000000009999999999999999");
+    testFormatValue(1e-12, "0.0000000000010000000000000000");
+    testFormatValue(1e-13, "1e-13");
+    testFormatValue(1e-14, "1e-14");
+    testFormatValue(12345678901234567e-15, "12.34567890123456735");
+    testFormatValue(12345678901234567e-16, "1.23456789012345669");
+    testFormatValue(12345678901234567e-17, "0.12345678901234566");
+    testFormatValue(12345678901234567e-18, "0.012345678901234567");
+    testFormatValue(12345678901234567e-19, "0.0012345678901234567");
+    testFormatValue(12345678901234567e-20, "0.00012345678901234567");
+    testFormatValue(12345678901234567e-21, "0.000012345678901234568");
+    testFormatValue(12345678901234567e-22, "0.0000012345678901234567");
+    testFormatValue(12345678901234567e-23, "0.00000012345678901234566");
+    testFormatValue(12345678901234567e-24, "0.000000012345678901234567");
+    testFormatValue(12345678901234567e-25, "0.0000000012345678901234566");
+    testFormatValue(12345678901234567e-26, "0.00000000012345678901234568");
+    testFormatValue(12345678901234567e-27, "0.000000000012345678901234567");
+    testFormatValue(12345678901234567e-28, "0.0000000000012345678901234567");
+    testFormatValue(12345678901234567e-29, "1.2345678901234566e-13");
 }
 
 
@@ -1662,7 +1752,7 @@ unittest
     string[][] data3x6ExpectedPermuteCompatProbs =
         [["random_value", "field_a", "field_b", "field_c"],
          ["0.96055546286515892", "yellow", "黄", "12"],
-         ["0.7571015392895788", "black", "黒", "0.983"],
+         ["0.75710153928957880", "black", "黒", "0.983"],
          ["0.52525980887003243", "blue", "青", "12"],
          ["0.49287854949943721", "white", "白", "1.65"],
          ["0.15929344086907804", "green", "緑", "0.0072"],
@@ -1718,7 +1808,7 @@ unittest
          ["0.49287854949943721", "white", "白", "1.65"],
          ["0.96055546286515892", "yellow", "黄", "12"],
          ["0.52525980887003243", "blue", "青", "12"],
-         ["0.7571015392895788", "black", "黒", "0.983"]];
+         ["0.75710153928957880", "black", "黒", "0.983"]];
 
     string[][] data3x6ExpectedBernoulliCompatProbsP60 =
         [["random_value", "field_a", "field_b", "field_c"],
@@ -1769,7 +1859,7 @@ unittest
 
     string[][] data3x6ExpectedPermuteWt3Probs =
         [["random_value", "field_a", "field_b", "field_c"],
-         ["0.9966519875764539", "yellow", "黄", "12"],
+         ["0.99665198757645390", "yellow", "黄", "12"],
          ["0.94775884809836686", "blue", "青", "12"],
          ["0.82728234682286661", "red", "赤", "23.8"],
          ["0.75346697377181959", "black", "黒", "0.983"],
@@ -1781,7 +1871,7 @@ unittest
          ["0.82728234682286661", "red", "赤", "23.8"],
          ["1.5636943712879866e-111", "green", "緑", "0.0072"],
          ["0.65130103496422487", "white", "白", "1.65"],
-         ["0.9966519875764539", "yellow", "黄", "12"],
+         ["0.99665198757645390", "yellow", "黄", "12"],
          ["0.94775884809836686", "blue", "青", "12"],
          ["0.75346697377181959", "black", "黒", "0.983"]];
 
@@ -1830,12 +1920,12 @@ unittest
          ["0.32097338931635022", "yellow", "黄", "12"],
          ["0.25092361867427826", "red", "赤", "23.8"],
          ["0.15535934292711318", "black", "黒", "0.983"],
-         ["0.04609582107514143", "white", "白", "1.65"]];
+         ["0.046095821075141430", "white", "白", "1.65"]];
 
     string[][] data3x6ExpectedBernoulliCompatP60V41Probs =
         [["random_value", "field_a", "field_b", "field_c"],
          ["0.25092361867427826", "red", "赤", "23.8"],
-         ["0.04609582107514143", "white", "白", "1.65"],
+         ["0.046095821075141430", "white", "白", "1.65"],
          ["0.32097338931635022", "yellow", "黄", "12"],
          ["0.15535934292711318", "black", "黒", "0.983"]];
 
@@ -1879,7 +1969,7 @@ unittest
          ["0.97088520275428891", "yellow", "黄", "12"],
          ["0.96055546286515892", "tan", "タン", "8.5"],
          ["0.81756894313730299", "brown", "褐色", "29.2"],
-         ["0.7571015392895788", "green", "緑", "0.0072"],
+         ["0.75710153928957880", "green", "緑", "0.0072"],
          ["0.52525980887003243", "red", "赤", "23.8"],
          ["0.49287854949943721", "purple", "紫の", "42"],
          ["0.47081507067196071", "black", "黒", "0.983"],
@@ -1897,7 +1987,7 @@ unittest
          ["0.49287854949943721", "purple", "紫の", "42"],
          ["0.96055546286515892", "tan", "タン", "8.5"],
          ["0.52525980887003243", "red", "赤", "23.8"],
-         ["0.7571015392895788", "green", "緑", "0.0072"],
+         ["0.75710153928957880", "green", "緑", "0.0072"],
          ["0.38388182921335101", "white", "白", "1.65"],
          ["0.97088520275428891", "yellow", "黄", "12"],
          ["0.24033216014504433", "blue", "青", "12"],
@@ -1937,13 +2027,13 @@ unittest
          ["0.99527665440088786", "tan", "タン", "8.5"],
          ["0.99312578945741659", "brown", "褐色", "29.2"],
          ["0.98329602553389361", "purple", "紫の", "42"],
-         ["0.9733096193808366", "red", "赤", "23.8"],
+         ["0.97330961938083660", "red", "赤", "23.8"],
          ["0.88797551521739648", "blue", "青", "12"],
          ["0.81999230489041786", "gray", "グレー", "6.2"],
          ["0.55975569204250941", "white", "白", "1.65"],
          ["0.46472135609205739", "black", "黒", "0.983"],
          ["0.18824582704191337", "pink", "ピンク", "1.1"],
-         ["0.1644613185329992", "orange", "オレンジ", "2.5"],
+         ["0.16446131853299920", "orange", "オレンジ", "2.5"],
          ["1.6438086931020549e-17", "green", "緑", "0.0072"]];
 
     string[][] combo1ExpectedPermuteWt3 =
@@ -2105,12 +2195,12 @@ unittest
          ["0.96833865494543658", "8", "0.91836862"],
          ["0.91856842054413923", "4", "0.47379424"],
          ["0.25730832087795091", "7", "0.70529242"],
-         ["0.2372531790701812", "9", "0.99103720"],
+         ["0.23725317907018120", "9", "0.99103720"],
          ["0.16016096701872204", "3", "0.38627527"],
          ["0.090819662667243381", "10", "0.31401740"],
          ["0.0071764539244361172", "6", "0.05636231"],
-         ["4.8318642951630057e-08", "1", "0.26788837"],
-         ["3.7525692966535517e-10", "5", "0.02966641"],
+         ["0.000000048318642951630057", "1", "0.26788837"],
+         ["0.00000000037525692966535517", "5", "0.02966641"],
          ["8.2123247880095796e-13", "2", "0.06601298"]];
 
     /* 2x10b - Uniform distribution [0,1000]. */
@@ -2135,7 +2225,7 @@ unittest
          ["0.99996486739067969", "8", "841"],
          ["0.99991017467137211", "4", "448"],
          ["0.99960871524873662", "6", "711"],
-         ["0.999141885371438", "5", "750"],
+         ["0.99914188537143800", "5", "750"],
          ["0.99903963250274785", "10", "784"],
          ["0.99889631825931946", "7", "867"],
          ["0.99852058315191139", "9", "963"],
@@ -2165,13 +2255,13 @@ unittest
          ["0.99998939008709697", "6", "26226.08"],
          ["0.99995951291695517", "9", "35213.81"],
          ["0.99991666907613541", "8", "354.56"],
-         ["0.9998944505218641", "2", "17403.31"],
-         ["0.9997589760286163", "5", "2671.04"],
+         ["0.99989445052186410", "2", "17403.31"],
+         ["0.99975897602861630", "5", "2671.04"],
          ["0.99891852769877643", "3", "653.84"],
          ["0.99889167752782515", "10", "679.29"],
          ["0.99512207506850148", "4", "8.23"],
          ["0.86789371584259023", "1", "31.85"],
-         ["0.5857443816291561", "7", "1.79"]];
+         ["0.58574438162915610", "7", "1.79"]];
 
     /* 2x10d. Logarithmic distribution in ascending order. */
     string[][] data2x10d =
