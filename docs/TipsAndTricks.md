@@ -208,7 +208,7 @@ $ # Using disk-based sampling, with integer weights
 $ tsv-sample -w 3 --gen-random-inorder file.tsv | tsv-sort -k1,1nr | cut -f 2- > randomized-file.tsv
 ```
 
-The examples above use "numeric" sorting. When values contain exponents then "general numeric" sorting should be used. This is specified using the '-k1,1gr' rather than '-k1,1nr'. Here's an example:
+The examples above use "numeric" sorting. When values contain exponents then "general numeric" sorting should be used. This is specified using `-k1,1gr` rather than `-k1,1nr`. Here's an example:
 ```
 $ # Using disk-based sampling, with floating point weights
 $ tsv-sample -w 3 --gen-random-inorder file.tsv | tsv-sort -k1,1gr | cut -f 2- > randomized-file.tsv
