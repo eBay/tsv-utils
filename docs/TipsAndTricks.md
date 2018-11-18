@@ -197,7 +197,7 @@ $ # Using disk-based sorting
 $ tsv-sample --gen-random-inorder file.txt | tsv-sort -k1,1nr | cut -f 2- > randomized-file.txt
 ```
 
-(*Note: These examples uses the `tsv-sort` shell script described earlier, under ([Customize the Unix sort command](#customize-the-unix-sort-command)). Substitute `tsv-sort` with `sort  -t $'\t' --buffer-size=2G` to use the `sort` command directly.*)
+(*Note: These examples uses the `tsv-sort` shell script described earlier, under [Customize the Unix sort command](#customize-the-unix-sort-command). Substitute `tsv-sort` with `sort  -t $'\t' --buffer-size=2G` to use the `sort` command directly.*)
 
 The above prepends a random value to each line, sorts, and removes the random values. Now available disk space is the limiting factor, not memory.
 
