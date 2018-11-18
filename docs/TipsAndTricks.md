@@ -182,9 +182,11 @@ Using `grep` as a pre-filter won't always be helpful, that will depend on the sp
 
 ## Shuffling large files
 
-[tsv-sample](ToolReference.md#tsv-sample-reference) has several sampling modes which limit the amount of memory used. However, system memory becomes a limitation when randomizing line order of very large files, as the entire file must be loaded into memory. ([GNU shuf](https://www.gnu.org/software/coreutils/manual/html_node/shuf-invocation.html) has the same limitation.) The solution is to use disk when the files become too large for memory.
+[tsv-sample](ToolReference.md#tsv-sample-reference) has several sampling modes which limit the amount of memory used. However, system memory becomes a limitation when randomizing line order of very large files, as the entire file must be loaded into memory. ([GNU shuf](https://www.gnu.org/software/coreutils/manual/html_node/shuf-invocation.html) has the same limitation.) The solution is to use disk-based shuffling when the files become too large for memory.
 
-The tsv-sample `--gen-random-inorder` option be combined with [GNU sort](https://www.gnu.org/software/coreutils/manual/html_node/sort-invocation.html) to do disk-based shuffling. A random value is generated for each line, written out, sorted, and the random value removed. This works because `sort` will use disk if necessary. This technique can be used with both weighted and unweighted line order randomization. There is a catch: GNU sort is dramatically faster when sorting numbers written in decimal notation, without exponents. However, random value generation may generate values with exponents in some cases. This is discussed in more detail below.
+One possibility is GNU sort's random sort option (`sort --random-sort`). This can be used for unweighted randomization, but is very slow, to the point of being nearly unusable for large files. Further, it doesn't randomize duplicate lines correctly.
+
+A more practical approach is to combine the tsv-sample `--gen-random-inorder` option with [GNU sort](https://www.gnu.org/software/coreutils/manual/html_node/sort-invocation.html). A random value is generated for each input line, the lines are sorted, and the random values removed. `sort` will use disk if necessary. This technique can be used for both weighted and unweighted line order randomization. There is a catch: GNU sort is dramatically faster when sorting numbers written in decimal notation, without exponents. However, random value generation may generate values with exponents in some cases. This is discussed in more detail below.
 
 Here's an example. This example uses the `tsv-sort` shell script described earlier ([Customize the Unix sort command](#customize-the-unix-sort-command)). Substitute `tsv-sort` with `sort  -t $'\t' --buffer-size=2G` to use the `sort` command directly.
 ```
@@ -195,7 +197,7 @@ $ # Using disk-based sorting
 $ tsv-sample --gen-random-inorder file.txt | tsv-sort -k1,1nr | cut -f 2- > randomized-file.txt
 ```
 
-The above prepends a random value to each line, sorts, and removes the random value. Now available disk space is the limiting factor, not memory.
+The above prepends a random value to each line, sorts, and removes the random values. Now available disk space is the limiting factor, not memory.
 
 This can be done with weighted sampling when the weights are integer values. These examples use a weight from field 3.
 ```
