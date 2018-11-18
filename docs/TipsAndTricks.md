@@ -182,11 +182,11 @@ Using `grep` as a pre-filter won't always be helpful, that will depend on the sp
 
 ## Shuffling large files
 
-[tsv-sample](ToolReference.md#tsv-sample-reference) has several sampling modes which limit the amount of memory used. However, system memory becomes a limitation when randomizing line order of very large files, as the entire file must be loaded into memory. [GNU shuf](https://www.gnu.org/software/coreutils/manual/html_node/shuf-invocation.html) has the same limitation. The solution is to use disk when the files become too large for memory.
+[tsv-sample](ToolReference.md#tsv-sample-reference) has several sampling modes which limit the amount of memory used. However, system memory becomes a limitation when randomizing line order of very large files, as the entire file must be loaded into memory. ([GNU shuf](https://www.gnu.org/software/coreutils/manual/html_node/shuf-invocation.html) has the same limitation.) The solution is to use disk when the files become too large for memory.
 
-The tsv-sample `--gen-random-inorder` option be combined with [GNU sort](https://www.gnu.org/software/coreutils/manual/html_node/sort-invocation.html) to do disk-based shuffling. A random value is generated for each line, written out, sorted, and the random value removed. This works because `sort` will use disk if necessary. This technique can be used with both weighted and unweighted line order randomization. There is a catch to be aware of: GNU sort is dramatically faster when sorting numbers written in decimal notation, without exponents. However, random value generation may generate values with exponents in some cases. This is discussed in more detail below.
+The tsv-sample `--gen-random-inorder` option be combined with [GNU sort](https://www.gnu.org/software/coreutils/manual/html_node/sort-invocation.html) to do disk-based shuffling. A random value is generated for each line, written out, sorted, and the random value removed. This works because `sort` will use disk if necessary. This technique can be used with both weighted and unweighted line order randomization. There is a catch: GNU sort is dramatically faster when sorting numbers written in decimal notation, without exponents. However, random value generation may generate values with exponents in some cases. This is discussed in more detail below.
 
-Here's an example. This example uses the `tsv-sort` shell script described earlier ([Customize the Unix sort command](#customize-the-unix-sort-command)). Substitute `tsv-sort` with `sort  -t $'\t' --buffer-size=2G` to use `sort` directly.
+Here's an example. This example uses the `tsv-sort` shell script described earlier ([Customize the Unix sort command](#customize-the-unix-sort-command)). Substitute `tsv-sort` with `sort  -t $'\t' --buffer-size=2G` to use the `sort` command directly.
 ```
 $ # In-memory version
 $ tsv-sample file.txt > randomized-file.txt
@@ -206,13 +206,13 @@ $ # Using disk-based sampling, with integer weights
 $ tsv-sample -w 3 --gen-random-inorder file.tsv | tsv-sort -k1,1nr | cut -f 2- > randomized-file.tsv
 ```
 
-The above sorts use "numeric" sorting. When values contain exponents then "general numeric" sorting should be used. This is specified using the 'g' specifier rather than 'n'. Here's an example:
+The examples above use "numeric" sorting. When values contain exponents then "general numeric" sorting should be used. This is specified using the '-k1,1gr' rather than '-k1,1nr'. Here's an example:
 ```
 $ # Using disk-based sampling, with floating point weights
 $ tsv-sample -w 3 --gen-random-inorder file.tsv | tsv-sort -k1,1gr | cut -f 2- > randomized-file.tsv
 ```
 
-Regarding exponential notation: The faster "numeric" sort will incorrectly order line where the value contains an exponent. `tsv-utils` version 1.3.2 changed random number printing to limit exponent printing. This was done by using exponents only when numbers are smaller than 1e-12. Though not guaranteed, this does not occur in practice with unweighted sampling or weighted sampling with integer weights. The author has run more than a billion trials without an occurrence. (It may be a property of the random number generator used.) It will occur if floating point weights are used. Use "general numeric" ('g') form when using floating point weights or if a guarantee is needed. However, in many cases regular "numeric" sort ('n') will suffice, and be dramatically faster.
+Regarding exponential notation: The faster "numeric" sort will incorrectly order lines where the random value contains an exponent. `tsv-utils` version 1.3.2 changed random number printing to limit exponent printing. This was done by using exponents only when numbers are smaller than 1e-12. Though not guaranteed, this does not occur in practice with unweighted sampling or weighted sampling with integer weights. The author has run more than a billion trials without an occurrence. (It may be a property of the random number generator used.) It will occur if floating point weights are used. Use "general numeric" ('g') form when using floating point weights or if a guarantee is needed. However, in many cases regular "numeric" sort ('n') will suffice, and be dramatically faster.
 
 Note: For unweighted shuffling it's likely faster version could be implemented. The idea would be to read all input lines and write each to a randomly chosen temporary file. Then read and shuffle each temporary file in-memory and write it back out. Then merge the input files. This would replace the sorting with faster shuffling. It'd also avoid printing random numbers, which is slow. The potential downside is more IO. It'd be interesting to experiment with this.
 
