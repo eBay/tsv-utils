@@ -69,6 +69,7 @@ matrix:
       d: ldc-1.12.0
       env: LTOPGO_V2=default DEPLOY=1
     - os: linux
+      dist: xenial
       group: travis_latest
       language: d
       d: ldc
