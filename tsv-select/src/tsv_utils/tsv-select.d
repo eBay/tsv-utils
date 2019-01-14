@@ -12,7 +12,7 @@ exception handling, ranges, tuples and strings, templates, universal function ca
 (UFCS), lambdas and functional programming constructs. Comments are more verbose than
 typical to shed light on D programming constructs, but not to the level of a tutorial.
 
-Copyright (c) 2015-2018, eBay Software Foundation
+Copyright (c) 2015-2019, eBay Software Foundation
 Initially written by Jon Degenhardt
 
 License: Boost Licence 1.0 (http://boost.org/LICENSE_1_0.txt)

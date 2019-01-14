@@ -3,7 +3,7 @@
     "description": "Print TSV data aligned for easier reading on consoles and traditional command-line environments.",
     "homepage": "https://github.com/eBay/tsv-utils",
     "authors": ["Jon Degenhardt"],
-    "copyright": "Copyright (c) 2017-2018, eBay Software Foundation",
+    "copyright": "Copyright (c) 2017-2019, eBay Software Foundation",
     "license": "BSL-1.0",
     "targetType": "executable",
     "configurations": [
