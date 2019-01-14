@@ -124,7 +124,7 @@ all lines into memory and is limited by available memory. The line order
 randomization algorithms hold the full output set in memory prior to
 generating results. This ultimately limits the size of the output set. For
 these memory needs can be reduced by using a sample size (--n|num). This
-engages reservior sampling. Output order is not affected. Both
+engages reservoir sampling. Output order is not affected. Both
 'tsv-sample -n 1000' and 'tsv-sample | head -n 1000' produce the same
 results, but the former is quite a bit faster.
 
@@ -230,7 +230,7 @@ struct TsvSampleOptions
                 "H|header",        "     Treat the first line of each file as a header.", &hasHeader,
                 std.getopt.config.caseInsensitive,
 
-                "n|num",           "NUM  Maximim number of lines to output. All selected lines are output if not provided or zero.", &sampleSize,
+                "n|num",           "NUM  Maximum number of lines to output. All selected lines are output if not provided or zero.", &sampleSize,
                 "p|prob",          "NUM  Inclusion probability (0.0 < NUM <= 1.0). For Bernoulli sampling, the probability each line is selected output. For distinct sampling, the probability each unique key is selected for output.", &inclusionProbability,
 
                 "k|key-fields",    "<field-list>  Fields to use as key for distinct sampling. Use with '--p|prob'. Specify '--k|key-fields 0' to use the entire line as the key.",
@@ -290,7 +290,7 @@ struct TsvSampleOptions
             {
                 if (hasWeightField)
                 {
-                    throw new Exception("Sampling with replacement (--r|replace) does not support wieghts (--w|weight-field).");
+                    throw new Exception("Sampling with replacement (--r|replace) does not support weights (--w|weight-field).");
                 }
                 else if (!inclusionProbability.isNaN)
                 {
@@ -403,7 +403,7 @@ if (isOutputRange!(OutputRange, char))
     }
     else if (cmdopt.genRandomInorder)
     {
-        /* Note that the preceeding cases handle gen-random-inorder themselves (Bernoulli,
+        /* Note that the preceding cases handle gen-random-inorder themselves (Bernoulli,
          * Distinct), or don't handle it (SRS w/ Replacement).
          */
         assert(cmdopt.hasWeightField);
@@ -452,7 +452,7 @@ if (isOutputRange!(OutputRange, char))
     }
 }
 
-/** Bernoulli sampling of lines on the input stream.
+/** Bernoulli sampling of lines from the input stream.
  *
  * Each input line is a assigned a random value and output if less than
  * cmdopt.inclusionProbability. The order of the lines is not changed.
@@ -543,13 +543,13 @@ if (isOutputRange!(OutputRange, char))
  * Skip sampling works by skipping a random number of lines between selections. This
  * can be faster than assigning a random value to each line when the inclusion
  * probability is low, as it reduces the number of calls to the random number
- * generator. Both the random number generator and the log() function as called when
+ * generator. Both the random number generator and the log() function are called when
  * calculating the next skip size. These additional log() calls add up as the
  * probability increases.
  *
  * Performance tests indicate the break-even point is about 4-5% (--prob 0.04) for
  * file-oriented line sampling. This is obviously environment specific. In the
- * environments this implementation has been tested in the perfmance improvements
+ * environments this implementation has been tested in the performance improvements
  * remain small, less than 7%, even with an inclusion probability as low as 0.0001.
  *
  * The algorithm does not assign random values to individual lines. This makes it
@@ -634,7 +634,7 @@ void bernoulliSkipSampling(OutputRange)(TsvSampleOptions cmdopt, OutputRange out
     }
 }
 
-/** Sample a subset of the unique values from the key fields.
+/** Sample a subset of lines by choosing a random set of values from key fields.
  *
  * Distinct sampling is done by hashing the key and mapping the hash value into
  * buckets matching the inclusion probability. Records having a key mapping to bucket
@@ -777,7 +777,7 @@ if (isOutputRange!(OutputRange, char))
 /** Invokes the appropriate reservoir sampling routine based on the command line
  * arguments.
  *
- * This routine selects the appropriate reservior sampling function and template
+ * This routine selects the appropriate reservoir sampling function and template
  * instantiation to use based on the command line arguments.
  *
  * Reservoir sampling is used when a fixed size sample is being pulled from an input
@@ -812,7 +812,7 @@ if (isOutputRange!(OutputRange, char))
     }
 }
 
-/** Reservior sampling using a heap. Both weighted and unweighted random sampling are
+/** Reservoir sampling using a heap. Both weighted and unweighted random sampling are
  * supported.
  *
  * The algorithm used here is based on the one-pass algorithm described by Pavlos
@@ -1110,7 +1110,7 @@ if (isOutputRange!(OutputRange, char))
         }
     }
 
-    /* The random sample is now in the reservior. Shuffle it and print. */
+    /* The random sample is now in the reservoir. Shuffle it and print. */
 
     reservoir.randomShuffle(randomGenerator);
 
@@ -1276,7 +1276,7 @@ if (isOutputRange!(OutputRange, char))
     }
 }
 
-/** A container and reader data form a file or standard input.
+/** A container and reader of data from a file or standard input.
  *
  * The FileData struct is used to read data from a file or standard input. It is used
  * by passing a filename to the constructor. The constructor reads the file data.
@@ -1330,7 +1330,7 @@ struct InputLine(HasRandomValue hasRandomValue)
  * processing. It does the initial processing of the file data.
  *
  * Three primary tasks are performed. One is splitting all input data into lines. The
- * second is writting the header line from the first file to the output stream. Header
+ * second is writing the header line from the first file to the output stream. Header
  * lines from subsequent files are ignored. Third is assigning a random value to the
  * line, if random values are being generated.
  *
@@ -1567,7 +1567,7 @@ unittest
  *
  * Portability note: Many of the tests here rely on generating consistent random numbers
  * across different platforms when using the same random seed. So far this has succeeded
- * on several different platorm, compiler, and library versions. However, it is certainly
+ * on several different platform, compiler, and library versions. However, it is certainly
  * possible this condition will not hold on other platforms.
  *
  * For tsv-sample, this portability implies generating the same results on different

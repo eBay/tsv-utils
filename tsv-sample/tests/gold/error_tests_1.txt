@@ -67,7 +67,7 @@ c-1	c-2	c-3	c-4
 [tsv-sample] Error processing command line arguments: --randomValueHeader must be at least one character and not contain field delimiters or newlines.
 
 ====[tsv-sample --replace -n 5 --weight-field 2 input3x25.tsv]====
-[tsv-sample] Error processing command line arguments: Sampling with replacement (--r|replace) does not support wieghts (--w|weight-field).
+[tsv-sample] Error processing command line arguments: Sampling with replacement (--r|replace) does not support weights (--w|weight-field).
 
 ====[tsv-sample --replace -n 5 --prob 0.5 input3x25.tsv]====
 [tsv-sample] Error processing command line arguments: Sampling with replacement (--r|replace) cannot be used with probabilities (--p|prob).
