@@ -20,6 +20,11 @@ version(unittest)
 }
 else
 {
+    /** Main program.
+     *
+     * Invokes command line argument processing and calls tsvSample to perform the real
+     * work. Errors occurring during processing are caught and reported to the user.
+     */
     int main(string[] cmdArgs)
     {
         /* When running in DMD code coverage mode, turn on report merging. */
@@ -178,7 +183,15 @@ also engages compatibility mode.
 Options:
 EOS";
 
-/** Container for command line options.
+/** Container for command line options and derived data.
+ *
+ * TsvSampleOptions handles several aspects of command line options. On the input side,
+ * it defines the command line options available, performs validation, and sets up any
+ * derived state based on the options provided. These activities are handled by the
+ * processArgs() member.
+ *
+ * Once argument processing is complete, the TsvSampleOptions is used as a container
+ * holding the specific processing options used by the different sampling routines.
  */
 struct TsvSampleOptions
 {
@@ -208,6 +221,23 @@ struct TsvSampleOptions
     bool usingUnpredictableSeed = true;        /// Derived from --static-seed, --seed-value
     uint seed = 0;                             /// Derived from --static-seed, --seed-value
 
+    /** Process tsv-sample command line arguments.
+     *
+     * Defines the command line options, performs validation, and derives additional
+     * state. std.getopt.getopt is called to do the main option processing followed
+     * additional validation and derivation.
+     *
+     * Help text is printed to standard output if help was requested. Error text is
+     * written to stderr if invalid input is encountered.
+     *
+     * A tuple is returned. First value is true if command line arguments were
+     * successfully processed and execution should continue, or false if an error
+     * occurred or the user asked for help. If false, the second value is the
+     * appropriate exit code (0 or 1).
+     *
+     * Returning true (execution continues) means args have been validated and derived
+     * values calculated. Field indices will have been converted to zero-based.
+     */
     auto processArgs(ref string[] cmdArgs)
     {
         import std.algorithm : any, canFind, each;
@@ -384,6 +414,9 @@ struct TsvSampleOptions
     }
 }
 /** Invokes the appropriate sampling routine based on the command line arguments.
+ *
+ * tsvSample is the top-level routine handling the different tsv-sample use cases.
+ * Its primary role is to invoke the correct routine for type of sampling requested.
  */
 void tsvSample(OutputRange)(TsvSampleOptions cmdopt, auto ref OutputRange outputStream)
 if (isOutputRange!(OutputRange, char))
@@ -419,12 +452,15 @@ if (isOutputRange!(OutputRange, char))
     }
 }
 
-/** Invokes the appropriate Bernoulli sampling routine based on the command line arguments.
+/** Invokes the appropriate Bernoulli sampling routine based on the command line
+ * arguments.
  *
  * This routine selects the appropriate bernoulli sampling function and template
  * instantiation to use based on the command line arguments.
  *
- * See the bernoulliSkipSampling routine for a discussion of the choices behind the
+ * One basic choices is whether to use skip sampling, a little faster when the
+ * inclusion probability is small and compatibility mode is not needed. See the
+ * bernoulliSkipSampling documentation for a discussion of the choices behind the
  * skipSamplingProbabilityThreshold used here.
  */
 void bernoulliSamplingCommand(OutputRange)(TsvSampleOptions cmdopt, auto ref OutputRange outputStream)
@@ -545,7 +581,7 @@ if (isOutputRange!(OutputRange, char))
  * probability is low, as it reduces the number of calls to the random number
  * generator. Both the random number generator and the log() function are called when
  * calculating the next skip size. These additional log() calls add up as the
- * probability increases.
+ * inclusion probability increases.
  *
  * Performance tests indicate the break-even point is about 4-5% (--prob 0.04) for
  * file-oriented line sampling. This is obviously environment specific. In the
@@ -635,6 +671,17 @@ void bernoulliSkipSampling(OutputRange)(TsvSampleOptions cmdopt, OutputRange out
 }
 
 /** Sample a subset of lines by choosing a random set of values from key fields.
+ *
+ * Distinct sampling is a streaming form of sampling, similar to Bernoulli sampling.
+ * However, instead of each line being subject to an independent trial, lines are
+ * selected based on a key contained in each line. A portion of keys are randomly
+ * selected for output, and every line containing a selected key is included in the
+ * output.
+ *
+ * An example use-case is a query log having <user, query, clicked-url> triples. It is
+ * often useful to sample records for one percent of the users, but include all records
+ * for the selected users. Distinct sampling supports this by selecting the users
+ * included in the output.
  *
  * Distinct sampling is done by hashing the key and mapping the hash value into
  * buckets matching the inclusion probability. Records having a key mapping to bucket
@@ -822,9 +869,9 @@ if (isOutputRange!(OutputRange, char))
  *
  * The implementation uses a heap (priority queue) large enough to hold the desired
  * number of lines. Input is read line-by-line, assigned a random value, and added to
- * the heap. The role of the identify the lines with the highest assigned random
- * values. Once the heap is full, adding a new line means dropping the line with the
- * lowest score. A "min" heap used for this reason.
+ * the heap. The role of the heap is to identify the lines with the highest assigned
+ * random values. Once the heap is full, adding a new line means dropping the line
+ * with the lowest score. A "min" heap used for this reason.
  *
  * When done reading all lines, the "min" heap is in the opposite order needed for
  * output. The desired order is obtained by removing each element one at at time from
@@ -835,8 +882,8 @@ if (isOutputRange!(OutputRange, char))
  *    created by taking the first N lines.
  *  - For unweighted sampling, it ensures that all output permutations are possible, and
  *    are not influences by input order or the heap data structure used.
- *  - Order consistency when making repeated use of the same random seeds, but with
- *    different sample sizes.
+ *  - Order consistency is maintained when making repeated use of the same random seed,
+ *    but with different sample sizes.
  *
  * There are use cases where only the selection set matters, for these some performance
  * could be gained by skipping the reordering and simply printing the backing store
@@ -1046,9 +1093,9 @@ if (isOutputRange!(OutputRange, char))
  *
  * This speed advantage may be offset a certain amount by using a more expensive random
  * value generator. reservoirSamplingViaHeap generates values between zero and one,
- * whereas reservoirSamplingAlgorithR generates random integers over and ever growing
+ * whereas reservoirSamplingAlgorithmR generates random integers over and ever growing
  * interval. The latter is expected to be more expensive. This is consistent with
- * performance test indicating that reservoirSamplingViaHeap is faster when using
+ * performance tests indicating that reservoirSamplingViaHeap is faster when using
  * small-to-medium size reservoirs and large input streams.
  */
 void reservoirSamplingAlgorithmR(OutputRange)(TsvSampleOptions cmdopt, auto ref OutputRange outputStream)
@@ -1197,9 +1244,8 @@ if (isOutputRange!(OutputRange, char))
 /** Randomize all the lines in files or standard input using a shuffling algorithm.
  *
  * All lines in files and/or standard input are read in and written out in random
- * order. This routine uses array shuffling, which is faster than sorting. This makes
- * this routine a good alternative to randomizeLinesViaSort when doing unweighted
- * randomization.
+ * order. This routine uses array shuffling, which is faster than sorting. It is a
+ * good alternative to randomizeLinesViaSort when doing unweighted randomization.
  *
  * Input data size is limited by available memory. Disk oriented techniques are needed
  * when data sizes are larger. For example, generating random values line-by-line (ala
