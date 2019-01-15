@@ -22,7 +22,7 @@ else
 {
     /** Main program.
      *
-     * Invokes command line argument processing and calls tsvSample to perform the real
+     * Invokes command line argument processing and calls tsvSample to do the real
      * work. Errors occurring during processing are caught and reported to the user.
      */
     int main(string[] cmdArgs)
@@ -455,13 +455,13 @@ if (isOutputRange!(OutputRange, char))
 /** Invokes the appropriate Bernoulli sampling routine based on the command line
  * arguments.
  *
- * This routine selects the appropriate bernoulli sampling function and template
+ * This routine selects the appropriate Bernoulli sampling function and template
  * instantiation to use based on the command line arguments.
  *
- * One basic choices is whether to use skip sampling, a little faster when the
- * inclusion probability is small and compatibility mode is not needed. See the
- * bernoulliSkipSampling documentation for a discussion of the choices behind the
- * skipSamplingProbabilityThreshold used here.
+ * One of the basic choices is whether to use the vanilla algorithm or skip sampling.
+ * Skip sampling is a tad faster when the inclusion probability is small but doesn't
+ * support compatibility mode. See the bernoulliSkipSampling documentation for a
+ * discussion of the skipSamplingProbabilityThreshold used here.
  */
 void bernoulliSamplingCommand(OutputRange)(TsvSampleOptions cmdopt, auto ref OutputRange outputStream)
 if (isOutputRange!(OutputRange, char))
@@ -674,14 +674,13 @@ void bernoulliSkipSampling(OutputRange)(TsvSampleOptions cmdopt, OutputRange out
  *
  * Distinct sampling is a streaming form of sampling, similar to Bernoulli sampling.
  * However, instead of each line being subject to an independent trial, lines are
- * selected based on a key contained in each line. A portion of keys are randomly
- * selected for output, and every line containing a selected key is included in the
- * output.
+ * selected based on a key from each line. A portion of keys are randomly selected for
+ * output, and every line containing a selected key is included in the output.
  *
  * An example use-case is a query log having <user, query, clicked-url> triples. It is
- * often useful to sample records for one percent of the users, but include all records
- * for the selected users. Distinct sampling supports this by selecting the users
- * included in the output.
+ * often useful to sample records for portion of the users, but including all records
+ * for the users selected. Distinct sampling supports this by selecting the subset of
+ * users included in the output.
  *
  * Distinct sampling is done by hashing the key and mapping the hash value into
  * buckets matching the inclusion probability. Records having a key mapping to bucket
@@ -827,14 +826,16 @@ if (isOutputRange!(OutputRange, char))
  * This routine selects the appropriate reservoir sampling function and template
  * instantiation to use based on the command line arguments.
  *
- * Reservoir sampling is used when a fixed size sample is being pulled from an input
- * stream. Weighted and unweighted sampling is supported. These routines also
+ * Reservoir sampling is used when a fixed size sample is being selected from an
+ * input stream. Weighted and unweighted sampling is supported. These routines also
  * randomize the order of the selected lines. This is consistent with line order
  * randomization of the entire input stream (handled by randomizeLinesCommand).
  *
- * For unweighted sampling, there is a performance tradeoff choice between the two
- * available implementations. See the reservoirSampling documentation for
- * information. The threshold used here was chosen based on performance tests.
+ * For unweighted sampling there is a performance tradeoff between the two available
+ * implementations. Heap-based sampling is faster for small sample sizes, Algorithm R
+ * is faster for large sample sizes. The threshold used here was chosen based on
+ * performance tests. See the reservoirSamplingAlgorithmR documentation for more
+ * information.
  */
 
 void reservoirSamplingCommand(OutputRange)(TsvSampleOptions cmdopt, auto ref OutputRange outputStream)
@@ -894,9 +895,9 @@ if (isOutputRange!(OutputRange, char))
  *    * In tsv-sample versions 1.2.1 and earlier this routine also supported
  *      randomization of all input lines. This was dropped in version 1.2.2 in favor
  *      of the approach used in randomizeLines. The latter has significant advantages
- *      given that all data data must be read into memory.
- *    * For larger reservoir sizes better performance can be achieved by using
- *      reservoirSamplingAlgorithmR. See the documentation of that function for details.
+ *      given that all data must be read into memory.
+ *    * For large reservoir sizes better performance can be achieved using Algorithm R.
+ *      See the reservoirSamplingAlgorithmR documentation for details.
  * )
  */
 void reservoirSamplingViaHeap(Flag!"isWeighted" isWeighted, OutputRange)
@@ -1168,11 +1169,19 @@ if (isOutputRange!(OutputRange, char))
     }
 }
 
-/** Invokes the appropriate routine to randomize input lines based on the command line
- * arguments.
+/** This routine is invoked when all input lines are being randomized. It selects the
+ * appropriate function and template instantiation based on the command line arguments.
  *
- * This routine selects the appropriate randomize lines function and template instantiation
- * to use based on the command line arguments.
+ * Different randomization algorithms are used when all input lines are being randomized
+ * rather than a subset. The key distinction being that if all input needs to be read
+ * into memory to support the algorithm, it works better to simply read the data all at
+ * once.
+ *
+ * There are two different types of algorithms used. Array shuffling is used for
+ * unweighted randomization. Sorting is used for weighted randomization or when
+ * compatibility mode is needed.
+ *
+ * The algorithms used here are all limited by available memory.
  */
 void randomizeLinesCommand(OutputRange)(TsvSampleOptions cmdopt, auto ref OutputRange outputStream)
 if (isOutputRange!(OutputRange, char))
@@ -1686,7 +1695,7 @@ unittest
      *  - Seed Value: V<num>, eg. V77
      *  - Key Field: K<num>, e.g. K2
      *  - Probability: P<num>, e.g P05 (5%)
-     *  - Printing Probalities: Probs
+     *  - Printing Probabilities: Probs
      *  - Printing Probs in order: ProbsInorder
      *  - Printing Probs with custom header: RVCustom
      */
