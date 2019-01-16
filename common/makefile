@@ -14,6 +14,7 @@ clean-bin-relics: ;
 .PHONY: clean-relics
 clean-relics:
 	-rm -f ./*.lst
+	-rm -f ./*.o
 
 .PHONY: clean
 clean: clean-relics
