@@ -31,6 +31,7 @@ clean-bin-relics:
 clean-relics: clean-bin-relics
 	-rm -f $(objdir)/*.o
 	-rm -f ./*.lst
+	-rm -f ./*.o
 	-rm -f $(testsdir)/*.lst
 	-rm -f $(ldc_profdata_file)
 	-rm -f $(ldc_profile_data_dir)/profile.*.raw
