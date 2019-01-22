@@ -3286,7 +3286,7 @@ class MadOperator : SingleFieldOperator
             auto median = valuesLists.numericValuesMedian(fieldIndex);
             auto values = valuesLists.numericValues(fieldIndex);
             auto medianDevs = new double[values.length];
-            foreach (int i, double v; values)
+            foreach (size_t i, double v; values)
                 medianDevs[i] = abs(v - median);
 
             return printOptions.formatNumber(medianDevs.rangeMedian);
