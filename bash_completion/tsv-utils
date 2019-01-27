@@ -1,6 +1,6 @@
 # bash completion for eBay's TSV Utility command line tools.
 #
-# Copyright (c) 2017-2018, eBay Software Foundation
+# Copyright (c) 2017-2019, eBay Software Foundation
 # Initially written by Jon Degenhardt
 #
 # License: Boost Licence 1.0 (http://boost.org/LICENSE_1_0.txt)
@@ -25,6 +25,7 @@ _csv2tsv()
     prev="${COMP_WORDS[COMP_CWORD-1]}"
     opts="--help --help-verbose --version --header --quote --csv-delim --tsv-delim --replacement"
 
+    # Options requiring an argument or precluding other options
     case $prev in
          -h|--help|--help-verbose|-V|--version|-q|--quote|-c|--csv-delim|-t|--tsv-delim|-r|--replacement)
           return
@@ -54,6 +55,7 @@ _number_lines()
     prev="${COMP_WORDS[COMP_CWORD-1]}"
     opts="--help --version --header --header-string --start-number --delimiter"
 
+    # Options requiring an argument or precluding other options
     case $prev in
          -h|--help|-V|--version|-s|--header-string|-n|--start-number|-d|--delimiter)
           return
@@ -78,6 +80,7 @@ _tsv_append()
     prev="${COMP_WORDS[COMP_CWORD-1]}"
     opts="--help --help-verbose --version --header --track-source --file --delimiter"
 
+    # Options requiring an argument or precluding other options
     case $prev in
          -h|--help|--help-verbose|-V|--version|-f|--file|-d|--delimiter)
           return
@@ -102,6 +105,7 @@ _tsv_filter()
     prev="${COMP_WORDS[COMP_CWORD-1]}"
     opts="--help --help-verbose --help-options --version --header --or --invert --delimiter --empty --not-empty --blank --not-blank --is-numeric --is-finite --is-nan --is-infinity --le --lt --ge --gt --eq --ne --str-le --str-lt --str-ge --str-gt --str-eq --istr-eq --str-ne --istr-ne --str-in-fld --istr-in-fld --str-not-in-fld --istr-not-in-fld --regex --iregex --not-regex --not-iregex --ff-le --ff-lt --ff-ge --ff-gt --ff-eq --ff-ne --ff-str-eq --ff-istr-eq --ff-str-ne --ff-istr-ne --ff-absdiff-le --ff-absdiff-gt ff-reldiff-le --ff-reldiff-gt"
 
+    # Options requiring an argument or precluding other options
     case $prev in
          -h|--help|--help-verbose|--help-options|-V|--version|-d|--delimiter|--le|--lt|--ge|--gt|--eq|--ne|--str-le|--str-lt|--str-ge|--str-gt|--str-eq|--istr-eq|--str-ne|--istr-ne|--str-in-fld|--istr-in-fld|--str-not-in-fld|--istr-not-in-fld|--regex|--iregex|--not-regex|--not-iregex|--ff-le|--ff-lt|--ff-ge|--ff-gt|--ff-eq|--ff-ne|--ff-str-eq|--ff-istr-eq|--ff-str-ne|--ff-istr-ne|--ff-absdiff-le|--ff-absdiff-gt|ff-reldiff-le|--ff-reldiff-gt)
 
@@ -127,6 +131,8 @@ _tsv_join()
     prev="${COMP_WORDS[COMP_CWORD-1]}"
     opts="--help --help-verbose --version --filter-file --key-fields --data-fields --append-fields --header --prefix --write-all --exclude --delimiter --allow-duplicate-keys"
 
+    # Options requiring an argument or precluding other options
+    # Options requiring a filename argument are handled in their own case match, ie. -f|--filter-file
     case $prev in
          -h|--help|--help-verbose|-V|--version|-k|--key-fields|-d|--data-fields|-a|--append-fields|-p|--prefix|-w|--write-all|--delimiter)
           return
@@ -157,8 +163,9 @@ _tsv_pretty()
     prev="${COMP_WORDS[COMP_CWORD-1]}"
     opts="--help --help-verbose --version --header --no-header --lookahead --repeat-header --underline-header --format-floats --precision --replace-empty --empty-replacement --delimiter --space-between-fields --max-text-width --preamble"
 
+    # Options requiring an argument or precluding other options
     case $prev in
-         -h--help|--help-verbose|-V|--version|-l|--lookahead|-r|--repeat-header|-u|--underline-header|-f|--format-floats|-p|--precision|-e|--replace-empty|-E|--empty-replacement|-d|--delimiter|-s|--space-between-fields|-m|--max-text-width|-a|--preamble)
+         -h--help|--help-verbose|-V|--version|-l|--lookahead|-r|--repeat-header|-p|--precision|-E|--empty-replacement|-d|--delimiter|-s|--space-between-fields|-m|--max-text-width|-a|--preamble)
           return
           ;;
     esac
@@ -181,6 +188,7 @@ _tsv_sample()
     prev="${COMP_WORDS[COMP_CWORD-1]}"
     opts="--help --help-verbose --version --header --num --prob --weight-field --key-fields --replace --print-random --gen-random-inorder --compatibility-mode --static-seed --seed-value --delimiter --prefer-skip-sampling --prefer-algorithm-r"
 
+    # Options requiring an argument or precluding other options
     case $prev in
          -h|--help|--help-verbose|-V|--version|-n|--num|-p|--prob|-w|--weight-field|-k|--key-fields|-r|--replace|-v|--seed-value|-d|--delimiter|--prefer-skip-sampling|--prefer-algorithm-r)
           return
@@ -205,6 +213,8 @@ _tsv_select()
     prev="${COMP_WORDS[COMP_CWORD-1]}"
     opts="--help --version --header --fields --rest --delimiter"
 
+    # Options requiring an argument or precluding other options
+    # Options with a restricted set of arguments (ie. -r|--rest) have their own case clause.
     case $prev in
         -h|--help|-V|--version|-f|--fields|-d|--delimiter)
             return
@@ -233,6 +243,7 @@ _tsv_summarize()
     prev="${COMP_WORDS[COMP_CWORD-1]}"
     opts="--help --help-verbose --version --group-by --header --write-header --delimiter --values-delimiter --float-precision --exclude-missing --replace-missing --count --count-header --retain --first --last --min --max --range --sum --mean --median --quantile --mad --var --stdev --mode --mode-count --unique-count --missing-count --not-missing-count --values --unique-values"
 
+    # Options requiring an argument or precluding other options
     case $prev in
           -h|--help|--help-verbose|-V|--version|-g|--group-by|-d|--delimiter|-v|--values-delimiter|-p|--float-precision|-x|--exclude-missing|-r|--replace-missing|--count-header|--retain|--first|--last|--min|--max|--range|--sum|--mean|--median|--quantile|--mad|--var|--stdev|--mode|--mode-count|--unique-count|--missing-count|--not-missing-count|--values|--unique-values)
           return
@@ -257,6 +268,7 @@ _tsv_uniq()
     prev="${COMP_WORDS[COMP_CWORD-1]}"
     opts="--help --help-verbose --version --header --fields --ignore-case --repeated --at-least --max --equiv --equiv-header --equiv-start --delimiter"
 
+    # Options requiring an argument or precluding other options
     case $prev in
          -h|--help|--help-verbose|-V|--version|-f|--fields|-a|--at-least|-m|--max|--equiv-header|--equiv-start|-d|--delimiter)
           return
