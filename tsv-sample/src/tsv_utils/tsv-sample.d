@@ -1377,7 +1377,7 @@ alias HasRandomValue = Flag!"hasRandomValue";
  */
 struct InputLine(HasRandomValue hasRandomValue)
 {
-    char[] data;
+    const(char)[] data;
     static if (hasRandomValue) double randomValue;
 }
 
@@ -1396,7 +1396,7 @@ struct InputLine(HasRandomValue hasRandomValue)
  * member if random values are being assigned.
  */
 InputLine!hasRandomValue[] identifyFileLines(HasRandomValue hasRandomValue, Flag!"isWeighted" isWeighted, OutputRange)
-(ref FileData[] fileData, TsvSampleOptions cmdopt, auto ref OutputRange outputStream)
+(const ref FileData[] fileData, TsvSampleOptions cmdopt, auto ref OutputRange outputStream)
 if (isOutputRange!(OutputRange, char))
 {
     import std.algorithm : splitter;
