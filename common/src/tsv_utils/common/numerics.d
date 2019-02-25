@@ -73,7 +73,7 @@ if (isFloatingPoint!T || isIntegral!T)
                  * - This handles integer values stored in floating point types.
                  * - Values like NaN and infinity also handled.
                  */
-                auto str = format("%.*f", floatPrecision, num);
+                immutable str = format("%.*f", floatPrecision, num);
                 size_t trimToLength = str.length;
 
                 if (floatPrecision != 0 && str.length > floatPrecision + 1)
@@ -615,9 +615,9 @@ body
         }
         else if (method == QuantileInterpolation.R2)
         {
-            double h1 = data.length * prob + 0.5;
-            size_t lo = ((h1 - 0.5).ceil.to!long - 1).max(0);
-            size_t hi = ((h1 + 0.5).to!size_t - 1).min(data.length - 1);
+            immutable double h1 = data.length * prob + 0.5;
+            immutable size_t lo = ((h1 - 0.5).ceil.to!long - 1).max(0);
+            immutable size_t hi = ((h1 + 0.5).to!size_t - 1).min(data.length - 1);
             q = (data[lo].to!double + data[hi].to!double) / 2.0;
         }
         else if (method == QuantileInterpolation.R3)
@@ -628,7 +628,7 @@ body
              * - DMD will sometimes choose the incorrect 0.5 rounding if the calculation
              *   is done as a single step. The separate calculation of 'h1' avoids this.
              */
-            double h1 = data.length * prob;
+            immutable double h1 = data.length * prob;
             q = data[h1.lrint.max(1) - 1].to!double;
         }
         else if ((method == QuantileInterpolation.R4) ||
@@ -654,12 +654,12 @@ body
             }
 
             double h1IntegerPart;
-            double h1FractionPart = modf(h1, &h1IntegerPart);
-            size_t lo = (h1IntegerPart - 1.0).to!long.max(0).min(data.length - 1);
+            immutable double h1FractionPart = modf(h1, &h1IntegerPart);
+            immutable size_t lo = (h1IntegerPart - 1.0).to!long.max(0).min(data.length - 1);
             q = data[lo];
             if (h1FractionPart > 0.0)
             {
-                size_t hi = h1IntegerPart.to!long.min(data.length - 1);
+                immutable size_t hi = h1IntegerPart.to!long.min(data.length - 1);
                 q += h1FractionPart * (data[hi].to!double - data[lo].to!double);
             }
         }

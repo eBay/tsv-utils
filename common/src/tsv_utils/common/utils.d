@@ -1575,11 +1575,11 @@ void throwIfWindowsNewlineOnUnix
     {
         static if (nlWasRemoved)
         {
-            bool hasWindowsLineEnding = line.length != 0 && line[$ - 1] == '\r';
+            immutable bool hasWindowsLineEnding = line.length != 0 && line[$ - 1] == '\r';
         }
         else
         {
-            bool hasWindowsLineEnding =
+            immutable bool hasWindowsLineEnding =
                 line.length > 1 &&
                 line[$ - 2] == '\r' &&
                 line[$ - 1] == '\n';

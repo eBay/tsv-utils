@@ -41,7 +41,7 @@ int main(string[] cmdArgs)
     }
 
     TsvFilterOptions cmdopt;
-    auto r = cmdopt.processArgs(cmdArgs);
+    const r = cmdopt.processArgs(cmdArgs);
     if (!r[0]) return r[1];
     version(LDC_Profile)
     {
@@ -57,7 +57,7 @@ int main(string[] cmdArgs)
     return 0;
 }
 
-auto helpText = q"EOS
+immutable helpText = q"EOS
 Synopsis: tsv-filter [options] [file...]
 
 Filter tab-delimited files for matching lines via comparison tests against
@@ -110,7 +110,7 @@ Operators:
 
 EOS";
 
-auto helpTextVerbose = q"EOS
+immutable helpTextVerbose = q"EOS
 Synopsis: tsv-filter [options] [file...]
 
 Filter lines of tab-delimited files via comparison tests against fields. Multiple
@@ -148,7 +148,7 @@ Details:
 Options:
 EOS";
 
-auto helpTextOptions = q"EOS
+immutable helpTextOptions = q"EOS
 Synopsis: tsv-filter [options] [file...]
 
 Options:
@@ -348,7 +348,7 @@ void fieldUnaryOptionHandler(
             format("Invalid option: '--%s %s'. Zero is not a valid field index.", option, optionVal));
     }
 
-    size_t zeroBasedIndex = field - 1;
+    immutable size_t zeroBasedIndex = field - 1;
     tests ~= makeFieldUnaryDelegate(fn, zeroBasedIndex);
     maxFieldIndex = (zeroBasedIndex > maxFieldIndex) ? zeroBasedIndex : maxFieldIndex;
 }
@@ -356,7 +356,7 @@ void fieldUnaryOptionHandler(
 void fieldVsNumberOptionHandler(
     ref FieldsPredicate[] tests, ref size_t maxFieldIndex, FieldVsNumberPredicate fn, string option, string optionVal)
 {
-    auto valSplit = findSplit(optionVal, ":");
+    immutable valSplit = findSplit(optionVal, ":");
     if (valSplit[1].length == 0 || valSplit[2].length == 0)
     {
         throw new Exception(
@@ -382,7 +382,7 @@ void fieldVsNumberOptionHandler(
         throw new Exception(
             format("Invalid option: '--%s %s'. Zero is not a valid field index.", option, optionVal));
     }
-    size_t zeroBasedIndex = field - 1;
+    immutable size_t zeroBasedIndex = field - 1;
     tests ~= makeFieldVsNumberDelegate(fn, zeroBasedIndex, value);
     maxFieldIndex = (zeroBasedIndex > maxFieldIndex) ? zeroBasedIndex : maxFieldIndex;
 }
@@ -390,7 +390,7 @@ void fieldVsNumberOptionHandler(
 void fieldVsStringOptionHandler(
     ref FieldsPredicate[] tests, ref size_t maxFieldIndex, FieldVsStringPredicate fn, string option, string optionVal)
 {
-    auto valSplit = findSplit(optionVal, ":");
+    immutable valSplit = findSplit(optionVal, ":");
     if (valSplit[1].length == 0 || valSplit[2].length == 0)
     {
         throw new Exception(
@@ -416,7 +416,7 @@ void fieldVsStringOptionHandler(
         throw new Exception(
             format("Invalid option: '--%s %s'. Zero is not a valid field index.", option, optionVal));
     }
-    size_t zeroBasedIndex = field - 1;
+    immutable size_t zeroBasedIndex = field - 1;
     tests ~= makeFieldVsStringDelegate(fn, zeroBasedIndex, value);
     maxFieldIndex = (zeroBasedIndex > maxFieldIndex) ? zeroBasedIndex : maxFieldIndex;
 }
@@ -427,7 +427,7 @@ void fieldVsStringOptionHandler(
 void fieldVsIStringOptionHandler(
     ref FieldsPredicate[] tests, ref size_t maxFieldIndex, FieldVsIStringPredicate fn, string option, string optionVal)
 {
-    auto valSplit = findSplit(optionVal, ":");
+    immutable valSplit = findSplit(optionVal, ":");
     if (valSplit[1].length == 0 || valSplit[2].length == 0)
     {
         throw new Exception(
@@ -453,7 +453,7 @@ void fieldVsIStringOptionHandler(
         throw new Exception(
             format("Invalid option: '--%s %s'. Zero is not a valid field index.", option, optionVal));
     }
-    size_t zeroBasedIndex = field - 1;
+    immutable size_t zeroBasedIndex = field - 1;
     tests ~= makeFieldVsIStringDelegate(fn, zeroBasedIndex, value.to!dstring.toLower);
     maxFieldIndex = (zeroBasedIndex > maxFieldIndex) ? zeroBasedIndex : maxFieldIndex;
 }
@@ -462,7 +462,7 @@ void fieldVsRegexOptionHandler(
     ref FieldsPredicate[] tests, ref size_t maxFieldIndex, FieldVsRegexPredicate fn, string option, string optionVal,
     bool caseSensitive)
 {
-    auto valSplit = findSplit(optionVal, ":");
+    immutable valSplit = findSplit(optionVal, ":");
     if (valSplit[1].length == 0 || valSplit[2].length == 0)
     {
         throw new Exception(
@@ -473,7 +473,7 @@ void fieldVsRegexOptionHandler(
     Regex!char value;
     try
     {
-        auto modifiers = caseSensitive ? "" : "i";
+        immutable modifiers = caseSensitive ? "" : "i";
         field = valSplit[0].to!size_t;
         value = regex(valSplit[2], modifiers);
     }
@@ -489,7 +489,7 @@ void fieldVsRegexOptionHandler(
         throw new Exception(
             format("Invalid option: '--%s %s'. Zero is not a valid field index.", option, optionVal));
     }
-    size_t zeroBasedIndex = field - 1;
+    immutable size_t zeroBasedIndex = field - 1;
     tests ~= makeFieldVsRegexDelegate(fn, zeroBasedIndex, value);
     maxFieldIndex = (zeroBasedIndex > maxFieldIndex) ? zeroBasedIndex : maxFieldIndex;
 }
@@ -497,7 +497,7 @@ void fieldVsRegexOptionHandler(
 void fieldVsFieldOptionHandler(
     ref FieldsPredicate[] tests, ref size_t maxFieldIndex, FieldVsFieldPredicate fn, string option, string optionVal)
 {
-    auto valSplit = findSplit(optionVal, ":");
+    immutable valSplit = findSplit(optionVal, ":");
     if (valSplit[1].length == 0 || valSplit[2].length == 0)
     {
         throw new Exception(
@@ -530,8 +530,8 @@ void fieldVsFieldOptionHandler(
             format("Invalid option: '--%s %s'. Field1 and field2 must be different fields", option, optionVal));
     }
 
-    size_t zeroBasedIndex1 = field1 - 1;
-    size_t zeroBasedIndex2 = field2 - 1;
+    immutable size_t zeroBasedIndex1 = field1 - 1;
+    immutable size_t zeroBasedIndex2 = field2 - 1;
     tests ~= makeFieldVsFieldDelegate(fn, zeroBasedIndex1, zeroBasedIndex2);
     maxFieldIndex = max(maxFieldIndex, zeroBasedIndex1, zeroBasedIndex2);
 }
@@ -543,12 +543,12 @@ void fieldFieldNumOptionHandler(
     size_t field1;
     size_t field2;
     double value;
-    auto valSplit = findSplit(optionVal, ":");
+    immutable valSplit = findSplit(optionVal, ":");
     auto invalidOption = (valSplit[1].length == 0 || valSplit[2].length == 0);
 
     if (!invalidOption)
     {
-        auto valSplit2 = findSplit(valSplit[2], ":");
+        immutable valSplit2 = findSplit(valSplit[2], ":");
         invalidOption = (valSplit2[1].length == 0 || valSplit2[2].length == 0);
 
         if (!invalidOption)
@@ -583,8 +583,8 @@ void fieldFieldNumOptionHandler(
             format("Invalid option: '--%s %s'. Field1 and field2 must be different fields", option, optionVal));
     }
 
-    size_t zeroBasedIndex1 = field1 - 1;
-    size_t zeroBasedIndex2 = field2 - 1;
+    immutable size_t zeroBasedIndex1 = field1 - 1;
+    immutable size_t zeroBasedIndex2 = field2 - 1;
     tests ~= makeFieldFieldNumDelegate(fn, zeroBasedIndex1, zeroBasedIndex2, value);
     maxFieldIndex = max(maxFieldIndex, zeroBasedIndex1, zeroBasedIndex2);
 }
@@ -859,7 +859,7 @@ void tsvFilter(in TsvFilterOptions cmdopt, in string[] inputFiles)
                     if (cmdopt.invert) passed = !passed;
                     if (passed)
                     {
-                        bool wasFlushed = bufferedOutput.appendln(line);
+                        const bool wasFlushed = bufferedOutput.appendln(line);
                         if (wasFlushed) inputLinesWithoutBufferFlush = 0;
                         else if (inputLinesWithoutBufferFlush > maxInputLinesWithoutBufferFlush)
                         {

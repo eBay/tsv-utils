@@ -35,7 +35,7 @@ else
         }
 
         TsvSampleOptions cmdopt;
-        auto r = cmdopt.processArgs(cmdArgs);
+        const r = cmdopt.processArgs(cmdArgs);
         if (!r[0]) return r[1];
         version(LDC_Profile)
         {
@@ -58,7 +58,7 @@ else
     }
 }
 
-auto helpText = q"EOS
+immutable helpText = q"EOS
 Synopsis: tsv-sample [options] [file...]
 
 Sample input lines or randomize their order. Several modes of operation
@@ -89,7 +89,7 @@ Use '--help-verbose' for detailed information.
 Options:
 EOS";
 
-auto helpTextVerbose = q"EOS
+immutable helpTextVerbose = q"EOS
 Synopsis: tsv-sample [options] [file...]
 
 Sample input lines or randomize their order. Several modes of operation
@@ -538,7 +538,7 @@ if (isOutputRange!(OutputRange, char))
             }
             else
             {
-                double lineScore = uniform01(randomGenerator);
+                immutable double lineScore = uniform01(randomGenerator);
 
                 static if (generateRandomAll)
                 {
@@ -962,13 +962,13 @@ if (isOutputRange!(OutputRange, char))
             {
                 static if (!isWeighted)
                 {
-                    double lineScore = uniform01(randomGenerator);
+                    immutable double lineScore = uniform01(randomGenerator);
                 }
                 else
                 {
-                    double lineWeight =
+                    immutable double lineWeight =
                         getFieldValue!double(line, cmdopt.weightField, cmdopt.delim, filename, fileLineNum);
-                    double lineScore =
+                    immutable double lineScore =
                         (lineWeight > 0.0)
                         ? uniform01(randomGenerator) ^^ (1.0 / lineWeight)
                         : 0.0;
@@ -993,7 +993,7 @@ if (isOutputRange!(OutputRange, char))
      * The asserts here avoid issues with the current binaryheap implementation. They
      * detect use of backing stores having a length not synchronized to the reservoir.
      */
-    size_t numLines = reservoir.length;
+    immutable size_t numLines = reservoir.length;
     assert(numLines == dataStore.length);
 
     while (!reservoir.empty) reservoir.removeFront;
@@ -1049,9 +1049,10 @@ if (isOutputRange!(OutputRange, char))
             }
             else
                {
-                double lineWeight = getFieldValue!double(line, cmdopt.weightField, cmdopt.delim,
-                                                         filename, fileLineNum);
-                double lineScore =
+                immutable double lineWeight =
+                    getFieldValue!double(line, cmdopt.weightField, cmdopt.delim, filename, fileLineNum);
+
+                immutable double lineScore =
                     (lineWeight > 0.0)
                     ? uniform01(randomGenerator) ^^ (1.0 / lineWeight)
                     : 0.0;
@@ -1149,7 +1150,7 @@ if (isOutputRange!(OutputRange, char))
                 }
                 else
                 {
-                    size_t i = uniform(0, totalLineNum, randomGenerator);
+                    immutable size_t i = uniform(0, totalLineNum, randomGenerator);
                     if (i < reservoir.length) reservoir[i] = line.idup;
                 }
 
@@ -1230,7 +1231,7 @@ if (isOutputRange!(OutputRange, char))
      * Read all file data into memory. Then split the data into lines and assign a
      * random value to each line. identifyFileLines also writes the first header line.
      */
-    auto fileData = cmdopt.files.map!FileData.array;
+    const fileData = cmdopt.files.map!FileData.array;
     auto inputLines = fileData.identifyFileLines!(Yes.hasRandomValue, isWeighted)(cmdopt, outputStream);
 
     /*
@@ -1276,7 +1277,7 @@ if (isOutputRange!(OutputRange, char))
     /*
      * Read all file data into memory and split into lines.
      */
-    auto fileData = cmdopt.files.map!FileData.array;
+    const fileData = cmdopt.files.map!FileData.array;
     auto inputLines = fileData.identifyFileLines!(No.hasRandomValue, No.isWeighted)(cmdopt, outputStream);
 
     /*
@@ -1312,8 +1313,8 @@ if (isOutputRange!(OutputRange, char))
     /*
      * Read all file data into memory and split the data into lines.
      */
-    auto fileData = cmdopt.files.map!FileData.array;
-    auto inputLines = fileData.identifyFileLines!(No.hasRandomValue, No.isWeighted)(cmdopt, outputStream);
+    const fileData = cmdopt.files.map!FileData.array;
+    const inputLines = fileData.identifyFileLines!(No.hasRandomValue, No.isWeighted)(cmdopt, outputStream);
 
     if (inputLines.length > 0)
     {
@@ -1323,7 +1324,7 @@ if (isOutputRange!(OutputRange, char))
         size_t numLeft = (cmdopt.sampleSize == 0) ? 1 : cmdopt.sampleSize;
         while (numLeft != 0)
         {
-            size_t index = uniform(0, inputLines.length, randomGenerator);
+            immutable size_t index = uniform(0, inputLines.length, randomGenerator);
             outputStream.put(inputLines[index].data);
             outputStream.put("\n");
             if (cmdopt.sampleSize != 0) numLeft--;
@@ -1358,7 +1359,7 @@ struct FileData
 
         if (filename != "-")
         {
-            ulong filesize = ifile.size;
+            immutable ulong filesize = ifile.size;
             if (filesize < ulong.max) dataAppender.reserve(min(filesize, size_t.max));
         }
 
@@ -1416,7 +1417,7 @@ if (isOutputRange!(OutputRange, char))
     foreach (fd; fileData)
     {
         /* Drop the last newline to avoid adding an extra empty line. */
-        auto data = (fd.data.length > 0 && fd.data[$ - 1] == '\n') ? fd.data[0 .. $ - 1] : fd.data;
+        const data = (fd.data.length > 0 && fd.data[$ - 1] == '\n') ? fd.data[0 .. $ - 1] : fd.data;
         foreach (fileLineNum, ref line; data.splitter('\n').enumerate(1))
         {
             if (fileLineNum == 1) throwIfWindowsNewlineOnUnix(line, fd.filename, fileLineNum);
@@ -1444,14 +1445,14 @@ if (isOutputRange!(OutputRange, char))
                 {
                     static if (!isWeighted)
                     {
-                        double randomValue = uniform01(randomGenerator);
+                        immutable double randomValue = uniform01(randomGenerator);
                     }
                     else
                     {
-                        double lineWeight =
+                        immutable double lineWeight =
                             getFieldValue!double(line, cmdopt.weightField, cmdopt.delim,
                                                  fd.filename, fileLineNum);
-                        double randomValue =
+                        immutable double randomValue =
                             (lineWeight > 0.0)
                             ? uniform01(randomGenerator) ^^ (1.0 / lineWeight)
                             : 0.0;
@@ -1505,7 +1506,7 @@ if (isOutputRange!(OutputRange, char))
 
     immutable spec17g = singleSpec("%.17g");
 
-    auto formatSpec =
+    immutable formatSpec =
         (value >= 1e-01) ? spec17f :
         (value >= 1e-02) ? spec18f :
         (value >= 1e-03) ? spec19f :
