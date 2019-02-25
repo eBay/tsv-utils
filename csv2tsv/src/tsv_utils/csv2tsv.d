@@ -17,7 +17,7 @@ import std.range;
 import std.traits : Unqual;
 import std.typecons : Nullable, tuple;
 
-auto helpText = q"EOS
+immutable helpText = q"EOS
 Synopsis: csv2tsv [options] [file...]
 
 csv2tsv converts comma-separated text (CSV) to tab-separated format (TSV). Records
@@ -27,7 +27,7 @@ Use '--help-verbose' for details the CSV formats accepted.
 Options:
 EOS";
 
-auto helpTextVerbose = q"EOS
+immutable helpTextVerbose = q"EOS
 Synopsis: csv2tsv [options] [file...]
 
 csv2tsv converts CSV (comma-separated) text to TSV (tab-separated) format. Records
@@ -177,7 +177,7 @@ else
         }
 
         Csv2tsvOptions cmdopt;
-        auto r = cmdopt.processArgs(cmdArgs);
+        const r = cmdopt.processArgs(cmdArgs);
         if (!r[0]) return r[1];
         version(LDC_Profile)
         {

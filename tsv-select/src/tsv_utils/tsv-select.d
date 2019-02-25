@@ -25,7 +25,7 @@ import std.stdio;
 import std.typecons : tuple, Tuple;
 
 // 'Heredoc' style help text. When printed it is followed by a getopt formatted option list.
-auto helpText = q"EOS
+immutable helpText = q"EOS
 Synopsis: tsv-select -f <field-list> [options] [file...]
 
 tsv-select reads files or standard input and writes specified fields to standard
@@ -140,7 +140,7 @@ int main(string[] cmdArgs)
     }
 
     TsvSelectOptions cmdopt;
-    auto r = cmdopt.processArgs(cmdArgs);
+    const r = cmdopt.processArgs(cmdArgs);
     if (!r[0]) return r[1];
     version(LDC_Profile)
     {
@@ -263,7 +263,7 @@ void tsvSelect(CTERestLocation cteRest)(in TsvSelectOptions cmdopt, in string[] 
                 }
                 else
                 {
-                    auto numMatched = fieldReordering.processNextField(fieldIndex, fieldValue);
+                    immutable numMatched = fieldReordering.processNextField(fieldIndex, fieldValue);
                     if (numMatched == 0) leftOverFieldsAppender.put(fieldValue);
                 }
             }
