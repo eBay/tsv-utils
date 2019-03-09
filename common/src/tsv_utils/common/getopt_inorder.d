@@ -13,7 +13,7 @@ This should only be used when retaining order is important. Though minimized, th
 cases that don't work as expected, the most important involving option arguments starting
 with a dash. See the getoptInorder function comments for specifics.
 
-Copyright (c) 2016-2018, eBay Software Foundation
+Copyright (c) 2016-2019, eBay Software Foundation
 Initially written by Jon Degenhardt
 
 License: Boost License 1.0 (http://boost.org/LICENSE_1_0.txt)
