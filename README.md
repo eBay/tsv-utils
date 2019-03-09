@@ -4,7 +4,7 @@ This is a set of command line utilities for manipulating large tabular data file
 
 The tools were originally developed in Perl and used for day-to-day work in a large scale data mining environment. One of the tools was re-written in D as an exercise exploring the language. Significant performance gains and agreeable programmer characteristics soon led to writing additional utilities in D. Information on the D programming language is available at [dlang.org](https://dlang.org/).
 
-These tools are especially useful when working with large data sets, as they generally run faster than other tools providing similar functionality, often by significant margins.
+These tools are especially useful when working with large data sets, as they run faster than other tools providing similar functionality, often by significant margins.
 
 File an [issue](https://github.com/eBay/tsv-utils/issues) if you have problems, questions or suggestions.
 
@@ -19,7 +19,7 @@ File an [issue](https://github.com/eBay/tsv-utils/issues) if you have problems, 
 * [Performance Studies](docs/Performance.md) (quick access: [2018 Comparative Benchmarks](docs/comparative-benchmarks-2018.md))
 * [Comparing TSV and CSV formats](docs/comparing-tsv-and-csv.md)
 * [Building with Link Time Optimization (LTO) and Profile Guided Optimization (PGO)](docs/BuildingWithLTO.md)
-* [About the code](docs/AboutTheCode.md) (see also: [code documentation](https://tsv-utils.dpldocs.info/))
+* [About the code](docs/AboutTheCode.md) (see also: [tsv-utils code documentation](https://tsv-utils.dpldocs.info/))
 * [Other toolkits](docs/OtherToolkits.md)
 
 **Talks and blog posts:**
@@ -44,10 +44,10 @@ Speed matters when processing large files, these tools are the fastest the autho
 
 The rest of this section contains a one line description of each tool followed by longer introductions. There is more detail in the [tool reference](docs/ToolReference.md).
 
-* [tsv-filter](#tsv-filter) - Filter data file rows via numeric and string comparisons.
+* [tsv-filter](#tsv-filter) - Filter rows via numeric and string comparisons.
 * [tsv-select](#tsv-select) - Keep a subset of columns (fields). Like `cut`, but with field reordering.
 * [tsv-summarize](#tsv-summarize) - Summary statistics on selected fields, against the full data set or grouped by key.
-* [tsv-sample](#tsv-sample) - Subsample input lines or randomize their order. Several sampling methods are available.
+* [tsv-sample](#tsv-sample) - Sample input lines or randomize their order. A number of sampling methods are available.
 * [tsv-join](#tsv-join) - Join lines from multiple files using fields as a key.
 * [tsv-uniq](#tsv-uniq) - Filter out duplicate lines using fields as a key.
 * [tsv-append](#tsv-append) - Concatenate TSV files. Header-aware; supports source file tracking.
@@ -242,11 +242,13 @@ $ curl -L https://github.com/eBay/tsv-utils/releases/download/v1.3.2/tsv-utils-v
 
 See the [Github releases](https://github.com/eBay/tsv-utils/releases) page for the latest release.
 
-For some distributions, a package can directly be installed:
+For some distributions a package can directly be installed:
 
 | Distribution | Command               |
 | ------------ | --------------------- |
 | Arch Linux   | `pacaur -S tsv-utils` (see [`tsv-utils`](https://aur.archlinux.org/packages/tsv-utils/))
+
+*Note: The distributions above are not updated as frequently as the [Github releases](https://github.com/eBay/tsv-utils/releases) page.*
 
 ### Build from source files
 

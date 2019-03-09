@@ -11,13 +11,15 @@ $(LIST
     * [quantile] - Generates quantile values for a data set.
 )
 
-Copyright (c) 2016-2018, eBay Software Foundation
+Copyright (c) 2016-2019, eBay Software Foundation
 Initially written by Jon Degenhardt
 
 License: Boost Licence 1.0 (http://boost.org/LICENSE_1_0.txt)
 */
 
 module tsv_utils.common.numerics;
+
+import std.traits : isFloatingPoint, isIntegral, Unqual;
 
 /**
 formatNumber is an alternate way to print numbers. It is especially useful when
@@ -39,8 +41,6 @@ $(LIST
       chopped in all cases.
 )
 */
-import std.traits : isFloatingPoint, isIntegral, Unqual;
-
 auto formatNumber(T, size_t readablePrecisionMax = 6)(T num, const size_t floatPrecision = 12)
 if (isFloatingPoint!T || isIntegral!T)
 {
@@ -560,6 +560,10 @@ enum QuantileInterpolation
     R9 = 9, /// R quantile type 9
 }
 
+
+import std.traits : isFloatingPoint, isNumeric, Unqual;
+import std.range;
+
 /**
 Returns the quantile in a data vector for a cumulative probability.
 
@@ -577,10 +581,6 @@ auto q1 = [0.25, 0.5, 0.75].map!(p => p.quantile(data));  // 57, 73, 97
 auto q2 = [0.25, 0.5, 0.75].map!(p => p.quantile(data), QuantileInterpolation.R8);  //45.3333, 73, 102.333
 ----
 */
-
-import std.traits : isFloatingPoint, isNumeric, Unqual;
-import std.range;
-
 double quantile(ProbType, Range)
     (const ProbType prob, Range data, QuantileInterpolation method = QuantileInterpolation.R7)
 if (isRandomAccessRange!Range && hasLength!Range && isNumeric!(ElementType!Range) &&

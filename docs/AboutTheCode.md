@@ -18,17 +18,19 @@ There is directory for each tool, plus one directory for shared code (`common`).
 * A function reading reading input and processing each line. e.g. `tsvUniq`.
 * A `main` routine putting it all together.
 
-Documentation for each tool is found near the top of the main file, both in the help text and the option documentation.
+Documentation for each tool is found near the top of the main file, both in the help text and the option documentation. The [tsv-utils code documentation](https://tsv-utils.dpldocs.info/) is also useful for understanding the code.
 
 The simplest tool is `number-lines`. It is useful as an illustration of the code outline followed by the other tools. `tsv-select` and `tsv-uniq` also have straightforward functionality, but employ a few more D programming concepts. `tsv-select` uses templates and compile-time programming in a somewhat less common way, it may be clearer after gaining some familiarity with D templates. A non-templatized version of the source code is included for comparison.
 
 `tsv-append` has a simple code structure. It's one of the newer tools. It's only additional complexity is that writes to an 'output range' rather than directly to standard output. This enables better encapsulation for unit testing. `tsv-sample`, another new tool, is written in a similar fashion. The code is only a bit more complicated, but the algorithm is much more interesting.
 
+`tsv-sample` is one of the newest tools and one of the better code examples. Sampling is algorithmically interesting and the code includes implementations of a number of sampling methods.
+
 `tsv-join` and `tsv-filter` also have relatively straightforward functionality, but support more use cases resulting in more code. `tsv-filter` in particular has more elaborate setup steps that take a bit more time to understand. `tsv-filter` uses several features like delegates (closures) and regular expressions not used in the other tools.
 
 `tsv-summarize` is one or the more recent tools. It uses a more object oriented style than the other tools, this makes it relatively easy to add new operations. It also makes quite extensive use of built-in unit tests.
 
-The `common` directory has code shared by the tools. At present this very limited, one helper class written as template. In addition to being an example of a simple template, it also makes use of a D ranges, a very useful sequence abstraction, and built-in unit tests.
+The `common` directory has code shared by the tools. See the [tsv-utils.common code documentation](https://tsv-utils.dpldocs.info/tsv_utils.common.html) for a description of the classes.
 
 New tools can be added by creating a new directory and a source tree following the same pattern as one of existing tools.
 
@@ -47,7 +49,7 @@ A useful aspect of D is that is additional optimization can be made as the need 
 * The `InputFieldReordering` class in the `common` directory. This is an optimization for processing only the first N fields needed for the individual command invocation. This is used by several tools.
 * The template expansion done in `tsv-select`. This reduces the number of if-tests in the inner loop.
 * Reusing arrays every input line, without re-allocating. Some programmers would do this naturally on the first attempt, for others it would be a second pass optimization.
-* The output buffering done in `csv2tsv`. The algorithm used naturally generates a single byte at a time, but writing a byte-at-a-time incurs a costly system call. Buffering the writes sped the program up signficantly.
+* Output buffering, which was added to a number tools well after the initial implementations. This sped up several of the tools considerably.
 
 ## Building and makefile
 

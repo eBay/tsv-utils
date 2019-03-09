@@ -26,7 +26,7 @@ $(LIST
       Windows newlines in input.
 )
 
-Copyright (c) 2015-2018, eBay Software Foundation
+Copyright (c) 2015-2019, eBay Software Foundation
 Initially written by Jon Degenhardt
 
 License: Boost Licence 1.0 (http://boost.org/LICENSE_1_0.txt)
@@ -363,6 +363,11 @@ unittest
     }
 }
 
+
+import std.stdio : isFileHandle;
+import std.range : isOutputRange;
+import std.traits : Unqual;
+
 /**
 BufferedOutputRange is a performance enhancement over writing directly to an output
 stream. It holds a File open for write or an OutputRange. Ouput is accumulated in an
@@ -408,11 +413,6 @@ $(LIST
 The internal buffer is automatically flushed when the BufferedOutputRange goes out of
 scope.
 */
-
-import std.stdio : isFileHandle;
-import std.range : isOutputRange;
-import std.traits : Unqual;
-
 struct BufferedOutputRange(OutputTarget)
 if (isFileHandle!(Unqual!OutputTarget) || isOutputRange!(Unqual!OutputTarget, char))
 {
