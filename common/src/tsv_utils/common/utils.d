@@ -479,6 +479,22 @@ if (isFileHandle!(Unqual!OutputTarget) || isOutputRange!(Unqual!OutputTarget, ch
         if (_outputBuffer.data.length >= _maxSize) flush();
     }
 
+    /* maybeFlush is intended for the case where put is called with a trailing newline.
+     *
+     * Flushing occurs if the buffer has a trailing newline and has reached flush size.
+     * Flushing also occurs if the buffer has reached max size.
+     */
+    private bool maybeFlush()
+    {
+        immutable bool doFlush =
+            _outputBuffer.data.length >= _flushSize &&
+            (_outputBuffer.data[$-1] == '\n' || _outputBuffer.data.length >= _maxSize);
+
+        if (doFlush) flush();
+        return doFlush;
+    }
+
+
     private void appendRaw(T)(T stuff)
     {
         import std.range : rangePut = put;
@@ -488,7 +504,7 @@ if (isFileHandle!(Unqual!OutputTarget) || isOutputRange!(Unqual!OutputTarget, ch
     void append(T)(T stuff)
     {
         appendRaw(stuff);
-        flushIfMaxSize();
+        maybeFlush();
     }
 
     bool appendln()
