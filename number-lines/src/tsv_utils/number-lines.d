@@ -129,7 +129,7 @@ void numberLines(in NumberLinesOptions cmdopt, in string[] inputFiles)
 {
     import std.conv : to;
     import std.range;
-    import tsv_utils.common.utils : BufferedOutputRange;
+    import tsv_utils.common.utils : bufferedByLine, BufferedOutputRange;
 
     auto bufferedOutput = BufferedOutputRange!(typeof(stdout))(stdout);
 
@@ -138,7 +138,7 @@ void numberLines(in NumberLinesOptions cmdopt, in string[] inputFiles)
     foreach (filename; (inputFiles.length > 0) ? inputFiles : ["-"])
     {
         auto inputStream = (filename == "-") ? stdin : filename.File();
-        foreach (fileLineNum, line; inputStream.byLine(KeepTerminator.no).enumerate(1))
+        foreach (fileLineNum, line; inputStream.bufferedByLine!(KeepTerminator.no).enumerate(1))
         {
             if (cmdopt.hasHeader && fileLineNum == 1)
             {

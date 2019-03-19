@@ -787,7 +787,7 @@ void tsvFilter(in TsvFilterOptions cmdopt, in string[] inputFiles)
 {
     import std.algorithm : all, any, splitter;
     import std.range;
-    import tsv_utils.common.utils : BufferedOutputRange, throwIfWindowsNewlineOnUnix;
+    import tsv_utils.common.utils : BufferedOutputRange, bufferedByLine, throwIfWindowsNewlineOnUnix;
 
     /* BufferedOutputRange improves performance on narrow files with high percentages of
      * writes. Want responsive output if output is rare, so ensure the first matched
@@ -805,7 +805,7 @@ void tsvFilter(in TsvFilterOptions cmdopt, in string[] inputFiles)
     foreach (filename; (inputFiles.length > 0) ? inputFiles : ["-"])
     {
         auto inputStream = (filename == "-") ? stdin : filename.File();
-        foreach (lineNum, line; inputStream.byLine.enumerate(1))
+        foreach (lineNum, line; inputStream.bufferedByLine.enumerate(1))
         {
             if (lineNum == 1) throwIfWindowsNewlineOnUnix(line, filename, lineNum);
             if (lineNum == 1 && cmdopt.hasHeader)

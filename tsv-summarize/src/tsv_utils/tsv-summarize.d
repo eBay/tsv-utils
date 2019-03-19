@@ -435,7 +435,7 @@ struct TsvSummarizeOptions {
  */
 void tsvSummarize(TsvSummarizeOptions cmdopt, in string[] inputFiles)
 {
-    import tsv_utils.common.utils : throwIfWindowsNewlineOnUnix;
+    import tsv_utils.common.utils : bufferedByLine, throwIfWindowsNewlineOnUnix;
 
     /* Pick the Summarizer based on the number of key-fields entered. */
     auto summarizer =
@@ -459,7 +459,7 @@ void tsvSummarize(TsvSummarizeOptions cmdopt, in string[] inputFiles)
     foreach (filename; (inputFiles.length > 0) ? inputFiles : ["-"])
     {
         auto inputStream = (filename == "-") ? stdin : filename.File();
-        foreach (lineNum, line; inputStream.byLine.enumerate(1))
+        foreach (lineNum, line; inputStream.bufferedByLine.enumerate(1))
         {
             if (lineNum == 1) throwIfWindowsNewlineOnUnix(line, filename, lineNum);
 

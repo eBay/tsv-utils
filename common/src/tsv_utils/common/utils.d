@@ -364,7 +364,7 @@ unittest
 }
 
 
-import std.stdio : isFileHandle;
+import std.stdio : File, isFileHandle, KeepTerminator;
 import std.range : isOutputRange;
 import std.traits : Unqual;
 
@@ -766,6 +766,126 @@ unittest
         assert(app5.data == "123456789012123456789012ab-cdde-gh-ij");
     }
     assert(app5.data == "123456789012123456789012ab-cdde-gh-ij");
+}
+
+/**
+bufferedByLine is a performance enhancement over std.stdio.File.byLine. It works by
+reading a larger buffers from the input stream rather than just reading a single line.
+
+This is work in progress.
+*/
+
+auto bufferedByLine(KeepTerminator keepTerminator = No.keepTerminator, Char = char, ubyte terminator = '\n')
+    (File file)
+if (is(Char == char) || is(Char == ubyte))
+{
+    static struct BufferedByLineImpl
+    {
+        /* Buffer state variables
+         *   - _buffer.length - Full length of allocated buffer.
+         *   - _dataEnd - End of currently valid data (end of last read).
+         *   - _lineStart - Start of current line.
+         *   - _lineEnd - End of current line.
+         */
+        private File _file;
+        private ubyte[] _buffer;
+        private size_t _lineStart = 0;
+        private size_t _lineEnd = 0;
+        private size_t _dataEnd = 0;
+        private enum _readSize = 1024 * 256;
+        private enum _growSize = 1024 * 16;
+
+        this (File f)
+        {
+            _file = f;
+            _buffer = new ubyte[_readSize + _growSize];
+        }
+
+        bool empty() const
+        {
+            return _file.eof && _lineStart == _dataEnd;
+        }
+
+        Char[] front()
+        {
+            assert(!empty, "Attempt to take the front of an empty bufferedByLine.");
+
+            static if (keepTerminator == Yes.keepTerminator)
+            {
+                return cast(Char[]) _buffer[_lineStart .. _lineEnd];
+            }
+            else
+            {
+                assert(_lineStart < _lineEnd);
+                immutable end = (_buffer[_lineEnd - 1] == terminator) ? _lineEnd - 1 : _lineEnd;
+                return cast(Char[]) _buffer[_lineStart .. end];
+            }
+        }
+
+        /* Note: Call popFront at initialization to do the initial read. */
+        void popFront()
+        {
+            import std.algorithm: countUntil, copy, find;
+            assert(!empty, "Attempt to popFront an empty bufferedByLine.");
+
+            _lineStart = _lineEnd;
+
+            //>> auto newlineDistance = _buffer[_lineStart .. _dataEnd].find(terminator).length - 1;
+            //>> if (newlineDistance != 0) _lineEnd = _lineStart + newlineDistance;
+
+            auto newlineDistance = _buffer[_lineStart .. _dataEnd].countUntil(terminator);
+
+            if (newlineDistance != -1)
+            {
+                _lineEnd = _lineStart + newlineDistance + 1;
+            }
+            else
+            {
+                _lineEnd = _dataEnd;
+
+                if (!_file.eof)
+                {
+                    /* Read data from the file to find the next newline. */
+                    if (_lineStart > 0)
+                    {
+                        /* Move remaining data to the start of the buffer. */
+                        immutable remainingLength = _dataEnd - _lineStart;
+                        copy(_buffer[_lineStart .. _dataEnd], _buffer[0 .. remainingLength]);
+                        _lineStart = 0;
+                        _lineEnd = _dataEnd = remainingLength;
+                    }
+                    while (newlineDistance == -1 && !_file.eof)
+                    {
+                        /* Grow the buffer if necessary. */
+                        immutable availableSize = _buffer.length - _dataEnd;
+                        if (availableSize < _readSize)
+                        {
+                            size_t growBy = _growSize;
+                            while (availableSize + growBy < _readSize) growBy += _growSize;
+                            _buffer.length += growBy;
+                        }
+
+                        /* Read the next block. */
+                        _dataEnd +=
+                            _file.rawRead(cast(ubyte[])_buffer[_dataEnd .. _dataEnd + _readSize])
+                            .length;
+
+                        newlineDistance = _buffer[_lineEnd .. _dataEnd].countUntil(terminator);
+                        if (newlineDistance != -1) _lineEnd = _lineEnd + newlineDistance + 1;
+
+                        //>> newlineDistance = _buffer[_lineStart .. _dataEnd].find(terminator).length - 1;
+                        //>> _lineEnd += newlineDistance;
+                    }
+                }
+            }
+        }
+    }
+
+    assert(file.isOpen, "bufferedByLine passed a closed file.");
+
+    auto r = BufferedByLineImpl(file);
+    r.popFront;
+    return r;
 }
 
 /**
