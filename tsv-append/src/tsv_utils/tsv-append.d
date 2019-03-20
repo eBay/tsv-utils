@@ -208,12 +208,14 @@ struct TsvAppendOptions
 void tsvAppend(OutputRange)(TsvAppendOptions cmdopt, auto ref OutputRange outputStream)
 if (isOutputRange!(OutputRange, char))
 {
+    import tsv_utils.common.utils : bufferedByLine;
+
     bool headerWritten = false;
     foreach (filename; (cmdopt.files.length > 0) ? cmdopt.files : ["-"])
     {
         auto inputStream = (filename == "-") ? stdin : filename.File();
         auto sourceName = cmdopt.fileSourceNames[filename];
-        foreach (fileLineNum, line; inputStream.byLine(KeepTerminator.no).enumerate(1))
+        foreach (fileLineNum, line; inputStream.bufferedByLine!(KeepTerminator.no).enumerate(1))
         {
             if (cmdopt.hasHeader && fileLineNum == 1)
             {

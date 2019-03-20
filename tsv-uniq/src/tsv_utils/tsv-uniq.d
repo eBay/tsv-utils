@@ -240,7 +240,7 @@ int main(string[] cmdArgs)
  */
 void tsvUniq(in TsvUniqOptions cmdopt, in string[] inputFiles)
 {
-    import tsv_utils.common.utils : InputFieldReordering, BufferedOutputRange;
+    import tsv_utils.common.utils : InputFieldReordering, bufferedByLine, BufferedOutputRange;
     import std.algorithm : splitter;
     import std.array : join;
     import std.conv : to;
@@ -265,7 +265,7 @@ void tsvUniq(in TsvUniqOptions cmdopt, in string[] inputFiles)
     foreach (filename; (inputFiles.length > 0) ? inputFiles : ["-"])
     {
         auto inputStream = (filename == "-") ? stdin : filename.File();
-        foreach (lineNum, line; inputStream.byLine.enumerate(1))
+        foreach (lineNum, line; inputStream.bufferedByLine.enumerate(1))
         {
             if (cmdopt.hasHeader && lineNum == 1)
             {

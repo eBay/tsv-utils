@@ -12,6 +12,10 @@ $(LIST
     * [BufferedOutputRange] - An OutputRange with an internal buffer used to buffer
       output. Intended for use with stdout, it is a significant performance benefit.
 
+    * [bufferedByLine] - Returns an input range that reads from a File handle line by
+      line. It is similar to the standard library method std.stdio.File.byLine, but is
+      quite a bit faster due to the use of buffering when reading.
+
     * [joinAppend] - A function that performs a join, but appending the join output to
       an output stream. It is a performance improvement over using join or joiner with
       writeln.
@@ -770,9 +774,15 @@ unittest
 
 /**
 bufferedByLine is a performance enhancement over std.stdio.File.byLine. It works by
-reading a larger buffers from the input stream rather than just reading a single line.
+reading a large buffer from the input stream rather than just reading a single line.
 
-This is work in progress.
+The file argument needs to be a File open for reading, typically a real file or
+standard input. Use the Yes.keepTerminator template parameter to keep the newline.
+This is similar to stdio.File.byLine, except specified as a template paramter
+rather than a runtime parameter.
+
+bufferedByLine is often quite a bit faster than stdio.File.byLine. Buffering does
+mean that input is not read until a full buffer is available.
 */
 
 auto bufferedByLine(KeepTerminator keepTerminator = No.keepTerminator, Char = char, ubyte terminator = '\n')
