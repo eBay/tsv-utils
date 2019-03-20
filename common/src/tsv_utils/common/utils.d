@@ -828,54 +828,48 @@ if (is(Char == char) || is(Char == ubyte))
             import std.algorithm: countUntil, copy, find;
             assert(!empty, "Attempt to popFront an empty bufferedByLine.");
 
+            /* Pop the current line. */
             _lineStart = _lineEnd;
 
-            //>> auto newlineDistance = _buffer[_lineStart .. _dataEnd].find(terminator).length - 1;
-            //>> if (newlineDistance != 0) _lineEnd = _lineStart + newlineDistance;
+            /* Setup the next line if more data is available, either in the buffer or
+             * the file. The next line ends at the next newline, if there is one.
+             *
+             * Note: 'find' returns the slice starting with the character searched for,
+             * or an empty range if not found.
+             */
+            auto found = _buffer[_lineStart .. _dataEnd].find(terminator);
+            _lineEnd = found.empty ? _dataEnd : _dataEnd - found.length + 1;
 
-            auto newlineDistance = _buffer[_lineStart .. _dataEnd].countUntil(terminator);
-
-            if (newlineDistance != -1)
+            if (_lineEnd == _dataEnd && !_file.eof)
             {
-                _lineEnd = _lineStart + newlineDistance + 1;
-            }
-            else
-            {
-                _lineEnd = _dataEnd;
-
-                if (!_file.eof)
+                /* No newline in current buffer. Read from the file to find the next newline. */
+                if (_lineStart > 0)
                 {
-                    /* Read data from the file to find the next newline. */
-                    if (_lineStart > 0)
+                    /* Move remaining data to the start of the buffer. */
+                    immutable remainingLength = _dataEnd - _lineStart;
+                    copy(_buffer[_lineStart .. _dataEnd], _buffer[0 .. remainingLength]);
+                    _lineStart = 0;
+                    _lineEnd = _dataEnd = remainingLength;
+                }
+
+                while (_lineEnd == _dataEnd && !_file.eof)
+                {
+                    /* Grow the buffer if necessary. */
+                    immutable availableSize = _buffer.length - _dataEnd;
+                    if (availableSize < _readSize)
                     {
-                        /* Move remaining data to the start of the buffer. */
-                        immutable remainingLength = _dataEnd - _lineStart;
-                        copy(_buffer[_lineStart .. _dataEnd], _buffer[0 .. remainingLength]);
-                        _lineStart = 0;
-                        _lineEnd = _dataEnd = remainingLength;
+                        size_t growBy = _growSize;
+                        while (availableSize + growBy < _readSize) growBy += _growSize;
+                        _buffer.length += growBy;
                     }
-                    while (newlineDistance == -1 && !_file.eof)
-                    {
-                        /* Grow the buffer if necessary. */
-                        immutable availableSize = _buffer.length - _dataEnd;
-                        if (availableSize < _readSize)
-                        {
-                            size_t growBy = _growSize;
-                            while (availableSize + growBy < _readSize) growBy += _growSize;
-                            _buffer.length += growBy;
-                        }
 
-                        /* Read the next block. */
-                        _dataEnd +=
-                            _file.rawRead(cast(ubyte[])_buffer[_dataEnd .. _dataEnd + _readSize])
-                            .length;
+                    /* Read the next block. */
+                    _dataEnd +=
+                        _file.rawRead(cast(ubyte[])_buffer[_dataEnd .. _dataEnd + _readSize])
+                        .length;
 
-                        newlineDistance = _buffer[_lineEnd .. _dataEnd].countUntil(terminator);
-                        if (newlineDistance != -1) _lineEnd = _lineEnd + newlineDistance + 1;
-
-                        //>> newlineDistance = _buffer[_lineStart .. _dataEnd].find(terminator).length - 1;
-                        //>> _lineEnd += newlineDistance;
-                    }
+                    found = _buffer[_lineEnd .. _dataEnd].find(terminator);
+                    _lineEnd = found.empty ? _dataEnd : _dataEnd - found.length + 1;
                 }
             }
         }
