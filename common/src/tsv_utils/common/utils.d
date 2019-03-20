@@ -792,7 +792,7 @@ if (is(Char == char) || is(Char == ubyte))
         private size_t _lineStart = 0;
         private size_t _lineEnd = 0;
         private size_t _dataEnd = 0;
-        private enum _readSize = 1024 * 256;
+        private enum _readSize = 1024 * 128;
         private enum _growSize = 1024 * 16;
 
         this (File f)
@@ -831,18 +831,23 @@ if (is(Char == char) || is(Char == ubyte))
             /* Pop the current line. */
             _lineStart = _lineEnd;
 
-            /* Setup the next line if more data is available, either in the buffer or
+            /* Set up the next line if more data is available, either in the buffer or
              * the file. The next line ends at the next newline, if there is one.
              *
-             * Note: 'find' returns the slice starting with the character searched for,
-             * or an empty range if not found.
+             * Notes:
+             * - 'find' returns the slice starting with the character searched for, or
+             *   an empty range if not found.
+             * - _lineEnd is set to _dataEnd both when the current buffer does not have
+             *   a newline and when it ends with one. This is reflected in the if-test.
              */
             auto found = _buffer[_lineStart .. _dataEnd].find(terminator);
             _lineEnd = found.empty ? _dataEnd : _dataEnd - found.length + 1;
 
-            if (_lineEnd == _dataEnd && !_file.eof)
+            if (found.empty && !_file.eof)
             {
                 /* No newline in current buffer. Read from the file to find the next newline. */
+                assert(_lineEnd == _dataEnd);
+
                 if (_lineStart > 0)
                 {
                     /* Move remaining data to the start of the buffer. */
