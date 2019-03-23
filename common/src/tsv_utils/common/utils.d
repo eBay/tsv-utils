@@ -837,8 +837,7 @@ if (is(Char == char) || is(Char == ubyte))
         /* Note: Call popFront at initialization to do the initial read. */
         void popFront()
         {
-            import std.stdio;
-            import std.algorithm: countUntil, copy, find;
+            import std.algorithm: copy, find;
             assert(!empty, "Attempt to popFront an empty bufferedByLine.");
 
             /* Pop the current line. */
@@ -851,14 +850,16 @@ if (is(Char == char) || is(Char == ubyte))
              * - 'find' returns the slice starting with the character searched for, or
              *   an empty range if not found.
              * - _lineEnd is set to _dataEnd both when the current buffer does not have
-             *   a newline and when it ends with one. This is reflected in the if-test.
+             *   a newline and when it ends with one.
              */
             auto found = _buffer[_lineStart .. _dataEnd].find(terminator);
             _lineEnd = found.empty ? _dataEnd : _dataEnd - found.length + 1;
 
             if (found.empty && !_file.eof)
             {
-                /* No newline in current buffer. Read from the file to find the next newline. */
+                /* No newline in current buffer. Read from the file until the next
+                 * newline is found.
+                 */
                 assert(_lineEnd == _dataEnd);
 
                 if (_lineStart > 0)
@@ -870,7 +871,7 @@ if (is(Char == char) || is(Char == ubyte))
                     _lineEnd = _dataEnd = remainingLength;
                 }
 
-                while (found.empty && !_file.eof)
+                do
                 {
                     /* Grow the buffer if necessary. */
                     immutable availableSize = _buffer.length - _dataEnd;
@@ -888,7 +889,8 @@ if (is(Char == char) || is(Char == ubyte))
 
                     found = _buffer[_lineEnd .. _dataEnd].find(terminator);
                     _lineEnd = found.empty ? _dataEnd : _dataEnd - found.length + 1;
-                }
+
+                } while (found.empty && !_file.eof);
             }
         }
     }
