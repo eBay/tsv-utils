@@ -292,7 +292,7 @@ int main(string[] cmdArgs)
  */
 void tsvJoin(in TsvJoinOptions cmdopt, in string[] inputFiles)
 {
-    import tsv_utils.common.utils : InputFieldReordering, BufferedOutputRange, throwIfWindowsNewlineOnUnix;
+    import tsv_utils.common.utils : InputFieldReordering, bufferedByLine, BufferedOutputRange, throwIfWindowsNewlineOnUnix;
     import std.algorithm : splitter;
     import std.array : join;
     import std.range;
@@ -355,7 +355,7 @@ void tsvJoin(in TsvJoinOptions cmdopt, in string[] inputFiles)
     {
         bool needPerFieldProcessing = (numKeyFields > 0) || (numAppendFields > 0);
         auto filterStream = (cmdopt.filterFile == "-") ? stdin : cmdopt.filterFile.File;
-        foreach (lineNum, line; filterStream.byLine.enumerate(1))
+        foreach (lineNum, line; filterStream.bufferedByLine.enumerate(1))
         {
             debug writeln("[filter line] |", line, "|");
             if (needPerFieldProcessing)
@@ -434,7 +434,7 @@ void tsvJoin(in TsvJoinOptions cmdopt, in string[] inputFiles)
     foreach (filename; (inputFiles.length > 0) ? inputFiles : ["-"])
     {
         auto inputStream = (filename == "-") ? stdin : filename.File();
-        foreach (lineNum, line; inputStream.byLine.enumerate(1))
+        foreach (lineNum, line; inputStream.bufferedByLine.enumerate(1))
         {
             debug writeln("[input line] |", line, "|");
 

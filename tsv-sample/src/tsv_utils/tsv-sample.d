@@ -500,7 +500,7 @@ void bernoulliSampling(Flag!"generateRandomAll" generateRandomAll, OutputRange)
 if (isOutputRange!(OutputRange, char))
 {
     import std.random : Random = Mt19937, uniform01;
-    import tsv_utils.common.utils : throwIfWindowsNewlineOnUnix;
+    import tsv_utils.common.utils : bufferedByLine, throwIfWindowsNewlineOnUnix;
 
     static if (generateRandomAll) assert(cmdopt.genRandomInorder);
     else assert(!cmdopt.genRandomInorder);
@@ -513,7 +513,7 @@ if (isOutputRange!(OutputRange, char))
     foreach (filename; cmdopt.files)
     {
         auto inputStream = (filename == "-") ? stdin : filename.File();
-        foreach (fileLineNum, line; inputStream.byLine(KeepTerminator.no).enumerate(1))
+        foreach (fileLineNum, line; inputStream.bufferedByLine!(KeepTerminator.no).enumerate(1))
         {
             if (fileLineNum == 1) throwIfWindowsNewlineOnUnix(line, filename, fileLineNum);
             if (fileLineNum == 1 && cmdopt.hasHeader)
@@ -615,7 +615,7 @@ void bernoulliSkipSampling(OutputRange)(TsvSampleOptions cmdopt, OutputRange out
     import std.conv : to;
     import std.math : log, trunc;
     import std.random : Random = Mt19937, uniform01;
-    import tsv_utils.common.utils : throwIfWindowsNewlineOnUnix;
+    import tsv_utils.common.utils : bufferedByLine, throwIfWindowsNewlineOnUnix;
 
     assert(cmdopt.inclusionProbability > 0.0 && cmdopt.inclusionProbability < 1.0);
     assert(!cmdopt.printRandom);
@@ -637,7 +637,7 @@ void bernoulliSkipSampling(OutputRange)(TsvSampleOptions cmdopt, OutputRange out
     foreach (filename; cmdopt.files)
     {
         auto inputStream = (filename == "-") ? stdin : filename.File();
-        foreach (fileLineNum, line; inputStream.byLine(KeepTerminator.no).enumerate(1))
+        foreach (fileLineNum, line; inputStream.bufferedByLine!(KeepTerminator.no).enumerate(1))
         {
             if (fileLineNum == 1) throwIfWindowsNewlineOnUnix(line, filename, fileLineNum);
             if (fileLineNum == 1 && cmdopt.hasHeader)
@@ -694,7 +694,7 @@ if (isOutputRange!(OutputRange, char))
     import std.conv : to;
     import std.digest.murmurhash;
     import std.math : lrint;
-    import tsv_utils.common.utils : InputFieldReordering, throwIfWindowsNewlineOnUnix;
+    import tsv_utils.common.utils : bufferedByLine, InputFieldReordering, throwIfWindowsNewlineOnUnix;
 
     static if (generateRandomAll) assert(cmdopt.genRandomInorder);
     else assert(!cmdopt.genRandomInorder);
@@ -721,7 +721,7 @@ if (isOutputRange!(OutputRange, char))
     foreach (filename; cmdopt.files)
     {
         auto inputStream = (filename == "-") ? stdin : filename.File();
-        foreach (fileLineNum, line; inputStream.byLine(KeepTerminator.no).enumerate(1))
+        foreach (fileLineNum, line; inputStream.bufferedByLine!(KeepTerminator.no).enumerate(1))
         {
             if (fileLineNum == 1) throwIfWindowsNewlineOnUnix(line, filename, fileLineNum);
             if (fileLineNum == 1 && cmdopt.hasHeader)
@@ -907,7 +907,7 @@ if (isOutputRange!(OutputRange, char))
     import std.container.array;
     import std.container.binaryheap;
     import std.random : Random = Mt19937, uniform01;
-    import tsv_utils.common.utils : throwIfWindowsNewlineOnUnix;
+    import tsv_utils.common.utils : bufferedByLine, throwIfWindowsNewlineOnUnix;
 
     static if (isWeighted) assert(cmdopt.hasWeightField);
     else assert(!cmdopt.hasWeightField);
@@ -941,7 +941,7 @@ if (isOutputRange!(OutputRange, char))
     foreach (filename; cmdopt.files)
     {
         auto inputStream = (filename == "-") ? stdin : filename.File();
-        foreach (fileLineNum, line; inputStream.byLine(KeepTerminator.no).enumerate(1))
+        foreach (fileLineNum, line; inputStream.bufferedByLine!(KeepTerminator.no).enumerate(1))
         {
             if (fileLineNum == 1) throwIfWindowsNewlineOnUnix(line, filename, fileLineNum);
             if (fileLineNum == 1 && cmdopt.hasHeader)
@@ -1021,7 +1021,7 @@ void generateWeightedRandomValuesInorder(OutputRange)(TsvSampleOptions cmdopt, a
 if (isOutputRange!(OutputRange, char))
 {
     import std.random : Random = Mt19937, uniform01;
-    import tsv_utils.common.utils : throwIfWindowsNewlineOnUnix;
+    import tsv_utils.common.utils : bufferedByLine, throwIfWindowsNewlineOnUnix;
 
     assert(cmdopt.hasWeightField);
 
@@ -1033,7 +1033,7 @@ if (isOutputRange!(OutputRange, char))
     foreach (filename; cmdopt.files)
     {
         auto inputStream = (filename == "-") ? stdin : filename.File();
-        foreach (fileLineNum, line; inputStream.byLine(KeepTerminator.no).enumerate(1))
+        foreach (fileLineNum, line; inputStream.bufferedByLine!(KeepTerminator.no).enumerate(1))
         {
             if (fileLineNum == 1) throwIfWindowsNewlineOnUnix(line, filename, fileLineNum);
             if (fileLineNum == 1 && cmdopt.hasHeader)
@@ -1104,7 +1104,7 @@ void reservoirSamplingAlgorithmR(OutputRange)(TsvSampleOptions cmdopt, auto ref 
 if (isOutputRange!(OutputRange, char))
 {
     import std.random : Random = Mt19937, randomShuffle, uniform;
-    import tsv_utils.common.utils : throwIfWindowsNewlineOnUnix;
+    import tsv_utils.common.utils : bufferedByLine, throwIfWindowsNewlineOnUnix;
 
     assert(cmdopt.sampleSize > 0);
     assert(!cmdopt.hasWeightField);
@@ -1125,7 +1125,7 @@ if (isOutputRange!(OutputRange, char))
     foreach (filename; cmdopt.files)
     {
         auto inputStream = (filename == "-") ? stdin : filename.File();
-        foreach (fileLineNum, line; inputStream.byLine(KeepTerminator.no).enumerate(1))
+        foreach (fileLineNum, line; inputStream.bufferedByLine!(KeepTerminator.no).enumerate(1))
         {
             if (fileLineNum == 1) throwIfWindowsNewlineOnUnix(line, filename, fileLineNum);
             if (fileLineNum == 1 && cmdopt.hasHeader)

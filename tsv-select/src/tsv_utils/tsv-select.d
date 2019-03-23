@@ -199,7 +199,7 @@ enum CTERestLocation { none, first, last };
  */
 void tsvSelect(CTERestLocation cteRest)(in TsvSelectOptions cmdopt, in string[] inputFiles)
 {
-    import tsv_utils.common.utils: BufferedOutputRange, InputFieldReordering, throwIfWindowsNewlineOnUnix;
+    import tsv_utils.common.utils: BufferedOutputRange, bufferedByLine, InputFieldReordering, throwIfWindowsNewlineOnUnix;
     import std.algorithm: splitter;
     import std.format: format;
     import std.range;
@@ -241,7 +241,7 @@ void tsvSelect(CTERestLocation cteRest)(in TsvSelectOptions cmdopt, in string[] 
     foreach (fileNum, filename; (inputFiles.length > 0) ? inputFiles : ["-"])
     {
         auto inputStream = (filename == "-") ? stdin : filename.File();
-        foreach (lineNum, line; inputStream.byLine.enumerate(1))
+        foreach (lineNum, line; inputStream.bufferedByLine.enumerate(1))
         {
             if (lineNum == 1) throwIfWindowsNewlineOnUnix(line, filename, lineNum);
 

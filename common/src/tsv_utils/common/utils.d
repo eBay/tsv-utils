@@ -12,6 +12,10 @@ $(LIST
     * [BufferedOutputRange] - An OutputRange with an internal buffer used to buffer
       output. Intended for use with stdout, it is a significant performance benefit.
 
+    * [bufferedByLine] - An input range that reads from a File handle line by line.
+      It is similar to the standard library method std.stdio.File.byLine, but quite a
+      bit faster. This is achieved by reading in larger blocks and buffering.
+
     * [joinAppend] - A function that performs a join, but appending the join output to
       an output stream. It is a performance improvement over using join or joiner with
       writeln.
@@ -364,7 +368,7 @@ unittest
 }
 
 
-import std.stdio : isFileHandle;
+import std.stdio : File, isFileHandle, KeepTerminator;
 import std.range : isOutputRange;
 import std.traits : Unqual;
 
@@ -766,6 +770,260 @@ unittest
         assert(app5.data == "123456789012123456789012ab-cdde-gh-ij");
     }
     assert(app5.data == "123456789012123456789012ab-cdde-gh-ij");
+}
+
+/**
+bufferedByLine is a performance enhancement over std.stdio.File.byLine. It works by
+reading a large buffer from the input stream rather than just a single line.
+
+The file argument needs to be a File object open for reading, typically a filesystem
+file or standard input. Use the Yes.keepTerminator template parameter to keep the
+newline. This is similar to stdio.File.byLine, except specified as a template paramter
+rather than a runtime parameter.
+
+Reading in blocks does mean that input is not read until a full buffer is available or
+end-of-file is reached. For this reason, bufferedByLine is not appropriate for
+interactive input.
+*/
+
+auto bufferedByLine(KeepTerminator keepTerminator = No.keepTerminator, Char = char,
+                    ubyte terminator = '\n', size_t readSize = 1024 * 128, size_t growSize = 1024 * 16)
+    (File file)
+if (is(Char == char) || is(Char == ubyte))
+{
+    static assert(0 < growSize && growSize <= readSize);
+
+    static class BufferedByLineImpl
+    {
+        /* Buffer state variables
+         *   - _buffer.length - Full length of allocated buffer.
+         *   - _dataEnd - End of currently valid data (end of last read).
+         *   - _lineStart - Start of current line.
+         *   - _lineEnd - End of current line.
+         */
+        private File _file;
+        private ubyte[] _buffer;
+        private size_t _lineStart = 0;
+        private size_t _lineEnd = 0;
+        private size_t _dataEnd = 0;
+
+        this (File f)
+        {
+            _file = f;
+            _buffer = new ubyte[readSize + growSize];
+        }
+
+        bool empty() const
+        {
+            return _file.eof && _lineStart == _dataEnd;
+        }
+
+        Char[] front()
+        {
+            assert(!empty, "Attempt to take the front of an empty bufferedByLine.");
+
+            static if (keepTerminator == Yes.keepTerminator)
+            {
+                return cast(Char[]) _buffer[_lineStart .. _lineEnd];
+            }
+            else
+            {
+                assert(_lineStart < _lineEnd);
+                immutable end = (_buffer[_lineEnd - 1] == terminator) ? _lineEnd - 1 : _lineEnd;
+                return cast(Char[]) _buffer[_lineStart .. end];
+            }
+        }
+
+        /* Note: Call popFront at initialization to do the initial read. */
+        void popFront()
+        {
+            import std.algorithm: copy, find;
+            assert(!empty, "Attempt to popFront an empty bufferedByLine.");
+
+            /* Pop the current line. */
+            _lineStart = _lineEnd;
+
+            /* Set up the next line if more data is available, either in the buffer or
+             * the file. The next line ends at the next newline, if there is one.
+             *
+             * Notes:
+             * - 'find' returns the slice starting with the character searched for, or
+             *   an empty range if not found.
+             * - _lineEnd is set to _dataEnd both when the current buffer does not have
+             *   a newline and when it ends with one.
+             */
+            auto found = _buffer[_lineStart .. _dataEnd].find(terminator);
+            _lineEnd = found.empty ? _dataEnd : _dataEnd - found.length + 1;
+
+            if (found.empty && !_file.eof)
+            {
+                /* No newline in current buffer. Read from the file until the next
+                 * newline is found.
+                 */
+                assert(_lineEnd == _dataEnd);
+
+                if (_lineStart > 0)
+                {
+                    /* Move remaining data to the start of the buffer. */
+                    immutable remainingLength = _dataEnd - _lineStart;
+                    copy(_buffer[_lineStart .. _dataEnd], _buffer[0 .. remainingLength]);
+                    _lineStart = 0;
+                    _lineEnd = _dataEnd = remainingLength;
+                }
+
+                do
+                {
+                    /* Grow the buffer if necessary. */
+                    immutable availableSize = _buffer.length - _dataEnd;
+                    if (availableSize < readSize)
+                    {
+                        size_t growBy = growSize;
+                        while (availableSize + growBy < readSize) growBy += growSize;
+                        _buffer.length += growBy;
+                    }
+
+                    /* Read the next block. */
+                    _dataEnd +=
+                        _file.rawRead(_buffer[_dataEnd .. _dataEnd + readSize])
+                        .length;
+
+                    found = _buffer[_lineEnd .. _dataEnd].find(terminator);
+                    _lineEnd = found.empty ? _dataEnd : _dataEnd - found.length + 1;
+
+                } while (found.empty && !_file.eof);
+            }
+        }
+    }
+
+    assert(file.isOpen, "bufferedByLine passed a closed file.");
+
+    auto r = new BufferedByLineImpl(file);
+    r.popFront;
+    return r;
+}
+
+unittest
+{
+    import std.array : appender;
+    import std.conv : to;
+    import std.file : rmdirRecurse, readText;
+    import std.path : buildPath;
+    import std.range : lockstep;
+    import std.stdio;
+    import tsv_utils.common.unittest_utils;
+
+    auto testDir = makeUnittestTempDir("tsv_utils_buffered_byline");
+    scope(exit) testDir.rmdirRecurse;
+
+    /* Create two data files with the same data. Read both in parallel with byLine and
+     * bufferedByLine and compare each line.
+     */
+    auto data1 = appender!(char[])();
+
+    foreach (i; 1 .. 1001) data1.put('\n');
+    foreach (i; 1 .. 1001) data1.put("a\n");
+    foreach (i; 1 .. 1001) { data1.put(i.to!string); data1.put('\n'); }
+    foreach (i; 1 .. 1001)
+    {
+        foreach (j; 1 .. i+1) data1.put('x');
+        data1.put('\n');
+    }
+
+    string file1a = buildPath(testDir, "file1a.txt");
+    string file1b = buildPath(testDir, "file1b.txt");
+    {
+
+        file1a.File("w").write(data1.data);
+        file1b.File("w").write(data1.data);
+    }
+
+    /* Default parameters. */
+    {
+        auto f1aIn = file1a.File().bufferedByLine!(No.keepTerminator);
+        auto f1bIn = file1b.File().byLine(No.keepTerminator);
+        foreach (a, b; lockstep(f1aIn, f1bIn, StoppingPolicy.requireSameLength)) assert(a == b);
+    }
+    {
+        auto f1aIn = file1a.File().bufferedByLine!(Yes.keepTerminator);
+        auto f1bIn = file1b.File().byLine(Yes.keepTerminator);
+        foreach (a, b; lockstep(f1aIn, f1bIn, StoppingPolicy.requireSameLength)) assert(a == b);
+    }
+
+    /* Smaller read size. This will trigger buffer growth. */
+    {
+        auto f1aIn = file1a.File().bufferedByLine!(No.keepTerminator, char, '\n', 512, 256);
+        auto f1bIn = file1b.File().byLine(No.keepTerminator);
+        foreach (a, b; lockstep(f1aIn, f1bIn, StoppingPolicy.requireSameLength)) assert(a == b);
+    }
+
+    /* Exercise boundary cases in buffer growth.
+     * Note: static-foreach requires DMD 2.076 / LDC 1.6
+     */
+    static foreach (readSize; [1, 2, 4])
+    {
+        static foreach (growSize; 1 .. readSize + 1)
+        {{
+            auto f1aIn = file1a.File().bufferedByLine!(No.keepTerminator, char, '\n', readSize, growSize);
+            auto f1bIn = file1b.File().byLine(No.keepTerminator);
+            foreach (a, b; lockstep(f1aIn, f1bIn, StoppingPolicy.requireSameLength)) assert(a == b);
+        }}
+        static foreach (growSize; 1 .. readSize + 1)
+        {{
+            auto f1aIn = file1a.File().bufferedByLine!(Yes.keepTerminator, char, '\n', readSize, growSize);
+            auto f1bIn = file1b.File().byLine(Yes.keepTerminator);
+            foreach (a, b; lockstep(f1aIn, f1bIn, StoppingPolicy.requireSameLength)) assert(a == b);
+        }}
+    }
+
+
+    /* Files that do not end in a newline. */
+
+    string file2a = buildPath(testDir, "file2a.txt");
+    string file2b = buildPath(testDir, "file2b.txt");
+    string file3a = buildPath(testDir, "file3a.txt");
+    string file3b = buildPath(testDir, "file3b.txt");
+    string file4a = buildPath(testDir, "file4a.txt");
+    string file4b = buildPath(testDir, "file4b.txt");
+    {
+        file1a.File("w").write("a");
+        file1b.File("w").write("a");
+        file2a.File("w").write("ab");
+        file2b.File("w").write("ab");
+        file3a.File("w").write("abc");
+        file3b.File("w").write("abc");
+    }
+
+    static foreach (readSize; [1, 2, 4])
+    {
+        static foreach (growSize; 1 .. readSize + 1)
+        {{
+            auto f1aIn = file1a.File().bufferedByLine!(No.keepTerminator, char, '\n', readSize, growSize);
+            auto f1bIn = file1b.File().byLine(No.keepTerminator);
+            foreach (a, b; lockstep(f1aIn, f1bIn, StoppingPolicy.requireSameLength)) assert(a == b);
+
+            auto f2aIn = file2a.File().bufferedByLine!(No.keepTerminator, char, '\n', readSize, growSize);
+            auto f2bIn = file2b.File().byLine(No.keepTerminator);
+            foreach (a, b; lockstep(f2aIn, f2bIn, StoppingPolicy.requireSameLength)) assert(a == b);
+
+            auto f3aIn = file3a.File().bufferedByLine!(No.keepTerminator, char, '\n', readSize, growSize);
+            auto f3bIn = file3b.File().byLine(No.keepTerminator);
+            foreach (a, b; lockstep(f3aIn, f3bIn, StoppingPolicy.requireSameLength)) assert(a == b);
+        }}
+        static foreach (growSize; 1 .. readSize + 1)
+        {{
+            auto f1aIn = file1a.File().bufferedByLine!(Yes.keepTerminator, char, '\n', readSize, growSize);
+            auto f1bIn = file1b.File().byLine(Yes.keepTerminator);
+            foreach (a, b; lockstep(f1aIn, f1bIn, StoppingPolicy.requireSameLength)) assert(a == b);
+
+            auto f2aIn = file2a.File().bufferedByLine!(Yes.keepTerminator, char, '\n', readSize, growSize);
+            auto f2bIn = file2b.File().byLine(Yes.keepTerminator);
+            foreach (a, b; lockstep(f2aIn, f2bIn, StoppingPolicy.requireSameLength)) assert(a == b);
+
+            auto f3aIn = file3a.File().bufferedByLine!(Yes.keepTerminator, char, '\n', readSize, growSize);
+            auto f3bIn = file3b.File().byLine(Yes.keepTerminator);
+            foreach (a, b; lockstep(f3aIn, f3bIn, StoppingPolicy.requireSameLength)) assert(a == b);
+        }}
+    }
 }
 
 /**
