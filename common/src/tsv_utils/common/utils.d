@@ -956,7 +956,9 @@ unittest
         foreach (a, b; lockstep(f1aIn, f1bIn, StoppingPolicy.requireSameLength)) assert(a == b);
     }
 
-    /* Exercise boundary cases in buffer growth. */
+    /* Exercise boundary cases in buffer growth.
+     * Note: static-foreach requires DMD 2.076 / LDC 1.6
+     */
     static foreach (readSize; [1, 2, 4])
     {
         static foreach (growSize; 1 .. readSize + 1)

@@ -30,12 +30,12 @@ matrix:
 #      osx_image: xcode10.1
 #      group: travis_latest
 #      language: d
-#      d: ldc-1.4.0
+#      d: ldc-1.6.0
 #      env: DUBTEST=1 MAKETEST=1 APPLTO=off
     - os: linux
       group: travis_latest
       language: d
-      d: ldc-1.4.0
+      d: ldc-1.6.0
       env: DUBTEST=0 MAKETEST=1
       if: type IN (pull_request, cron)
 #      if: fork = true
