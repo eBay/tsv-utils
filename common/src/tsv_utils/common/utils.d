@@ -793,7 +793,7 @@ if (is(Char == char) || is(Char == ubyte))
 {
     static assert(0 < growSize && growSize <= readSize);
 
-    static class BufferedByLineImpl
+    static final class BufferedByLineImpl
     {
         /* Buffer state variables
          *   - _buffer.length - Full length of allocated buffer.
