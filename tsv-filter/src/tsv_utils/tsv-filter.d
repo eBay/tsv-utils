@@ -28,6 +28,8 @@ import std.uni: asLowerCase, toLower;
  * a lengthy set, one for each test.
  */
 
+static if (__VERSION__ >= 2085) extern(C) __gshared string[] rt_options = [ "gcopt=cleanup:none" ];
+
 /** Main program. Invokes command line arg processing and tsv-filter to perform
  * the real work. Any errors are caught and reported.
  */

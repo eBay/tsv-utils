@@ -161,6 +161,8 @@ struct Csv2tsvOptions
     }
 }
 
+static if (__VERSION__ >= 2085) extern(C) __gshared string[] rt_options = [ "gcopt=cleanup:none" ];
+
 version(unittest)
 {
     // No main in unittest

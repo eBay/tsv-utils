@@ -32,6 +32,8 @@ Options:
 -h         --help   This help information.
 EOS";
 
+static if (__VERSION__ >= 2085) extern(C) __gshared string[] rt_options = [ "gcopt=cleanup:none" ];
+
 /** keep-header is a simple program, it is implemented entirely in main.
  */
 int main(string[] args)

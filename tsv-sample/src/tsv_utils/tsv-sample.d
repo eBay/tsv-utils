@@ -14,6 +14,8 @@ import std.range;
 import std.stdio;
 import std.typecons : tuple, Flag;
 
+static if (__VERSION__ >= 2085) extern(C) __gshared string[] rt_options = [ "gcopt=cleanup:none" ];
+
 version(unittest)
 {
     // When running unit tests, use main from -main compiler switch.
