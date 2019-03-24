@@ -208,6 +208,8 @@ struct TsvUniqOptions
     }
 }
 
+static if (__VERSION__ >= 2085) extern(C) __gshared string[] rt_options = [ "gcopt=cleanup:none" ];
+
 /** Main program. Processes command line arguments and calls tsvUniq which implements
  * the main processing logic.
  */

@@ -265,6 +265,8 @@ struct TsvJoinOptions
     }
 }
 
+static if (__VERSION__ >= 2085) extern(C) __gshared string[] rt_options = [ "gcopt=cleanup:none" ];
+
 /** Main program.
  */
 int main(string[] cmdArgs)
