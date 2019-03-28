@@ -34,24 +34,33 @@ EOS";
 auto helpTextVerbose = q"EOS
 Synopsis: tsv-uniq [options] [file...]
 
-tsv-uniq identifies equivalent lines in tab-separated value files. Input is read
-line by line, recording a key based on one or more of the fields. Two lines are
-equivalent if they have the same key. When operating in 'uniq' mode, the first
-time a key is seen the line is written to standard output, but subsequent lines
-are discarded. This is similar to the unix 'uniq' program, but based on individual
-fields and without requiring sorted data. This command uniq's on fields 2 and 3:
+tsv-uniq identifies equivalent lines in tab-separated value files. Input
+is read line by line, recording a key for each line based on one or more
+of the fields. Two lines are equivalent if they have the same key. The
+first time a key its line is written to standard output. subsequent lines
+containing the key are discarded. This command uniq's on fields 2 and 3:
 
    tsv-uniq -f 2,3 file.tsv
 
-The alternate to 'uniq' mode is 'equiv-class' identification. In this mode, all
-lines are written to standard output, but with a new field added marking
-equivalent entries with an ID. The ID is simply a one-upped counter. Example:
+This is similar to the unix 'uniq' program, but based on individual
+fields and without requiring sorted data.
+
+tsv-uniq can be run without specifying a key field. In this case the
+whole line is used as a key, same as the Unix 'uniq' program. This works
+on any line-oriented text file, not just TSV files.
+
+The above is the default behavior ('uniq' mode). The alternates to 'uniq'
+mode are 'number' mode and 'equiv-class identification' mode. In
+'equiv-class identification' mode, all lines are written to standard
+output, but with a new field added marking equivalent entries with an ID.
+The ID is simply a one-upped counter. Example:
 
    tsv-uniq --header -f 2,3 --equiv file.tsv
 
-tsv-uniq can be run without specifying a key field. In this case the whole line
-is used as a key, same as the Unix 'uniq' program. This works on any line-oriented
-text file, not just TSV files.
+'Number' mode is similar in that it outputs all input lines. Each line
+is prefixed with a number indicating the occurrence count for that key.
+The line that contains a particular key get the number '1', the second
+line containing the key gets number '2', etc.
 
 The '--r|repeated' option can be used to print only lines occurring more than
 once. '--a|at-least N' is similar, except that it only prints lines occuring at
@@ -73,6 +82,7 @@ struct TsvUniqOptions
 {
     enum defaultEquivHeader = "equiv_id";
     enum defaultEquivStartID = 1;
+    enum defaultNumberLinesHeader = "occurrence";
 
     string programName;
     bool helpVerbose = false;                 // --h|help-verbose
@@ -82,6 +92,8 @@ struct TsvUniqOptions
     bool onlyRepeated = false;                // --r|repeated. Shorthand for '--atleast 2'
     size_t atLeast = 0;                       // --a|at-least. Zero implies default behavior.
     size_t max = 0;                           // --m|max. Zero implies default behavior.
+    bool numberLines = false;                 // --z|number-lines
+    string numberLinesHeader = defaultNumberLinesHeader;  // --nl-header
     bool equivMode = false;                   // --e|equiv
     string equivHeader = defaultEquivHeader;  // --equiv-header
     long equivStartID = defaultEquivStartID;  // --equiv-start
@@ -137,6 +149,8 @@ struct TsvUniqOptions
                 "r|repeated",    "              Output only lines that are repeated (based on the key).", &onlyRepeated,
                 "a|at-least",    "INT           Output only lines that are repeated INT times (based on the key). Zero and one are ignored.", &atLeast,
                 "m|max",         "INT           Max number of each unique key to output (zero is ignored).", &max,
+                "z|number-lines", "              Output the cumulative occurrence count rather than uniq'ing entries.", &numberLines,
+                "nl-header",     "STR           Use STR as the number-lines field header. Applies when using '--header --number-lines'. Default: 'occurrence'.", &numberLinesHeader,
                 "e|equiv",       "              Output equiv class IDs rather than uniq'ing entries.", &equivMode,
                 "equiv-header",  "STR           Use STR as the equiv-id field header. Applies when using '--header --equiv'. Default: 'equiv_id'.", &equivHeader,
                 "equiv-start",   "INT           Use INT as the first equiv-id. Default: 1.", &equivStartID,
@@ -173,6 +187,11 @@ struct TsvUniqOptions
                 }
             }
 
+            if (!numberLines && numberLinesHeader != defaultNumberLinesHeader)
+            {
+                 throw new Exception("--nl-header requires --z|number-lines");
+            }
+
             if (fields.length > 1 && fields.any!(x => x == 0))
             {
                 throw new Exception("Whole line as key (--f|field 0) cannot be combined with multiple fields.");
@@ -192,8 +211,8 @@ struct TsvUniqOptions
             if (onlyRepeated && atLeast <= 1) atLeast = 2;
             if (atLeast >= 2 && max < atLeast)
             {
-                // Don't modify max if it is zero and equivMode is in effect.
-                if (max != 0 || !equivMode) max = atLeast;
+                // Don't modify max if it is zero and equivMode or numberLines is in effect.
+                if (max != 0 || (!equivMode && !numberLines)) max = atLeast;
             }
 
             if (!keyIsFullLine) fields.each!((ref x) => --x);  // Convert to 1-based indexing.
@@ -274,7 +293,14 @@ void tsvUniq(in TsvUniqOptions cmdopt, in string[] inputFiles)
                 /* Header line. */
                 if (!headerWritten)
                 {
+                    if (cmdopt.numberLines)
+                    {
+                        bufferedOutput.append(cmdopt.numberLinesHeader);
+                        bufferedOutput.append(cmdopt.delim);
+                    }
+
                     bufferedOutput.append(line);
+
                     if (cmdopt.equivMode)
                     {
                         bufferedOutput.append(cmdopt.delim);
@@ -333,7 +359,8 @@ void tsvUniq(in TsvUniqOptions cmdopt, in string[] inputFiles)
                     currEntry = *priorEntry;
 
                     if ((currEntry.count <= cmdopt.max && currEntry.count >= cmdopt.atLeast) ||
-                        (cmdopt.equivMode && cmdopt.max == 0))
+                        (cmdopt.equivMode && cmdopt.max == 0) ||
+                        (cmdopt.numberLines && cmdopt.max == 0))
                     {
                         isOutput = true;
                     }
@@ -341,7 +368,14 @@ void tsvUniq(in TsvUniqOptions cmdopt, in string[] inputFiles)
 
                 if (isOutput)
                 {
+                    if (cmdopt.numberLines)
+                    {
+                        bufferedOutput.append(currEntry.count.to!string);
+                        bufferedOutput.append(cmdopt.delim);
+                    }
+
                     bufferedOutput.append(line);
+
                     if (cmdopt.equivMode)
                     {
                         bufferedOutput.append(cmdopt.delim);
