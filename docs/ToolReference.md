@@ -494,9 +494,11 @@ $ tsv-join -f run1.tsv --header --key-fields 1 --append-fields 2 --prefix run1_ 
 
 ## tsv-uniq reference
 
-`tsv-uniq` identifies equivalent lines in tab-separated value files. Input is read line by line, recording a key based on one or more of the fields. Two lines are equivalent if they have the same key. When operating in the default 'uniq' mode, the first time a key is seen the line is written to standard output, but subsequent lines are discarded. This is similar to the Unix `uniq` program, but based on individual fields and without requiring sorted data.
+`tsv-uniq` identifies equivalent lines in files or standard input. Input is read line by line, recording a key based on one or more of the fields. Two lines are equivalent if they have the same key. When operating in the default 'uniq' mode, the first time a key is seen the line is written to standard output. Subsequent lines having the key are discarded. This is similar to the Unix `uniq` program, but based on individual fields and without requiring sorted data.
 
-The alternate to 'uniq' mode is 'equiv-class' identification. In this mode, all lines are written to standard output, but with a new field added marking equivalent entries with an ID. The ID is simply a one-upped counter.
+The alternate to 'uniq' mode is 'equivalence class identification'. In this mode, all lines are written to standard output, but with a new field appended marking equivalent entries with an ID. The ID is simply a one-upped counter.
+
+'Number' mode is similar to 'equivalence class identification'. In this mode, line numbers are appended to each line, with separate line numbers for each key.
 
 `tsv-uniq` can be run without specifying a key field. In this case the whole line is used as a key, same as the Unix `uniq` program. As with `uniq`, this works on any line-oriented text file, not just TSV files. As there is no need to sort the data, `tsv-uniq` is generally [quite a bit faster](TipsAndTricks.md#a-faster-way-to-unique-a-file) and preserves input order in the process.
 
@@ -513,10 +515,14 @@ The `--m|max NUM` option can be used to output the first `NUM` lines for each un
 * `--H|header` - Treat the first line of each file as a header.
 * `--f|fields <field-list>` - Fields to use as the key. Default: 0 (entire line).
 * `--i|ignore-case` - Ignore case when comparing keys.
-* `--m|max INT` - Max number of each unique key to output (zero is ignored).
 * `--e|equiv` - Output equiv class IDs rather than uniq'ing entries.
-* `--equiv-header STR` - Use STR as the equiv-id field header. Applies when using `--header --equiv`. Default: 'equiv_id'.
+* `--equiv-header STR` - Use STR as the equiv-id field header. Applies when using `--header --equiv`. Default: `equiv_id`.
 * `--equiv-start INT` - Use INT as the first equiv-id. Default: 1.
+* `--z|number` - Output equivalence class occurrence counts rather than uniq'ing entries.
+* `--number-header STR` - Use STR as the `--number` field header (when using `-H --number`). Default: `equiv_line`.
+* `--r|repeated` - Output only lines that are repeated (based on the key).
+* `--a|at-least INT` - Output only lines that are repeated INT times (based on the key). Zero and one are ignored.
+* `--m|max INT` - Max number of each unique key to output (zero is ignored).
 * `--d|delimiter CHR` - Field delimiter. Default: TAB. (Single byte UTF-8 characters only.)
 
 **Examples:**
@@ -541,6 +547,53 @@ $ tsv-uniq -f 1,2 --equiv data.tsv
 
 $ # Generate uniq IDs, but account for headers
 $ tsv-uniq -f 1,2 --equiv --header data.tsv
+
+$ # Generate line numbers specific to each key
+$ tsv-uniq -f 1,2 --number --header data.tsv
+
+$ # --Examples showing the data--
+
+$ cat data.tsv
+field1  field2  field2
+ABCD    1234    PQR
+efgh    5678    stu
+ABCD    1234    PQR
+wxyz    1234    stu
+efgh    5678    stu
+ABCD    1234    PQR
+
+$ # Uniq using the full line as key
+$ tsv-uniq -H data.tsv
+field1  field2  field2
+ABCD    1234    PQR
+efgh    5678    stu
+wxyz    1234    stu
+
+$ # Uniq using field 2 as key
+$ tsv-uniq -H -f 2 data.tsv
+field1  field2  field2
+ABCD    1234    PQR
+efgh    5678    stu
+
+$ # Generate equivalence class IDs
+$ tsv-uniq -H --equiv data.tsv
+field1  field2  field2  equiv_id
+ABCD    1234    PQR     1
+efgh    5678    stu     2
+ABCD    1234    PQR     1
+wxyz    1234    stu     3
+efgh    5678    stu     2
+ABCD    1234    PQR     1
+
+$ # Generate equivalence class IDs and line numbers
+$ tsv-uniq -H --equiv --number data.tsv
+field1	field2	field2	equiv_id  equiv_line
+ABCD    1234    PQR     1         1
+efgh    5678    stu     2         1
+ABCD    1234    PQR     1         2
+wxyz    1234    stu     3         1
+efgh    5678    stu     2         2
+ABCD    1234    PQR     1         3
 ```
 
 ---
@@ -733,6 +786,10 @@ $ # Number lines from multiple files. Treat the first line of each file
 $ # as a header.
 $ number-lines --header data*.tsv
 ```
+
+**See Also:**
+
+* [tsv-uniq](#tsv-uniq-reference) supports numbering lines grouped by key.
 
 ---
 

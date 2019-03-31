@@ -28,6 +28,9 @@ Error test set 1
 ====[tsv-uniq -f 2 --equiv-header abc input1.tsv]====
 [tsv-uniq] Error processing command line arguments: --equiv-header requires --e|equiv
 
+====[tsv-uniq -f 2 --number-header abc input1.tsv]====
+[tsv-uniq] Error processing command line arguments: --number-header requires --z|number
+
 ====[tsv-uniq -f 2,30 input1.tsv]====
 Error [tsv-uniq]: Not enough fields in line. File: input1.tsv, Line: 1
 

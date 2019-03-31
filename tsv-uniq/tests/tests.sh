@@ -18,10 +18,6 @@ runtest () {
     return 0
 }
 
-## Note: input1.tsv has duplicate values in fields 2 & 3. Tests with those fields
-## as keys that have append values need to use --allow-duplicate-keys (unless
-## testing error handling).
-
 basic_tests_1=${odir}/basic_tests_1.txt
 
 echo "Basic tests set 1" > ${basic_tests_1}
@@ -98,6 +94,30 @@ runtest ${prog} "-H -f 2 --at-least 3 --max 4 input2.tsv input2.tsv" ${basic_tes
 runtest ${prog} "-H -f 3,5 --at-least 2 --max 4 input2.tsv input2.tsv" ${basic_tests_1}
 runtest ${prog} "-H -f 2 --equiv --at-least 3 --max 5 input2.tsv input2.tsv input2.tsv" ${basic_tests_1}
 
+# Number-lines tests
+echo "" >> ${basic_tests_1}; echo "====Number Lines tests===" >> ${basic_tests_1}
+
+# --number, whole line as key
+runtest ${prog} "--ignore-case --number input1.tsv" ${basic_tests_1}
+runtest ${prog} "--header --number --ignore-case input1.tsv" ${basic_tests_1}
+runtest ${prog} "--header --number --number-header key_linenum --ignore-case input1.tsv" ${basic_tests_1}
+
+# --number-lines --equiv-id, whole like as key
+runtest ${prog} "--ignore-case --equiv --number input1.tsv" ${basic_tests_1}
+runtest ${prog} "--header --equiv -z --ignore-case input1.tsv" ${basic_tests_1}
+runtest ${prog} "--header --equiv --equiv-header id -z --number-header id_linenum --ignore-case input1.tsv" ${basic_tests_1}
+
+# --number-lines, individual fields as key
+runtest ${prog} "input1.tsv -f 3,4 --number --ignore-case" ${basic_tests_1}
+runtest ${prog} "input1.tsv -H -f 3,4 --number --ignore-case" ${basic_tests_1}
+runtest ${prog} "input1.tsv --header -f 3,4 -z --number-header key_linenum --ignore-case" ${basic_tests_1}
+
+# --number-lines --equiv-id, individual fields as key
+runtest ${prog} "input1.tsv -f 3,4 --equiv --number --ignore-case" ${basic_tests_1}
+runtest ${prog} "input1.tsv -H -f 3,4 --equiv -z --ignore-case" ${basic_tests_1}
+runtest ${prog} "input1.tsv --header -f 3,4 --equiv --equiv-start 10 --number --ignore-case" ${basic_tests_1}
+runtest ${prog} "input1.tsv --header -f 3,4 --equiv --equiv-start 10 --equiv-header id --number --number-header id_linenum --ignore-case" ${basic_tests_1}
+
 # Alternate delimiter tests
 echo "" >> ${basic_tests_1}; echo "====Alternate delimiter tests===" >> ${basic_tests_1}
 runtest ${prog} "input_delim_underscore.tsv --delimiter _ --fields 1" ${basic_tests_1}
@@ -146,8 +166,6 @@ echo "----------------" >> ${error_tests_1}
 
 runtest ${prog} "-f 1,0 input1.tsv" ${error_tests_1}
 
-# Disable this test until Phobos 2.071 is available on all compilers
-# 2.071 changed the error message in a minor way.
 runtest ${prog} "-f 1,g input1.tsv" ${error_tests_1}
 
 runtest ${prog} "-f 1-g input1.tsv" ${error_tests_1}
@@ -158,6 +176,7 @@ runtest ${prog} "-d abc -f 2 input1.tsv" ${error_tests_1}
 runtest ${prog} "-d ß -f 1 input1.tsv" ${error_tests_1}
 runtest ${prog} "-f 2 --equiv-start 10 input1.tsv" ${error_tests_1}
 runtest ${prog} "-f 2 --equiv-header abc input1.tsv" ${error_tests_1}
+runtest ${prog} "-f 2 --number-header abc input1.tsv" ${error_tests_1}
 runtest ${prog} "-f 2,30 input1.tsv" ${error_tests_1}
 runtest ${prog} "-f 2-30 input1.tsv" ${error_tests_1}
 
