@@ -934,6 +934,294 @@ f1	f2	f3	f4	f5	equiv_id
 9	ÀBC		1367	1331	7
 15	7	xyz	9999	8888	8
 
+====Number Lines tests===
+
+====[tsv-uniq --ignore-case --number input1.tsv]====
+f1	f2	f3	f4	f5	1
+1	ggg	UUU	101	15	1
+2	bbb	ZZZ	21	28	1
+3	ggg	CCC	5734	52	1
+4	ddd	ZZZ	65	602	1
+5	ßßß	SSS	 7	771	1
+6	sss	sss	17	15	1
+7	ssssss	sss	18	16	1
+8	àbc	P	1209	1234	1
+9	ÀBC		1367	1331	1
+10			e-e	1602	1
+11	0	X	1721	1703	1
+9	ÀBC		1367	1331	2
+12	 	 	sp-sp	2020	1
+13	0.0	Z	1931	1956	1
+8	ÀBC	p	1209	1234	2
+14	 	 	sp-sp	2022	1
+3	ggg	CCC	5734	52	2
+9	ÀBC		1367	1331	3
+17	0	Z	5734	602	1
+
+====[tsv-uniq --header --number --ignore-case input1.tsv]====
+f1	f2	f3	f4	f5	equiv_line
+1	ggg	UUU	101	15	1
+2	bbb	ZZZ	21	28	1
+3	ggg	CCC	5734	52	1
+4	ddd	ZZZ	65	602	1
+5	ßßß	SSS	 7	771	1
+6	sss	sss	17	15	1
+7	ssssss	sss	18	16	1
+8	àbc	P	1209	1234	1
+9	ÀBC		1367	1331	1
+10			e-e	1602	1
+11	0	X	1721	1703	1
+9	ÀBC		1367	1331	2
+12	 	 	sp-sp	2020	1
+13	0.0	Z	1931	1956	1
+8	ÀBC	p	1209	1234	2
+14	 	 	sp-sp	2022	1
+3	ggg	CCC	5734	52	2
+9	ÀBC		1367	1331	3
+17	0	Z	5734	602	1
+
+====[tsv-uniq --header --number --number-header key_linenum --ignore-case input1.tsv]====
+f1	f2	f3	f4	f5	key_linenum
+1	ggg	UUU	101	15	1
+2	bbb	ZZZ	21	28	1
+3	ggg	CCC	5734	52	1
+4	ddd	ZZZ	65	602	1
+5	ßßß	SSS	 7	771	1
+6	sss	sss	17	15	1
+7	ssssss	sss	18	16	1
+8	àbc	P	1209	1234	1
+9	ÀBC		1367	1331	1
+10			e-e	1602	1
+11	0	X	1721	1703	1
+9	ÀBC		1367	1331	2
+12	 	 	sp-sp	2020	1
+13	0.0	Z	1931	1956	1
+8	ÀBC	p	1209	1234	2
+14	 	 	sp-sp	2022	1
+3	ggg	CCC	5734	52	2
+9	ÀBC		1367	1331	3
+17	0	Z	5734	602	1
+
+====[tsv-uniq --ignore-case --equiv --number input1.tsv]====
+f1	f2	f3	f4	f5	1	1
+1	ggg	UUU	101	15	2	1
+2	bbb	ZZZ	21	28	3	1
+3	ggg	CCC	5734	52	4	1
+4	ddd	ZZZ	65	602	5	1
+5	ßßß	SSS	 7	771	6	1
+6	sss	sss	17	15	7	1
+7	ssssss	sss	18	16	8	1
+8	àbc	P	1209	1234	9	1
+9	ÀBC		1367	1331	10	1
+10			e-e	1602	11	1
+11	0	X	1721	1703	12	1
+9	ÀBC		1367	1331	10	2
+12	 	 	sp-sp	2020	13	1
+13	0.0	Z	1931	1956	14	1
+8	ÀBC	p	1209	1234	9	2
+14	 	 	sp-sp	2022	15	1
+3	ggg	CCC	5734	52	4	2
+9	ÀBC		1367	1331	10	3
+17	0	Z	5734	602	16	1
+
+====[tsv-uniq --header --equiv -z --ignore-case input1.tsv]====
+f1	f2	f3	f4	f5	equiv_id	equiv_line
+1	ggg	UUU	101	15	1	1
+2	bbb	ZZZ	21	28	2	1
+3	ggg	CCC	5734	52	3	1
+4	ddd	ZZZ	65	602	4	1
+5	ßßß	SSS	 7	771	5	1
+6	sss	sss	17	15	6	1
+7	ssssss	sss	18	16	7	1
+8	àbc	P	1209	1234	8	1
+9	ÀBC		1367	1331	9	1
+10			e-e	1602	10	1
+11	0	X	1721	1703	11	1
+9	ÀBC		1367	1331	9	2
+12	 	 	sp-sp	2020	12	1
+13	0.0	Z	1931	1956	13	1
+8	ÀBC	p	1209	1234	8	2
+14	 	 	sp-sp	2022	14	1
+3	ggg	CCC	5734	52	3	2
+9	ÀBC		1367	1331	9	3
+17	0	Z	5734	602	15	1
+
+====[tsv-uniq --header --equiv --equiv-header id -z --number-header id_linenum --ignore-case input1.tsv]====
+f1	f2	f3	f4	f5	id	id_linenum
+1	ggg	UUU	101	15	1	1
+2	bbb	ZZZ	21	28	2	1
+3	ggg	CCC	5734	52	3	1
+4	ddd	ZZZ	65	602	4	1
+5	ßßß	SSS	 7	771	5	1
+6	sss	sss	17	15	6	1
+7	ssssss	sss	18	16	7	1
+8	àbc	P	1209	1234	8	1
+9	ÀBC		1367	1331	9	1
+10			e-e	1602	10	1
+11	0	X	1721	1703	11	1
+9	ÀBC		1367	1331	9	2
+12	 	 	sp-sp	2020	12	1
+13	0.0	Z	1931	1956	13	1
+8	ÀBC	p	1209	1234	8	2
+14	 	 	sp-sp	2022	14	1
+3	ggg	CCC	5734	52	3	2
+9	ÀBC		1367	1331	9	3
+17	0	Z	5734	602	15	1
+
+====[tsv-uniq input1.tsv -f 3,4 --number --ignore-case]====
+f1	f2	f3	f4	f5	1
+1	ggg	UUU	101	15	1
+2	bbb	ZZZ	21	28	1
+3	ggg	CCC	5734	52	1
+4	ddd	ZZZ	65	602	1
+5	ßßß	SSS	 7	771	1
+6	sss	sss	17	15	1
+7	ssssss	sss	18	16	1
+8	àbc	P	1209	1234	1
+9	ÀBC		1367	1331	1
+10			e-e	1602	1
+11	0	X	1721	1703	1
+9	ÀBC		1367	1331	2
+12	 	 	sp-sp	2020	1
+13	0.0	Z	1931	1956	1
+8	ÀBC	p	1209	1234	2
+14	 	 	sp-sp	2022	2
+3	ggg	CCC	5734	52	2
+9	ÀBC		1367	1331	3
+17	0	Z	5734	602	1
+
+====[tsv-uniq input1.tsv -H -f 3,4 --number --ignore-case]====
+f1	f2	f3	f4	f5	equiv_line
+1	ggg	UUU	101	15	1
+2	bbb	ZZZ	21	28	1
+3	ggg	CCC	5734	52	1
+4	ddd	ZZZ	65	602	1
+5	ßßß	SSS	 7	771	1
+6	sss	sss	17	15	1
+7	ssssss	sss	18	16	1
+8	àbc	P	1209	1234	1
+9	ÀBC		1367	1331	1
+10			e-e	1602	1
+11	0	X	1721	1703	1
+9	ÀBC		1367	1331	2
+12	 	 	sp-sp	2020	1
+13	0.0	Z	1931	1956	1
+8	ÀBC	p	1209	1234	2
+14	 	 	sp-sp	2022	2
+3	ggg	CCC	5734	52	2
+9	ÀBC		1367	1331	3
+17	0	Z	5734	602	1
+
+====[tsv-uniq input1.tsv --header -f 3,4 -z --number-header key_linenum --ignore-case]====
+f1	f2	f3	f4	f5	key_linenum
+1	ggg	UUU	101	15	1
+2	bbb	ZZZ	21	28	1
+3	ggg	CCC	5734	52	1
+4	ddd	ZZZ	65	602	1
+5	ßßß	SSS	 7	771	1
+6	sss	sss	17	15	1
+7	ssssss	sss	18	16	1
+8	àbc	P	1209	1234	1
+9	ÀBC		1367	1331	1
+10			e-e	1602	1
+11	0	X	1721	1703	1
+9	ÀBC		1367	1331	2
+12	 	 	sp-sp	2020	1
+13	0.0	Z	1931	1956	1
+8	ÀBC	p	1209	1234	2
+14	 	 	sp-sp	2022	2
+3	ggg	CCC	5734	52	2
+9	ÀBC		1367	1331	3
+17	0	Z	5734	602	1
+
+====[tsv-uniq input1.tsv -f 3,4 --equiv --number --ignore-case]====
+f1	f2	f3	f4	f5	1	1
+1	ggg	UUU	101	15	2	1
+2	bbb	ZZZ	21	28	3	1
+3	ggg	CCC	5734	52	4	1
+4	ddd	ZZZ	65	602	5	1
+5	ßßß	SSS	 7	771	6	1
+6	sss	sss	17	15	7	1
+7	ssssss	sss	18	16	8	1
+8	àbc	P	1209	1234	9	1
+9	ÀBC		1367	1331	10	1
+10			e-e	1602	11	1
+11	0	X	1721	1703	12	1
+9	ÀBC		1367	1331	10	2
+12	 	 	sp-sp	2020	13	1
+13	0.0	Z	1931	1956	14	1
+8	ÀBC	p	1209	1234	9	2
+14	 	 	sp-sp	2022	13	2
+3	ggg	CCC	5734	52	4	2
+9	ÀBC		1367	1331	10	3
+17	0	Z	5734	602	15	1
+
+====[tsv-uniq input1.tsv -H -f 3,4 --equiv -z --ignore-case]====
+f1	f2	f3	f4	f5	equiv_id	equiv_line
+1	ggg	UUU	101	15	1	1
+2	bbb	ZZZ	21	28	2	1
+3	ggg	CCC	5734	52	3	1
+4	ddd	ZZZ	65	602	4	1
+5	ßßß	SSS	 7	771	5	1
+6	sss	sss	17	15	6	1
+7	ssssss	sss	18	16	7	1
+8	àbc	P	1209	1234	8	1
+9	ÀBC		1367	1331	9	1
+10			e-e	1602	10	1
+11	0	X	1721	1703	11	1
+9	ÀBC		1367	1331	9	2
+12	 	 	sp-sp	2020	12	1
+13	0.0	Z	1931	1956	13	1
+8	ÀBC	p	1209	1234	8	2
+14	 	 	sp-sp	2022	12	2
+3	ggg	CCC	5734	52	3	2
+9	ÀBC		1367	1331	9	3
+17	0	Z	5734	602	14	1
+
+====[tsv-uniq input1.tsv --header -f 3,4 --equiv --equiv-start 10 --number --ignore-case]====
+f1	f2	f3	f4	f5	equiv_id	equiv_line
+1	ggg	UUU	101	15	10	1
+2	bbb	ZZZ	21	28	11	1
+3	ggg	CCC	5734	52	12	1
+4	ddd	ZZZ	65	602	13	1
+5	ßßß	SSS	 7	771	14	1
+6	sss	sss	17	15	15	1
+7	ssssss	sss	18	16	16	1
+8	àbc	P	1209	1234	17	1
+9	ÀBC		1367	1331	18	1
+10			e-e	1602	19	1
+11	0	X	1721	1703	20	1
+9	ÀBC		1367	1331	18	2
+12	 	 	sp-sp	2020	21	1
+13	0.0	Z	1931	1956	22	1
+8	ÀBC	p	1209	1234	17	2
+14	 	 	sp-sp	2022	21	2
+3	ggg	CCC	5734	52	12	2
+9	ÀBC		1367	1331	18	3
+17	0	Z	5734	602	23	1
+
+====[tsv-uniq input1.tsv --header -f 3,4 --equiv --equiv-start 10 --equiv-header id --number --number-header id_linenum --ignore-case]====
+f1	f2	f3	f4	f5	id	id_linenum
+1	ggg	UUU	101	15	10	1
+2	bbb	ZZZ	21	28	11	1
+3	ggg	CCC	5734	52	12	1
+4	ddd	ZZZ	65	602	13	1
+5	ßßß	SSS	 7	771	14	1
+6	sss	sss	17	15	15	1
+7	ssssss	sss	18	16	16	1
+8	àbc	P	1209	1234	17	1
+9	ÀBC		1367	1331	18	1
+10			e-e	1602	19	1
+11	0	X	1721	1703	20	1
+9	ÀBC		1367	1331	18	2
+12	 	 	sp-sp	2020	21	1
+13	0.0	Z	1931	1956	22	1
+8	ÀBC	p	1209	1234	17	2
+14	 	 	sp-sp	2022	21	2
+3	ggg	CCC	5734	52	12	2
+9	ÀBC		1367	1331	18	3
+17	0	Z	5734	602	23	1
+
 ====Alternate delimiter tests===
 
 ====[tsv-uniq input_delim_underscore.tsv --delimiter _ --fields 1]====
