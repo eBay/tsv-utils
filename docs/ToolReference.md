@@ -494,13 +494,13 @@ $ tsv-join -f run1.tsv --header --key-fields 1 --append-fields 2 --prefix run1_ 
 
 ## tsv-uniq reference
 
-`tsv-uniq` identifies equivalent lines in files or standard input. Input is read line by line, recording a key based on one or more of the fields. Two lines are equivalent if they have the same key. When operating in the default 'uniq' mode, the first time a key is seen the line is written to standard output. Subsequent lines having the key are discarded. This is similar to the Unix `uniq` program, but based on individual fields and without requiring sorted data.
+`tsv-uniq` identifies equivalent lines in files or standard input. Input is read line by line, recording a key based on one or more of the fields. Two lines are equivalent if they have the same key. When operating in the default 'uniq' mode, the first time a key is seen the line is written to standard output. Subsequent lines having the same key are discarded. This is similar to the Unix `uniq` program, but based on individual fields and without requiring sorted data.
 
 The alternate to 'uniq' mode is 'equivalence class identification'. In this mode, all lines are written to standard output, but with a new field appended marking equivalent entries with an ID. The ID is simply a one-upped counter.
 
 'Number' mode is similar to 'equivalence class identification'. In this mode, line numbers are appended to each line, with separate line numbers for each key.
 
-`tsv-uniq` can be run without specifying a key field. In this case the whole line is used as a key, same as the Unix `uniq` program. As with `uniq`, this works on any line-oriented text file, not just TSV files. As there is no need to sort the data, `tsv-uniq` is generally [quite a bit faster](TipsAndTricks.md#a-faster-way-to-unique-a-file) and preserves input order in the process.
+`tsv-uniq` can be run without specifying a key field. In this case the whole line is used as a key, same as the Unix `uniq` program. As with `uniq`, this works on any line-oriented text file, not just TSV files. As there is no need to sort the data, `tsv-uniq` is [quite a bit faster](TipsAndTricks.md#a-faster-way-to-unique-a-file) and preserves input order in the process.
 
 The `--r|repeated` option can be used to print only lines occurring more than once. `--a|at-least N` is similar, except that it only prints lines occuring at least N times. For both, the Nth line found is printed, in the order found.
 
