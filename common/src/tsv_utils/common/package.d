@@ -10,6 +10,9 @@ $(LIST
     * [tsv_utils.common.utils.BufferedOutputRange] - An OutputRange with an internal
       buffer used to buffer output. Intended for use with stdout, it is a significant
       performance benefit.
+    * [tsv_utils.common.utils.bufferedByLine] - An input range that reads from a File
+      handle line by line. It is similar to standard library method std.stdio.File.byLine,
+      but quite a bit faster. This is achieved by reading in larger blocks and buffering.
     * [tsv_utils.common.numerics.quantile] - Calculates a cummulative probability for
       values in a data set. Supports the same interpolation methods as the quantile
       function in R and many other statistical packages.
