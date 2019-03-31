@@ -715,7 +715,7 @@ class SummarizerBase(OutputRange) : Summarizer!OutputRange
  * Note: NoKeySummarizer is used in Operator unit tests and gets extensive testing
  * through that mechanism.
  */
-class NoKeySummarizer(OutputRange) : SummarizerBase!OutputRange
+final class NoKeySummarizer(OutputRange) : SummarizerBase!OutputRange
 {
     private Calculator[] _calculators;
     private UniqueKeyValuesLists _valueLists;
@@ -838,7 +838,7 @@ class KeySummarizerBase(OutputRange) : SummarizerBase!OutputRange
 
 /** This Summarizer is for the case where the unique key is based on exactly one field.
  */
-class OneKeySummarizer(OutputRange) : KeySummarizerBase!OutputRange
+final class OneKeySummarizer(OutputRange) : KeySummarizerBase!OutputRange
 {
     private size_t _keyFieldIndex = 0;
     private string _keyFieldHeader;
@@ -877,7 +877,7 @@ class OneKeySummarizer(OutputRange) : KeySummarizerBase!OutputRange
 
 /** This Summarizer is for the case where the unique key is based on multiple fields.
  */
-class MultiKeySummarizer(OutputRange) : KeySummarizerBase!OutputRange
+final class MultiKeySummarizer(OutputRange) : KeySummarizerBase!OutputRange
 {
     private size_t[] _keyFieldIndices;
     private string _keyFieldHeader;
@@ -1666,7 +1666,7 @@ interface Calculator
 
 /** This class describes processing behavior when a missing value is encountered.
  */
-class MissingFieldPolicy
+final class MissingFieldPolicy
 {
     private bool _useMissing = true;          // True if missing values are processed unchanged.
     private bool _replaceMissing = false;     // True if missing values are replaced.
@@ -1749,7 +1749,7 @@ class MissingFieldPolicy
  * to avoid repeated calculations of the median by different calculations.
  */
 
-class SharedFieldValues
+final class SharedFieldValues
 {
     // Arrays with field indices that need to be saved.
     private size_t[] _numericFieldIndices;
@@ -1779,7 +1779,7 @@ class SharedFieldValues
     }
 }
 
-class UniqueKeyValuesLists
+final class UniqueKeyValuesLists
 {
     /* A FieldValues object holds is a list of values collect for a specific field. A
      * unique key may hold several. For example, the command:
@@ -1857,7 +1857,7 @@ class UniqueKeyValuesLists
         return findNumericFieldValues(index).median;
     }
 
-    private class FieldValues(ValueType)
+    private final class FieldValues(ValueType)
     {
         import std.array : appender;
         private size_t _fieldIndex;
@@ -2509,7 +2509,7 @@ version(unittest)
  * field on the line. Instead it is summarizing a property of the unique key itself. For
  * this reason it doesn't derive from SingleFieldOperator.
  */
-class CountOperator : ZeroFieldOperator
+final class CountOperator : ZeroFieldOperator
 {
     this()
     {
@@ -2521,7 +2521,7 @@ class CountOperator : ZeroFieldOperator
         return new CountCalculator();
     }
 
-    static class CountCalculator : ZeroFieldCalculator
+    static final class CountCalculator : ZeroFieldCalculator
     {
         private size_t _count = 0;
 
@@ -2558,7 +2558,7 @@ unittest // CountOperator
  * Notes:
  * - An option to signal an error if multiple values are encountered might be useful.
  */
-class RetainOperator : SingleFieldOperator
+final class RetainOperator : SingleFieldOperator
 {
     this(size_t fieldIndex, MissingFieldPolicy missingPolicy)
     {
@@ -2570,7 +2570,7 @@ class RetainOperator : SingleFieldOperator
         return new RetainCalculator(fieldIndex);
     }
 
-    class RetainCalculator : SingleFieldCalculator
+    final class RetainCalculator : SingleFieldCalculator
     {
         private bool _done = false;
         private string _value = "";
@@ -2623,7 +2623,7 @@ unittest // RetainOperator
 
 /** FirstOperator outputs the first value found for the field.
  */
-class FirstOperator : SingleFieldOperator
+final class FirstOperator : SingleFieldOperator
 {
     this(size_t fieldIndex, MissingFieldPolicy missingPolicy)
     {
@@ -2635,7 +2635,7 @@ class FirstOperator : SingleFieldOperator
         return new FirstCalculator(fieldIndex);
     }
 
-    class FirstCalculator : SingleFieldCalculator
+    final class FirstCalculator : SingleFieldCalculator
     {
         private bool _done = false;
         private string _value = "";
@@ -2688,7 +2688,7 @@ unittest // FirstOperator
 
 /** LastOperator outputs the last value found for the field.
  */
-class LastOperator : SingleFieldOperator
+final class LastOperator : SingleFieldOperator
 {
     this(size_t fieldIndex, MissingFieldPolicy missingPolicy)
     {
@@ -2700,7 +2700,7 @@ class LastOperator : SingleFieldOperator
         return new LastCalculator(fieldIndex);
     }
 
-    class LastCalculator : SingleFieldCalculator
+    final class LastCalculator : SingleFieldCalculator
     {
         private string _value = "";
 
@@ -2748,7 +2748,7 @@ unittest // LastOperator
 
 /** MinOperator output the minimum value for the field. This is a numeric operator.
  */
-class MinOperator : SingleFieldOperator
+final class MinOperator : SingleFieldOperator
 {
     this(size_t fieldIndex, MissingFieldPolicy missingPolicy)
     {
@@ -2760,7 +2760,7 @@ class MinOperator : SingleFieldOperator
         return new MinCalculator(fieldIndex);
     }
 
-    class MinCalculator : SingleFieldCalculator
+    final class MinCalculator : SingleFieldCalculator
     {
         private bool _isFirst = true;
         private double _value = double.nan;
@@ -2818,7 +2818,7 @@ unittest // MinOperator
 
 /** MaxOperator output the maximum value for the field. This is a numeric operator.
  */
-class MaxOperator : SingleFieldOperator
+final class MaxOperator : SingleFieldOperator
 {
     this(size_t fieldIndex, MissingFieldPolicy missingPolicy)
     {
@@ -2830,7 +2830,7 @@ class MaxOperator : SingleFieldOperator
         return new MaxCalculator(fieldIndex);
     }
 
-    class MaxCalculator : SingleFieldCalculator
+    final class MaxCalculator : SingleFieldCalculator
     {
         private bool _isFirst = true;
         private double _value = double.nan;
@@ -2891,7 +2891,7 @@ unittest // MaxOperator
  * If there is a single value, or all values are the same, the range is zero. This is
  * a numeric operator.
  */
-class RangeOperator : SingleFieldOperator
+final class RangeOperator : SingleFieldOperator
 {
     this(size_t fieldIndex, MissingFieldPolicy missingPolicy)
     {
@@ -2903,7 +2903,7 @@ class RangeOperator : SingleFieldOperator
         return new RangeCalculator(fieldIndex);
     }
 
-    class RangeCalculator : SingleFieldCalculator
+    final class RangeCalculator : SingleFieldCalculator
     {
         private bool _isFirst = true;
         private double _minValue = 0.0;
@@ -2966,7 +2966,7 @@ unittest // RangeOperator
 
 /** SumOperator produces the sum of all the values. This is a numeric operator.
  */
-class SumOperator : SingleFieldOperator
+final class SumOperator : SingleFieldOperator
 {
     this(size_t fieldIndex, MissingFieldPolicy missingPolicy)
     {
@@ -2978,7 +2978,7 @@ class SumOperator : SingleFieldOperator
         return new SumCalculator(fieldIndex);
     }
 
-    class SumCalculator : SingleFieldCalculator
+    final class SumCalculator : SingleFieldCalculator
     {
         private double _total = 0.0;
 
@@ -3026,7 +3026,7 @@ unittest // SumOperator
 
 /** MeanOperator produces the mean (average) of all the values. This is a numeric operator.
  */
-class MeanOperator : SingleFieldOperator
+final class MeanOperator : SingleFieldOperator
 {
     this(size_t fieldIndex, MissingFieldPolicy missingPolicy)
     {
@@ -3038,7 +3038,7 @@ class MeanOperator : SingleFieldOperator
         return new MeanCalculator(fieldIndex);
     }
 
-    class MeanCalculator : SingleFieldCalculator
+    final class MeanCalculator : SingleFieldCalculator
     {
         private double _total = 0.0;
         private size_t _count = 0;
@@ -3092,7 +3092,7 @@ unittest // MeanOperator
  * All the field values are stored in memory as part of this calculation. This is
  * handled by unique key value lists.
  */
-class MedianOperator : SingleFieldOperator
+final class MedianOperator : SingleFieldOperator
 {
     this(size_t fieldIndex, MissingFieldPolicy missingPolicy)
     {
@@ -3105,7 +3105,7 @@ class MedianOperator : SingleFieldOperator
         return new MedianCalculator(fieldIndex);
     }
 
-    class MedianCalculator : SingleFieldCalculator
+    final class MedianCalculator : SingleFieldCalculator
     {
         this(size_t fieldIndex)
         {
@@ -3159,7 +3159,7 @@ unittest // MedianOperator
  * All the field's values are stored in memory as part of this calculation. This is
  * handled by unique key value lists.
  */
-class QuantileOperator : SingleFieldOperator
+final class QuantileOperator : SingleFieldOperator
 {
     private double _prob;
 
@@ -3179,7 +3179,7 @@ class QuantileOperator : SingleFieldOperator
         return new QuantileCalculator(fieldIndex);
     }
 
-    class QuantileCalculator : SingleFieldCalculator
+    final class QuantileCalculator : SingleFieldCalculator
     {
         this(size_t fieldIndex)
         {
@@ -3251,7 +3251,7 @@ unittest // QuantileOperator
  * All the field values are stored in memory as part of this calculation. This is
  * handled by unique key value lists.
  */
-class MadOperator : SingleFieldOperator
+final class MadOperator : SingleFieldOperator
 {
     this(size_t fieldIndex, MissingFieldPolicy missingPolicy)
     {
@@ -3264,7 +3264,7 @@ class MadOperator : SingleFieldOperator
         return new MadCalculator(fieldIndex);
     }
 
-    class MadCalculator : SingleFieldCalculator
+    final class MadCalculator : SingleFieldCalculator
     {
         this(size_t fieldIndex)
         {
@@ -3318,7 +3318,7 @@ unittest // MadOperator
 
 /** Generates the variance of the fields values. This is a numeric operator.
  */
-class VarianceOperator : SingleFieldOperator
+final class VarianceOperator : SingleFieldOperator
 {
     this(size_t fieldIndex, MissingFieldPolicy missingPolicy)
     {
@@ -3330,7 +3330,7 @@ class VarianceOperator : SingleFieldOperator
         return new VarianceCalculator(fieldIndex);
     }
 
-    class VarianceCalculator : SingleFieldCalculator
+    final class VarianceCalculator : SingleFieldCalculator
     {
         private double _count = 0.0;
         private double _mean = 0.0;
@@ -3385,7 +3385,7 @@ unittest // VarianceOperator
 
 /** Generates the standard deviation of the fields values. This is a numeric operator.
  */
-class StDevOperator : SingleFieldOperator
+final class StDevOperator : SingleFieldOperator
 {
     this(size_t fieldIndex, MissingFieldPolicy missingPolicy)
     {
@@ -3397,7 +3397,7 @@ class StDevOperator : SingleFieldOperator
         return new StDevCalculator(fieldIndex);
     }
 
-    class StDevCalculator : SingleFieldCalculator
+    final class StDevCalculator : SingleFieldCalculator
     {
         private double _count = 0.0;
         private double _mean = 0.0;
@@ -3458,7 +3458,7 @@ unittest
  *
  * All the unique field values are stored in memory as part of this calculation.
  */
-class UniqueCountOperator : SingleFieldOperator
+final class UniqueCountOperator : SingleFieldOperator
 {
     this(size_t fieldIndex, MissingFieldPolicy missingPolicy)
     {
@@ -3470,7 +3470,7 @@ class UniqueCountOperator : SingleFieldOperator
         return new UniqueCountCalculator(fieldIndex);
     }
 
-    class UniqueCountCalculator : SingleFieldCalculator
+    final class UniqueCountCalculator : SingleFieldCalculator
     {
         private bool[string] _values;
 
@@ -3521,7 +3521,7 @@ unittest // UniqueCount
 /** MissingCountOperator generates the number of missing values. This overrides
  * the global missingFieldsPolicy.
  */
-class MissingCountOperator : SingleFieldOperator
+final class MissingCountOperator : SingleFieldOperator
 {
     private MissingFieldPolicy _globalMissingPolicy;
 
@@ -3536,7 +3536,7 @@ class MissingCountOperator : SingleFieldOperator
         return new MissingCountCalculator(fieldIndex);
     }
 
-    class MissingCountCalculator : SingleFieldCalculator
+    final class MissingCountCalculator : SingleFieldCalculator
     {
         private size_t _missingCount = 0;
 
@@ -3596,7 +3596,7 @@ unittest // MissingCount
 /** NotMissingCountOperator generates the number of not-missing values. This overrides
  * the global missingFieldsPolicy.
  */
-class NotMissingCountOperator : SingleFieldOperator
+final class NotMissingCountOperator : SingleFieldOperator
 {
     private MissingFieldPolicy _globalMissingPolicy;
 
@@ -3611,7 +3611,7 @@ class NotMissingCountOperator : SingleFieldOperator
         return new NotMissingCountCalculator(fieldIndex);
     }
 
-    class NotMissingCountCalculator : SingleFieldCalculator
+    final class NotMissingCountCalculator : SingleFieldCalculator
     {
         private size_t _notMissingCount = 0;
 
@@ -3674,7 +3674,7 @@ unittest // NotMissingCount
  * All the field values are stored in memory as part of this calculation.
  *
  */
-class ModeOperator : SingleFieldOperator
+final class ModeOperator : SingleFieldOperator
 {
     this(size_t fieldIndex, MissingFieldPolicy missingPolicy)
     {
@@ -3686,7 +3686,7 @@ class ModeOperator : SingleFieldOperator
         return new ModeCalculator(fieldIndex);
     }
 
-    class ModeCalculator : SingleFieldCalculator
+    final class ModeCalculator : SingleFieldCalculator
     {
         private size_t[string] _valueCounts;
         private Appender!(string[]) _uniqueValues;
@@ -3767,7 +3767,7 @@ unittest // ModeOperator
  * All the field values are stored in memory as part of this calculation.
  *
  */
-class ModeCountOperator : SingleFieldOperator
+final class ModeCountOperator : SingleFieldOperator
 {
     this(size_t fieldIndex, MissingFieldPolicy missingPolicy)
     {
@@ -3779,7 +3779,7 @@ class ModeCountOperator : SingleFieldOperator
         return new ModeCountCalculator(fieldIndex);
     }
 
-    class ModeCountCalculator : SingleFieldCalculator
+    final class ModeCountCalculator : SingleFieldCalculator
     {
         private size_t[string] _valueCounts;
 
@@ -3845,7 +3845,7 @@ unittest // ModeCountOperator
  * handled by unique key value lists.
  */
 
-class ValuesOperator : SingleFieldOperator
+final class ValuesOperator : SingleFieldOperator
 {
     this(size_t fieldIndex, MissingFieldPolicy missingPolicy)
     {
@@ -3858,7 +3858,7 @@ class ValuesOperator : SingleFieldOperator
         return new ValuesCalculator(fieldIndex);
     }
 
-    class ValuesCalculator : SingleFieldCalculator
+    final class ValuesCalculator : SingleFieldCalculator
     {
         this(size_t fieldIndex)
         {
@@ -3908,7 +3908,7 @@ unittest // ValuesOperator
  * All unique field values are stored in memory as part of this calculation.
  *
  */
-class UniqueValuesOperator : SingleFieldOperator
+final class UniqueValuesOperator : SingleFieldOperator
 {
     this(size_t fieldIndex, MissingFieldPolicy missingPolicy)
     {
@@ -3920,7 +3920,7 @@ class UniqueValuesOperator : SingleFieldOperator
         return new UniqueValuesCalculator(fieldIndex);
     }
 
-    class UniqueValuesCalculator : SingleFieldCalculator
+    final class UniqueValuesCalculator : SingleFieldCalculator
     {
         private size_t[string] _valuesHash;
         private Appender!(string[]) _uniqueValues;

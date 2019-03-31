@@ -100,7 +100,7 @@ invalid and cannot be used. However, if partial lines are okay, the template can
 instantiated with EnablePartialLines.yes. This will ensure that any fields not filled-in
 are empty strings in the outputFields return.
 */
-class InputFieldReordering(C, EnablePartialLines partialLinesOk = EnablePartialLines.no)
+final class InputFieldReordering(C, EnablePartialLines partialLinesOk = EnablePartialLines.no)
 if (isSomeChar!C)
 {
     /* Implementation: The class works by creating an array of tuples mapping the input
