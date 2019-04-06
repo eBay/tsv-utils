@@ -22,6 +22,7 @@ matrix:
       env: DUBTEST=1 MAKETEST=1
       if: type IN (cron)
     - os: linux
+      dist: xenial
       group: travis_latest
       language: d
       d: dmd
@@ -33,6 +34,7 @@ matrix:
 #      d: ldc-1.6.0
 #      env: DUBTEST=1 MAKETEST=1 APPLTO=off
     - os: linux
+      dist: xenial
       group: travis_latest
       language: d
       d: ldc-1.6.0
@@ -77,6 +79,7 @@ matrix:
       if: type IN (pull_request, cron)
 #      if: fork = true
     - os: linux
+      dist: xenial
       group: travis_latest
       language: d
       d: ldc
@@ -84,12 +87,14 @@ matrix:
       if: type IN (pull_request, cron)
 #      if: fork = true
     - os: linux
+      dist: xenial
       group: travis_latest
       language: d
       d: ldc
       env: LTOPGO=default
       if: type IN (pull_request, cron)
     - os: linux
+      dist: xenial
       group: travis_latest
       language: d
       d: ldc
