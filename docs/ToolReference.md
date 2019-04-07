@@ -496,15 +496,17 @@ $ tsv-join -f run1.tsv --header --key-fields 1 --append-fields 2 --prefix run1_ 
 
 `tsv-uniq` identifies equivalent lines in files or standard input. Input is read line by line, recording a key based on one or more of the fields. Two lines are equivalent if they have the same key. When operating in the default 'uniq' mode, the first time a key is seen the line is written to standard output. Subsequent lines having the same key are discarded. This is similar to the Unix `uniq` program, but based on individual fields and without requiring sorted data.
 
-The alternate to 'uniq' mode is 'equivalence class identification'. In this mode, all lines are written to standard output, but with a new field appended marking equivalent entries with an ID. The ID is simply a one-upped counter.
-
-'Number' mode is similar to 'equivalence class identification'. In this mode, line numbers are appended to each line, with separate line numbers for each key.
-
 `tsv-uniq` can be run without specifying a key field. In this case the whole line is used as a key, same as the Unix `uniq` program. As with `uniq`, this works on any line-oriented text file, not just TSV files. As there is no need to sort the data, `tsv-uniq` is [quite a bit faster](TipsAndTricks.md#a-faster-way-to-unique-a-file) and preserves input order in the process.
 
-The `--r|repeated` option can be used to print only lines occurring more than once. `--a|at-least N` is similar, except that it only prints lines occuring at least N times. For both, the Nth line found is printed, in the order found.
+The alternates to the default 'uniq' mode are 'number' mode and 'equiv-class' mode. In 'equiv-class' mode (`--e|equiv`), all lines are written to standard output, but with a field appended marking equivalent entries with an ID. The ID is a one-upped counter.
 
-The `--m|max NUM` option can be used to output the first `NUM` lines for each uniq key. This works in both 'uniq' and 'equiv-class' mode. `--a|at-least` and `--m|max` can be used together, though its not clear why that would be useful.
+'Number' mode (`--z|number`) also writes all lines to standard output, but with a field appended numbering the occurrence count for the line's key. The first line with a specific key is assigned the number '1', the second with the key is assigned number '2', etc. 'Number' and 'equiv-class' modes can be used together.
+
+The `--r|repeated` option can be used to print only lines occurring more than once. Specifically, the second occurrence of a key is printed. The `--a|at-least N` option is similar, printing lines occurring at least N times. (Like repeated, the Nth line with the key is printed.)
+
+The `--m|max MAX` option changes the behavior to output the first MAX lines for each key, rather than just the first line for each key.
+
+If both `--a|at-least` and `--m|max` are specified, the occurrences starting with 'at-least' and ending with 'max' are output.
 
 **Synopsis:** tsv-uniq [options] [file...]
 
