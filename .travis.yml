@@ -111,14 +111,21 @@ matrix:
       language: d
       d: ldc-beta
       env: DUBTEST=1 MAKETEST=1 APPLTO=full
-      # if: type IN (cron)
+      if: type IN (cron)
     - os: linux
       dist: xenial
       group: travis_latest
       language: d
       d: ldc-beta
       env: LTOPGO_V2=default
-      # if: type IN (cron)
+      if: type IN (cron)
+    - os: osx
+      osx_image: xcode10.2
+      group: travis_latest
+      language: d
+      d: ldc-beta
+      env: LTOPGO_V2=default
+      if: type IN (cron)
 before_install:
   - if [[ "$DOCKERSPECIAL" == "1" ]]; then
       sudo apt-get -qq update
