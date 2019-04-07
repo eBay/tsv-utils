@@ -48,7 +48,7 @@ uniq's a file on fields 2 and 3:
 
    tsv-uniq -f 2,3 file.tsv
 
-This is similar to the unix 'uniq' program, but based on individual
+This is similar to the Unix 'uniq' program, but based on individual
 fields and without requiring sorted data.
 
 tsv-uniq can be run without specifying a key field. In this case the
@@ -56,28 +56,27 @@ whole line is used as a key, same as the Unix 'uniq' program. This works
 on any line-oriented text file, not just TSV files.
 
 The above is the default behavior ('uniq' mode). The alternates to 'uniq'
-mode are 'number' mode and 'equiv-class identification' mode. In
-'equiv-class identification' mode, all lines are written to standard
-output, but with a new field added marking equivalent entries with an ID.
-The ID is simply a one-upped counter. Example:
+mode are 'number' mode and 'equiv-class' mode. In 'equiv-class' mode, all
+lines are written to standard output, but with a field appended marking
+equivalent entries with an ID. The ID is a one-upped counter. Example:
 
    tsv-uniq --header -f 2,3 --equiv file.tsv
 
-'Number' mode is similar in that it outputs all input lines. Each line
-is prefixed with a number indicating the occurrence count for that key.
-The line that contains a particular key get the number '1', the second
-line containing the key gets number '2', etc.
+'Number' mode also writes all lines to standard output, but with a field
+appended numbering the occurrence count for the line's key. The first line
+with a specific key is assigned the number '1', the second with the key is
+assigned number '2', etc. 'Number' and 'equiv-class' modes can be combined.
 
-The '--r|repeated' option can be used to print only lines occurring more than
-once. '--a|at-least N' is similar, except that it only prints lines occuring at
-least N times. For both, the Nth line found is printed, in the order found.
+The '--r|repeated' option can be used to print only lines occurring more
+than once. Specifically, the second occurrence of a key is printed. The
+'--a|at-least N' option is similar, printing lines occurring at least N
+times. (Like repeated, the Nth line with the key is printed.)
 
-The '--m|max MAX' option changes the behavior to output the first MAX lines for
-each key, rather than just the first line for each key. This can also with used
-with '--e|equiv' to limit the number output for each equivalence class.
+The '--m|max MAX' option changes the behavior to output the first MAX
+lines for each key, rather than just the first line for each key.
 
-If both '--a|at-least' and '--m|max' are specified, the occurrences between
-'at-least' and 'max' are output.
+If both '--a|at-least' and '--m|max' are specified, the occurrences
+starting with 'at-least' and ending with 'max' are output.
 
 Options:
 EOS";
@@ -115,9 +114,9 @@ struct TsvUniqOptions
      * values calculated. In addition, field indices have been converted to zero-based.
      * If the whole line is the key, the individual fields list will be cleared.
      *
-     * Repeat count control variables 'atLeast' and max' - The general idea is that the
-     * values are left at zero if no repeat count options are specified. They are set if
-     * repeat count options are specified, as follows:
+     * Repeat count control variables 'atLeast' and max' - These values are left at zero
+     * if no repeat count options are specified. They are set if repeat count options
+     * are specified, as follows:
      *   * atLeast - Will be zero unless --r|repeated or --a|at-least is specified.
      *     --r|repeated option sets it 2, --a|at-least sets it to the specified value.
      *   * max - Default to zero. Is set to the --m|max value if provided. Is set to
