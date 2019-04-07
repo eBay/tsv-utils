@@ -13,26 +13,45 @@
 #   DEPLOY - Deploy if a tagged release.
 matrix:
   include:
-#==> Use only in Cron build until Travis has more OSX capacity
-    - os: osx
-      osx_image: xcode10.2
-      group: travis_latest
-      language: d
-      d: dmd
-      env: DUBTEST=1 MAKETEST=1
-      if: type IN (cron)
     - os: linux
       dist: xenial
       group: travis_latest
       language: d
       d: dmd
       env: DUBTEST=1 MAKETEST=1 CODECOV=1
-#    - os: osx
-#      osx_image: xcode10.2
-#      group: travis_latest
-#      language: d
-#      d: ldc-1.6.0
-#      env: DUBTEST=1 MAKETEST=1 APPLTO=off
+    - os: osx
+      osx_image: xcode10.2
+      group: travis_latest
+      language: d
+      d: dmd
+      env: DUBTEST=1 MAKETEST=1
+    - os: linux
+      dist: xenial
+      group: travis_latest
+      language: d
+      d: ldc
+      env: LTOPGO_V2=default
+    - os: linux
+      dist: xenial
+      group: travis_latest
+      language: d
+      d: ldc-1.15.0
+      env: LINUX_SPECIAL=1 DEPLOY=1
+      # if: type IN (pull_request, cron)
+    - os: osx
+      osx_image: xcode10.2
+      group: travis_latest
+      language: d
+      d: ldc-1.15.0
+      env: LTOPGO_V2=default DEPLOY=1
+      # if: type IN (pull_request, cron)
+    - os: osx
+      osx_image: xcode10.2
+      group: travis_latest
+      language: d
+      d: ldc
+      env: LTOPGO_V2=default
+      if: type IN (pull_request, cron)
     - os: linux
       dist: xenial
       group: travis_latest
@@ -40,72 +59,34 @@ matrix:
       d: ldc-1.6.0
       env: DUBTEST=0 MAKETEST=1
       if: type IN (pull_request, cron)
-#      if: fork = true
-#
-#==> Put back when Travis has more OSX capacity
-#    - os: osx
-#      osx_image: xcode10.2
-#      group: travis_latest
-#      language: d
-#      d: ldc
-#      env: DUBTEST=1 MAKETEST=1 APPLTO=off
-#      if: type IN (pull_request, cron)
-#      if: fork = true
-    - os: osx
-      osx_image: xcode10.2
+    - os: linux
+      dist: xenial
       group: travis_latest
       language: d
       d: ldc
-      env: LTOPGO=default
-    - os: osx
-      osx_image: xcode10.2
-      group: travis_latest
-      language: d
-      d: ldc
-      env: LTOPGO_V2=default
-      if: type IN (pull_request, cron)
-    - os: osx
-      osx_image: xcode10.2
-      group: travis_latest
-      language: d
-      d: ldc-1.12.0
-      env: LTOPGO_V2=default DEPLOY=1
+      env: DUBTEST=1 MAKETEST=1
+      if: type IN (pull_request)
     - os: linux
       dist: xenial
       group: travis_latest
       language: d
       d: ldc
       env: DUBTEST=1 MAKETEST=1 APPLTO=full
-      if: type IN (pull_request, cron)
-#      if: fork = true
+      if: type IN (cron)
     - os: linux
       dist: xenial
       group: travis_latest
       language: d
       d: ldc
       env: APPLTO=thin ALLLTO=default
-      if: type IN (pull_request, cron)
-#      if: fork = true
+      if: type IN (cron)
     - os: linux
       dist: xenial
       group: travis_latest
       language: d
       d: ldc
       env: LTOPGO=default
-      if: type IN (pull_request, cron)
-    - os: linux
-      dist: xenial
-      group: travis_latest
-      language: d
-      d: ldc
-      env: LTOPGO_V2=default
-#
-# ===> Still fails on Ubuntu 14.04, even with thinLTO and LDC 1.12.0
-#    - os: linux
-#      group: travis_latest
-#      language: d
-#      d: ldc
-#      env: LINUX_SPECIAL=1
+      if: type IN (cron)
     - os: linux
       dist: xenial
       sudo: required
@@ -114,7 +95,7 @@ matrix:
       d: ldc-1.7.0
       services: docker
       env: DOCKERSPECIAL=1
-      if: type IN (pull_request, cron)
+      if: type IN (cron)
     - os: linux
       dist: xenial
       sudo: required
@@ -122,7 +103,29 @@ matrix:
       language: d
       d: ldc-1.12.0
       services: docker
-      env: DOCKERSPECIAL=2 DEPLOY=1
+      env: DOCKERSPECIAL=2
+      if: type IN (cron)
+    - os: linux
+      dist: xenial
+      group: travis_latest
+      language: d
+      d: ldc-beta
+      env: DUBTEST=1 MAKETEST=1 APPLTO=full
+      if: type IN (cron)
+    - os: linux
+      dist: xenial
+      group: travis_latest
+      language: d
+      d: ldc-beta
+      env: LTOPGO_V2=default
+      if: type IN (cron)
+    - os: osx
+      osx_image: xcode10.2
+      group: travis_latest
+      language: d
+      d: ldc-beta
+      env: LTOPGO_V2=default
+      if: type IN (cron)
 before_install:
   - if [[ "$DOCKERSPECIAL" == "1" ]]; then
       sudo apt-get -qq update
@@ -226,8 +229,10 @@ before_deploy:
   elif [[ "$DOCKERSPECIAL" == "2" ]]; then
     docker run --rm -ti -v $(pwd):/src -w /src dlang2/ldc-ubuntu:1.12.0 make package PKG_ROOT_DIR=tsv-utils DCOMPILER=$DC OS=$TRAVIS_OS_NAME APP_VERSION=$USE_VERSION LDC_LTO_RUNTIME=1 LDC_PGO=2 DFLAGS=-static;
     sudo chown -R $UID:$GID $(pwd);
+  elif [[ "$TRAVIS_OS_NAME" == "osx ]]; then
+    make package PKG_ROOT_DIR=tsv-utils DCOMPILER=$DC OS=$TRAVIS_OS_NAME APP_VERSION=$USE_VERSION LDC_LTO_RUNTIME=1 LDC_PGO=2;
   else
-    make package PKG_ROOT_DIR=tsv-utils DCOMPILER=$DC OS=$TRAVIS_OS_NAME APP_VERSION=$USE_VERSION LDC_BUILD_RUNTIME=1 LDC_PGO=2;
+    make package PKG_ROOT_DIR=tsv-utils DCOMPILER=$DC OS=$TRAVIS_OS_NAME APP_VERSION=$USE_VERSION LDC_LTO_RUNTIME=1 LDC_PGO=2 DFLAGS=-static;
   fi
 deploy:
   provider: releases
