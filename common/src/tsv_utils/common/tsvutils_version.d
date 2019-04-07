@@ -3,7 +3,7 @@
 
 module tsv_utils.common.tsvutils_version;
 
-enum string tsvutilsVersion = "v1.4.0";
+enum string tsvutilsVersion = "v1.4.1";
 
 string tsvutilsVersionNotice (string toolName)
 {
