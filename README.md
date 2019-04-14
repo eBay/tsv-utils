@@ -246,14 +246,6 @@ $ curl -L https://github.com/eBay/tsv-utils/releases/download/v1.3.2/tsv-utils-v
 
 See the [Github releases](https://github.com/eBay/tsv-utils/releases) page for the latest release.
 
-For some distributions a package can directly be installed:
-
-| Distribution | Command               |
-| ------------ | --------------------- |
-| Arch Linux   | `pacaur -S tsv-utils` (see [`tsv-utils`](https://aur.archlinux.org/packages/tsv-utils/))
-
-*Note: The distributions above are not updated as frequently as the [Github releases](https://github.com/eBay/tsv-utils/releases) page.*
-
 ### Build from source files
 
 [Download a D compiler](https://dlang.org/download.html). These tools have been tested with the DMD and LDC compilers, on Mac OSX and Linux. Use DMD version 2.076.1 or later, LDC version 1.6.0 or later.
