@@ -238,10 +238,10 @@ There are several ways to obtain the tools: [prebuilt binaries](#prebuilt-binari
 
 ### Prebuilt binaries
 
-Prebuilt binaries are available for Linux and Mac, these can be found on the [Github releases](https://github.com/eBay/tsv-utils/releases) page. Download and unpack the tar.gz file. Executables are in the `bin` directory. Add the `bin` directory or individual tools to the `PATH` environment variable. As an example, the 1.3.2 releases for Linux and MacOS can be downloaded and unpacked with these commands:
+Prebuilt binaries are available for Linux and Mac, these can be found on the [Github releases](https://github.com/eBay/tsv-utils/releases) page. Download and unpack the tar.gz file. Executables are in the `bin` directory. Add the `bin` directory or individual tools to the `PATH` environment variable. As an example, the 1.4.1 releases for Linux and MacOS can be downloaded and unpacked with these commands:
 ```
-$ curl -L https://github.com/eBay/tsv-utils/releases/download/v1.3.2/tsv-utils-v1.3.2_linux-x86_64_ldc2.tar.gz | tar xz
-$ curl -L https://github.com/eBay/tsv-utils/releases/download/v1.3.2/tsv-utils-v1.3.2_osx-x86_64_ldc2.tar.gz | tar xz
+$ curl -L https://github.com/eBay/tsv-utils/releases/download/v1.4.1/tsv-utils-v1.4.1_linux-x86_64_ldc2.tar.gz | tar xz
+$ curl -L https://github.com/eBay/tsv-utils/releases/download/v1.4.1/tsv-utils-v1.4.1_osx-x86_64_ldc2.tar.gz | tar xz
 ```
 
 See the [Github releases](https://github.com/eBay/tsv-utils/releases) page for the latest release.
