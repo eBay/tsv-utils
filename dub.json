@@ -25,11 +25,11 @@
         {
             "name" : "executable",
             "targetName": "dub_build",
-            "mainSourceFile": "dub_build.d",
+            "mainSourceFile": "dub_build.d"
         },
         {
             "name": "unittest",
-            "targetType": "none",
+            "targetType": "none"
         }
     ],
     "buildTypes": {
