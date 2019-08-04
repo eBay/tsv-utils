@@ -78,11 +78,11 @@ _tsv_append()
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
-    opts="--help --help-verbose --version --header --track-source --file --delimiter"
+    opts="--help --help-verbose --version --header --track-source --source-header --file --delimiter"
 
     # Options requiring an argument or precluding other options
     case $prev in
-         -h|--help|--help-verbose|-V|--version|-f|--file|-d|--delimiter)
+         -h|--help|--help-verbose|-V|--version|-s|--source-header|-f|--file|-d|--delimiter)
           return
           ;;
     esac
