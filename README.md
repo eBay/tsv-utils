@@ -2,14 +2,12 @@
 
 This is a set of command line utilities for manipulating large tabular data files. Files of numeric and text data commonly found in machine learning, data mining, and similar environments. Filtering, sampling, statistical calculations and other operations are supported.
 
-The tools were originally developed in Perl and used for day-to-day work in a large scale data mining environment. One of the tools was re-written in D as an exercise exploring the language. Significant performance gains and agreeable programmer characteristics soon led to writing additional utilities in D. Information on the D programming language is available at [dlang.org](https://dlang.org/).
-
-These tools are especially useful when working with large data sets, as they run faster than other tools providing similar functionality, often by significant margins.
+These tools are especially useful when working with large data sets, as they run faster than other tools providing similar functionality, often by significant margins. See the [2018 Comparative Benchmarks Update](docs/comparative-benchmarks-2018.md) for comparisons with similar tools.
 
 File an [issue](https://github.com/eBay/tsv-utils/issues) if you have problems, questions or suggestions.
 
 **In this README:**
-* [Tools overview](#tools-overview)
+* [Tools overview](#tools-overview) - Short description of each tool.
 * [Obtaining and installation](#obtaining-and-installation)
 
 **Additional documents:**
@@ -40,11 +38,9 @@ These tools perform data manipulation and statistical calculations on tab delimi
 
 The tools work like traditional Unix command line utilities such as `cut`, `sort`,  and `grep`, and are intended to complement these tools. Each tool is a standalone executable. They follow common Unix conventions for pipeline programs. Data is read from files or standard input, results are written to standard output. The field separator defaults to TAB, but any character can be used. Input and output is UTF-8, and all operations are Unicode ready, including regular expression match (`tsv-filter`). Documentation is available for each tool by invoking it with the `--help` option. TSV format is similar to CSV, see [Comparing TSV and CSV formats](docs/comparing-tsv-and-csv.md) for the differences.
 
-Speed matters when processing large files, these tools are the fastest the author has found. See the [2018 Comparative Benchmarks Update](docs/comparative-benchmarks-2018.md) for comparisons with similar tools.
+The rest of this section contains an overview of each tool. Full documentation is available in the [tool reference](docs/ToolReference.md).
 
-The rest of this section contains a one line description of each tool followed by longer introductions. There is more detail in the [tool reference](docs/ToolReference.md).
-
-* [tsv-filter](#tsv-filter) - Filter rows via numeric and string comparisons.
+* [tsv-filter](#tsv-filter) - Filter lines using numeric, string and regular expression comparisons against individual fields.
 * [tsv-select](#tsv-select) - Keep a subset of columns (fields). Like `cut`, but with field reordering.
 * [tsv-summarize](#tsv-summarize) - Summary statistics on selected fields, against the full data set or grouped by key.
 * [tsv-sample](#tsv-sample) - Sample input lines or randomize their order. A number of sampling methods are available.
@@ -58,7 +54,7 @@ The rest of this section contains a one line description of each tool followed b
 
 ### tsv-filter
 
-Filters lines by making numeric and string comparisons against individual fields. Multiple tests can be specified in a single call. A variety of numeric and string comparison operators are available as well as regular expressions. Example:
+Filters lines by making tests against individual fields. Multiple tests can be specified in a single call. A variety of numeric and string comparison operators are available as well as regular expressions. Example:
 ```
 $ tsv-filter --ge 3:100 --le 3:200 --str-eq 4:red file.tsv
 ```
