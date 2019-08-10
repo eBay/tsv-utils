@@ -8,11 +8,11 @@ _Visit the [main page](../README.md)_
 
 ## 2018 Benchmark Summary
 
-The table below summarizes the results of the 2018 benchmark study. It shows the top-3 results from all the tests. Times are in seconds. The tsv-utils tools are shown in _italics_. (With the exception of *csv2tsv*, tsv-utils tools names begin with the `tsv-` prefix.)
+The table below summarizes the results of the 2018 benchmark study. It shows the top-3 tools from each test. Times are in seconds. The tsv-utils tools are in _italics_. (Except for *csv2tsv*, tsv-utils tool names start with "tsv-".)
 
-The benchmarks are described in detail in the [Comparative Benchmark Study](#comparative-benchmark-study) and the  [2017](comparative-benchmarks-2017.md) and [2018](comparative-benchmarks-2018.md) comparative benchmark reports. These reports include goals, methodology, details for reproducing results, caveats, conclusions, etc.
+The benchmarks are described in detail in the [Comparative Benchmark Study](#comparative-benchmark-study) and the [2017](comparative-benchmarks-2017.md) and [2018](comparative-benchmarks-2018.md) comparative benchmark reports. These reports include goals, methodology, test details, caveats, conclusions, etc.
 
-### Top-3 tools in each benchmark
+### Top three tools in each benchmark
 
 | Benchmark                     | Platform | 1st             |  Time | 2nd          |  Time | 3rd          |  Time |
 |-------------------------------|----------|-----------------|------:|--------------|------:|--------------|------:|

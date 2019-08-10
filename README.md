@@ -1,8 +1,8 @@
 # Command line utilities for tabular data files
 
-This is a set of command line utilities for manipulating large tabular data files. Files of numeric and text data commonly found in machine learning, data mining, and similar environments. Filtering, sampling, statistical calculations, joins, and more.
+This is a set of command line utilities for manipulating large tabular data files. Files of numeric and text data commonly found in machine learning, data mining, and similar environments. Filtering, sampling, statistics, joins, and more.
 
-These tools are especially useful when working with large data sets. They run faster than other tools providing similar functionality, often by significant margins. See [Performance Studies](docs/Performance.md) for benchmark comparisons with other tools.
+These tools are especially useful when working with large data sets. They run faster than other tools providing similar functionality, often by significant margins. See [Performance Studies](docs/Performance.md) for comparisons with other tools.
 
 File an [issue](https://github.com/eBay/tsv-utils/issues) if you have problems, questions or suggestions.
 
