@@ -2,8 +2,34 @@ _Visit the [main page](../README.md)_
 
 # Performance Studies
 
+* [2018 Benchmark Summary](#2018-benchmark-summary)
 * [Comparative Benchmark Study](#comparative-benchmark-study)
 * [LTO and PGO studies](#lto-and-pgo-studies)
+
+## 2018 Benchmark Summary
+
+The table below summarizes the results of the 2018 benchmark study. It shows the top-3 results from all the tests. Times are in seconds. The tsv-utils tools are shown in _italics_. (With the exception of *csv2tsv*, tsv-utils tools names begin with the `tsv-` prefix.)
+
+The benchmarks are described in detail in the [Comparative Benchmark Study](#comparative-benchmark-study) and the  [2017](comparative-benchmarks-2017.md) and [2018](comparative-benchmarks-2018.md) comparative benchmark reports. These reports include goals, methodology, details for reproducing results, caveats, conclusions, etc.
+
+### Top-3 tools in each benchmark
+
+| Benchmark                     | Platform | 1st             |  Time | 2nd          |  Time | 3rd          |  Time |
+|-------------------------------|----------|-----------------|------:|--------------|------:|--------------|------:|
+| **Numeric Row Filter**        | Linux    | _tsv-filter_    |  5.48 | mawk         | 11.31 | GNU awk      | 42.80 |
+| (4.8 GB, 7M lines)            | Mac OS   | _tsv-filter_    |  3.35 | mawk         | 15.05 | GNU awk      | 24.25 |
+| **Regex Row Filter**          | Linux    | xsv             |  7.97 | _tsv-filter_ |  8.80 | mawk         | 17.74 |
+| (2.7 GB, 14M lines)           | Mac OS   | xsv             |  7.03 | _tsv-filter_ |  8.28 | GNU awk      | 16.47 |
+| **Column selection**          | Linux    | _tsv-select_    |  4.79 | mawk         |  9.51 | xsv          |  9.74 |
+| (4.8 GB, 7M lines)            | Mac OS   | _tsv-select_    |  2.93 | xsv          |  7.67 | csvtk        | 11.00 |
+| **Column selection (narrow)** | Linux    | GNU cut         |  5.60 | _tsv-select_ |  8.26 | xsv          | 13.60 |
+| (1.7 GB, 86M lines)           | Mac OS   | xsv             |  9.22 | _tsv-select_ | 10.18 | GNU cut      | 10.65 |
+| **Join two files**            | Linux    | _tsv-join_      | 26.68 | xsv          | 68.02 | csvtk        | 98.51 |
+| (4.8 GB, 7M lines)            | Mac OS   | _tsv-join_      | 21.78 | xsv          | 60.03 | csvtk        | 82.43 |
+| **Summary statistics**        | Linux    | _tsv-summarize_ | 15.78 | xsv          | 44.38 | GNU Datamash | 48.51 |
+| (4.8 GB, 7M lines)            | Mac OS   | _tsv-summarize_ |  9.82 | xsv          | 35.32 | csvtk        | 45.92 |
+| **CSV-to-TSV**                | Linux    | _csv2tsv_       | 20.30 | xsv          | 26.82 | csvtk        | 44.82 |
+| (2.7 GB, 14M lines)           | Mac OS   | _csv2tsv_       | 10.91 | xsv          | 14.38 | csvtk        | 32.49 |
 
 ## Comparative Benchmark Study
 

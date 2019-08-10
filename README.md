@@ -2,7 +2,7 @@
 
 This is a set of command line utilities for manipulating large tabular data files. Files of numeric and text data commonly found in machine learning, data mining, and similar environments. Filtering, sampling, statistical calculations, joins, and more.
 
-These tools are especially useful when working with large data sets. They run faster than other tools providing similar functionality, often by significant margins. See the [2018 Comparative Benchmarks Update](docs/comparative-benchmarks-2018.md) for performance comparisons with other tools.
+These tools are especially useful when working with large data sets. They run faster than other tools providing similar functionality, often by significant margins. See [Performance Studies](docs/Performance.md) for benchmark comparisons with other tools.
 
 File an [issue](https://github.com/eBay/tsv-utils/issues) if you have problems, questions or suggestions.
 
@@ -14,7 +14,7 @@ File an [issue](https://github.com/eBay/tsv-utils/issues) if you have problems, 
 * [Tools reference](docs/ToolReference.md)
 * [Release notes (releases page)](https://github.com/eBay/tsv-utils/releases)
 * [Tips and tricks](docs/TipsAndTricks.md)
-* [Performance Studies](docs/Performance.md) (quick access: [2018 Comparative Benchmarks](docs/comparative-benchmarks-2018.md))
+* [Performance Studies](docs/Performance.md)
 * [Comparing TSV and CSV formats](docs/comparing-tsv-and-csv.md)
 * [Building with Link Time Optimization (LTO) and Profile Guided Optimization (PGO)](docs/BuildingWithLTO.md)
 * [About the code](docs/AboutTheCode.md) (see also: [tsv-utils code documentation](https://tsv-utils.dpldocs.info/))
@@ -23,7 +23,7 @@ File an [issue](https://github.com/eBay/tsv-utils/issues) if you have problems, 
 **Talks and blog posts:**
 * [Faster Command Line Tools in D](https://dlang.org/blog/2017/05/24/faster-command-line-tools-in-d/). May 24, 2017. A blog post showing a few ways to optimize performance in command line tools. Many of the ideas in the post were identified while developing the TSV Utilities.
 * [Experimenting with Link Time Optimization](docs/dlang-meetup-14dec2017.pdf). Dec 14, 2017. A presentation at the [Silicon Valley D Meetup](https://www.meetup.com/D-Lang-Silicon-Valley/) describing experiments using LTO based on eBay's TSV Utilities.
-* [Exploring D via Benchmarking of eBay's TSV Utilities](http://dconf.org/2018/talks/degenhardt.html). May 2, 2018. A presentation at [DConf 2018](http://dconf.org/2018/) describing benchmarking studies conducted using eBay's TSV Utilities (slides [here](docs/dconf2018.pdf)).
+* [Exploring D via Benchmarking of eBay's TSV Utilities](http://dconf.org/2018/talks/degenhardt.html). May 2, 2018. A presentation at [DConf 2018](http://dconf.org/2018/) describing performance benchmark studies conducted using eBay's TSV Utilities (slides [here](docs/dconf2018.pdf)).
 
 [![Travis](https://img.shields.io/travis/eBay/tsv-utils.svg)](https://travis-ci.org/eBay/tsv-utils)
 [![Codecov](https://img.shields.io/codecov/c/github/eBay/tsv-utils.svg)](https://codecov.io/gh/eBay/tsv-utils)
