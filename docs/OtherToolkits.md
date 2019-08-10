@@ -7,14 +7,14 @@ There are a number of open-source toolkits with functionality similar to the TSV
 * [clarkgrubb/data-tools](https://github.com/clarkgrubb/data-tools) - A variety of tools, especially rich in format converters. Written in Python, Ruby, and C.
 * [csvkit](https://github.com/wireservice/csvkit) - CSV tools, written in Python.
 * [csvtk](https://github.com/shenwei356/csvtk) - CSV tools, written in Go.
-* [GNU Datamash](https://www.gnu.org/software/datamash/) - Performs numeric, textual and statistical operations on TSV files. Has many similarities to `tsv-summarize`. Written in C.
+* [GNU Datamash](https://www.gnu.org/software/datamash/) - Performs numeric, textual and statistical operations on TSV files. Has many similarities to  [tsv-summarize](ToolReference.md#tsv-summarize-reference). Written in C.
 * [dplyr](https://github.com/hadley/dplyr) - Tools for tabular data in R storage formats. Runs in an R environment, code is in C++.
 * [miller](https://github.com/johnkerl/miller) - CSV and JSON tools, written in C.
-* [GNU shuf](https://www.gnu.org/software/coreutils/manual/html_node/shuf-invocation.html), part of [GNU Core Utils](https://www.gnu.org/software/coreutils/coreutils.html) - Generates permutations of input lines. Sampling with and without replacement is supported. This tool has many of the same features as `tsv-sample`. Written in C.
+* [GNU shuf](https://www.gnu.org/software/coreutils/manual/html_node/shuf-invocation.html), part of [GNU Core Utils](https://www.gnu.org/software/coreutils/coreutils.html) - Generates permutations of input lines. Sampling with and without replacement is supported. This tool has many of the same features as [tsv-sample](ToolReference.md#tsv-sample-reference). Written in C.
 * [brendano/tsvutils](https://github.com/brendano/tsvutils) - TSV tools, especially rich in format converters. Written in Python.
 * [xsv](https://github.com/BurntSushi/xsv) - CSV tools, written in Rust.
 
-A broader list of tools can be found here: [Structured text tools](https://github.com/dbohdan/structured-text-tools).
+A much more comprehensive list of tools can be found here: [Structured text tools](https://github.com/dbohdan/structured-text-tools).
 
 The different toolkits are certainly worth investigating if you work with tabular data files. Several have quite extensive feature sets. Each toolkit has its own strengths, your workflow and preferences are likely to fit some toolkits better than others.
 
