@@ -48,4 +48,4 @@ References:
 - [Wikipedia: Comma-separated-values](https://en.wikipedia.org/wiki/Comma-separated_values) - Describes CSV and related formats.
 - [RFC 4180](https://tools.ietf.org/html/rfc4180) - IETF CSV format description, the closest thing to an actual standard for CSV.
 - [brendano/tsvutils: The philosophy of tsvutils](https://github.com/brendano/tsvutils#the-philosophy-of-tsvutils) - Brendan O'Connor's discussion of the rationale for using TSV format in his open source toolkit.
-- [http://thomasburette.com/blog/2014/05/25/so-you-want-to-write-your-own-CSV-code/](So You Want To Write Your Own CSV code?), Thomas Burette - A humorous but largely accurate blog post describing the troubles with ad-hoc CSV parsing. Of course, you could use TSV and avoid these problems!
+- [So You Want To Write Your Own CSV code?](http://thomasburette.com/blog/2014/05/25/so-you-want-to-write-your-own-CSV-code/) - Thomas Burette's humorous, and accurate, blog post describing the troubles with ad-hoc CSV parsing. Of course, you could use TSV and avoid these problems!
