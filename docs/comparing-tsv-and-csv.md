@@ -40,7 +40,7 @@ abc	hello, world	def
 ghi	Say "hello, world!"	jkl
 ```
 
-The similarity between TSV and CSV can lead to confusion about which tools are appropriate. Furthering this confusion, it is somewhat common to have data files using comma as the field delimiter, but without comma, quote, or newlines in the data. No CSV escapes are needed in these files, with the implication that traditional Unix tools like `cut` and `awk` can be used to process these files. Such files are sometimes referred to as "simple CSV". They are equivalent to TSV files with comma as a field delimiter. Traditional Unix tools and [tsv-utils](../README.md) tools can process these files correctly by specifying the field delimiter. However, "simple csv" is a very ad hoc and ill defined notion. A simple precaution when working with these files is to run a CSV-to-TSV converter like the [csv2tsv](ToolReference.md#csv2tsv-reference) prior to other processing steps.
+The similarity between TSV and CSV can lead to confusion about which tools are appropriate. Furthering this confusion, it is somewhat common to have data files using comma as the field delimiter, but without comma, quote, or newlines in the data. No CSV escapes are needed in these files, with the implication that traditional Unix tools like `cut` and `awk` can be used to process these files. Such files are sometimes referred to as "simple CSV". They are equivalent to TSV files with comma as a field delimiter. Traditional Unix tools and [tsv-utils](../README.md) tools can process these files correctly by specifying the field delimiter. However, "simple csv" is a very ad hoc and ill defined notion. A simple precaution when working with these files is to run a CSV-to-TSV converter like [csv2tsv](ToolReference.md#csv2tsv-reference) prior to other processing steps.
 
 References:
 - [Wikipedia: Tab-separated values](https://en.wikipedia.org/wiki/Tab-separated_values) - Useful description of TSV format.
@@ -48,3 +48,4 @@ References:
 - [Wikipedia: Comma-separated-values](https://en.wikipedia.org/wiki/Comma-separated_values) - Describes CSV and related formats.
 - [RFC 4180](https://tools.ietf.org/html/rfc4180) - IETF CSV format description, the closest thing to an actual standard for CSV.
 - [brendano/tsvutils: The philosophy of tsvutils](https://github.com/brendano/tsvutils#the-philosophy-of-tsvutils) - Brendan O'Connor's discussion of the rationale for using TSV format in his open source toolkit.
+- [http://thomasburette.com/blog/2014/05/25/so-you-want-to-write-your-own-CSV-code/](So You Want To Write Your Own CSV code?), Thomas Burette - A humorous but largely accurate blog post describing the troubles with ad-hoc CSV parsing. Of course, you could use TSV and avoid these problems!
