@@ -70,11 +70,11 @@ See the [tsv-filter reference](docs/ToolReference.md#tsv-filter-reference) for d
 
 ### tsv-sample
 
-`tsv-sample` randomizes line order or selects subsamples of lines from input data. Several sampling methods are available, including simple random sampling, weighted random sampling, Bernoulli sampling, and distinct sampling. Data can be read from files or standard input. These sampling methods are made available through several modes of operation:
+`tsv-sample` randomizes line order (shuffling) or selects random subsets of lines (sampling) from input data. Several techniques are available, including shuffling, simple random sampling, weighted random sampling, Bernoulli sampling, and distinct sampling. Data can be read from files or standard input. These sampling methods are made available through several modes of operation:
 
-* Line order randomization - This is the default mode of operation. All lines are read into memory and written out in a random order. All orderings are equally likely. This can be used for simple random sampling by specifying the `-n|--num` option, producing a random subset of the specified size.
+* Line order randomization (Shuffling) - This is the default mode of operation. All lines are read into memory and written out in a random order. All orderings are equally likely. This can be used for simple random sampling by specifying the `-n|--num` option, producing a random subset of the specified size. (Subsets are in random order.)
 
-* Weighted line order randomization - This extends the previous method to weighted random sampling by the use of a weight taken from each line. The weight field is specified with the `-w|--weight-field` option.
+* Weighted line order randomization - This extends the previous method to weighted shuffling or weighted random sampling by the use of a weight taken from each line. The weight field is specified with the `-w|--weight-field` option.
 
 * Sampling with replacement - All lines are read into memory, then lines are selected one at a time at random and output. Lines can be output multiple times. Output continues until `-n|--num` samples have been output.
 
