@@ -1,32 +1,32 @@
-Fixed length preambles
-----------------------
+Auto-detect Preambles
+---------------------
 
-====[tsv-pretty --preamble 1 input_5x1_preamble1.tsv]====
+====[tsv-pretty --auto-preamble input_5x1_preamble1.tsv]====
 ### A one line preamble ###
 Text-1  Num-1  Mix-1  Mix-2  Mix-3
 
-====[tsv-pretty --preamble 1 input_5x2_preamble1.tsv]====
+====[tsv-pretty --auto-preamble input_5x2_preamble1.tsv]====
 ### A one line preamble ###
 Text-1  Num-1  Mix-1  Mix-2  Mix-3
 ABC        22     14  .      ab
 
-====[tsv-pretty --preamble 1 input_5x3_preamble1.tsv]====
+====[tsv-pretty --auto-preamble input_5x3_preamble1.tsv]====
 ### A one line preamble ###
 Text-1    Num-1  Mix-1   Mix-2  Mix-3
 DEF        2233  0.0     e      nan
 GHIJKLM  223344  1.4e07  17     ghi
 
-====[tsv-pretty --preamble 1 input_5x1_preamble1.tsv input_5x1_preamble1.tsv]====
+====[tsv-pretty --auto-preamble input_5x1_preamble1.tsv input_5x1_preamble1.tsv]====
 ### A one line preamble ###
 Text-1  Num-1  Mix-1  Mix-2  Mix-3
 
-====[tsv-pretty --preamble 1 -u input_5x1_preamble1.tsv input_5x2_preamble1.tsv]====
+====[tsv-pretty --auto-preamble -u input_5x1_preamble1.tsv input_5x2_preamble1.tsv]====
 ### A one line preamble ###
 Text-1  Num-1  Mix-1  Mix-2  Mix-3
 ------  -----  -----  -----  -----
 ABC        22     14  .      ab
 
-====[tsv-pretty -b 1 -u input_5x2_preamble1.tsv input_5x3_preamble1.tsv]====
+====[tsv-pretty -a -u input_5x2_preamble1.tsv input_5x3_preamble1.tsv]====
 ### A one line preamble ###
 Text-1    Num-1  Mix-1   Mix-2  Mix-3
 ------    -----  -----   -----  -----
@@ -34,7 +34,7 @@ ABC          22  14      .      ab
 DEF        2233  0.0     e      nan
 GHIJKLM  223344  1.4e07  17     ghi
 
-====[tsv-pretty -b 1 -u input_5x1_preamble1.tsv input_5x2_preamble1.tsv input_5x3_preamble1.tsv]====
+====[tsv-pretty -a -u input_5x1_preamble1.tsv input_5x2_preamble1.tsv input_5x3_preamble1.tsv]====
 ### A one line preamble ###
 Text-1    Num-1  Mix-1   Mix-2  Mix-3
 ------    -----  -----   -----  -----
@@ -42,64 +42,64 @@ ABC          22  14      .      ab
 DEF        2233  0.0     e      nan
 GHIJKLM  223344  1.4e07  17     ghi
 
-====[tsv-pretty -b 1 --no-header input_5x1_noheader_preamble1.tsv]====
+====[tsv-pretty -a --no-header input_5x1_noheader_preamble1.tsv]====
 ### A one line preamble ###
 ABC  22  14  .  ab
 
-====[tsv-pretty -b 1 --no-header input_5x1_noheader_preamble1.tsv input_5x1_noheader_preamble1.tsv]====
+====[tsv-pretty -a --no-header input_5x1_noheader_preamble1.tsv input_5x1_noheader_preamble1.tsv]====
 ### A one line preamble ###
 ABC  22  14  .  ab
 ABC  22  14  .  ab
 
-====[tsv-pretty -b 1 --no-header input_5x2_noheader_preamble1.tsv]====
+====[tsv-pretty -a --no-header input_5x2_noheader_preamble1.tsv]====
 ### A one line preamble ###
 DEF        2233  0.0     e   nan
 GHIJKLM  223344  1.4e07  17  ghi
 
-====[tsv-pretty -b 1 -x input_5x2_noheader_preamble1.tsv input_5x2_noheader_preamble1.tsv]====
+====[tsv-pretty -a -x input_5x2_noheader_preamble1.tsv input_5x2_noheader_preamble1.tsv]====
 ### A one line preamble ###
 DEF        2233  0.0     e   nan
 GHIJKLM  223344  1.4e07  17  ghi
 DEF        2233  0.0     e   nan
 GHIJKLM  223344  1.4e07  17  ghi
 
-====[tsv-pretty -b 1 -x input_5x1_noheader_preamble1.tsv input_5x2_noheader_preamble1.tsv]====
+====[tsv-pretty -a -x input_5x1_noheader_preamble1.tsv input_5x2_noheader_preamble1.tsv]====
 ### A one line preamble ###
 ABC          22  14      .   ab
 DEF        2233  0.0     e   nan
 GHIJKLM  223344  1.4e07  17  ghi
 
-====[tsv-pretty --preamble 2 input_5x1_preamble2.tsv]====
+====[tsv-pretty --auto-preamble input_5x1_preamble2.tsv]====
 ### First line of a two-line preamble ###
 ### Second line of a two-line preamble ###
 Text-1  Num-1  Mix-1  Mix-2  Mix-3
 
-====[tsv-pretty --preamble 2 input_5x2_preamble2.tsv]====
+====[tsv-pretty --auto-preamble input_5x2_preamble2.tsv]====
 ### First line of a two-line preamble ###
 ### Second line of a two-line preamble ###
 Text-1  Num-1  Mix-1  Mix-2  Mix-3
 ABC        22     14  .      ab
 
-====[tsv-pretty --preamble 2 input_5x3_preamble2.tsv]====
+====[tsv-pretty --auto-preamble input_5x3_preamble2.tsv]====
 ### First line of a two-line preamble ###
 ### Second line of a two-line preamble ###
 Text-1    Num-1  Mix-1   Mix-2  Mix-3
 DEF        2233  0.0     e      nan
 GHIJKLM  223344  1.4e07  17     ghi
 
-====[tsv-pretty --preamble 2 input_5x1_preamble2.tsv input_5x1_preamble2.tsv]====
+====[tsv-pretty --auto-preamble input_5x1_preamble2.tsv input_5x1_preamble2.tsv]====
 ### First line of a two-line preamble ###
 ### Second line of a two-line preamble ###
 Text-1  Num-1  Mix-1  Mix-2  Mix-3
 
-====[tsv-pretty --preamble 2 -u input_5x1_preamble2.tsv input_5x2_preamble2.tsv]====
+====[tsv-pretty --auto-preamble -u input_5x1_preamble2.tsv input_5x2_preamble2.tsv]====
 ### First line of a two-line preamble ###
 ### Second line of a two-line preamble ###
 Text-1  Num-1  Mix-1  Mix-2  Mix-3
 ------  -----  -----  -----  -----
 ABC        22     14  .      ab
 
-====[tsv-pretty -b 2 -u input_5x2_preamble2.tsv input_5x3_preamble2.tsv]====
+====[tsv-pretty -a -u input_5x2_preamble2.tsv input_5x3_preamble2.tsv]====
 ### First line of a two-line preamble ###
 ### Second line of a two-line preamble ###
 Text-1    Num-1  Mix-1   Mix-2  Mix-3
@@ -108,7 +108,7 @@ ABC          22  14      .      ab
 DEF        2233  0.0     e      nan
 GHIJKLM  223344  1.4e07  17     ghi
 
-====[tsv-pretty -b 2 -u input_5x1_preamble2.tsv input_5x2_preamble2.tsv input_5x3_preamble2.tsv]====
+====[tsv-pretty -a -u input_5x1_preamble2.tsv input_5x2_preamble2.tsv input_5x3_preamble2.tsv]====
 ### First line of a two-line preamble ###
 ### Second line of a two-line preamble ###
 Text-1    Num-1  Mix-1   Mix-2  Mix-3
@@ -117,24 +117,24 @@ ABC          22  14      .      ab
 DEF        2233  0.0     e      nan
 GHIJKLM  223344  1.4e07  17     ghi
 
-====[tsv-pretty -b 2 --no-header input_5x1_noheader_preamble2.tsv]====
+====[tsv-pretty -a --no-header input_5x1_noheader_preamble2.tsv]====
 ### First line of a two-line preamble ###
 ### Second line of a two-line preamble ###
 ABC  22  14  .  ab
 
-====[tsv-pretty -b 2 --no-header input_5x1_noheader_preamble2.tsv input_5x1_noheader_preamble2.tsv]====
+====[tsv-pretty -a --no-header input_5x1_noheader_preamble2.tsv input_5x1_noheader_preamble2.tsv]====
 ### First line of a two-line preamble ###
 ### Second line of a two-line preamble ###
 ABC  22  14  .  ab
 ABC  22  14  .  ab
 
-====[tsv-pretty -b 2 --no-header input_5x2_noheader_preamble2.tsv]====
+====[tsv-pretty -a --no-header input_5x2_noheader_preamble2.tsv]====
 ### First line of a two-line preamble ###
 ### Second line of a two-line preamble ###
 DEF        2233  0.0     e   nan
 GHIJKLM  223344  1.4e07  17  ghi
 
-====[tsv-pretty -b 2 -x input_5x2_noheader_preamble2.tsv input_5x2_noheader_preamble2.tsv]====
+====[tsv-pretty -a -x input_5x2_noheader_preamble2.tsv input_5x2_noheader_preamble2.tsv]====
 ### First line of a two-line preamble ###
 ### Second line of a two-line preamble ###
 DEF        2233  0.0     e   nan
@@ -142,7 +142,7 @@ GHIJKLM  223344  1.4e07  17  ghi
 DEF        2233  0.0     e   nan
 GHIJKLM  223344  1.4e07  17  ghi
 
-====[tsv-pretty -b 2 -x input_5x1_noheader_preamble2.tsv input_5x2_noheader_preamble2.tsv]====
+====[tsv-pretty -a -x input_5x1_noheader_preamble2.tsv input_5x2_noheader_preamble2.tsv]====
 ### First line of a two-line preamble ###
 ### Second line of a two-line preamble ###
 ABC          22  14      .   ab

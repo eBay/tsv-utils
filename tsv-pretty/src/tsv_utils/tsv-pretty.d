@@ -81,7 +81,9 @@ Features:
   are displayed using exponential notation with the same precision.
 
 * Preamble: A number of initial lines can be designated as a preamble and output
-  unchanged. The preamble is before the header, if a header is present.
+  unchanged. The preamble is before the header, if a header is present. Preamble
+  lines can be auto-detected via the heuristic that they lack field delimiters.
+  This works well when the field delimiter is a TAB.
 
 * Fonts: Fixed-width fonts are assumed. CJK characters are assumed to be double
   width. This is not always correct, but works well in most cases.
@@ -118,7 +120,8 @@ struct TsvPrettyOptions
     char delim = '\t';                  // --d|delimiter
     size_t spaceBetweenFields = 2;      // --s|space-between-fields num
     size_t maxFieldPrintWidth = 40;     // --m|max-text-width num; Max width for variable width text fields.
-    size_t preambleLines = 0;           // --a|preamble; Number of preamble lines.
+    bool autoDetectPreamble = false;    // --a|auto-preamble
+    size_t preambleLines = 0;           // --b|preamble; Number of preamble lines.
     bool versionWanted = false;         // --V|version
 
     /* Returns a tuple. First value is true if command line arguments were successfully
@@ -161,7 +164,8 @@ struct TsvPrettyOptions
                 "d|delimiter",            "CHR    Field delimiter. Default: TAB. (Single byte UTF-8 characters only.)", &delim,
                 "s|space-between-fields", "NUM    Spaces between each field (Default: 2)", &spaceBetweenFields,
                 "m|max-text-width",       "NUM    Max reserved field width for variable width text fields. Default: 40", &maxFieldPrintWidth,
-                "a|preamble",             "NUM    Treat the first NUM lines as a preamble and output them unchanged.", &preambleLines,
+                "a|auto-preamble",        "       Treat initial lines in a file as a preamble if the line contains no field delimiters.", &autoDetectPreamble,
+                "b|preamble",             "NUM    Treat the first NUM lines as a preamble and output them unchanged.", &preambleLines,
                 std.getopt.config.caseSensitive,
                 "V|version",              "       Print version information and exit.", &versionWanted,
                 std.getopt.config.caseInsensitive,
@@ -198,6 +202,11 @@ struct TsvPrettyOptions
                 throw new Exception("Cannot auto-detect header with zero look-ahead. Specify either '--H|header' or '--x|no-header' when using '--l|lookahead 0'.");
             }
 
+            if (autoDetectPreamble && preambleLines != 0)
+            {
+                throw new Exception("Do not use '--b|preamble NUM' and '--a|auto-preamble' together. ('--b|preamble 0' is okay.)");
+            }
+
             if (emptyReplacement.length != 0) replaceEmpty = true;
             else if (replaceEmpty) emptyReplacement = "--";
 
@@ -230,21 +239,55 @@ struct TsvPrettyOptions
  * algorithm, which operates on generic ranges. A lockingTextWriter is created and
  * released on every input line. This has effect flushing standard output every line,
  * desirable in command line tools.
+ *
+ * This routine also handles identification of preamble lines. This is mostly for
+ * simplification of the TsvPrettyProcessor code.
  */
 void tsvPretty(in ref TsvPrettyOptions options, string[] files)
 {
+    import std.algorithm : canFind;
+
     auto firstNonPreambleLine = options.preambleLines + 1;
     auto tpp = TsvPrettyProcessor(options);
     foreach (filename; (files.length > 0) ? files : ["-"])
     {
+        bool autoDetectPreambleDone = false;
         auto inputStream = (filename == "-") ? stdin : filename.File();
         foreach (lineNum, line; inputStream.byLine.enumerate(1))
         {
-            if (lineNum < firstNonPreambleLine)
+            bool isPreambleLine = false;
+            bool isFirstNonPreambleLine = false;
+
+            if (options.autoDetectPreamble)
+            {
+                if (!autoDetectPreambleDone)
+                {
+                    if (line.canFind(options.delim))
+                    {
+                        autoDetectPreambleDone = true;
+                        isFirstNonPreambleLine = true;
+                    }
+                    else
+                    {
+                        isPreambleLine = true;
+                    }
+                }
+            }
+            else if (lineNum < firstNonPreambleLine)
+            {
+                isPreambleLine = true;
+            }
+            else if (lineNum == firstNonPreambleLine)
+            {
+                isFirstNonPreambleLine = true;
+            }
+
+
+            if (isPreambleLine)
             {
                 tpp.processPreambleLine(outputRangeObject!(char, char[])(stdout.lockingTextWriter), line);
             }
-            else if (lineNum == firstNonPreambleLine)
+            else if (isFirstNonPreambleLine)
             {
                 tpp.processFileFirstLine(outputRangeObject!(char, char[])(stdout.lockingTextWriter), line);
             }

@@ -575,35 +575,109 @@ echo "" >> ${basic_tests_5}; echo "====[cat input_5x5.tsv | tsv-pretty -u -- inp
 cat input_5x5.tsv | ${prog} -u -- input_5x2.tsv - >> ${basic_tests_5} 2>&1
 
 ###
-### Preamble tests. Use file ${basics_tests_6}
+### Preamble tests. Use files ${basics_tests_6}, ${basics_tests_7}, ${basics_tests_8}
 ###
 basic_tests_6=${odir}/basic_tests_6.txt
+
+echo "Fixed length preambles" >> ${basic_tests_6}
+echo "----------------------" >> ${basic_tests_6}
 
 runtest ${prog} "--preamble 1 input_5x1_preamble1.tsv" ${basic_tests_6}
 runtest ${prog} "--preamble 1 input_5x2_preamble1.tsv" ${basic_tests_6}
 runtest ${prog} "--preamble 1 input_5x3_preamble1.tsv" ${basic_tests_6}
 runtest ${prog} "--preamble 1 input_5x1_preamble1.tsv input_5x1_preamble1.tsv" ${basic_tests_6}
 runtest ${prog} "--preamble 1 -u input_5x1_preamble1.tsv input_5x2_preamble1.tsv" ${basic_tests_6}
-runtest ${prog} "-a 1 -u input_5x2_preamble1.tsv input_5x3_preamble1.tsv" ${basic_tests_6}
-runtest ${prog} "-a 1 -u input_5x1_preamble1.tsv input_5x2_preamble1.tsv input_5x3_preamble1.tsv" ${basic_tests_6}
-runtest ${prog} "-a 1 --no-header input_5x1_noheader_preamble1.tsv" ${basic_tests_6}
-runtest ${prog} "-a 1 --no-header input_5x1_noheader_preamble1.tsv input_5x1_noheader_preamble1.tsv" ${basic_tests_6}
-runtest ${prog} "-a 1 --no-header input_5x2_noheader_preamble1.tsv" ${basic_tests_6}
-runtest ${prog} "-a 1 -x input_5x2_noheader_preamble1.tsv input_5x2_noheader_preamble1.tsv" ${basic_tests_6}
-runtest ${prog} "-a 1 -x input_5x1_noheader_preamble1.tsv input_5x2_noheader_preamble1.tsv" ${basic_tests_6}
+runtest ${prog} "-b 1 -u input_5x2_preamble1.tsv input_5x3_preamble1.tsv" ${basic_tests_6}
+runtest ${prog} "-b 1 -u input_5x1_preamble1.tsv input_5x2_preamble1.tsv input_5x3_preamble1.tsv" ${basic_tests_6}
+runtest ${prog} "-b 1 --no-header input_5x1_noheader_preamble1.tsv" ${basic_tests_6}
+runtest ${prog} "-b 1 --no-header input_5x1_noheader_preamble1.tsv input_5x1_noheader_preamble1.tsv" ${basic_tests_6}
+runtest ${prog} "-b 1 --no-header input_5x2_noheader_preamble1.tsv" ${basic_tests_6}
+runtest ${prog} "-b 1 -x input_5x2_noheader_preamble1.tsv input_5x2_noheader_preamble1.tsv" ${basic_tests_6}
+runtest ${prog} "-b 1 -x input_5x1_noheader_preamble1.tsv input_5x2_noheader_preamble1.tsv" ${basic_tests_6}
 
 runtest ${prog} "--preamble 2 input_5x1_preamble2.tsv" ${basic_tests_6}
 runtest ${prog} "--preamble 2 input_5x2_preamble2.tsv" ${basic_tests_6}
 runtest ${prog} "--preamble 2 input_5x3_preamble2.tsv" ${basic_tests_6}
 runtest ${prog} "--preamble 2 input_5x1_preamble2.tsv input_5x1_preamble2.tsv" ${basic_tests_6}
 runtest ${prog} "--preamble 2 -u input_5x1_preamble2.tsv input_5x2_preamble2.tsv" ${basic_tests_6}
-runtest ${prog} "-a 2 -u input_5x2_preamble2.tsv input_5x3_preamble2.tsv" ${basic_tests_6}
-runtest ${prog} "-a 2 -u input_5x1_preamble2.tsv input_5x2_preamble2.tsv input_5x3_preamble2.tsv" ${basic_tests_6}
-runtest ${prog} "-a 2 --no-header input_5x1_noheader_preamble2.tsv" ${basic_tests_6}
-runtest ${prog} "-a 2 --no-header input_5x1_noheader_preamble2.tsv input_5x1_noheader_preamble2.tsv" ${basic_tests_6}
-runtest ${prog} "-a 2 --no-header input_5x2_noheader_preamble2.tsv" ${basic_tests_6}
-runtest ${prog} "-a 2 -x input_5x2_noheader_preamble2.tsv input_5x2_noheader_preamble2.tsv" ${basic_tests_6}
-runtest ${prog} "-a 2 -x input_5x1_noheader_preamble2.tsv input_5x2_noheader_preamble2.tsv" ${basic_tests_6}
+runtest ${prog} "-b 2 -u input_5x2_preamble2.tsv input_5x3_preamble2.tsv" ${basic_tests_6}
+runtest ${prog} "-b 2 -u input_5x1_preamble2.tsv input_5x2_preamble2.tsv input_5x3_preamble2.tsv" ${basic_tests_6}
+runtest ${prog} "-b 2 --no-header input_5x1_noheader_preamble2.tsv" ${basic_tests_6}
+runtest ${prog} "-b 2 --no-header input_5x1_noheader_preamble2.tsv input_5x1_noheader_preamble2.tsv" ${basic_tests_6}
+runtest ${prog} "-b 2 --no-header input_5x2_noheader_preamble2.tsv" ${basic_tests_6}
+runtest ${prog} "-b 2 -x input_5x2_noheader_preamble2.tsv input_5x2_noheader_preamble2.tsv" ${basic_tests_6}
+runtest ${prog} "-b 2 -x input_5x1_noheader_preamble2.tsv input_5x2_noheader_preamble2.tsv" ${basic_tests_6}
+
+###
+### A repeat of basic_tests_6, but using auto-detect
+###
+basic_tests_7=${odir}/basic_tests_7.txt
+
+echo "Auto-detect Preambles" >> ${basic_tests_7}
+echo "---------------------" >> ${basic_tests_7}
+
+runtest ${prog} "--auto-preamble input_5x1_preamble1.tsv" ${basic_tests_7}
+runtest ${prog} "--auto-preamble input_5x2_preamble1.tsv" ${basic_tests_7}
+runtest ${prog} "--auto-preamble input_5x3_preamble1.tsv" ${basic_tests_7}
+runtest ${prog} "--auto-preamble input_5x1_preamble1.tsv input_5x1_preamble1.tsv" ${basic_tests_7}
+runtest ${prog} "--auto-preamble -u input_5x1_preamble1.tsv input_5x2_preamble1.tsv" ${basic_tests_7}
+runtest ${prog} "-a -u input_5x2_preamble1.tsv input_5x3_preamble1.tsv" ${basic_tests_7}
+runtest ${prog} "-a -u input_5x1_preamble1.tsv input_5x2_preamble1.tsv input_5x3_preamble1.tsv" ${basic_tests_7}
+runtest ${prog} "-a --no-header input_5x1_noheader_preamble1.tsv" ${basic_tests_7}
+runtest ${prog} "-a --no-header input_5x1_noheader_preamble1.tsv input_5x1_noheader_preamble1.tsv" ${basic_tests_7}
+runtest ${prog} "-a --no-header input_5x2_noheader_preamble1.tsv" ${basic_tests_7}
+runtest ${prog} "-a -x input_5x2_noheader_preamble1.tsv input_5x2_noheader_preamble1.tsv" ${basic_tests_7}
+runtest ${prog} "-a -x input_5x1_noheader_preamble1.tsv input_5x2_noheader_preamble1.tsv" ${basic_tests_7}
+
+runtest ${prog} "--auto-preamble input_5x1_preamble2.tsv" ${basic_tests_7}
+runtest ${prog} "--auto-preamble input_5x2_preamble2.tsv" ${basic_tests_7}
+runtest ${prog} "--auto-preamble input_5x3_preamble2.tsv" ${basic_tests_7}
+runtest ${prog} "--auto-preamble input_5x1_preamble2.tsv input_5x1_preamble2.tsv" ${basic_tests_7}
+runtest ${prog} "--auto-preamble -u input_5x1_preamble2.tsv input_5x2_preamble2.tsv" ${basic_tests_7}
+runtest ${prog} "-a -u input_5x2_preamble2.tsv input_5x3_preamble2.tsv" ${basic_tests_7}
+runtest ${prog} "-a -u input_5x1_preamble2.tsv input_5x2_preamble2.tsv input_5x3_preamble2.tsv" ${basic_tests_7}
+runtest ${prog} "-a --no-header input_5x1_noheader_preamble2.tsv" ${basic_tests_7}
+runtest ${prog} "-a --no-header input_5x1_noheader_preamble2.tsv input_5x1_noheader_preamble2.tsv" ${basic_tests_7}
+runtest ${prog} "-a --no-header input_5x2_noheader_preamble2.tsv" ${basic_tests_7}
+runtest ${prog} "-a -x input_5x2_noheader_preamble2.tsv input_5x2_noheader_preamble2.tsv" ${basic_tests_7}
+runtest ${prog} "-a -x input_5x1_noheader_preamble2.tsv input_5x2_noheader_preamble2.tsv" ${basic_tests_7}
+
+###
+### Auto-detect preambles: None-detect cases; alternate delimiters, etc.
+###
+basic_tests_8=${odir}/basic_tests_8.txt
+
+echo "Auto-detect Preambles: Misc tests" >> ${basic_tests_8}
+echo "---------------------------------" >> ${basic_tests_8}
+
+runcmd "cat input_sample_preamble.tsv" ${basic_tests_8}
+runtest ${prog} "-f input_sample_preamble.tsv" ${basic_tests_8}
+runtest ${prog} "-f --auto-preamble input_sample_preamble.tsv" ${basic_tests_8}
+runtest ${prog} "-f --preamble 3 input_sample_preamble.tsv" ${basic_tests_8}
+
+runcmd "cat input_mixed_1.tsv" ${basic_tests_8}
+runtest ${prog} "--auto-preamble input_mixed_1.tsv" ${basic_tests_8}
+runtest ${prog} "--auto-preamble --preamble 0 input_mixed_1.tsv" ${basic_tests_8}
+runtest ${prog} "-a -x input_mixed_1.tsv" ${basic_tests_8}
+runtest ${prog} "-a -H input_mixed_1.tsv" ${basic_tests_8}
+runtest ${prog} "-a --lookahead 3 input_mixed_1.tsv" ${basic_tests_8}
+
+runcmd "cat input_mixed_2.tsv" ${basic_tests_8}
+runtest ${prog} "--auto-preamble input_mixed_2.tsv" ${basic_tests_8}
+runtest ${prog} "-a -u input_mixed_2.tsv" ${basic_tests_8}
+
+runcmd "cat input_5x1.tsv" ${basic_tests_8}
+runtest ${prog} "-a input_5x1.tsv" ${basic_tests_8}
+
+runcmd "cat input_5x2.tsv" ${basic_tests_8}
+runtest ${prog} "-a input_5x2.tsv" ${basic_tests_8}
+runtest ${prog} "-a input_5x2.tsv input_5x2.tsv" ${basic_tests_8}
+
+runcmd "cat input_comma_delim.tsv" ${basic_tests_8}
+runtest ${prog} "--auto-preamble input_comma_delim.tsv" ${basic_tests_8}
+runtest ${prog} "-a --delimiter , input_comma_delim.tsv" ${basic_tests_8}
+runtest ${prog} "-a --header -d , input_comma_delim.tsv" ${basic_tests_8}
+runtest ${prog} "-a --no-header -d , input_comma_delim.tsv" ${basic_tests_8}
 
 ## Error cases
 
@@ -621,4 +695,5 @@ runtest ${prog} "--lookahead 1.5 input_unicode.tsv" ${error_tests_1}
 runtest ${prog} "--space-between-fields 1.5 input_unicode.tsv" ${error_tests_1}
 runtest ${prog} "--max-text-width -1 input_unicode.tsv" ${error_tests_1}
 runtest ${prog} "--lookahead 0 input_unicode.tsv" ${error_tests_1}
+runtest ${prog} "--auto-preamble --preamble 1 input_unicode.tsv" ${error_tests_1}
 runtest ${prog} "invalid_unicode.tsv" ${error_tests_1}
