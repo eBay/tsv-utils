@@ -650,6 +650,11 @@ basic_tests_8=${odir}/basic_tests_8.txt
 echo "Auto-detect Preambles: Misc tests" >> ${basic_tests_8}
 echo "---------------------------------" >> ${basic_tests_8}
 
+runcmd "cat input_sample_preamble.tsv" ${basic_tests_8}
+runtest ${prog} "-f input_sample_preamble.tsv" ${basic_tests_8}
+runtest ${prog} "-f --auto-preamble input_sample_preamble.tsv" ${basic_tests_8}
+runtest ${prog} "-f --preamble 3 input_sample_preamble.tsv" ${basic_tests_8}
+
 runcmd "cat input_mixed_1.tsv" ${basic_tests_8}
 runtest ${prog} "--auto-preamble input_mixed_1.tsv" ${basic_tests_8}
 runtest ${prog} "--auto-preamble --preamble 0 input_mixed_1.tsv" ${basic_tests_8}

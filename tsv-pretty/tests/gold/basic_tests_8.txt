@@ -1,6 +1,50 @@
 Auto-detect Preambles: Misc tests
 ---------------------------------
 
+===[cat input_sample_preamble.tsv]===
+# This file contains 4 fields: Color, Count, Height (Ht), and Weight (Wt).
+# Color is an alphabetic, the others are numeric.
+
+Color	Count	Ht	Wt
+Brown	106	202.2	1.5
+Canary Yellow	7	106	0.761
+Chartreuse	1139	77.02	6.22
+Fluorescent Orange	422	1141.7	7.921
+Grey	19	140.3	1.03
+
+====[tsv-pretty -f input_sample_preamble.tsv]====
+# This file contains 4 fields: Color, Count, Height (Ht), and Weight (Wt).
+# Color is an alphabetic, the others are numeric.
+
+Color                                     Count  Ht      Wt
+Brown                                     106    202.2   1.5
+Canary Yellow                             7      106     0.761
+Chartreuse                                1139   77.02   6.22
+Fluorescent Orange                        422    1141.7  7.921
+Grey                                      19     140.3   1.03
+
+====[tsv-pretty -f --auto-preamble input_sample_preamble.tsv]====
+# This file contains 4 fields: Color, Count, Height (Ht), and Weight (Wt).
+# Color is an alphabetic, the others are numeric.
+
+Color               Count       Ht     Wt
+Brown                 106   202.20  1.500
+Canary Yellow           7   106.00  0.761
+Chartreuse           1139    77.02  6.220
+Fluorescent Orange    422  1141.70  7.921
+Grey                   19   140.30  1.030
+
+====[tsv-pretty -f --preamble 3 input_sample_preamble.tsv]====
+# This file contains 4 fields: Color, Count, Height (Ht), and Weight (Wt).
+# Color is an alphabetic, the others are numeric.
+
+Color               Count       Ht     Wt
+Brown                 106   202.20  1.500
+Canary Yellow           7   106.00  0.761
+Chartreuse           1139    77.02  6.220
+Fluorescent Orange    422  1141.70  7.921
+Grey                   19   140.30  1.030
+
 ===[cat input_mixed_1.tsv]===
 I1	T1	F1	T2	F2	Mixed
 3	A	.1	HelloWorld	-1.28098e-05	15
