@@ -28,6 +28,9 @@ Error [tsv-pretty]: Cannot open file `no_such_file.tsv' in mode `rb' (No such fi
 ====[tsv-pretty --lookahead 0 input_unicode.tsv]====
 [tsv-pretty] Error processing command line arguments: Cannot auto-detect header with zero look-ahead. Specify either '--H|header' or '--x|no-header' when using '--l|lookahead 0'.
 
+====[tsv-pretty --auto-preamble --preamble 1 input_unicode.tsv]====
+[tsv-pretty] Error processing command line arguments: Do not use '--b|preamble NUM' and '--a|auto-preamble' together. ('--b|preamble 0' is okay.)
+
 ====[tsv-pretty invalid_unicode.tsv]====
 Column-1       Column-2  Column-3
 white          Weiß      白
