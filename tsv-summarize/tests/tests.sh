@@ -90,6 +90,11 @@ runtest ${prog} "--values 1 input_1field_a.tsv --replace-missing XYZ" ${basic_te
 runtest ${prog} "--count empty_file.tsv --exclude-missing" ${basic_tests_1}
 runtest ${prog} "--count empty_file.tsv --replace-missing XYZ" ${basic_tests_1}
 
+## Long number formatting
+
+runtest ${prog} "input_5field_d.tsv --header --group-by 1 --min 3-5 --max 3-5 --mean 3-5" ${basic_tests_1}
+runtest ${prog} "input_5field_d.tsv --float-precision 20 --header --group-by 1 --min 3-5 --max 3-5 --mean 3-5" ${basic_tests_1}
+
 ## Help and Version printing
 
 echo "" >> ${basic_tests_1}
