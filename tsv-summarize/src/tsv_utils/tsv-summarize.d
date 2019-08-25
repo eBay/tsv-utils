@@ -110,10 +110,10 @@ Summarization operators available are:
   min         quantile     mode-count     not-missing-count
   max
 
-Numeric values are printed to 12 significant digits by default. This can be
-changed using the '--p|float-precision' option. If six or less it sets the
-number of significant digits after the decimal point. If greater than six it
-sets the total number of significant digits.
+Calculated numeric values are printed to 12 significant digits by default.
+This can be changed using the '--p|float-precision' option. If six or less
+it sets the number of significant digits after the decimal point. If
+greater than six it sets the total number of significant digits.
 
 Calculations hold onto the minimum data needed while reading data. A few
 operations like median keep all data values in memory. These operations will
@@ -2747,6 +2747,10 @@ unittest // LastOperator
 }
 
 /** MinOperator output the minimum value for the field. This is a numeric operator.
+ *
+ * This operator returns the original string without additional numeric formatting.
+ * This can be useful when joining back to the original data. This is different than
+ * numeric operators that perform calculations.
  */
 final class MinOperator : SingleFieldOperator
 {
@@ -2764,6 +2768,7 @@ final class MinOperator : SingleFieldOperator
     {
         private bool _isFirst = true;
         private double _value = double.nan;
+        private string _originalString = "nan";  // Note: Cannot format floats at compile time (version 2.087)
 
         this(size_t fieldIndex)
         {
@@ -2781,17 +2786,19 @@ final class MinOperator : SingleFieldOperator
             if (_isFirst)
             {
                 _value = fieldValue;
+                _originalString = nextField.to!string;
                 _isFirst = false;
             }
             else if (fieldValue < _value)
             {
                 _value = fieldValue;
+                _originalString = nextField.to!string;
             }
         }
 
         final string calculate(UniqueKeyValuesLists valuesLists, const ref SummarizerPrintOptions printOptions)
         {
-            return printOptions.formatNumber(_value);
+            return _originalString;
         }
     }
 }
@@ -2817,6 +2824,10 @@ unittest // MinOperator
 }
 
 /** MaxOperator output the maximum value for the field. This is a numeric operator.
+ *
+ * This operator returns the original string without additional numeric formatting.
+ * This can be useful when joining back to the original data. This is different than
+ * numeric operators that perform calculations.
  */
 final class MaxOperator : SingleFieldOperator
 {
@@ -2834,6 +2845,7 @@ final class MaxOperator : SingleFieldOperator
     {
         private bool _isFirst = true;
         private double _value = double.nan;
+        private string _originalString = "nan";  // Note: Cannot format floats at compile time (version 2.087)
 
         this(size_t fieldIndex)
         {
@@ -2851,17 +2863,19 @@ final class MaxOperator : SingleFieldOperator
             if (_isFirst)
             {
                 _value = fieldValue;
+                _originalString = nextField.to!string;
                 _isFirst = false;
             }
             else if (fieldValue > _value)
             {
                 _value = fieldValue;
+                _originalString = nextField.to!string;
             }
         }
 
         final string calculate(UniqueKeyValuesLists valuesLists, const ref SummarizerPrintOptions printOptions)
         {
-            return printOptions.formatNumber(_value);
+            return _originalString;
         }
     }
 }

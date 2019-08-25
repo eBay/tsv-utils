@@ -329,7 +329,7 @@ Summarization operators available are:
    max
 ```
 
-Numeric values are printed to 12 significant digits by default. This can be changed using the `--p|float-precision` option. If six or less it sets the number of significant digits after the decimal point. If greater than six it sets the total number of significant digits.
+Calculated numeric values are printed to 12 significant digits by default. This can be changed using the `--p|float-precision` option. If six or less it sets the number of significant digits after the decimal point. If greater than six it sets the total number of significant digits.
 
 Calculations hold onto the minimum data needed while reading data. A few operations like median keep all data values in memory. These operations will start to encounter performance issues as available memory becomes scarce. The size that can be handled effectively is machine dependent, but often quite large files can be handled.
 
