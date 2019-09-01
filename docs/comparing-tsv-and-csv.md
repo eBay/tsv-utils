@@ -19,7 +19,7 @@ The most common CSV escape format uses quotes to delimit fields containing delim
 | abc     | hello, world!        | def     |
 | ghi     | Say "hello, world!"  | jkl     |
 
-In field2, the first value contains a comma, the second value contain both quotes and a comma. Here is the CSV representation, using escapes to represent commas and quotes in the data.
+In Field-2, the first value contains a comma, the second value contain both quotes and a comma. Here is the CSV representation, using escapes to represent commas and quotes in the data.
 ```
 Field-1,Field-2,Field-3
 abc,"hello, world!",def
@@ -36,7 +36,7 @@ In the above example, only fields with delimiters are quoted. It is also common 
 Here's the same data in TSV. It is much simpler as no escapes are involved:
 ```
 Field-1	Field-2	Field-3
-abc	hello, world	def
+abc	hello, world!	def
 ghi	Say "hello, world!"	jkl
 ```
 
