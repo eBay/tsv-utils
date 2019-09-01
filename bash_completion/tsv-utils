@@ -37,11 +37,6 @@ _csv2tsv()
         return 0
     fi
 
-    if [[ ${cur} == -* ]] ; then
-        COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
-        return 0
-    fi
-
     compopt -o filenames
     COMPREPLY=( $(compgen -f -X "$xspec" -- ${cur}) $( compgen -d -- "$cur" ) )
 }
