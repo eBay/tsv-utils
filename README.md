@@ -82,7 +82,7 @@ See the [tsv-filter reference](docs/ToolReference.md#tsv-filter-reference) for d
 
 * Distinct sampling - This is another streaming mode form of sampling. However, instead of each line being subject to an independent selection choice, lines are selected based on a key contained in each line. A portion of keys are randomly selected for output, and every line containing a selected key is included in the output. Consider a query log with records consisting of <user, query, clicked-url> triples. It may be desirable to sample records for one percent of the users, but include all records for the selected users. Distinct sampling is specified using the `-k|--key-fields` and `-p|--prob` options.
 
-`tsv-sample` is designed for large data sets. Streaming algorithms make immediate decisions on each line. They do not accumulate memory and can run on infinite length input streams. Line order randomization algorithms need to hold the full output set into memory and are therefore limited by available memory. Memory requirements can be reduced by specifying a sample size (`-n|--num`). This enables reservoir sampling, which is often dramatically faster than full permutations. By default, a new random order is generated every run, but options are available for using the same randomization order over multiple runs. The random values assigned to each line can be printed, either to observe the behavior or even run further customized selected algorithms.
+`tsv-sample` is designed for large data sets. Streaming algorithms make immediate decisions on each line. They do not accumulate memory and can run on infinite length input streams. Line order randomization algorithms need to hold the full output set into memory and are therefore limited by available memory. Memory requirements can be reduced by specifying a sample size (`-n|--num`). This enables reservoir sampling, which is often dramatically faster than full permutations. By default, a new random order is generated every run, but options are available for using the same randomization order over multiple runs. The random values assigned to each line can be printed, either to observe the behavior or to run custom selection algorithms on the results.
 
 See the [tsv-sample reference](docs/ToolReference.md#tsv-sample-reference) for further details.
 
@@ -115,7 +115,7 @@ See the [tsv-summarize reference](docs/ToolReference.md#tsv-summarize-reference)
 
 ### tsv-pretty
 
-tsv-pretty prints TSV data in an aligned format for better readability when working on the command-line. Text columns are left aligned, numeric columns are right aligned. Floats aligned on the decimal point and precision can be specified. Header lines are detected automatically. If desired, the header line can be repeated at regular intervals. An example, first printed without formatting:
+tsv-pretty prints TSV data in an aligned format for better readability when working on the command-line. Text columns are left aligned, numeric columns are right aligned. Floats are aligned on the decimal point and precision can be specified. Header lines are detected automatically. If desired, the header line can be repeated at regular intervals. An example, first printed without formatting:
 ```
 $ cat sample.tsv
 Color   Count   Ht      Wt
@@ -190,7 +190,7 @@ Note that many CSV files do not use escapes, and in-fact follow a strict delimit
 
 The `csv2tsv` converter often has a second benefit: regularizing newlines. CSV files are often exported using Windows newline conventions. `csv2tsv` converts all newlines to Unix format.
 
-There are many variations of CSV file format. See the [csv2tsv reference](docs/ToolReference.md#csv2tsv-reference) for details the format variations supported by this tool.
+There are many variations of CSV file format. See the [csv2tsv reference](docs/ToolReference.md#csv2tsv-reference) for details the format variations supported by this tool. See [Comparing TSV and CSV formats](docs/comparing-tsv-and-csv.md) for more information on CSV escapes and other differences between CSV and TSV formats.
 
 ### tsv-append
 
