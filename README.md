@@ -190,7 +190,10 @@ Note that many CSV files do not use escapes, and in-fact follow a strict delimit
 
 The `csv2tsv` converter often has a second benefit: regularizing newlines. CSV files are often exported using Windows newline conventions. `csv2tsv` converts all newlines to Unix format.
 
-There are many variations of CSV file format. See the [csv2tsv reference](docs/ToolReference.md#csv2tsv-reference) for details the format variations supported by this tool. See [Comparing TSV and CSV formats](docs/comparing-tsv-and-csv.md) for more information on CSV escapes and other differences between CSV and TSV formats.
+See [Comparing TSV and CSV formats](docs/comparing-tsv-and-csv.md) for more information on CSV escapes and other differences between CSV and TSV formats.
+
+There are many variations of CSV file format. See the [csv2tsv reference](docs/ToolReference.md#csv2tsv-reference) for details the format variations supported by this tool.
+
 
 ### tsv-append
 
