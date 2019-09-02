@@ -192,7 +192,7 @@ The `csv2tsv` converter often has a second benefit: regularizing newlines. CSV f
 
 See [Comparing TSV and CSV formats](docs/comparing-tsv-and-csv.md) for more information on CSV escapes and other differences between CSV and TSV formats.
 
-There are many variations of CSV file format. See the [csv2tsv reference](docs/ToolReference.md#csv2tsv-reference) for details the format variations supported by this tool.
+There are many variations of CSV file format. See the [csv2tsv reference](docs/ToolReference.md#csv2tsv-reference) for details of the format variations supported by this tool.
 
 
 ### tsv-append
