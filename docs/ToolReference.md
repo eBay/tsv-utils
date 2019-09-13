@@ -351,8 +351,8 @@ Missing values are not treated specially by default, this can be changed using t
 * `--r|replace-missing STR` - Replace missing (empty) fields with STR in calculations.
 
 **Operators:**
-* `--count` - Count occurrences of each unique key.
-* `--count-header STR` - Count occurrences of each unique key, use custom header STR.
+* `--count` - Count occurrences of each unique key (`--g|group-by`), or the total number of records if no key field is specified.
+* `--count-header STR` - Count occurrences of each unique key, like `--count`, but use STR as the header.
 * `--retain <field-list>` - Retain one copy of the field. The field header is unchanged.
 * `--first <field-list>[:STR]` - First value seen.
 * `--last <field-list>[:STR]`- Last value seen.

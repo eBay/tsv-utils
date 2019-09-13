@@ -12,7 +12,7 @@ File an [issue](https://github.com/eBay/tsv-utils/issues) if you have problems, 
 
 **Additional documents:**
 * [Tools reference](docs/ToolReference.md)
-* [Release notes (releases page)](https://github.com/eBay/tsv-utils/releases)
+* [Releases](https://github.com/eBay/tsv-utils/releases) - Pre-built binaries and release notes.
 * [Tips and tricks](docs/TipsAndTricks.md)
 * [Performance Studies](docs/Performance.md)
 * [Comparing TSV and CSV formats](docs/comparing-tsv-and-csv.md)
