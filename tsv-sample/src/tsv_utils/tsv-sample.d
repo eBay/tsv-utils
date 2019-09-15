@@ -685,8 +685,10 @@ void bernoulliSkipSampling(OutputRange)(TsvSampleOptions cmdopt, OutputRange out
  * users included in the output.
  *
  * Distinct sampling is done by hashing the key and mapping the hash value into
- * buckets matching the inclusion probability. Records having a key mapping to bucket
- * zero are output.
+ * buckets sized to hold the inclusion probability. Records having a key mapping to
+ * bucket zero are output. Buckets are equal size and therefore may be larger than the
+ * inclusion probability. (The other approach would be to have the caller specify the
+ * the number of buckets. More correct, but less convenient.)
  */
 void distinctSampling(Flag!"generateRandomAll" generateRandomAll, OutputRange)
     (TsvSampleOptions cmdopt, auto ref OutputRange outputStream)

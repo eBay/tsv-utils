@@ -89,6 +89,13 @@ $ xsv search -s COMPONENT '[RD].*(ION[0-2])' TREE_GRM_ESTN_14mil.tsv >> /dev/nul
 $ tsv-filter -H --regex 10:'[RD].*(ION[0-2])' TREE_GRM_ESTN_14mil.tsv >> /dev/null
 ```
 
+Note: For `xsv`, the more correct way to operate on unescaped TSV files would be to first pipe the data through `xsv input --no-quoting` first. e.g.
+```
+$ xsv input --no-quoting TREE_GRM_ESTN_14mil.tsv | xsv search -s COMPONENT '[RD].*(ION[0-2])' >> /dev/null
+```
+
+However, adding an additional command invocation runs counter to the goals of the benchmark exercise, so it was not used in these tests. This is the case for all the `xsv` command lines, except for csv-to-tsv conversion.
+
 ### Column selection benchmark
 
 This is the traditional Unix `cut` operation. Surprisingly, the `cut` implementations were not the fastest. The test selected fields 1, 8, 19 from a 7 million line, 29 column, 4.8 GB numeric data file.
