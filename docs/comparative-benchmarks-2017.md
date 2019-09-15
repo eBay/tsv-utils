@@ -89,7 +89,7 @@ $ xsv search -s COMPONENT '[RD].*(ION[0-2])' TREE_GRM_ESTN_14mil.tsv >> /dev/nul
 $ tsv-filter -H --regex 10:'[RD].*(ION[0-2])' TREE_GRM_ESTN_14mil.tsv >> /dev/null
 ```
 
-Note: For `xsv`, the more correct way to operate on unescaped TSV files would be to first pipe the data through `xsv input --no-quoting` first. e.g.
+Note: For `xsv`, the more correct way to operate on unescaped TSV files is to first pipe the data through `xsv input --no-quoting` first. e.g.
 ```
 $ xsv input --no-quoting TREE_GRM_ESTN_14mil.tsv | xsv search -s COMPONENT '[RD].*(ION[0-2])' >> /dev/null
 ```
