@@ -199,3 +199,10 @@ $ csvtk csv2tab TREE_GRM_ESTN_14mil.csv > /dev/null
 $ csv2tsv TREE_GRM_ESTN_14mil.csv > /dev/null
 $ xsv fmt -t '\t' TREE_GRM_ESTN_14mil.csv > /dev/null
 ```
+
+Note: For `xsv`, the more correct way to operate on unescaped TSV files is to first pipe the data through `xsv input --no-quoting` first. e.g.
+```
+$ xsv input --no-quoting hepmass_all_train.tsv | xsv select 1,8,19 > /dev/null
+```
+
+However, adding an additional command invocation runs counter to the goals of the benchmark exercise, so it was not done in these tests.
