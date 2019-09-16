@@ -206,6 +206,7 @@ struct TsvSampleOptions
     size_t[] keyFields;                        /// --k|key-fields - Used with inclusion probability
     size_t weightField = 0;                    /// --w|weight-field - Field holding the weight
     bool srsWithReplacement = false;           /// --r|replace
+    bool preserveInputOrder = false;           /// --i|inorder
     bool staticSeed = false;                   /// --s|static-seed
     uint seedValueOptionArg = 0;               /// --v|seed-value
     bool printRandom = false;                  /// --print-random
@@ -270,6 +271,7 @@ struct TsvSampleOptions
 
                 "w|weight-field",  "NUM  Field containing weights. All lines get equal weight if not provided or zero.", &weightField,
                 "r|replace",       "     Simple random sampling with replacement. Use --n|num to specify the sample size.", &srsWithReplacement,
+                "i|inorder",       "     Output random samples in original input order. Requires use of --n|num.", &preserveInputOrder,
                 "s|static-seed",   "     Use the same random seed every run.", &staticSeed,
 
                 std.getopt.config.caseSensitive,
@@ -336,6 +338,10 @@ struct TsvSampleOptions
                 {
                     throw new Exception("Sampling with replacement (--r|replace) does not support random value printing (--print-random, --gen-random-inorder).");
                 }
+                else if (preserveInputOrder)
+                {
+                    throw new Exception("Sampling with replacement (--r|replace) does not support output in input order (--i|inorder).");
+                }
             }
 
             if (keyFields.length > 0)
@@ -388,6 +394,21 @@ struct TsvSampleOptions
                 randomValueHeader.canFind(delim))
             {
                 throw new Exception("--randomValueHeader must be at least one character and not contain field delimiters or newlines.");
+            }
+
+            /* The (--i|inorder) option to preserve input order modifies the behavior
+             * of simple and weighted random sampling. These are specified via --n|num.
+             * Bernoulli and distinct sampling always preserve input order. But it does
+             * not apply to sampling with replacement or shuffling of the full input.
+             * Sampling with replacement is detected earlier.
+             */
+            if (preserveInputOrder &&
+                sampleSize == 0 &&
+                !useBernoulliSampling &&
+                !useDistinctSampling
+               )
+            {
+                throw new Exception("Preserving input order (--i|inorder) requires a sample size (--n|num).");
             }
 
             /* Random value printing implies compatibility-mode, otherwise user's selection is used. */
@@ -830,16 +851,21 @@ if (isOutputRange!(OutputRange, char))
  * This routine selects the appropriate reservoir sampling function and template
  * instantiation to use based on the command line arguments.
  *
- * Reservoir sampling is used when a fixed size sample is being selected from an
- * input stream. Weighted and unweighted sampling is supported. These routines also
- * randomize the order of the selected lines. This is consistent with line order
- * randomization of the entire input stream (handled by randomizeLinesCommand).
+ * Reservoir sampling is used when a fixed size sample is being selected from an input
+ * stream. Weighted and unweighted sampling is supported. The selected sample is
+ * output either in random order or in the original input order.
  *
- * For unweighted sampling there is a performance tradeoff between the two available
- * implementations. Heap-based sampling is faster for small sample sizes, Algorithm R
- * is faster for large sample sizes. The threshold used here was chosen based on
- * performance tests. See the reservoirSamplingAlgorithmR documentation for more
- * information.
+ * Two algorithms are supported, reservoir sampling via a heap and reservoir sampling
+ * via Algorithm R.
+ *
+ * Wieghted sampling always uses the heap. Compatibility mode does as well, as it is
+ * the method that uses per-line random assignments, so that a larger sample includes
+ * results from a smaller sample.
+ *
+ * For unweighted sampling there is a performance tradeoff between implementations.
+ * Heap-based sampling is faster for small sample sizes. Algorithm R is faster for
+ * large sample sizes. The threshold used was chosen based on performance tests. See
+ * the reservoirSamplingAlgorithmR documentation for more information.
  */
 
 void reservoirSamplingCommand(OutputRange)(TsvSampleOptions cmdopt, auto ref OutputRange outputStream)
@@ -851,16 +877,34 @@ if (isOutputRange!(OutputRange, char))
 
     if (cmdopt.hasWeightField)
     {
-        reservoirSamplingViaHeap!(Yes.isWeighted)(cmdopt, outputStream);
+        if (cmdopt.preserveInputOrder)
+        {
+            reservoirSamplingViaHeap!(Yes.isWeighted, Yes.preserveInputOrder)(cmdopt, outputStream);
+        }
+        else
+        {
+            reservoirSamplingViaHeap!(Yes.isWeighted, No.preserveInputOrder)(cmdopt, outputStream);
+        }
     }
     else if (cmdopt.compatibilityMode ||
              (cmdopt.sampleSize < algorithmRSampleSizeThreshold && !cmdopt.preferAlgorithmR))
     {
-        reservoirSamplingViaHeap!(No.isWeighted)(cmdopt, outputStream);
+        if (cmdopt.preserveInputOrder)
+        {
+            reservoirSamplingViaHeap!(No.isWeighted, Yes.preserveInputOrder)(cmdopt, outputStream);
+        }
+        else
+        {
+            reservoirSamplingViaHeap!(No.isWeighted, No.preserveInputOrder)(cmdopt, outputStream);
+        }
+    }
+    else if (cmdopt.preserveInputOrder)
+    {
+        reservoirSamplingAlgorithmR!(Yes.preserveInputOrder)(cmdopt, outputStream);
     }
     else
     {
-        reservoirSamplingAlgorithmR(cmdopt, outputStream);
+        reservoirSamplingAlgorithmR!(No.preserveInputOrder)(cmdopt, outputStream);
     }
 }
 
@@ -904,7 +948,7 @@ if (isOutputRange!(OutputRange, char))
  *      See the reservoirSamplingAlgorithmR documentation for details.
  * )
  */
-void reservoirSamplingViaHeap(Flag!"isWeighted" isWeighted, OutputRange)
+void reservoirSamplingViaHeap(Flag!"isWeighted" isWeighted, Flag!"preserveInputOrder" preserveInputOrder, OutputRange)
     (TsvSampleOptions cmdopt, auto ref OutputRange outputStream)
 if (isOutputRange!(OutputRange, char))
 {
@@ -920,10 +964,11 @@ if (isOutputRange!(OutputRange, char))
 
     auto randomGenerator = Random(cmdopt.seed);
 
-    struct Entry
+    struct Entry(Flag!"preserveInputOrder" preserveInputOrder)
     {
         double score;
-        char[] line;
+        const(char)[] line;
+        static if (preserveInputOrder) size_t lineNumber;
     }
 
     /* Create the heap and backing data store.
@@ -936,12 +981,13 @@ if (isOutputRange!(OutputRange, char))
      * backing stores. See: https://issues.dlang.org/show_bug.cgi?id=17094.
      */
 
-    Array!Entry dataStore;
+    Array!(Entry!preserveInputOrder) dataStore;
     dataStore.reserve(cmdopt.sampleSize);
     auto reservoir = dataStore.heapify!("a.score > b.score")(0);  // Min binaryheap
 
     /* Process each line. */
     bool headerWritten = false;
+    static if (preserveInputOrder) size_t totalLineNum = 0;
     foreach (filename; cmdopt.files)
     {
         auto inputStream = (filename == "-") ? stdin : filename.File();
@@ -980,12 +1026,28 @@ if (isOutputRange!(OutputRange, char))
 
                 if (reservoir.length < cmdopt.sampleSize)
                 {
-                    reservoir.insert(Entry(lineScore, line.dup));
+                    static if (preserveInputOrder)
+                    {
+                        reservoir.insert(Entry!preserveInputOrder(lineScore, line.dup, totalLineNum));
+                    }
+                    else
+                    {
+                        reservoir.insert(Entry!preserveInputOrder(lineScore, line.dup));
+                    }
                 }
                 else if (reservoir.front.score < lineScore)
                 {
-                    reservoir.replaceFront(Entry(lineScore, line.dup));
+                    static if (preserveInputOrder)
+                    {
+                        reservoir.replaceFront(Entry!preserveInputOrder(lineScore, line.dup, totalLineNum));
+                    }
+                    else
+                    {
+                        reservoir.replaceFront(Entry!preserveInputOrder(lineScore, line.dup));
+                    }
                 }
+
+                static if (preserveInputOrder) ++totalLineNum;
             }
         }
     }
@@ -1000,7 +1062,16 @@ if (isOutputRange!(OutputRange, char))
     immutable size_t numLines = reservoir.length;
     assert(numLines == dataStore.length);
 
-    while (!reservoir.empty) reservoir.removeFront;
+    static if (preserveInputOrder)
+    {
+        import std.algorithm : sort;
+        dataStore[].sort!((a, b) => a.lineNumber < b.lineNumber);
+    }
+    else
+    {
+        while (!reservoir.empty) reservoir.removeFront;
+    }
+
     assert(numLines == dataStore.length);
 
     foreach (entry; dataStore)
@@ -1021,7 +1092,8 @@ if (isOutputRange!(OutputRange, char))
  * simply iterates over the input lines generating the values. The weighted random
  * values are generated with the same formula used by reservoirSampling.
  */
-void generateWeightedRandomValuesInorder(OutputRange)(TsvSampleOptions cmdopt, auto ref OutputRange outputStream)
+void generateWeightedRandomValuesInorder(OutputRange)
+    (TsvSampleOptions cmdopt, auto ref OutputRange outputStream)
 if (isOutputRange!(OutputRange, char))
 {
     import std.random : Random = Mt19937, uniform01;
@@ -1104,7 +1176,8 @@ if (isOutputRange!(OutputRange, char))
  * performance tests indicating that reservoirSamplingViaHeap is faster when using
  * small-to-medium size reservoirs and large input streams.
  */
-void reservoirSamplingAlgorithmR(OutputRange)(TsvSampleOptions cmdopt, auto ref OutputRange outputStream)
+void reservoirSamplingAlgorithmR(Flag!"preserveInputOrder" preserveInputOrder, OutputRange)
+    (TsvSampleOptions cmdopt, auto ref OutputRange outputStream)
 if (isOutputRange!(OutputRange, char))
 {
     import std.random : Random = Mt19937, randomShuffle, uniform;
@@ -1116,7 +1189,13 @@ if (isOutputRange!(OutputRange, char))
     assert(!cmdopt.printRandom);
     assert(!cmdopt.genRandomInorder);
 
-    string[] reservoir;
+    struct Entry(Flag!"preserveInputOrder" preserveInputOrder)
+    {
+        const(char)[] line;
+        static if (preserveInputOrder) size_t lineNumber;
+    }
+
+    Entry!preserveInputOrder[] reservoir;
     auto reservoirAppender = appender(&reservoir);
     reservoirAppender.reserve(cmdopt.sampleSize);
 
@@ -1150,12 +1229,29 @@ if (isOutputRange!(OutputRange, char))
                  */
                 if (totalLineNum < cmdopt.sampleSize)
                 {
-                    reservoirAppender ~= line.idup;
+                    static if (preserveInputOrder)
+                    {
+                        reservoirAppender ~= Entry!preserveInputOrder(line.idup, totalLineNum);
+                    }
+                    else
+                    {
+                        reservoirAppender ~= Entry!preserveInputOrder(line.idup);
+                    }
                 }
                 else
                 {
                     immutable size_t i = uniform(0, totalLineNum, randomGenerator);
-                    if (i < reservoir.length) reservoir[i] = line.idup;
+                    if (i < reservoir.length)
+                    {
+                        static if (preserveInputOrder)
+                        {
+                            reservoir[i] = Entry!preserveInputOrder(line.idup, totalLineNum);
+                        }
+                        else
+                        {
+                            reservoir[i] =  Entry!preserveInputOrder(line.idup);
+                        }
+                    }
                 }
 
                 ++totalLineNum;
@@ -1165,11 +1261,20 @@ if (isOutputRange!(OutputRange, char))
 
     /* The random sample is now in the reservoir. Shuffle it and print. */
 
-    reservoir.randomShuffle(randomGenerator);
-
-    foreach (ref line; reservoir)
+    static if (preserveInputOrder)
     {
-        outputStream.put(line);
+        writeln("[algorithm R] sorting...");
+        import std.algorithm : sort;
+        reservoir.sort!((a, b) => a.lineNumber < b.lineNumber);
+    }
+    else
+    {
+        reservoir.randomShuffle(randomGenerator);
+    }
+
+    foreach (ref entry; reservoir)
+    {
+        outputStream.put(entry.line);
         outputStream.put("\n");
     }
 }
