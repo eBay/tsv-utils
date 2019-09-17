@@ -952,8 +952,10 @@ void reservoirSamplingViaHeap(Flag!"isWeighted" isWeighted, Flag!"preserveInputO
     (TsvSampleOptions cmdopt, auto ref OutputRange outputStream)
 if (isOutputRange!(OutputRange, char))
 {
+    import std.algorithm : sort;
     import std.container.array;
     import std.container.binaryheap;
+    import std.meta : AliasSeq;
     import std.random : Random = Mt19937, uniform01;
     import tsv_utils.common.utils : bufferedByLine, throwIfWindowsNewlineOnUnix;
 
@@ -1024,27 +1026,16 @@ if (isOutputRange!(OutputRange, char))
                         : 0.0;
                 }
 
+                static if (preserveInputOrder) alias entryCTArgs = AliasSeq!(totalLineNum);
+                else alias entryCTArgs = AliasSeq!();
+
                 if (reservoir.length < cmdopt.sampleSize)
                 {
-                    static if (preserveInputOrder)
-                    {
-                        reservoir.insert(Entry!preserveInputOrder(lineScore, line.dup, totalLineNum));
-                    }
-                    else
-                    {
-                        reservoir.insert(Entry!preserveInputOrder(lineScore, line.dup));
-                    }
+                    reservoir.insert(Entry!preserveInputOrder(lineScore, line.dup, entryCTArgs));
                 }
                 else if (reservoir.front.score < lineScore)
                 {
-                    static if (preserveInputOrder)
-                    {
-                        reservoir.replaceFront(Entry!preserveInputOrder(lineScore, line.dup, totalLineNum));
-                    }
-                    else
-                    {
-                        reservoir.replaceFront(Entry!preserveInputOrder(lineScore, line.dup));
-                    }
+                    reservoir.replaceFront(Entry!preserveInputOrder(lineScore, line.dup, entryCTArgs));
                 }
 
                 static if (preserveInputOrder) ++totalLineNum;
@@ -1064,7 +1055,6 @@ if (isOutputRange!(OutputRange, char))
 
     static if (preserveInputOrder)
     {
-        import std.algorithm : sort;
         dataStore[].sort!((a, b) => a.lineNumber < b.lineNumber);
     }
     else
@@ -1180,7 +1170,9 @@ void reservoirSamplingAlgorithmR(Flag!"preserveInputOrder" preserveInputOrder, O
     (TsvSampleOptions cmdopt, auto ref OutputRange outputStream)
 if (isOutputRange!(OutputRange, char))
 {
+    import std.meta : AliasSeq;
     import std.random : Random = Mt19937, randomShuffle, uniform;
+    import std.algorithm : sort;
     import tsv_utils.common.utils : bufferedByLine, throwIfWindowsNewlineOnUnix;
 
     assert(cmdopt.sampleSize > 0);
@@ -1227,30 +1219,19 @@ if (isOutputRange!(OutputRange, char))
                  * the total number of lines seen. If added to the reservoir, the
                  * line replaces a randomly chosen existing line.
                  */
+                static if (preserveInputOrder) alias entryCTArgs = AliasSeq!(totalLineNum);
+                else alias entryCTArgs = AliasSeq!();
+
                 if (totalLineNum < cmdopt.sampleSize)
                 {
-                    static if (preserveInputOrder)
-                    {
-                        reservoirAppender ~= Entry!preserveInputOrder(line.idup, totalLineNum);
-                    }
-                    else
-                    {
-                        reservoirAppender ~= Entry!preserveInputOrder(line.idup);
-                    }
+                    reservoirAppender ~= Entry!preserveInputOrder(line.idup, entryCTArgs);
                 }
                 else
                 {
                     immutable size_t i = uniform(0, totalLineNum, randomGenerator);
                     if (i < reservoir.length)
                     {
-                        static if (preserveInputOrder)
-                        {
-                            reservoir[i] = Entry!preserveInputOrder(line.idup, totalLineNum);
-                        }
-                        else
-                        {
-                            reservoir[i] =  Entry!preserveInputOrder(line.idup);
-                        }
+                        reservoir[i] = Entry!preserveInputOrder(line.idup, entryCTArgs);
                     }
                 }
 
@@ -1263,8 +1244,6 @@ if (isOutputRange!(OutputRange, char))
 
     static if (preserveInputOrder)
     {
-        writeln("[algorithm R] sorting...");
-        import std.algorithm : sort;
         reservoir.sort!((a, b) => a.lineNumber < b.lineNumber);
     }
     else
