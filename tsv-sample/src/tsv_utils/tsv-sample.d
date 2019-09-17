@@ -1,7 +1,7 @@
 /**
-Command line tool for randomizing or sampling lines from input streams. Several
-sampling methods are available, including simple random sampling, weighted random
-sampling, Bernoulli sampling, and distinct sampling.
+Command line tool for shuffling or sampling lines from input streams. Several methods
+are available, including weighted and unweighted shuffling, simple and weighted random
+sampling, sampling with replacement, Bernoulli sampling, and distinct sampling.
 
 Copyright (c) 2017-2019, eBay Software Foundation
 Initially written by Jon Degenhardt
@@ -467,16 +467,16 @@ if (isOutputRange!(OutputRange, char))
     }
     else if (cmdopt.sampleSize != 0)
     {
-        reservoirSamplingCommand(cmdopt, outputStream);
+        randomSamplingCommand(cmdopt, outputStream);
     }
     else
     {
-        randomizeLinesCommand(cmdopt, outputStream);
+        shuffleCommand(cmdopt, outputStream);
     }
 }
 
-/** Invokes the appropriate Bernoulli sampling routine based on the command line
- * arguments.
+/** Bernoulli sampling command handler. Invokes the appropriate Bernoulli sampling
+ * routine based on the command line arguments.
  *
  * This routine selects the appropriate Bernoulli sampling function and template
  * instantiation to use based on the command line arguments.
@@ -845,22 +845,22 @@ if (isOutputRange!(OutputRange, char))
     }
 }
 
-/** Invokes the appropriate reservoir sampling routine based on the command line
- * arguments.
+/** Random sampling command handler. Invokes the appropriate sampling routine based on
+ * the command line arguments.
  *
- * This routine selects the appropriate reservoir sampling function and template
- * instantiation to use based on the command line arguments.
+ * Random sampling is when a fixed size random sample is selected from the input
+ * stream. Both simple random sampling and weighted random sampling are supported.
+ * Selected lines are output either in random order or original input order. For
+ * weighted sampling the random order is the weighted selection order.
  *
- * Reservoir sampling is used when a fixed size sample is being selected from an input
- * stream. Weighted and unweighted sampling is supported. The selected sample is
- * output either in random order or in the original input order.
+ * Two algorithms are used, reservoir sampling via a heap and reservoir sampling via
+ * Algorithm R. This routine selects the appropriate reservoir sampling function and
+ * template instantiation to based on the command line arguments.
  *
- * Two algorithms are supported, reservoir sampling via a heap and reservoir sampling
- * via Algorithm R.
- *
- * Wieghted sampling always uses the heap. Compatibility mode does as well, as it is
- * the method that uses per-line random assignments, so that a larger sample includes
- * results from a smaller sample.
+ * Wieghted sampling always uses the heap approach. Compatibility mode does as well,
+ * as it is the method that uses per-line random assignments. The implication is that
+ * a larger sample size includes all the results from a smaller sample, assuming the
+ * same random seed is used.
  *
  * For unweighted sampling there is a performance tradeoff between implementations.
  * Heap-based sampling is faster for small sample sizes. Algorithm R is faster for
@@ -868,7 +868,7 @@ if (isOutputRange!(OutputRange, char))
  * the reservoirSamplingAlgorithmR documentation for more information.
  */
 
-void reservoirSamplingCommand(OutputRange)(TsvSampleOptions cmdopt, auto ref OutputRange outputStream)
+void randomSamplingCommand(OutputRange)(TsvSampleOptions cmdopt, auto ref OutputRange outputStream)
 if (isOutputRange!(OutputRange, char))
 {
     assert(cmdopt.sampleSize != 0);
@@ -1258,13 +1258,15 @@ if (isOutputRange!(OutputRange, char))
     }
 }
 
-/** This routine is invoked when all input lines are being randomized. It selects the
- * appropriate function and template instantiation based on the command line arguments.
+/** This routine is invoked when all input lines are being shuffled (order randomized).
+ * The appropriate function and template instantiation is invoked based on the command
+ * line arguments.
  *
- * Different randomization algorithms are used when all input lines are being randomized
- * rather than a subset. The key distinction being that if all input needs to be read
- * into memory to support the algorithm, it works better to simply read the data all at
- * once.
+ * The algorithms used for shuffling are different than used for the random sampling.
+ * Random sampling selects a subset, only the current subset selection needs to be
+ * kept in memory. This is supported by reservoir sampling. By contrast, shuffling
+ * needs to hold all input in memory, so it works better to read it all at once and
+ * then shuffle.
  *
  * There are two different types of algorithms used. Array shuffling is used for
  * unweighted randomization. Sorting is used for weighted randomization or when
@@ -1272,7 +1274,7 @@ if (isOutputRange!(OutputRange, char))
  *
  * The algorithms used here are all limited by available memory.
  */
-void randomizeLinesCommand(OutputRange)(TsvSampleOptions cmdopt, auto ref OutputRange outputStream)
+void shuffleCommand(OutputRange)(TsvSampleOptions cmdopt, auto ref OutputRange outputStream)
 if (isOutputRange!(OutputRange, char))
 {
     if (cmdopt.hasWeightField)
@@ -1289,23 +1291,24 @@ if (isOutputRange!(OutputRange, char))
     }
 }
 
-/** Randomize all the lines in files or standard input using assigned random weights
- * and sorting.
+/** Shuffle (randomize) all the lines in files or standard input using assigned random
+ * weights and sorting.
  *
  * All lines in files and/or standard input are read in and written out in random
- * order. This algorithm assigns a random value to each line and sorts. This approach
- * supports both weighted sampling and simple random sampling (unweighted).
+ * order. This algorithm assigns a random value to each line and sorts. Both weighted
+ * and unweighted shuffling are supported.
  *
  * This is significantly faster than heap-based reservoir sampling in the case where
- * the entire file is being read. See also randomizeLinesViaShuffle for the unweighted
- * case, as it is a little faster, at the cost not supporting random value printing or
+ * the entire file is being read. See randomizeLinesViaShuffle for the unweighted
+ * case. It is a little faster, at the cost not supporting random value printing or
  * compatibility-mode.
  *
  * Input data size is limited by available memory. Disk oriented techniques are needed
  * when data sizes are larger. For example, generating random values line-by-line (ala
  * --gen-random-inorder) and sorting with a disk-backed sort program like GNU sort.
  */
-void randomizeLinesViaSort(Flag!"isWeighted" isWeighted, OutputRange)(TsvSampleOptions cmdopt, auto ref OutputRange outputStream)
+void randomizeLinesViaSort(Flag!"isWeighted" isWeighted, OutputRange)
+    (TsvSampleOptions cmdopt, auto ref OutputRange outputStream)
 if (isOutputRange!(OutputRange, char))
 {
     import std.algorithm : map, sort;
@@ -1339,11 +1342,13 @@ if (isOutputRange!(OutputRange, char))
     }
 }
 
-/** Randomize all the lines in files or standard input using a shuffling algorithm.
+/** Shuffle (randomize) all lines in files or standard input using a shuffling
+ * algorithm.
  *
  * All lines in files and/or standard input are read in and written out in random
  * order. This routine uses array shuffling, which is faster than sorting. It is a
- * good alternative to randomizeLinesViaSort when doing unweighted randomization.
+ * good alternative to randomizeLinesViaSort when doing unweighted shuffling (the
+ * most common case).
  *
  * Input data size is limited by available memory. Disk oriented techniques are needed
  * when data sizes are larger. For example, generating random values line-by-line (ala
@@ -1392,7 +1397,8 @@ if (isOutputRange!(OutputRange, char))
  * until the desired number of samples (--n|num) has been output. Output continues
  * indefinitely if a sample size was not provided.
  */
-void simpleRandomSamplingWithReplacement(OutputRange)(TsvSampleOptions cmdopt, auto ref OutputRange outputStream)
+void simpleRandomSamplingWithReplacement(OutputRange)
+    (TsvSampleOptions cmdopt, auto ref OutputRange outputStream)
 if (isOutputRange!(OutputRange, char))
 {
     import std.algorithm : map;
