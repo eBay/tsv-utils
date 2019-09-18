@@ -65,26 +65,27 @@ Synopsis: tsv-sample [options] [file...]
 
 Sample input lines or randomize their order. Several modes of operation
 are available:
-* Line order randomization (the default): All input lines are output in a
-  random order. All orderings are equally likely.
-* Weighted line order randomization (--w|weight-field): Lines are selected
-  using weighted random sampling, with the weight taken from a field.
-  Lines are output in weighted selection order, reordering the lines.
-* Sampling with replacement (--r|replace, --n|num): All input is read into
-  memory, then lines are repeatedly selected at random and written out. This
-  continues until --n|num samples are output. Lines can be selected multiple
-  times. Output continues forever if --n|num is zero or not specified.
-* Bernoulli sampling (--p|prob): A random subset of lines is output based
-  on an inclusion probability. This is a streaming operation. A selection
-  decision is made on each line as is it read. Line order is not changed.
-* Distinct sampling (--k|key-fields, --p|prob): Input lines are sampled
-  based on the values in the key field. A subset of the keys are chosen
-  based on the inclusion probability (a 'distinct' set of keys). All lines
-  with one of the selected keys are output. Line order is not changed.
-
-The '--n|num' option limits the sample size produced. It speeds up line
-order randomization and weighted sampling significantly. It is also used
-to terminate sampling with replacement.
+* Shuffling (the default): All input lines are output in random order. All
+  orderings are equally likely.
+* Random sampling (--n|num N): A random sample of N lines are selected and
+  written to standard output. By default, selected lines are written in
+  random order. All sample sets and orderings are equally likely. Use
+  --i|inorder to write the selected lines in the original input order.
+* Weighted random sampling (--n|num N, --w|weight-field F): A weighted
+  sample of N lines is produced. Weights are taken from field F. Lines are
+  output in weighted selection order. Use --i|inorder to write in original
+  input order. Omit --n|num to shuffle all lines (weighted shuffling).
+* Sampling with replacement (--r|replace, --n|num N): All input lines are
+  read in, then lines are repeatedly selected at random and written out.
+  This continues until N lines are output. Individual lines can be written
+  multiple times. Output continues forever if N is zero or not provided.
+* Bernoulli sampling (--p|prob P): A random subset of lines is selected
+  based on probability P, a 0.0-1.0 value. This is a streaming operation.
+  A decision is made on each line as it is read. Line order is not changed.
+* Distinct sampling (--k|key-fields F, --p|prob P): Input lines are sampled
+  based on the values in the key fields. A subset of keys are chosen based
+  on the inclusion probability (a 'distinct' set of keys). All lines with
+  one of the selected keys are output. Line order is not changed.
 
 Use '--help-verbose' for detailed information.
 
@@ -96,26 +97,31 @@ Synopsis: tsv-sample [options] [file...]
 
 Sample input lines or randomize their order. Several modes of operation
 are available:
-* Line order randomization (the default): All input lines are output in a
-  random order. All orderings are equally likely.
-* Weighted line order randomization (--w|weight-field): Lines are selected
-  using weighted random sampling, with the weight taken from a field.
-  Lines are output in weighted selection order, reordering the lines.
-* Sampling with replacement (--r|replace, --n|num): All input is read into
-  memory, then lines are repeatedly selected at random and written out. This
-  continues until --n|num samples are output. Lines can be selected multiple
-  times. Output continues forever if --n|num is zero or not specified.
-* Bernoulli sampling (--p|prob): A random subset of lines is output based
-  on an inclusion probability. This is a streaming operation. A selection
-  decision is made on each line as is it read. Lines order is not changed.
-* Distinct sampling (--k|key-fields, --p|prob): Input lines are sampled
-  based on the values in the key field. A subset of the keys are chosen
-  based on the inclusion probability (a 'distinct' set of keys). All lines
-  with one of the selected keys are output. Line order is not changed.
+* Shuffling (the default): All input lines are output in random order. All
+  orderings are equally likely.
+* Random sampling (--n|num N): A random sample of N lines are selected and
+  written to standard output. By default, selected lines are written in
+  random order. All sample sets and orderings are equally likely. Use
+  --i|inorder to write the selected lines in the original input order.
+* Weighted random sampling (--n|num N, --w|weight-field F): A weighted
+  sample of N lines is produced. Weights are taken from field F. Lines are
+  output in weighted selection order. Use --i|inorder to write in original
+  input order. Omit --n|num to shuffle all lines (weighted shuffling).
+* Sampling with replacement (--r|replace, --n|num N): All input lines are
+  read in, then lines are repeatedly selected at random and written out.
+  This continues until N lines are output. Individual lines can be written
+  multiple times. Output continues forever if N is zero or not provided.
+* Bernoulli sampling (--p|prob P): A random subset of lines is selected
+  based on probability P, a 0.0-1.0 value. This is a streaming operation.
+  A decision is made on each line as it is read. Line order is not changed.
+* Distinct sampling (--k|key-fields F, --p|prob P): Input lines are sampled
+  based on the values in the key fields. A subset of keys are chosen based
+  on the inclusion probability (a 'distinct' set of keys). All lines with
+  one of the selected keys are output. Line order is not changed.
 
-Sample size: The '--n|num' option limits the sample size produced. This
-speeds up line order randomization and weighted sampling significantly
-(details below). It is also used to terminate sampling with replacement.
+Sample size: The '--n|num' option controls the sample size for all
+sampling methods. In the case of simple and weighted random sampling it
+also limits the amount of memory required.
 
 Controlling the random seed: By default, each run produces a different
 randomization or sampling. Using '--s|static-seed' changes this so
@@ -125,15 +131,12 @@ random seed each run. The random seed can be specified using
 value is a no-op and ignored.)
 
 Memory use: Bernoulli sampling and distinct sampling make decisions on
-each line as it is read, so there is no memory accumulation. These
-algorithms support arbitrary size inputs. Sampling with replacement reads
-all lines into memory and is limited by available memory. The line order
-randomization algorithms hold the full output set in memory prior to
-generating results. This ultimately limits the size of the output set. For
-these memory needs can be reduced by using a sample size (--n|num). This
-engages reservoir sampling. Output order is not affected. Both
-'tsv-sample -n 1000' and 'tsv-sample | head -n 1000' produce the same
-results, but the former is quite a bit faster.
+each line as it is read, there is no memory accumulation. These algorithms
+can run on arbitrary size inputs. Sampling with replacement reads all
+lines into memory and is limited by available memory. Shuffling also reads
+all lines into memory and is similarly limited. Random sampling uses
+reservoir sampling, and only needs to hold the sample size (--n|num) in
+memory. The input data can be of any length.
 
 Weighted sampling: Weighted random sampling is done using an algorithm
 described by Pavlos Efraimidis and Paul Spirakis. Weights should be
