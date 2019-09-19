@@ -204,7 +204,7 @@ struct TsvSampleOptions
     string[] files;                            /// Input files
     bool helpVerbose = false;                  /// --help-verbose
     bool hasHeader = false;                    /// --H|header
-    size_t sampleSize = 0;                     /// --n|num - Size of the desired sample
+    ulong sampleSize = 0;                      /// --n|num - Size of the desired sample
     double inclusionProbability = double.nan;  /// --p|prob - Inclusion probability
     size_t[] keyFields;                        /// --k|key-fields - Used with inclusion probability
     size_t weightField = 0;                    /// --w|weight-field - Field holding the weight
@@ -535,11 +535,11 @@ if (isOutputRange!(OutputRange, char))
 
     /* Process each line. */
     bool headerWritten = false;
-    size_t numLinesWritten = 0;
+    ulong numLinesWritten = 0;
     foreach (filename; cmdopt.files)
     {
         auto inputStream = (filename == "-") ? stdin : filename.File();
-        foreach (fileLineNum, line; inputStream.bufferedByLine!(KeepTerminator.no).enumerate(1))
+        foreach (ulong fileLineNum, line; inputStream.bufferedByLine!(KeepTerminator.no).enumerate(1))
         {
             if (fileLineNum == 1) throwIfWindowsNewlineOnUnix(line, filename, fileLineNum);
             if (fileLineNum == 1 && cmdopt.hasHeader)
@@ -659,11 +659,11 @@ void bernoulliSkipSampling(OutputRange)(TsvSampleOptions cmdopt, OutputRange out
 
     /* Process each line. */
     bool headerWritten = false;
-    size_t numLinesWritten = 0;
+    ulong numLinesWritten = 0;
     foreach (filename; cmdopt.files)
     {
         auto inputStream = (filename == "-") ? stdin : filename.File();
-        foreach (fileLineNum, line; inputStream.bufferedByLine!(KeepTerminator.no).enumerate(1))
+        foreach (ulong fileLineNum, line; inputStream.bufferedByLine!(KeepTerminator.no).enumerate(1))
         {
             if (fileLineNum == 1) throwIfWindowsNewlineOnUnix(line, filename, fileLineNum);
             if (fileLineNum == 1 && cmdopt.hasHeader)
@@ -745,11 +745,11 @@ if (isOutputRange!(OutputRange, char))
 
     /* Process each line. */
     bool headerWritten = false;
-    size_t numLinesWritten = 0;
+    ulong numLinesWritten = 0;
     foreach (filename; cmdopt.files)
     {
         auto inputStream = (filename == "-") ? stdin : filename.File();
-        foreach (fileLineNum, line; inputStream.bufferedByLine!(KeepTerminator.no).enumerate(1))
+        foreach (ulong fileLineNum, line; inputStream.bufferedByLine!(KeepTerminator.no).enumerate(1))
         {
             if (fileLineNum == 1) throwIfWindowsNewlineOnUnix(line, filename, fileLineNum);
             if (fileLineNum == 1 && cmdopt.hasHeader)
@@ -973,7 +973,7 @@ if (isOutputRange!(OutputRange, char))
     {
         double score;
         const(char)[] line;
-        static if (preserveInputOrder) size_t lineNumber;
+        static if (preserveInputOrder) ulong lineNumber;
     }
 
     /* Create the heap and backing data store.
@@ -992,11 +992,11 @@ if (isOutputRange!(OutputRange, char))
 
     /* Process each line. */
     bool headerWritten = false;
-    static if (preserveInputOrder) size_t totalLineNum = 0;
+    static if (preserveInputOrder) ulong totalLineNum = 0;
     foreach (filename; cmdopt.files)
     {
         auto inputStream = (filename == "-") ? stdin : filename.File();
-        foreach (fileLineNum, line; inputStream.bufferedByLine!(KeepTerminator.no).enumerate(1))
+        foreach (ulong fileLineNum, line; inputStream.bufferedByLine!(KeepTerminator.no).enumerate(1))
         {
             if (fileLineNum == 1) throwIfWindowsNewlineOnUnix(line, filename, fileLineNum);
             if (fileLineNum == 1 && cmdopt.hasHeader)
@@ -1053,7 +1053,7 @@ if (isOutputRange!(OutputRange, char))
      * The asserts here avoid issues with the current binaryheap implementation. They
      * detect use of backing stores having a length not synchronized to the reservoir.
      */
-    immutable size_t numLines = reservoir.length;
+    immutable ulong numLines = reservoir.length;
     assert(numLines == dataStore.length);
 
     static if (preserveInputOrder)
@@ -1098,11 +1098,11 @@ if (isOutputRange!(OutputRange, char))
 
     /* Process each line. */
     bool headerWritten = false;
-    size_t numLinesWritten = 0;
+    ulong numLinesWritten = 0;
     foreach (filename; cmdopt.files)
     {
         auto inputStream = (filename == "-") ? stdin : filename.File();
-        foreach (fileLineNum, line; inputStream.bufferedByLine!(KeepTerminator.no).enumerate(1))
+        foreach (ulong fileLineNum, line; inputStream.bufferedByLine!(KeepTerminator.no).enumerate(1))
         {
             if (fileLineNum == 1) throwIfWindowsNewlineOnUnix(line, filename, fileLineNum);
             if (fileLineNum == 1 && cmdopt.hasHeader)
@@ -1187,7 +1187,7 @@ if (isOutputRange!(OutputRange, char))
     struct Entry(Flag!"preserveInputOrder" preserveInputOrder)
     {
         const(char)[] line;
-        static if (preserveInputOrder) size_t lineNumber;
+        static if (preserveInputOrder) ulong lineNumber;
     }
 
     Entry!preserveInputOrder[] reservoir;
@@ -1199,11 +1199,11 @@ if (isOutputRange!(OutputRange, char))
     /* Process each line. */
 
     bool headerWritten = false;
-    size_t totalLineNum = 0;
+    ulong totalLineNum = 0;
     foreach (filename; cmdopt.files)
     {
         auto inputStream = (filename == "-") ? stdin : filename.File();
-        foreach (fileLineNum, line; inputStream.bufferedByLine!(KeepTerminator.no).enumerate(1))
+        foreach (ulong fileLineNum, line; inputStream.bufferedByLine!(KeepTerminator.no).enumerate(1))
         {
             if (fileLineNum == 1) throwIfWindowsNewlineOnUnix(line, filename, fileLineNum);
             if (fileLineNum == 1 && cmdopt.hasHeader)
@@ -1671,7 +1671,7 @@ unittest
  * text tailored for this program.
  */
 import std.traits : isSomeChar;
-T getFieldValue(T, C)(const C[] line, size_t fieldIndex, C delim, string filename, size_t lineNum) pure @safe
+T getFieldValue(T, C)(const C[] line, size_t fieldIndex, C delim, string filename, ulong lineNum) pure @safe
 if (isSomeChar!C)
 {
     import std.conv : ConvException, to;
