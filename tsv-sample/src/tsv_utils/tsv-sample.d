@@ -1786,8 +1786,8 @@ unittest
      *
      * Expected results naming conventions:
      *  - Prefix: dataNxMExpected. N and M are numbers. e.g. data3x6Expected
-     *  - Sampling Type (required): Permute, Replace, Bernoulli, Distinct
-     *  - Compatibility: Compat, AlgoR, Skip, Swap
+     *  - Sampling Type (required): Permute (Shuffle), Sample, Replace, Bernoulli, Distinct
+     *  - Compatibility: Compat, AlgoR, Skip, Swap, Inorder
      *  - Weight Field: Wt<num>, e.g. Wt3
      *  - Sample Size: Num<num>, eg. Num3
      *  - Seed Value: V<num>, eg. V77
@@ -1911,11 +1911,11 @@ unittest
          ["0.15929344086907804", "green", "緑", "0.0072"],
          ["0.010968807619065046", "red", "赤", "23.8"]];
 
-    /* Note: data3x6ExpectedAlgoRNum6 is identical to data3x6ExpectedPermuteSwap because
+    /* Note: data3x6ExpectedSampleAlgoRNum6 is identical to data3x6ExpectedPermuteSwap because
      * both are effectively the same algorithm given that --num is data length. Both read
      * in the full data in order then call randomShuffle.
      */
-    string[][] data3x6ExpectedPermuteAlgoRNum6 =
+    string[][] data3x6ExpectedSampleAlgoRNum6 =
         [["field_a", "field_b", "field_c"],
          ["black", "黒", "0.983"],
          ["green", "緑", "0.0072"],
@@ -1924,7 +1924,7 @@ unittest
          ["white", "白", "1.65"],
          ["blue", "青", "12"]];
 
-    string[][] data3x6ExpectedPermuteAlgoRNum5 =
+    string[][] data3x6ExpectedSampleAlgoRNum5 =
         [["field_a", "field_b", "field_c"],
          ["red", "赤", "23.8"],
          ["black", "黒", "0.983"],
@@ -1932,25 +1932,65 @@ unittest
          ["green", "緑", "0.0072"],
          ["yellow", "黄", "12"]];
 
-    string[][] data3x6ExpectedPermuteAlgoRNum4 =
+    string[][] data3x6ExpectedSampleAlgoRNum4 =
         [["field_a", "field_b", "field_c"],
          ["blue", "青", "12"],
          ["green", "緑", "0.0072"],
          ["black", "黒", "0.983"],
          ["white", "白", "1.65"]];
 
-    string[][] data3x6ExpectedPermuteAlgoRNum3 =
+    string[][] data3x6ExpectedSampleAlgoRNum3 =
         [["field_a", "field_b", "field_c"],
          ["red", "赤", "23.8"],
          ["black", "黒", "0.983"],
          ["green", "緑", "0.0072"]];
 
-    string[][] data3x6ExpectedPermuteAlgoRNum2 =
+    string[][] data3x6ExpectedSampleAlgoRNum2 =
         [["field_a", "field_b", "field_c"],
          ["black", "黒", "0.983"],
          ["red", "赤", "23.8"]];
 
-    string[][] data3x6ExpectedPermuteAlgoRNum1 =
+    string[][] data3x6ExpectedSampleAlgoRNum1 =
+        [["field_a", "field_b", "field_c"],
+         ["green", "緑", "0.0072"]];
+
+    /* Inorder versions. */
+    string[][] data3x6ExpectedSampleAlgoRNum6Inorder =
+        [["field_a", "field_b", "field_c"],
+         ["red", "赤", "23.8"],
+         ["green", "緑", "0.0072"],
+         ["white", "白", "1.65"],
+         ["yellow", "黄", "12"],
+         ["blue", "青", "12"],
+         ["black", "黒", "0.983"]];
+
+    string[][] data3x6ExpectedSampleAlgoRNum5Inorder =
+        [["field_a", "field_b", "field_c"],
+         ["red", "赤", "23.8"],
+         ["green", "緑", "0.0072"],
+         ["white", "白", "1.65"],
+         ["yellow", "黄", "12"],
+         ["black", "黒", "0.983"]];
+
+    string[][] data3x6ExpectedSampleAlgoRNum4Inorder =
+        [["field_a", "field_b", "field_c"],
+         ["green", "緑", "0.0072"],
+         ["white", "白", "1.65"],
+         ["blue", "青", "12"],
+         ["black", "黒", "0.983"]];
+
+    string[][] data3x6ExpectedSampleAlgoRNum3Inorder =
+        [["field_a", "field_b", "field_c"],
+         ["red", "赤", "23.8"],
+         ["green", "緑", "0.0072"],
+         ["black", "黒", "0.983"]];
+
+    string[][] data3x6ExpectedSampleAlgoRNum2Inorder =
+        [["field_a", "field_b", "field_c"],
+         ["red", "赤", "23.8"],
+         ["black", "黒", "0.983"]];
+
+    string[][] data3x6ExpectedSampleAlgoRNum1Inorder =
         [["field_a", "field_b", "field_c"],
          ["green", "緑", "0.0072"]];
 
@@ -2204,12 +2244,19 @@ unittest
          ["orange", "オレンジ", "2.5"],
          ["green", "緑", "0.0072"]];
 
-        string[][] combo1ExpectedPermuteAlgoRNum4 =
+        string[][] combo1ExpectedSampleAlgoRNum4 =
         [["field_a", "field_b", "field_c"],
          ["blue", "青", "12"],
          ["gray", "グレー", "6.2"],
          ["brown", "褐色", "29.2"],
          ["white", "白", "1.65"]];
+
+        string[][] combo1ExpectedSampleAlgoRNum4Inorder =
+        [["field_a", "field_b", "field_c"],
+         ["white", "白", "1.65"],
+         ["blue", "青", "12"],
+         ["brown", "褐色", "29.2"],
+         ["gray", "グレー", "6.2"]];
 
     string[][] combo1ExpectedReplaceNum10 =
         [["field_a", "field_b", "field_c"],
@@ -2727,13 +2774,28 @@ unittest
     testTsvSample(["test-aa13", "--prefer-algorithm-r", "-H", "-s", "--num", "2", fpath_data3x0], data3x0);
     testTsvSample(["test-aa14", "--prefer-algorithm-r", "-H", "-s", "--num", "1", fpath_data3x1], data3x1);
     testTsvSample(["test-aa15", "--prefer-algorithm-r", "-H", "-s", "--num", "2", fpath_data3x1], data3x1);
-    testTsvSample(["test-aa16", "--prefer-algorithm-r", "-H", "-s", "--num", "7", fpath_data3x6], data3x6ExpectedPermuteAlgoRNum6);
-    testTsvSample(["test-aa17", "--prefer-algorithm-r", "-H", "-s", "--num", "6", fpath_data3x6], data3x6ExpectedPermuteAlgoRNum6);
-    testTsvSample(["test-aa18", "--prefer-algorithm-r", "-H", "-s", "--num", "5", fpath_data3x6], data3x6ExpectedPermuteAlgoRNum5);
-    testTsvSample(["test-aa19", "--prefer-algorithm-r", "-H", "-s", "--num", "4", fpath_data3x6], data3x6ExpectedPermuteAlgoRNum4);
-    testTsvSample(["test-aa20", "--prefer-algorithm-r", "-H", "-s", "--num", "3", fpath_data3x6], data3x6ExpectedPermuteAlgoRNum3);
-    testTsvSample(["test-aa21", "--prefer-algorithm-r", "-H", "-s", "--num", "2", fpath_data3x6], data3x6ExpectedPermuteAlgoRNum2);
-    testTsvSample(["test-aa22", "--prefer-algorithm-r", "-H", "-s", "--num", "1", fpath_data3x6], data3x6ExpectedPermuteAlgoRNum1);
+    testTsvSample(["test-aa16", "--prefer-algorithm-r", "-H", "-s", "--num", "7", fpath_data3x6], data3x6ExpectedSampleAlgoRNum6);
+    testTsvSample(["test-aa17", "--prefer-algorithm-r", "-H", "-s", "--num", "6", fpath_data3x6], data3x6ExpectedSampleAlgoRNum6);
+    testTsvSample(["test-aa18", "--prefer-algorithm-r", "-H", "-s", "--num", "5", fpath_data3x6], data3x6ExpectedSampleAlgoRNum5);
+    testTsvSample(["test-aa19", "--prefer-algorithm-r", "-H", "-s", "--num", "4", fpath_data3x6], data3x6ExpectedSampleAlgoRNum4);
+    testTsvSample(["test-aa20", "--prefer-algorithm-r", "-H", "-s", "--num", "3", fpath_data3x6], data3x6ExpectedSampleAlgoRNum3);
+    testTsvSample(["test-aa21", "--prefer-algorithm-r", "-H", "-s", "--num", "2", fpath_data3x6], data3x6ExpectedSampleAlgoRNum2);
+    testTsvSample(["test-aa22", "--prefer-algorithm-r", "-H", "-s", "--num", "1", fpath_data3x6], data3x6ExpectedSampleAlgoRNum1);
+
+    /* Inorder versions of Algorithm R tests. */
+    testTsvSample(["test-ai10", "--prefer-algorithm-r", "--header", "--static-seed", "--num", "1", "--inorder", fpath_dataEmpty], dataEmpty);
+    testTsvSample(["test-ai11", "--prefer-algorithm-r", "--header", "--static-seed", "--num", "2", "--inorder", fpath_dataEmpty], dataEmpty);
+    testTsvSample(["test-ai12", "--prefer-algorithm-r", "-H", "-s", "--num", "1", "--inorder", fpath_data3x0], data3x0);
+    testTsvSample(["test-ai13", "--prefer-algorithm-r", "-H", "-s", "--num", "2", "--inorder", fpath_data3x0], data3x0);
+    testTsvSample(["test-ai14", "--prefer-algorithm-r", "-H", "-s", "--num", "1", "--inorder", fpath_data3x1], data3x1);
+    testTsvSample(["test-ai15", "--prefer-algorithm-r", "-H", "-s", "--num", "2", "-i", fpath_data3x1], data3x1);
+    testTsvSample(["test-ai16", "--prefer-algorithm-r", "-H", "-s", "--num", "7", "-i", fpath_data3x6], data3x6ExpectedSampleAlgoRNum6Inorder);
+    testTsvSample(["test-ai17", "--prefer-algorithm-r", "-H", "-s", "--num", "6", "-i", fpath_data3x6], data3x6ExpectedSampleAlgoRNum6Inorder);
+    testTsvSample(["test-ai18", "--prefer-algorithm-r", "-H", "-s", "--num", "5", "-i", fpath_data3x6], data3x6ExpectedSampleAlgoRNum5Inorder);
+    testTsvSample(["test-ai19", "--prefer-algorithm-r", "-H", "-s", "--num", "4", "-i", fpath_data3x6], data3x6ExpectedSampleAlgoRNum4Inorder);
+    testTsvSample(["test-ai20", "--prefer-algorithm-r", "-H", "-s", "--num", "3", "-i", fpath_data3x6], data3x6ExpectedSampleAlgoRNum3Inorder);
+    testTsvSample(["test-ai21", "--prefer-algorithm-r", "-H", "-s", "--num", "2", "-i", fpath_data3x6], data3x6ExpectedSampleAlgoRNum2Inorder);
+    testTsvSample(["test-ai22", "--prefer-algorithm-r", "-H", "-s", "--num", "1", "-i", fpath_data3x6], data3x6ExpectedSampleAlgoRNum1Inorder);
 
     /* Bernoulli sampling cases. */
     testTsvSample(["test-a14", "--header", "--static-seed", "--prob", "0.001", fpath_dataEmpty], dataEmpty);
@@ -2810,17 +2872,29 @@ unittest
     testTsvSample(["test-bb7", "-v", "41", "--print-random", "--compatibility-mode", fpath_data3x6_noheader], data3x6ExpectedPermuteCompatV41Probs[1..$]);
 
     /* Reservoir sampling using Algorithm R, no headers. */
-    testTsvSample(["test-aa10", "--prefer-algorithm-r", "--static-seed", "--num", "1", fpath_dataEmpty], dataEmpty);
-    testTsvSample(["test-aa11", "--prefer-algorithm-r", "--static-seed", "--num", "2", fpath_dataEmpty], dataEmpty);
-    testTsvSample(["test-aa14", "--prefer-algorithm-r", "-s", "--num", "1", fpath_data3x1_noheader], data3x1[1..$]);
-    testTsvSample(["test-aa15", "--prefer-algorithm-r", "-s", "--num", "2", fpath_data3x1_noheader], data3x1[1..$]);
-    testTsvSample(["test-aa16", "--prefer-algorithm-r", "-s", "--num", "7", fpath_data3x6_noheader], data3x6ExpectedPermuteAlgoRNum6[1..$]);
-    testTsvSample(["test-aa17", "--prefer-algorithm-r", "-s", "--num", "6", fpath_data3x6_noheader], data3x6ExpectedPermuteAlgoRNum6[1..$]);
-    testTsvSample(["test-aa18", "--prefer-algorithm-r", "-s", "--num", "5", fpath_data3x6_noheader], data3x6ExpectedPermuteAlgoRNum5[1..$]);
-    testTsvSample(["test-aa19", "--prefer-algorithm-r", "-s", "--num", "4", fpath_data3x6_noheader], data3x6ExpectedPermuteAlgoRNum4[1..$]);
-    testTsvSample(["test-aa20", "--prefer-algorithm-r", "-s", "--num", "3", fpath_data3x6_noheader], data3x6ExpectedPermuteAlgoRNum3[1..$]);
-    testTsvSample(["test-aa21", "--prefer-algorithm-r", "-s", "--num", "2", fpath_data3x6_noheader], data3x6ExpectedPermuteAlgoRNum2[1..$]);
-    testTsvSample(["test-aa22", "--prefer-algorithm-r", "-s", "--num", "1", fpath_data3x6_noheader], data3x6ExpectedPermuteAlgoRNum1[1..$]);
+    testTsvSample(["test-ac10", "--prefer-algorithm-r", "--static-seed", "--num", "1", fpath_dataEmpty], dataEmpty);
+    testTsvSample(["test-ac11", "--prefer-algorithm-r", "--static-seed", "--num", "2", fpath_dataEmpty], dataEmpty);
+    testTsvSample(["test-ac14", "--prefer-algorithm-r", "-s", "--num", "1", fpath_data3x1_noheader], data3x1[1..$]);
+    testTsvSample(["test-ac15", "--prefer-algorithm-r", "-s", "--num", "2", fpath_data3x1_noheader], data3x1[1..$]);
+    testTsvSample(["test-ac16", "--prefer-algorithm-r", "-s", "--num", "7", fpath_data3x6_noheader], data3x6ExpectedSampleAlgoRNum6[1..$]);
+    testTsvSample(["test-ac17", "--prefer-algorithm-r", "-s", "--num", "6", fpath_data3x6_noheader], data3x6ExpectedSampleAlgoRNum6[1..$]);
+    testTsvSample(["test-ac18", "--prefer-algorithm-r", "-s", "--num", "5", fpath_data3x6_noheader], data3x6ExpectedSampleAlgoRNum5[1..$]);
+    testTsvSample(["test-ac19", "--prefer-algorithm-r", "-s", "--num", "4", fpath_data3x6_noheader], data3x6ExpectedSampleAlgoRNum4[1..$]);
+    testTsvSample(["test-ac20", "--prefer-algorithm-r", "-s", "--num", "3", fpath_data3x6_noheader], data3x6ExpectedSampleAlgoRNum3[1..$]);
+    testTsvSample(["test-ac21", "--prefer-algorithm-r", "-s", "--num", "2", fpath_data3x6_noheader], data3x6ExpectedSampleAlgoRNum2[1..$]);
+    testTsvSample(["test-ac22", "--prefer-algorithm-r", "-s", "--num", "1", fpath_data3x6_noheader], data3x6ExpectedSampleAlgoRNum1[1..$]);
+
+    testTsvSample(["test-aj10", "--prefer-algorithm-r", "--static-seed", "--num", "1", "-i", fpath_dataEmpty], dataEmpty);
+    testTsvSample(["test-aj11", "--prefer-algorithm-r", "--static-seed", "--num", "2", "-i", fpath_dataEmpty], dataEmpty);
+    testTsvSample(["test-aj14", "--prefer-algorithm-r", "-s", "--num", "1", "-i", fpath_data3x1_noheader], data3x1[1..$]);
+    testTsvSample(["test-aj15", "--prefer-algorithm-r", "-s", "--num", "2", "-i", fpath_data3x1_noheader], data3x1[1..$]);
+    testTsvSample(["test-aj16", "--prefer-algorithm-r", "-s", "--num", "7", "-i", fpath_data3x6_noheader], data3x6ExpectedSampleAlgoRNum6Inorder[1..$]);
+    testTsvSample(["test-aj17", "--prefer-algorithm-r", "-s", "--num", "6", "-i", fpath_data3x6_noheader], data3x6ExpectedSampleAlgoRNum6Inorder[1..$]);
+    testTsvSample(["test-aj18", "--prefer-algorithm-r", "-s", "--num", "5", "-i", fpath_data3x6_noheader], data3x6ExpectedSampleAlgoRNum5Inorder[1..$]);
+    testTsvSample(["test-aj19", "--prefer-algorithm-r", "-s", "--num", "4", "-i", fpath_data3x6_noheader], data3x6ExpectedSampleAlgoRNum4Inorder[1..$]);
+    testTsvSample(["test-aj20", "--prefer-algorithm-r", "-s", "--num", "3", "-i", fpath_data3x6_noheader], data3x6ExpectedSampleAlgoRNum3Inorder[1..$]);
+    testTsvSample(["test-aj21", "--prefer-algorithm-r", "-s", "--num", "2", "-i", fpath_data3x6_noheader], data3x6ExpectedSampleAlgoRNum2Inorder[1..$]);
+    testTsvSample(["test-aj22", "--prefer-algorithm-r", "-s", "--num", "1", "-i", fpath_data3x6_noheader], data3x6ExpectedSampleAlgoRNum1Inorder[1..$]);
 
     /* Bernoulli sampling cases. */
     testTsvSample(["test-b10", "-s", "-p", "1.0", fpath_data3x1_noheader], data3x1[1..$]);
@@ -2875,7 +2949,10 @@ unittest
                   combo1ExpectedPermuteWt3);
     testTsvSample(["test-c5", "--header", "--static-seed", "--prefer-algorithm-r", "--num", "4",
                    fpath_data3x0, fpath_data3x3, fpath_data3x1, fpath_dataEmpty, fpath_data3x6, fpath_data3x2],
-                  combo1ExpectedPermuteAlgoRNum4);
+                  combo1ExpectedSampleAlgoRNum4);
+    testTsvSample(["test-c5b", "--header", "--static-seed", "--prefer-algorithm-r", "--num", "4", "--inorder",
+                   fpath_data3x0, fpath_data3x3, fpath_data3x1, fpath_dataEmpty, fpath_data3x6, fpath_data3x2],
+                  combo1ExpectedSampleAlgoRNum4Inorder);
 
     /* Multi-file, no headers. */
     testTsvSample(["test-c6", "--static-seed", "--compatibility-mode",
@@ -2897,7 +2974,11 @@ unittest
     testTsvSample(["test-c10", "--static-seed", "--prefer-algorithm-r", "--num", "4",
                    fpath_data3x3_noheader, fpath_data3x1_noheader, fpath_dataEmpty,
                    fpath_data3x6_noheader, fpath_data3x2_noheader],
-                  combo1ExpectedPermuteAlgoRNum4[1..$]);
+                  combo1ExpectedSampleAlgoRNum4[1..$]);
+    testTsvSample(["test-c10b", "--static-seed", "--prefer-algorithm-r", "--num", "4", "--inorder",
+                   fpath_data3x3_noheader, fpath_data3x1_noheader, fpath_dataEmpty,
+                   fpath_data3x6_noheader, fpath_data3x2_noheader],
+                  combo1ExpectedSampleAlgoRNum4Inorder[1..$]);
 
     /* Bernoulli sampling cases. */
     testTsvSample(["test-c11", "--header", "--static-seed", "--print-random", "--prob", ".5",
