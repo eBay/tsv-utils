@@ -1994,6 +1994,88 @@ unittest
         [["field_a", "field_b", "field_c"],
          ["green", "緑", "0.0072"]];
 
+    /* Reservoir inorder */
+    string[][] data3x6ExpectedSampleCompatNum6Inorder =
+        [["field_a", "field_b", "field_c"],
+         ["red", "赤", "23.8"],
+         ["green", "緑", "0.0072"],
+         ["white", "白", "1.65"],
+         ["yellow", "黄", "12"],
+         ["blue", "青", "12"],
+         ["black", "黒", "0.983"]];
+
+    string[][] data3x6ExpectedSampleCompatNum5Inorder =
+        [["field_a", "field_b", "field_c"],
+         ["green", "緑", "0.0072"],
+         ["white", "白", "1.65"],
+         ["yellow", "黄", "12"],
+         ["blue", "青", "12"],
+         ["black", "黒", "0.983"]];
+
+    string[][] data3x6ExpectedSampleCompatNum4Inorder =
+        [["field_a", "field_b", "field_c"],
+         ["white", "白", "1.65"],
+         ["yellow", "黄", "12"],
+         ["blue", "青", "12"],
+         ["black", "黒", "0.983"]];
+
+    string[][] data3x6ExpectedSampleCompatNum3Inorder =
+        [["field_a", "field_b", "field_c"],
+         ["yellow", "黄", "12"],
+         ["blue", "青", "12"],
+         ["black", "黒", "0.983"]];
+
+    string[][] data3x6ExpectedSampleCompatNum2Inorder =
+        [["field_a", "field_b", "field_c"],
+         ["yellow", "黄", "12"],
+         ["black", "黒", "0.983"]];
+
+    string[][] data3x6ExpectedSampleCompatNum1Inorder =
+        [["field_a", "field_b", "field_c"],
+         ["yellow", "黄", "12"]];
+
+
+    /* Reservoir inorder with probabilities. */
+    string[][] data3x6ExpectedSampleCompatNum6ProbsInorder =
+        [["random_value", "field_a", "field_b", "field_c"],
+         ["0.010968807619065046", "red", "赤", "23.8"],
+         ["0.15929344086907804", "green", "緑", "0.0072"],
+         ["0.49287854949943721", "white", "白", "1.65"],
+         ["0.96055546286515892", "yellow", "黄", "12"],
+         ["0.52525980887003243", "blue", "青", "12"],
+         ["0.75710153928957880", "black", "黒", "0.983"]];
+
+    string[][] data3x6ExpectedSampleCompatNum5ProbsInorder =
+        [["random_value", "field_a", "field_b", "field_c"],
+         ["0.15929344086907804", "green", "緑", "0.0072"],
+         ["0.49287854949943721", "white", "白", "1.65"],
+         ["0.96055546286515892", "yellow", "黄", "12"],
+         ["0.52525980887003243", "blue", "青", "12"],
+         ["0.75710153928957880", "black", "黒", "0.983"]];
+
+    string[][] data3x6ExpectedSampleCompatNum4ProbsInorder =
+        [["random_value", "field_a", "field_b", "field_c"],
+         ["0.49287854949943721", "white", "白", "1.65"],
+         ["0.96055546286515892", "yellow", "黄", "12"],
+         ["0.52525980887003243", "blue", "青", "12"],
+         ["0.75710153928957880", "black", "黒", "0.983"]];
+
+    string[][] data3x6ExpectedSampleCompatNum3ProbsInorder =
+        [["random_value", "field_a", "field_b", "field_c"],
+         ["0.96055546286515892", "yellow", "黄", "12"],
+         ["0.52525980887003243", "blue", "青", "12"],
+         ["0.75710153928957880", "black", "黒", "0.983"]];
+
+    string[][] data3x6ExpectedSampleCompatNum2ProbsInorder =
+        [["random_value", "field_a", "field_b", "field_c"],
+         ["0.96055546286515892", "yellow", "黄", "12"],
+         ["0.75710153928957880", "black", "黒", "0.983"]];
+
+    string[][] data3x6ExpectedSampleCompatNum1ProbsInorder =
+        [["random_value", "field_a", "field_b", "field_c"],
+         ["0.96055546286515892", "yellow", "黄", "12"]];
+
+
     string[][] data3x6ExpectedBernoulliProbsP100 =
         [["random_value", "field_a", "field_b", "field_c"],
          ["0.010968807619065046", "red", "赤", "23.8"],
@@ -2825,7 +2907,6 @@ unittest
     testTsvSample(["test-a27", "-H", "-s", "-p", "0.6", "-k", "1,3", fpath_data3x6], data3x6ExpectedDistinctK1K3P60);
 
 
-
     /* Generating random weights. Use Bernoulli sampling test set at prob 100% for uniform sampling.
      * For weighted sampling, use the weighted cases, but with expected using the original ordering.
      */
@@ -3114,6 +3195,50 @@ unittest
         testTsvSample([format("test-f17_%d", n), "-s", "--gen-random-inorder", "-n", n.to!string,
                        fpath_data3x6_noheader], data3x6ExpectedBernoulliProbsP100[1..expectedLength]);
     }
+
+    /* Inorder tests with reservoir sampling via heap (compatibility mode). */
+    testTsvSample(["test-ar10", "--compatibility-mode", "--header", "--static-seed", "--num", "1", "--inorder", fpath_dataEmpty], dataEmpty);
+    testTsvSample(["test-ar11", "--compatibility-mode", "--header", "--static-seed", "--num", "2", "--inorder", fpath_dataEmpty], dataEmpty);
+    testTsvSample(["test-ar12", "--compatibility-mode", "-H", "-s", "--num", "1", "--inorder", fpath_data3x0], data3x0);
+    testTsvSample(["test-ar13", "--compatibility-mode", "-H", "-s", "--num", "2", "--inorder", fpath_data3x0], data3x0);
+    testTsvSample(["test-ar14", "--compatibility-mode", "-H", "-s", "--num", "1", "--inorder", fpath_data3x1], data3x1);
+    testTsvSample(["test-ar15", "--compatibility-mode", "-H", "-s", "--num", "2", "-i", fpath_data3x1], data3x1);
+    testTsvSample(["test-ar16", "--compatibility-mode", "-H", "-s", "--num", "7", "-i", fpath_data3x6], data3x6ExpectedSampleCompatNum6Inorder);
+    testTsvSample(["test-ar17", "--compatibility-mode", "-H", "-s", "--num", "6", "-i", fpath_data3x6], data3x6ExpectedSampleCompatNum6Inorder);
+    testTsvSample(["test-ar18", "--compatibility-mode", "-H", "-s", "--num", "5", "-i", fpath_data3x6], data3x6ExpectedSampleCompatNum5Inorder);
+    testTsvSample(["test-ar19", "--compatibility-mode", "-H", "-s", "--num", "4", "-i", fpath_data3x6],         data3x6ExpectedSampleCompatNum4Inorder);
+    testTsvSample(["test-ar20", "--compatibility-mode", "-H", "-s", "--num", "3", "-i", fpath_data3x6], data3x6ExpectedSampleCompatNum3Inorder);
+    testTsvSample(["test-ar21", "--compatibility-mode", "-H", "-s", "--num", "2", "-i", fpath_data3x6], data3x6ExpectedSampleCompatNum2Inorder);
+    testTsvSample(["test-ar22", "--compatibility-mode", "-H", "-s", "--num", "1", "-i", fpath_data3x6], data3x6ExpectedSampleCompatNum1Inorder);
+
+    testTsvSample(["test-as10", "--compatibility-mode", "--static-seed", "--num", "1", "-i", fpath_dataEmpty], dataEmpty);
+    testTsvSample(["test-as11", "--compatibility-mode", "--static-seed", "--num", "2", "-i", fpath_dataEmpty], dataEmpty);
+    testTsvSample(["test-as14", "--compatibility-mode", "-s", "--num", "1", "-i", fpath_data3x1_noheader], data3x1[1..$]);
+    testTsvSample(["test-as15", "--compatibility-mode", "-s", "--num", "2", "-i", fpath_data3x1_noheader], data3x1[1..$]);
+    testTsvSample(["test-as16", "--compatibility-mode", "-s", "--num", "7", "-i", fpath_data3x6_noheader], data3x6ExpectedSampleCompatNum6Inorder[1..$]);
+    testTsvSample(["test-as17", "--compatibility-mode", "-s", "--num", "6", "-i", fpath_data3x6_noheader], data3x6ExpectedSampleCompatNum6Inorder[1..$]);
+    testTsvSample(["test-as18", "--compatibility-mode", "-s", "--num", "5", "-i", fpath_data3x6_noheader], data3x6ExpectedSampleCompatNum5Inorder[1..$]);
+    testTsvSample(["test-as19", "--compatibility-mode", "-s", "--num", "4", "-i", fpath_data3x6_noheader], data3x6ExpectedSampleCompatNum4Inorder[1..$]);
+    testTsvSample(["test-as20", "--compatibility-mode", "-s", "--num", "3", "-i", fpath_data3x6_noheader], data3x6ExpectedSampleCompatNum3Inorder[1..$]);
+    testTsvSample(["test-as21", "--compatibility-mode", "-s", "--num", "2", "-i", fpath_data3x6_noheader], data3x6ExpectedSampleCompatNum2Inorder[1..$]);
+    testTsvSample(["test-as22", "--compatibility-mode", "-s", "--num", "1", "-i", fpath_data3x6_noheader], data3x6ExpectedSampleCompatNum1Inorder[1..$]);
+
+
+    testTsvSample(["test-at16", "--compatibility-mode", "-H", "-s", "--num", "7", "-i", "--print-random", fpath_data3x6], data3x6ExpectedSampleCompatNum6ProbsInorder);
+    testTsvSample(["test-at17", "--compatibility-mode", "-H", "-s", "--num", "6", "-i", "--print-random", fpath_data3x6], data3x6ExpectedSampleCompatNum6ProbsInorder);
+    testTsvSample(["test-at18", "--compatibility-mode", "-H", "-s", "--num", "5", "-i", "--print-random", fpath_data3x6], data3x6ExpectedSampleCompatNum5ProbsInorder);
+    testTsvSample(["test-at19", "--compatibility-mode", "-H", "-s", "--num", "4", "-i", "--print-random", fpath_data3x6], data3x6ExpectedSampleCompatNum4ProbsInorder);
+    testTsvSample(["test-at20", "--compatibility-mode", "-H", "-s", "--num", "3", "-i", "--print-random", fpath_data3x6], data3x6ExpectedSampleCompatNum3ProbsInorder);
+    testTsvSample(["test-at21", "--compatibility-mode", "-H", "-s", "--num", "2", "-i", "--print-random", fpath_data3x6], data3x6ExpectedSampleCompatNum2ProbsInorder);
+    testTsvSample(["test-at22", "--compatibility-mode", "-H", "-s", "--num", "1", "-i", "--print-random", fpath_data3x6], data3x6ExpectedSampleCompatNum1ProbsInorder);
+
+    testTsvSample(["test-au16", "--compatibility-mode", "-s", "--num", "7", "-i", "--print-random", fpath_data3x6_noheader], data3x6ExpectedSampleCompatNum6ProbsInorder[1..$]);
+    testTsvSample(["test-au17", "--compatibility-mode", "-s", "--num", "6", "-i", "--print-random", fpath_data3x6_noheader], data3x6ExpectedSampleCompatNum6ProbsInorder[1..$]);
+    testTsvSample(["test-au18", "--compatibility-mode", "-s", "--num", "5", "-i", "--print-random", fpath_data3x6_noheader], data3x6ExpectedSampleCompatNum5ProbsInorder[1..$]);
+    testTsvSample(["test-au19", "--compatibility-mode", "-s", "--num", "4", "-i", "--print-random", fpath_data3x6_noheader], data3x6ExpectedSampleCompatNum4ProbsInorder[1..$]);
+    testTsvSample(["test-au20", "--compatibility-mode", "-s", "--num", "3", "-i", "--print-random", fpath_data3x6_noheader], data3x6ExpectedSampleCompatNum3ProbsInorder[1..$]);
+    testTsvSample(["test-au21", "--compatibility-mode", "-s", "--num", "2", "-i", "--print-random", fpath_data3x6_noheader], data3x6ExpectedSampleCompatNum2ProbsInorder[1..$]);
+    testTsvSample(["test-au22", "--compatibility-mode", "-s", "--num", "1", "-i", "--print-random", fpath_data3x6_noheader], data3x6ExpectedSampleCompatNum1ProbsInorder[1..$]);
 
     /* Similar tests with the 1x10 data set. */
     for (size_t n = data1x10.length + 2; n >= 1; n--)
