@@ -2075,6 +2075,45 @@ unittest
         [["random_value", "field_a", "field_b", "field_c"],
          ["0.96055546286515892", "yellow", "黄", "12"]];
 
+    string[][] data3x6ExpectedWt3Num6Inorder =
+        [["field_a", "field_b", "field_c"],
+         ["red", "赤", "23.8"],
+         ["green", "緑", "0.0072"],
+         ["white", "白", "1.65"],
+         ["yellow", "黄", "12"],
+         ["blue", "青", "12"],
+         ["black", "黒", "0.983"]];
+
+    string[][] data3x6ExpectedWt3Num5Inorder =
+        [["field_a", "field_b", "field_c"],
+         ["green", "緑", "0.0072"],
+         ["white", "白", "1.65"],
+         ["yellow", "黄", "12"],
+         ["blue", "青", "12"],
+         ["black", "黒", "0.983"]];
+
+    string[][] data3x6ExpectedWt3Num4Inorder =
+        [["field_a", "field_b", "field_c"],
+         ["white", "白", "1.65"],
+         ["yellow", "黄", "12"],
+         ["blue", "青", "12"],
+         ["black", "黒", "0.983"]];
+
+    string[][] data3x6ExpectedWt3Num3Inorder =
+        [["field_a", "field_b", "field_c"],
+         ["yellow", "黄", "12"],
+         ["blue", "青", "12"],
+         ["black", "黒", "0.983"]];
+
+    string[][] data3x6ExpectedWt3Num2Inorder =
+        [["field_a", "field_b", "field_c"],
+         ["yellow", "黄", "12"],
+         ["black", "黒", "0.983"]];
+
+    string[][] data3x6ExpectedWt3Num1Inorder =
+        [["field_a", "field_b", "field_c"],
+         ["yellow", "黄", "12"]];
+
 
     string[][] data3x6ExpectedBernoulliProbsP100 =
         [["random_value", "field_a", "field_b", "field_c"],
@@ -2158,6 +2197,7 @@ unittest
          ["black", "黒", "0.983"],
          ["white", "白", "1.65"],
          ["green", "緑", "0.0072"]];
+
 
     string[][] data3x6ExpectedReplaceNum10 =
         [["field_a", "field_b", "field_c"],
@@ -2821,7 +2861,7 @@ unittest
      * Enough setup! Actually run some tests!
      */
 
-    /* Permutations. Headers, static seed, compatibility mode. With weights and without. */
+    /* Shuffling tests. Headers, static seed, compatibility mode. With weights and without. */
     testTsvSample(["test-a1", "--header", "--static-seed", "--compatibility-mode", fpath_dataEmpty], dataEmpty);
     testTsvSample(["test-a2", "--header", "--static-seed", "--compatibility-mode", fpath_data3x0], data3x0);
     testTsvSample(["test-a3", "-H", "-s", "--compatibility-mode", fpath_data3x1], data3x1);
@@ -2836,7 +2876,7 @@ unittest
     testTsvSample(["test-a12", "-H", "-s", "-v", "0", "--print-random", fpath_data3x6], data3x6ExpectedPermuteCompatProbs);
     testTsvSample(["test-a13", "-H", "-v", "41", "-w", "3", "--print-random", fpath_data3x6], data3x6ExpectedPermuteWt3V41Probs);
 
-    /* Permutations, without compatibility mode, or with both compatibility and printing. */
+    /* Shuffling, without compatibility mode, or with both compatibility and printing. */
     testTsvSample(["test-aa1", "--header", "--static-seed", fpath_dataEmpty], dataEmpty);
     testTsvSample(["test-aa2", "--header", "--static-seed", fpath_data3x0], data3x0);
     testTsvSample(["test-aa3", "-H", "-s", fpath_data3x1], data3x1);
@@ -2932,7 +2972,7 @@ unittest
     testTsvSample(["test-a40", "-H", "-s", "--replace", "--num", "10", fpath_data3x6], data3x6ExpectedReplaceNum10);
     testTsvSample(["test-a41", "-H", "-s", "-v", "77", "--replace", "--num", "10", fpath_data3x6], data3x6ExpectedReplaceNum10V77);
 
-    /* Permutations, compatibility mode, without headers. */
+    /* Shuffling, compatibility mode, without headers. */
     testTsvSample(["test-b1", "-s", "--compatibility-mode", fpath_data3x1_noheader], data3x1[1..$]);
     testTsvSample(["test-b2", "-s", "--compatibility-mode", fpath_data3x2_noheader], data3x2PermuteCompat[1..$]);
     testTsvSample(["test-b3", "-s", "--compatibility-mode", fpath_data3x3_noheader], data3x3ExpectedPermuteCompat[1..$]);
@@ -2943,7 +2983,7 @@ unittest
     testTsvSample(["test-b8", "-v", "41", "--print-random", fpath_data3x6_noheader], data3x6ExpectedPermuteCompatV41Probs[1..$]);
     testTsvSample(["test-b9", "-v", "41", "-w", "3", "--print-random", fpath_data3x6_noheader], data3x6ExpectedPermuteWt3V41Probs[1..$]);
 
-    /* Permutations, no headers, without compatibility mode, or with printing and compatibility mode. */
+    /* Shuffling, no headers, without compatibility mode, or with printing and compatibility mode. */
     testTsvSample(["test-bb1", "-s", fpath_data3x1_noheader], data3x1[1..$]);
     testTsvSample(["test-bb2", "-s", fpath_data3x2_noheader], data3x2PermuteShuffle[1..$]);
     testTsvSample(["test-bb3", "-s", fpath_data3x3_noheader], data3x3ExpectedPermuteSwap[1..$]);
@@ -2965,6 +3005,7 @@ unittest
     testTsvSample(["test-ac21", "--prefer-algorithm-r", "-s", "--num", "2", fpath_data3x6_noheader], data3x6ExpectedSampleAlgoRNum2[1..$]);
     testTsvSample(["test-ac22", "--prefer-algorithm-r", "-s", "--num", "1", fpath_data3x6_noheader], data3x6ExpectedSampleAlgoRNum1[1..$]);
 
+    /* Reservoir sampling using Algorithm R, no headers, inorder output. */
     testTsvSample(["test-aj10", "--prefer-algorithm-r", "--static-seed", "--num", "1", "-i", fpath_dataEmpty], dataEmpty);
     testTsvSample(["test-aj11", "--prefer-algorithm-r", "--static-seed", "--num", "2", "-i", fpath_dataEmpty], dataEmpty);
     testTsvSample(["test-aj14", "--prefer-algorithm-r", "-s", "--num", "1", "-i", fpath_data3x1_noheader], data3x1[1..$]);
@@ -3124,7 +3165,7 @@ unittest
     testTsvSample(["test-e4", "-H", "-s", "-w", "2", "--print-random", fpath_data2x10d], data2x10dExpectedPermuteWt2Probs);
     testTsvSample(["test-e5", "-H", "-s", "-w", "2", "--print-random", fpath_data2x10e], data2x10eExpectedPermuteWt2Probs);
 
-    /* Tests of subset sample (--n|num) field.
+    /* Tests of subset sample (--n|num) field. Random sampling, Bernoulli sampling, distinct sampling.
      *
      * Note: The way these tests are done ensures that subset length does not affect
      * output order.
@@ -3196,50 +3237,6 @@ unittest
                        fpath_data3x6_noheader], data3x6ExpectedBernoulliProbsP100[1..expectedLength]);
     }
 
-    /* Inorder tests with reservoir sampling via heap (compatibility mode). */
-    testTsvSample(["test-ar10", "--compatibility-mode", "--header", "--static-seed", "--num", "1", "--inorder", fpath_dataEmpty], dataEmpty);
-    testTsvSample(["test-ar11", "--compatibility-mode", "--header", "--static-seed", "--num", "2", "--inorder", fpath_dataEmpty], dataEmpty);
-    testTsvSample(["test-ar12", "--compatibility-mode", "-H", "-s", "--num", "1", "--inorder", fpath_data3x0], data3x0);
-    testTsvSample(["test-ar13", "--compatibility-mode", "-H", "-s", "--num", "2", "--inorder", fpath_data3x0], data3x0);
-    testTsvSample(["test-ar14", "--compatibility-mode", "-H", "-s", "--num", "1", "--inorder", fpath_data3x1], data3x1);
-    testTsvSample(["test-ar15", "--compatibility-mode", "-H", "-s", "--num", "2", "-i", fpath_data3x1], data3x1);
-    testTsvSample(["test-ar16", "--compatibility-mode", "-H", "-s", "--num", "7", "-i", fpath_data3x6], data3x6ExpectedSampleCompatNum6Inorder);
-    testTsvSample(["test-ar17", "--compatibility-mode", "-H", "-s", "--num", "6", "-i", fpath_data3x6], data3x6ExpectedSampleCompatNum6Inorder);
-    testTsvSample(["test-ar18", "--compatibility-mode", "-H", "-s", "--num", "5", "-i", fpath_data3x6], data3x6ExpectedSampleCompatNum5Inorder);
-    testTsvSample(["test-ar19", "--compatibility-mode", "-H", "-s", "--num", "4", "-i", fpath_data3x6],         data3x6ExpectedSampleCompatNum4Inorder);
-    testTsvSample(["test-ar20", "--compatibility-mode", "-H", "-s", "--num", "3", "-i", fpath_data3x6], data3x6ExpectedSampleCompatNum3Inorder);
-    testTsvSample(["test-ar21", "--compatibility-mode", "-H", "-s", "--num", "2", "-i", fpath_data3x6], data3x6ExpectedSampleCompatNum2Inorder);
-    testTsvSample(["test-ar22", "--compatibility-mode", "-H", "-s", "--num", "1", "-i", fpath_data3x6], data3x6ExpectedSampleCompatNum1Inorder);
-
-    testTsvSample(["test-as10", "--compatibility-mode", "--static-seed", "--num", "1", "-i", fpath_dataEmpty], dataEmpty);
-    testTsvSample(["test-as11", "--compatibility-mode", "--static-seed", "--num", "2", "-i", fpath_dataEmpty], dataEmpty);
-    testTsvSample(["test-as14", "--compatibility-mode", "-s", "--num", "1", "-i", fpath_data3x1_noheader], data3x1[1..$]);
-    testTsvSample(["test-as15", "--compatibility-mode", "-s", "--num", "2", "-i", fpath_data3x1_noheader], data3x1[1..$]);
-    testTsvSample(["test-as16", "--compatibility-mode", "-s", "--num", "7", "-i", fpath_data3x6_noheader], data3x6ExpectedSampleCompatNum6Inorder[1..$]);
-    testTsvSample(["test-as17", "--compatibility-mode", "-s", "--num", "6", "-i", fpath_data3x6_noheader], data3x6ExpectedSampleCompatNum6Inorder[1..$]);
-    testTsvSample(["test-as18", "--compatibility-mode", "-s", "--num", "5", "-i", fpath_data3x6_noheader], data3x6ExpectedSampleCompatNum5Inorder[1..$]);
-    testTsvSample(["test-as19", "--compatibility-mode", "-s", "--num", "4", "-i", fpath_data3x6_noheader], data3x6ExpectedSampleCompatNum4Inorder[1..$]);
-    testTsvSample(["test-as20", "--compatibility-mode", "-s", "--num", "3", "-i", fpath_data3x6_noheader], data3x6ExpectedSampleCompatNum3Inorder[1..$]);
-    testTsvSample(["test-as21", "--compatibility-mode", "-s", "--num", "2", "-i", fpath_data3x6_noheader], data3x6ExpectedSampleCompatNum2Inorder[1..$]);
-    testTsvSample(["test-as22", "--compatibility-mode", "-s", "--num", "1", "-i", fpath_data3x6_noheader], data3x6ExpectedSampleCompatNum1Inorder[1..$]);
-
-
-    testTsvSample(["test-at16", "--compatibility-mode", "-H", "-s", "--num", "7", "-i", "--print-random", fpath_data3x6], data3x6ExpectedSampleCompatNum6ProbsInorder);
-    testTsvSample(["test-at17", "--compatibility-mode", "-H", "-s", "--num", "6", "-i", "--print-random", fpath_data3x6], data3x6ExpectedSampleCompatNum6ProbsInorder);
-    testTsvSample(["test-at18", "--compatibility-mode", "-H", "-s", "--num", "5", "-i", "--print-random", fpath_data3x6], data3x6ExpectedSampleCompatNum5ProbsInorder);
-    testTsvSample(["test-at19", "--compatibility-mode", "-H", "-s", "--num", "4", "-i", "--print-random", fpath_data3x6], data3x6ExpectedSampleCompatNum4ProbsInorder);
-    testTsvSample(["test-at20", "--compatibility-mode", "-H", "-s", "--num", "3", "-i", "--print-random", fpath_data3x6], data3x6ExpectedSampleCompatNum3ProbsInorder);
-    testTsvSample(["test-at21", "--compatibility-mode", "-H", "-s", "--num", "2", "-i", "--print-random", fpath_data3x6], data3x6ExpectedSampleCompatNum2ProbsInorder);
-    testTsvSample(["test-at22", "--compatibility-mode", "-H", "-s", "--num", "1", "-i", "--print-random", fpath_data3x6], data3x6ExpectedSampleCompatNum1ProbsInorder);
-
-    testTsvSample(["test-au16", "--compatibility-mode", "-s", "--num", "7", "-i", "--print-random", fpath_data3x6_noheader], data3x6ExpectedSampleCompatNum6ProbsInorder[1..$]);
-    testTsvSample(["test-au17", "--compatibility-mode", "-s", "--num", "6", "-i", "--print-random", fpath_data3x6_noheader], data3x6ExpectedSampleCompatNum6ProbsInorder[1..$]);
-    testTsvSample(["test-au18", "--compatibility-mode", "-s", "--num", "5", "-i", "--print-random", fpath_data3x6_noheader], data3x6ExpectedSampleCompatNum5ProbsInorder[1..$]);
-    testTsvSample(["test-au19", "--compatibility-mode", "-s", "--num", "4", "-i", "--print-random", fpath_data3x6_noheader], data3x6ExpectedSampleCompatNum4ProbsInorder[1..$]);
-    testTsvSample(["test-au20", "--compatibility-mode", "-s", "--num", "3", "-i", "--print-random", fpath_data3x6_noheader], data3x6ExpectedSampleCompatNum3ProbsInorder[1..$]);
-    testTsvSample(["test-au21", "--compatibility-mode", "-s", "--num", "2", "-i", "--print-random", fpath_data3x6_noheader], data3x6ExpectedSampleCompatNum2ProbsInorder[1..$]);
-    testTsvSample(["test-au22", "--compatibility-mode", "-s", "--num", "1", "-i", "--print-random", fpath_data3x6_noheader], data3x6ExpectedSampleCompatNum1ProbsInorder[1..$]);
-
     /* Similar tests with the 1x10 data set. */
     for (size_t n = data1x10.length + 2; n >= 1; n--)
     {
@@ -3277,10 +3274,75 @@ unittest
 
         testTsvSample([format("test-i2_%d", n), "-v", "333", "-p", "0.03", "-n", n.to!string,
                        fpath_data1x200_noheader], data1x200ExpectedBernoulliSkipV333P03[1..expectedLength]);
-}
+    }
 
+    /* Inorder sampling tests using reservoir sampling via heap (compatibility mode). */
+    testTsvSample(["test-ar10", "--compatibility-mode", "--header", "--static-seed", "--num", "1", "--inorder", fpath_dataEmpty], dataEmpty);
+    testTsvSample(["test-ar11", "--compatibility-mode", "--header", "--static-seed", "--num", "2", "--inorder", fpath_dataEmpty], dataEmpty);
+    testTsvSample(["test-ar12", "--compatibility-mode", "-H", "-s", "--num", "1", "--inorder", fpath_data3x0], data3x0);
+    testTsvSample(["test-ar13", "--compatibility-mode", "-H", "-s", "--num", "2", "--inorder", fpath_data3x0], data3x0);
+    testTsvSample(["test-ar14", "--compatibility-mode", "-H", "-s", "--num", "1", "--inorder", fpath_data3x1], data3x1);
+    testTsvSample(["test-ar15", "--compatibility-mode", "-H", "-s", "--num", "2", "-i", fpath_data3x1], data3x1);
+    testTsvSample(["test-ar16", "--compatibility-mode", "-H", "-s", "--num", "7", "-i", fpath_data3x6], data3x6ExpectedSampleCompatNum6Inorder);
+    testTsvSample(["test-ar17", "--compatibility-mode", "-H", "-s", "--num", "6", "-i", fpath_data3x6], data3x6ExpectedSampleCompatNum6Inorder);
+    testTsvSample(["test-ar18", "--compatibility-mode", "-H", "-s", "--num", "5", "-i", fpath_data3x6], data3x6ExpectedSampleCompatNum5Inorder);
+    testTsvSample(["test-ar19", "--compatibility-mode", "-H", "-s", "--num", "4", "-i", fpath_data3x6],         data3x6ExpectedSampleCompatNum4Inorder);
+    testTsvSample(["test-ar20", "--compatibility-mode", "-H", "-s", "--num", "3", "-i", fpath_data3x6], data3x6ExpectedSampleCompatNum3Inorder);
+    testTsvSample(["test-ar21", "--compatibility-mode", "-H", "-s", "--num", "2", "-i", fpath_data3x6], data3x6ExpectedSampleCompatNum2Inorder);
+    testTsvSample(["test-ar22", "--compatibility-mode", "-H", "-s", "--num", "1", "-i", fpath_data3x6], data3x6ExpectedSampleCompatNum1Inorder);
 
-    /* Distinct sampling tests. */
+    testTsvSample(["test-as10", "--compatibility-mode", "--static-seed", "--num", "1", "-i", fpath_dataEmpty], dataEmpty);
+    testTsvSample(["test-as11", "--compatibility-mode", "--static-seed", "--num", "2", "-i", fpath_dataEmpty], dataEmpty);
+    testTsvSample(["test-as14", "--compatibility-mode", "-s", "--num", "1", "-i", fpath_data3x1_noheader], data3x1[1..$]);
+    testTsvSample(["test-as15", "--compatibility-mode", "-s", "--num", "2", "-i", fpath_data3x1_noheader], data3x1[1..$]);
+    testTsvSample(["test-as16", "--compatibility-mode", "-s", "--num", "7", "-i", fpath_data3x6_noheader], data3x6ExpectedSampleCompatNum6Inorder[1..$]);
+    testTsvSample(["test-as17", "--compatibility-mode", "-s", "--num", "6", "-i", fpath_data3x6_noheader], data3x6ExpectedSampleCompatNum6Inorder[1..$]);
+    testTsvSample(["test-as18", "--compatibility-mode", "-s", "--num", "5", "-i", fpath_data3x6_noheader], data3x6ExpectedSampleCompatNum5Inorder[1..$]);
+    testTsvSample(["test-as19", "--compatibility-mode", "-s", "--num", "4", "-i", fpath_data3x6_noheader], data3x6ExpectedSampleCompatNum4Inorder[1..$]);
+    testTsvSample(["test-as20", "--compatibility-mode", "-s", "--num", "3", "-i", fpath_data3x6_noheader], data3x6ExpectedSampleCompatNum3Inorder[1..$]);
+    testTsvSample(["test-as21", "--compatibility-mode", "-s", "--num", "2", "-i", fpath_data3x6_noheader], data3x6ExpectedSampleCompatNum2Inorder[1..$]);
+    testTsvSample(["test-as22", "--compatibility-mode", "-s", "--num", "1", "-i", fpath_data3x6_noheader], data3x6ExpectedSampleCompatNum1Inorder[1..$]);
+
+    /* Inorder sampling tests with random number printing. --compatibility-mode not needed. */
+    testTsvSample(["test-at16", "--compatibility-mode", "-H", "-s", "--num", "7", "-i", "--print-random", fpath_data3x6], data3x6ExpectedSampleCompatNum6ProbsInorder);
+    testTsvSample(["test-at17", "--compatibility-mode", "-H", "-s", "--num", "6", "-i", "--print-random", fpath_data3x6], data3x6ExpectedSampleCompatNum6ProbsInorder);
+    testTsvSample(["test-at18", "--compatibility-mode", "-H", "-s", "--num", "5", "-i", "--print-random", fpath_data3x6], data3x6ExpectedSampleCompatNum5ProbsInorder);
+    testTsvSample(["test-at19", "--compatibility-mode", "-H", "-s", "--num", "4", "-i", "--print-random", fpath_data3x6], data3x6ExpectedSampleCompatNum4ProbsInorder);
+    testTsvSample(["test-at19",                         "-H", "-s", "--num", "4", "-i", "--print-random", fpath_data3x6], data3x6ExpectedSampleCompatNum4ProbsInorder);
+    testTsvSample(["test-at20", "--compatibility-mode", "-H", "-s", "--num", "3", "-i", "--print-random", fpath_data3x6], data3x6ExpectedSampleCompatNum3ProbsInorder);
+    testTsvSample(["test-at20",                         "-H", "-s", "--num", "3", "-i", "--print-random", fpath_data3x6], data3x6ExpectedSampleCompatNum3ProbsInorder);
+    testTsvSample(["test-at21", "--compatibility-mode", "-H", "-s", "--num", "2", "-i", "--print-random", fpath_data3x6], data3x6ExpectedSampleCompatNum2ProbsInorder);
+    testTsvSample(["test-at22", "--compatibility-mode", "-H", "-s", "--num", "1", "-i", "--print-random", fpath_data3x6], data3x6ExpectedSampleCompatNum1ProbsInorder);
+
+    testTsvSample(["test-au16", "--compatibility-mode", "-s", "--num", "7", "-i", "--print-random", fpath_data3x6_noheader], data3x6ExpectedSampleCompatNum6ProbsInorder[1..$]);
+    testTsvSample(["test-au17", "--compatibility-mode", "-s", "--num", "6", "-i", "--print-random", fpath_data3x6_noheader], data3x6ExpectedSampleCompatNum6ProbsInorder[1..$]);
+    testTsvSample(["test-au18", "--compatibility-mode", "-s", "--num", "5", "-i", "--print-random", fpath_data3x6_noheader], data3x6ExpectedSampleCompatNum5ProbsInorder[1..$]);
+    testTsvSample(["test-au19", "--compatibility-mode", "-s", "--num", "4", "-i", "--print-random", fpath_data3x6_noheader], data3x6ExpectedSampleCompatNum4ProbsInorder[1..$]);
+    testTsvSample(["test-au19",                         "-s", "--num", "4", "-i", "--print-random", fpath_data3x6_noheader], data3x6ExpectedSampleCompatNum4ProbsInorder[1..$]);
+    testTsvSample(["test-au20", "--compatibility-mode", "-s", "--num", "3", "-i", "--print-random", fpath_data3x6_noheader], data3x6ExpectedSampleCompatNum3ProbsInorder[1..$]);
+    testTsvSample(["test-au21", "--compatibility-mode", "-s", "--num", "2", "-i", "--print-random", fpath_data3x6_noheader], data3x6ExpectedSampleCompatNum2ProbsInorder[1..$]);
+    testTsvSample(["test-au22", "--compatibility-mode", "-s", "--num", "1", "-i", "--print-random", fpath_data3x6_noheader], data3x6ExpectedSampleCompatNum1ProbsInorder[1..$]);
+
+    /* Inorder weighted sampling tests. */
+    testTsvSample(["test-ax16", "-H", "-s", "-n", "7", "-i", fpath_data3x6], data3x6ExpectedWt3Num6Inorder);
+    testTsvSample(["test-ax17", "-H", "-s", "-n", "6", "-i", fpath_data3x6], data3x6ExpectedWt3Num6Inorder);
+    testTsvSample(["test-ax18", "-H", "-s", "-n", "5", "-i", fpath_data3x6], data3x6ExpectedWt3Num5Inorder);
+    testTsvSample(["test-ax19", "-H", "-s", "-n", "4", "-i", fpath_data3x6], data3x6ExpectedWt3Num4Inorder);
+    testTsvSample(["test-ax20", "-H", "-s", "-n", "3", "-i", fpath_data3x6], data3x6ExpectedWt3Num3Inorder);
+    testTsvSample(["test-ax21", "-H", "-s", "-n", "2", "-i", fpath_data3x6], data3x6ExpectedWt3Num2Inorder);
+    testTsvSample(["test-ax22", "-H", "-s", "-n", "1", "-i", fpath_data3x6], data3x6ExpectedWt3Num1Inorder);
+
+    testTsvSample(["test-ay16", "-s", "-n", "7", "-i", fpath_data3x6_noheader], data3x6ExpectedWt3Num6Inorder[1..$]);
+    testTsvSample(["test-ay17", "-s", "-n", "6", "-i", fpath_data3x6_noheader], data3x6ExpectedWt3Num6Inorder[1..$]);
+    testTsvSample(["test-ay18", "-s", "-n", "5", "-i", fpath_data3x6_noheader], data3x6ExpectedWt3Num5Inorder[1..$]);
+    testTsvSample(["test-ay19", "-s", "-n", "4", "-i", fpath_data3x6_noheader], data3x6ExpectedWt3Num4Inorder[1..$]);
+    testTsvSample(["test-ay20", "-s", "-n", "3", "-i", fpath_data3x6_noheader], data3x6ExpectedWt3Num3Inorder[1..$]);
+    testTsvSample(["test-ay21", "-s", "-n", "2", "-i", fpath_data3x6_noheader], data3x6ExpectedWt3Num2Inorder[1..$]);
+    testTsvSample(["test-ay22", "-s", "-n", "1", "-i", fpath_data3x6_noheader], data3x6ExpectedWt3Num1Inorder[1..$]);
+
+    /*
+     * Distinct sampling tests.
+     */
     testTsvSample(["test-j1", "--header", "--static-seed", "--prob", "0.40", "--key-fields", "2", fpath_data5x25],
                   data5x25ExpectedDistinctK2P40);
 
