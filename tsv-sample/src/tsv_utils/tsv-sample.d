@@ -343,7 +343,7 @@ struct TsvSampleOptions
                 }
                 else if (preserveInputOrder)
                 {
-                    throw new Exception("Sampling with replacement (--r|replace) does not support output in input order (--i|inorder).");
+                    throw new Exception("Sampling with replacement (--r|replace) does not support input order preservation (--i|inorder option).");
                 }
             }
 
@@ -411,7 +411,7 @@ struct TsvSampleOptions
                 !useDistinctSampling
                )
             {
-                throw new Exception("Preserving input order (--i|inorder) requires a sample size (--n|num).");
+                throw new Exception("Preserving input order (--i|inorder) is not consistent with full data set shuffling. Use a sample size (--n|num).");
             }
 
             /* Random value printing implies compatibility-mode, otherwise user's selection is used. */

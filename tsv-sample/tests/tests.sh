@@ -49,12 +49,16 @@ runtest ${prog} "-H -s --gen-random-inorder --weight-field 3 input3x10.tsv input
 runtest ${prog} "-H -s --gen-random-inorder -n 15 --weight-field 3 input3x10.tsv input3x25.tsv" ${basic_tests_1}
 runtest ${prog} "-H -s --gen-random-inorder input3x10.tsv input3x25.tsv" ${basic_tests_1}
 runtest ${prog} "-H -s --gen-random-inorder -n 15 input3x10.tsv input3x25.tsv" ${basic_tests_1}
+runtest ${prog} "-H -s --inorder -n 15 --compatibility-mode input3x10.tsv input3x25.tsv" ${basic_tests_1}
+runtest ${prog} "-H -s --inorder -n 15 --prefer-algorithm-r input3x10.tsv input3x25.tsv" ${basic_tests_1}
+runtest ${prog} "-H -s --inorder -n 15 --weight-field 3 input3x10.tsv input3x25.tsv" ${basic_tests_1}
 
 # Bernoulli sampling
 runtest ${prog} "-H -s --prob 1.0 --print-random input3x10.tsv input3x25.tsv" ${basic_tests_1}
 runtest ${prog} "-H -s -p 0.25 --compatibility-mode input3x10.tsv input3x25.tsv" ${basic_tests_1}
 runtest ${prog} "-H -s -p 0.75 -n 5 --compatibility-mode input3x10.tsv input3x25.tsv" ${basic_tests_1}
 runtest ${prog} "-H -s -p 0.02 input4x50.tsv input4x15.tsv" ${basic_tests_1}
+runtest ${prog} "-H -s -p 0.02 --inorder input4x50.tsv input4x15.tsv" ${basic_tests_1}
 runtest ${prog} "-s -p 0.02 input4x50.tsv input4x15.tsv" ${basic_tests_1}
 
 # Simple random sampling with replacement
@@ -63,6 +67,7 @@ runtest ${prog} "-s --r input2x5_noheader.tsv --num 7 --compatibility-mode" ${ba
 
 # Distinct Sampling
 runtest ${prog} "-H -s --prob .25 -k 3,1 --compatibility-mode input4x50.tsv input4x15.tsv" ${basic_tests_1}
+runtest ${prog} "-H -s --prob .25 -k 3,1 --compatibility-mode --inorder input4x50.tsv input4x15.tsv" ${basic_tests_1}
 runtest ${prog} "-H -s -p .25 -k 1,3 --compatibility-mode input4x50.tsv input4x15.tsv" ${basic_tests_1}
 runtest ${prog} "-H -s -p .25 -k 1,1 --compatibility-mode input4x50.tsv input4x15.tsv" ${basic_tests_1}
 runtest ${prog} "-H -s -p .25 --key-fields 1 --compatibility-mode input4x50.tsv input4x15.tsv" ${basic_tests_1}
@@ -210,6 +215,9 @@ runtest ${prog} "--replace -n 5 --prob 0.5 input3x25.tsv" ${error_tests}
 runtest ${prog} "--replace -n 5 --key-fields 2 input3x25.tsv" ${error_tests}
 runtest ${prog} "--replace -n 5 --print-random input3x25.tsv" ${error_tests}
 runtest ${prog} "--replace -n 5 --gen-random-inorder input3x25.tsv" ${error_tests}
+runtest ${prog} "--inorder --replace -n 5 input3x25.tsv" ${error_tests}
+runtest ${prog} "--inorder input3x25.tsv" ${error_tests}
+runtest ${prog} "--inorder -n 0 input3x25.tsv" ${error_tests}
 
 # Error tests 2 are tests that are compiler version dependent. There are multiple
 # version files in test-config.json.
