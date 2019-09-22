@@ -393,7 +393,7 @@ _**Tip:**_ Bash completion is very helpful when using commands like `tsv-summari
 
 **Sample size**: The `--n|num` option controls the sample size for all sampling methods. In the case of simple and weighted random sampling it also limits the amount of memory required.
 
-**Performance and memory use**: `tsv-sample` is designed for large data sets. Algorithms make one pass over the data, using reservoir sampling and hashing when possible to limit the memory required. Bernoulli sampling and distinct sampling make immediate decisions on each line, with no memory accumulation. They can operate on arbitrary length data streams. Sampling with replacement reads all lines into memory and is limited by available memory. Shuffling also reads all lines into memory and is similarly limited. Simple and weighted random sampling use reservoir sampling algorithms and only need to hold the sample size (`--n|num`) in memory. See [Shuffling large files](TipsAndTricks.md#shuffling-large-files) for ways to use disk when available memory is still not sufficient.
+**Performance and memory use**: `tsv-sample` is designed for large data sets. Algorithms make one pass over the data, using reservoir sampling and hashing when possible to limit the memory required. Bernoulli sampling and distinct sampling make immediate decisions on each line, with no memory accumulation. They can operate on arbitrary length data streams. Sampling with replacement reads all lines into memory and is limited by available memory. Shuffling also reads all lines into memory and is similarly limited. Simple and weighted random sampling use reservoir sampling algorithms and only need to hold the sample size (`--n|num`) in memory. See [Shuffling large files](TipsAndTricks.md#shuffling-large-files) for ways to use disk when available memory is not sufficient.
 
 **Controlling randomization**: Each run produces a different randomization. Using `--s|static-seed` changes this so multiple runs produce the same randomization. This works by using the same random seed each run. The random seed can be specified using `--v|seed-value`. This takes a non-zero, 32-bit positive integer. A zero value is a no-op and ignored.
 
@@ -401,26 +401,26 @@ _**Tip:**_ Bash completion is very helpful when using commands like `tsv-summari
 * Wikipedia: https://en.wikipedia.org/wiki/Reservoir_sampling
 * "Weighted Random Sampling over Data Streams", Pavlos S. Efraimidis (https://arxiv.org/abs/1012.0256)
 
-**Distinct sampling**: Distinct sampling selects a subset based on a key in data. Consider a query log with records consisting of <user, query, clicked-url> triples. Distinct sampling selects all records matching a subset of values from one of the fields. For example, all events for ten percent of the users. This is important for certain types of analysis. Distinct sampling works by converting the specified probability (`--p|prob`) into a set of buckets and mapping every key into one of the buckets. One bucket is used to select records in the sample. Buckets are equal size and therefore may be larger than the inclusion probability, though the differences will normally be small. Since every key is assigned a bucket, this method can also be used to fully divide a set of records into distinct groups. (See *Printing random values* below.) The term "distinct sampling" originates from algorithms estimating the number of distinct elements in extremely large data sets.
+**Distinct sampling**: Distinct sampling selects a subset based on a key in data. Consider a query log with records consisting of <user, query, clicked-url> triples. Distinct sampling selects all records matching a subset of values from one of the fields. For example, all events for ten percent of the users. This is important for certain types of analysis. Distinct sampling works by converting the specified probability (`--p|prob`) into a set of buckets and mapping every key into one of the buckets. One bucket is used to select records in the sample. Buckets are equal size and therefore may be a bit larger than the inclusion probability. Since every key is assigned a bucket, this method can also be used to fully divide a set of records into distinct groups. (See *Printing random values* below.) The term "distinct sampling" originates from algorithms estimating the number of distinct elements in extremely large data sets.
 
-**Printing random values**: Most of these algorithms work by generating a random value for each line. (See also "Compatibility mode" below.) The nature of these values depends on the sampling algorithm. They are used for both line selection and output ordering. The `--print-random` option can be used to print these values. The random value is prepended to the line separated by the `--d|delimiter` char (TAB by default). The `--gen-random-inorder` option takes this one step further, generating random values for all input lines without changing the input order. The types of values currently used by these sampling algorithms:
-* Unweighted sampling: Uniform random value in the interval [0,1]. This includes stream sampling and unweighted line order randomization.
-* Weighted sampling: Value in the interval [0,1]. Distribution depends on the values in the weight field. It is used as a partial ordering.
+**Printing random values**: Most of these algorithms work by generating a random value for each line. (See also "Compatibility mode" below.) The nature of these values depends on the sampling algorithm. They are used for both line selection and output ordering. The `--print-random` option can be used to print these values. The random value is prepended to the line separated by the `--d|delimiter` char (TAB by default). The `--gen-random-inorder` option takes this one step further, generating random values for all input lines without changing the input order. The types of values currently used are specific to the sampling algorithm:
+* Shuffling, simple random sampling, Bernoulli sampling: Uniform random value in the interval [0,1].
+* Weighted random sampling: Value in the interval [0,1]. Distribution depends on the values in the weight field.
 * Distinct sampling: An integer, zero and up, representing a selection group (aka. "bucket"). The inclusion probability determines the number of selection groups.
 * Sampling with replacement: Random value printing is not supported.
 
 The specifics behind these random values are subject to change in future releases.
 
-**Compatibility mode**: As described above, many of the sampling algorithms assign a random value to each line. This is useful when printing random values. It has another occasionally useful property: repeated runs with the same static seed but different selection parameters are more compatible with each other, as each line gets assigned the same random value on every run. This property comes at a cost: in some cases there are faster algorithms that don't preserve this property. By default, `tsv-sample` will use faster algorithms when available. The `--compatibility-mode` option changes this, switching to algorithms that assign a random value per line. Printing random values also engages compatibility mode. This applies primarily to Bernoulli sampling and random sampling:
-* Bernoulli sampling - A run with a larger probabilitiy will be a superset of a smaller probability. In the example below, all lines selected in the first run are selected in the second.
+**Compatibility mode**: As described above, many of the sampling algorithms assign a random value to each line. This is useful when printing random values. It has another occasionally useful property: repeated runs with the same static seed but different selection parameters are more compatible with each other, as each line gets assigned the same random value on every run. This property comes at a cost: in some cases there are faster algorithms that don't assign random values to each line. By default, `tsv-sample` will use the fastest algorithm available. The `--compatibility-mode` option changes this, switching to algorithms that assign a random value per line. Printing random values also engages compatibility mode. Compatibility mode is beneficial primarily when using Bernoulli sampling or random sampling:
+* Bernoulli sampling - A run with a larger probability will be a superset of a smaller probability. In the example below, all lines selected in the first run are also selected in the second.
   ```
   $ tsv-sample --static-seed --compatibility-mode --prob 0.2 data.tsv
   $ tsv-sample --static-seed --compatibility-mode --prob 0.3 data.tsv
   ```
-* Random sampling - A run with a larger sample size will be a superset of a smaller sample size. In the example below, all lines selected in the first run are selected in the second.
+* Random sampling - A run with a larger sample size will be a superset of a smaller sample size. In the example below, all lines selected in the first run are also selected in the second.
   ```
-  $ tsv-sample -s --compatibility-mode -n 1000 data.tsv
-  $ tsv-sample -s --compatibility-mode -n 2000 data.tsv
+  $ tsv-sample --static-seed --compatibility-mode -n 1000 data.tsv
+  $ tsv-sample --static-seed --compatibility-mode -n 1500 data.tsv
   ```
   This works for weighted sampling as well.
 
@@ -434,9 +434,9 @@ The specifics behind these random values are subject to change in future release
 * `--p|prob NUM` - Inclusion probability (0.0 < NUM <= 1.0). For Bernoulli sampling, the probability each line is selected output. For distinct sampling, the probability each unique key is selected for output.
 * `--k|key-fields <field-list>` - Fields to use as key for distinct sampling. Use with `--p|prob`. Specify `--k|key-fields 0` to use the entire line as the key.
 * `--w|weight-field NUM` - Field containing weights. All lines get equal weight if not provided or zero.
-* `--r|replace` - Simple Random Sampling With Replacement. Use `--n|num` to specify the sample size.
+* `--r|replace` - Simple random sampling with replacement. Use `--n|num` to specify the sample size.
 * `--s|static-seed` - Use the same random seed every run.
-* `--v|seed-value NUM` - Sets the initial random seed. Use a non-zero, 32 bit positive integer. Zero is a no-op.
+* `--v|seed-value NUM` - Sets the random seed. Use a non-zero, 32 bit positive integer. Zero is a no-op.
 * `--print-random` - Output the random values that were assigned.
 * `--gen-random-inorder` - Output all lines with assigned random values prepended, no changes to the order of input.
 * `--random-value-header` - Header to use with `--print-random` and `--gen-random-inorder`. Default: `random_value`.
