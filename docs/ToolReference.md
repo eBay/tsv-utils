@@ -384,13 +384,18 @@ _**Tip:**_ Bash completion is very helpful when using commands like `tsv-summari
 
 `tsv-sample` subsamples input lines or randomizes their order. Several techniques are available: shuffling, simple random sampling, weighted random sampling, Bernoulli sampling, and distinct sampling. These are provided via several different modes operation:
 
-* Line order randomization (_default_): All input lines are output in a random order (aka. "shuffling"). All orderings are equally likely. Use `--n|num` to limit the sample size and produce a randomly ordered subsample. This is a form of simple random sampling.
-* Weighted line order randomization (`--w|weight-field`): Input lines are selected using weighted random sampling, with the weight taken from a field. Lines are output in the weighted sample selection order, reordering the lines. Use `--n|num` to produce a subsample.
-* Sampling with replacement (`--r|replace`, `--n|num`): All input is read into memory, then lines are selected one at a time at random and written out. Lines can be output multiple times. Output continues until `-n|--num` samples have been output. Output continues forever if `--n|num` is zero or not specified.
-* Bernoulli sampling (`--p|prob`): Lines are read one-at-a-time in a streaming fashion and a random subset is output based on an inclusion probability. e.g. `--prob 0.2` gives each line a 20% chance of being selected. All lines have an equal likelihood of being selected. The order of the lines is unchanged.
+* Shuffling (_default_): All input lines are read into memory and output in a random order. All orderings are equally likely.
+* Simple random sampling (`--n|num N`): A random sample of `N` lines are selected and written to standard output. Selected lines are written in random order, similar to shuffling. All sample sets and orderings are equally likely. Use `--i|inorder` to write to preserve the original input order.
+* Weighted random sampling (`--n|num N`, `--w|weight-field F`): A weighted sample of N lines are selected using weights from a field on each line. Lines are output in weighted selection order. Use `--i|inorder` to preserve the original input order. Omit `--n|num` to shuffle all lines (weighted shuffling).
+* Sampling with replacement (`--r|replace`, `--n|num N`): All lines are read into memory, then lines are selected one at a time at random and written out. Lines can be selected multiple times. Output continues until `N` samples have been output. Output continues forever if `--n|num` is zero or not specified.
+* Bernoulli sampling (`--p|prob P`): Lines are read one-at-a-time in a streaming fashion and a random subset is output based on an inclusion probability. e.g. `--prob 0.2` gives each line a 20% chance of being selected. All lines have an equal likelihood of being selected. The order of the lines is unchanged.
 * Distinct sampling (`--k|key-fields`, `--p|prob`): Input lines are sampled based on the values in a key field. A subset of the keys are chosen based on the inclusion probability (a 'distinct' set of keys). All lines with one of the selected keys are output. This is a streaming operation; a decision is made on each line as it is read. The order of the lines is not changed.
 
-**Performance**: `tsv-sample` is designed for large data sets. Algorithms make one pass over the data, using reservoir sampling and hashing when possible to limit the memory required. Bernoulli sampling and distinct sampling make immediate decisions on each line, with no memory accumulation. They can operate on arbitrary length data streams. Sampling with replacement reads all lines into memory and is limited by available memory. Line order randomization algorithms hold the entire output set in memory. The memory required can be reduced significantly by limiting the output set (`--n|num`). Notice that both `tsv-sample -n <num>` and  `tsv-sample | head -n <num>` produce the same results, but the former is faster and can operate on arbitrary size input streams. See [Shuffling large files](TipsAndTricks.md#shuffling-large-files) for ways to use disk when memory is still not sufficient.
+**Sample size**: The `--n|num` option controls the sample size for all sampling methods. In the case of simple and weighted random sampling it also limits the amount of memory required.
+
+**Performance and memory use**: `tsv-sample` is designed for large data sets. Algorithms make one pass over the data, using reservoir sampling and hashing when possible to limit the memory required. Bernoulli sampling and distinct sampling make immediate decisions on each line, with no memory accumulation. They can operate on arbitrary length data streams. Sampling with replacement reads all lines into memory and is limited by available memory. Shuffling also reads all lines into memory and is similarly limited. Simple and weighted random sampling use reservoir sampling algorithms and only need to hold the sample size (`--n|num`) in memory. See [Shuffling large files](TipsAndTricks.md#shuffling-large-files) for ways to use disk when memory is still not sufficient.
+
+Notice that both `tsv-sample -n <num>` and  `tsv-sample | head -n <num>` produce the same results, but the former is faster and can operate on arbitrary size input streams.
 
 **Controlling randomization**: Each run produces a different randomization. Using `--s|static-seed` changes this so multiple runs produce the same randomization. This works by using the same random seed each run. The random seed can be specified using `--v|seed-value`. This takes a non-zero, 32-bit positive integer. (A zero value is a no-op and ignored.)
 
@@ -408,7 +413,18 @@ _**Tip:**_ Bash completion is very helpful when using commands like `tsv-summari
 
 The specifics behind these random values are subject to change in future releases.
 
-**Compatibility mode**: As described above, many of the sampling algorithms assign a random value to each line. This is useful when printing random values. It has another occasionally useful property: repeated runs with the same static seed but different selection parameters are more compatible with each other, as each line gets assigned the same random value on every run. For example, if Bernoulli sampling is run with `--prob 0.2 --static-seed`, then run again with `--prob 0.3 --static-seed`, all the lines selected in the first run will be selected in the second. This comes at a cost: in some cases there are faster algorithms that don't preserve this property. By default, `tsv-sample` will use faster algorithms when available. However, the `--compatibility-mode` option switches to algorithms that assign a random value per line. Printing random values also engages compatibility mode.
+**Compatibility mode**: As described above, many of the sampling algorithms assign a random value to each line. This is useful when printing random values. It has another occasionally useful property: repeated runs with the same static seed but different selection parameters are more compatible with each other, as each line gets assigned the same random value on every run. This property comes at a cost: in some cases there are faster algorithms that don't preserve this property. By default, `tsv-sample` will use faster algorithms when available. The `--compatibility-mode` option changes this, switching to algorithms that assign a random value per line. Printing random values also engages compatibility mode. This applies primarily to Bernoulli sampling and random sampling:
+* Bernoulli sampling - A run with a larger probabilitiy will be a superset of a smaller probability. In the example below, all lines selected in the first run are selected in the second.
+  ```
+  $ tsv-sample --static-seed --compatibility-mode --prob 0.2 data.tsv
+  $ tsv-sample --static-seed --compatibility-mode --prob 0.3 data.tsv
+  ```
+* Random sampling - A run with a larger sample size will be a superset of a smaller sample size. In the example below, all lines selected in the first run are selected in the second.
+  ```
+  $ tsv-sample -s --compatibility-mode -n 1000 data.tsv
+  $ tsv-sample -s --compatibility-mode -n 2000 data.tsv
+  ```
+  This works for weighted sampling as well.
 
 **Options:**
 

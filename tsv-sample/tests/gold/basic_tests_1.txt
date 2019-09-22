@@ -447,7 +447,7 @@ line	title	weight
 0.157876295	Jacques le fataliste et son maître
 0.788170018	Les stratagèmes
 
-====[tsv-sample -H -s --prob .25 -k 3,1 --compatibility-mode input4x50.tsv input4x15.tsv]====
+====[tsv-sample -H -s --prob .25 -k 3,1 input4x50.tsv input4x15.tsv]====
 c-1	c-2	c-3	c-4
 púrpura	2088	Macuco	1
 schneeweiß	2117	Porrón Islándico	4
@@ -467,7 +467,7 @@ café	2019	Marreca-cabocla	1
 blutrot	2093	Araqua-pintado	2
 jaune	2104	Tüpfelsumpfhuhn	1
 
-====[tsv-sample -H -s --prob .25 -k 3,1 --compatibility-mode --inorder input4x50.tsv input4x15.tsv]====
+====[tsv-sample -H -s --prob .25 -k 3,1 --inorder input4x50.tsv input4x15.tsv]====
 c-1	c-2	c-3	c-4
 púrpura	2088	Macuco	1
 schneeweiß	2117	Porrón Islándico	4
@@ -487,7 +487,7 @@ café	2019	Marreca-cabocla	1
 blutrot	2093	Araqua-pintado	2
 jaune	2104	Tüpfelsumpfhuhn	1
 
-====[tsv-sample -H -s -p .25 -k 1,3 --compatibility-mode input4x50.tsv input4x15.tsv]====
+====[tsv-sample -H -s -p .25 -k 1,3 input4x50.tsv input4x15.tsv]====
 c-1	c-2	c-3	c-4
 púrpura	2088	Macuco	1
 blutrot	2142	Tüpfelsumpfhuhn	1
@@ -505,7 +505,7 @@ Indigo	2138	Голубь	4
 jaune	2090	Weißwangengans	4
 marrón	2121	Marreca-cabocla	2
 
-====[tsv-sample -H -s -p .25 -k 1,1 --compatibility-mode input4x50.tsv input4x15.tsv]====
+====[tsv-sample -H -s -p .25 -k 1,1 input4x50.tsv input4x15.tsv]====
 c-1	c-2	c-3	c-4
 Indigo	2056	Голубь	1
 Indigo	2141	Голубь	1
@@ -518,7 +518,7 @@ marrón	2034	Weißwangengans	1
 marrón	2121	Marreca-cabocla	2
 dorado	2147	Tüpfelsumpfhuhn	1
 
-====[tsv-sample -H -s -p .25 --key-fields 1 --compatibility-mode input4x50.tsv input4x15.tsv]====
+====[tsv-sample -H -s -p .25 --key-fields 1 input4x50.tsv input4x15.tsv]====
 c-1	c-2	c-3	c-4
 púrpura	2088	Macuco	1
 blutrot	2142	Tüpfelsumpfhuhn	1
@@ -543,7 +543,7 @@ café	2019	Marreca-cabocla	1
 blutrot	2093	Araqua-pintado	2
 blutrot	2137	Marreca-cabocla	1
 
-====[tsv-sample -H -s -p .25 -k 1 -n 5 --compatibility-mode input4x50.tsv input4x15.tsv]====
+====[tsv-sample -H -s -p .25 -k 1 -n 5 input4x50.tsv input4x15.tsv]====
 c-1	c-2	c-3	c-4
 púrpura	2088	Macuco	1
 blutrot	2142	Tüpfelsumpfhuhn	1
@@ -551,7 +551,7 @@ blutrot	2118	Tüpfelsumpfhuhn	4
 Cerise	2076	Malvasía Cabeciblanca	4
 café	2088	Purpurreiher	2
 
-====[tsv-sample -s -p .25 -k 1,3 --compatibility-mode input4x50.tsv input4x15.tsv]====
+====[tsv-sample -s -p .25 -k 1,3 input4x50.tsv input4x15.tsv]====
 púrpura	2088	Macuco	1
 blutrot	2142	Tüpfelsumpfhuhn	1
 Indigo	2056	Голубь	1
@@ -568,7 +568,7 @@ Indigo	2138	Голубь	4
 jaune	2090	Weißwangengans	4
 marrón	2121	Marreca-cabocla	2
 
-====[tsv-sample -s -p .25 -k 3,1 --compatibility-mode input4x50.tsv input4x15.tsv]====
+====[tsv-sample -s -p .25 -k 3,1 input4x50.tsv input4x15.tsv]====
 púrpura	2088	Macuco	1
 schneeweiß	2117	Porrón Islándico	4
 café	2088	Purpurreiher	2
@@ -587,7 +587,7 @@ café	2019	Marreca-cabocla	1
 blutrot	2093	Araqua-pintado	2
 jaune	2104	Tüpfelsumpfhuhn	1
 
-====[tsv-sample -s -p 1 -k 3,1 --compatibility-mode input4x50.tsv input4x15.tsv]====
+====[tsv-sample -s -p 1 -k 3,1 input4x50.tsv input4x15.tsv]====
 c-1	c-2	c-3	c-4
 púrpura	2088	Macuco	1
 blutrot	2142	Tüpfelsumpfhuhn	1

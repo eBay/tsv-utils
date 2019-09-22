@@ -157,7 +157,7 @@ of these values depends on the sampling algorithm. They are used for both
 line selection and output ordering. The '--p|print-random' option can be
 used to print these values. The random value is prepended to the line
 separated by the --d|delimiter char (TAB by default). The
-'--q|gen-random-inorder' option takes this one step further, generating
+'--gen-random-inorder' option takes this one step further, generating
 random values for all input lines without changing the input order. The
 types of values currently used by these sampling algorithms:
 * Unweighted sampling: Uniform random value in the interval [0,1]. This
@@ -385,7 +385,7 @@ struct TsvSampleOptions
 
                 if (genRandomInorder && !useDistinctSampling)
                 {
-                    throw new Exception("--q|gen-random-inorder and --p|prob can only be used together if --k|key-fields is also used.");
+                    throw new Exception("--gen-random-inorder and --p|prob can only be used together if --k|key-fields is also used.");
                 }
             }
             else if (genRandomInorder && !hasWeightField)
@@ -414,7 +414,19 @@ struct TsvSampleOptions
                 throw new Exception("Preserving input order (--i|inorder) is not consistent with full data set shuffling. Use a sample size (--n|num).");
             }
 
-            /* Random value printing implies compatibility-mode, otherwise user's selection is used. */
+            /* Compatibility mode checks:
+             * - Random value printing implies compatibility-mode, otherwise user's
+             *   selection is used.
+             * - Distinct sampling doesn't support compatibility-mode. The routines
+             *   don't care, but users might expect larger probabilities to be a
+             *   superset of smaller probabilities. This would be confusing, so
+             *   flag it as an error.
+             */
+            if (compatibilityMode && useDistinctSampling)
+            {
+                throw new Exception("Distinct sampling (--k|key-fields --p|prob) does not support --compatibility-mode.");
+            }
+
             if (printRandom || genRandomInorder) compatibilityMode = true;
 
             /* Seed. */

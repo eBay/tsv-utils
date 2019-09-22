@@ -60,8 +60,11 @@ Error [tsv-sample]: Not enough fields in line. File: input4x50.tsv, Line: 1
 Error [tsv-sample]: Not enough fields in line. File: input4x50.tsv, Line: 2
 c-1	c-2	c-3	c-4
 
+====[tsv-sample -p 0.05 -k 1 --compatibility-mode input3x25.tsv]====
+[tsv-sample] Error processing command line arguments: Distinct sampling (--k|key-fields --p|prob) does not support --compatibility-mode.
+
 ====[tsv-sample -H -p 0.5 --gen-random-inorder input4x50.tsv input4x15.tsv]====
-[tsv-sample] Error processing command line arguments: --q|gen-random-inorder and --p|prob can only be used together if --k|key-fields is also used.
+[tsv-sample] Error processing command line arguments: --gen-random-inorder and --p|prob can only be used together if --k|key-fields is also used.
 
 ====[tsv-sample -H --gen-random-inorder -d , --random-value-header abc,def input3x25.tsv]====
 [tsv-sample] Error processing command line arguments: --randomValueHeader must be at least one character and not contain field delimiters or newlines.
