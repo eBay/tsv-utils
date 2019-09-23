@@ -70,19 +70,16 @@ See the [tsv-filter reference](docs/ToolReference.md#tsv-filter-reference) for d
 
 ### tsv-sample
 
-`tsv-sample` randomizes line order (shuffling) or selects random subsets of lines (sampling) from input data. Several techniques are available, including shuffling, simple random sampling, weighted random sampling, Bernoulli sampling, and distinct sampling. Data can be read from files or standard input. These sampling methods are made available through several modes of operation:
+`tsv-sample` randomizes line order (shuffling) or selects random subsets of lines (sampling) from input data. Several methods are available, including shuffling, simple random sampling, weighted random sampling, Bernoulli sampling, and distinct sampling. Data can be read from files or standard input. These sampling methods are made available through several modes of operation:
 
-* Line order randomization (Shuffling) - This is the default mode of operation. All lines are read into memory and written out in a random order. All orderings are equally likely. This can be used for simple random sampling by specifying the `-n|--num` option, producing a random subset of the specified size. (Subsets are in random order.)
+* Shuffling - The default mode of operation. All lines are read in and written out in random order. All orderings are equally likely.
+* Simple random sampling (`--n|num N`) - A random sample of `N` lines are selected and written out in random order. The `--i|inorder` option preserves the original input order.
+* Weighted random sampling (`--n|num N`, `--w|weight-field F`) - A weighted random sample of N lines are selected using weights from a field on each line. Output is in weighted selected order unless the `--i|inorder` option is used. Omitting `--n|num` outputs all lines in weighted selection order (weighted shuffling).
+* Sampling with replacement (`--r|replace`, `--n|num N`) - All lines are read in, then lines are randomly selected one at a time and written out. Lines can be selected multiple times. Output continues until `N` samples have been output.
+* Bernoulli sampling (`--p|prob P`) - A streaming form of sampling. Lines are read one at a time and selected for output using probability `P`. e.g. `-p 0.1` specifies that 10% of lines should be included in the sample.
+* Distinct sampling (`--k|key-fields F`, `--p|prob P`) - Another streaming form of sampling. However, instead of each line being subject to an independent selection choice, lines are selected based on a key contained in each line. A portion of keys are randomly selected for output, with probability P. Every line containing a selected key is included in the output. Consider a query log with records consisting of <user, query, clicked-url> triples. It may be desirable to sample records for one percent of the users, but include all records for the selected users.
 
-* Weighted line order randomization - This extends the previous method to weighted shuffling or weighted random sampling by the use of a weight taken from each line. The weight field is specified with the `-w|--weight-field` option.
-
-* Sampling with replacement - All lines are read into memory, then lines are selected one at a time at random and output. Lines can be output multiple times. Output continues until `-n|--num` samples have been output.
-
-* Bernoulli sampling - Sampling can be done in streaming mode by using the `-p|--prob` option. This specifies the desired portion of lines that should be included in the sample. e.g. `-p 0.1` specifies that 10% of lines should be included in the sample. In this mode lines are read one at a time, a random selection choice made, and those lines selected are immediately output. All lines have an equal likelihood of being output.
-
-* Distinct sampling - This is another streaming mode form of sampling. However, instead of each line being subject to an independent selection choice, lines are selected based on a key contained in each line. A portion of keys are randomly selected for output, and every line containing a selected key is included in the output. Consider a query log with records consisting of <user, query, clicked-url> triples. It may be desirable to sample records for one percent of the users, but include all records for the selected users. Distinct sampling is specified using the `-k|--key-fields` and `-p|--prob` options.
-
-`tsv-sample` is designed for large data sets. Streaming algorithms make immediate decisions on each line. They do not accumulate memory and can run on infinite length input streams. Line order randomization algorithms need to hold the full output set into memory and are therefore limited by available memory. Memory requirements can be reduced by specifying a sample size (`-n|--num`). This enables reservoir sampling, which is often dramatically faster than full permutations. By default, a new random order is generated every run, but options are available for using the same randomization order over multiple runs. The random values assigned to each line can be printed, either to observe the behavior or to run custom selection algorithms on the results.
+`tsv-sample` is designed for large data sets. Streaming algorithms make immediate decisions on each line. They do not accumulate memory and can run on infinite length input streams. Both shuffling and sampling with replacement read in the entire dataset and are limited by available memory. Simple and weighted random sampling use reservoir sampling and only need to hold the specified sample size (`--n|num`) in memory. By default, a new random order is generated every run, but options are available for using the same randomization order over multiple runs. The random values assigned to each line can be printed, either to observe the behavior or to run custom algorithms on the results.
 
 See the [tsv-sample reference](docs/ToolReference.md#tsv-sample-reference) for further details.
 
@@ -171,9 +168,9 @@ An example uniq'ing a file on fields 2 and 3:
 $ tsv-uniq -f 2,3 data.tsv
 ```
 
-`tsv-uniq` operates on the entire line when no fields are specified. This is a useful alternative to the traditional `sort -u` or `sort | uniq` paradigms for identifying unique lines in unsorted files, as it is quite a bit faster.
+`tsv-uniq` operates on the entire line when no fields are specified. This is a useful alternative to the traditional `sort -u` or `sort | uniq` paradigms for identifying unique lines in unsorted files, as it is dramatically faster. As a bonus, order of the input lines is retained.
 
-As with `tsv-join`, this uses an in-memory lookup table to record unique entries. This ultimately limits the data sizes that can be processed. The author has found that datasets with up to about 10 million unique entries work fine, but performance degrades after that.
+As with `tsv-join`, an in-memory lookup table is used to record unique entries. This ultimately limits the data sizes that can be processed. The author has found that datasets with up to about 10 million unique entries work fine, but performance starts to degrade after that. Even then it remains quite a bit faster than the alternatives.
 
 See the [tsv-uniq reference](docs/ToolReference.md#tsv-uniq-reference) for details.
 
