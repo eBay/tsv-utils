@@ -195,7 +195,7 @@ EOS";
  * derived state based on the options provided. These activities are handled by the
  * processArgs() member.
  *
- * Once argument processing is complete, the TsvSampleOptions is used as a container
+ * Once argument processing is complete, TsvSampleOptions is used as a container
  * holding the specific processing options used by the different sampling routines.
  */
 struct TsvSampleOptions
@@ -497,9 +497,9 @@ if (isOutputRange!(OutputRange, char))
  * instantiation to use based on the command line arguments.
  *
  * One of the basic choices is whether to use the vanilla algorithm or skip sampling.
- * Skip sampling is a tad faster when the inclusion probability is small but doesn't
- * support compatibility mode. See the bernoulliSkipSampling documentation for a
- * discussion of the skipSamplingProbabilityThreshold used here.
+ * Skip sampling is a little bit faster when the inclusion probability is small but
+ * doesn't support compatibility mode. See the bernoulliSkipSampling documentation
+ * for a discussion of the skipSamplingProbabilityThreshold used here.
  */
 void bernoulliSamplingCommand(OutputRange)(TsvSampleOptions cmdopt, auto ref OutputRange outputStream)
 if (isOutputRange!(OutputRange, char))
@@ -708,7 +708,8 @@ void bernoulliSkipSampling(OutputRange)(TsvSampleOptions cmdopt, OutputRange out
     }
 }
 
-/** Sample a subset of lines by choosing a random set of values from key fields.
+/** Sample lines by choosing a random set of distinct keys formed from one or more
+ * fields on each line.
  *
  * Distinct sampling is a streaming form of sampling, similar to Bernoulli sampling.
  * However, instead of each line being subject to an independent trial, lines are
@@ -717,8 +718,8 @@ void bernoulliSkipSampling(OutputRange)(TsvSampleOptions cmdopt, OutputRange out
  *
  * An example use-case is a query log having <user, query, clicked-url> triples. It is
  * often useful to sample records for portion of the users, but including all records
- * for the users selected. Distinct sampling supports this by selecting the subset of
- * users included in the output.
+ * for the users selected. Distinct sampling supports this by selecting a subset of
+ * users to include in the output.
  *
  * Distinct sampling is done by hashing the key and mapping the hash value into
  * buckets sized to hold the inclusion probability. Records having a key mapping to
@@ -945,7 +946,7 @@ if (isOutputRange!(OutputRange, char))
  *  - For weighted sampling, it preserves the property that smaller valid subsets can be
  *    created by taking the first N lines.
  *  - For unweighted sampling, it ensures that all output permutations are possible, and
- *    are not influences by input order or the heap data structure used.
+ *    are not influenced by input order or the heap data structure used.
  *  - Order consistency is maintained when making repeated use of the same random seed,
  *    but with different sample sizes.
  *
@@ -1091,7 +1092,7 @@ if (isOutputRange!(OutputRange, char))
     }
  }
 
-/** Generates weighted random values for all input lines, preserving input order.
+/** Generate weighted random values for all input lines, preserving input order.
  *
  * This complements weighted reservoir sampling, but instead of using a reservoir it
  * simply iterates over the input lines generating the values. The weighted random
@@ -1167,7 +1168,8 @@ if (isOutputRange!(OutputRange, char))
  *
  * The classic algorithm stops after identifying the selected set of items. This
  * implementation goes one step further and randomizes the order of the selected
- * lines. This supports the tsv-sample use-case, which is line order randomization.
+ * lines. This is consistent with shuffling (line order randomization), a primary
+ * tsv-sample use-case.
  *
  * This algorithm is faster than reservoirSamplingViaHeap when the sample size
  * (reservoir size) is large. Heap insertion is O(log k), where k is the sample size.
@@ -1273,15 +1275,14 @@ if (isOutputRange!(OutputRange, char))
     }
 }
 
-/** This routine is invoked when all input lines are being shuffled (order randomized).
- * The appropriate function and template instantiation is invoked based on the command
- * line arguments.
+/** Shuffling command handler. Invokes the appropriate shuffle (line order
+ * randomization) routine based on the command line arguments.
  *
- * The algorithms used for shuffling are different than used for the random sampling.
- * Random sampling selects a subset, only the current subset selection needs to be
- * kept in memory. This is supported by reservoir sampling. By contrast, shuffling
- * needs to hold all input in memory, so it works better to read it all at once and
- * then shuffle.
+ * Shuffling has similarities to random sampling, but the algorithms used are
+ * different. Random sampling selects a subset, only the current subset selection
+ * needs to be kept in memory. This is supported by reservoir sampling. By contrast,
+ * shuffling needs to hold all input in memory, so it works better to read all lines
+ * into memory at once and then shuffle.
  *
  * There are two different types of algorithms used. Array shuffling is used for
  * unweighted randomization. Sorting is used for weighted randomization or when
@@ -1306,8 +1307,7 @@ if (isOutputRange!(OutputRange, char))
     }
 }
 
-/** Shuffle (randomize) all the lines in files or standard input using assigned random
- * weights and sorting.
+/** Shuffle (randomize) all input lines by assigned random weights and sorting.
  *
  * All lines in files and/or standard input are read in and written out in random
  * order. This algorithm assigns a random value to each line and sorts. Both weighted
@@ -1357,8 +1357,7 @@ if (isOutputRange!(OutputRange, char))
     }
 }
 
-/** Shuffle (randomize) all lines in files or standard input using a shuffling
- * algorithm.
+/** Shuffle (randomize) all input lines using a shuffling algorithm.
  *
  * All lines in files and/or standard input are read in and written out in random
  * order. This routine uses array shuffling, which is faster than sorting. It is a
@@ -1447,7 +1446,7 @@ if (isOutputRange!(OutputRange, char))
  * by passing a filename to the constructor. The constructor reads the file data.
  * If the filename is a single hyphen ('-') then data is read from standard input.
  *
- * The struct make the data available through two members: 'filename', which is the
+ * The struct makes the data available through two members: 'filename', which is the
  * filename, and 'data', which is a character array of the data.
  */
 struct FileData
