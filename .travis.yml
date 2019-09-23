@@ -35,14 +35,14 @@ matrix:
       dist: xenial
       group: travis_latest
       language: d
-      d: ldc-1.16.0
+      d: ldc-1.17.0
       env: LINUX_SPECIAL=1 DEPLOY=1
       # if: type IN (pull_request, cron)
     - os: osx
       osx_image: xcode11
       group: travis_latest
       language: d
-      d: ldc-1.16.0
+      d: ldc-1.17.0
       env: LTOPGO_V2=default DEPLOY=1
       # if: type IN (pull_request, cron)
     - os: osx
