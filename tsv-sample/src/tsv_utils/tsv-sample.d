@@ -1329,7 +1329,7 @@ if (isOutputRange!(OutputRange, char))
  *     case where the entire file is being read.
  *   * Input data must be read entirely in memory. Disk oriented techniques are needed
  *     when data sizes get too large for available memory. One option is to generate
- *     random values for each line (Eg. --gen-random-inorder) and sort with a disk-
+ *     random values for each line, e.g. --gen-random-inorder, and sort with a disk-
  *     backed sort program like GNU sort.
  * )
  */
