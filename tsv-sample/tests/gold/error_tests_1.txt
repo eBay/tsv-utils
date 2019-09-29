@@ -88,7 +88,7 @@ c-1	c-2	c-3	c-4
 [tsv-sample] Error processing command line arguments: Sampling with replacement (--r|replace) does not support input order preservation (--i|inorder option).
 
 ====[tsv-sample --inorder input3x25.tsv]====
-[tsv-sample] Error processing command line arguments: Preserving input order (--i|inorder) is not consistent with full data set shuffling. Use a sample size (--n|num).
+[tsv-sample] Error processing command line arguments: Preserving input order (--i|inorder) is not compatible with full data set shuffling. Switch to random sampling with a sample size (--n|num) to use --i|inorder.
 
 ====[tsv-sample --inorder -n 0 input3x25.tsv]====
-[tsv-sample] Error processing command line arguments: Preserving input order (--i|inorder) is not consistent with full data set shuffling. Use a sample size (--n|num).
+[tsv-sample] Error processing command line arguments: Preserving input order (--i|inorder) is not compatible with full data set shuffling. Switch to random sampling with a sample size (--n|num) to use --i|inorder.
