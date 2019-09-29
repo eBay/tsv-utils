@@ -399,11 +399,10 @@ struct TsvSampleOptions
                 throw new Exception("--randomValueHeader must be at least one character and not contain field delimiters or newlines.");
             }
 
-            /* The (--i|inorder) option to preserve input order modifies the behavior
-             * of simple and weighted random sampling. These are specified via --n|num.
-             * Bernoulli and distinct sampling always preserve input order. But it does
-             * not apply to sampling with replacement or shuffling of the full input.
-             * Sampling with replacement is detected earlier.
+            /* Check for incompatible use of (--i|inorder) and shuffling of the full
+             * data set. Sampling with replacement is also incompatible, this is
+             * detected earlier. Shuffling is the default operation, so it identified
+             * by eliminating the other modes of operation.
              */
             if (preserveInputOrder &&
                 sampleSize == 0 &&
@@ -411,7 +410,7 @@ struct TsvSampleOptions
                 !useDistinctSampling
                )
             {
-                throw new Exception("Preserving input order (--i|inorder) is not consistent with full data set shuffling. Use a sample size (--n|num).");
+                throw new Exception("Preserving input order (--i|inorder) is not compatible with full data set shuffling. Switch to random sampling with a sample size (--n|num) to use --i|inorder.");
             }
 
             /* Compatibility mode checks:
@@ -864,19 +863,19 @@ if (isOutputRange!(OutputRange, char))
 /** Random sampling command handler. Invokes the appropriate sampling routine based on
  * the command line arguments.
  *
- * Random sampling is when a fixed size random sample is selected from the input
- * stream. Both simple random sampling and weighted random sampling are supported.
- * Selected lines are output either in random order or original input order. For
- * weighted sampling the random order is the weighted selection order.
+ * Random sampling selects a fixed size random sample from the input stream. Both
+ * simple random sampling (equal likelihood) and weighted random sampling are
+ * supported. Selected lines are output either in random order or original input order.
+ * For weighted sampling the random order is the weighted selection order.
  *
  * Two algorithms are used, reservoir sampling via a heap and reservoir sampling via
  * Algorithm R. This routine selects the appropriate reservoir sampling function and
  * template instantiation to based on the command line arguments.
  *
- * Wieghted sampling always uses the heap approach. Compatibility mode does as well,
- * as it is the method that uses per-line random assignments. The implication is that
- * a larger sample size includes all the results from a smaller sample, assuming the
- * same random seed is used.
+ * Weighted sampling always uses the heap approach. Compatibility mode does as well,
+ * as it is the method that uses per-line random value assignments. The implication
+ * of compatibility mode is that a larger sample size includes all the results from
+ * a smaller sample, assuming the same random seed is used.
  *
  * For unweighted sampling there is a performance tradeoff between implementations.
  * Heap-based sampling is faster for small sample sizes. Algorithm R is faster for
@@ -935,14 +934,15 @@ if (isOutputRange!(OutputRange, char))
  * The implementation uses a heap (priority queue) large enough to hold the desired
  * number of lines. Input is read line-by-line, assigned a random value, and added to
  * the heap. The role of the heap is to identify the lines with the highest assigned
- * random values. Once the heap is full, adding a new line means dropping the line
- * with the lowest score. A "min" heap used for this reason.
+ * random values. Once the heap is full, adding a new line means dropping the line with
+ * the lowest score. A "min" heap used for this reason.
  *
- * When done reading all lines, the "min" heap is in the opposite order needed for
- * output. The desired order is obtained by removing each element one at at time from
- * the heap. The underlying data store will have the elements in correct order.
+ * When done reading all lines, the "min" heap is in reverse of weighted selection
+ * order. Weighted selection order is obtained by removing each element one at at time
+ * from the heap. The underlying data store will have the elements in weighted selction
+ * order (largest weights first).
  *
- * Generating output in weighted order matters for several reasons:
+ * Generating output in weighted order is useful for several reasons:
  *  - For weighted sampling, it preserves the property that smaller valid subsets can be
  *    created by taking the first N lines.
  *  - For unweighted sampling, it ensures that all output permutations are possible, and
@@ -950,9 +950,13 @@ if (isOutputRange!(OutputRange, char))
  *  - Order consistency is maintained when making repeated use of the same random seed,
  *    but with different sample sizes.
  *
- * There are use cases where only the selection set matters, for these some performance
+ * The other choice is preserving input order. This is supporting by recording line
+ * numbers and sorting the selected sample.
+ *
+ * There are use cases where only the selection set matters. For these some performance
  * could be gained by skipping the reordering and simply printing the backing store
- * array in-order, but making this distinction seems an unnecessary complication.
+ * array in-order. Performance tests indicate only a minor benefit, so this is not
+ * supported.
  *
  * Notes:
  * $(LIST
@@ -1059,22 +1063,26 @@ if (isOutputRange!(OutputRange, char))
         }
     }
 
-    /* All entries are in the reservoir. Time to print. The heap is in reverse order
-     * of assigned weights. Reversing order is done by removing all elements from the
-     * heap, this leaves the backing store in the correct order for output.
-     *
-     * The asserts here avoid issues with the current binaryheap implementation. They
+    /* Done with input, all entries are in the reservoir. */
+
+    /* The asserts here avoid issues with the current binaryheap implementation. They
      * detect use of backing stores having a length not synchronized to the reservoir.
      */
     immutable ulong numLines = reservoir.length;
     assert(numLines == dataStore.length);
 
+    /* Update the backing store so it is in the desired output order.
+     */
     static if (preserveInputOrder)
     {
         dataStore[].sort!((a, b) => a.lineNumber < b.lineNumber);
     }
     else
     {
+        /* Output in weighted selection order. The heap is in reverse order of assigned
+         * weights. Reversing order is done by removing all elements from the heap. This
+         * leaves the backing store in the correct order.
+         */
         while (!reservoir.empty) reservoir.removeFront;
     }
 
@@ -1257,7 +1265,7 @@ if (isOutputRange!(OutputRange, char))
         }
     }
 
-    /* The random sample is now in the reservoir. Shuffle it and print. */
+    /* Done with input. The sample is in the reservoir. Update the order and print. */
 
     static if (preserveInputOrder)
     {
@@ -1284,9 +1292,9 @@ if (isOutputRange!(OutputRange, char))
  * shuffling needs to hold all input in memory, so it works better to read all lines
  * into memory at once and then shuffle.
  *
- * There are two different types of algorithms used. Array shuffling is used for
- * unweighted randomization. Sorting is used for weighted randomization or when
- * compatibility mode is needed.
+ * Two different algorithms are used. Array shuffling is used for unweighted shuffling.
+ * Sorting plus random weight assignments is used for weighted shuffling and when
+ * compatibility mode is being used.
  *
  * The algorithms used here are all limited by available memory.
  */
@@ -1307,20 +1315,23 @@ if (isOutputRange!(OutputRange, char))
     }
 }
 
-/** Shuffle (randomize) all input lines by assigned random weights and sorting.
+/** Shuffle all input lines by assigning random weights and sorting.
  *
- * All lines in files and/or standard input are read in and written out in random
- * order. This algorithm assigns a random value to each line and sorts. Both weighted
- * and unweighted shuffling are supported.
+ * randomizeLinesViaSort reads in all input lines and writes them out in random order.
+ * The algorithm works by assigning a random value to each line and sorting. Both
+ * weighted and unweighted shuffling are supported.
  *
- * This is significantly faster than heap-based reservoir sampling in the case where
- * the entire file is being read. See randomizeLinesViaShuffle for the unweighted
- * case. It is a little faster, at the cost not supporting random value printing or
- * compatibility-mode.
- *
- * Input data size is limited by available memory. Disk oriented techniques are needed
- * when data sizes are larger. For example, generating random values line-by-line (ala
- * --gen-random-inorder) and sorting with a disk-backed sort program like GNU sort.
+ * Notes:
+ * $(LIST
+ *   * For unweighted shuffling randomizeLinesViaShuffle is faster and should be used
+ *     unless compatibility mode is needed.
+ *   * This routine is significantly faster than heap-based reservoir sampling in the
+ *     case where the entire file is being read.
+ *   * Input data must be read entirely in memory. Disk oriented techniques are needed
+ *     when data sizes get too large for available memory. One option is to generate
+ *     random values for each line (Eg. --gen-random-inorder) and sort with a disk-
+ *     backed sort program like GNU sort.
+ * )
  */
 void randomizeLinesViaSort(Flag!"isWeighted" isWeighted, OutputRange)
     (TsvSampleOptions cmdopt, auto ref OutputRange outputStream)
