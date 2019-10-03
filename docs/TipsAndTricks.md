@@ -58,6 +58,8 @@ Especially on a Mac, the default `sort` program is rather old. On OS X Sierra, t
 Specifying TAB as the delimiter every invocation is a nuisance. The way to fix this is to create either a `bash` alias or a shell script. A shell script is a better fit for `sort`, as shell commands can be invoked by other programs. This is convenient when using tools like [keep-header](ToolReference.md#keep-header-reference).
 
 Put the lines below in a file, eg. `tsv-sort`. Run `$ chmod a+x tsv-sort`, and add the file to the PATH:
+
+*file: tsv-sort*
 ```
 #!/bin/sh
 sort -t $'\t' $*
@@ -82,7 +84,9 @@ $ grep green file.txt | sort --buffer-size=2G
 $ keep-header file.txt -- sort --buffer-size=2G
 ```
 
-These can be added to the shell script described eariler. The revised shell script (file: `tsv-sort`):
+These can be added to the shell script described eariler. The revised shell script:
+
+*file: tsv-sort*
 ```
 #!/bin/sh
 sort  -t $'\t' --buffer-size=2G $*
@@ -97,6 +101,22 @@ $ keep-header file.txt -- tsv-sort
 Remember to use the correct `sort` program name if an updated version has been installed under a different name. This may be `gsort` on some systems.
 
 *More details*: The `--buffer-size` option may affect sort programs differently depending on whether input is being read from files or standard input. This is the case for [GNU sort](https://www.gnu.org/software/coreutils/manual/coreutils.html#sort-invocation), perhaps the most common sort program available. This is because by default sort uses different methods to choose an internal buffer size when reading from files and when reading from standard input. `--buffer-size` controls both. On a machine with very large amounts of RAM, say, 64 GB, picking a 1 or 2 GB buffer size may actually slow sort down when reading from files, while speeding it up when reading from standard input. The author has not experimented with enough systems to make a universal recommendation, but a bit of experimentation on any specific system should help. [GNU sort](https://www.gnu.org/software/coreutils/manual/coreutils.html#sort-invocation) has additional options when optimum performance is needed.
+
+#### Turn off locale sensitive sort when not needed
+
+GNU `sort` performs locale sensitive sorting, obeying the locale setting of the shell. Locale sensitive sorting is designed to produce standard dictionary sort orders across all languages and character sets. However, it is quite a bit slower than sorts using byte value, in some cases by an order of magnitude.
+
+This affects shells set to a non-default locale ("C" or "POSIX"). Setting the locale is normally preferred and is especially useful when working with Unicode data. Run the `locale` command to check the settings.
+
+Locale sensitive sorting can be turned off when not needed. This is done by setting environment variable `LC_ALL=C` for the duration of the sort command. Here is a version of the sort shell script that does this:
+
+*file: tsv-sort-fast*
+```
+#!/bin/sh
+(LC_ALL=C sort -t $'\t' --buffer-size=2G $*)
+```
+
+This `tsv-sort-fast` script can be used the same way the `tsv-sort` script described earlier can be used.
 
 ## MacOS: Install GNU versions of Unix command line tools
 
@@ -132,8 +152,8 @@ $ tsv-uniq data.txt > data_unique.txt
 
 Run-times for the above commands are show below. Two different files were used, one 12 MB, 500,000 lines, the other 127 MB, 5 million lines. The files contained 339,185 and 3,394,172 unique lines respectively. Timing was done on a Macbook Pro with 16 GB of memory and flash storage. The `sort` and `uniq` programs are from GNU coreutils version 8.26. Run-times using `tsv-uniq` are nearly 10 times faster in these cases.
 
-| Command                 | File size         | Time (seconds) |
-| ----------------------- | ----------------- | -------------: |
+| Command               | File size         | Time (seconds) |
+| --------------------- | ----------------- | -------------: |
 | sort data.txt \| uniq | 12 MB; 500K lines |           2.19 |
 | sort -u data.txt      | 12 MB; 500K lines |           2.37 |
 | tsv-uniq data.txt     | 12 MB; 500K lines |           0.29 |
@@ -184,9 +204,9 @@ Using `grep` as a pre-filter won't always be helpful, that will depend on the sp
 
 Line order randomization, or "shuffling", is one of the operations supported by [tsv-sample](ToolReference.md#tsv-sample-reference). Most `tsv-sample` operations can be performed with limited system memory. However, system memory becomes a limitation when shuffling very large data sets, as the entire data set must be loaded into memory. ([GNU shuf](https://www.gnu.org/software/coreutils/manual/html_node/shuf-invocation.html) has the same limitation.) The solution is to use disk-based shuffling.
 
-One option is [GNU sort](https://www.gnu.org/software/coreutils/manual/html_node/sort-invocation.html)'s random sort feature (`sort --random-sort`). This can be used for unweighted randomization, but is very slow, to the point of being nearly unusable for large files. Further, it doesn't randomize duplicate lines correctly.
+One option is [GNU sort](https://www.gnu.org/software/coreutils/manual/html_node/sort-invocation.html)'s random sort feature (`sort --random-sort`). This can be used for unweighted randomization. However, there are couple of downsides. One is that it places duplicates lines next to each other, a problem for many shuffling use cases. Another is that it is rather slow. 
 
-A more practical approach is to combine the `tsv-sample --gen-random-inorder` option with disk-based sorting. [GNU sort](https://www.gnu.org/software/coreutils/manual/html_node/sort-invocation.html) serves the purpose well. A random value is generated for each input line, the lines are sorted, and the random values removed. GNU sort will use disk if necessary. This technique can be used for both weighted and unweighted line order randomization. There is a catch: GNU sort is dramatically faster when sorting numbers written in decimal notation, without exponents. However, random value generation may generate values with exponents in some cases. This is discussed in more detail below.
+An better approach is to combine `tsv-sample --gen-random-inorder` with disk-based sorting. [GNU sort](https://www.gnu.org/software/coreutils/manual/html_node/sort-invocation.html) serves the latter purpose well. A random value is generated for each input line, the lines are sorted, and the random values removed. GNU sort will use disk if necessary. This technique can be used for both weighted and unweighted line order randomization. There is a catch: GNU sort is dramatically faster when sorting numbers written in decimal notation, without exponents. However, random value generation may generate values with exponents in some cases. This is discussed in more detail at the end of this section.
 
 Here's an example.
 ```
@@ -194,12 +214,12 @@ $ # In-memory version
 $ tsv-sample file.txt > randomized-file.txt
 
 $ # Using disk-based sorting
-$ tsv-sample --gen-random-inorder file.txt | tsv-sort -k1,1nr | cut -f 2- > randomized-file.txt
+$ tsv-sample --gen-random-inorder file.txt | tsv-sort-fast -k1,1nr | cut -f 2- > randomized-file.txt
 ```
 
-(*Note: These examples uses the `tsv-sort` shell script described earlier, under [Customize the Unix sort command](#customize-the-unix-sort-command). Substitute `tsv-sort` with `sort  -t $'\t' --buffer-size=2G` to use the `sort` command directly.*)
+(*Note: These examples uses the `tsv-sort-fast` shell script described earlier, under [Customize the Unix sort command](#customize-the-unix-sort-command). Substitute `tsv-sort-fast -k1,1nr` with `(LC_ALL=C sort -t $'\t' --buffer-size=2G -k1,1nr)` to use the `sort` command directly.*)
 
-The above prepends a random value to each line, sorts, and removes the random values. Now available disk space is the limiting factor, not memory.
+The above example prepends a random value to each line, sorts, and removes the random values. Now available disk space is the limiting factor, not memory.
 
 This can be done with weighted sampling when the weights are integer values. This is shown in the next example, using a weight from field 3.
 ```
@@ -207,20 +227,38 @@ $ # In-memory version
 $ tsv-sample -w 3 file.tsv > randomized-file.tsv
 
 $ # Using disk-based sampling, with integer weights
-$ tsv-sample -w 3 --gen-random-inorder file.tsv | tsv-sort -k1,1nr | cut -f 2- > randomized-file.tsv
+$ tsv-sample -w 3 --gen-random-inorder file.tsv | tsv-sort-fast -k1,1nr | cut -f 2- > randomized-file.tsv
 ```
 
 The examples so far use "numeric" sorting. When values contain exponents "general numeric" sorting should be used. This is specified using `-k1,1gr` rather than `-k1,1nr`. Here's an example:
 ```
 $ # Using disk-based sampling, with floating point weights
-$ tsv-sample -w 3 --gen-random-inorder file.tsv | tsv-sort -k1,1gr | cut -f 2- > randomized-file.tsv
+$ tsv-sample -w 3 --gen-random-inorder file.tsv | tsv-sort-fast -k1,1gr | cut -f 2- > randomized-file.tsv
 ```
 
-Performance of the approaches described will vary considerably based on the hardware and data sets used. As one comparison point the author tried both `sort --random-sort` and the unweighted, disk based approach above on a 294 million line, 5.8 GB data set. A 16 GB MacOS box with SSD disk storage was used. This data set fits in memory on this machine, so the in-memory approach was used as well. The in-memory version took 3 minutes 49 seconds. The disk-sampling approach above took 14 minutes, 3 seconds. The random sort version took 4 hours, 53 minutes. Despite being substantially slower than the in-memory version, the disk-sampling approach describe here is a dramatic improvement over random sort.
+Performance of the approaches described will vary considerably based on the hardware and data sets. As one comparison point the author ran both `sort --random-sort` and the unweighted, disk based approach shown above on a 294 million line, 5.8 GB data set. A 16 GB MacOS box with SSD disk storage was used. This data set fits in memory on this machine, so the in-memory approach was tested as well. Both `tsv-sample` and GNU `shuf` were used. The `sort --random-sort` metric was run with [locale sensitive sorting](#turn-off-locale-sensitive-sort-when-not-needed) both on and off to show the difference.
 
-Regarding exponential notation: The faster "numeric" sort will incorrectly order lines where the random value contains an exponent. In version 1.3.2, `tsv-sample` changed random number printing to limit exponent printing. This was done by using exponents only when numbers are smaller than 1e-12. Though not guaranteed, this does not occur in practice with unweighted sampling or weighted sampling with integer weights. The author has run more than a billion trials without an occurrence. (It may be a property of the random number generator used.) It will occur if floating point weights are used. Use "general numeric" ('g') form when using floating point weights or if a guarantee is needed. However, in many cases regular "numeric" sort ('n') will suffice, and be dramatically faster.
+The in-memory versions are of course faster. But if disk is necessary, combining `tsv-sample --gen-random-inorder` with `sort` is about twice as fast as `sort --random-sort` and doesn't have the undesirable behavior of grouping duplicate lines.
 
-Note: For unweighted shuffling it's likely faster version could be implemented. The idea would be to read all input lines and write each to a randomly chosen temporary file. Then read and shuffle each temporary file in-memory and write it to the final output, appending each shuffled file. This would replace sorting with a faster shuffling operation. It would also avoid printing random numbers, which is slow. See Daniel Lemire's blog post [External-memory shuffling in linear time?](https://lemire.me/blog/2010/03/15/external-memory-shuffling-in-linear-time/) for a more detailed discussion.
+| Command/Method                                           | Disk? |           Time |
+| -------------------------------------------------------- | ------| -------------: |
+| `tsv-sample file.txt > out.txt`                          | No    |  1 min, 52 sec |
+| `shuf file.txt > out.txt`                                | No    |  3 min,  9 sec |
+| Method: _tsv-sample --gen-random-inorder_, _cut_, _sort_ | Yes   | 13 min, 24 sec |
+| `tsv-sort-fast --random-sort file.txt > out.txt`         | Yes   | 27 min, 44 sec |
+| `tsv-sort --random-sort file.txt > out.txt`              | Yes   |  4 hrs, 55 min |
+
+Notes:
+* The "_tsv-sample --gen-random-inorder_, _cut_, _sort_" command:
+  ```
+  tsv-sample --gen-random-inorder file.txt | tsv-sort-fast -k1,1nr | cut -f 2- > out.txt
+  ```
+* `tsv-sort` and `tsv-sort-fast` are described in [Customize the Unix sort command](#customize-the-unix-sort-command). They are covers for `sort`. `tsv-sort-fast` turns locale sensitivity off, `tsv-sort` leaves it on. `tsv-sort` was run with `LANG="en_US.UTF-8`.
+* Program versions: `tsv-sample` version 1.4.4; GNU `sort` version 8.31; GNU `shuf` version 8.31.
+
+**Regarding exponential notation**: The faster "numeric" sort will incorrectly order lines where the random value contains an exponent. In version 1.3.2, `tsv-sample` changed random number printing to limit exponent printing. This was done by using exponents only when numbers are smaller than 1e-12. Though not guaranteed, this does not occur in practice with unweighted sampling or weighted sampling with integer weights. The author has run more than a billion trials without an occurrence. (It may be a property of the random number generator used.) It will occur if floating point weights are used. Use "general numeric" ('g') form when using floating point weights or if a guarantee is needed. However, in many cases regular "numeric" sort ('n') will suffice, and be dramatically faster.
+
+**Regarding unweighted shuffling**: A faster version of unweighted shuffling appears very doable. One possibility would be to read all input lines and write each to a randomly chosen temporary file. Then read and shuffle each temporary file in-memory and write it to the final output, appending each shuffled file. This would replace sorting with a faster shuffling operation. It would also avoid printing random numbers, which is slow. See Daniel Lemire's blog post [External-memory shuffling in linear time?](https://lemire.me/blog/2010/03/15/external-memory-shuffling-in-linear-time/) for a more detailed discussion.
 
 ## Enable bash-completion
 
