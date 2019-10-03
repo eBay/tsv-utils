@@ -238,22 +238,22 @@ $ tsv-sample -w 3 --gen-random-inorder file.tsv | tsv-sort-fast -k1,1gr | cut -f
 
 Performance of the approaches described will vary considerably based on the hardware and data sets. As one comparison point the author ran both `sort --random-sort` and the unweighted, disk based approach shown above on a 294 million line, 5.8 GB data set. A 16 GB MacOS box with SSD disk storage was used. This data set fits in memory on this machine, so the in-memory approach was tested as well. Both `tsv-sample` and GNU `shuf` were used. The `sort --random-sort` metric was run with [locale sensitive sorting](#turn-off-locale-sensitive-sort-when-not-needed) both on and off to show the difference.
 
-The in-memory version took 3 minutes 49 seconds. The disk-sampling approach above took 14 minutes, 3 seconds. The random sort version took 4 hours, 53 minutes. Despite being substantially slower than the in-memory version, the disk-sampling approach describe here is a dramatic improvement over random sort.
+The in-memory versions are of course faster. But if disk is necessary, combining `tsv-sample --gen-random-inorder` with `sort` is about twice as fast as `sort --random-sort` and doesn't have the undesirable behavior of grouping duplicate lines.
 
-| Method/Command                                   | Disk? |           Time |
-| ------------------------------------------------ | ------| -------------: |
-| `tsv-sample file.txt > out.txt`                  | No    |  1 min, 52 sec |
-| `shuf file.txt > out.txt`                        | No    |  3 min,  9 sec |
-| _tsv-sample --gen-random-inorder_, _cut_, _sort_ | Yes   | 13 min, 24 sec |
-| `tsv-sort-fast --random-sort file.txt > out.txt` | Yes   | 27 min, 44 sec |
-| `tsv-sort --random-sort file.txt > out.txt`      | Yes   |  4 hrs, 55 min |
+| Command/Method                                           | Disk? |           Time |
+| -------------------------------------------------------- | ------| -------------: |
+| `tsv-sample file.txt > out.txt`                          | No    |  1 min, 52 sec |
+| `shuf file.txt > out.txt`                                | No    |  3 min,  9 sec |
+| Method: _tsv-sample --gen-random-inorder_, _cut_, _sort_ | Yes   | 13 min, 24 sec |
+| `tsv-sort-fast --random-sort file.txt > out.txt`         | Yes   | 27 min, 44 sec |
+| `tsv-sort --random-sort file.txt > out.txt`              | Yes   |  4 hrs, 55 min |
 
 Notes:
 * The "_tsv-sample --gen-random-inorder_, _cut_, _sort_" command:
   ```
   tsv-sample --gen-random-inorder file.txt | tsv-sort-fast -k1,1nr | cut -f 2- > out.txt
   ```
-* The `tsv-sort` and `tsv-sort-fast` scripts are described in [Customize the Unix sort command](#customize-the-unix-sort-command). They are covers for `sort` program. `tsv-sort-fast` turns locale sensitivity off, `tsv-sort` leaves it on. `tsv-sort` was run with `LANG="en_US.UTF-8`.
+* `tsv-sort` and `tsv-sort-fast` are described in [Customize the Unix sort command](#customize-the-unix-sort-command). They are covers for `sort`. `tsv-sort-fast` turns locale sensitivity off, `tsv-sort` leaves it on. `tsv-sort` was run with `LANG="en_US.UTF-8`.
 * Program versions: `tsv-sample` version 1.4.4; GNU `sort` version 8.31; GNU `shuf` version 8.31.
 
 **Regarding exponential notation**: The faster "numeric" sort will incorrectly order lines where the random value contains an exponent. In version 1.3.2, `tsv-sample` changed random number printing to limit exponent printing. This was done by using exponents only when numbers are smaller than 1e-12. Though not guaranteed, this does not occur in practice with unweighted sampling or weighted sampling with integer weights. The author has run more than a billion trials without an occurrence. (It may be a property of the random number generator used.) It will occur if floating point weights are used. Use "general numeric" ('g') form when using floating point weights or if a guarantee is needed. However, in many cases regular "numeric" sort ('n') will suffice, and be dramatically faster.
