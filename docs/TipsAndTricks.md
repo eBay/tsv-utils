@@ -8,7 +8,6 @@ Contents:
 * [Customize the Unix sort command](#customize-the-unix-sort-command)
 * [MacOS: Install GNU versions of Unix command line tools](#macos-install-gnu-versions-of-unix-command-line-tools)
 * [Reading data in R](#reading-data-in-r)
-* [A faster way to unique a file](#a-faster-way-to-unique-a-file)
 * [Using grep and tsv-filter together](#using-grep-and-tsv-filter-together)
 * [Shuffling large files](#shuffling-large-files)
 * [Enable bash-completion](#enable-bash-completion)
@@ -141,28 +140,6 @@ The first two use the `pipe` function to create the shell command. `fread` does 
 
 *Note: One common issue is not having the PATH environment setup correctly. Depending on setup, the R application might not have the full path normally available in a command shell. See the R documentation for details.*
 
-## A faster way to unique a file
-
-The commands `sort | uniq` and `sort -u` are common ways to remove duplicates from a unsorted file. However, `tsv-uniq` is faster, generally by quite a bit. As a bonus, it preserves the original input order, including the header line. The following commands are equivalent, apart from sort order:
-```
-$ sort data.txt | uniq > data_unique.txt
-$ sort -u data.txt > data_unique.txt
-$ tsv-uniq data.txt > data_unique.txt
-```
-
-Run-times for the above commands are show below. Two different files were used, one 12 MB, 500,000 lines, the other 127 MB, 5 million lines. The files contained 339,185 and 3,394,172 unique lines respectively. Timing was done on a Macbook Pro with 16 GB of memory and flash storage. The `sort` and `uniq` programs are from GNU coreutils version 8.26. Run-times using `tsv-uniq` are nearly 10 times faster in these cases.
-
-| Command               | File size         | Time (seconds) |
-| --------------------- | ----------------- | -------------: |
-| sort data.txt \| uniq | 12 MB; 500K lines |           2.19 |
-| sort -u data.txt      | 12 MB; 500K lines |           2.37 |
-| tsv-uniq data.txt     | 12 MB; 500K lines |           0.29 |
-| sort data.txt \| uniq | 127 MB; 5M lines  |          26.13 |
-| sort -u data.txt      | 127 MB; 5M lines  |          29.02 |
-| tsv-uniq data.txt     | 127 MB; 5M lines  |           3.14 |
-
-For more info, see the [tsv-uniq reference](ToolReference.md#tsv-uniq-reference).
-
 ## Using grep and tsv-filter together
 
 `tsv-filter` is fast, but a quality Unix `grep` implementation is faster. There are good reasons for this, notably, `grep` can ignore line boundaries during initial matching (see ["why GNU grep is fast", Mike Haertel](https://lists.freebsd.org/pipermail/freebsd-current/2010-August/019310.html)).
@@ -204,7 +181,7 @@ Using `grep` as a pre-filter won't always be helpful, that will depend on the sp
 
 Line order randomization, or "shuffling", is one of the operations supported by [tsv-sample](ToolReference.md#tsv-sample-reference). Most `tsv-sample` operations can be performed with limited system memory. However, system memory becomes a limitation when shuffling very large data sets, as the entire data set must be loaded into memory. ([GNU shuf](https://www.gnu.org/software/coreutils/manual/html_node/shuf-invocation.html) has the same limitation.) The solution is to use disk-based shuffling.
 
-One option is [GNU sort](https://www.gnu.org/software/coreutils/manual/html_node/sort-invocation.html)'s random sort feature (`sort --random-sort`). This can be used for unweighted randomization. However, there are couple of downsides. One is that it places duplicates lines next to each other, a problem for many shuffling use cases. Another is that it is rather slow. 
+One option is [GNU sort](https://www.gnu.org/software/coreutils/manual/html_node/sort-invocation.html)'s random sort feature (`sort --random-sort`). This can be used for unweighted randomization. However, there are couple of downsides. One is that it places duplicates lines next to each other, a problem for many shuffling use cases. Another is that it is rather slow.
 
 An better approach is to combine `tsv-sample --gen-random-inorder` with disk-based sorting. [GNU sort](https://www.gnu.org/software/coreutils/manual/html_node/sort-invocation.html) serves the latter purpose well. A random value is generated for each input line, the lines are sorted, and the random values removed. GNU sort will use disk if necessary. This technique can be used for both weighted and unweighted line order randomization. There is a catch: GNU sort is dramatically faster when sorting numbers written in decimal notation, without exponents. However, random value generation may generate values with exponents in some cases. This is discussed in more detail at the end of this section.
 

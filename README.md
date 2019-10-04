@@ -168,9 +168,9 @@ An example uniq'ing a file on fields 2 and 3:
 $ tsv-uniq -f 2,3 data.tsv
 ```
 
-`tsv-uniq` operates on the entire line when no fields are specified. This is a useful alternative to the traditional `sort -u` or `sort | uniq` paradigms for identifying unique lines in unsorted files, as it is dramatically faster. As a bonus, order of the input lines is retained.
+`tsv-uniq` operates on the entire line when no fields are specified. This is a useful alternative to the traditional `sort -u` or `sort | uniq` paradigms for identifying unique lines in unsorted files, as it is quite a bit faster, especially when there are many duplicate lines. As a bonus, order of the input lines is retained.
 
-As with `tsv-join`, an in-memory lookup table is used to record unique entries. This ultimately limits the data sizes that can be processed. The author has found that datasets with up to about 10 million unique entries work fine, but performance starts to degrade after that. Even then it remains quite a bit faster than the alternatives.
+As with `tsv-join`, an in-memory lookup table is used to record unique entries. This ultimately limits the data sizes that can be processed. The author has found that datasets with up to about 10 million unique entries work fine, but performance starts to degrade after that. Even then it faster than the alternatives.
 
 See the [tsv-uniq reference](docs/ToolReference.md#tsv-uniq-reference) for details.
 
