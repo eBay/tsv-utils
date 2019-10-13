@@ -220,7 +220,7 @@ struct TsvUniqOptions
                 if (max != 0 || (!equivMode && !numberMode)) max = atLeast;
             }
 
-            if (!keyIsFullLine) fields.each!((ref x) => --x);  // Convert to 1-based indexing.
+            if (!keyIsFullLine) fields.each!((ref x) => --x);  // Convert to 0-based indexing.
 
         }
         catch (Exception exc)
@@ -266,9 +266,9 @@ int main(string[] cmdArgs)
  */
 void tsvUniq(in TsvUniqOptions cmdopt, in string[] inputFiles)
 {
-    import tsv_utils.common.utils : InputFieldReordering, bufferedByLine, BufferedOutputRange;
+    import tsv_utils.common.utils : InputFieldReordering, bufferedByLine, BufferedOutputRange, joinAppend;
     import std.algorithm : splitter;
-    import std.array : join;
+    import std.array : appender;
     import std.conv : to;
     import std.range;
     import std.uni : toLower;
@@ -285,7 +285,10 @@ void tsvUniq(in TsvUniqOptions cmdopt, in string[] inputFiles)
     struct EquivEntry { size_t equivID; size_t count; }
     EquivEntry[string] equivHash;
 
-    size_t numFields = cmdopt.fields.length;
+    /* Key buffer when using multi-field keys. */
+    auto multiFieldKeyBuffer = appender!(char[]);
+
+    const size_t numKeyFields = cmdopt.fields.length;
     long nextEquivID = cmdopt.equivStartID;
     bool headerWritten = false;
     foreach (filename; (inputFiles.length > 0) ? inputFiles : ["-"])
@@ -343,7 +346,16 @@ void tsvUniq(in TsvUniqOptions cmdopt, in string[] inputFiles)
                                    (filename == "-") ? "Standard Input" : filename, lineNum));
                     }
 
-                    key = keyFieldsReordering.outputFields.join(cmdopt.delim);
+                    if (numKeyFields == 1)
+                    {
+                        key = keyFieldsReordering.outputFields[0];
+                    }
+                    else
+                    {
+                        multiFieldKeyBuffer.clear();
+                        keyFieldsReordering.outputFields.joinAppend(multiFieldKeyBuffer, cmdopt.delim);
+                        key = multiFieldKeyBuffer.data;
+                    }
                 }
 
                 if (cmdopt.ignoreCase) key = key.toLower;
