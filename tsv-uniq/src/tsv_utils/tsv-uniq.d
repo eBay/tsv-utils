@@ -271,7 +271,8 @@ void tsvUniq(in TsvUniqOptions cmdopt, in string[] inputFiles)
     import std.array : appender;
     import std.conv : to;
     import std.range;
-    import std.uni : toLower;
+    import std.uni : asLowerCase;
+    import std.utf : byChar;
 
     /* InputFieldReordering maps the key fields from an input line to a separate buffer. */
     auto keyFieldsReordering = cmdopt.keyIsFullLine ? null : new InputFieldReordering!char(cmdopt.fields);
@@ -285,8 +286,9 @@ void tsvUniq(in TsvUniqOptions cmdopt, in string[] inputFiles)
     struct EquivEntry { size_t equivID; size_t count; }
     EquivEntry[string] equivHash;
 
-    /* Key buffer when using multi-field keys. */
+    /* Reusable buffers for multi-field keys and case-insensitive keys. */
     auto multiFieldKeyBuffer = appender!(char[]);
+    auto lowerKeyBuffer = appender!(char[]);
 
     const size_t numKeyFields = cmdopt.fields.length;
     long nextEquivID = cmdopt.equivStartID;
@@ -358,7 +360,13 @@ void tsvUniq(in TsvUniqOptions cmdopt, in string[] inputFiles)
                     }
                 }
 
-                if (cmdopt.ignoreCase) key = key.toLower;
+                if (cmdopt.ignoreCase)
+                {
+                    /* Equivalent to key = key.toLower, but without memory allocation. */
+                    lowerKeyBuffer.clear();
+                    lowerKeyBuffer.put(key.asLowerCase.byChar);
+                    key = lowerKeyBuffer.data;
+                }
 
                 bool isOutput = false;
                 EquivEntry currEntry;
