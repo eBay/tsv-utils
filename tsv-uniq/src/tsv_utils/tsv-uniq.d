@@ -220,7 +220,7 @@ struct TsvUniqOptions
                 if (max != 0 || (!equivMode && !numberMode)) max = atLeast;
             }
 
-            if (!keyIsFullLine) fields.each!((ref x) => --x);  // Convert to 1-based indexing.
+            if (!keyIsFullLine) fields.each!((ref x) => --x);  // Convert to 0-based indexing.
 
         }
         catch (Exception exc)
@@ -266,12 +266,13 @@ int main(string[] cmdArgs)
  */
 void tsvUniq(in TsvUniqOptions cmdopt, in string[] inputFiles)
 {
-    import tsv_utils.common.utils : InputFieldReordering, bufferedByLine, BufferedOutputRange;
+    import tsv_utils.common.utils : InputFieldReordering, bufferedByLine, BufferedOutputRange, joinAppend;
     import std.algorithm : splitter;
-    import std.array : join;
+    import std.array : appender;
     import std.conv : to;
     import std.range;
-    import std.uni : toLower;
+    import std.uni : asLowerCase;
+    import std.utf : byChar;
 
     /* InputFieldReordering maps the key fields from an input line to a separate buffer. */
     auto keyFieldsReordering = cmdopt.keyIsFullLine ? null : new InputFieldReordering!char(cmdopt.fields);
@@ -285,7 +286,11 @@ void tsvUniq(in TsvUniqOptions cmdopt, in string[] inputFiles)
     struct EquivEntry { size_t equivID; size_t count; }
     EquivEntry[string] equivHash;
 
-    size_t numFields = cmdopt.fields.length;
+    /* Reusable buffers for multi-field keys and case-insensitive keys. */
+    auto multiFieldKeyBuffer = appender!(char[]);
+    auto lowerKeyBuffer = appender!(char[]);
+
+    const size_t numKeyFields = cmdopt.fields.length;
     long nextEquivID = cmdopt.equivStartID;
     bool headerWritten = false;
     foreach (filename; (inputFiles.length > 0) ? inputFiles : ["-"])
@@ -343,10 +348,25 @@ void tsvUniq(in TsvUniqOptions cmdopt, in string[] inputFiles)
                                    (filename == "-") ? "Standard Input" : filename, lineNum));
                     }
 
-                    key = keyFieldsReordering.outputFields.join(cmdopt.delim);
+                    if (numKeyFields == 1)
+                    {
+                        key = keyFieldsReordering.outputFields[0];
+                    }
+                    else
+                    {
+                        multiFieldKeyBuffer.clear();
+                        keyFieldsReordering.outputFields.joinAppend(multiFieldKeyBuffer, cmdopt.delim);
+                        key = multiFieldKeyBuffer.data;
+                    }
                 }
 
-                if (cmdopt.ignoreCase) key = key.toLower;
+                if (cmdopt.ignoreCase)
+                {
+                    /* Equivalent to key = key.toLower, but without memory allocation. */
+                    lowerKeyBuffer.clear();
+                    lowerKeyBuffer.put(key.asLowerCase.byChar);
+                    key = lowerKeyBuffer.data;
+                }
 
                 bool isOutput = false;
                 EquivEntry currEntry;

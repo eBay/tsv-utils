@@ -50,6 +50,19 @@ runtest ${prog} "input1.tsv -H -f 3,4 --equiv --ignore-case" ${basic_tests_1}
 runtest ${prog} "input1.tsv --header -f 3,4 --equiv --equiv-start 10 --ignore-case" ${basic_tests_1}
 runtest ${prog} "input1.tsv --header -f 3,4 --equiv --equiv-start 10 --equiv-header id --ignore-case" ${basic_tests_1}
 
+# Additional tests on keys and case sensitivity
+echo "" >> ${basic_tests_1}; echo "====Mixed tests===" >> ${basic_tests_1}
+runtest ${prog} "input3.tsv" ${basic_tests_1}
+runtest ${prog} "input3.tsv -i" ${basic_tests_1}
+runtest ${prog} "input3.tsv -H -i" ${basic_tests_1}
+runtest ${prog} "input3.tsv -H -f 1" ${basic_tests_1}
+runtest ${prog} "input3.tsv -H -f 1 -i" ${basic_tests_1}
+runtest ${prog} "input3.tsv -H -f 2,3" ${basic_tests_1}
+runtest ${prog} "input3.tsv -H -f 2,3 -i" ${basic_tests_1}
+runtest ${prog} "input3.tsv -H -f 2,3 -i" ${basic_tests_1}
+runtest ${prog} "input3.tsv -H -f 2,3,5" ${basic_tests_1}
+runtest ${prog} "input3.tsv -H -f 2,3,5 -i" ${basic_tests_1}
+
 # Max unique values
 echo "" >> ${basic_tests_1}; echo "====Max count tests===" >> ${basic_tests_1}
 runtest ${prog} "-H --max 0 input1.tsv" ${basic_tests_1}

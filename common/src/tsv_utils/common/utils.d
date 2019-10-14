@@ -1030,9 +1030,6 @@ unittest
 joinAppend performs a join operation on an input range, appending the results to
 an output range.
 
-Note: The main uses of joinAppend have been replaced by BufferedOutputRange, which has
-its own joinAppend method.
-
 joinAppend was written as a performance enhancement over using std.algorithm.joiner
 or std.array.join with writeln. Using joiner with writeln is quite slow, 3-4x slower
 than std.array.join with writeln. The joiner performance may be due to interaction
@@ -1045,6 +1042,10 @@ The Appender re-uses the underlying data buffer, saving memory. The example belo
 illustrates. It is a modification of the InputFieldReordering example. The role
 Appender plus joinAppend are playing is to buffer the output. BufferedOutputRange
 uses a similar technique to buffer multiple lines.
+
+Note: The original uses joinAppend have been replaced by BufferedOutputRange, which has
+its own joinAppend method. However, joinAppend remains useful when constructing internal
+buffers where BufferedOutputRange is not appropriate.
 
 ---
 int main(string[] args)
