@@ -249,6 +249,13 @@ int main(string[] cmdArgs)
     TsvUniqOptions cmdopt;
     auto r = cmdopt.processArgs(cmdArgs);
     if (!r[0]) return r[1];
+
+    version(LDC_Profile)
+    {
+        import ldc.profile : resetAll;
+        resetAll();
+    }
+
     try tsvUniq(cmdopt, cmdArgs[1..$]);
     catch (Exception exc)
     {
