@@ -16,7 +16,7 @@ Contents:
 ### Useful bash aliases
 A bash alias is a keystroke shortcut known by the shell. They are setup in the user's `~/.bashrc` or another shell init file. There's one that's really valuable when working with TSV files: `tsv-header`, which lists the field numbers for each field in a TSV file. To define it, put the following in `~/.bashrc` or other init file:
 ```
-tsv-header () { head -n 1 $* | tr $'\t' '\n' | nl ; }
+tsv-header () { head -n 1 "$@" | tr $'\t' $'\n' | nl ; }
 ```
 
 Once this is defined, use it as follows:
@@ -33,13 +33,13 @@ $ tsv-header worldcitiespop.tsv
 
 A similar alias can be setup for CSV files. Here are two, the first one takes advantage of a csv-to-tsv converter. The second one uses only standard Unix tools. It won't interpret CSV escapes, but many header lines don't use escapes. (Define only one):
 ```
-csv-header () { csv2tsv $* | head -n 1 | tr $'\t' '\n' | nl ; }
-csv-header () { head -n 1 $* | tr ',' '\n' | nl ; }
+csv-header () { csv2tsv "$@" | head -n 1 | tr $'\t' $'\n' | nl ; }
+csv-header () { head -n 1 "$@" | tr $',' $'\n' | nl ; }
 ```
 
 There are any number of useful aliases that can be defined. Here is another the author finds useful with TSV files. It prints a file excluding the first line (the header line):
 ```
-but-first () { tail -n +2 $* ; }
+but-first () { tail -n +2 "$@" ; }
 ```
 
 These aliases can be created in most shells. Non-bash shells may have a different syntax though.
@@ -61,7 +61,7 @@ Put the lines below in a file, eg. `tsv-sort`. Run `$ chmod a+x tsv-sort`, and a
 *file: tsv-sort*
 ```
 #!/bin/sh
-sort -t $'\t' $*
+sort -t $'\t' "$@"
 ```
 
 Now `tsv-sort` will run sort with TAB as the delimiter. The following sorts on column 2:
@@ -88,7 +88,7 @@ These can be added to the shell script described eariler. The revised shell scri
 *file: tsv-sort*
 ```
 #!/bin/sh
-sort  -t $'\t' --buffer-size=2G $*
+sort  -t $'\t' --buffer-size=2G "$@"
 ```
 
 Now the commands are once again simple and have good performance:
@@ -112,7 +112,7 @@ Locale sensitive sorting can be turned off when not needed. This is done by sett
 *file: tsv-sort-fast*
 ```
 #!/bin/sh
-(LC_ALL=C sort -t $'\t' --buffer-size=2G $*)
+(LC_ALL=C sort -t $'\t' --buffer-size=2G "$@")
 ```
 
 This `tsv-sort-fast` script can be used the same way the `tsv-sort` script described earlier can be used.
