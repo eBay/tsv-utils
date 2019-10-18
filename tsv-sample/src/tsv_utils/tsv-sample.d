@@ -986,7 +986,7 @@ if (isOutputRange!(OutputRange, char))
 
     auto randomGenerator = Random(cmdopt.seed);
 
-    struct Entry(Flag!"preserveInputOrder" preserveInputOrder)
+    static struct Entry(Flag!"preserveInputOrder" preserveInputOrder)
     {
         double score;
         const(char)[] line;
@@ -1206,7 +1206,7 @@ if (isOutputRange!(OutputRange, char))
     assert(!cmdopt.printRandom);
     assert(!cmdopt.genRandomInorder);
 
-    struct Entry(Flag!"preserveInputOrder" preserveInputOrder)
+    static struct Entry(Flag!"preserveInputOrder" preserveInputOrder)
     {
         const(char)[] line;
         static if (preserveInputOrder) ulong lineNumber;
@@ -1460,7 +1460,7 @@ if (isOutputRange!(OutputRange, char))
  * The struct makes the data available through two members: 'filename', which is the
  * filename, and 'data', which is a character array of the data.
  */
-struct FileData
+static struct FileData
 {
     string filename;
     char[] data;
@@ -1495,7 +1495,7 @@ alias HasRandomValue = Flag!"hasRandomValue";
  * line found in a FileData array. The 'data' element contains the line. A 'randomValue'
  * line is included if random values are being generated.
  */
-struct InputLine(HasRandomValue hasRandomValue)
+static struct InputLine(HasRandomValue hasRandomValue)
 {
     const(char)[] data;
     static if (hasRandomValue) double randomValue;
