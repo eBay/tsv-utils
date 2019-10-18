@@ -290,7 +290,7 @@ void tsvUniq(in TsvUniqOptions cmdopt, in string[] inputFiles)
     /* The master hash. The key is the specified fields concatenated together (including
      * separators). The value is a struct with the equiv-id and occurrence count.
      */
-    struct EquivEntry { size_t equivID; size_t count; }
+    static struct EquivEntry { size_t equivID; size_t count; }
     EquivEntry[string] equivHash;
 
     /* Reusable buffers for multi-field keys and case-insensitive keys. */
