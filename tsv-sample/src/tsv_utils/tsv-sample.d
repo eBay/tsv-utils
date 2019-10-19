@@ -1348,7 +1348,8 @@ if (isOutputRange!(OutputRange, char))
      * Read all file data into memory. Then split the data into lines and assign a
      * random value to each line. identifyFileLines also writes the first header line.
      */
-    const fileData = cmdopt.files.map!FileData.array;
+    //const fileData = cmdopt.files.map!FileData.array;
+    const fileData = cmdopt.files.readAllFileData;
     auto inputLines = fileData.identifyFileLines!(Yes.hasRandomValue, isWeighted)(cmdopt, outputStream);
 
     /*
@@ -1395,7 +1396,8 @@ if (isOutputRange!(OutputRange, char))
     /*
      * Read all file data into memory and split into lines.
      */
-    const fileData = cmdopt.files.map!FileData.array;
+    //const fileData = cmdopt.files.map!FileData.array;
+    const fileData = cmdopt.files.readAllFileData;
     auto inputLines = fileData.identifyFileLines!(No.hasRandomValue, No.isWeighted)(cmdopt, outputStream);
 
     /*
@@ -1432,7 +1434,8 @@ if (isOutputRange!(OutputRange, char))
     /*
      * Read all file data into memory and split the data into lines.
      */
-    const fileData = cmdopt.files.map!FileData.array;
+    //const fileData = cmdopt.files.map!FileData.array;
+    const fileData = cmdopt.files.readAllFileData;
     const inputLines = fileData.identifyFileLines!(No.hasRandomValue, No.isWeighted)(cmdopt, outputStream);
 
     if (inputLines.length > 0)
@@ -1486,6 +1489,59 @@ static struct FileData
     }
 }
 
+/* A replacement for FileData */
+static struct FileChunk
+{
+    string filename;
+    size_t chunkNumber;
+    char[] buffer;
+}
+
+FileChunk[] readAllFileData(string[] files)
+{
+    import std.algorithm : min;
+    import std.array : appender;
+
+    enum ReadSize = 1024L * 128L;
+    enum ChunkSize = 1024L * 1024L * 1024L * 2L;   // 2GB chunks for reading from stdin
+
+    FileChunk[] fileChunks;
+    auto fileChunkAppender = appender(&fileChunks);
+    fileChunkAppender.reserve(files.length);
+
+    /* Read buffer, for raw reads. */
+    ubyte[ReadSize] rawReadBuffer;
+
+    foreach (filename; files)
+    {
+        auto ifile = (filename == "-") ? stdin : filename.File;
+        immutable ulong filesize = (filename == "-") ? ulong.max : ifile.size;
+
+        if (filesize < ulong.max)
+        {
+            /* Known file size. Read into a single FileChunk struct. */
+            fileChunkAppender.put(FileChunk(filename, 0));
+            FileChunk* currFileChunk = &(fileChunkAppender.data[$-1]);
+            auto dataAppender = appender(&(currFileChunk.buffer));
+            dataAppender.reserve(min(filesize, size_t.max));
+            foreach (ref ubyte[] buffer; ifile.byChunk(rawReadBuffer))
+            {
+                dataAppender.put(cast(char[]) buffer);
+            }
+        }
+        else
+        {
+            /* Unknown file size. For now, read into a single FileChunk struct. */
+            fileChunkAppender.put(FileChunk(filename, 0));
+            FileChunk* currFileChunk = &(fileChunkAppender.data[$-1]);
+            auto dataAppender = appender(&(currFileChunk.buffer));
+            //dataAppender.reserve(min(filesize, size_t.max));
+            foreach (ref ubyte[] buffer; ifile.byChunk(rawReadBuffer)) dataAppender.put(cast(char[]) buffer);
+        }
+    }
+    return fileChunks;
+}
+
 /** HasRandomValue is a boolean flag used at compile time by identifyFileLines to
  * distinguish use cases needing random value assignments from those that don't.
  */
@@ -1516,7 +1572,7 @@ static struct InputLine(HasRandomValue hasRandomValue)
  * member if random values are being assigned.
  */
 InputLine!hasRandomValue[] identifyFileLines(HasRandomValue hasRandomValue, Flag!"isWeighted" isWeighted, OutputRange)
-(const ref FileData[] fileData, TsvSampleOptions cmdopt, auto ref OutputRange outputStream)
+(const ref FileChunk[] fileData, TsvSampleOptions cmdopt, auto ref OutputRange outputStream)
 if (isOutputRange!(OutputRange, char))
 {
     import std.algorithm : splitter;
@@ -1536,7 +1592,7 @@ if (isOutputRange!(OutputRange, char))
     foreach (fd; fileData)
     {
         /* Drop the last newline to avoid adding an extra empty line. */
-        const data = (fd.data.length > 0 && fd.data[$ - 1] == '\n') ? fd.data[0 .. $ - 1] : fd.data;
+        const data = (fd.buffer.length > 0 && fd.buffer[$ - 1] == '\n') ? fd.buffer[0 .. $ - 1] : fd.buffer;
         foreach (fileLineNum, ref line; data.splitter('\n').enumerate(1))
         {
             if (fileLineNum == 1) throwIfWindowsNewlineOnUnix(line, fd.filename, fileLineNum);
