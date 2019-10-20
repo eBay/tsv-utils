@@ -10,6 +10,7 @@ License: Boost License 1.0 (http://boost.org/LICENSE_1_0.txt)
 */
 module tsv_utils.tsv_sample;
 
+import std.array : appender, Appender, RefAppender;
 import std.range;
 import std.stdio;
 import std.typecons : tuple, Flag;
@@ -1486,10 +1487,9 @@ static struct InputBlock
 InputBlock[] readFileData(string[] files)
 {
     import std.algorithm : find, min;
-    import std.array : appender;
     import std.range : retro;
 
-    enum BlockSize = 1024L * 1024L * 1024L * 2L;   // 2 GB. ('L' notation avoids overflow.)
+    enum BlockSize = 1024L * 1024L * 1024L;   // 1 GB. ('L' notation avoids overflow w/ 2GB+ sizes.)
     enum ReadSize = 1024L * 128L;
     enum NewlineSearchSize = 1024L * 16L;
 
@@ -1497,21 +1497,20 @@ InputBlock[] readFileData(string[] files)
     auto blocksAppender = appender(&blocks);
     blocksAppender.reserve(files.length);  // At least one block per file.
 
-    ubyte[ReadSize] rawReadBuffer;
+    ubyte[] rawReadBuffer = new ubyte[ReadSize];
 
     foreach (filename; files)
     {
         auto ifile = (filename == "-") ? stdin : filename.File;
 
-        blocksAppender.put(InputBlock(filename, 0));
-        auto dataAppender = appender(&(blocks[$-1].data));
-
-        // Note: File.isize returns ulong.max if file size cannot be determined.
+        /* Note: File.isize returns ulong.max if file size cannot be determined. */
         immutable ulong filesize = (filename == "-") ? ulong.max : ifile.size;
 
         if (filesize != ulong.max)
         {
             /* File size known. Read into a single InputBlock struct. */
+            blocksAppender.put(InputBlock(filename, 0));
+            auto dataAppender = appender(&(blocks[$-1].data));
             dataAppender.reserve(filesize);
 
             foreach (ref ubyte[] buffer; ifile.byChunk(rawReadBuffer))
@@ -1521,83 +1520,112 @@ InputBlock[] readFileData(string[] files)
         }
         else
         {
-            /* Unknown input size. Read into one or more BlockSize blocks. */
-            dataAppender.reserve(BlockSize);
-            size_t blockNumber = 0;
+            readFileDataAsBlocks(filename, ifile, blocksAppender, rawReadBuffer,
+                                 BlockSize, ReadSize, NewlineSearchSize);
+        }
+    }
+    return blocks;
+}
 
-            foreach (ref ubyte[] buffer; ifile.byChunk(rawReadBuffer))
+/* readFileData() helper function. Read data from a File handle as a series of blocks.
+ * Blocks are appended to an existing InputBlock[] array.
+ *
+ * This routine is part of the readFileData logic. It handles the case where a file or
+ * standard input is being read as a series of blocks. It is separated out for unit
+ * testing and is not intended as a general API. See readFileData for more info.
+ */
+private void readFileDataAsBlocks(
+    string filename,
+    ref File ifile,
+    ref RefAppender!(InputBlock[]) blocksAppender,
+    ref ubyte[] rawReadBuffer,
+    const size_t BlockSize,
+    const size_t ReadSize,
+    const size_t NewlineSearchSize)
+{
+    import std.algorithm : find, min;
+    import std.range : retro;
+
+    assert(ifile.isOpen);
+
+    /* Create a new block for the file and an Appender for writing data.
+     */
+    blocksAppender.put(InputBlock(filename, 0));
+    auto dataAppender = appender(&(blocksAppender.data[$-1].data));
+    dataAppender.reserve(BlockSize);
+    size_t blockNumber = 0;
+
+    /* Read all the data and copy it to an InputBlock. */
+    foreach (ref ubyte[] buffer; ifile.byChunk(rawReadBuffer))
+    {
+        assert(blockNumber == blocksAppender.data[$-1].fileBlockNumber);
+
+        immutable size_t remainingCapacity = dataAppender.capacity - dataAppender.data.length;
+
+        if (buffer.length <= remainingCapacity)
+        {
+            dataAppender.put(cast(char[]) buffer);
+        }
+        else
+        {
+            /* See if there is enough room in the block to add one or more full lines.
+             * That is, find the last newline that fits in remaining block capacity.
+             */
+            auto searchRegion = buffer[0 .. remainingCapacity];
+            auto appendRegion = searchRegion.retro.find('\n').source;
+
+            if (appendRegion.length > 0)
             {
-                assert(blockNumber == blocksAppender.data[$-1].fileBlockNumber);
+                /* Copy the first part of the read buffer to the block. */
+                dataAppender.put(cast(char[]) appendRegion);
 
-                immutable size_t remainingCapacity = dataAppender.capacity - dataAppender.data.length;
+                /* Create a new InputBlock and copy the remaining data to it. */
+                blockNumber++;
+                blocksAppender.put(InputBlock(filename, blockNumber));
+                dataAppender = appender(&(blocksAppender.data[$-1].data));
+                dataAppender.reserve(BlockSize);
+                dataAppender.put(cast(char[]) buffer[appendRegion.length .. $]);
 
-                if (buffer.length <= remainingCapacity)
+                assert(blocksAppender.data.length >= 2);
+                assert(blocksAppender.data[$-2].data[$-1] == '\n');
+            }
+            else
+            {
+                /* Search backward in the current block for a newline. If a
+                 * newline is not found, simply append to the current block
+                 * and let it grow. We'll only search backward so far.
+                 */
+                InputBlock* currBlock = &(blocksAppender.data[$-1]);
+                immutable size_t searchLength = min(currBlock.data.length, NewlineSearchSize);
+                immutable size_t searchStart = currBlock.data.length - searchLength;
+                auto blockSearchRegion = currBlock.data[searchStart .. $];
+                auto lastNewlineOffset = blockSearchRegion.retro.find('\n').source.length;
+
+                if (lastNewlineOffset != 0)
                 {
+                    /* Create a new InputBlock. */
+                    blockNumber++;
+                    blocksAppender.put(InputBlock(filename, blockNumber));
+                    dataAppender = appender(&(blocksAppender.data[$-1].data));
+                    dataAppender.reserve(BlockSize);
+
+                    /* Move data following the newline from the last block to
+                     * the new block. Then append the current read buffer. */
+                    dataAppender.put(currBlock.data[searchStart + lastNewlineOffset .. $]);
                     dataAppender.put(cast(char[]) buffer);
+                    currBlock.data.length = searchStart + lastNewlineOffset;
+
+                    assert(blocksAppender.data.length >= 2);
+                    assert(blocksAppender.data[$-2].data[$-1] == '\n');
                 }
                 else
                 {
-                    /* See if there is enough room in the block to take a section of the
-                     * read buffer ending in newline.
-                     */
-                    auto searchRegion = buffer[0 .. remainingCapacity];
-                    auto appendRegion = searchRegion.retro.find('\n').source;
-
-                    if (appendRegion.length > 0)
-                    {
-                        /* Move the first part of the read buffer to the block. Then
-                         * create a new block and move the remainder to it.
-                         */
-                        dataAppender.put(cast(char[]) appendRegion);
-                        blockNumber++;
-                        blocksAppender.put(InputBlock(filename, blockNumber));
-                        dataAppender = appender(&(blocks[$-1].data));
-                        dataAppender.reserve(BlockSize);
-                        dataAppender.put(cast(char[]) buffer[appendRegion.length .. $]);
-
-                        assert(blocks.length >= 2);
-                        assert(blocks[$-2].data[$-1] == '\n');
-                    }
-                    else
-                    {
-                        /* Search backward in the current block for a newline. If a
-                         * newline is not found, simply append to the current block
-                         * and let it grow. We'll only search backward so far.
-                         */
-                        InputBlock* currBlock = &blocks[$-1];
-                        immutable size_t searchLength = min(currBlock.data.length, NewlineSearchSize);
-                        immutable size_t searchStart = currBlock.data.length - searchLength;
-                        auto blockSearchRegion = currBlock.data[searchStart .. $];
-                        auto lastNewlineOffset = blockSearchRegion.retro.find('\n').source.length;
-
-                        if (lastNewlineOffset != 0)
-                        {
-                            /* Create a new InputBlock. */
-                            blockNumber++;
-                            blocksAppender.put(InputBlock(filename, blockNumber));
-                            dataAppender = appender(&(blocks[$-1].data));
-                            dataAppender.reserve(BlockSize);
-
-                            /* Move data following the newline from the last block to
-                             * the new block. Then append the current read buffer. */
-                            dataAppender.put(currBlock.data[searchStart + lastNewlineOffset .. $]);
-                            dataAppender.put(cast(char[]) buffer);
-                            currBlock.data.length = searchStart + lastNewlineOffset;
-
-                            assert(blocks.length >= 2);
-                            assert(blocks[$-2].data[$-1] == '\n');
-                        }
-                        else
-                        {
-                            /* Give up. Allow the current block to grow. */
-                            dataAppender.put(cast(char[]) buffer);
-                        }
-                    }
+                    /* Give up. Allow the current block to grow. */
+                    dataAppender.put(cast(char[]) buffer);
                 }
             }
         }
     }
-    return blocks;
 }
 
 /** HasRandomValue is a boolean flag used at compile time by identifyInputLines to
