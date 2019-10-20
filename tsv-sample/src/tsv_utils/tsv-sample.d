@@ -439,7 +439,7 @@ struct TsvSampleOptions
             else assert(0, "Internal error, invalid seed option states.");
 
             /* Assume remaining args are files. Use standard input if files were not provided. */
-            files ~= (cmdArgs.length > 1) ? cmdArgs[1..$] : ["-"];
+            files ~= (cmdArgs.length > 1) ? cmdArgs[1 .. $] : ["-"];
             cmdArgs.length = 1;
         }
         catch (Exception exc)
@@ -1346,11 +1346,11 @@ if (isOutputRange!(OutputRange, char))
 
     /*
      * Read all file data into memory. Then split the data into lines and assign a
-     * random value to each line. identifyFileLines also writes the first header line.
+     * random value to each line. identifyInputLines also writes the first header line.
      */
     //const fileData = cmdopt.files.map!FileData.array;
-    const fileData = cmdopt.files.readAllFileData;
-    auto inputLines = fileData.identifyFileLines!(Yes.hasRandomValue, isWeighted)(cmdopt, outputStream);
+    const fileData = cmdopt.files.readFileData;
+    auto inputLines = fileData.identifyInputLines!(Yes.hasRandomValue, isWeighted)(cmdopt, outputStream);
 
     /*
      * Sort by the weight and output the lines.
@@ -1397,8 +1397,8 @@ if (isOutputRange!(OutputRange, char))
      * Read all file data into memory and split into lines.
      */
     //const fileData = cmdopt.files.map!FileData.array;
-    const fileData = cmdopt.files.readAllFileData;
-    auto inputLines = fileData.identifyFileLines!(No.hasRandomValue, No.isWeighted)(cmdopt, outputStream);
+    const fileData = cmdopt.files.readFileData;
+    auto inputLines = fileData.identifyInputLines!(No.hasRandomValue, No.isWeighted)(cmdopt, outputStream);
 
     /*
      * Randomly shuffle and print each line.
@@ -1435,8 +1435,8 @@ if (isOutputRange!(OutputRange, char))
      * Read all file data into memory and split the data into lines.
      */
     //const fileData = cmdopt.files.map!FileData.array;
-    const fileData = cmdopt.files.readAllFileData;
-    const inputLines = fileData.identifyFileLines!(No.hasRandomValue, No.isWeighted)(cmdopt, outputStream);
+    const fileData = cmdopt.files.readFileData;
+    const inputLines = fileData.identifyInputLines!(No.hasRandomValue, No.isWeighted)(cmdopt, outputStream);
 
     if (inputLines.length > 0)
     {
@@ -1454,76 +1454,66 @@ if (isOutputRange!(OutputRange, char))
     }
 }
 
-/** A container and reader of data from a file or standard input.
+/** A container holding data read from a file or standard input.
  *
- * The FileData struct is used to read data from a file or standard input. It is used
- * by passing a filename to the constructor. The constructor reads the file data.
- * If the filename is a single hyphen ('-') then data is read from standard input.
- *
- * The struct makes the data available through two members: 'filename', which is the
- * filename, and 'data', which is a character array of the data.
+ * The InputBlock struct is to represent a block of data read from a file or standard
+ * input. An array of InputBlocks is returned by readFileData. Typically one block
+ * per file. Multiple blocks are used for standard input and when file size cannot be
+ * determined.
  */
-static struct FileData
+static struct InputBlock
 {
-    string filename;
-    char[] data;
-
-    this(string fname)
-    {
-        import std.algorithm : min;
-        import std.array : appender;
-
-        filename = fname;
-
-        ubyte[1024 * 128] fileRawBuf;
-        auto dataAppender = appender(&data);
-        auto ifile = (filename == "-") ? stdin : filename.File;
-
-        if (filename != "-")
-        {
-            immutable ulong filesize = ifile.size;
-            if (filesize < ulong.max) dataAppender.reserve(min(filesize, size_t.max));
-        }
-
-        foreach (ref ubyte[] buffer; ifile.byChunk(fileRawBuf)) dataAppender.put(cast(char[]) buffer);
-    }
+    string filename;          /// Original filename or path. "-" denotes standard input.
+    size_t fileBlockNumber;   /// Zero-based block number for the file.
+    char[] data;              /// The actual data. Newline terminated or last block for the file.
 }
 
-/* A replacement for FileData */
-static struct FileChunk
+/** Reads data from one or more files. This routine is used when reading all data
+ * into memory.
+ *
+ * readFileData reads in all data from a set of files. Data is returned as an array
+ * of InputBlock structs. Normally one InputBlock per file, sized to match the size
+ * of the file. Standard input is read in one or more blocks, as are files whose size
+ * cannot be determined. Multiple blocks are used in these last two cases to avoid
+ * expensive memory reallocations. This is not necessary when file size is known as
+ * the necessary memory can be preallocated.
+ *
+ * Individual lines never span multiple blocks, and newlines are preserved. This
+ * means that each block starts at the beginning of a line and ends with a newline
+ * unless the end of a file has been reached. Each file gets its own block so that
+ * header processing can be done.
+ */
+InputBlock[] readFileData(string[] files)
 {
-    string filename;
-    size_t chunkNumber;
-    char[] buffer;
-}
-
-FileChunk[] readAllFileData(string[] files)
-{
-    import std.algorithm : min;
+    import std.algorithm : find, min;
     import std.array : appender;
+    import std.range : retro;
 
+    enum BlockSize = 1024L * 1024L * 1024L * 2L;   // 2 GB. ('L' notation avoids overflow.)
     enum ReadSize = 1024L * 128L;
-    enum ChunkSize = 1024L * 1024L * 1024L * 2L;   // 2GB chunks for reading from stdin
+    enum NewlineSearchSize = 1024L * 16L;
 
-    FileChunk[] fileChunks;
-    auto fileChunkAppender = appender(&fileChunks);
-    fileChunkAppender.reserve(files.length);
+    InputBlock[] blocks;
+    auto blocksAppender = appender(&blocks);
+    blocksAppender.reserve(files.length);  // At least one block per file.
 
-    /* Read buffer, for raw reads. */
     ubyte[ReadSize] rawReadBuffer;
 
     foreach (filename; files)
     {
         auto ifile = (filename == "-") ? stdin : filename.File;
+
+        blocksAppender.put(InputBlock(filename, 0));
+        auto dataAppender = appender(&(blocks[$-1].data));
+
+        // Note: File.isize returns ulong.max if file size cannot be determined.
         immutable ulong filesize = (filename == "-") ? ulong.max : ifile.size;
 
-        if (filesize < ulong.max)
+        if (filesize != ulong.max)
         {
-            /* Known file size. Read into a single FileChunk struct. */
-            fileChunkAppender.put(FileChunk(filename, 0));
-            FileChunk* currFileChunk = &(fileChunkAppender.data[$-1]);
-            auto dataAppender = appender(&(currFileChunk.buffer));
-            dataAppender.reserve(min(filesize, size_t.max));
+            /* File size known. Read into a single InputBlock struct. */
+            dataAppender.reserve(filesize);
+
             foreach (ref ubyte[] buffer; ifile.byChunk(rawReadBuffer))
             {
                 dataAppender.put(cast(char[]) buffer);
@@ -1531,23 +1521,91 @@ FileChunk[] readAllFileData(string[] files)
         }
         else
         {
-            /* Unknown file size. For now, read into a single FileChunk struct. */
-            fileChunkAppender.put(FileChunk(filename, 0));
-            FileChunk* currFileChunk = &(fileChunkAppender.data[$-1]);
-            auto dataAppender = appender(&(currFileChunk.buffer));
-            //dataAppender.reserve(min(filesize, size_t.max));
-            foreach (ref ubyte[] buffer; ifile.byChunk(rawReadBuffer)) dataAppender.put(cast(char[]) buffer);
+            /* Unknown input size. Read into one or more BlockSize blocks. */
+            dataAppender.reserve(BlockSize);
+            size_t blockNumber = 0;
+
+            foreach (ref ubyte[] buffer; ifile.byChunk(rawReadBuffer))
+            {
+                assert(blockNumber == blocksAppender.data[$-1].fileBlockNumber);
+
+                immutable size_t remainingCapacity = dataAppender.capacity - dataAppender.data.length;
+
+                if (buffer.length <= remainingCapacity)
+                {
+                    dataAppender.put(cast(char[]) buffer);
+                }
+                else
+                {
+                    /* See if there is enough room in the block to take a section of the
+                     * read buffer ending in newline.
+                     */
+                    auto searchRegion = buffer[0 .. remainingCapacity];
+                    auto appendRegion = searchRegion.retro.find('\n').source;
+
+                    if (appendRegion.length > 0)
+                    {
+                        /* Move the first part of the read buffer to the block. Then
+                         * create a new block and move the remainder to it.
+                         */
+                        dataAppender.put(cast(char[]) appendRegion);
+                        blockNumber++;
+                        blocksAppender.put(InputBlock(filename, blockNumber));
+                        dataAppender = appender(&(blocks[$-1].data));
+                        dataAppender.reserve(BlockSize);
+                        dataAppender.put(cast(char[]) buffer[appendRegion.length .. $]);
+
+                        assert(blocks.length >= 2);
+                        assert(blocks[$-2].data[$-1] == '\n');
+                    }
+                    else
+                    {
+                        /* Search backward in the current block for a newline. If a
+                         * newline is not found, simply append to the current block
+                         * and let it grow. We'll only search backward so far.
+                         */
+                        InputBlock* currBlock = &blocks[$-1];
+                        immutable size_t searchLength = min(currBlock.data.length, NewlineSearchSize);
+                        immutable size_t searchStart = currBlock.data.length - searchLength;
+                        auto blockSearchRegion = currBlock.data[searchStart .. $];
+                        auto lastNewlineOffset = blockSearchRegion.retro.find('\n').source.length;
+
+                        if (lastNewlineOffset != 0)
+                        {
+                            /* Create a new InputBlock. */
+                            blockNumber++;
+                            blocksAppender.put(InputBlock(filename, blockNumber));
+                            dataAppender = appender(&(blocks[$-1].data));
+                            dataAppender.reserve(BlockSize);
+
+                            /* Move data following the newline from the last block to
+                             * the new block. Then append the current read buffer. */
+                            dataAppender.put(currBlock.data[searchStart + lastNewlineOffset .. $]);
+                            dataAppender.put(cast(char[]) buffer);
+                            currBlock.data.length = searchStart + lastNewlineOffset;
+
+                            assert(blocks.length >= 2);
+                            assert(blocks[$-2].data[$-1] == '\n');
+                        }
+                        else
+                        {
+                            /* Give up. Allow the current block to grow. */
+                            dataAppender.put(cast(char[]) buffer);
+                        }
+                    }
+                }
+            }
         }
     }
-    return fileChunks;
+    return blocks;
 }
 
-/** HasRandomValue is a boolean flag used at compile time by identifyFileLines to
+/** HasRandomValue is a boolean flag used at compile time by identifyInputLines to
  * distinguish use cases needing random value assignments from those that don't.
  */
 alias HasRandomValue = Flag!"hasRandomValue";
 
-/** An InputLine array is returned by identifyFileLines to represent each non-header line
+/** An InputLine array is returned by identifyInputLines to represent each non-header line
  * line found in a FileData array. The 'data' element contains the line. A 'randomValue'
  * line is included if random values are being generated.
  */
@@ -1557,7 +1615,7 @@ static struct InputLine(HasRandomValue hasRandomValue)
     static if (hasRandomValue) double randomValue;
 }
 
-/** identifyFileLines is used by algorithms that read all files into memory prior to
+/** identifyInputLines is used by algorithms that read all files into memory prior to
  * processing. It does the initial processing of the file data.
  *
  * Three primary tasks are performed. One is splitting all input data into lines. The
@@ -1565,14 +1623,14 @@ static struct InputLine(HasRandomValue hasRandomValue)
  * lines from subsequent files are ignored. Third is assigning a random value to the
  * line, if random values are being generated.
  *
- * The key input is a FileData array, one element for each file. The FileData reads
- * the file when instantiated.
+ * The key input is an InputBlock array. Normally one block for each file, but standard
+ * input may have multiple blocks.
  *
  * The return value is an array of InputLine structs. The struct will have a 'randomValue'
  * member if random values are being assigned.
  */
-InputLine!hasRandomValue[] identifyFileLines(HasRandomValue hasRandomValue, Flag!"isWeighted" isWeighted, OutputRange)
-(const ref FileChunk[] fileData, TsvSampleOptions cmdopt, auto ref OutputRange outputStream)
+InputLine!hasRandomValue[] identifyInputLines(HasRandomValue hasRandomValue, Flag!"isWeighted" isWeighted, OutputRange)
+(const ref InputBlock[] inputBlocks, TsvSampleOptions cmdopt, auto ref OutputRange outputStream)
 if (isOutputRange!(OutputRange, char))
 {
     import std.algorithm : splitter;
@@ -1588,14 +1646,21 @@ if (isOutputRange!(OutputRange, char))
     auto linesAppender = appender(&inputLines);
     static if (hasRandomValue) auto randomGenerator = Random(cmdopt.seed);
     bool headerWritten = false;
+    size_t fileLineNum;
 
-    foreach (fd; fileData)
+    foreach (block; inputBlocks)
     {
         /* Drop the last newline to avoid adding an extra empty line. */
-        const data = (fd.buffer.length > 0 && fd.buffer[$ - 1] == '\n') ? fd.buffer[0 .. $ - 1] : fd.buffer;
-        foreach (fileLineNum, ref line; data.splitter('\n').enumerate(1))
+        const data = (block.data.length > 0 && block.data[$-1] == '\n') ?
+            block.data[0 .. $-1] : block.data;
+
+        if (block.fileBlockNumber == 0) fileLineNum = 0;
+
+        foreach (ref line; data.splitter('\n'))
         {
-            if (fileLineNum == 1) throwIfWindowsNewlineOnUnix(line, fd.filename, fileLineNum);
+            fileLineNum++;
+
+            if (fileLineNum == 1) throwIfWindowsNewlineOnUnix(line, block.filename, fileLineNum);
             if (fileLineNum == 1 && cmdopt.hasHeader)
             {
                 if (!headerWritten)
@@ -1626,7 +1691,7 @@ if (isOutputRange!(OutputRange, char))
                     {
                         immutable double lineWeight =
                             getFieldValue!double(line, cmdopt.weightField, cmdopt.delim,
-                                                 fd.filename, fileLineNum);
+                                                 block.filename, fileLineNum);
                         immutable double randomValue =
                             (lineWeight > 0.0)
                             ? uniform01(randomGenerator) ^^ (1.0 / lineWeight)
@@ -1894,7 +1959,7 @@ unittest
     string fpath_data3x1 = buildPath(testDir, "data3x1.tsv");
     string fpath_data3x1_noheader = buildPath(testDir, "data3x1_noheader.tsv");
     writeUnittestTsvFile(fpath_data3x1, data3x1);
-    writeUnittestTsvFile(fpath_data3x1_noheader, data3x1[1..$]);
+    writeUnittestTsvFile(fpath_data3x1_noheader, data3x1[1 .. $]);
 
     string[][] data3x1ExpectedReplaceNum3 =
         [["field_a", "field_b", "field_c"],
@@ -1911,7 +1976,7 @@ unittest
     string fpath_data3x2 = buildPath(testDir, "data3x2.tsv");
     string fpath_data3x2_noheader = buildPath(testDir, "data3x2_noheader.tsv");
     writeUnittestTsvFile(fpath_data3x2, data3x2);
-    writeUnittestTsvFile(fpath_data3x2_noheader, data3x2[1..$]);
+    writeUnittestTsvFile(fpath_data3x2_noheader, data3x2[1 .. $]);
 
     string[][] data3x2PermuteCompat =
         [["field_a", "field_b", "field_c"],
@@ -1933,7 +1998,7 @@ unittest
     string fpath_data3x3 = buildPath(testDir, "data3x3.tsv");
     string fpath_data3x3_noheader = buildPath(testDir, "data3x3_noheader.tsv");
     writeUnittestTsvFile(fpath_data3x3, data3x3);
-    writeUnittestTsvFile(fpath_data3x3_noheader, data3x3[1..$]);
+    writeUnittestTsvFile(fpath_data3x3_noheader, data3x3[1 .. $]);
 
     string[][] data3x3ExpectedPermuteCompat =
         [["field_a", "field_b", "field_c"],
@@ -1959,7 +2024,7 @@ unittest
     string fpath_data3x6 = buildPath(testDir, "data3x6.tsv");
     string fpath_data3x6_noheader = buildPath(testDir, "data3x6_noheader.tsv");
     writeUnittestTsvFile(fpath_data3x6, data3x6);
-    writeUnittestTsvFile(fpath_data3x6_noheader, data3x6[1..$]);
+    writeUnittestTsvFile(fpath_data3x6_noheader, data3x6[1 .. $]);
 
     // Randomization, all lines
     string[][] data3x6ExpectedPermuteCompat =
@@ -2499,7 +2564,7 @@ unittest
     string fpath_data1x200 = buildPath(testDir, "data1x200.tsv");
     string fpath_data1x200_noheader = buildPath(testDir, "data1x200_noheader.tsv");
     writeUnittestTsvFile(fpath_data1x200, data1x200);
-    writeUnittestTsvFile(fpath_data1x200_noheader, data1x200[1..$]);
+    writeUnittestTsvFile(fpath_data1x200_noheader, data1x200[1 .. $]);
 
     string[][] data1x200ExpectedBernoulliSkipV333P01 =
         [["field_a"],
@@ -2565,7 +2630,7 @@ unittest
     string fpath_data1x10 = buildPath(testDir, "data1x10.tsv");
     string fpath_data1x10_noheader = buildPath(testDir, "data1x10_noheader.tsv");
     writeUnittestTsvFile(fpath_data1x10, data1x10);
-    writeUnittestTsvFile(fpath_data1x10_noheader, data1x10[1..$]);
+    writeUnittestTsvFile(fpath_data1x10_noheader, data1x10[1 .. $]);
 
     string[][] data1x10ExpectedPermuteCompat =
         [["field_a"], ["8"], ["4"], ["6"], ["5"], ["3"], ["10"], ["7"], ["9"], ["2"], ["1"]];
@@ -2755,7 +2820,7 @@ unittest
     string fpath_data5x25 = buildPath(testDir, "data5x25.tsv");
     string fpath_data5x25_noheader = buildPath(testDir, "data5x25_noheader.tsv");
     writeUnittestTsvFile(fpath_data5x25, data5x25);
-    writeUnittestTsvFile(fpath_data5x25_noheader, data5x25[1..$]);
+    writeUnittestTsvFile(fpath_data5x25_noheader, data5x25[1 .. $]);
 
     string[][] data5x25ExpectedDistinctK2P40 =
         [["ID", "Shape", "Color", "Size", "Weight"],
@@ -2832,7 +2897,7 @@ unittest
     string fpath_data2x25 = buildPath(testDir, "data2x25.tsv");
     string fpath_data2x25_noheader = buildPath(testDir, "data2x25_noheader.tsv");
     writeUnittestTsvFile(fpath_data2x25, data2x25);
-    writeUnittestTsvFile(fpath_data2x25_noheader, data2x25[1..$]);
+    writeUnittestTsvFile(fpath_data2x25_noheader, data2x25[1 .. $]);
 
     string[][] data2x25ExpectedDistinctK1K2P20 =
         [["Shape", "Size"],
@@ -2880,7 +2945,7 @@ unittest
     string fpath_data1x25 = buildPath(testDir, "data1x25.tsv");
     string fpath_data1x25_noheader = buildPath(testDir, "data1x25_noheader.tsv");
     writeUnittestTsvFile(fpath_data1x25, data1x25);
-    writeUnittestTsvFile(fpath_data1x25_noheader, data1x25[1..$]);
+    writeUnittestTsvFile(fpath_data1x25_noheader, data1x25[1 .. $]);
 
     string[][] data1x25ExpectedDistinctK1P20 =
         [["Shape-Size"],
@@ -3051,88 +3116,88 @@ unittest
     testTsvSample(["test-a41", "-H", "-s", "-v", "77", "--replace", "--num", "10", fpath_data3x6], data3x6ExpectedReplaceNum10V77);
 
     /* Shuffling, compatibility mode, without headers. */
-    testTsvSample(["test-b1", "-s", "--compatibility-mode", fpath_data3x1_noheader], data3x1[1..$]);
-    testTsvSample(["test-b2", "-s", "--compatibility-mode", fpath_data3x2_noheader], data3x2PermuteCompat[1..$]);
-    testTsvSample(["test-b3", "-s", "--compatibility-mode", fpath_data3x3_noheader], data3x3ExpectedPermuteCompat[1..$]);
-    testTsvSample(["test-b4", "-s", "--compatibility-mode", fpath_data3x6_noheader], data3x6ExpectedPermuteCompat[1..$]);
-    testTsvSample(["test-b5", "-s", "--print-random", fpath_data3x6_noheader], data3x6ExpectedPermuteCompatProbs[1..$]);
-    testTsvSample(["test-b6", "-s", "--weight-field", "3", "--compatibility-mode", fpath_data3x6_noheader], data3x6ExpectedPermuteWt3[1..$]);
-    testTsvSample(["test-b7", "-s", "--print-random", "-w", "3", fpath_data3x6_noheader], data3x6ExpectedPermuteWt3Probs[1..$]);
-    testTsvSample(["test-b8", "-v", "41", "--print-random", fpath_data3x6_noheader], data3x6ExpectedPermuteCompatV41Probs[1..$]);
-    testTsvSample(["test-b9", "-v", "41", "-w", "3", "--print-random", fpath_data3x6_noheader], data3x6ExpectedPermuteWt3V41Probs[1..$]);
+    testTsvSample(["test-b1", "-s", "--compatibility-mode", fpath_data3x1_noheader], data3x1[1 .. $]);
+    testTsvSample(["test-b2", "-s", "--compatibility-mode", fpath_data3x2_noheader], data3x2PermuteCompat[1 .. $]);
+    testTsvSample(["test-b3", "-s", "--compatibility-mode", fpath_data3x3_noheader], data3x3ExpectedPermuteCompat[1 .. $]);
+    testTsvSample(["test-b4", "-s", "--compatibility-mode", fpath_data3x6_noheader], data3x6ExpectedPermuteCompat[1 .. $]);
+    testTsvSample(["test-b5", "-s", "--print-random", fpath_data3x6_noheader], data3x6ExpectedPermuteCompatProbs[1 .. $]);
+    testTsvSample(["test-b6", "-s", "--weight-field", "3", "--compatibility-mode", fpath_data3x6_noheader], data3x6ExpectedPermuteWt3[1 .. $]);
+    testTsvSample(["test-b7", "-s", "--print-random", "-w", "3", fpath_data3x6_noheader], data3x6ExpectedPermuteWt3Probs[1 .. $]);
+    testTsvSample(["test-b8", "-v", "41", "--print-random", fpath_data3x6_noheader], data3x6ExpectedPermuteCompatV41Probs[1 .. $]);
+    testTsvSample(["test-b9", "-v", "41", "-w", "3", "--print-random", fpath_data3x6_noheader], data3x6ExpectedPermuteWt3V41Probs[1 .. $]);
 
     /* Shuffling, no headers, without compatibility mode, or with printing and compatibility mode. */
-    testTsvSample(["test-bb1", "-s", fpath_data3x1_noheader], data3x1[1..$]);
-    testTsvSample(["test-bb2", "-s", fpath_data3x2_noheader], data3x2PermuteShuffle[1..$]);
-    testTsvSample(["test-bb3", "-s", fpath_data3x3_noheader], data3x3ExpectedPermuteSwap[1..$]);
-    testTsvSample(["test-bb4", "-s", fpath_data3x6_noheader], data3x6ExpectedPermuteSwap[1..$]);
-    testTsvSample(["test-bb5", "-s", "--weight-field", "3", fpath_data3x6_noheader], data3x6ExpectedPermuteWt3[1..$]);
-    testTsvSample(["test-bb6", "-s", "--print-random", "-w", "3", "--compatibility-mode", fpath_data3x6_noheader], data3x6ExpectedPermuteWt3Probs[1..$]);
-    testTsvSample(["test-bb7", "-v", "41", "--print-random", "--compatibility-mode", fpath_data3x6_noheader], data3x6ExpectedPermuteCompatV41Probs[1..$]);
+    testTsvSample(["test-bb1", "-s", fpath_data3x1_noheader], data3x1[1 .. $]);
+    testTsvSample(["test-bb2", "-s", fpath_data3x2_noheader], data3x2PermuteShuffle[1 .. $]);
+    testTsvSample(["test-bb3", "-s", fpath_data3x3_noheader], data3x3ExpectedPermuteSwap[1 .. $]);
+    testTsvSample(["test-bb4", "-s", fpath_data3x6_noheader], data3x6ExpectedPermuteSwap[1 .. $]);
+    testTsvSample(["test-bb5", "-s", "--weight-field", "3", fpath_data3x6_noheader], data3x6ExpectedPermuteWt3[1 .. $]);
+    testTsvSample(["test-bb6", "-s", "--print-random", "-w", "3", "--compatibility-mode", fpath_data3x6_noheader], data3x6ExpectedPermuteWt3Probs[1 .. $]);
+    testTsvSample(["test-bb7", "-v", "41", "--print-random", "--compatibility-mode", fpath_data3x6_noheader], data3x6ExpectedPermuteCompatV41Probs[1 .. $]);
 
     /* Reservoir sampling using Algorithm R, no headers. */
     testTsvSample(["test-ac10", "--prefer-algorithm-r", "--static-seed", "--num", "1", fpath_dataEmpty], dataEmpty);
     testTsvSample(["test-ac11", "--prefer-algorithm-r", "--static-seed", "--num", "2", fpath_dataEmpty], dataEmpty);
-    testTsvSample(["test-ac14", "--prefer-algorithm-r", "-s", "--num", "1", fpath_data3x1_noheader], data3x1[1..$]);
-    testTsvSample(["test-ac15", "--prefer-algorithm-r", "-s", "--num", "2", fpath_data3x1_noheader], data3x1[1..$]);
-    testTsvSample(["test-ac16", "--prefer-algorithm-r", "-s", "--num", "7", fpath_data3x6_noheader], data3x6ExpectedSampleAlgoRNum6[1..$]);
-    testTsvSample(["test-ac17", "--prefer-algorithm-r", "-s", "--num", "6", fpath_data3x6_noheader], data3x6ExpectedSampleAlgoRNum6[1..$]);
-    testTsvSample(["test-ac18", "--prefer-algorithm-r", "-s", "--num", "5", fpath_data3x6_noheader], data3x6ExpectedSampleAlgoRNum5[1..$]);
-    testTsvSample(["test-ac19", "--prefer-algorithm-r", "-s", "--num", "4", fpath_data3x6_noheader], data3x6ExpectedSampleAlgoRNum4[1..$]);
-    testTsvSample(["test-ac20", "--prefer-algorithm-r", "-s", "--num", "3", fpath_data3x6_noheader], data3x6ExpectedSampleAlgoRNum3[1..$]);
-    testTsvSample(["test-ac21", "--prefer-algorithm-r", "-s", "--num", "2", fpath_data3x6_noheader], data3x6ExpectedSampleAlgoRNum2[1..$]);
-    testTsvSample(["test-ac22", "--prefer-algorithm-r", "-s", "--num", "1", fpath_data3x6_noheader], data3x6ExpectedSampleAlgoRNum1[1..$]);
+    testTsvSample(["test-ac14", "--prefer-algorithm-r", "-s", "--num", "1", fpath_data3x1_noheader], data3x1[1 .. $]);
+    testTsvSample(["test-ac15", "--prefer-algorithm-r", "-s", "--num", "2", fpath_data3x1_noheader], data3x1[1 .. $]);
+    testTsvSample(["test-ac16", "--prefer-algorithm-r", "-s", "--num", "7", fpath_data3x6_noheader], data3x6ExpectedSampleAlgoRNum6[1 .. $]);
+    testTsvSample(["test-ac17", "--prefer-algorithm-r", "-s", "--num", "6", fpath_data3x6_noheader], data3x6ExpectedSampleAlgoRNum6[1 .. $]);
+    testTsvSample(["test-ac18", "--prefer-algorithm-r", "-s", "--num", "5", fpath_data3x6_noheader], data3x6ExpectedSampleAlgoRNum5[1 .. $]);
+    testTsvSample(["test-ac19", "--prefer-algorithm-r", "-s", "--num", "4", fpath_data3x6_noheader], data3x6ExpectedSampleAlgoRNum4[1 .. $]);
+    testTsvSample(["test-ac20", "--prefer-algorithm-r", "-s", "--num", "3", fpath_data3x6_noheader], data3x6ExpectedSampleAlgoRNum3[1 .. $]);
+    testTsvSample(["test-ac21", "--prefer-algorithm-r", "-s", "--num", "2", fpath_data3x6_noheader], data3x6ExpectedSampleAlgoRNum2[1 .. $]);
+    testTsvSample(["test-ac22", "--prefer-algorithm-r", "-s", "--num", "1", fpath_data3x6_noheader], data3x6ExpectedSampleAlgoRNum1[1 .. $]);
 
     /* Reservoir sampling using Algorithm R, no headers, inorder output. */
     testTsvSample(["test-aj10", "--prefer-algorithm-r", "--static-seed", "--num", "1", "-i", fpath_dataEmpty], dataEmpty);
     testTsvSample(["test-aj11", "--prefer-algorithm-r", "--static-seed", "--num", "2", "-i", fpath_dataEmpty], dataEmpty);
-    testTsvSample(["test-aj14", "--prefer-algorithm-r", "-s", "--num", "1", "-i", fpath_data3x1_noheader], data3x1[1..$]);
-    testTsvSample(["test-aj15", "--prefer-algorithm-r", "-s", "--num", "2", "-i", fpath_data3x1_noheader], data3x1[1..$]);
-    testTsvSample(["test-aj16", "--prefer-algorithm-r", "-s", "--num", "7", "-i", fpath_data3x6_noheader], data3x6ExpectedSampleAlgoRNum6Inorder[1..$]);
-    testTsvSample(["test-aj17", "--prefer-algorithm-r", "-s", "--num", "6", "-i", fpath_data3x6_noheader], data3x6ExpectedSampleAlgoRNum6Inorder[1..$]);
-    testTsvSample(["test-aj18", "--prefer-algorithm-r", "-s", "--num", "5", "-i", fpath_data3x6_noheader], data3x6ExpectedSampleAlgoRNum5Inorder[1..$]);
-    testTsvSample(["test-aj19", "--prefer-algorithm-r", "-s", "--num", "4", "-i", fpath_data3x6_noheader], data3x6ExpectedSampleAlgoRNum4Inorder[1..$]);
-    testTsvSample(["test-aj20", "--prefer-algorithm-r", "-s", "--num", "3", "-i", fpath_data3x6_noheader], data3x6ExpectedSampleAlgoRNum3Inorder[1..$]);
-    testTsvSample(["test-aj21", "--prefer-algorithm-r", "-s", "--num", "2", "-i", fpath_data3x6_noheader], data3x6ExpectedSampleAlgoRNum2Inorder[1..$]);
-    testTsvSample(["test-aj22", "--prefer-algorithm-r", "-s", "--num", "1", "-i", fpath_data3x6_noheader], data3x6ExpectedSampleAlgoRNum1Inorder[1..$]);
+    testTsvSample(["test-aj14", "--prefer-algorithm-r", "-s", "--num", "1", "-i", fpath_data3x1_noheader], data3x1[1 .. $]);
+    testTsvSample(["test-aj15", "--prefer-algorithm-r", "-s", "--num", "2", "-i", fpath_data3x1_noheader], data3x1[1 .. $]);
+    testTsvSample(["test-aj16", "--prefer-algorithm-r", "-s", "--num", "7", "-i", fpath_data3x6_noheader], data3x6ExpectedSampleAlgoRNum6Inorder[1 .. $]);
+    testTsvSample(["test-aj17", "--prefer-algorithm-r", "-s", "--num", "6", "-i", fpath_data3x6_noheader], data3x6ExpectedSampleAlgoRNum6Inorder[1 .. $]);
+    testTsvSample(["test-aj18", "--prefer-algorithm-r", "-s", "--num", "5", "-i", fpath_data3x6_noheader], data3x6ExpectedSampleAlgoRNum5Inorder[1 .. $]);
+    testTsvSample(["test-aj19", "--prefer-algorithm-r", "-s", "--num", "4", "-i", fpath_data3x6_noheader], data3x6ExpectedSampleAlgoRNum4Inorder[1 .. $]);
+    testTsvSample(["test-aj20", "--prefer-algorithm-r", "-s", "--num", "3", "-i", fpath_data3x6_noheader], data3x6ExpectedSampleAlgoRNum3Inorder[1 .. $]);
+    testTsvSample(["test-aj21", "--prefer-algorithm-r", "-s", "--num", "2", "-i", fpath_data3x6_noheader], data3x6ExpectedSampleAlgoRNum2Inorder[1 .. $]);
+    testTsvSample(["test-aj22", "--prefer-algorithm-r", "-s", "--num", "1", "-i", fpath_data3x6_noheader], data3x6ExpectedSampleAlgoRNum1Inorder[1 .. $]);
 
     /* Bernoulli sampling cases. */
-    testTsvSample(["test-b10", "-s", "-p", "1.0", fpath_data3x1_noheader], data3x1[1..$]);
-    testTsvSample(["test-b11", "-s", "-p", "1.0", fpath_data3x6_noheader], data3x6[1..$]);
-    testTsvSample(["test-b12", "-p", "1.0", fpath_data3x6_noheader], data3x6[1..$]);
-    testTsvSample(["test-b13", "-s", "--prob", "1.0", "--print-random", fpath_data3x6_noheader], data3x6ExpectedBernoulliProbsP100[1..$]);
-    testTsvSample(["test-b14", "-s", "--prob", "0.60", "--print-random", fpath_data3x6_noheader], data3x6ExpectedBernoulliCompatProbsP60[1..$]);
-    testTsvSample(["test-b15", "-v", "41", "--prob", "0.60", "--print-random", fpath_data3x6_noheader], data3x6ExpectedBernoulliCompatP60V41Probs[1..$]);
+    testTsvSample(["test-b10", "-s", "-p", "1.0", fpath_data3x1_noheader], data3x1[1 .. $]);
+    testTsvSample(["test-b11", "-s", "-p", "1.0", fpath_data3x6_noheader], data3x6[1 .. $]);
+    testTsvSample(["test-b12", "-p", "1.0", fpath_data3x6_noheader], data3x6[1 .. $]);
+    testTsvSample(["test-b13", "-s", "--prob", "1.0", "--print-random", fpath_data3x6_noheader], data3x6ExpectedBernoulliProbsP100[1 .. $]);
+    testTsvSample(["test-b14", "-s", "--prob", "0.60", "--print-random", fpath_data3x6_noheader], data3x6ExpectedBernoulliCompatProbsP60[1 .. $]);
+    testTsvSample(["test-b15", "-v", "41", "--prob", "0.60", "--print-random", fpath_data3x6_noheader], data3x6ExpectedBernoulliCompatP60V41Probs[1 .. $]);
 
     /* Bernoulli sampling with probabilities in skip sampling range. */
-    testTsvSample(["test-bb1", "-v", "333", "-p", "0.01", fpath_data1x200_noheader], data1x200ExpectedBernoulliSkipV333P01[1..$]);
-    testTsvSample(["test-bb2", "-v", "333", "-p", "0.02", fpath_data1x200_noheader], data1x200ExpectedBernoulliSkipV333P02[1..$]);
-    testTsvSample(["test-bb3", "-v", "333", "-p", "0.03", fpath_data1x200_noheader], data1x200ExpectedBernoulliSkipV333P03[1..$]);
-    testTsvSample(["test-bb4", "-v", "333", "-p", "0.01", "--compatibility-mode", fpath_data1x200_noheader], data1x200ExpectedBernoulliCompatV333P01[1..$]);
-    testTsvSample(["test-bb5", "-v", "333", "-p", "0.02", "--compatibility-mode", fpath_data1x200_noheader], data1x200ExpectedBernoulliCompatV333P02[1..$]);
-    testTsvSample(["test-bb6", "-v", "333", "-p", "0.03", "--compatibility-mode", fpath_data1x200_noheader], data1x200ExpectedBernoulliCompatV333P03[1..$]);
-    testTsvSample(["test-bb7", "-s", "-p", "0.40", "--prefer-skip-sampling", fpath_data3x6_noheader], data3x6ExpectedBernoulliSkipP40[1..$]);
+    testTsvSample(["test-bb1", "-v", "333", "-p", "0.01", fpath_data1x200_noheader], data1x200ExpectedBernoulliSkipV333P01[1 .. $]);
+    testTsvSample(["test-bb2", "-v", "333", "-p", "0.02", fpath_data1x200_noheader], data1x200ExpectedBernoulliSkipV333P02[1 .. $]);
+    testTsvSample(["test-bb3", "-v", "333", "-p", "0.03", fpath_data1x200_noheader], data1x200ExpectedBernoulliSkipV333P03[1 .. $]);
+    testTsvSample(["test-bb4", "-v", "333", "-p", "0.01", "--compatibility-mode", fpath_data1x200_noheader], data1x200ExpectedBernoulliCompatV333P01[1 .. $]);
+    testTsvSample(["test-bb5", "-v", "333", "-p", "0.02", "--compatibility-mode", fpath_data1x200_noheader], data1x200ExpectedBernoulliCompatV333P02[1 .. $]);
+    testTsvSample(["test-bb6", "-v", "333", "-p", "0.03", "--compatibility-mode", fpath_data1x200_noheader], data1x200ExpectedBernoulliCompatV333P03[1 .. $]);
+    testTsvSample(["test-bb7", "-s", "-p", "0.40", "--prefer-skip-sampling", fpath_data3x6_noheader], data3x6ExpectedBernoulliSkipP40[1 .. $]);
 
     /* Distinct sampling cases. */
-    testTsvSample(["test-b16", "-s", "-p", "1.0", "-k", "2", fpath_data3x1_noheader], data3x1[1..$]);
-    testTsvSample(["test-b17", "-s", "-p", "1.0", "-k", "2", fpath_data3x6_noheader], data3x6[1..$]);
-    testTsvSample(["test-b18", "-p", "1.0", "-k", "2", fpath_data3x6_noheader], data3x6[1..$]);
-    testTsvSample(["test-b19", "-v", "71563", "-p", "1.0", "-k", "2", fpath_data3x6_noheader], data3x6[1..$]);
+    testTsvSample(["test-b16", "-s", "-p", "1.0", "-k", "2", fpath_data3x1_noheader], data3x1[1 .. $]);
+    testTsvSample(["test-b17", "-s", "-p", "1.0", "-k", "2", fpath_data3x6_noheader], data3x6[1 .. $]);
+    testTsvSample(["test-b18", "-p", "1.0", "-k", "2", fpath_data3x6_noheader], data3x6[1 .. $]);
+    testTsvSample(["test-b19", "-v", "71563", "-p", "1.0", "-k", "2", fpath_data3x6_noheader], data3x6[1 .. $]);
 
     /* Generating random weights. Reuse Bernoulli sampling tests at prob 100%. */
-    testTsvSample(["test-b20", "-s", "--gen-random-inorder", fpath_data3x6_noheader], data3x6ExpectedBernoulliProbsP100[1..$]);
-    testTsvSample(["test-b23", "-v", "41", "--gen-random-inorder", "--weight-field", "3", fpath_data3x6_noheader], data3x6ExpectedWt3V41ProbsInorder[1..$]);
+    testTsvSample(["test-b20", "-s", "--gen-random-inorder", fpath_data3x6_noheader], data3x6ExpectedBernoulliProbsP100[1 .. $]);
+    testTsvSample(["test-b23", "-v", "41", "--gen-random-inorder", "--weight-field", "3", fpath_data3x6_noheader], data3x6ExpectedWt3V41ProbsInorder[1 .. $]);
     testTsvSample(["test-b24", "-s", "-p", "0.6", "-k", "1,3", "--print-random", fpath_data3x6_noheader],
-                  data3x6ExpectedDistinctK1K3P60Probs[1..$]);
+                  data3x6ExpectedDistinctK1K3P60Probs[1 .. $]);
     testTsvSample(["test-b24", "-s", "-p", "0.2", "-k", "2", "--gen-random-inorder", fpath_data3x6_noheader],
-                  data3x6ExpectedDistinctK2P2ProbsInorder[1..$]);
+                  data3x6ExpectedDistinctK2P2ProbsInorder[1 .. $]);
 
     /* Simple random sampling with replacement. */
     testTsvSample(["test-b25", "-s", "--replace", fpath_dataEmpty], dataEmpty);
     testTsvSample(["test-b26", "-s", "-r", "--num", "3", fpath_dataEmpty], dataEmpty);
-    testTsvSample(["test-b27", "-s", "-r", "-n", "3", fpath_data3x1_noheader], data3x1ExpectedReplaceNum3[1..$]);
-    testTsvSample(["test-b28", "-s", "--replace", "-n", "10", fpath_data3x6_noheader], data3x6ExpectedReplaceNum10[1..$]);
-    testTsvSample(["test-b29", "-s", "-v", "77", "--replace", "--num", "10", fpath_data3x6_noheader], data3x6ExpectedReplaceNum10V77[1..$]);
+    testTsvSample(["test-b27", "-s", "-r", "-n", "3", fpath_data3x1_noheader], data3x1ExpectedReplaceNum3[1 .. $]);
+    testTsvSample(["test-b28", "-s", "--replace", "-n", "10", fpath_data3x6_noheader], data3x6ExpectedReplaceNum10[1 .. $]);
+    testTsvSample(["test-b29", "-s", "-v", "77", "--replace", "--num", "10", fpath_data3x6_noheader], data3x6ExpectedReplaceNum10V77[1 .. $]);
 
     /* Multi-file tests. */
     testTsvSample(["test-c1", "--header", "--static-seed", "--compatibility-mode",
@@ -3158,27 +3223,27 @@ unittest
     testTsvSample(["test-c6", "--static-seed", "--compatibility-mode",
                    fpath_data3x3_noheader, fpath_data3x1_noheader, fpath_dataEmpty,
                    fpath_data3x6_noheader, fpath_data3x2_noheader],
-                  combo1ExpectedPermuteCompat[1..$]);
+                  combo1ExpectedPermuteCompat[1 .. $]);
     testTsvSample(["test-c7", "--static-seed", "--print-random",
                    fpath_data3x3_noheader, fpath_data3x1_noheader, fpath_dataEmpty,
                    fpath_data3x6_noheader, fpath_data3x2_noheader],
-                  combo1ExpectedPermuteCompatProbs[1..$]);
+                  combo1ExpectedPermuteCompatProbs[1 .. $]);
     testTsvSample(["test-c8", "--static-seed", "--print-random", "--weight-field", "3",
                    fpath_data3x3_noheader, fpath_data3x1_noheader, fpath_dataEmpty,
                    fpath_data3x6_noheader, fpath_data3x2_noheader],
-                  combo1ExpectedPermuteWt3Probs[1..$]);
+                  combo1ExpectedPermuteWt3Probs[1 .. $]);
     testTsvSample(["test-c9", "--static-seed", "--weight-field", "3", "--compatibility-mode",
                    fpath_data3x3_noheader, fpath_data3x1_noheader, fpath_dataEmpty,
                    fpath_data3x6_noheader, fpath_data3x2_noheader],
-                  combo1ExpectedPermuteWt3[1..$]);
+                  combo1ExpectedPermuteWt3[1 .. $]);
     testTsvSample(["test-c10", "--static-seed", "--prefer-algorithm-r", "--num", "4",
                    fpath_data3x3_noheader, fpath_data3x1_noheader, fpath_dataEmpty,
                    fpath_data3x6_noheader, fpath_data3x2_noheader],
-                  combo1ExpectedSampleAlgoRNum4[1..$]);
+                  combo1ExpectedSampleAlgoRNum4[1 .. $]);
     testTsvSample(["test-c10b", "--static-seed", "--prefer-algorithm-r", "--num", "4", "--inorder",
                    fpath_data3x3_noheader, fpath_data3x1_noheader, fpath_dataEmpty,
                    fpath_data3x6_noheader, fpath_data3x2_noheader],
-                  combo1ExpectedSampleAlgoRNum4Inorder[1..$]);
+                  combo1ExpectedSampleAlgoRNum4Inorder[1 .. $]);
 
     /* Bernoulli sampling cases. */
     testTsvSample(["test-c11", "--header", "--static-seed", "--print-random", "--prob", ".5",
@@ -3190,11 +3255,11 @@ unittest
     testTsvSample(["test-c13", "--static-seed", "--print-random", "--prob", ".5",
                    fpath_data3x3_noheader, fpath_data3x1_noheader, fpath_dataEmpty,
                    fpath_data3x6_noheader, fpath_data3x2_noheader],
-                  combo1ExpectedBernoulliCompatP50Probs[1..$]);
+                  combo1ExpectedBernoulliCompatP50Probs[1 .. $]);
     testTsvSample(["test-c14", "--static-seed", "--prob", ".4",
                    fpath_data3x3_noheader, fpath_data3x1_noheader, fpath_dataEmpty,
                    fpath_data3x6_noheader, fpath_data3x2_noheader],
-                  combo1ExpectedBernoulliCompatP40[1..$]);
+                  combo1ExpectedBernoulliCompatP40[1 .. $]);
 
     /* Bernoulli sampling with probabilities in skip sampling range. */
     testTsvSample(["test-cc1", "-H", "-v", "333", "-p", "0.03",
@@ -3202,7 +3267,7 @@ unittest
                   combo2ExpectedBernoulliSkipV333P03);
     testTsvSample(["test-cc1", "-v", "333", "-p", "0.03",
                    fpath_data3x1_noheader, fpath_data1x200_noheader, fpath_dataEmpty, fpath_data1x10_noheader],
-                  combo2ExpectedBernoulliSkipV333P03[1..$]);
+                  combo2ExpectedBernoulliSkipV333P03[1 .. $]);
 
     /* Distinct sampling cases. */
     testTsvSample(["test-c13", "--header", "--static-seed", "--key-fields", "1", "--prob", ".4",
@@ -3211,7 +3276,7 @@ unittest
     testTsvSample(["test-c14", "--static-seed", "--key-fields", "1", "--prob", ".4",
                    fpath_data3x3_noheader, fpath_data3x1_noheader, fpath_dataEmpty,
                    fpath_data3x6_noheader, fpath_data3x2_noheader],
-                  combo1ExpectedDistinctK1P40[1..$]);
+                  combo1ExpectedDistinctK1P40[1 .. $]);
 
     /* Generating random weights. */
     testTsvSample(["test-c15", "--header", "--static-seed", "--gen-random-inorder",
@@ -3220,7 +3285,7 @@ unittest
     testTsvSample(["test-c16", "--static-seed", "--gen-random-inorder",
                    fpath_data3x3_noheader, fpath_data3x1_noheader,
                    fpath_dataEmpty, fpath_data3x6_noheader, fpath_data3x2_noheader],
-                  combo1ExpectedProbsInorder[1..$]);
+                  combo1ExpectedProbsInorder[1 .. $]);
 
     /* Simple random sampling with replacement. */
     testTsvSample(["test-c17", "--header", "--static-seed", "--replace", "--num", "10",
@@ -3230,7 +3295,7 @@ unittest
     testTsvSample(["test-c18", "--static-seed", "--replace", "--num", "10",
                    fpath_data3x3_noheader, fpath_data3x1_noheader, fpath_dataEmpty,
                    fpath_data3x6_noheader, fpath_data3x2_noheader],
-                  combo1ExpectedReplaceNum10[1..$]);
+                  combo1ExpectedReplaceNum10[1 .. $]);
 
     /* Single column file. */
     testTsvSample(["test-d1", "-H", "-s", "--compatibility-mode", fpath_data1x10], data1x10ExpectedPermuteCompat);
@@ -3371,15 +3436,15 @@ unittest
 
     testTsvSample(["test-as10", "--compatibility-mode", "--static-seed", "--num", "1", "-i", fpath_dataEmpty], dataEmpty);
     testTsvSample(["test-as11", "--compatibility-mode", "--static-seed", "--num", "2", "-i", fpath_dataEmpty], dataEmpty);
-    testTsvSample(["test-as14", "--compatibility-mode", "-s", "--num", "1", "-i", fpath_data3x1_noheader], data3x1[1..$]);
-    testTsvSample(["test-as15", "--compatibility-mode", "-s", "--num", "2", "-i", fpath_data3x1_noheader], data3x1[1..$]);
-    testTsvSample(["test-as16", "--compatibility-mode", "-s", "--num", "7", "-i", fpath_data3x6_noheader], data3x6ExpectedSampleCompatNum6Inorder[1..$]);
-    testTsvSample(["test-as17", "--compatibility-mode", "-s", "--num", "6", "-i", fpath_data3x6_noheader], data3x6ExpectedSampleCompatNum6Inorder[1..$]);
-    testTsvSample(["test-as18", "--compatibility-mode", "-s", "--num", "5", "-i", fpath_data3x6_noheader], data3x6ExpectedSampleCompatNum5Inorder[1..$]);
-    testTsvSample(["test-as19", "--compatibility-mode", "-s", "--num", "4", "-i", fpath_data3x6_noheader], data3x6ExpectedSampleCompatNum4Inorder[1..$]);
-    testTsvSample(["test-as20", "--compatibility-mode", "-s", "--num", "3", "-i", fpath_data3x6_noheader], data3x6ExpectedSampleCompatNum3Inorder[1..$]);
-    testTsvSample(["test-as21", "--compatibility-mode", "-s", "--num", "2", "-i", fpath_data3x6_noheader], data3x6ExpectedSampleCompatNum2Inorder[1..$]);
-    testTsvSample(["test-as22", "--compatibility-mode", "-s", "--num", "1", "-i", fpath_data3x6_noheader], data3x6ExpectedSampleCompatNum1Inorder[1..$]);
+    testTsvSample(["test-as14", "--compatibility-mode", "-s", "--num", "1", "-i", fpath_data3x1_noheader], data3x1[1 .. $]);
+    testTsvSample(["test-as15", "--compatibility-mode", "-s", "--num", "2", "-i", fpath_data3x1_noheader], data3x1[1 .. $]);
+    testTsvSample(["test-as16", "--compatibility-mode", "-s", "--num", "7", "-i", fpath_data3x6_noheader], data3x6ExpectedSampleCompatNum6Inorder[1 .. $]);
+    testTsvSample(["test-as17", "--compatibility-mode", "-s", "--num", "6", "-i", fpath_data3x6_noheader], data3x6ExpectedSampleCompatNum6Inorder[1 .. $]);
+    testTsvSample(["test-as18", "--compatibility-mode", "-s", "--num", "5", "-i", fpath_data3x6_noheader], data3x6ExpectedSampleCompatNum5Inorder[1 .. $]);
+    testTsvSample(["test-as19", "--compatibility-mode", "-s", "--num", "4", "-i", fpath_data3x6_noheader], data3x6ExpectedSampleCompatNum4Inorder[1 .. $]);
+    testTsvSample(["test-as20", "--compatibility-mode", "-s", "--num", "3", "-i", fpath_data3x6_noheader], data3x6ExpectedSampleCompatNum3Inorder[1 .. $]);
+    testTsvSample(["test-as21", "--compatibility-mode", "-s", "--num", "2", "-i", fpath_data3x6_noheader], data3x6ExpectedSampleCompatNum2Inorder[1 .. $]);
+    testTsvSample(["test-as22", "--compatibility-mode", "-s", "--num", "1", "-i", fpath_data3x6_noheader], data3x6ExpectedSampleCompatNum1Inorder[1 .. $]);
 
     /* Inorder sampling tests with random number printing. --compatibility-mode not needed. */
     testTsvSample(["test-at16", "--compatibility-mode", "-H", "-s", "--num", "7", "-i", "--print-random", fpath_data3x6], data3x6ExpectedSampleCompatNum6ProbsInorder);
@@ -3392,14 +3457,14 @@ unittest
     testTsvSample(["test-at21", "--compatibility-mode", "-H", "-s", "--num", "2", "-i", "--print-random", fpath_data3x6], data3x6ExpectedSampleCompatNum2ProbsInorder);
     testTsvSample(["test-at22", "--compatibility-mode", "-H", "-s", "--num", "1", "-i", "--print-random", fpath_data3x6], data3x6ExpectedSampleCompatNum1ProbsInorder);
 
-    testTsvSample(["test-au16", "--compatibility-mode", "-s", "--num", "7", "-i", "--print-random", fpath_data3x6_noheader], data3x6ExpectedSampleCompatNum6ProbsInorder[1..$]);
-    testTsvSample(["test-au17", "--compatibility-mode", "-s", "--num", "6", "-i", "--print-random", fpath_data3x6_noheader], data3x6ExpectedSampleCompatNum6ProbsInorder[1..$]);
-    testTsvSample(["test-au18", "--compatibility-mode", "-s", "--num", "5", "-i", "--print-random", fpath_data3x6_noheader], data3x6ExpectedSampleCompatNum5ProbsInorder[1..$]);
-    testTsvSample(["test-au19", "--compatibility-mode", "-s", "--num", "4", "-i", "--print-random", fpath_data3x6_noheader], data3x6ExpectedSampleCompatNum4ProbsInorder[1..$]);
-    testTsvSample(["test-au19",                         "-s", "--num", "4", "-i", "--print-random", fpath_data3x6_noheader], data3x6ExpectedSampleCompatNum4ProbsInorder[1..$]);
-    testTsvSample(["test-au20", "--compatibility-mode", "-s", "--num", "3", "-i", "--print-random", fpath_data3x6_noheader], data3x6ExpectedSampleCompatNum3ProbsInorder[1..$]);
-    testTsvSample(["test-au21", "--compatibility-mode", "-s", "--num", "2", "-i", "--print-random", fpath_data3x6_noheader], data3x6ExpectedSampleCompatNum2ProbsInorder[1..$]);
-    testTsvSample(["test-au22", "--compatibility-mode", "-s", "--num", "1", "-i", "--print-random", fpath_data3x6_noheader], data3x6ExpectedSampleCompatNum1ProbsInorder[1..$]);
+    testTsvSample(["test-au16", "--compatibility-mode", "-s", "--num", "7", "-i", "--print-random", fpath_data3x6_noheader], data3x6ExpectedSampleCompatNum6ProbsInorder[1 .. $]);
+    testTsvSample(["test-au17", "--compatibility-mode", "-s", "--num", "6", "-i", "--print-random", fpath_data3x6_noheader], data3x6ExpectedSampleCompatNum6ProbsInorder[1 .. $]);
+    testTsvSample(["test-au18", "--compatibility-mode", "-s", "--num", "5", "-i", "--print-random", fpath_data3x6_noheader], data3x6ExpectedSampleCompatNum5ProbsInorder[1 .. $]);
+    testTsvSample(["test-au19", "--compatibility-mode", "-s", "--num", "4", "-i", "--print-random", fpath_data3x6_noheader], data3x6ExpectedSampleCompatNum4ProbsInorder[1 .. $]);
+    testTsvSample(["test-au19",                         "-s", "--num", "4", "-i", "--print-random", fpath_data3x6_noheader], data3x6ExpectedSampleCompatNum4ProbsInorder[1 .. $]);
+    testTsvSample(["test-au20", "--compatibility-mode", "-s", "--num", "3", "-i", "--print-random", fpath_data3x6_noheader], data3x6ExpectedSampleCompatNum3ProbsInorder[1 .. $]);
+    testTsvSample(["test-au21", "--compatibility-mode", "-s", "--num", "2", "-i", "--print-random", fpath_data3x6_noheader], data3x6ExpectedSampleCompatNum2ProbsInorder[1 .. $]);
+    testTsvSample(["test-au22", "--compatibility-mode", "-s", "--num", "1", "-i", "--print-random", fpath_data3x6_noheader], data3x6ExpectedSampleCompatNum1ProbsInorder[1 .. $]);
 
     /* Inorder weighted sampling tests. */
     testTsvSample(["test-ax16", "-H", "-s", "-n", "7", "-i", fpath_data3x6], data3x6ExpectedWt3Num6Inorder);
@@ -3410,13 +3475,13 @@ unittest
     testTsvSample(["test-ax21", "-H", "-s", "-n", "2", "-i", fpath_data3x6], data3x6ExpectedWt3Num2Inorder);
     testTsvSample(["test-ax22", "-H", "-s", "-n", "1", "-i", fpath_data3x6], data3x6ExpectedWt3Num1Inorder);
 
-    testTsvSample(["test-ay16", "-s", "-n", "7", "-i", fpath_data3x6_noheader], data3x6ExpectedWt3Num6Inorder[1..$]);
-    testTsvSample(["test-ay17", "-s", "-n", "6", "-i", fpath_data3x6_noheader], data3x6ExpectedWt3Num6Inorder[1..$]);
-    testTsvSample(["test-ay18", "-s", "-n", "5", "-i", fpath_data3x6_noheader], data3x6ExpectedWt3Num5Inorder[1..$]);
-    testTsvSample(["test-ay19", "-s", "-n", "4", "-i", fpath_data3x6_noheader], data3x6ExpectedWt3Num4Inorder[1..$]);
-    testTsvSample(["test-ay20", "-s", "-n", "3", "-i", fpath_data3x6_noheader], data3x6ExpectedWt3Num3Inorder[1..$]);
-    testTsvSample(["test-ay21", "-s", "-n", "2", "-i", fpath_data3x6_noheader], data3x6ExpectedWt3Num2Inorder[1..$]);
-    testTsvSample(["test-ay22", "-s", "-n", "1", "-i", fpath_data3x6_noheader], data3x6ExpectedWt3Num1Inorder[1..$]);
+    testTsvSample(["test-ay16", "-s", "-n", "7", "-i", fpath_data3x6_noheader], data3x6ExpectedWt3Num6Inorder[1 .. $]);
+    testTsvSample(["test-ay17", "-s", "-n", "6", "-i", fpath_data3x6_noheader], data3x6ExpectedWt3Num6Inorder[1 .. $]);
+    testTsvSample(["test-ay18", "-s", "-n", "5", "-i", fpath_data3x6_noheader], data3x6ExpectedWt3Num5Inorder[1 .. $]);
+    testTsvSample(["test-ay19", "-s", "-n", "4", "-i", fpath_data3x6_noheader], data3x6ExpectedWt3Num4Inorder[1 .. $]);
+    testTsvSample(["test-ay20", "-s", "-n", "3", "-i", fpath_data3x6_noheader], data3x6ExpectedWt3Num3Inorder[1 .. $]);
+    testTsvSample(["test-ay21", "-s", "-n", "2", "-i", fpath_data3x6_noheader], data3x6ExpectedWt3Num2Inorder[1 .. $]);
+    testTsvSample(["test-ay22", "-s", "-n", "1", "-i", fpath_data3x6_noheader], data3x6ExpectedWt3Num1Inorder[1 .. $]);
 
     /*
      * Distinct sampling tests.
@@ -3431,13 +3496,13 @@ unittest
                   data5x25ExpectedDistinctK2K3K4P20);
 
     testTsvSample(["test-j4", "--static-seed", "--prob", "0.40", "--key-fields", "2", fpath_data5x25_noheader],
-                  data5x25ExpectedDistinctK2P40[1..$]);
+                  data5x25ExpectedDistinctK2P40[1 .. $]);
 
     testTsvSample(["test-j5", "-s", "-p", "0.20", "-k", "2,4", fpath_data5x25_noheader],
-                  data5x25ExpectedDistinctK2K4P20[1..$]);
+                  data5x25ExpectedDistinctK2K4P20[1 .. $]);
 
     testTsvSample(["test-j6", "-s", "-p", "0.20", "-k", "2-4", fpath_data5x25_noheader],
-                  data5x25ExpectedDistinctK2K3K4P20[1..$]);
+                  data5x25ExpectedDistinctK2K3K4P20[1 .. $]);
 
 
     /* These distinct tests check that the whole line as '-k 0' and specifying all fields
@@ -3451,10 +3516,10 @@ unittest
                   data2x25ExpectedDistinctK1K2P20);
 
     testTsvSample(["test-j9", "-s", "-p", "0.20", "-k", "1,2", fpath_data2x25_noheader],
-                  data2x25ExpectedDistinctK1K2P20[1..$]);
+                  data2x25ExpectedDistinctK1K2P20[1 .. $]);
 
     testTsvSample(["test-j10", "-s", "-p", "0.20", "-k", "0", fpath_data2x25_noheader],
-                  data2x25ExpectedDistinctK1K2P20[1..$]);
+                  data2x25ExpectedDistinctK1K2P20[1 .. $]);
 
     /* Similar to the last set, but for a 1-column file. Also with random value printing. */
     testTsvSample(["test-j11", "-H", "-s", "-p", "0.20", "-k", "1", fpath_data1x25],
@@ -3464,10 +3529,10 @@ unittest
                   data1x25ExpectedDistinctK1P20);
 
     testTsvSample(["test-j13", "-s", "-p", "0.20", "-k", "1", fpath_data1x25_noheader],
-                  data1x25ExpectedDistinctK1P20[1..$]);
+                  data1x25ExpectedDistinctK1P20[1 .. $]);
 
     testTsvSample(["test-j14", "-s", "-p", "0.20", "-k", "0", fpath_data1x25_noheader],
-                  data1x25ExpectedDistinctK1P20[1..$]);
+                  data1x25ExpectedDistinctK1P20[1 .. $]);
 
 
     testTsvSample(["test-j15", "-H", "-s", "-p", "0.20", "-k", "1", "--print-random", fpath_data1x25],
@@ -3477,10 +3542,10 @@ unittest
                   data1x25ExpectedDistinctK1P20Probs);
 
     testTsvSample(["test-j17", "-s", "-p", "0.20", "-k", "1", "--print-random", fpath_data1x25_noheader],
-                  data1x25ExpectedDistinctK1P20Probs[1..$]);
+                  data1x25ExpectedDistinctK1P20Probs[1 .. $]);
 
     testTsvSample(["test-j18", "-s", "-p", "0.20", "-k", "0", "--print-random", fpath_data1x25_noheader],
-                  data1x25ExpectedDistinctK1P20Probs[1..$]);
+                  data1x25ExpectedDistinctK1P20Probs[1 .. $]);
 
 
     testTsvSample(["test-j19", "-H", "-s", "-p", "0.20", "-k", "1", "--gen-random-inorder", fpath_data1x25],
@@ -3490,9 +3555,9 @@ unittest
                   data1x25ExpectedDistinctK1P20ProbsInorder);
 
     testTsvSample(["test-j21", "-s", "-p", "0.20", "-k", "1", "--gen-random-inorder", fpath_data1x25_noheader],
-                  data1x25ExpectedDistinctK1P20ProbsInorder[1..$]);
+                  data1x25ExpectedDistinctK1P20ProbsInorder[1 .. $]);
 
     testTsvSample(["test-j22", "-s", "-p", "0.20", "-k", "0", "--gen-random-inorder", fpath_data1x25_noheader],
-                  data1x25ExpectedDistinctK1P20ProbsInorder[1..$]);
+                  data1x25ExpectedDistinctK1P20ProbsInorder[1 .. $]);
 
 }
