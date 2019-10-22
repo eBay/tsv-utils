@@ -1349,7 +1349,6 @@ if (isOutputRange!(OutputRange, char))
      * Read all file data into memory. Then split the data into lines and assign a
      * random value to each line. identifyInputLines also writes the first header line.
      */
-    //const fileData = cmdopt.files.map!FileData.array;
     const fileData = cmdopt.files.readFileData;
     auto inputLines = fileData.identifyInputLines!(Yes.hasRandomValue, isWeighted)(cmdopt, outputStream);
 
@@ -1397,7 +1396,6 @@ if (isOutputRange!(OutputRange, char))
     /*
      * Read all file data into memory and split into lines.
      */
-    //const fileData = cmdopt.files.map!FileData.array;
     const fileData = cmdopt.files.readFileData;
     auto inputLines = fileData.identifyInputLines!(No.hasRandomValue, No.isWeighted)(cmdopt, outputStream);
 
@@ -1435,7 +1433,6 @@ if (isOutputRange!(OutputRange, char))
     /*
      * Read all file data into memory and split the data into lines.
      */
-    //const fileData = cmdopt.files.map!FileData.array;
     const fileData = cmdopt.files.readFileData;
     const inputLines = fileData.identifyInputLines!(No.hasRandomValue, No.isWeighted)(cmdopt, outputStream);
 
@@ -1501,47 +1498,73 @@ InputBlock[] readFileData(string[] files)
 
     foreach (filename; files)
     {
-        auto ifile = (filename == "-") ? stdin : filename.File;
+        /* If the file size can be determined then read it as a single block.
+         * Otherwise read as multiple blocks. File.size() returns ulong.max
+         * if file size cannot be determined, so we'll combine that check
+         * with the standard input case.
+         */
 
-        /* Note: File.isize returns ulong.max if file size cannot be determined. */
+        auto ifile = (filename == "-") ? stdin : filename.File;
         immutable ulong filesize = (filename == "-") ? ulong.max : ifile.size;
 
         if (filesize != ulong.max)
         {
-            /* File size known. Read into a single InputBlock struct. */
-            blocksAppender.put(InputBlock(filename, 0));
-            auto dataAppender = appender(&(blocks[$-1].data));
-            dataAppender.reserve(filesize);
-
-            foreach (ref ubyte[] buffer; ifile.byChunk(rawReadBuffer))
-            {
-                dataAppender.put(cast(char[]) buffer);
-            }
+            readFileDataAsOneBlock(filename, ifile, filesize, blocksAppender, rawReadBuffer);
         }
         else
         {
-            readFileDataAsBlocks(filename, ifile, blocksAppender, rawReadBuffer,
-                                 BlockSize, ReadSize, NewlineSearchSize);
+            readFileDataAsMultipleBlocks(filename, ifile, blocksAppender, rawReadBuffer,
+                                         BlockSize, NewlineSearchSize);
         }
     }
     return blocks;
 }
 
+/* readFileData() helper function. Read data from a File handle as a single block. The
+ * new block is appended to an existing InputBlock[] array.
+ *
+ * readFileDataAsOneBlocks is part of the readFileData logic. It handles the case
+ * where a file is being read as a single block. Normally initialBlockSize is passed
+ * as the size of the file.
+ *
+ * This routine has been separated out to enable unit testing. At present it is not
+ * intended as a general API. See readFileData for more info.
+ */
+private void readFileDataAsOneBlock(
+    string filename,
+    ref File ifile,
+    const ulong initialBlockSize,
+    ref RefAppender!(InputBlock[]) blocksAppender,
+    ref ubyte[] rawReadBuffer)
+{
+    blocksAppender.put(InputBlock(filename, 0));
+    auto dataAppender = appender(&(blocksAppender.data[$-1].data));
+    dataAppender.reserve(initialBlockSize);
+
+    foreach (ref ubyte[] buffer; ifile.byChunk(rawReadBuffer))
+    {
+        dataAppender.put(cast(char[]) buffer);
+    }
+}
+
 /* readFileData() helper function. Read data from a File handle as a series of blocks.
  * Blocks are appended to an existing InputBlock[] array.
  *
- * This routine is part of the readFileData logic. It handles the case where a file or
- * standard input is being read as a series of blocks. It is separated out for unit
- * testing and is not intended as a general API. See readFileData for more info.
+ * readFileDataAsMultipleBlocks is part of the readFileData logic. It handles the case
+ * where a file or standard input is being read as a series of blocks. This is the
+ * standard approach for standard input, but also applies when the file size cannot be
+ * determined.
+ *
+ * This routine has been separated out to enable unit testing. At present it is not
+ * intended as a general API. See readFileData for more info.
  */
-private void readFileDataAsBlocks(
+private void readFileDataAsMultipleBlocks(
     string filename,
     ref File ifile,
     ref RefAppender!(InputBlock[]) blocksAppender,
     ref ubyte[] rawReadBuffer,
-    const size_t BlockSize,
-    const size_t ReadSize,
-    const size_t NewlineSearchSize)
+    const size_t blockSize,
+    const size_t newlineSearchSize)
 {
     import std.algorithm : find, min;
     import std.range : retro;
@@ -1552,7 +1575,7 @@ private void readFileDataAsBlocks(
      */
     blocksAppender.put(InputBlock(filename, 0));
     auto dataAppender = appender(&(blocksAppender.data[$-1].data));
-    dataAppender.reserve(BlockSize);
+    dataAppender.reserve(blockSize);
     size_t blockNumber = 0;
 
     /* Read all the data and copy it to an InputBlock. */
@@ -1583,7 +1606,7 @@ private void readFileDataAsBlocks(
                 blockNumber++;
                 blocksAppender.put(InputBlock(filename, blockNumber));
                 dataAppender = appender(&(blocksAppender.data[$-1].data));
-                dataAppender.reserve(BlockSize);
+                dataAppender.reserve(blockSize);
                 dataAppender.put(cast(char[]) buffer[appendRegion.length .. $]);
 
                 assert(blocksAppender.data.length >= 2);
@@ -1595,25 +1618,32 @@ private void readFileDataAsBlocks(
                  * newline is not found, simply append to the current block
                  * and let it grow. We'll only search backward so far.
                  */
-                InputBlock* currBlock = &(blocksAppender.data[$-1]);
-                immutable size_t searchLength = min(currBlock.data.length, NewlineSearchSize);
-                immutable size_t searchStart = currBlock.data.length - searchLength;
-                auto blockSearchRegion = currBlock.data[searchStart .. $];
+                immutable size_t currBlockLength = blocksAppender.data[$-1].data.length;
+                immutable size_t searchLength = min(currBlockLength, newlineSearchSize);
+                immutable size_t searchStart = currBlockLength - searchLength;
+                auto blockSearchRegion = blocksAppender.data[$-1].data[searchStart .. $];
                 auto lastNewlineOffset = blockSearchRegion.retro.find('\n').source.length;
 
                 if (lastNewlineOffset != 0)
                 {
-                    /* Create a new InputBlock. */
+                    /* Create a new InputBlock. The previous InputBlock is then found
+                     * at blocksAppender.data[$-2]. It may be a physically different
+                     * struct (a copy) if the blocks array gets reallocated.
+                     */
                     blockNumber++;
                     blocksAppender.put(InputBlock(filename, blockNumber));
                     dataAppender = appender(&(blocksAppender.data[$-1].data));
-                    dataAppender.reserve(BlockSize);
+                    dataAppender.reserve(blockSize);
 
-                    /* Move data following the newline from the last block to
-                     * the new block. Then append the current read buffer. */
-                    dataAppender.put(currBlock.data[searchStart + lastNewlineOffset .. $]);
+                    /* Copy data following the newline from the last block to the new
+                     * block. Then append the current read buffer.
+                     */
+                    immutable size_t moveRegionStart = searchStart + lastNewlineOffset;
+                    dataAppender.put(blocksAppender.data[$-2].data[moveRegionStart .. $]);
                     dataAppender.put(cast(char[]) buffer);
-                    currBlock.data.length = searchStart + lastNewlineOffset;
+
+                    /* Now delete the moved region from the last block. */
+                    blocksAppender.data[$-2].data.length = moveRegionStart;
 
                     assert(blocksAppender.data.length >= 2);
                     assert(blocksAppender.data[$-2].data[$-1] == '\n');
@@ -1733,6 +1763,148 @@ if (isOutputRange!(OutputRange, char))
     }
 
     return inputLines;
+}
+
+/* Unit tests for ReadFileData. These tests focus on multiple InputBlock scenarios.
+ * Other use paths are well tested by the tests at the end cases.
+ */
+unittest
+{
+    import tsv_utils.common.unittest_utils;
+    import std.algorithm : equal, joiner, splitter;
+    import std.array : appender;
+    import std.file : rmdirRecurse;
+    import std.format : format;
+    import std.path : buildPath;
+    import std.range : repeat;
+
+    auto rfdTestDir = makeUnittestTempDir("tsv_sample_readFileData");
+    scope(exit) rfdTestDir.rmdirRecurse;
+
+    char[] file1Data;
+    char[] file2Data;
+    char[] file3Data;
+
+    auto app1 = appender(&file1Data);
+    auto app2 = appender(&file2Data);
+    auto app3 = appender(&file3Data);
+
+    /* File 1: 1000 short lines. */
+    app1.put("\n".repeat(100).joiner);
+    app1.put("x\n".repeat(100).joiner);
+    app1.put("yz\n".repeat(100).joiner);
+    app1.put("pqr\n".repeat(100).joiner);
+    app1.put("a\nbc\ndef\n".repeat(100).joiner);
+    app1.put('\n'.repeat(100));
+    app1.put("z\n".repeat(100).joiner);
+    app1.put("xy\n".repeat(100).joiner);
+
+    /* File 2: 500 longer lines. */
+    app2.put(
+        "0123456789-abcdefghijklmnopqrstuvwxyz-0123456789abcdefghijklmnopqrstuvwxyz-0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ-\n"
+        .repeat(100)
+        .joiner);
+    app2.put(
+        "|abcdefghijklmnopqrstuv|\n|0123456789|\n|0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ|\n|abcdefghijklmnopqrstuvwxyz|\n"
+        .repeat(100)
+        .joiner);
+    app2.put(
+         "0123456789-abcdefghijklmnopqrstuvwxyz-0123456789abcdefghijklmnopqrstuvwxyz-0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ-\n"
+        .repeat(100)
+        .joiner);
+
+    /* File 3: 1000 mixed length lines. */
+    app3.put("\n\n|abcde|\n1\n12\n123\n|abcdefghijklmnop|\n|xyz|\n0123456789\nX\n".repeat(100).joiner);
+
+    string file1Path = buildPath(rfdTestDir, "file1.txt");
+    string file2Path = buildPath(rfdTestDir, "file2.txt");
+    string file3Path = buildPath(rfdTestDir, "file3.txt");
+
+    try
+    {
+        auto ofile1 = File(file1Path, "w");
+        ofile1.write(file1Data);
+    }
+    catch (Exception e) assert(false, format("Failed to write file: %s.\n  Error: %s", file1Path, e.msg));
+
+    try
+    {
+        auto ofile2 = File(file2Path, "w");
+        ofile2.write(file2Data);
+    }
+    catch (Exception e) assert(false, format("Failed to write file: %s.\n  Error: %s", file2Path, e.msg));
+
+    try
+    {
+        auto ofile3 = File(file3Path, "w");
+        ofile3.write(file3Data);
+    }
+    catch  (Exception e) assert(false, format("Failed to write file: %s.\n  Error: %s", file3Path, e.msg));
+
+    auto allData = file1Data ~ file2Data ~ file3Data;
+    auto expectedLines = allData.splitter('\n').array[0 .. $-1];
+
+    TsvSampleOptions cmdoptNoHeader;
+    auto noHeaderCmdArgs = ["unittest"];
+    auto r1 = cmdoptNoHeader.processArgs(noHeaderCmdArgs);
+    assert(r1[0], format("Invalid command lines arg: '%s'.", noHeaderCmdArgs));
+
+    TsvSampleOptions cmdoptYesHeader;
+    auto yesHeaderCmdArgs = ["unittest", "--header"];
+    auto r2 = cmdoptYesHeader.processArgs(yesHeaderCmdArgs);
+    assert(r2[0], format("Invalid command lines arg: '%s'.", yesHeaderCmdArgs));
+
+    auto outputStream = appender!(char[])();
+
+    {
+        /* Reading as single blocks. */
+        ubyte[] rawReadBuffer = new ubyte[256];
+        InputBlock[] blocks;
+        auto blocksAppender = appender(&blocks);
+        blocksAppender.reserve(3);
+        foreach (f; [ file1Path, file2Path, file3Path ])
+        {
+            auto ifile = f.File;
+            ulong filesize = ifile.size;
+            if (filesize == ulong.max) filesize = 1000;
+            readFileDataAsOneBlock(f, ifile, filesize, blocksAppender, rawReadBuffer);
+        }
+        auto inputLines =
+            identifyInputLines!(No.hasRandomValue, No.isWeighted)(
+                blocks, cmdoptNoHeader, outputStream);
+
+        assert(equal!((a, b) => a.data == b)(inputLines, expectedLines));
+    }
+
+    {
+        /* Reading as multiple blocks. */
+        foreach (size_t searchSize; [ 0, 1, 2, 64 ])
+        {
+            foreach (size_t blockSize; [ 1, 2, 16, 64, 256 ])
+            {
+                foreach (size_t readSize; [ 1, 2, 8, 32 ])
+                {
+                    ubyte[] rawReadBuffer = new ubyte[readSize];
+                    InputBlock[] blocks;
+                    auto blocksAppender = appender(&blocks);
+                    blocksAppender.reserve(3);
+                    foreach (f; [ file1Path, file2Path, file3Path ])
+                    {
+                        auto ifile = f.File;
+                        ulong filesize = ifile.size;
+                        if (filesize == ulong.max) filesize = 1000;
+                        readFileDataAsMultipleBlocks(f, ifile, blocksAppender,
+                                                     rawReadBuffer, blockSize, searchSize);
+                    }
+                    auto inputLines =
+                        identifyInputLines!(No.hasRandomValue, No.isWeighted)(
+                            blocks, cmdoptNoHeader, outputStream);
+
+                    assert(equal!((a, b) => a.data == b)(inputLines, expectedLines));
+                }
+            }
+        }
+    }
 }
 
 /** Write a floating point random value to an output stream.
