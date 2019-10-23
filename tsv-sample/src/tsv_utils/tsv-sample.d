@@ -1454,10 +1454,13 @@ if (isOutputRange!(OutputRange, char))
 
 /** A container holding data read from a file or standard input.
  *
- * The InputBlock struct is to represent a block of data read from a file or standard
- * input. An array of InputBlocks is returned by readFileData. Typically one block
- * per file. Multiple blocks are used for standard input and when file size cannot be
- * determined.
+ * The InputBlock struct is used to represent a block of data read from a file or
+ * standard input. An array of InputBlocks is returned by readFileData. Typically one
+ * block per file. Multiple blocks are used for standard input and when the file size
+ * cannot be determined. Individual lines are not allowed to span blocks. The blocks
+ * allocated to an individual file are numbered starting with zero.
+ *
+ * See readFileData() for more information.
  */
 static struct InputBlock
 {
@@ -1466,8 +1469,8 @@ static struct InputBlock
     char[] data;              /// The actual data. Newline terminated or last block for the file.
 }
 
-/** Reads data from one or more files. This routine is used when reading all data
- * into memory.
+/** Read data from one or more files. This routine is used by algorithms needing to
+ * read all data into memory.
  *
  * readFileData reads in all data from a set of files. Data is returned as an array
  * of InputBlock structs. Normally one InputBlock per file, sized to match the size
@@ -1486,7 +1489,7 @@ InputBlock[] readFileData(string[] files)
     import std.algorithm : find, min;
     import std.range : retro;
 
-    enum BlockSize = 1024L * 1024L * 1024L;   // 1 GB. ('L' notation avoids overflow w/ 2GB+ sizes.)
+    enum BlockSize = 1024L * 1024L * 1024L;  // 1 GB. ('L' notation avoids overflow w/ 2GB+ sizes.)
     enum ReadSize = 1024L * 128L;
     enum NewlineSearchSize = 1024L * 16L;
 
@@ -1547,7 +1550,7 @@ private void readFileDataAsOneBlock(
     }
 }
 
-/* readFileData() helper function. Read data from a File handle as a series of blocks.
+/* readFileData() helper function. Read data from a File handle as one or more blocks.
  * Blocks are appended to an existing InputBlock[] array.
  *
  * readFileDataAsMultipleBlocks is part of the readFileData logic. It handles the case
@@ -1591,8 +1594,8 @@ private void readFileDataAsMultipleBlocks(
         }
         else
         {
-            /* See if there is enough room in the block to add one or more full lines.
-             * That is, find the last newline that fits in remaining block capacity.
+            /* Look for the last newline in the input buffer that fits in remaining
+             * capacity of the block.
              */
             auto searchRegion = buffer[0 .. remainingCapacity];
             auto appendRegion = searchRegion.retro.find('\n').source;
@@ -1614,9 +1617,11 @@ private void readFileDataAsMultipleBlocks(
             }
             else
             {
-                /* Search backward in the current block for a newline. If a
-                 * newline is not found, simply append to the current block
-                 * and let it grow. We'll only search backward so far.
+                /* Search backward in the current block for a newline. If found, it
+                 * becomes the last newline in the current block. Anything following
+                 * it is moved to the block. If a newline is not found, simply append
+                 * to the current block and let it grow. We'll only search backward
+                 * so far.
                  */
                 immutable size_t currBlockLength = blocksAppender.data[$-1].data.length;
                 immutable size_t searchLength = min(currBlockLength, newlineSearchSize);
@@ -1771,7 +1776,7 @@ if (isOutputRange!(OutputRange, char))
 unittest
 {
     import tsv_utils.common.unittest_utils;
-    import std.algorithm : equal, joiner, splitter;
+    import std.algorithm : equal, find, joiner, splitter;
     import std.array : appender;
     import std.file : rmdirRecurse;
     import std.format : format;
@@ -1844,6 +1849,13 @@ unittest
     auto allData = file1Data ~ file2Data ~ file3Data;
     auto expectedLines = allData.splitter('\n').array[0 .. $-1];
 
+    auto file2DataNoHeader = (file2Data.find('\n'))[1 .. $];
+    auto file3DataNoHeader = (file3Data.find('\n'))[1 .. $];
+    auto allDataUsingHeader = file1Data ~ file2DataNoHeader ~ file3DataNoHeader;
+    auto expectedLinesUsingHeader = allDataUsingHeader.splitter('\n').array[0 .. $-1];
+
+    assert(expectedLines.length == expectedLinesUsingHeader.length + 2);
+
     TsvSampleOptions cmdoptNoHeader;
     auto noHeaderCmdArgs = ["unittest"];
     auto r1 = cmdoptNoHeader.processArgs(noHeaderCmdArgs);
@@ -1891,8 +1903,6 @@ unittest
                     foreach (f; [ file1Path, file2Path, file3Path ])
                     {
                         auto ifile = f.File;
-                        ulong filesize = ifile.size;
-                        if (filesize == ulong.max) filesize = 1000;
                         readFileDataAsMultipleBlocks(f, ifile, blocksAppender,
                                                      rawReadBuffer, blockSize, searchSize);
                     }
@@ -1904,6 +1914,29 @@ unittest
                 }
             }
         }
+    }
+    {
+        /* Reading as multiple blocks, with header processing. */
+        const size_t readSize = 32;
+        const size_t blockSize = 48;
+        const size_t searchSize = 16;
+
+        ubyte[] rawReadBuffer = new ubyte[readSize];
+        InputBlock[] blocks;
+        auto blocksAppender = appender(&blocks);
+        blocksAppender.reserve(3);
+        foreach (f; [ file1Path, file2Path, file3Path ])
+        {
+            auto ifile = f.File;
+            readFileDataAsMultipleBlocks(f, ifile, blocksAppender,
+                                         rawReadBuffer, blockSize, searchSize);
+        }
+        auto inputLines =
+            identifyInputLines!(No.hasRandomValue, No.isWeighted)(
+                blocks, cmdoptYesHeader, outputStream);
+
+        assert(outputStream.data == expectedLinesUsingHeader[0] ~ '\n');
+        assert(equal!((a, b) => a.data == b)(inputLines, expectedLinesUsingHeader[1 .. $]));
     }
 }
 
