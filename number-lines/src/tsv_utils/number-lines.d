@@ -127,7 +127,7 @@ int main(string[] cmdArgs)
  * Reads lines lines from each file, outputing each with a line number prepended. The
  * header from the first file is written, the header from subsequent files is dropped.
  */
-void numberLines(in NumberLinesOptions cmdopt, in string[] inputFiles)
+void numberLines(const NumberLinesOptions cmdopt, const string[] inputFiles)
 {
     import std.conv : to;
     import std.range;

@@ -1484,7 +1484,7 @@ static struct InputBlock
  * unless the end of a file has been reached. Each file gets its own block so that
  * header processing can be done.
  */
-InputBlock[] readFileData(string[] files)
+InputBlock[] readFileData(const string[] files)
 {
     import std.algorithm : find, min;
     import std.range : retro;

@@ -271,7 +271,7 @@ int main(string[] cmdArgs)
  * The first time a line is seen it is output. If key fields are being used these are
  * used as the basis for the associative array entries rather than the full line.
  */
-void tsvUniq(in TsvUniqOptions cmdopt, in string[] inputFiles)
+void tsvUniq(const TsvUniqOptions cmdopt, const string[] inputFiles)
 {
     import tsv_utils.common.utils : InputFieldReordering, bufferedByLine, BufferedOutputRange, joinAppend;
     import std.algorithm : splitter;

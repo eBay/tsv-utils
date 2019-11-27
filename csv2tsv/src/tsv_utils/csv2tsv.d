@@ -206,7 +206,7 @@ alias NullableSizeT = Nullable!(size_t, size_t.max);
 /** csv2tsvFiles reads multiple files and standard input and writes the results to
  * standard output.
  */
-void csv2tsvFiles(in Csv2tsvOptions cmdopt, in string[] inputFiles)
+void csv2tsvFiles(const ref Csv2tsvOptions cmdopt, const string[] inputFiles)
 {
     import std.algorithm : joiner;
     import tsv_utils.common.utils : BufferedOutputRange;
