@@ -785,7 +785,7 @@ struct TsvFilterOptions
 
 /** tsvFilter processes the input files and runs the tests.
  */
-void tsvFilter(in TsvFilterOptions cmdopt, in string[] inputFiles)
+void tsvFilter(const TsvFilterOptions cmdopt, const string[] inputFiles)
 {
     import std.algorithm : all, any, splitter;
     import std.range;

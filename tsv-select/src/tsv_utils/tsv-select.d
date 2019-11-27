@@ -199,7 +199,7 @@ enum CTERestLocation { none, first, last };
  * in a larger program, but is faster. Run-time improvements of 25% were measured compared
  * to the non-templatized version. (Note: 'cte' stands for 'compile time evaluation'.)
  */
-void tsvSelect(CTERestLocation cteRest)(in TsvSelectOptions cmdopt, in string[] inputFiles)
+void tsvSelect(CTERestLocation cteRest)(const TsvSelectOptions cmdopt, const string[] inputFiles)
 {
     import tsv_utils.common.utils: BufferedOutputRange, bufferedByLine, InputFieldReordering, throwIfWindowsNewlineOnUnix;
     import std.algorithm: splitter;

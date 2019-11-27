@@ -292,7 +292,7 @@ int main(string[] cmdArgs)
 
 /** tsvJoin does the primary work of the tsv-join program.
  */
-void tsvJoin(in TsvJoinOptions cmdopt, in string[] inputFiles)
+void tsvJoin(const TsvJoinOptions cmdopt, const string[] inputFiles)
 {
     import tsv_utils.common.utils : InputFieldReordering, bufferedByLine, BufferedOutputRange, throwIfWindowsNewlineOnUnix;
     import std.algorithm : splitter;

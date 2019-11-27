@@ -435,7 +435,7 @@ struct TsvSummarizeOptions {
 
 /** tsvSummarize does the primary work of the tsv-summarize program.
  */
-void tsvSummarize(TsvSummarizeOptions cmdopt, in string[] inputFiles)
+void tsvSummarize(TsvSummarizeOptions cmdopt, const string[] inputFiles)
 {
     import tsv_utils.common.utils : bufferedByLine, throwIfWindowsNewlineOnUnix;
 
@@ -1672,12 +1672,12 @@ final class MissingFieldPolicy
     private bool _replaceMissing = false;     // True if missing values are replaced.
     private string _missingReplacement;       // Replacement string if replaceMissing is true.
 
-    this (in bool excludeMissing = false, in string missingReplacement = "")
+    this (const bool excludeMissing = false, string missingReplacement = "")
     {
         updatePolicy(excludeMissing, missingReplacement);
     }
 
-    void updatePolicy(in bool excludeMissing, in string missingReplacement)
+    void updatePolicy(const bool excludeMissing, string missingReplacement)
     {
         _missingReplacement = missingReplacement;
         _replaceMissing = missingReplacement.length != 0;
