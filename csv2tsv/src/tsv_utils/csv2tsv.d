@@ -211,7 +211,7 @@ void csv2tsvFiles(const ref Csv2tsvOptions cmdopt, const string[] inputFiles)
     import std.algorithm : joiner;
     import tsv_utils.common.utils : BufferedOutputRange;
 
-    ubyte[1024 * 1024] fileRawBuf;
+    ubyte[1024 * 128] fileRawBuf;
     ubyte[] stdinRawBuf = fileRawBuf[0..1024];
     auto stdoutWriter = BufferedOutputRange!(typeof(stdout))(stdout);
     bool firstFile = true;

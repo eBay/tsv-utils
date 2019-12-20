@@ -131,7 +131,7 @@ int main(string[] args)
             }
             else
             {
-                ubyte[1024*1024] readBuffer;
+                ubyte[1024 * 128] readBuffer;
                 foreach (ubyte[] chunk; inputStream.byChunk(readBuffer))
                 {
                     pipe.stdin.write(cast(char[])chunk);
