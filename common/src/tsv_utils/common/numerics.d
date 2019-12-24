@@ -592,7 +592,7 @@ in
     assert(method >= QuantileInterpolation.min && method <= QuantileInterpolation.max);
     assert(data.isSorted);
 }
-body
+do
 {
     import core.stdc.math : modf;
     import std.algorithm : max, min;
