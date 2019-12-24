@@ -781,7 +781,7 @@ public:
         assert(_type == FieldType.text || _type == FieldType.integer ||
                _type == FieldType.floatingPoint || _type == FieldType.exponent);
     }
-    body
+    do
     {
         import std.algorithm : find, max, min;
         import std.conv : to, ConvException;
