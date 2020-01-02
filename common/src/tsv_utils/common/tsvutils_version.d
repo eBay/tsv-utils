@@ -8,7 +8,7 @@ enum string tsvutilsVersion = "v1.4.4";
 string tsvutilsVersionNotice (string toolName)
 {
     return toolName ~ " (eBay/tsv-utils) " ~ tsvutilsVersion ~ "\n" ~ q"EOS
-Copyright (c) 2015-2019, eBay Software Foundation
+Copyright (c) 2015-2020, eBay Inc.
 https://github.com/eBay/tsv-utils
 EOS";
 }

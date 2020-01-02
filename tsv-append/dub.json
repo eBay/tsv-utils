@@ -3,7 +3,7 @@
     "description": "Concatenate TSV files. Header aware, with support for source file tracking.",
     "homepage": "https://github.com/eBay/tsv-utils",
     "authors": ["Jon Degenhardt"],
-    "copyright": "Copyright (c) 2017-2019, eBay Software Foundation",
+    "copyright": "Copyright (c) 2017-2020, eBay Inc.",
     "license": "BSL-1.0",
     "targetType": "executable",
     "configurations": [

@@ -6,7 +6,7 @@ multiple tests are run from different directories, multiple output files are pro
 This tool moves these files to a common directory, aggregating coverage files for the
 same source code file along the way.
 
-Copyright (c) 2017-2019, eBay Software Foundation
+Copyright (c) 2017-2020, eBay Inc.
 Initially written by Jon Degenhardt
 
 License: Boost Licence 1.0 (http://boost.org/LICENSE_1_0.txt)

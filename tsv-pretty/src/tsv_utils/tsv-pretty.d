@@ -2,7 +2,7 @@
 Command line tool that prints TSV data aligned for easier reading on consoles
 and traditional command-line environments.
 
-Copyright (c) 2017-2019, eBay Software Foundation
+Copyright (c) 2017-2020, eBay Inc.
 Initially written by Jon Degenhardt
 
 License: Boost License 1.0 (http://boost.org/LICENSE_1_0.txt)
