@@ -17,7 +17,7 @@ Contents:
 
 ### Bash aliases
 
-A bash alias is a keystroke shortcut known by the shell. They are setup in the user's `~/.bashrc` or another shell init file. A convenient alias when working with TSV files is `tsv-header`, which lists the field numbers for each field in a TSV file. To define it, put the following in `~/.bashrc` or other init file:
+A bash alias is a keystroke shortcut known by the shell. They are setup in the user's `~/.bashrc` or another shell init file. A convenient alias when working with TSV files is `tsv-header` which lists the field numbers for each field in a TSV file. To define it, put the following in `~/.bashrc` or other init file:
 ```
 tsv-header () { head -n 1 "$@" | tr $'\t' $'\n' | nl ; }
 ```
@@ -68,7 +68,7 @@ The are a couple of simple sample scripts in the [Customize the Unix sort comman
 
 ## macOS: Install GNU versions of Unix command line tools
 
-If you're using a Mac, one of best things you can do is install GNU versions of the typical Unix text processing tools. `cat`, `cut`, `grep`, `awk`, etc. The versions shipped with macOS are older and quite slow compared to the newer GNU versions, which are typically more than five times faster. The [2017 Comparative Benchmarks](comparative-benchmarks-2017.md) includes several benchmarks showing these deltas.
+If you're using a Mac, one of best things you can do is install GNU versions of the typical Unix text processing tools. `cat`, `cut`, `grep`, `awk`, etc. The versions shipped with macOS are older and quite slow compared to the newer GNU versions, which are often more than five times faster. The [2017 Comparative Benchmarks](comparative-benchmarks-2017.md) includes several benchmarks showing these deltas.
 
 The [Homebrew](https://brew.sh/) and [MacPorts](https://www.macports.org/) package managers are good ways to install these tools and many others. Useful packages for data processing include:
 * `coreutils` - The key Unix command line tools, including `cp`, `cat`, `cut`, `head`, `tail`, `wc`, `sort`, `uniq`, `shuf` and quite a few others.
@@ -76,11 +76,11 @@ The [Homebrew](https://brew.sh/) and [MacPorts](https://www.macports.org/) packa
 * `gnu-sed` (Homebrew), `gsed` (MacPorts)  - GNU sed.
 * `grep` - GNU grep.
 
-Note that in many cases the default installation process will install the tools with alternative names to avoid overriding the built-in versions. In many cases an added with a leading `g`. For example, `gawk`, `gsort`, `ggrep`, `gwc`, etc. Each package manager provides instructions for installing with the standard names.
+Note that in many cases the default installation process will install the tools with alternative names to avoid overriding the built-in versions. This is often done by adding a leading `g`. For example, `gawk`, `gsort`, `ggrep`, `gwc`, etc. Each package manager provides instructions for installing using the standard names.
 
 ## Customize the Unix sort command
 
-The standard Unix `sort` utility works perfectly well on TSV files. The syntax for sorting on individual fields (`-k|--key` option) takes getting used to, but once learned Unix `sort` becomes a very capable tool. However, there are few simple tweaks that can improve convenience and performance.
+The standard Unix `sort` utility works quite well on TSV files. The syntax for sorting on individual fields (`-k|--key` option) takes getting used to, but once learned `sort` becomes a very capable tool. However, there are few simple tweaks that can improve convenience and performance.
 
 ### Install an updated sort utility (especially on macOS)
 
@@ -90,7 +90,7 @@ Use your system's package manager to upgrade to the latest sort utility and cons
 
 ### Specify TAB as a delimiter in a shell command
 
-Unix `sort` utilities are able to sort using fields as keys. To use this capability on TSV files the TAB character must be passed as the field delimiter. This is easy enough, but specifying it on every sort invocation is a nuisance.
+Unix `sort` utilities are able to sort using fields as keys. To use this feature on TSV files the TAB character must be passed as the field delimiter. This is easy enough, but specifying it on every sort invocation is a nuisance.
 
 The way to fix this is to create either a `bash` alias or a shell script. A shell script is a better fit for `sort`, as shell commands can be invoked by other programs. This is convenient when using tools like [keep-header](ToolReference.md#keep-header-reference).
 
@@ -115,7 +115,7 @@ $ grep green file.txt | sort
 $ keep-header file.txt -- sort
 ```
 
-Most of the performance of direct file reads can be regained by suggesting a buffer size in the `sort` command invocation. The author has had good results with a 2 GB buffer on a 16 GB Macbook, and a 1 GB buffer obtains most of improvement. The change to the above commands:
+Most of the performance of direct file reads can be regained by specifying a buffer size in the `sort` command invocation. The author has had good results with a 2 GB buffer on a 16 GB Macbook, and a 1 GB buffer obtains most of improvement. The change to the above commands:
 ```
 $ grep green file.txt | sort --buffer-size=2G
 $ keep-header file.txt -- sort --buffer-size=2G
@@ -137,7 +137,7 @@ $ keep-header file.txt -- tsv-sort
 
 Remember to use the correct `sort` program name if an updated version has been installed under a different name. This may be `gsort` on some systems.
 
-*More details*: The `--buffer-size` option may affect `sort` programs differently depending on whether input is being read from files or standard input. This is the case for [GNU sort](https://www.gnu.org/software/coreutils/manual/coreutils.html#sort-invocation), perhaps the most common `sort` program available. This is because by default `sort` uses different methods to choose an internal buffer size when reading from files and when reading from standard input. `--buffer-size` controls both. On a machine with large amounts of RAM, say, 64 GB, picking a 1 or 2 GB buffer size may actually slow `sort` down when reading from files, while speeding it up when reading from standard input. The author has not experimented with enough systems to make a universal recommendation, but a bit of experimentation on any specific system should help. [GNU sort](https://www.gnu.org/software/coreutils/manual/coreutils.html#sort-invocation) has additional options when optimum performance is needed.
+*More details*: The `--buffer-size` option may affect `sort` programs differently depending on whether input is being read from files or standard input. This is the case for [GNU sort](https://www.gnu.org/software/coreutils/manual/coreutils.html#sort-invocation), perhaps the most common `sort` program available. This is because by default `sort` uses different methods to choose an internal buffer size when reading from files and when reading from standard input. `--buffer-size` controls both. On a machine with large amounts of RAM, e.g. 64 GB, picking a 1 or 2 GB buffer size may actually slow `sort` down when reading from files, while speeding it up when reading from standard input. The author has not experimented with enough systems to make a universal recommendation, but a bit of experimentation on any specific system should help. [GNU sort](https://www.gnu.org/software/coreutils/manual/coreutils.html#sort-invocation) has additional options when optimum performance is needed.
 
 ### Turn off locale sensitive sorting when not needed
 
@@ -209,7 +209,7 @@ Using `grep` as a pre-filter won't always be helpful, that will depend on the sp
 
 Line order randomization, or "shuffling", is one of the operations supported by [tsv-sample](ToolReference.md#tsv-sample-reference). Most `tsv-sample` operations can be performed with limited system memory. However, system memory becomes a limitation when shuffling very large data sets, as the entire data set must be loaded into memory. ([GNU shuf](https://www.gnu.org/software/coreutils/manual/html_node/shuf-invocation.html) has the same limitation.)
 
-In many cases the most effective solution is simply get more memory, or find a machine with enough memory. However, when more memory is not an option, another solution to consider is disk-based shuffling. This is approach described here.
+In many cases the most effective solution is simply to get more memory, or find a machine with enough memory. However, when more memory is not an option, another solution to consider is disk-based shuffling. This is approach described here.
 
 One option for disk-based shuffling is [GNU sort](https://www.gnu.org/software/coreutils/manual/html_node/sort-invocation.html)'s random sort feature (`sort --random-sort`). This can be used for unweighted randomization. However, there are couple of downsides. One is that it places duplicates lines next to each other, a problem for many shuffling use cases. Another is that it is rather slow.
 
