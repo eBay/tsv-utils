@@ -153,6 +153,7 @@ matrix:
       group: travis_latest
       language: d
       d: dmd-nightly
+      env: DUBTEST=1 MAKETEST=1
       if: type IN (cron)
 before_install:
   - if [[ "$DOCKERSPECIAL" == "1" ]]; then
