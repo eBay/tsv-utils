@@ -12,11 +12,12 @@
 #       1 is the original. 2 was introduced Nov 2018 to use a docker image with an up-to-date LDC
 #   DEPLOY - Deploy if a tagged release.
 #   ALLOW_FAILURES=[true] - If true, don't fail the entire build if the job fails. Used to avoid
-#       build failures when there is a issue in a specific dmd or ldc version.
-env:
-  global:
-    ALLOW_FAILURES=false
+#       build failures when there is a issue in a specific dmd or ldc version. Unfortunately, all
+#       the desired matching environment variables combos must be included in the 'allow_failures:'
+#       section. (A travis-ci thing.)
 matrix:
+    allow_failures:
+    - env: DUBTEST=1 MAKETEST=1 ALLOW_FAILURES=true
   include:
     - os: linux
       dist: xenial
@@ -153,8 +154,6 @@ matrix:
       language: d
       d: dmd-nightly
       if: type IN (cron)
-  allow_failures:
-    - env: "ALLOW_FAILURES=true"
 before_install:
   - if [[ "$DOCKERSPECIAL" == "1" ]]; then
       sudo apt-get -qq update
