@@ -11,14 +11,24 @@
 #   DOCKERSPECIAL=[1|2] - Special dockerized build to run LDC with LTO, PGO and -static
 #       1 is the original. 2 was introduced Nov 2018 to use a docker image with an up-to-date LDC
 #   DEPLOY - Deploy if a tagged release.
+#   ALLOW_FAILURES=[true] - If true, don't fail the entire build if the job fails. Used to avoid
+#       build failures when there is a issue in a specific dmd or ldc version.
 matrix:
   include:
     - os: linux
       dist: xenial
       group: travis_latest
       language: d
-      d: dmd
+      # Use 2.088.1 for code coverage and official tests until dub issue in 2.089 is fixed.
+      d: dmd-2.088.1
       env: DUBTEST=1 MAKETEST=1 CODECOV=1
+    - os: linux
+      dist: xenial
+      group: travis_latest
+      language: d
+      d: dmd
+      # Allow dmd latest (xenial) to fail until dub issue in 2.089 is fixed.
+      env: DUBTEST=1 MAKETEST=1 ALLOW_FAILURES=true
     - os: osx
       osx_image: xcode11
       group: travis_latest
@@ -131,15 +141,17 @@ matrix:
       group: travis_latest
       language: d
       d: dmd-nightly
-      env: DUBTEST=1 MAKETEST=1
+      # Allow dmd-nightly (xenial) to fail until dub issue in 2.089 is fixed.
+      env: DUBTEST=1 MAKETEST=1 ALLOW_FAILURES=true
       if: type IN (cron)
     - os: osx
       osx_image: xcode11
       group: travis_latest
       language: d
       d: dmd-nightly
-      env: DUBTEST=1 MAKETEST=1
       if: type IN (cron)
+  allow_failures:
+    - env: "ALLOW_FAILURES=true"
 before_install:
   - if [[ "$DOCKERSPECIAL" == "1" ]]; then
       sudo apt-get -qq update
