@@ -13,6 +13,9 @@
 #   DEPLOY - Deploy if a tagged release.
 #   ALLOW_FAILURES=[true] - If true, don't fail the entire build if the job fails. Used to avoid
 #       build failures when there is a issue in a specific dmd or ldc version.
+env:
+  global:
+    ALLOW_FAILURES=false
 matrix:
   include:
     - os: linux
