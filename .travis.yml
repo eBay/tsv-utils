@@ -16,7 +16,7 @@
 #       the desired matching environment variables combos must be included in the 'allow_failures:'
 #       section. (A travis-ci thing.)
 matrix:
-    allow_failures:
+  allow_failures:
     - env: DUBTEST=1 MAKETEST=1 ALLOW_FAILURES=true
   include:
     - os: linux
