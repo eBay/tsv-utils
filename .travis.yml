@@ -155,6 +155,21 @@ matrix:
       d: dmd-nightly
       env: DUBTEST=1 MAKETEST=1
       if: type IN (cron)
+    - os: linux
+      dist: xenial
+      group: travis_latest
+      language: d
+      d: dmd-beta
+      # Allow dmd-beta (xenial) to fail until dub issue in 2.089 is fixed.
+      env: DUBTEST=1 MAKETEST=1 ALLOW_FAILURES=true
+      if: type IN (cron)
+    - os: osx
+      osx_image: xcode11
+      group: travis_latest
+      language: d
+      d: dmd-beta
+      env: DUBTEST=1 MAKETEST=1
+      if: type IN (cron)
 before_install:
   - if [[ "$DOCKERSPECIAL" == "1" ]]; then
       sudo apt-get -qq update
