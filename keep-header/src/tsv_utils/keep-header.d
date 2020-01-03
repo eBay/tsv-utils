@@ -1,7 +1,7 @@
 /**
 Command line tool that executes a command while preserving header lines.
 
-Copyright (c) 2018-2019, eBay Software Foundation
+Copyright (c) 2018-2020, eBay Inc.
 Initially written by Jon Degenhardt
 
 License: Boost License 1.0 (http://boost.org/LICENSE_1_0.txt)

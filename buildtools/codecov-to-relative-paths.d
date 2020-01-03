@@ -9,7 +9,7 @@ report.
 This tool checks a coverage file to see if absolute names where used. If so, it renames
 the file and updates the report to use a relative path.
 
-Copyright (c) 2017-2019, eBay Software Foundation
+Copyright (c) 2017-2020, eBay Inc.
 Initially written by Jon Degenhardt
 
 License: Boost Licence 1.0 (http://boost.org/LICENSE_1_0.txt)

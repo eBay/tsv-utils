@@ -12,7 +12,7 @@ exception handling, ranges, tuples and strings, universal function call syntax (
 lambdas and functional programming constructs. Comments are more verbose than typical
 to shed light on D programming constructs, but not to the level of a tutorial.
 
-Copyright (c) 2015-2016, eBay Software Foundation
+Copyright (c) 2015-2020, eBay Inc.
 Initially written by Jon Degenhardt
 
 License: Boost Licence 1.0 (http://boost.org/LICENSE_1_0.txt)
@@ -41,12 +41,12 @@ listed can be output using the --rest option. Examples:
 Options:
 EOS";
 
-/** 
-Container for command line options. 
+/**
+Container for command line options.
  */
 struct TsvSelectOptions {
     enum RestOptionVal { none, first, last };  // Values allowed in --rest option.
-    
+
     char delim = '\t';
     size_t[] fields;
     RestOptionVal rest;
@@ -57,11 +57,11 @@ struct TsvSelectOptions {
      *
      * Returning true (execution continues) means args have been validated and derived
      * values calculated. In addition, field indices have been converted to zero-based.
-     */ 
+     */
     auto processArgs (ref string[] cmdArgs) {
         import std.algorithm : any, each;
         import std.getopt;
-        
+
         try {
             arraySep = ",";    // Use comma to separate values in command line options
             auto r = getopt(
@@ -70,17 +70,17 @@ struct TsvSelectOptions {
                 "r|rest",      "none|first|last  Location for remaining fields. Default: none", &rest,
                 "d|delimiter", "CHR              Character to use as field delimiter. Default: TAB. (Single byte UTF-8 characters only.)", &delim
                 );
-            
+
             if (r.helpWanted) {
                 defaultGetoptPrinter(helpText, r.options);
                 return tuple(false, 0);
             }
-        
+
             /* Consistency checks */
             if (fields.length == 0) {
                 throw new Exception("Required option --f|fields was not supplied.");
             }
-        
+
             if (fields.length > 0 && fields.any!(x => x == 0)) {
                 throw new Exception("Zero is not a valid field number (--f|fields).");
             }
@@ -88,7 +88,7 @@ struct TsvSelectOptions {
             /* Derivations */
             fields.each!((ref x) => --x);  // Convert to 1-based indexing. Using 'ref' in the lambda allows the actual
                                            // field value to be modified. Otherwise a copy would be passed.
-            
+
         } catch (Exception exc) {
             stderr.writeln("Error processing command line arguments: ", exc.msg);
             return tuple(false, 1);
@@ -122,7 +122,7 @@ int main(string[] cmdArgs) {
 
 /**
 tsvSelect does the primary work of the tsv-select program.
- 
+
 Input is read line by line, extracting the listed fields and writing them
 out in the order specified. An exception is thrown on error.
  */
@@ -144,7 +144,7 @@ void tsvSelect(in TsvSelectOptions cmdopt, in string[] inputFiles) {
      * on the first line.
      */
     bool keepingLeftOverFields = cmdopt.rest != TsvSelectOptions.RestOptionVal.none;
-    auto leftOverFieldsAppender = appender!(char[][]); 
+    auto leftOverFieldsAppender = appender!(char[][]);
 
     /* Read each input file (or stdin) and iterate over each line. A filename of "-" is
      * interpreted as stdin, common behavior for unix command line tools.

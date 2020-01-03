@@ -25,7 +25,7 @@ $(LIST
       processes command line arguments in the order given on the command line.
 )
 
-Copyright (c) 2015-2019, eBay Software Foundation
+Copyright (c) 2015-2020, eBay Inc.
 Initially written by Jon Degenhardt
 
 License: Boost License 1.0 (http://boost.org/LICENSE_1_0.txt)
