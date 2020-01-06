@@ -354,7 +354,7 @@ Timing info from these runs shows substantial performance gains using `parallel`
 | `parallel wc -l ::: ngram-*.tsv`    |    2.07 | 9.88 |   5.33 | 734% |
 | `parallel -k wc -l ::: ngram-*.tsv` |    2.03 | 9.88 |   5.27 | 743% |
 
-Now for some examples using the TSV Utilities.
+Now for some examples using TSV Utilities.
 
 #### GNU parallel and tsv-filter
 
