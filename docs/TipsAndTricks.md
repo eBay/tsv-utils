@@ -6,12 +6,13 @@ Contents:
 
 * [Useful bash aliases and shell scripts](#useful-bash-aliases-and-shell-scripts)
 * [macOS: Install GNU versions of Unix command line tools](#macos-install-gnu-versions-of-unix-command-line-tools)
-* [Customize the Unix sort command](#customize-the-unix-sort-command)
-* [Reading data in R](#reading-data-in-r)
-* [Using grep and tsv-filter together](#using-grep-and-tsv-filter-together)
-* [Shuffling large files](#shuffling-large-files)
+* [Customize the sort command](#customize-the-sort-command)
 * [Enable bash-completion](#enable-bash-completion)
 * [Convert newline format and character encoding with dos2unix and iconv](#convert-newline-format-and-character-encoding-with-dos2unix-and-iconv)
+* [Using grep and tsv-filter together](#using-grep-and-tsv-filter-together)
+* [Faster processing using GNU parallel](#faster-processing-using-gnu-parallel)
+* [Reading data in R](#reading-data-in-r)
+* [Shuffling large files](#shuffling-large-files)
 
 ## Useful bash aliases and shell scripts
 
@@ -78,7 +79,7 @@ The [Homebrew](https://brew.sh/) and [MacPorts](https://www.macports.org/) packa
 
 Note that in many cases the default installation process will install the tools with alternative names to avoid overriding the built-in versions. This is often done by adding a leading `g`. For example, `gawk`, `gsort`, `ggrep`, `gwc`, etc. Each package manager provides instructions for installing using the standard names.
 
-## Customize the Unix sort command
+## Customize the sort command
 
 The standard Unix `sort` utility works quite well on TSV files. The syntax for sorting on individual fields (`-k|--key` option) takes getting used to, but once learned `sort` becomes a very capable tool. However, there are few simple tweaks that can improve convenience and performance.
 
@@ -115,7 +116,7 @@ $ grep green file.txt | sort
 $ keep-header file.txt -- sort
 ```
 
-Most of the performance of direct file reads can be regained by specifying a buffer size in the `sort` command invocation. The author has had good results with a 2 GB buffer on a 16 GB Macbook, and a 1 GB buffer obtains most of improvement. The change to the above commands:
+Most of the performance of direct file reads can be regained by specifying a buffer size in the `sort` command invocation. The author has had good results with a 2 GB buffer on machines having 16 to 64 GB of RAM, and a 1 GB buffer obtains most of improvement. The change to the above commands:
 ```
 $ grep green file.txt | sort --buffer-size=2G
 $ keep-header file.txt -- sort --buffer-size=2G
@@ -155,6 +156,352 @@ Locale sensitive sorting can be turned off when not needed. This is done by sett
 
 The `tsv-sort-fast` script can be used the same way as the `tsv-sort` script shown earlier.
 
+## Enable bash-completion
+
+Bash command completion is quite handy for command line tools. Command names complete by default, already useful. Adding completion of command options is even better. As an example, with bash completion turned on, enter the command name, then a single dash (-):
+```
+$ tsv-select -
+```
+Now type a TAB (or pair of TABs depending on setup). A list of possible completions is printed and the command line restored for continued entry.
+```
+$ tsv-select -
+--delimiter  --fields     --header     --help       --rest
+$ tsv-select --
+```
+Now type 'r', then TAB, and the command will complete up to `$ tsv-select --rest`.
+
+Enabling bash completion is a bit more involved than other packages, but still not too hard. It will often be necessary to install a package. The way to do this is system specific. A good source of instructions can be found at the [bash-completion GitHub repository](https://github.com/scop/bash-completion). Mac users may find the MacPorts [How to use bash-completion](https://trac.macports.org/wiki/howto/bash-completion) guide useful. Procedures for Homebrew are similar, but the details differ a bit.
+
+After enabling bash-completion, add completions for the tsv-utils package. Completions are available in the `bash_completion/tsv-utils` file. One way to add them is to 'source' the file from the `~/.bash_completion` file. A line like the following will do this.
+```
+if [ -r ~/tsv-utils/bash_completion/tsv-utils ]; then
+    . ~/tsv-utils/bash_completion/tsv-utils
+fi
+```
+
+The file can also be added to the bash completions system directory on your system. The location is system specific, see the bash-completion installation instructions for details.
+
+## Convert newline format and character encoding with dos2unix and iconv
+
+The TSV Utilities expect input data to be utf-8 encoded and on Unix, to use Unix newlines. The `dos2unix` and `iconv` command line tools are useful when conversion is required.
+
+Needing to convert newlines from DOS/Windows format to Unix is relatively common. Data files may have been prepared for Windows, and a number of spreadsheet programs generate Windows line feeds when exporting data. The `csv2tsv` tool converts Windows newlines as part of its operation. The other TSV Utilities detect Window newlines when running on a Unix platform, including macOS. The following `dos2unix` commands convert files to use Unix newlines:
+```
+$ # In-place conversion.
+$ dos2unix file.tsv
+
+$ # Conversion writing to a new file. The existing file is not modified.
+$ dos2unix -n file_dos.tsv file_unix.tsv
+
+$ # Reading from standard input writes to standard output
+$ cat file_dos.tsv | dos2unix | tsv-select -f 1-3 > newfile.tsv
+```
+
+Most applications and databases will export data in utf-8 encoding, but it can still be necessary to convert to utf-8. `iconv` serves this purpose nicely. An example converting Windows Latin-1 (code page 1252) to utf-8:
+```
+$ iconv -f CP1252 -t UTF-8 file_latin1.tsv > file_utf8.tsv
+```
+
+The above can be combined with `dos2unix` to perform both conversions at once:
+```
+$ iconv -f CP1252 -t UTF-8 file_window.tsv | dos2unix > file_unix.tsv
+```
+
+See the `dos2unix` and `iconv` man pages for more details.
+
+## Using grep and tsv-filter together
+
+`tsv-filter` is fast, but a quality Unix `grep` implementation is faster. There are good reasons for this, notably, `grep` can ignore line boundaries during initial matching (see ["why GNU grep is fast", Mike Haertel](https://lists.freebsd.org/pipermail/freebsd-current/2010-August/019310.html)).
+
+Much of the time this won't matter, as `tsv-filter` can process gigabyte files in a couple seconds. However, when working with much larger files or slow I/O devices, the wait may be longer. In these cases, it may be possible to speed things up using `grep` as a first pass filter. This will work if there is a string, preferably several characters long, that is found on every line expected in the output, but winnows out a fair number of non-matching lines.
+
+An example, using a set of files from the [Google Books Ngram Viewer data-sets](https://storage.googleapis.com/books/ngrams/books/datasetsv2.html). In these files, each line holds stats for an ngram, field 2 is the year the stats apply to. In this test, `ngram_*.tsv` consists of 1.2 billion lines, 23 GB of data in 26 files. To get the lines for the year 1850, this command would be run:
+```
+$ tsv-filter --str-eq 2:1850 ngram_*.tsv
+```
+
+This took 72 seconds on a MacMini (6-core, 64 GB RAM, SSD drives) and output 2493403 records. Grep can also be used:
+```
+$ grep 1850 ngram_*.tsv
+```
+
+This took 38 seconds, quite a bit faster, but produced too many records (2504846), as "1850" appears in places other than the year. But the correct result can generated by using `grep` and `tsv-filter` together:
+```
+$ grep 1850 ngram_*.tsv | tsv-filter --str-eq 2:1850
+```
+
+This took 39 seconds, nearly as fast `grep` by itself. `grep` and `tsv-filter` run in parallel, and `tsv-filter` keeps up easily as it is processing fewer records.
+
+Using `grep` as a pre-filter won't always be helpful, that will depend on the specific case, but on occasion it can be quite handy.
+
+### Using ripgrep and tsv-filter together
+
+[ripgrep](https://github.com/BurntSushi/ripgrep) is a popular alternative to `grep`, and one of the fastest grep style programs available. It has built-in support for parallel processing when operating on multiple files. This creates an interesting comparison point, one useful in conjunction with the next topic, [Faster processing using GNU parallel](#faster-processing-using-gnu-parallel).
+
+This experiment uses the same Google ngram files, but a more complex expression. We'll find stats lines for years 1850 through 1950 on ngrams tagged as verbs. The `tsv-filter` expression:
+```
+tsv-filter --str-in-fld 1:_VERB --ge 2:1850 --le 2:1950
+```
+
+This produces 26,956,517 lines. Prefiltering with grep/ripgrep using `_VERB` reduces the set passed to `tsv-filter` to 81,626,466 (from the original 1,194,956,817).
+
+For the first test the data is piped through standard input rather read directly from files. This has the effect of forcing ripgrep to run in single threaded mode. This is similar to running against a single large file. The command lines:
+```
+$ cat ngram-*.tsv | tsv-filter --str-in-fld 1:_VERB --ge 2:1850 --le 2:1950
+$ cat ngram-*.tsv | grep _VERB | tsv-filter --str-in-fld 1:_VERB --ge 2:1850 --le 2:1950
+$ cat ngram-*.tsv | rg _VERB | tsv-filter --str-in-fld 1:_VERB --ge 2:1850 --le 2:1950
+```
+
+Timing results (Mac Mini; 6-cores; 64 GB RAM; SSD drive):
+
+|              Command | Elapsed |  User | System |  CPU |
+|---------------------:|--------:|------:|-------:|-----:|
+|           tsv-filter |   79.08 | 75.49 |   8.97 | 106% |
+|    grep & tsv-filter |   25.56 | 32.98 |   7.16 | 157% |
+| ripgrep & tsv-filter |   14.27 | 16.29 |  11.46 | 194% |
+
+The ripgrep version is materially faster on this test. A larger set of tests on different types of files would be needed to determine if this holds generally, but the result is promising for ripgrep. In these tests, `tsv-filter` was able to keep up with `grep`, but not ripgrep, which on its own finishes in about 12 seconds. Of course, both `grep` and `ripgrep` are material improvements over `tsv-filter` standalone.
+
+The next test runs against the 26 files directly, allowing ripgrep's parallel capabilities to be used. Runs with combining GNU `parallel` with `grep` and `tsv-filter` standalone are included for comparison. The commands:
+```
+$ tsv-filter ngram-*.tsv --str-in-fld 1:_VERB --ge 2:1850 --le 2:1950
+$ grep _VERB ngram-*.tsv | tsv-filter --ge 2:1850 --le 2:195
+$ rg _VERB ngram-*.tsv | tsv-filter --str-in-fld 1:_VERB --ge 2:1850 --le 2:1950
+$ parallel tsv-filter --str-in-fld 1:_VERB --ge 2:1850 --le 2:1950 ::: ngram-*.tsv
+$ parallel grep _VERB ::: ngram-*.tsv | tsv-filter --str-in-fld 1:_VERB --ge 2:1850 --le 2:1950
+```
+
+Timing info for these commands:
+
+|                            | Elapsed |   User | System |  CPU |
+|---------------------------:|--------:|-------:|-------:|-----:|
+|                 tsv-filter |   76.06 |  74.00 |   3.21 | 101% |
+|          grep & tsv-filter |   30.65 |  37.22 |   4.05 | 134% |
+|       ripgrep & tsv-filter |   11.04 |  20.94 |  10.32 | 283% |
+| parallel grep & tsv-filter |   16.48 | 134.54 |   6.27 | 854% |
+|        parallel tsv-filter |   16.36 | 134.39 |   6.12 | 858% |
+
+The ripgrep version, using multiple threads, is the fastest. For these tests, the single threaded use of `tsv-filter` is the limitation in both ripgrep and parallelized `grep` cases. By themselves, parallel grep and ripgrep finish the prefiltering steps in 6.3 and 3.5 seconds respectively. Very nicely, GNU `parallel` with `tsv-filter` standalone is a nice improvement.
+
+These results show promise for ripgrep and using GNU `parallel`. Actual results will depend on the specific data files and tasks. The machine configuration will matter for multi-threading cases. See the next section, [Faster processing using GNU parallel](#faster-processing-using-gnu-parallel), for more info about GNU `parallel`.
+
+Version information for the timing tests:
+* tsv-filter v1.4.4
+* GNU grep 3.3
+* ripgrep 11.0.2
+
+## Faster processing using GNU parallel
+
+The TSV Utilities tools are singled threaded. Multiple cores available on today's processors are utilized primarily when the tools are run in a Unix command pipeline. The example shown using in [Using grep and tsv-filter together](#using-grep-and-tsv-filter-together) uses the Unix pipeline approach to some gain parallelism.
+
+This often leaves processing power on the table, power that can be used to run commands considerably faster. This is especially true when reading from fast IO devices such as the newer generations of SSD drives. These fast devices often read much faster than a single CPU core can keep up with.
+
+[GNU parallel](https://www.gnu.org/software/parallel/) provides a convenient way to parallelize many Unix command line tools and take advantage of multiple CPU cores. TSV Utilities tools can use GNU parallel as well, several examples are given in this section. The techniques shown can applied to many other command line tools as well. If you are using a machine with multiple cores you may gain performance benefit from using GNU parallel.
+
+GNU `parallel` may need to be installed, use your system's package manager to do this. GNU `parallel` provides a large feature set, only a subset is shown in these examples. See the [GNU parallel documentation](https://www.gnu.org/software/parallel/) for more details.
+
+### GNU parallel and TSV Utilities
+
+The simplest uses of GNU `parallel` arise when processing multiple files that do not contain header lines. In these scenarios, `parallel` is used to start multiple instances of a command in parallel, each command invocation run against a different file. The results from each command are written to standard output.
+
+Line counting (`wc -l`) will be used to illustrate the process. The same Google ngram files used in the examples in [Using grep and tsv-filter together](#using-grep-and-tsv-filter-together) will be used here (26 files, 1.2 billion lines, 23 GB). (All the examples in the section were timed on a 6-core Mac Mini with 64 GB RAM and SSD drives.)
+
+The standalone command to count lines in each file is below (output truncated for brevity):
+```
+$ wc -l ngram-*.tsv
+   86618505 ngram-a.tsv
+   61551917 ngram-b.tsv
+   97689325 ngram-c.tsv
+... files d-w ...
+    3929235 ngram-x.tsv
+    6869307 ngram-y.tsv
+ 1194956817 Total
+```
+
+`parallel` is invoked by passing both the list of files and the command to run. The file names can be provided in standard input or by using the `:::` operator. The following command lines show these two methods:
+```
+$ ls ngram-* | parallel wc -l
+$ parallel wc -l ::: ngram-*.tsv
+```
+
+Here are the results with parallel:
+```
+$ parallel wc -l ::: ngram-*.tsv
+17008269 ngram-j.tsv
+27279767 ngram-k.tsv
+39861295 ngram-g.tsv
+... more files ...
+88562873 ngram-p.tsv
+110075424 ngram-s.tsv
+```
+
+Notice that there is no summary line. That is because `wc` produces the summary when processing multiple files, but using parallel `wc` is invoked once per file. Also, the result order has changed. This is because results are output in the order they finish rather than the order the files are listed in. The input order can be preserved using the `--keep-order` (or `-k`) option:
+```
+$ parallel --keep-order gwc -l ::: *.tsv
+86618505 ngram-a.tsv
+61551917 ngram-b.tsv
+97689325 ngram-c.tsv
+... files d-w ...
+3929235 ngram-x.tsv
+6869307 ngram-y.tsv
+```
+
+Timing info from these runs shows substantial performance gains using `parallel`:
+
+| Command                             | Elapsed | User | System |  CPU |
+|:------------------------------------|--------:|-----:|-------:|-----:|
+| `wc -l ngram-*.tsv`                 |   11.95 | 8.26 |   3.55 |  98% |
+| `parallel wc -l ::: ngram-*.tsv`    |    2.07 | 9.88 |   5.33 | 734% |
+| `parallel -k wc -l ::: ngram-*.tsv` |    2.03 | 9.88 |   5.27 | 743% |
+
+Now for some examples using the TSV Utilities.
+
+#### GNU parallel and tsv-filter
+
+An example was shown earlier in the section [Using ripgrep and tsv-filter together](#using-ripgrep-and-tsv-filter-together). That example was for a case where a grep program could be used as a prefilter. But `parallel` and `tsv-filter` will also work in cases where a grep style prefilter is not appropriate. Repeating the earlier example:
+
+```
+$ tsv-filter --str-in-fld 1:_VERB --ge 2:1850 --le 2:1950 ngram-*.tsv
+$ parallel tsv-filter --str-in-fld 1:_VERB --ge 2:1850 --le 2:1950 ::: ngram-*.tsv
+```
+
+|                     | Elapsed |   User | System |  CPU |
+|--------------------:|--------:|-------:|-------:|-----:|
+|          tsv-filter |   76.06 |  74.00 |   3.21 | 101% |
+| parallel tsv-filter |   16.36 | 134.39 |   6.12 | 858% |
+
+This works the same way as the `wc -l` example. The output from all the individual invocations of `tsv-filter` are concatenated together, just as in the standalone invocation of `tsv-filter`. (Use the `--keep-order` option to preserve the input order.)
+
+It's a valuable performance gain for a minor change in the command structure. Notice though that if the file had header lines additional steps would be needed, as the above commands would do nothing to suppress repeated header lines from the multiple files.
+
+#### GNU parallel and tsv-select
+
+`tsv-select` can be parallelized in the same fashion as `tsv-filter`. This example selects the first, second, and fourth fields from the ngram files. The `cut` utility is shown as well (`cut` from GNU coreutils 8.31). The commands and time results:
+```
+$ tsv-select -f 1,2,4 ngram-*.tsv
+$ cut -f 1,2,4 ngram-*.tsv
+$ parallel -k tsv-select -f 1,2,4 ::: ngram-*.tsv
+$ parallel -k cut -f 1,2,4 ::: ngram-*.tsv
+```
+
+|                     | Elapsed |   User | System |  CPU |
+|--------------------:|--------:|-------:|-------:|-----:|
+|                 cut |  158.78 | 153.82 |   4.95 |  99% |
+|        parallel cut |   41.07 | 278.71 |  66.65 | 840% |
+|          tsv-select |  100.42 |  98.44 |   3.04 | 101% |
+| parallel tsv-select |   29.33 | 179.39 |  63.78 | 828% |
+
+#### GNU parallel and tsv-sample
+
+Bernoulli sampling is relatively easy to parallelize. Let's say we want to take a 0.1% sample from the ngram files. The standalone and parallelized versions of the command are similar:
+```
+$ tsv-sample -p 0.001 ngram-*.tsv
+$ parallel -k tsv-sample -p 0.001 ::: ngram-*.tsv
+```
+
+The standalone version takes about 46 seconds to complete, the parallelized version less than 9.
+
+|                     | Elapsed |  User | System |  CPU |
+|--------------------:|--------:|------:|-------:|-----:|
+|          tsv-sample |   46.08 | 44.16 |   2.47 | 101% |
+| parallel tsv-sample |    8.57 | 67.09 |   3.56 | 833% |
+
+Suppose we want to do this with simple random sampling? In simple random sample, a specified number of records are chosen at random. Picking a 1 million random set would be done with a command like:
+```
+$ tsv-sample -n 1000000 ngram-*.tsv
+```
+
+We can't parallelize the `tsv-sample -n` command itself. However, a trick that can be played is to over-sample using Bernoulli sampling, then get the desired number of records with random sampling. Our earlier formula for Bernoulli sample produces on average about 1.19 million records, a reasonable over-sampling for the 1 million records desired. The Bernoulli process could produce less than 1 million records, but that would be exceptionally rare. The resulting formula:
+```
+$ tsv-sample -p 0.001 ngram-*.tsv | tsv-sample -n 1000000
+```
+
+The initial Bernoulli stage can be parallelized, just as before:
+```
+$ parallel -k tsv-sample -p 0.001 ::: ngram-*.tsv | tsv-sample -n 1000000
+```
+
+|                                      | Elapsed |  User | System |  CPU |
+|-------------------------------------:|--------:|------:|-------:|-----:|
+|                      random sampling |   60.14 | 58.20 |   2.68 | 101% |
+|          Bernoulli & random sampling |   47.11 | 45.37 |   2.95 | 102% |
+| Parallel Bernoulli & random sampling |    8.96 | 70.86 |   3.79 | 832% |
+
+Bernoulli sampling is a bit faster than simple random sampling, so there is some benefit from using this technique in single process mode. The real win is when the Bernoulli sampling stage is parallelized.
+
+#### GNU parallel and tsv-summarize
+
+Many `tsv-summary` calculations require seeing all the data all at once and cannot be readily parallelized. Computations like `mean`, `median`, `stdev`, and `quantile` fall into this bucket. However, there are operations that can parallelized. Operations like `sum`, `min` and `max`. We'll use `max` to show an example of how this works. First, we'll `tsv-summarize` to find largest occurrence count (3rd column) in the ngram files:
+```
+$ tsv-summarize --max 3 ngram-*.tsv
+927838975
+```
+
+That worked, but took 85 seconds. Here's a version that parallelizes the invocations:
+```
+$ parallel tsv-summarize --max 3 ::: ngram-*.tsv
+11383300
+12112865
+11794164
+...
+32969204
+```
+
+That worked, but produced a result line for each file. To get the final results we need to make another `tsv-summarize` result:
+
+```
+$ parallel tsv-summarize --max 3 ::: ngram-*.tsv | tsv-summarize --max 1
+927838975
+```
+
+This produced the correct result and finished in 18 seconds, much more palatable than the 85 in the single process version.
+
+We could find the max occurrence count for each year (column 2) in a similar fashion. This example sorts the results by year for good measure.
+```
+$ tsv-summarize --group-by 2 --max 3 ngram-*.tsv | tsv-sort-fast -k1,1n
+1505	1267
+1507	1938
+1515	19549
+...
+2005	658292423
+2006	703340664
+2007	749205383
+2008	927838975
+```
+
+This took 110 seconds. Here's the parallel version. It produces the same results, but finishes in 23 seconds.
+```
+$ parallel tsv-summarize --group-by 2 --max 3 ::: ngram-*.tsv | tsv-summarize --group-by 1 --max 2 | tsv-sort-fast -k1,1n
+```
+
+### Using GNU Parallel on files with header lines
+
+All the examples shown so far involve multiple files without header lines. Correctly handling header lines is a more involved. The main issue is that results from multiple files get concatenated together when results are reassembled. One way to deal with this is to drop the headers from each file as they are processed, arranging to have the header from the first file preserved if necessary. Other methods are possible, but more involved than will be discussed here.
+
+### GNU Parallel on standard input or a single large file
+
+All the examples shown so far run against multiple files. This is a natural fit for `parallel`'s capabilities. `parallel` also has facilities for automatically splitting up individual files as well as standard input into smaller chunks and invoking commands on these smaller chunks in parallel.
+
+Unfortunately, performance when using these facilities is more variable than when running against multiple input files. This is because the work to split up the file or input stream is itself single threaded and become a bottleneck. Performance gains are unlikely to match the gains seen on multiple files, and performance may actually get worse. Performance appears dependent on the specific task, the nature of the files or input stream, and the computation being performed. Some experimentation may needed to identify the best parameter tuning.
+
+For these reasons, paralellizing tasks on standard input or against single files may be most appropriate for repeated tasks. Tasks run on a regular basis against similar data sets, where time invested in performance tuning gets paid back over multiple runs.
+
+Of the two cases, performance gains are more likely when running against a single file than when running against standard input. That is because the mechanism used to split a file (`--pipepart`) is much faster than the mechanism used to split up standard input (`--pipe`).
+
+Here are examples of the command syntax. The Bernoulli sampling example used earlier is shown:
+```
+$ # Standalone invocation
+$ tsv-sample -p 0.001 bigfile.txt
+
+$ # Reading from standard input and splitting via --pipe
+$ cat bigfile.txt | parallel --pipe --blocksize=64M tsv-sample -p 0.001
+
+$ # Reading from a single file and splitting via --pipepart
+$ parallel -a bigfile.txt --pipepart --blocksize=64M tsv-sample -p 0.001
+```
+
+Consult the [GNU parallel documentation](https://www.gnu.org/software/parallel/) for more information about these features. Experiment with them in your environment to see what works for your use cases.
+
 ## Reading data in R
 
 It's common to perform transformations on data prior to loading into applications like R or Pandas. This especially useful when data sets are large and loading entirely into memory is undesirable. One approach is to create modified files and load those. In R it can also be done as part of the different read routines, most of which allow reading from a shell command. This enables filtering rows, selecting, sampling, etc. This will work with any command line tool. Some examples below. These use `read.table` from the base R package, `read_tsv` from the `tidyverse/readr` package, and `fread` from the `data.table` package:
@@ -167,43 +514,6 @@ It's common to perform transformations on data prior to loading into application
 The first two use the `pipe` function to create the shell command. `fread` does this automatically.
 
 *Note: One common issue is not having the PATH environment setup correctly. Depending on setup, the R application might not have the full path normally available in a command shell. See the R documentation for details.*
-
-## Using grep and tsv-filter together
-
-`tsv-filter` is fast, but a quality Unix `grep` implementation is faster. There are good reasons for this, notably, `grep` can ignore line boundaries during initial matching (see ["why GNU grep is fast", Mike Haertel](https://lists.freebsd.org/pipermail/freebsd-current/2010-August/019310.html)).
-
-Much of the time this won't matter, as `tsv-filter` can process gigabyte files in a couple seconds. However, when working with much larger files or slow I/O devices, the wait may be longer. In these cases, it may be possible to speed things up using `grep` as a first pass filter. This will work if there is a string, preferably several characters long, that is found on every line expected in the output, but winnows out a fair number of non-matching lines.
-
-An example, using a number of files from the [Google Books Ngram Viewer data-sets](https://storage.googleapis.com/books/ngrams/books/datasetsv2.html). In these files, each line holds stats for an ngram, field 2 is the year the stats apply to. In this test, `ngram_*.tsv` consists of 1.4 billion lines, 27.5 GB of data in 39 files. To get the lines for the year 1850, this command would be run:
-```
-$ tsv-filter --str-eq 2:1850 ngram_*.tsv
-```
-
-This took 157 seconds on Macbook Pro and output 2770512 records. Grep can also be used:
-```
-$ grep 1850 ngram_*.tsv
-```
-
-This took 37 seconds, quite a bit faster, but produced too many records (2943588), as "1850" appears in places other than the year. But the correct result can generated by using `grep` and `tsv-filter` together:
-```
-$ grep 1850 ngram_*.tsv | tsv-filter --str-eq 2:1850
-```
-
-This took 37 seconds, same as `grep` by itself. `grep` and `tsv-filter` run in parallel, and `tsv-filter` keeps up easily as it is processing fewer records.
-
-The above example can be done entirely in `grep` by using regular expressions, but it's easy to get wrong and actually slower due to the regular expression use. For example (syntax may be different in your environment):
-```
-$ grep $'^[^\t]*\t1850\t' ngram_*.tsv
-```
-
-This produced the correct results, but took 48 seconds. It is feasible because only string comparisons are needed. It wouldn't work if numeric comparisons were also involved.
-
-The google ngram files don't have headers, if they did, `grep` as used above would drop them. Use the [keep-header](ToolReference.md#keep-header-reference) tool to preserve the header. For example:
-```
-$ keep-header ngram_with_header_*.tsv -- grep 1850 | tsv-filter -H --str-eq 2:1850
-```
-
-Using `grep` as a pre-filter won't always be helpful, that will depend on the specific case, but on occasion it can be quite handy.
 
 ## Shuffling large files
 
@@ -266,56 +576,3 @@ Notes:
 **Regarding exponential notation**: The faster "numeric" sort will incorrectly order lines where the random value contains an exponent. In version 1.3.2, `tsv-sample` changed random number printing to limit exponent printing. This was done by using exponents only when numbers are smaller than 1e-12. Though not guaranteed, this does not occur in practice with unweighted sampling or weighted sampling with integer weights. The author has run more than a billion trials without an occurrence. (It may be a property of the random number generator used.) It will occur if floating point weights are used. Use "general numeric" ('g') form when using floating point weights or if a guarantee is needed. However, in many cases regular "numeric" sort ('n') will suffice, and be dramatically faster.
 
 **Regarding unweighted shuffling**: A faster version of unweighted shuffling appears very doable. One possibility would be to read all input lines and write each to a randomly chosen temporary file. Then read and shuffle each temporary file in-memory and write it to the final output, appending each shuffled file. This would replace sorting with a faster shuffling operation. It would also avoid printing random numbers, which is slow. See Daniel Lemire's blog post [External-memory shuffling in linear time?](https://lemire.me/blog/2010/03/15/external-memory-shuffling-in-linear-time/) for a more detailed discussion.
-
-## Enable bash-completion
-
-Bash command completion is quite handy for command line tools. Command names complete by default, already useful. Adding completion of command options is even better. As an example, with bash completion turned on, enter the command name, then a single dash (-):
-```
-$ tsv-select -
-```
-Now type a TAB (or pair of TABs depending on setup). A list of possible completions is printed and the command line restored for continued entry.
-```
-$ tsv-select -
---delimiter  --fields     --header     --help       --rest
-$ tsv-select --
-```
-Now type 'r', then TAB, and the command will complete up to `$ tsv-select --rest`.
-
-Enabling bash completion is a bit more involved than other packages, but still not too hard. It will often be necessary to install a package. The way to do this is system specific. A good source of instructions can be found at the [bash-completion GitHub repository](https://github.com/scop/bash-completion). Mac users may find the MacPorts [How to use bash-completion](https://trac.macports.org/wiki/howto/bash-completion) guide useful. Procedures for Homebrew are similar, but the details differ a bit.
-
-After enabling bash-completion, add completions for the tsv-utils package. Completions are available in the `bash_completion/tsv-utils` file. One way to add them is to 'source' the file from the `~/.bash_completion` file. A line like the following will do this.
-```
-if [ -r ~/tsv-utils/bash_completion/tsv-utils ]; then
-    . ~/tsv-utils/bash_completion/tsv-utils
-fi
-```
-
-The file can also be added to the bash completions system directory on your system. The location is system specific, see the bash-completion installation instructions for details.
-
-## Convert newline format and character encoding with dos2unix and iconv
-
-The TSV Utilities expect input data to be utf-8 encoded and on Unix, to use Unix newlines. The `dos2unix` and `iconv` command line tools are useful when conversion is required.
-
-Needing to convert newlines from DOS/Windows format to Unix is relatively common. Data files may have been prepared for Windows, and a number of spreadsheet programs generate Windows line feeds when exporting data. The `csv2tsv` tool converts Windows newlines as part of its operation. The other TSV Utilities detect Window newlines when running on a Unix platform, including macOS. The following `dos2unix` commands convert files to use Unix newlines:
-```
-$ # In-place conversion.
-$ dos2unix file.tsv
-
-$ # Conversion writing to a new file. The existing file is not modified.
-$ dos2unix -n file_dos.tsv file_unix.tsv
-
-$ # Reading from standard input writes to standard output
-$ cat file_dos.tsv | dos2unix | tsv-select -f 1-3 > newfile.tsv
-```
-
-Most applications and databases will export data in utf-8 encoding, but it can still be necessary to convert to utf-8. `iconv` serves this purpose nicely. An example converting Windows Latin-1 (code page 1252) to utf-8:
-```
-$ iconv -f CP1252 -t UTF-8 file_latin1.tsv > file_utf8.tsv
-```
-
-The above can be combined with `dos2unix` to perform both conversions at once:
-```
-$ iconv -f CP1252 -t UTF-8 file_window.tsv | dos2unix > file_unix.tsv
-```
-
-See the `dos2unix` and `iconv` man pages for more details.
