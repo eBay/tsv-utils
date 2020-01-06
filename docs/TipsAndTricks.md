@@ -312,7 +312,7 @@ $ wc -l ngram-*.tsv
    86618505 ngram-a.tsv
    61551917 ngram-b.tsv
    97689325 ngram-c.tsv
-    ... files ngram-d.tsv - ngram-w.tsv ...
+   ... more files ...
     3929235 ngram-x.tsv
     6869307 ngram-y.tsv
  1194956817 Total
@@ -341,7 +341,7 @@ Notice that there is no summary line. That is because `wc` produces the summary 
 86618505 ngram-a.tsv
 61551917 ngram-b.tsv
 97689325 ngram-c.tsv
-... files d-w ...
+... more files ...
 3929235 ngram-x.tsv
 6869307 ngram-y.tsv
 ```
