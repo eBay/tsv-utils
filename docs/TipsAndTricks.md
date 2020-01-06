@@ -337,7 +337,7 @@ $ parallel wc -l ::: ngram-*.tsv
 
 Notice that there is no summary line. That is because `wc` produces the summary when processing multiple files, but using parallel `wc` is invoked once per file. Also, the result order has changed. This is because results are output in the order they finish rather than the order the files are listed in. The input order can be preserved using the `--keep-order` (or `-k`) option:
 ```
-`$ parallel --keep-order wc -l ::: *.tsv
+`$ parallel --keep-order wc -l ::: ngram-*.tsv
 86618505 ngram-a.tsv
 61551917 ngram-b.tsv
 97689325 ngram-c.tsv
