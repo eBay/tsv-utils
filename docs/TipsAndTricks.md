@@ -411,7 +411,7 @@ Suppose we want to do this with simple random sampling? In simple random samplin
 $ tsv-sample -n 1000000 ngram-*.tsv
 ```
 
-We can't parallelize the `tsv-sample -n` command itself. However, a trick that can be played is to over-sample using Bernoulli sampling, then get the desired number of records with random sampling. Our earlier formula for Bernoulli sample produces on average about 1.19 million records, a reasonable over-sampling for the 1 million records desired. (It is possible of course for the Bernoulli sample to produce less than 1 million records, but that would be exceptionally rare.) The resulting formula:
+We can't parallelize the `tsv-sample -n` command itself. However, a trick that can be played is to over-sample using Bernoulli sampling, then get the desired number of records with random sampling. Our earlier formula for Bernoulli sample produces on average about 1.19 million records, a reasonable over-sampling for the 1 million records desired. (It is possible for the Bernoulli sample to produce less than 1 million records, but that would be exceptionally rare with this over-sampling rate.) The resulting formula:
 ```
 $ tsv-sample -p 0.001 ngram-*.tsv | tsv-sample -n 1000000
 ```
