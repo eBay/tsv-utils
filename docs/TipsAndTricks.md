@@ -378,17 +378,17 @@ It's a valuable performance gain for a minor change in the command structure. No
 
 `tsv-select` can be parallelized in the same fashion as `tsv-filter`. This example selects the first, second, and fourth fields from the ngram files. The `cut` utility is shown as well (`cut` from GNU coreutils 8.31). The commands and timing results:
 ```
-$ tsv-select -f 1,2,4 ngram-*.tsv
 $ cut -f 1,2,4 ngram-*.tsv
-$ parallel -k tsv-select -f 1,2,4 ::: ngram-*.tsv
+$ tsv-select -f 1,2,4 ngram-*.tsv
 $ parallel -k cut -f 1,2,4 ::: ngram-*.tsv
+$ parallel -k tsv-select -f 1,2,4 ::: ngram-*.tsv
 ```
 
 |                     | Elapsed |   User | System |  CPU |
 |--------------------:|--------:|-------:|-------:|-----:|
 |                 cut |  158.78 | 153.82 |   4.95 |  99% |
-|        parallel cut |   41.07 | 278.71 |  66.65 | 840% |
 |          tsv-select |  100.42 |  98.44 |   3.04 | 101% |
+|        parallel cut |   41.07 | 278.71 |  66.65 | 840% |
 | parallel tsv-select |   29.33 | 179.39 |  63.78 | 828% |
 
 #### GNU parallel and tsv-sample
