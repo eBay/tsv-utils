@@ -439,7 +439,7 @@ $ tsv-summarize --max 3 ngram-*.tsv
 927838975
 ```
 
-That worked, but took 85 seconds. Here's a version that parallelizes the invocations:
+That works, but took 85 seconds. Here's a version that parallelizes the invocations:
 ```
 $ parallel tsv-summarize --max 3 ::: ngram-*.tsv
 11383300
@@ -449,7 +449,7 @@ $ parallel tsv-summarize --max 3 ::: ngram-*.tsv
 32969204
 ```
 
-That worked, but produced a result line for each file. To get the final results we need to make another `tsv-summarize` call producing the final result:
+That worked, but produced a result line for each file. To get the final results we need to make another `tsv-summarize` call aggregating the intermediate results:
 
 ```
 $ parallel tsv-summarize --max 3 ::: ngram-*.tsv | tsv-summarize --max 1
