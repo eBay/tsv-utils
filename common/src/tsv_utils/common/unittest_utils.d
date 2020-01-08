@@ -38,7 +38,7 @@ version(unittest)
      * on failure. However, if run with asserts disabled, the returned path will be empty in
      * event of a failure.
      */
-    string makeUnittestTempDir(string toolDirName)
+    string makeUnittestTempDir(string toolDirName) @safe
     {
         import std.conv : to;
         import std.file : exists, mkdir, tempDir;
@@ -79,7 +79,7 @@ version(unittest)
      * if the write fails. However, if run in a mode with asserts disabled, it will
      * return false if the write failed.
      */
-    bool writeUnittestTsvFile(string filepath, string[][] tsvData, char delimiter = '\t')
+    bool writeUnittestTsvFile(string filepath, string[][] tsvData, char delimiter = '\t') @safe
     {
         import std.algorithm : each, joiner, map;
         import std.conv : to;
@@ -104,7 +104,7 @@ version(unittest)
     }
 
     /* Convert a 2-dimensional array of values to an in-memory string. */
-    string tsvDataToString(string[][] tsvData, char delimiter = '\t')
+    string tsvDataToString(string[][] tsvData, char delimiter = '\t') @safe
     {
         import std.algorithm : joiner, map;
         import std.conv : to;

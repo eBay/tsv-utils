@@ -1996,7 +1996,7 @@ if (isOutputRange!(OutputRange, char))
     outputStream.formatValue(value, formatSpec);
 }
 
-unittest
+@safe unittest
 {
     void testFormatValue(double value, string expected)
     {
@@ -2077,7 +2077,7 @@ if (isSomeChar!C)
     return val;
 }
 
-unittest
+@safe unittest
 {
     /* getFieldValue unit tests. getTsvFieldValue has it's own tests.
      * These tests make basic sanity checks on the getFieldValue wrapper.

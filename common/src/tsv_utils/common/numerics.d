@@ -505,7 +505,7 @@ if (isRandomAccessRange!Range && hasLength!Range && hasSlicing!Range)
 }
 
 /* rangeMedian unit tests. */
-unittest
+@safe unittest
 {
     import std.math : isNaN;
     import std.algorithm : all, permutations;
