@@ -110,7 +110,7 @@ struct TsvAppendOptions
     bool versionWanted = false;        // --V|version
 
     /* fileOptionHandler processes the '--f|file source=file' option. */
-    private void fileOptionHandler(string option, string optionVal)
+    private void fileOptionHandler(string option, string optionVal) pure @safe
     {
         import std.algorithm : findSplit;
         import std.format : format;
