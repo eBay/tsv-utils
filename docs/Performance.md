@@ -14,12 +14,32 @@ The benchmarks are described in detail in the [Comparative Benchmark Study](#com
 
 ### Top four tools in each benchmark
 
-![Numeric Row Filter (Linux)](images/numeric-row-filter_linux_2018.jpg) ![Numeric Row Filter (macOS)](images/numeric-row-filter_macos_2018.jpg)
-![Regex Row Filter (Linux)](images/regex-row-filter_linux_2018.jpg) ![Regex Row Filter (macOS)](images/regex-row-filter_macos_2018.jpg)
-![Column Selection (Linux)](images/column-selection_linux_2018.jpg) ![Column Selection (macOS)](images/column-selection_macos_2018.jpg)
-![Column Selection: Narrow (Linux)](images/column-selection-narrow_linux_2018.jpg) ![Column Selection: Narrow (macOS)](images/column-selection-narrow_macos_2018.jpg)
-![Join Two Files (Linux)](images/join-two-files_linux_2018.jpg) ![Join Two Files (Linux)](images/join-two-files_macos_2018.jpg)
-![Summary Statistics (Linux)](images/summary-statistics_linux_2018.jpg) ![Summary Statistics (Linux)](images/summary-statistics_macos_2018.jpg)
+<table style="width:100%">
+<tr>
+<td><img src="images/numeric-row-filter_linux.jpg" width="320"></td>
+<td><img src="images/numeric-row-filter_macos.jpg" width="320"></td>
+</tr>
+<tr>
+<td><img src="images/regex-row-filter_linux.jpg" width="320"></td>
+<td><img src="images/regex-row-filter_macos.jpg" width="320"></td>
+</tr>
+<tr>
+<td><img src="images/column-selection_linux_2018.jpg" width="320"></td>
+<td><img src="images/column-selection_macos_2018.jpg" width="320"></td>
+</tr>
+<tr>
+<td><img src="images/column-selection-narrow_linux_2018.jpg" width="320"></td>
+<td><img src="images/column-selection-narrow_macos_2018.jpg" width="320"></td>
+</tr>
+<tr>
+<td><img src="images/join-two-files_linux_2018.jpg" width="320"></td>
+<td><img src="images/join-two-files_macos_2018.jpg" width="320"></td>
+</tr>
+<tr>
+<td><img src="images/summary-statistics_linux_2018.jpg" width="320"></td>
+<td><img src="images/summary-statistics_macos_2018.jpg" width="320"></td>
+</tr>
+</table>
 
 ### Top three tools in each benchmark
 
