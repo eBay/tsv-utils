@@ -16,7 +16,8 @@ The benchmarks are described in detail in the [Comparative Benchmark Study](#com
 
 #### Numeric row filter
 
-Filtering rows using numeric tests on individual fields.
+Test: Filter rows using numeric tests on individual fields.
+File: 4.8 GB; 7 million lines.
 
 <table style="width:100%">
   <tr>
@@ -27,6 +28,9 @@ Filtering rows using numeric tests on individual fields.
 
 #### Regular expression row filter
 
+Test: Filter rows using regular expressions.
+File: 2.7 GB; 14 million lines.
+
 <table style="width:100%">
   <tr>
     <td><img src="images/regex-row-filter_linux_2018.jpg" width="400"></td>
@@ -34,7 +38,10 @@ Filtering rows using numeric tests on individual fields.
   </tr>
 </table>
 
-#### Column selection (aka. cut)
+#### Column selection
+
+Test: Select a subset of columns (aka. "cut")
+File: 4.8 GB; 7 million lines
 
 <table style="width:100%">
  <tr>
@@ -45,6 +52,9 @@ Filtering rows using numeric tests on individual fields.
 
 #### Column selection: short lines
 
+Test: Select a subset of columns. Run against data with short lines.
+File: 1.7 GB; 86 million lines
+
 <table style="width:100%">
   <tr>
     <td><img src="images/column-selection-narrow_linux_2018.jpg" width="400"></td>
@@ -54,6 +64,9 @@ Filtering rows using numeric tests on individual fields.
 
 #### Join two files
 
+Test: Join two files on a common key.
+File: 4.8 GB; 7 million lines
+
 <table style="width:100%">
   <tr>
     <td><img src="images/join-two-files_linux_2018.jpg" width="400"></td>
@@ -62,6 +75,21 @@ Filtering rows using numeric tests on individual fields.
 </table>
 
 #### Summary statistics
+
+Test: Calculate summary statistics (count, sum, mean, etc) for individual fields.
+File: 4.8 GB; 7 million lines
+
+<table style="width:100%">
+  <tr>
+    <td><img src="images/summary-statistics_linux_2018.jpg" width="400"></td>
+    <td><img src="images/summary-statistics_macos_2018.jpg" width="400"></td>
+  </tr>
+</table>
+
+#### Converst CSV to TSV
+
+Test: Convert CSV data to TSV
+File: 2.7 GB; 14 million lines
 
 <table style="width:100%">
   <tr>
