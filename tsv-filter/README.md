@@ -8,8 +8,8 @@ Consider a file having 4 fields: `id`, `color`, `year`, `count`. Using [tsv-pret
 ```
 $ tsv-pretty data.tsv | head -n 5
  id  color   year  count
-100  green   1945    173
-101  red     1952    756
+100  green   1982    173
+101  red     1935    756
 102  red     2008   1303
 103  yellow  1873    180
 ```
@@ -24,10 +24,10 @@ Using `tsv-pretty` to view the first few results:
 ```
 $ tsv-filter -H --str-eq 2:red --ge 3:1850 --lt 3:1950 data.tsv | tsv-pretty  | head -n 5
  id  color  year  count
+101  red    1935    756
 106  red    1883   1156
 111  red    1907   1792
 114  red    1931   1412
-118  red    1875    977
 ```
 
 `tsv-filter` is the most widely applicable of the tools, as dataset pruning is a common task. It is stream oriented, so it can handle arbitrarily large files. It is quite fast, faster than other tools the author has tried. This makes it idea for preparing data for applications like R and Pandas. It is also convenient for quickly answering simple questions about a dataset. For example, to count the number of records with a non-zero value in field 4, use the command:
