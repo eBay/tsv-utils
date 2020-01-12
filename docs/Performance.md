@@ -8,52 +8,67 @@ _Visit the [main page](../README.md)_
 
 ## 2018 Benchmark Summary
 
-The table below summarizes the results of the 2018 benchmark study. It shows the top-3 tools from each test. Times are in seconds. The tsv-utils tools are in _italics_. (Except for *csv2tsv*, tsv-utils tool names start with "tsv-".)
+The tables below summarize the results of the 2018 benchmark study. It shows the top-4 tools from each test. Times are in seconds. Times for the tsv-utils tools are show with the green bar.
 
 The benchmarks are described in detail in the [Comparative Benchmark Study](#comparative-benchmark-study) and the [2017](comparative-benchmarks-2017.md) and [2018](comparative-benchmarks-2018.md) comparative benchmark reports. These reports include goals, methodology, test details, caveats, conclusions, etc.
 
 ### Top four tools in each benchmark
 
-<table style="width:100%" border="0" bgcolor="white" cellspacing="0" cellpadding="0">
-  <tr bgcolor="white">
+#### Numeric row filter
+
+Filtering rows using numeric tests on individual fields.
+
+<table style="width:100%">
+  <tr>
     <td><img src="images/numeric-row-filter_linux_2018.jpg" width="400"></td>
     <td><img src="images/numeric-row-filter_macos_2018.jpg" width="400"></td>
   </tr>
-  <tr bgcolor="white">
+</table>
+
+#### Regular expression row filter
+
+<table style="width:100%">
+  <tr>
     <td><img src="images/regex-row-filter_linux_2018.jpg" width="400"></td>
     <td><img src="images/regex-row-filter_macos_2018.jpg" width="400"></td>
   </tr>
-  <tr bgcolor="white">
+</table>
+
+#### Column selection (aka. cut)
+
+<table style="width:100%">
+ <tr>
     <td><img src="images/column-selection_linux_2018.jpg" width="400"></td>
     <td><img src="images/column-selection_macos_2018.jpg" width="400"></td>
   </tr>
-  <tr bgcolor="white">
+</table>
+
+#### Column selection: short lines
+
+<table style="width:100%">
+  <tr>
     <td><img src="images/column-selection-narrow_linux_2018.jpg" width="400"></td>
     <td><img src="images/column-selection-narrow_macos_2018.jpg" width="400"></td>
   </tr>
-  <tr bgcolor="white">
+</table>
+
+#### Join two files
+
+<table style="width:100%">
+  <tr>
     <td><img src="images/join-two-files_linux_2018.jpg" width="400"></td>
     <td><img src="images/join-two-files_macos_2018.jpg" width="400"></td>
   </tr>
-  <tr bgcolor="white">
+</table>
+
+#### Summary statistics
+
+<table style="width:100%">
+  <tr>
     <td><img src="images/summary-statistics_linux_2018.jpg" width="400"></td>
     <td><img src="images/summary-statistics_macos_2018.jpg" width="400"></td>
   </tr>
 </table>
-
-### Top four tools in each benchmark - Try 2
-
-#### Numeric row filter
-
-This test...
-
-<img src="images/numeric-row-filter_linux_2018.jpg" width="320"><img src="images/numeric-row-filter_macos_2018.jpg" width="320">
-
-#### Regex row filter
-
-This test...
-
-<img src="images/regex-row-filter_linux_2018.jpg" width="320"> <img src="images/regex-row-filter_macos_2018.jpg" width="320">
 
 ### Top three tools in each benchmark
 
