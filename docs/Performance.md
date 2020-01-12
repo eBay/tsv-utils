@@ -47,12 +47,13 @@ The benchmarks are described in detail in the [Comparative Benchmark Study](#com
 
 This test...
 
-<img src="images/numeric-row-filter_linux_2018.jpg" width="400"><img src="images/numeric-row-filter_macos_2018.jpg" width="400">
+<img src="images/numeric-row-filter_linux_2018.jpg" width="320"><img src="images/numeric-row-filter_macos_2018.jpg" width="320">
 
 #### Regex row filter
 
 This test...
-<img src="images/regex-row-filter_linux_2018.jpg" width="400"> <img src="images/regex-row-filter_macos_2018.jpg" width="400">
+
+<img src="images/regex-row-filter_linux_2018.jpg" width="320"> <img src="images/regex-row-filter_macos_2018.jpg" width="320">
 
 ### Top three tools in each benchmark
 
