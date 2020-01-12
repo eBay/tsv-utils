@@ -41,6 +41,19 @@ The benchmarks are described in detail in the [Comparative Benchmark Study](#com
   </tr>
 </table>
 
+### Top four tools in each benchmark - Try 2
+
+#### Numeric row filter
+
+This test...
+
+<img src="images/numeric-row-filter_linux_2018.jpg" width="400"><img src="images/numeric-row-filter_macos_2018.jpg" width="400">
+
+#### Regex row filter
+
+This test...
+<img src="images/regex-row-filter_linux_2018.jpg" width="400"> <img src="images/regex-row-filter_macos_2018.jpg" width="400">
+
 ### Top three tools in each benchmark
 
 | Benchmark                     | Platform | 1st             |  Time | 2nd          |  Time | 3rd          |  Time |
