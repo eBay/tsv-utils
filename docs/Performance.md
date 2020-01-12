@@ -15,27 +15,27 @@ The benchmarks are described in detail in the [Comparative Benchmark Study](#com
 ### Top four tools in each benchmark
 
 <table style="width:100%" border="0" bgcolor="white">
-  <tr>
+  <tr bgcolor="white">
     <td><img src="images/numeric-row-filter_linux_2018.jpg" width="400"></td>
     <td><img src="images/numeric-row-filter_macos_2018.jpg" width="400"></td>
   </tr>
-  <tr>
+  <tr bgcolor="white">
     <td><img src="images/regex-row-filter_linux_2018.jpg" width="400"></td>
     <td><img src="images/regex-row-filter_macos_2018.jpg" width="400"></td>
   </tr>
-  <tr>
+  <tr bgcolor="white">
     <td><img src="images/column-selection_linux_2018.jpg" width="400"></td>
     <td><img src="images/column-selection_macos_2018.jpg" width="400"></td>
   </tr>
-  <tr>
+  <tr bgcolor="white">
     <td><img src="images/column-selection-narrow_linux_2018.jpg" width="400"></td>
     <td><img src="images/column-selection-narrow_macos_2018.jpg" width="400"></td>
   </tr>
-  <tr>
+  <tr bgcolor="white">
     <td><img src="images/join-two-files_linux_2018.jpg" width="400"></td>
     <td><img src="images/join-two-files_macos_2018.jpg" width="400"></td>
   </tr>
-  <tr>
+  <tr bgcolor="white">
     <td><img src="images/summary-statistics_linux_2018.jpg" width="400"></td>
     <td><img src="images/summary-statistics_macos_2018.jpg" width="400"></td>
   </tr>
