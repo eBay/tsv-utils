@@ -7,14 +7,14 @@ These tools are especially useful when working with large data sets. They run fa
 File an [issue](https://github.com/eBay/tsv-utils/issues) if you have problems, questions or suggestions.
 
 **In this README:**
-* [Tools overview](#tools-overview) - Descriptions of each tool.
+* [Tools overview](#tools-overview) - Description of each tool.
 * [Obtaining and installation](#obtaining-and-installation)
 
 **Additional documents:**
-* [Tools reference](docs/ToolReference.md)
+* [Tools reference](docs/ToolReference.md) - Detailed documentation.
 * [Releases](https://github.com/eBay/tsv-utils/releases) - Pre-built binaries and release notes.
-* [Tips and tricks](docs/TipsAndTricks.md)
-* [Performance Studies](docs/Performance.md)
+* [Tips and tricks](docs/TipsAndTricks.md) - Simpler and faster use of command line tools.
+* [Performance Studies](docs/Performance.md) - Benchmarks against similar tools and other performance studies.
 * [Comparing TSV and CSV formats](docs/comparing-tsv-and-csv.md)
 * [Building with Link Time Optimization (LTO) and Profile Guided Optimization (PGO)](docs/BuildingWithLTO.md)
 * [About the code](docs/AboutTheCode.md) (see also: [tsv-utils code documentation](https://tsv-utils.dpldocs.info/))
@@ -41,12 +41,12 @@ The tools work like traditional Unix command line utilities such as `cut`, `sort
 The rest of this section contains descriptions of each tool. Click on the links below to jump directly to one of the tools. Full documentation is available in the [tool reference](docs/ToolReference.md).
 
 * [tsv-filter](#tsv-filter) - Filter lines using numeric, string and regular expression comparisons against individual fields.
-* [tsv-sample](#tsv-sample) - Sample input lines or randomize their order. A number of sampling methods are available.
-* [tsv-summarize](#tsv-summarize) - Summary statistics on selected fields, against the full data set or grouped by key.
-* [tsv-pretty](#tsv-pretty) - Print TSV data aligned for easier reading on the command-line.
 * [tsv-select](#tsv-select) - Keep a subset of columns (fields). Like `cut`, but with field reordering.
+* [tsv-uniq](#tsv-uniq) - Filter out duplicate lines using either the full line or individual fields as a key.
+* [tsv-summarize](#tsv-summarize) - Summary statistics on selected fields, against the full data set or grouped by key.
+* [tsv-sample](#tsv-sample) - Sample input lines or randomize their order. A number of sampling methods are available.
 * [tsv-join](#tsv-join) - Join lines from multiple files using fields as a key.
-* [tsv-uniq](#tsv-uniq) - Filter out duplicate lines using fields as a key.
+* [tsv-pretty](#tsv-pretty) - Print TSV data aligned for easier reading on the command-line.
 * [csv2tsv](#csv2tsv) - Convert CSV files to TSV.
 * [tsv-append](#tsv-append) - Concatenate TSV files. Header-aware; supports source file tracking.
 * [number-lines](#number-lines) - Number the input lines.
@@ -54,34 +54,66 @@ The rest of this section contains descriptions of each tool. Click on the links 
 
 ### tsv-filter
 
-Filters lines by making tests against individual fields. Multiple tests can be specified in a single call. A variety of numeric and string comparison operators are available as well as regular expressions. Example:
+Filters lines by making tests against individual fields. Multiple tests can be specified in a single call. A variety of numeric and string comparison operators are available as well as regular expressions.
+
+Consider a file having 4 fields: `id`, `color`, `year`, `count`. Using [tsv-pretty](#tsv-pretty) to view the first few lines:
 ```
-$ tsv-filter --ge 3:100 --le 3:200 --str-eq 4:red file.tsv
+$ tsv-pretty data.tsv | head -n 5
+ id  color   year  count
+100  green   1945    173
+101  red     1952    756
+102  red     2008   1303
+103  yellow  1873    180
 ```
 
-This outputs lines where field 3 satisfies (100 <= fieldval <= 200) and field 4 matches 'red'.
+The following command will find all `red` entries with years between 1850 and 1950:
 
-`tsv-filter` is the most widely applicable of the tools, as dataset pruning is a common task. It is stream oriented, so it can handle arbitrarily large files. It is fast, quite a bit faster than other tools the author has tried. This makes it ideal for preparing data for applications like R and Pandas. It is also convenient for quickly answering simple questions about a dataset. For example, to count the number of records with a non-zero value in field 3, use the command:
 ```
-$ tsv-filter --ne 3:0 file.tsv | wc -l
+$ tsv-filter -H --str-eq 2:red --ge 3:1850 --lt 3:1950 data.tsv
 ```
 
-See the [tsv-filter reference](docs/ToolReference.md#tsv-filter-reference) for details.
+Using [tsv-pretty](#tsv-pretty) to view the first few results:
+```
+$ tsv-filter -H --str-eq 2:red --ge 3:1850 --lt 3:1950 data.tsv | tsv-pretty  | head -n 5
+ id  color  year  count
+106  red    1883   1156
+111  red    1907   1792
+114  red    1931   1412
+118  red    1875    977
+```
 
-### tsv-sample
+`tsv-filter` is the most widely applicable of the tools, as dataset pruning is a common task. It is stream oriented, so it can handle arbitrarily large files. It is fast, quite a bit faster than other tools the author has tried. This makes it ideal for preparing data for applications like R and Pandas. It is also convenient for quickly answering simple questions about a dataset. For example, to count the number of records with a non-zero value in field 4, use the command:
+```
+$ tsv-filter --ne 4:0 file.tsv | wc -l
+```
 
-`tsv-sample` randomizes line order (shuffling) or selects random subsets of lines (sampling) from input data. Several methods are available, including shuffling, simple random sampling, weighted random sampling, Bernoulli sampling, and distinct sampling. Data can be read from files or standard input. These sampling methods are made available through several modes of operation:
+Many filtering options are available. See the [tsv-filter reference](docs/ToolReference.md#tsv-filter-reference) for details.
 
-* Shuffling - The default mode of operation. All lines are read in and written out in random order. All orderings are equally likely.
-* Simple random sampling (`--n|num N`) - A random sample of `N` lines are selected and written out in random order. The `--i|inorder` option preserves the original input order.
-* Weighted random sampling (`--n|num N`, `--w|weight-field F`) - A weighted random sample of N lines are selected using weights from a field on each line. Output is in weighted selected order unless the `--i|inorder` option is used. Omitting `--n|num` outputs all lines in weighted selection order (weighted shuffling).
-* Sampling with replacement (`--r|replace`, `--n|num N`) - All lines are read in, then lines are randomly selected one at a time and written out. Lines can be selected multiple times. Output continues until `N` samples have been output.
-* Bernoulli sampling (`--p|prob P`) - A streaming form of sampling. Lines are read one at a time and selected for output using probability `P`. e.g. `-p 0.1` specifies that 10% of lines should be included in the sample.
-* Distinct sampling (`--k|key-fields F`, `--p|prob P`) - Another streaming form of sampling. However, instead of each line being subject to an independent selection choice, lines are selected based on a key contained in each line. A portion of keys are randomly selected for output, with probability P. Every line containing a selected key is included in the output. Consider a query log with records consisting of <user, query, clicked-url> triples. It may be desirable to sample records for one percent of the users, but include all records for the selected users.
+### tsv-select
 
-`tsv-sample` is designed for large data sets. Streaming algorithms make immediate decisions on each line. They do not accumulate memory and can run on infinite length input streams. Both shuffling and sampling with replacement read in the entire dataset and are limited by available memory. Simple and weighted random sampling use reservoir sampling and only need to hold the specified sample size (`--n|num`) in memory. By default, a new random order is generated every run, but options are available for using the same randomization order over multiple runs. The random values assigned to each line can be printed, either to observe the behavior or to run custom algorithms on the results.
+A version of the Unix `cut` utility with the additional ability to re-order the fields. It also helps with header lines by keeping only the header from the first file (`--header` option). The following command writes fields [4, 2, 9, 10, 11] from a pair of files to stdout:
+```
+$ tsv-select -f 4,2,9-11 file1.tsv file2.tsv
+```
 
-See the [tsv-sample reference](docs/ToolReference.md#tsv-sample-reference) for further details.
+See the [tsv-select reference](docs/ToolReference.md#tsv-select-reference) for details.
+
+### tsv-uniq
+
+Similar in spirit to the Unix `uniq` tool, `tsv-uniq` filters a dataset so there is only one copy of each unique line. `tsv-uniq` goes beyond Unix `uniq` in a couple ways. First, data does not need to be sorted. Second, equivalence can be based on a subset of fields rather than the full line.
+
+`tsv-uniq` can also be run in 'equivalence class identification' mode, where lines with equivalent keys are marked with a unique id rather than filtered out. Another variant is 'number' mode, which generates lines numbers grouped by the key.
+
+An example uniq'ing a file on fields 2 and 3:
+```
+$ tsv-uniq -f 2,3 data.tsv
+```
+
+`tsv-uniq` operates on the entire line when no fields are specified. This is a useful alternative to the traditional `sort -u` or `sort | uniq` paradigms for identifying unique lines in unsorted files, as it is quite a bit faster, especially when there are many duplicate lines. As a bonus, order of the input lines is retained.
+
+As with `tsv-join`, an in-memory lookup table is used to record unique entries. This ultimately limits the data sizes that can be processed. The author has found that datasets with up to about 10 million unique entries work fine, but performance starts to degrade after that. Even then it remains faster than the alternatives.
+
+See the [tsv-uniq reference](docs/ToolReference.md#tsv-uniq-reference) for details.
 
 ### tsv-summarize
 
@@ -110,6 +142,34 @@ Multiple fields can be used as the `--group-by` key. The file's sort order does 
 
 See the [tsv-summarize reference](docs/ToolReference.md#tsv-summarize-reference) for the list of statistical and other aggregation operations available.
 
+### tsv-sample
+
+`tsv-sample` randomizes line order (shuffling) or selects random subsets of lines (sampling) from input data. Several methods are available, including shuffling, simple random sampling, weighted random sampling, Bernoulli sampling, and distinct sampling. Data can be read from files or standard input. These sampling methods are made available through several modes of operation:
+
+* Shuffling - The default mode of operation. All lines are read in and written out in random order. All orderings are equally likely.
+* Simple random sampling (`--n|num N`) - A random sample of `N` lines are selected and written out in random order. The `--i|inorder` option preserves the original input order.
+* Weighted random sampling (`--n|num N`, `--w|weight-field F`) - A weighted random sample of N lines are selected using weights from a field on each line. Output is in weighted selected order unless the `--i|inorder` option is used. Omitting `--n|num` outputs all lines in weighted selection order (weighted shuffling).
+* Sampling with replacement (`--r|replace`, `--n|num N`) - All lines are read in, then lines are randomly selected one at a time and written out. Lines can be selected multiple times. Output continues until `N` samples have been output.
+* Bernoulli sampling (`--p|prob P`) - A streaming form of sampling. Lines are read one at a time and selected for output using probability `P`. e.g. `-p 0.1` specifies that 10% of lines should be included in the sample.
+* Distinct sampling (`--k|key-fields F`, `--p|prob P`) - Another streaming form of sampling. However, instead of each line being subject to an independent selection choice, lines are selected based on a key contained in each line. A portion of keys are randomly selected for output, with probability P. Every line containing a selected key is included in the output. Consider a query log with records consisting of <user, query, clicked-url> triples. It may be desirable to sample records for one percent of the users, but include all records for the selected users.
+
+`tsv-sample` is designed for large data sets. Streaming algorithms make immediate decisions on each line. They do not accumulate memory and can run on infinite length input streams. Both shuffling and sampling with replacement read in the entire dataset and are limited by available memory. Simple and weighted random sampling use reservoir sampling and only need to hold the specified sample size (`--n|num`) in memory. By default, a new random order is generated every run, but options are available for using the same randomization order over multiple runs. The random values assigned to each line can be printed, either to observe the behavior or to run custom algorithms on the results.
+
+See the [tsv-sample reference](docs/ToolReference.md#tsv-sample-reference) for further details.
+
+### tsv-join
+
+Joins lines from multiple files based on a common key. One file, the 'filter' file, contains the records (lines) being matched. The other input files are scanned for matching records. Matching records are written to standard output, along with any designated fields from the filter file. In database parlance this is a hash semi-join. Example:
+```
+$ tsv-join --filter-file filter.tsv --key-fields 1,3 --append-fields 5,6 data.tsv
+```
+
+This reads `filter.tsv`, creating a lookup table keyed on fields 1 and 3. `data.tsv` is read, lines with a matching key are written to standard output with fields 5 and 6 from `filter.tsv` appended. This is a form of inner-join. Outer-joins and anti-joins can also be done.
+
+Common uses for `tsv-join` are to join related datasets or to filter one dataset based on another. Filter file entries are kept in memory, this limits the ultimate size that can be handled effectively. The author has found that filter files up to about 10 million lines are processed effectively, but performance starts to degrade after that.
+
+See the [tsv-join reference](docs/ToolReference.md#tsv-join-reference) for details.
+
 ### tsv-pretty
 
 tsv-pretty prints TSV data in an aligned format for better readability when working on the command-line. Text columns are left aligned, numeric columns are right aligned. Floats are aligned on the decimal point and precision can be specified. Header lines are detected automatically. If desired, the header line can be repeated at regular intervals. An example, first printed without formatting:
@@ -134,45 +194,6 @@ Fluorescent Orange    422  1141.70  7.921
 Grey                   19   140.30  1.030
 ```
 See the [tsv-pretty reference](docs/ToolReference.md#tsv-pretty-reference) for details.
-
-### tsv-select
-
-A version of the Unix `cut` utility with the additional ability to re-order the fields. It also helps with header lines by keeping only the header from the first file (`--header` option). The following command writes fields [4, 2, 9, 10, 11] from a pair of files to stdout:
-```
-$ tsv-select -f 4,2,9-11 file1.tsv file2.tsv
-```
-
-See the [tsv-select reference](docs/ToolReference.md#tsv-select-reference) for details.
-
-### tsv-join
-
-Joins lines from multiple files based on a common key. One file, the 'filter' file, contains the records (lines) being matched. The other input files are scanned for matching records. Matching records are written to standard output, along with any designated fields from the filter file. In database parlance this is a hash semi-join. Example:
-```
-$ tsv-join --filter-file filter.tsv --key-fields 1,3 --append-fields 5,6 data.tsv
-```
-
-This reads `filter.tsv`, creating a lookup table keyed on fields 1 and 3. `data.tsv` is read, lines with a matching key are written to standard output with fields 5 and 6 from `filter.tsv` appended. This is a form of inner-join. Outer-joins and anti-joins can also be done.
-
-Common uses for `tsv-join` are to join related datasets or to filter one dataset based on another. Filter file entries are kept in memory, this limits the ultimate size that can be handled effectively. The author has found that filter files up to about 10 million lines are processed effectively, but performance starts to degrade after that.
-
-See the [tsv-join reference](docs/ToolReference.md#tsv-join-reference) for details.
-
-### tsv-uniq
-
-Similar in spirit to the Unix `uniq` tool, `tsv-uniq` filters a dataset so there is only one copy of each unique line. `tsv-uniq` goes beyond Unix `uniq` in a couple ways. First, data does not need to be sorted. Second, equivalence can be based on a subset of fields rather than the full line.
-
-`tsv-uniq` can also be run in 'equivalence class identification' mode, where lines with equivalent keys are marked with a unique id rather than filtered out. Another variant is 'number' mode, which generates lines numbers grouped by the key.
-
-An example uniq'ing a file on fields 2 and 3:
-```
-$ tsv-uniq -f 2,3 data.tsv
-```
-
-`tsv-uniq` operates on the entire line when no fields are specified. This is a useful alternative to the traditional `sort -u` or `sort | uniq` paradigms for identifying unique lines in unsorted files, as it is quite a bit faster, especially when there are many duplicate lines. As a bonus, order of the input lines is retained.
-
-As with `tsv-join`, an in-memory lookup table is used to record unique entries. This ultimately limits the data sizes that can be processed. The author has found that datasets with up to about 10 million unique entries work fine, but performance starts to degrade after that. Even then it remains faster than the alternatives.
-
-See the [tsv-uniq reference](docs/ToolReference.md#tsv-uniq-reference) for details.
 
 ### csv2tsv
 
