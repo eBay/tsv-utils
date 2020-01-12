@@ -16,8 +16,8 @@ The benchmarks are described in detail in the [Comparative Benchmark Study](#com
 
 #### Numeric row filter
 
-Test: Filter rows using numeric tests on individual fields.
-File: 4.8 GB; 7 million lines.
+**Test:** Filter rows using numeric tests on individual fields.<br>
+**File:** 4.8 GB; 7 million lines.
 
 <table style="width:100%">
   <tr>
@@ -28,8 +28,8 @@ File: 4.8 GB; 7 million lines.
 
 #### Regular expression row filter
 
-Test: Filter rows using regular expressions.
-File: 2.7 GB; 14 million lines.
+**Test:** Filter rows using regular expressions.<br>
+**File:** 2.7 GB; 14 million lines.
 
 <table style="width:100%">
   <tr>
@@ -40,8 +40,8 @@ File: 2.7 GB; 14 million lines.
 
 #### Column selection
 
-Test: Select a subset of columns (aka. "cut")
-File: 4.8 GB; 7 million lines
+**Test:** Select a subset of columns (aka. "cut")<br>
+**File:** 4.8 GB; 7 million lines
 
 <table style="width:100%">
  <tr>
@@ -52,8 +52,8 @@ File: 4.8 GB; 7 million lines
 
 #### Column selection: short lines
 
-Test: Select a subset of columns. Run against data with short lines.
-File: 1.7 GB; 86 million lines
+**Test:** Select a subset of columns. Run against data with short lines.<br>
+**File:** 1.7 GB; 86 million lines
 
 <table style="width:100%">
   <tr>
@@ -64,8 +64,8 @@ File: 1.7 GB; 86 million lines
 
 #### Join two files
 
-Test: Join two files on a common key.
-File: 4.8 GB; 7 million lines
+**Test:** Join two files on a common key.<br>
+**File:** 4.8 GB; 7 million lines
 
 <table style="width:100%">
   <tr>
@@ -76,8 +76,8 @@ File: 4.8 GB; 7 million lines
 
 #### Summary statistics
 
-Test: Calculate summary statistics (count, sum, mean, etc) for individual fields.
-File: 4.8 GB; 7 million lines
+**Test:** Calculate summary statistics (count, sum, mean, etc) for individual fields.<br>
+**File:** 4.8 GB; 7 million lines
 
 <table style="width:100%">
   <tr>
@@ -88,8 +88,8 @@ File: 4.8 GB; 7 million lines
 
 #### Converst CSV to TSV
 
-Test: Convert CSV data to TSV
-File: 2.7 GB; 14 million lines
+**Test:** Convert CSV data to TSV<br>
+**File:** 2.7 GB; 14 million lines
 
 <table style="width:100%">
   <tr>
@@ -97,25 +97,6 @@ File: 2.7 GB; 14 million lines
     <td><img src="images/summary-statistics_macos_2018.jpg" width="400"></td>
   </tr>
 </table>
-
-### Top three tools in each benchmark
-
-| Benchmark                     | Platform | 1st             |  Time | 2nd          |  Time | 3rd          |  Time |
-|-------------------------------|----------|-----------------|------:|--------------|------:|--------------|------:|
-| **Numeric Row Filter**        | Linux    | _tsv-filter_    |  5.48 | mawk         | 11.31 | GNU awk      | 42.80 |
-| (4.8 GB, 7M lines)            | Mac OS   | _tsv-filter_    |  3.35 | mawk         | 15.05 | GNU awk      | 24.25 |
-| **Regex Row Filter**          | Linux    | xsv             |  7.97 | _tsv-filter_ |  8.80 | mawk         | 17.74 |
-| (2.7 GB, 14M lines)           | Mac OS   | xsv             |  7.03 | _tsv-filter_ |  8.28 | GNU awk      | 16.47 |
-| **Column selection**          | Linux    | _tsv-select_    |  4.79 | mawk         |  9.51 | xsv          |  9.74 |
-| (4.8 GB, 7M lines)            | Mac OS   | _tsv-select_    |  2.93 | xsv          |  7.67 | csvtk        | 11.00 |
-| **Column selection (narrow)** | Linux    | GNU cut         |  5.60 | _tsv-select_ |  8.26 | xsv          | 13.60 |
-| (1.7 GB, 86M lines)           | Mac OS   | xsv             |  9.22 | _tsv-select_ | 10.18 | GNU cut      | 10.65 |
-| **Join two files**            | Linux    | _tsv-join_      | 26.68 | xsv          | 68.02 | csvtk        | 98.51 |
-| (4.8 GB, 7M lines)            | Mac OS   | _tsv-join_      | 21.78 | xsv          | 60.03 | csvtk        | 82.43 |
-| **Summary statistics**        | Linux    | _tsv-summarize_ | 15.78 | xsv          | 44.38 | GNU Datamash | 48.51 |
-| (4.8 GB, 7M lines)            | Mac OS   | _tsv-summarize_ |  9.82 | xsv          | 35.32 | csvtk        | 45.92 |
-| **CSV-to-TSV**                | Linux    | _csv2tsv_       | 20.30 | xsv          | 26.82 | csvtk        | 44.82 |
-| (2.7 GB, 14M lines)           | Mac OS   | _csv2tsv_       | 10.91 | xsv          | 14.38 | csvtk        | 32.49 |
 
 ## Comparative Benchmark Study
 
