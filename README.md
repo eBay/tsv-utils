@@ -7,13 +7,13 @@ These tools are especially useful when working with large data sets. They run fa
 File an [issue](https://github.com/eBay/tsv-utils/issues) if you have problems, questions or suggestions.
 
 **In this README:**
-* [Tools overview](#tools-overview) - Description of each tool.
+* [Tools overview](#tools-overview) - Descriptions of each tool.
 * [Obtaining and installation](#obtaining-and-installation)
 
 **Additional documents:**
 * [Tools reference](docs/ToolReference.md) - Detailed documentation.
 * [Releases](https://github.com/eBay/tsv-utils/releases) - Pre-built binaries and release notes.
-* [Tips and tricks](docs/TipsAndTricks.md) - Simpler and faster use of command line tools.
+* [Tips and tricks](docs/TipsAndTricks.md) - Simpler and faster command line tool use.
 * [Performance Studies](docs/Performance.md) - Benchmarks against similar tools and other performance studies.
 * [Comparing TSV and CSV formats](docs/comparing-tsv-and-csv.md)
 * [Building with Link Time Optimization (LTO) and Profile Guided Optimization (PGO)](docs/BuildingWithLTO.md)
