@@ -20,9 +20,9 @@ The following command will find all `red` entries with years between 1850 and 19
 $ tsv-filter -H --str-eq 2:red --ge 3:1850 --lt 3:1950 data.tsv
 ```
 
-Using `tsv-pretty` to view the first few results:
+Viewing the first few results:
 ```
-$ tsv-filter -H --str-eq 2:red --ge 3:1850 --lt 3:1950 data.tsv | tsv-pretty  | head -n 5
+$ tsv-filter -H --str-eq 2:red --ge 3:1850 --lt 3:1950 data.tsv | tsv-pretty | head -n 5
  id  color  year  count
 101  red    1935    756
 106  red    1883   1156

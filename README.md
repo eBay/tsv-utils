@@ -54,7 +54,7 @@ The rest of this section contains descriptions of each tool. Click on the links 
 
 ### tsv-filter
 
-Filters lines by making tests against individual fields. Multiple tests can be specified in a single call. A variety of numeric and string comparison operators are available as well as regular expressions.
+Filters lines by making tests against individual fields. Multiple tests can be specified in a single call. A variety of numeric and string comparison operators are available, including regular expressions.
 
 Consider a file having 4 fields: `id`, `color`, `year`, `count`. Using [tsv-pretty](#tsv-pretty) to view the first few lines:
 ```
@@ -72,9 +72,9 @@ The following command will find all `red` entries with years between 1850 and 19
 $ tsv-filter -H --str-eq 2:red --ge 3:1850 --lt 3:1950 data.tsv
 ```
 
-Using [tsv-pretty](#tsv-pretty) to view the first few results:
+Viewing the first few results:
 ```
-$ tsv-filter -H --str-eq 2:red --ge 3:1850 --lt 3:1950 data.tsv | tsv-pretty  | head -n 5
+$ tsv-filter -H --str-eq 2:red --ge 3:1850 --lt 3:1950 data.tsv | tsv-pretty | head -n 5
  id  color  year  count
 101  red    1935    756
 106  red    1883   1156
@@ -111,7 +111,7 @@ $ tsv-uniq -f 2,3 data.tsv
 
 `tsv-uniq` operates on the entire line when no fields are specified. This is a useful alternative to the traditional `sort -u` or `sort | uniq` paradigms for identifying unique lines in unsorted files, as it is quite a bit faster, especially when there are many duplicate lines. As a bonus, order of the input lines is retained.
 
-As with `tsv-join`, an in-memory lookup table is used to record unique entries. This ultimately limits the data sizes that can be processed. The author has found that datasets with up to about 10 million unique entries work fine, but performance starts to degrade after that. Even then it remains faster than the alternatives.
+An in-memory lookup table is used to record unique entries. This ultimately limits the data sizes that can be processed. The author has found that datasets with up to about 10 million unique entries work fine, but performance starts to degrade after that. Even then it remains faster than the alternatives.
 
 See the [tsv-uniq reference](docs/ToolReference.md#tsv-uniq-reference) for details.
 
