@@ -14,7 +14,7 @@ The benchmarks are described in detail in the [Comparative Benchmark Study](#com
 
 ### Top four tools in each benchmark
 
-<table style="width:100% background-color:white border:0">
+<table style="width:100%" border="0" bgcolor="white">
   <tr>
     <td><img src="images/numeric-row-filter_linux_2018.jpg" width="400"></td>
     <td><img src="images/numeric-row-filter_macos_2018.jpg" width="400"></td>
