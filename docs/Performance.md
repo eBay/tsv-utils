@@ -12,6 +12,15 @@ The table below summarizes the results of the 2018 benchmark study. It shows the
 
 The benchmarks are described in detail in the [Comparative Benchmark Study](#comparative-benchmark-study) and the [2017](comparative-benchmarks-2017.md) and [2018](comparative-benchmarks-2018.md) comparative benchmark reports. These reports include goals, methodology, test details, caveats, conclusions, etc.
 
+### Top four tools in each benchmark
+
+![Numeric Row Filter (Linux)](images/numeric-row-filter_linux_2018.jpg) ![Numeric Row Filter (macOS)](images/numeric-row-filter_linux_2018.jpg)
+![Regex Row Filter (Linux)](images/regex-row-filter_linux_2018.jpg) ![Regex Row Filter (macOS)](images/regex-row-filter_linux_2018.jpg)
+![Column Selection (Linux)](images/column-selection_linux_2018.jpg) ![Column Selection (macOS)](images/column-selection_macos_2018.jpg)
+![Column Selection: Narrow (Linux)](images/column-selection-narrow_linux_2018.jpg) ![Column Selection: Narrow (macOS)](images/column-selection-narrow_macos_2018.jpg)
+![Join Two Files (Linux)](images/join-two-files_linux_2018.jpg) ![Join Two Files (Linux)](images/join-two-files_macos_2018.jpg)
+![Summary Statistics (Linux)](images/summary-statistics_linux_2018.jpg) ![Summary Statistics (Linux)](images/summary-statistics_macos_2018.jpg)
+
 ### Top three tools in each benchmark
 
 | Benchmark                     | Platform | 1st             |  Time | 2nd          |  Time | 3rd          |  Time |
