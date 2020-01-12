@@ -14,8 +14,8 @@ The benchmarks are described in detail in the [Comparative Benchmark Study](#com
 
 ### Top four tools in each benchmark
 
-![Numeric Row Filter (Linux)](images/numeric-row-filter_linux_2018.jpg) ![Numeric Row Filter (macOS)](images/numeric-row-filter_linux_2018.jpg)
-![Regex Row Filter (Linux)](images/regex-row-filter_linux_2018.jpg) ![Regex Row Filter (macOS)](images/regex-row-filter_linux_2018.jpg)
+![Numeric Row Filter (Linux)](images/numeric-row-filter_linux_2018.jpg) ![Numeric Row Filter (macOS)](images/numeric-row-filter_macos_2018.jpg)
+![Regex Row Filter (Linux)](images/regex-row-filter_linux_2018.jpg) ![Regex Row Filter (macOS)](images/regex-row-filter_macos_2018.jpg)
 ![Column Selection (Linux)](images/column-selection_linux_2018.jpg) ![Column Selection (macOS)](images/column-selection_macos_2018.jpg)
 ![Column Selection: Narrow (Linux)](images/column-selection-narrow_linux_2018.jpg) ![Column Selection: Narrow (macOS)](images/column-selection-narrow_macos_2018.jpg)
 ![Join Two Files (Linux)](images/join-two-files_linux_2018.jpg) ![Join Two Files (Linux)](images/join-two-files_macos_2018.jpg)
