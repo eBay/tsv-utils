@@ -105,15 +105,15 @@ The benchmarks are described in detail in the [Comparative Benchmark Study](#com
   </tr>
 </table>
 
-### Converst CSV to TSV
+### Convert CSV to TSV
 
 **Test:** Convert CSV data to TSV<br>
 **File:** 2.7 GB; 14 million lines
 
 <table style="width:100%">
   <tr>
-    <td><img src="images/summary-statistics_linux_2018.jpg" width="400"></td>
-    <td><img src="images/summary-statistics_macos_2018.jpg" width="400"></td>
+    <td><img src="images/csv2tsv_linux_2018.jpg" width="400"></td>
+    <td><img src="images/csv2tsv_macos_2018.jpg" width="400"></td>
   </tr>
 </table>
 
