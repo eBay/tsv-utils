@@ -2,13 +2,34 @@ _Visit the [main page](../README.md)_
 
 # Performance Studies
 
-* [2018 Benchmark Summary](#2018-benchmark-summary)
 * [Comparative Benchmark Study](#comparative-benchmark-study)
+* [2018 Benchmark Summary](#2018-benchmark-summary)
 * [LTO and PGO studies](#lto-and-pgo-studies)
+
+Jump to the [2018 Benchmark Summary](#2018-benchmark-summary) for an overview of how tsv-utils performance compares to other tools.
+
+## Comparative Benchmark Study
+
+Performance is a key motivation for using D rather an interpreted language like Python or Perl. It is also a consideration in choosing between D and C/C++. To gauge D's performance, benchmarks were run comparing eBay's TSV Utilities to a number of similar tools written in other native compiled programming languages. Included were traditional Unix tools as well as several specialized toolkits. Programming languages involved were C, Go, and Rust.
+
+The larger goal was to see how D programs would compare when written in a straightforward style, as if by a team of well qualified programmers in the course of normal development. Attention was giving to choosing good algorithms and identifying poorly performing code constructs, but heroic measures were not used to gain performance. D's standard library was used extensively, without writing custom versions of core algorithms or containers. Unnecessary GC allocation was avoided, but GC was used rather manual memory management. Higher-level I/O primitives were used rather than custom buffer management.
+
+This larger goal was also the motivation for using multiple benchmarks and a variety of tools. Single points of comparison are more likely to be biased (less reliable) due to the differing goals and quality of the specific application.
+
+The study was conducted in March 2017. An update done in April 2018 using the fastest tools from the initial study.
+
+* [March 2017 Comparative Benchmark Study](comparative-benchmarks-2017.md)
+* [April 2018 Comparative Benchmark Update](comparative-benchmarks-2018.md)
+
+The D programs performed extremely well, exceeding the author's expectations. Six benchmarks were used in the 2017 study, the D tools were the fastest on each, often by significant margins. This is impressive given that very little low-level programming was done. In the 2018 update the TSV Utilities were first or second on all benchmarks. The TSV Utilities were faster than in 2017, but several of the other tools had gotten faster as well.
+
+As with most benchmarks, there are caveats. The tools used for comparison are not exact equivalents, and in many cases have different design goals and capabilities likely to impact performance. Tasks performed are highly I/O dependent and follow similar computational patterns, so the results may not transfer to other applications.
+
+Despite limitations of the benchmarks, this is certainly a good result. The benchmarks engage a fair range of programming constructs, and the comparison basis includes nine distinct implementations and several long tenured Unix tools. As a practical matter, performance of the tools has changed the author's personal work habits, as calculations that used to take 15-20 seconds are now instantaneous, and calculations that took minutes often finish in 10 seconds or so.
 
 ## 2018 Benchmark Summary
 
-The tables below summarize the results of the 2018 benchmark study. It shows the top-4 tools from each test. Times are in seconds. Times for the tsv-utils tools are show with the green bar.
+The tables below summarize the results of the 2018 benchmark study. It shows the top-4 tools from each test. Times are in seconds. Times for the tsv-utils tools are show with a green bar.
 
 The benchmarks are described in detail in the [Comparative Benchmark Study](#comparative-benchmark-study) and the [2017](comparative-benchmarks-2017.md) and [2018](comparative-benchmarks-2018.md) comparative benchmark reports. These reports include goals, methodology, test details, caveats, conclusions, etc.
 
@@ -76,7 +97,7 @@ The benchmarks are described in detail in the [Comparative Benchmark Study](#com
 
 #### Summary statistics
 
-**Test:** Calculate summary statistics (count, sum, mean, etc) for individual fields.<br>
+**Test:** Calculate summary statistics (count, sum, mean, etc) on individual fields.<br>
 **File:** 4.8 GB; 7 million lines
 
 <table style="width:100%">
@@ -97,25 +118,6 @@ The benchmarks are described in detail in the [Comparative Benchmark Study](#com
     <td><img src="images/summary-statistics_macos_2018.jpg" width="400"></td>
   </tr>
 </table>
-
-## Comparative Benchmark Study
-
-Performance is a key motivation for using D rather an interpreted language like Python or Perl. It is also a consideration in choosing between D and C/C++. To gauge D's performance, benchmarks were run comparing eBay's TSV Utilities to a number of similar tools written in other native compiled programming languages. Included were traditional Unix tools as well as several specialized toolkits. Programming languages involved were C, Go, and Rust.
-
-The larger goal was to see how D programs would compare when written in a straightforward style, as if by a team of well qualified programmers in the course of normal development. Attention was giving to choosing good algorithms and identifying poorly performing code constructs, but heroic measures were not used to gain performance. D's standard library was used extensively, without writing custom versions of core algorithms or containers. Unnecessary GC allocation was avoided, but GC was used rather manual memory management. Higher-level I/O primitives were used rather than custom buffer management.
-
-This larger goal was also the motivation for using multiple benchmarks and a variety of tools. Single points of comparison are more likely to be biased (less reliable) due to the differing goals and quality of the specific application.
-
-The study was conducted in March 2017. An update done in April 2018 using the fastest tools from the initial study.
-
-* [March 2017 Comparative Benchmark Study](comparative-benchmarks-2017.md)
-* [April 2018 Comparative Benchmark Update](comparative-benchmarks-2018.md)
-
-The D programs performed extremely well, exceeding the author's expectations. Six benchmarks were used in the 2017 study, the D tools were the fastest on each, often by significant margins. This is impressive given that very little low-level programming was done. In the 2018 update the TSV Utilities were first or second on all benchmarks. The TSV Utilities were faster than in 2017, but several of the other tools had gotten faster as well.
-
-As with most benchmarks, there are caveats. The tools used for comparison are not exact equivalents, and in many cases have different design goals and capabilities likely to impact performance. Tasks performed are highly I/O dependent and follow similar computational patterns, so the results may not transfer to other applications.
-
-Despite limitations of the benchmarks, this is certainly a good result. The benchmarks engage a fair range of programming constructs, and the comparison basis includes nine distinct implementations and several long tenured Unix tools. As a practical matter, performance of the tools has changed the author's personal work habits, as calculations that used to take 15-20 seconds are now instantaneous, and calculations that took minutes often finish in 10 seconds or so.
 
 ## LTO and PGO studies
 
