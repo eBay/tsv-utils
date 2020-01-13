@@ -45,6 +45,8 @@ The benchmarks are described in detail in the [Comparative Benchmark Study](#com
   </tr>
 </table>
 
+*Times in seconds*
+
 ### Regular expression row filter
 
 **Test:** Filter rows using regular expressions.<br>
