@@ -29,25 +29,23 @@ Despite limitations of the benchmarks, this is certainly a good result. The benc
 
 ## 2018 Benchmark Summary
 
-The tables below summarize the results of the 2018 benchmark study. It shows the top-4 tools from each test. Times are in seconds. Times for the tsv-utils tools are show with a green bar.
+The tables below summarize the results of the 2018 benchmark study. It shows the top-4 tools from each test. Times are in seconds. Times for tsv-utils tools are show with a green bar.
 
 The benchmarks are described in detail in the [Comparative Benchmark Study](#comparative-benchmark-study) and the [2017](comparative-benchmarks-2017.md) and [2018](comparative-benchmarks-2018.md) comparative benchmark reports. These reports include goals, methodology, test details, caveats, conclusions, etc.
 
-### Top four tools in each benchmark
-
-#### Numeric row filter
+### Numeric row filter
 
 **Test:** Filter rows using numeric tests on individual fields.<br>
 **File:** 4.8 GB; 7 million lines.
 
 <table style="width:100%">
   <tr>
-    <td><img src="images/numeric-row-filter_linux_2018.jpg" width="400"></td>
-    <td><img src="images/numeric-row-filter_macos_2018.jpg" width="400"></td>
+    <td><img src="images/numeric-row-filter_linux_2018.jpg" width="400" alt="Numeric row filter (Linux)"></td>
+    <td><img src="images/numeric-row-filter_macos_2018.jpg" width="400" alt="Numeric row filter (macOS)"></td>
   </tr>
 </table>
 
-#### Regular expression row filter
+### Regular expression row filter
 
 **Test:** Filter rows using regular expressions.<br>
 **File:** 2.7 GB; 14 million lines.
@@ -59,7 +57,7 @@ The benchmarks are described in detail in the [Comparative Benchmark Study](#com
   </tr>
 </table>
 
-#### Column selection
+### Column selection
 
 **Test:** Select a subset of columns (aka. "cut")<br>
 **File:** 4.8 GB; 7 million lines
@@ -71,7 +69,7 @@ The benchmarks are described in detail in the [Comparative Benchmark Study](#com
   </tr>
 </table>
 
-#### Column selection: short lines
+### Column selection: short lines
 
 **Test:** Select a subset of columns. Run against data with short lines.<br>
 **File:** 1.7 GB; 86 million lines
@@ -83,7 +81,7 @@ The benchmarks are described in detail in the [Comparative Benchmark Study](#com
   </tr>
 </table>
 
-#### Join two files
+### Join two files
 
 **Test:** Join two files on a common key.<br>
 **File:** 4.8 GB; 7 million lines
@@ -95,7 +93,7 @@ The benchmarks are described in detail in the [Comparative Benchmark Study](#com
   </tr>
 </table>
 
-#### Summary statistics
+### Summary statistics
 
 **Test:** Calculate summary statistics (count, sum, mean, etc) on individual fields.<br>
 **File:** 4.8 GB; 7 million lines
@@ -107,7 +105,7 @@ The benchmarks are described in detail in the [Comparative Benchmark Study](#com
   </tr>
 </table>
 
-#### Converst CSV to TSV
+### Converst CSV to TSV
 
 **Test:** Convert CSV data to TSV<br>
 **File:** 2.7 GB; 14 million lines
