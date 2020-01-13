@@ -40,8 +40,8 @@ The benchmarks are described in detail in the [Comparative Benchmark Study](#com
 
 <table style="width:100%">
   <tr>
-    <td><img src="images/numeric-row-filter_linux_2018.jpg" width="400" alt="Numeric row filter (Linux)"></td>
-    <td><img src="images/numeric-row-filter_macos_2018.jpg" width="400" alt="Numeric row filter (macOS)"></td>
+    <td><img src="images/numeric-row-filter_linux_2018.jpg" width="400" "></td>
+    <td><img src="images/numeric-row-filter_macos_2018.jpg" width="400" "></td>
   </tr>
 </table>
 
