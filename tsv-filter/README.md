@@ -2,7 +2,7 @@ _Visit the eBay TSV utilities [main page](../README.md)_
 
 # tsv-filter
 
-`tsv-filter` outputs select lines by making numeric and string comparisons against individual fields. Multiple comparisons can be specified in a single call. A variety of numeric and string comparison operators are available as well as regular expressions.
+`tsv-filter` outputs select lines by making numeric and string comparisons against individual fields. Multiple comparisons can be specified in a single call. A variety of numeric and string comparison operators are available, including regular expressions.
 
 Consider a file having 4 fields: `id`, `color`, `year`, `count`. Using [tsv-pretty](../docs/ToolReference.md#tsv-pretty-reference) to view the first few lines:
 ```
