@@ -29,7 +29,7 @@ Despite limitations of the benchmarks, this is certainly a good result. The benc
 
 ## 2018 Benchmark Summary
 
-The graphs below summarize the results of the 2018 benchmark study. Each graph shows the times of top-4 tools on that test. Times are in seconds. Times for tsv-utils tools are show with a green bar.
+The graphs below summarize the results of the 2018 benchmark study. Each graph shows the times of top-4 tools on that test. Times are in seconds. Times for TSV Utilities tools are show with a green bar.
 
 The benchmarks are described in detail in the [Comparative Benchmark Study](#comparative-benchmark-study) and the [2017](comparative-benchmarks-2017.md) and [2018](comparative-benchmarks-2018.md) comparative benchmark reports. These reports include goals, methodology, test details, caveats, conclusions, etc.
 
