@@ -23,16 +23,8 @@ matrix:
       dist: xenial
       group: travis_latest
       language: d
-      # Use 2.088.1 for code coverage and official tests until dub issue in 2.089 is fixed.
-      d: dmd-2.088.1
-      env: DUBTEST=1 MAKETEST=1 CODECOV=1
-    - os: linux
-      dist: xenial
-      group: travis_latest
-      language: d
       d: dmd
-      # Allow dmd latest (xenial) to fail until dub issue in 2.089 is fixed.
-      env: DUBTEST=1 MAKETEST=1 ALLOW_FAILURES=true
+      env: DUBTEST=1 MAKETEST=1 CODECOV=1
     - os: osx
       osx_image: xcode11
       group: travis_latest
