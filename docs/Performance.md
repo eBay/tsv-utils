@@ -12,7 +12,7 @@ Jump to the [2018 Benchmark Summary](#2018-benchmark-summary) for an overview of
 
 Performance is a key motivation for using D rather an interpreted language like Python or Perl. It is also a consideration in choosing between D and C/C++. To gauge D's performance, benchmarks were run comparing eBay's TSV Utilities to a number of similar tools written in other native compiled programming languages. Included were traditional Unix tools as well as several specialized toolkits. Programming languages involved were C, Go, and Rust.
 
-The larger goal was to see how D programs would compare when written in a straightforward style, as if by a team of well qualified programmers in the course of normal development. Attention was giving to choosing good algorithms and identifying poorly performing code constructs, but heroic measures were not used to gain performance. D's standard library was used extensively, without writing custom versions of core algorithms or containers. Unnecessary GC allocation was avoided, but GC was used rather manual memory management. Higher-level I/O primitives were used rather than custom buffer management.
+The larger goal was to see how D programs would compare when written in a straightforward style, as if by a team of well qualified programmers in the course of normal development. Attention was given to choosing good algorithms and identifying poorly performing code constructs, but no heroic measures were used to gain performance. D's standard library was used extensively, without writing custom versions of core algorithms or containers. Unnecessary GC allocation was avoided, but GC was used rather than manual memory management. Higher-level I/O primitives were used rather than custom buffer management.
 
 This larger goal was also the motivation for using multiple benchmarks and a variety of tools. Single points of comparison are more likely to be biased (less reliable) due to the differing goals and quality of the specific application.
 
@@ -29,7 +29,7 @@ Despite limitations of the benchmarks, this is certainly a good result. The benc
 
 ## 2018 Benchmark Summary
 
-The graphs below summarize the results of the 2018 benchmark study. Each graph shows the times of top-4 tools on that test. Times are in seconds. Times for TSV Utilities tools are show with a green bar.
+The graphs below summarize the results of the 2018 benchmark study. Each graph shows the times of the top-4 tools on that test. Times are in seconds. Times for TSV Utilities tools are show with a green bar.
 
 The benchmarks are described in detail in the [Comparative Benchmark Study](#comparative-benchmark-study) and the [2017](comparative-benchmarks-2017.md) and [2018](comparative-benchmarks-2018.md) comparative benchmark reports. These reports include goals, methodology, test details, caveats, conclusions, etc.
 
