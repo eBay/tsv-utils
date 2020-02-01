@@ -176,7 +176,7 @@ Now type 'r', then TAB, and the command will complete up to `$ tsv-select --rest
 
 Enabling bash completion is a bit more involved than other packages, but still not too hard. It will often be necessary to install a package. The way to do this is system specific. A good source of instructions can be found at the [bash-completion GitHub repository](https://github.com/scop/bash-completion). Mac users may find the MacPorts [How to use bash-completion](https://trac.macports.org/wiki/howto/bash-completion) guide useful. Procedures for Homebrew are similar, but the details differ a bit.
 
-After enabling bash-completion, add completions for the tsv-utils package. Completions are available in the `bash_completion/tsv-utils` file in the repository. This file is also included with the prebuilt binary release packages. One way to add them is to 'source' the file from the `~/.bash_completion` file. A line like the following will achieve this:
+After enabling bash-completion, add completions for the tsv-utils package. Completions are available in the `tsv-utils` file in the [bash_completion](../bash_completion) directory in the tsv-utils GitHub repository. This file is also included with the prebuilt binary release packages. One way to add them is to 'source' the file from the `~/.bash_completion` file. A line like the following will achieve this:
 ```
 if [ -r ~/tsv-utils/bash_completion/tsv-utils ]; then
     . ~/tsv-utils/bash_completion/tsv-utils
