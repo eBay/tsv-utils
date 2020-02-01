@@ -20,7 +20,7 @@ Contents:
 
 A bash alias is a keystroke shortcut known by the shell. They are setup in the user's `~/.bashrc` or another shell init file. A convenient alias when working with TSV files is `tsv-header` which lists the field numbers for each field in a TSV file. To define it, put the following in `~/.bashrc` or other init file:
 ```
-tsv-header () { head -n 1 "$@" | tr $'\t' $'\n' | nl ; }
+tsv-header () { head -n 1 "$@" | tr $'\t' $'\n' | nl -ba ; }
 ```
 
 Once this is defined, use it as follows:
@@ -37,8 +37,8 @@ $ tsv-header worldcitiespop.tsv
 
 A similar alias can be setup for CSV files. Here are two. The first uses  [csv2tsv](ToolReference.md#csv2tsv-reference) to interpret the CSV header line, including CSV escape characters. The second uses only standard Unix tools. It won't interpret CSV escapes, but many header lines don't use escapes. (Define only one):
 ```
-csv-header () { csv2tsv "$@" | head -n 1 | tr $'\t' $'\n' | nl ; }
-csv-header () { head -n 1 "$@" | tr $',' $'\n' | nl ; }
+csv-header () { csv2tsv "$@" | head -n 1 | tr $'\t' $'\n' | nl -ba ; }
+csv-header () { head -n 1 "$@" | tr $',' $'\n' | nl -ba ; }
 ```
 
 Many useful aliases can be defined. Here is another the author finds useful with TSV files. It prints a file excluding the first line (the header line):
@@ -59,13 +59,13 @@ if [ "$1" == "-h" ] || [ "$1" == "--h" ] || [ "$1" = "--help" ]; then
     echo ""
     echo "Print field numbers and header text from the first line of <tsv-file>."
 else
-    head -n 1 "$@" | tr $'\t' $'\n' | nl
+    head -n 1 "$@" | tr $'\t' $'\n' | nl -ba
 fi
 ```
 
 Put the above in the file `tsv-header` somewhere on the PATH. A common location is the `~/bin` directory, but this is not required. Run the command `$ chmod a+x tsv-header` to make it executable. Now it can be invoked just like the alias version of `tsv-header`.
 
-The are a couple of simple sample scripts in the [Customize the Unix sort command](#customize-the-unix-sort-command) section.
+The are a couple of simple sample scripts in the [Customize the sort command](#customize-the-sort-command) section.
 
 ## macOS: Install GNU versions of Unix command line tools
 
@@ -138,6 +138,8 @@ $ keep-header file.txt -- tsv-sort
 
 Remember to use the correct `sort` program name if an updated version has been installed under a different name. This may be `gsort` on some systems.
 
+A sample implementation of this script can be found in the [extras/scripts](../extras/scripts) directory in the tsv-utils GitHub repository.
+
 *More details*: The `--buffer-size` option may affect `sort` programs differently depending on whether input is being read from files or standard input. This is the case for [GNU sort](https://www.gnu.org/software/coreutils/manual/coreutils.html#sort-invocation), perhaps the most common `sort` program available. This is because by default `sort` uses different methods to choose an internal buffer size when reading from files and when reading from standard input. `--buffer-size` controls both. On a machine with large amounts of RAM, e.g. 64 GB, picking a 1 or 2 GB buffer size may actually slow `sort` down when reading from files while speeding it up when reading from standard input. The author has not experimented with enough systems to make a universal recommendation, but a bit of experimentation on any specific system should help. [GNU sort](https://www.gnu.org/software/coreutils/manual/coreutils.html#sort-invocation) has additional options when optimum performance is needed.
 
 ### Turn off locale sensitive sorting when not needed
@@ -156,6 +158,8 @@ Locale sensitive sorting can be turned off when not needed. This is done by sett
 
 The `tsv-sort-fast` script can be used the same way as the `tsv-sort` script shown earlier.
 
+A sample implementation of this script can be found in the [extras/scripts](../extras/scripts) directory in the tsv-utils GitHub repository.
+
 ## Enable bash-completion
 
 Bash command completion is quite handy for command line tools. Command names complete by default, already useful. Adding completion of command options is even better. As an example, with bash completion turned on, enter the command name, then a single dash (-):
@@ -172,7 +176,7 @@ Now type 'r', then TAB, and the command will complete up to `$ tsv-select --rest
 
 Enabling bash completion is a bit more involved than other packages, but still not too hard. It will often be necessary to install a package. The way to do this is system specific. A good source of instructions can be found at the [bash-completion GitHub repository](https://github.com/scop/bash-completion). Mac users may find the MacPorts [How to use bash-completion](https://trac.macports.org/wiki/howto/bash-completion) guide useful. Procedures for Homebrew are similar, but the details differ a bit.
 
-After enabling bash-completion, add completions for the tsv-utils package. Completions are available in the `bash_completion/tsv-utils` file. One way to add them is to 'source' the file from the `~/.bash_completion` file. A line like the following will do this.
+After enabling bash-completion, add completions for the tsv-utils package. Completions are available in the `tsv-utils` file in the [bash_completion](../bash_completion) directory in the tsv-utils GitHub repository. This file is also included with the prebuilt binary release packages. One way to add them is to 'source' the file from the `~/.bash_completion` file. A line like the following will achieve this:
 ```
 if [ -r ~/tsv-utils/bash_completion/tsv-utils ]; then
     . ~/tsv-utils/bash_completion/tsv-utils

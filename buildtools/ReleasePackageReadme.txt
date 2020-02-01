@@ -12,3 +12,7 @@ repository (https://github.com/eBay/tsv-utils/blob/master/README.md).
 The 'bash_completion' directory contains support for enabling command
 option completion for the individual tools. For setup instructions, see
 https://github.com/eBay/tsv-utils/blob/master/docs/TipsAndTricks.md#enable-bash-completion.
+
+The 'extras/scripts' directory contains sample implementations of scripts
+described on the Tips and Tricks page on the Github repository:
+https://github.com/eBay/tsv-utils/blob/master/docs/TipsAndTricks.md.
