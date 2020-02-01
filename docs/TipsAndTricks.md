@@ -65,7 +65,7 @@ fi
 
 Put the above in the file `tsv-header` somewhere on the PATH. A common location is the `~/bin` directory, but this is not required. Run the command `$ chmod a+x tsv-header` to make it executable. Now it can be invoked just like the alias version of `tsv-header`.
 
-The are a couple of simple sample scripts in the [Customize the Unix sort command](#customize-the-unix-sort-command) section.
+The are a couple of simple sample scripts in the [Customize the sort command](#customize-the-sort-command) section.
 
 ## macOS: Install GNU versions of Unix command line tools
 
