@@ -35,7 +35,7 @@ $ tsv-header worldcitiespop.tsv
      7	Longitude
 ```
 
-A similar alias can be setup for CSV files. Here are two. The first uses  [csv2tsv](ToolReference.md#csv2tsv-reference) to interpret the CSV header line, including CSV escape characters. The second uses only standard Unix tools. It won't interpret CSV escapes, but many header lines don't use escapes. (Define only one):
+A similar alias can be setup for CSV files. Here are two. The first uses [csv2tsv](ToolReference.md#csv2tsv-reference) to interpret the CSV header line, including CSV escape characters. The second uses only standard Unix tools. It won't interpret CSV escapes, but many header lines don't use escapes. (Define only one):
 ```
 csv-header () { csv2tsv "$@" | head -n 1 | tr $'\t' $'\n' | nl -ba ; }
 csv-header () { head -n 1 "$@" | tr $',' $'\n' | nl -ba ; }
@@ -138,7 +138,7 @@ $ keep-header file.txt -- tsv-sort
 
 Remember to use the correct `sort` program name if an updated version has been installed under a different name. This may be `gsort` on some systems.
 
-A sample implementation of this script can be found in the [extras/scripts](../extras/scripts) directory in the tsv-utils GitHub repository.
+A sample implementation of this script can be found in the `extras/scripts` directory in the tsv-utils GitHub repository.
 
 *More details*: The `--buffer-size` option may affect `sort` programs differently depending on whether input is being read from files or standard input. This is the case for [GNU sort](https://www.gnu.org/software/coreutils/manual/coreutils.html#sort-invocation), perhaps the most common `sort` program available. This is because by default `sort` uses different methods to choose an internal buffer size when reading from files and when reading from standard input. `--buffer-size` controls both. On a machine with large amounts of RAM, e.g. 64 GB, picking a 1 or 2 GB buffer size may actually slow `sort` down when reading from files while speeding it up when reading from standard input. The author has not experimented with enough systems to make a universal recommendation, but a bit of experimentation on any specific system should help. [GNU sort](https://www.gnu.org/software/coreutils/manual/coreutils.html#sort-invocation) has additional options when optimum performance is needed.
 
@@ -158,7 +158,7 @@ Locale sensitive sorting can be turned off when not needed. This is done by sett
 
 The `tsv-sort-fast` script can be used the same way as the `tsv-sort` script shown earlier.
 
-A sample implementation of this script can be found in the [extras/scripts](../extras/scripts) directory in the tsv-utils GitHub repository.
+A sample implementation of this script can be found in the `extras/scripts` directory in the tsv-utils GitHub repository.
 
 ## Enable bash-completion
 
@@ -176,7 +176,7 @@ Now type 'r', then TAB, and the command will complete up to `$ tsv-select --rest
 
 Enabling bash completion is a bit more involved than other packages, but still not too hard. It will often be necessary to install a package. The way to do this is system specific. A good source of instructions can be found at the [bash-completion GitHub repository](https://github.com/scop/bash-completion). Mac users may find the MacPorts [How to use bash-completion](https://trac.macports.org/wiki/howto/bash-completion) guide useful. Procedures for Homebrew are similar, but the details differ a bit.
 
-After enabling bash-completion, add completions for the tsv-utils package. Completions are available in the `tsv-utils` file in the [bash_completion](../bash_completion) directory in the tsv-utils GitHub repository. This file is also included with the prebuilt binary release packages. One way to add them is to 'source' the file from the `~/.bash_completion` file. A line like the following will achieve this:
+After enabling bash-completion, add completions for the tsv-utils package. Completions are available in the `tsv-utils` file in the `bash_completion` directory in the tsv-utils GitHub repository. This file is also included with the prebuilt binary release packages. One way to add them is to 'source' the file from the `~/.bash_completion` file. A line like the following will achieve this:
 ```
 if [ -r ~/tsv-utils/bash_completion/tsv-utils ]; then
     . ~/tsv-utils/bash_completion/tsv-utils
