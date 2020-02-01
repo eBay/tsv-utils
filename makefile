@@ -113,6 +113,7 @@ package:
 	mkdir $(PKG_DIR)
 	cp -pr $(CURDIR)/bin $(PKG_DIR)
 	cp -pr $(CURDIR)/bash_completion $(PKG_DIR)
+	cp -pr $(CURDIR)/extras $(PKG_DIR)
 	cp -pr $(CURDIR)/LICENSE.txt $(PKG_DIR)
 	cp -pr $(buildtools_dir)/ReleasePackageReadme.txt $(PKG_DIR)
 	tar -czf $(TAR_FILE) $(PKG_DIR)

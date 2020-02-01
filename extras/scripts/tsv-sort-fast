@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+#
+# Copyright (c) 2020, eBay Inc.
+# Initially written by Jon Degenhardt
+#
+# License: Boost Licence 1.0 (http://boost.org/LICENSE_1_0.txt)
+#
+# -------------------------------------------------------------
+#
+# This file contains a sample implementation of the 'tsv-sort-fast' script
+# described on the Tips and Tricks page in the eBay tsv-utils repository:
+# https://github.com/eBay/tsv-utils/blob/master/docs/TipsAndTricks.md
+#
+
+command_name="sort"
+mac_gnu_name="gsort"
+
+if [ "$(uname)" == "Darwin" ] && type $mac_gnu_name &>/dev/null ; then
+   command_name=$mac_gnu_name
+fi
+if [ "$1" == "--help" ]; then
+    script_name=$(basename $0)
+    echo ""
+    echo "$script_name runs '$command_name' with:"
+    echo "  * TAB as the field delimiter."
+    echo "  * The buffer size set to 2G."
+    echo "  * Locale sensitive sorting turned off."
+    echo ""
+    echo "All arguments are forwarded to '$command_name'. Example:"
+    echo ""
+    echo "    tsv-sort-fast data.tsv -k1,1 -k3,3"
+    echo ""
+    echo "This sorts data.tsv using the 1st and 3rd fields as keys."
+    echo "Run '$command_name --help' for more information."
+    echo ""
+    echo "Turning off locale specific sorting is a meaningful change."
+    echo "Alphabetic entries are no longer sorted in a locale and Unicode"
+    echo "aware fashion. Instead sorting is based on the underlying byte"
+    echo "sequences. The advantage is that it is dramatically faster. The"
+    echo "typical speedup is between 2 and 10 times. Use with care."
+    exit 0
+fi
+(LC_ALL=C $command_name -t $'\t' --buffer-size=2G "$@")
