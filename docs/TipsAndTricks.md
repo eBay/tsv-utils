@@ -138,7 +138,7 @@ $ keep-header file.txt -- tsv-sort
 
 Remember to use the correct `sort` program name if an updated version has been installed under a different name. This may be `gsort` on some systems.
 
-A sample implementation of this script can be found in the [extras/scripts](../extras/scripts) directory.
+A sample implementation of this script can be found in the [extras/scripts](../extras/scripts) directory in the tsv-utils GitHub repository.
 
 *More details*: The `--buffer-size` option may affect `sort` programs differently depending on whether input is being read from files or standard input. This is the case for [GNU sort](https://www.gnu.org/software/coreutils/manual/coreutils.html#sort-invocation), perhaps the most common `sort` program available. This is because by default `sort` uses different methods to choose an internal buffer size when reading from files and when reading from standard input. `--buffer-size` controls both. On a machine with large amounts of RAM, e.g. 64 GB, picking a 1 or 2 GB buffer size may actually slow `sort` down when reading from files while speeding it up when reading from standard input. The author has not experimented with enough systems to make a universal recommendation, but a bit of experimentation on any specific system should help. [GNU sort](https://www.gnu.org/software/coreutils/manual/coreutils.html#sort-invocation) has additional options when optimum performance is needed.
 
@@ -158,7 +158,7 @@ Locale sensitive sorting can be turned off when not needed. This is done by sett
 
 The `tsv-sort-fast` script can be used the same way as the `tsv-sort` script shown earlier.
 
-A sample implementation of this script can be found in the [extras/scripts](../extras/scripts) directory.
+A sample implementation of this script can be found in the [extras/scripts](../extras/scripts) directory in the tsv-utils GitHub repository.
 
 ## Enable bash-completion
 
