@@ -19,7 +19,7 @@ if [ "$(uname)" == "Darwin" ] && type $mac_gnu_name &>/dev/null ; then
    command_name=$mac_gnu_name
 fi
 if [ "$1" == "--help" ]; then
-    script_name=$(basename $0)
+    script_name=$(basename "$0")
     echo ""
     echo "$script_name runs '$command_name' using TAB as the field delimiter and the buffer"
     echo "size set to 2G. All arguments are forwared to '$command_name'. Example:"
