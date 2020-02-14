@@ -144,6 +144,52 @@ runtest ${prog} "--header --regex 1:^\-[0-9]+ input1.tsv" ${basic_tests_1}
 runtest ${prog} "--header --not-iregex 4:abc input1.tsv" ${basic_tests_1}
 runtest ${prog} "--header --not-regex 4:z|d input1.tsv" ${basic_tests_1}
 
+echo "" >> ${basic_tests_1}; echo "====Character and Byte Length tests===" >> ${basic_tests_1}
+
+runtest ${prog} "--header --char-len-eq 3:0 input1.tsv" ${basic_tests_1}
+runtest ${prog} "--header --char-len-eq 3:1 input1.tsv" ${basic_tests_1}
+runtest ${prog} "--header --char-len-eq 3:2 input1.tsv" ${basic_tests_1}
+
+runtest ${prog} "--header --char-len-ne 3:0 input1.tsv" ${basic_tests_1}
+runtest ${prog} "--header --char-len-ne 3:1 input1.tsv" ${basic_tests_1}
+runtest ${prog} "--header --char-len-ne 3:2 input1.tsv" ${basic_tests_1}
+
+runtest ${prog} "--header --char-len-le 4:2 input1.tsv" ${basic_tests_1}
+runtest ${prog} "--header --char-len-lt 4:2 input1.tsv" ${basic_tests_1}
+runtest ${prog} "--header --char-len-gt 4:2 input1.tsv" ${basic_tests_1}
+runtest ${prog} "--header --char-len-ge 4:2 input1.tsv" ${basic_tests_1}
+
+runtest ${prog} "--header --byte-len-eq 3:0 input1.tsv" ${basic_tests_1}
+runtest ${prog} "--header --byte-len-eq 3:1 input1.tsv" ${basic_tests_1}
+runtest ${prog} "--header --byte-len-eq 3:2 input1.tsv" ${basic_tests_1}
+
+runtest ${prog} "--header --byte-len-ne 3:0 input1.tsv" ${basic_tests_1}
+runtest ${prog} "--header --byte-len-ne 3:1 input1.tsv" ${basic_tests_1}
+runtest ${prog} "--header --byte-len-ne 3:2 input1.tsv" ${basic_tests_1}
+
+runtest ${prog} "--header --byte-len-le 4:2 input1.tsv" ${basic_tests_1}
+runtest ${prog} "--header --byte-len-lt 4:2 input1.tsv" ${basic_tests_1}
+runtest ${prog} "--header --byte-len-gt 4:2 input1.tsv" ${basic_tests_1}
+runtest ${prog} "--header --byte-len-ge 4:2 input1.tsv" ${basic_tests_1}
+
+runtest ${prog} "--header --char-len-le 3:3 input_unicode.tsv" ${basic_tests_1}
+runtest ${prog} "--header --char-len-lt 3:3 input_unicode.tsv" ${basic_tests_1}
+runtest ${prog} "--header --char-len-ge 3:3 input_unicode.tsv" ${basic_tests_1}
+runtest ${prog} "--header --char-len-gt 3:3 input_unicode.tsv" ${basic_tests_1}
+runtest ${prog} "--header --char-len-eq 3:3 input_unicode.tsv" ${basic_tests_1}
+runtest ${prog} "--header --char-len-ne 3:3 input_unicode.tsv" ${basic_tests_1}
+
+runtest ${prog} "--header --byte-len-le 3:3 input_unicode.tsv" ${basic_tests_1}
+runtest ${prog} "--header --byte-len-lt 3:3 input_unicode.tsv" ${basic_tests_1}
+runtest ${prog} "--header --byte-len-ge 3:3 input_unicode.tsv" ${basic_tests_1}
+runtest ${prog} "--header --byte-len-gt 3:3 input_unicode.tsv" ${basic_tests_1}
+runtest ${prog} "--header --byte-len-eq 3:3 input_unicode.tsv" ${basic_tests_1}
+runtest ${prog} "--header --byte-len-ne 3:3 input_unicode.tsv" ${basic_tests_1}
+
+runtest ${prog} "--header --char-len-lt 1:3 input_unicode.tsv" ${basic_tests_1}
+runtest ${prog} "--header --char-len-le 2:2 input_unicode.tsv" ${basic_tests_1}
+runtest ${prog} "--header --char-len-ge 4:2 input_unicode.tsv" ${basic_tests_1}
+
 # Field vs Field tests
 echo "" >> ${basic_tests_1}; echo "====Field vs Field===" >> ${basic_tests_1}
 

@@ -147,6 +147,20 @@ Regular expression tests:
 * `--not-regex FIELD:REGEX` - FIELD does not match regular expression.
 * `--not-iregex FIELD:REGEX` - FIELD does not match regular expression, case-insensitive.
 
+Field length tests
+* `--char-len-le FIELD:NUM` - FIELD character length <= NUM.
+* `--char-len-lt FIELD:NUM` - FIELD character length < NUM.
+* `--char-len-ge FIELD:NUM` - FIELD character length >= NUM.
+* `--char-len-gt FIELD:NUM` - FIELD character length > NUM.
+* `--char-len-eq FIELD:NUM` - FIELD character length == NUM.
+* `--char-len-ne FIELD:NUM` - FIELD character length != NUM.
+* `--byte-len-le FIELD:NUM` - FIELD byte length <= NUM.
+* `--byte-len-lt FIELD:NUM` - FIELD byte length < NUM.
+* `--byte-len-ge FIELD:NUM` - FIELD byte length >= NUM.
+* `--byte-len-gt FIELD:NUM` - FIELD byte length > NUM.
+* `--byte-len-eq FIELD:NUM` - FIELD byte length == NUM.
+* `--byte-len-ne FIELD:NUM` - FIELD byte length != NUM.
+
 Field to field comparisons:
 * `--ff-le FIELD1:FIELD2` - FIELD1 <= FIELD2 (numeric).
 * `--ff-lt FIELD1:FIELD2` - FIELD1 <  FIELD2 (numeric).

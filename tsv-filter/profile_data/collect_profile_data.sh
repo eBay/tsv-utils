@@ -51,6 +51,18 @@ $prog profile_data_2.tsv --ne 2:622 --ne 2:642 --ne 2:649 > /dev/null
 $prog profile_data_2.tsv --or --eq 3:16 --gt 4:570 --ge 3:140 --le 3:3 --lt 2:510 > /dev/null
 
 ## Most of the other operators start here
+$prog profile_data_3.tsv --char-len-le 3:7 > /dev/null
+$prog profile_data_3.tsv --char-len-lt 3:9 > /dev/null
+$prog profile_data_3.tsv --char-len-ge 3:10 > /dev/null
+$prog profile_data_3.tsv --char-len-gt 3:8 > /dev/null
+$prog profile_data_3.tsv --char-len-eq 3:11 > /dev/null
+$prog profile_data_3.tsv --char-len-ne 3:12 > /dev/null
+$prog profile_data_3.tsv --byte-len-le 3:7 > /dev/null
+$prog profile_data_3.tsv --byte-len-lt 3:9 > /dev/null
+$prog profile_data_3.tsv --byte-len-ge 3:10 > /dev/null
+$prog profile_data_3.tsv --byte-len-gt 3:8 > /dev/null
+$prog profile_data_3.tsv --byte-len-eq 3:11 > /dev/null
+$prog profile_data_3.tsv --byte-len-ne 3:12 > /dev/null
 $prog profile_data_5.tsv --ff-eq 2:3 > /dev/null
 $prog profile_data_5.tsv --ff-ne 3:4 > /dev/null
 $prog profile_data_5.tsv --ff-le 3:2 > /dev/null

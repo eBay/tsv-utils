@@ -1,0 +1,28 @@
+Language	Text 1	Text 2	Text 3
+English	snow storm	soccer player	town hall
+Chinese (Simplified)	雪风暴	足球运动员	市政厅
+Chinese (Traditional)	雪風暴	足球運動員	市政廳
+French	Tempête de neige	joueur de foot	mairie
+Georgian	თოვლის ქარიშხალი	ფეხბურთის მოთამაშე	მუნიციპალიტეტი
+German	Schneesturm	Fußballspieler	Rathaus
+Greek	Χιονοθύελλα	ποδοσφαιριστής	Δημαρχείο
+Japanese	吹雪	サッカー選手	町役場
+Russian	Снежная буря	футболист	ратуша
+Spanish	Tormenta de nieve	jugador de fútbol	Ayuntamiento
+Vietnamese	Bão tuyết	cầuthủ bóng đá	Thị trấn
+Mixed1	a-雪	a	abcd
+Mixed2	ab-雪雪	ab	abc
+Mixed3	abc-雪	abc	ab
+Mixed4	abcd-雪雪	abcd	a
+Mixed5	a-雪	abcde	abcd
+Mixed6	ab-雪	雪	abc
+Mixed7	abc-雪	雪雪	ab
+Mixed8	abcd-雪	雪雪雪	a
+Mixed9	a-雪	雪雪雪雪	abcd
+Mixed10	ab-雪	雪雪雪雪雪	abc
+Mixed11	abc-雪	षि	ab
+Mixed12	abcd-雪	षिषि	a
+Mixed13	a-雪	षिषिषि	abcd
+Mixed14	ab-雪	षिषिषिषि	abc
+Mixed15	abc-雪	षिषिषिषिषि	ab
+Mixed16	abcd-雪	aषि雪	a

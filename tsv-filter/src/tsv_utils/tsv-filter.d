@@ -15,11 +15,12 @@ import std.algorithm : canFind, equal, findSplit, max, min;
 import std.conv : to;
 import std.format : format;
 import std.math : abs, isFinite, isInfinity, isNaN;
+import std.range : walkLength;
 import std.regex;
 import std.stdio;
 import std.string : isNumeric;
 import std.typecons : tuple;
-import std.uni: asLowerCase, toLower;
+import std.uni: asLowerCase, toLower, byGrapheme;
 
 /* The program has two main parts, command line arg processing and processing the input
  * files. Much of the work is in command line arg processing. This sets up the tests run
@@ -99,6 +100,12 @@ Operators:
   Syntax:  --regex|iregex|not-regex|not-iregex  FIELD:REGEX
   Example: --regex '3:ab*c'      // True if field 3 contains "ac", "abc", "abbc", etc.
 
+* Test a field's character or byte length
+  Syntax:  --char-len-[le|lt|ge|gt|eq|ne] FIELD:NUM
+           --byte-len-[le|lt|ge|gt|eq|ne] FIELD:NUM
+  Example: --char-len-lt 2:10    // True if field 2 is less than 10 characters long.
+           --byte-len-gt 2:10    // True if field 2 is greater than 10 bytes long.
+
 * Field to field comparisons - Similar to field vs literal comparisons, but field vs field.
   Syntax:  --ff-eq|ff-ne|ff-lt|ff-le|ff-gt|ff-ge  FIELD1:FIELD2
            --ff-str-eq|ff-str-ne|ff-istr-eq|ff-istr-ne  FIELD1:FIELD2
@@ -135,6 +142,7 @@ Tests available include:
   * Compare a field to a string - String equality and relational tests.
   * Test if a field matches a regular expression. Case sensitive or insensitive.
   * Test if a field contains a string. Sub-string search, case sensitive or insensitive.
+  * Test a field's character or byte length.
   * Field to field comparisons - Similar to the other tests, except comparing
     one field to another in the same line.
 
@@ -274,6 +282,20 @@ bool istrNotInFld(const char[][] fields, size_t index, dstring val) { return !fi
  */
 bool regexMatch(const char[][] fields, size_t index, Regex!char val) { return cast(bool) fields[index].matchFirst(val); }
 bool regexNotMatch(const char[][] fields, size_t index, Regex!char val) { return !fields[index].matchFirst(val); }
+
+bool charLenLE(const char[][] fields, size_t index, double val) { return fields[index].byGrapheme.walkLength <= val; }
+bool charLenLT(const char[][] fields, size_t index, double val) { return fields[index].byGrapheme.walkLength < val; }
+bool charLenGE(const char[][] fields, size_t index, double val) { return fields[index].byGrapheme.walkLength >= val; }
+bool charLenGT(const char[][] fields, size_t index, double val) { return fields[index].byGrapheme.walkLength > val; }
+bool charLenEQ(const char[][] fields, size_t index, double val) { return fields[index].byGrapheme.walkLength == val; }
+bool charLenNE(const char[][] fields, size_t index, double val) { return fields[index].byGrapheme.walkLength != val; }
+
+bool byteLenLE(const char[][] fields, size_t index, double val) { return fields[index].length <= val; }
+bool byteLenLT(const char[][] fields, size_t index, double val) { return fields[index].length < val; }
+bool byteLenGE(const char[][] fields, size_t index, double val) { return fields[index].length >= val; }
+bool byteLenGT(const char[][] fields, size_t index, double val) { return fields[index].length > val; }
+bool byteLenEQ(const char[][] fields, size_t index, double val) { return fields[index].length == val; }
+bool byteLenNE(const char[][] fields, size_t index, double val) { return fields[index].length != val; }
 
 bool ffLE(const char[][] fields, size_t index1, size_t index2) { return fields[index1].to!double <= fields[index2].to!double; }
 bool ffLT(const char[][] fields, size_t index1, size_t index2) { return fields[index1].to!double  < fields[index2].to!double; }
@@ -663,6 +685,20 @@ struct TsvFilterOptions
         void handlerIRegexMatch(string option, string value)    { fieldVsRegexOptionHandler(tests, maxFieldIndex, &regexMatch,    option, value, false); }
         void handlerIRegexNotMatch(string option, string value) { fieldVsRegexOptionHandler(tests, maxFieldIndex, &regexNotMatch, option, value, false); }
 
+        void handlerCharLenLE(string option, string value) { fieldVsNumberOptionHandler(tests, maxFieldIndex, &charLenLE, option, value); }
+        void handlerCharLenLT(string option, string value) { fieldVsNumberOptionHandler(tests, maxFieldIndex, &charLenLT, option, value); }
+        void handlerCharLenGE(string option, string value) { fieldVsNumberOptionHandler(tests, maxFieldIndex, &charLenGE, option, value); }
+        void handlerCharLenGT(string option, string value) { fieldVsNumberOptionHandler(tests, maxFieldIndex, &charLenGT, option, value); }
+        void handlerCharLenEQ(string option, string value) { fieldVsNumberOptionHandler(tests, maxFieldIndex, &charLenEQ, option, value); }
+        void handlerCharLenNE(string option, string value) { fieldVsNumberOptionHandler(tests, maxFieldIndex, &charLenNE, option, value); }
+
+        void handlerByteLenLE(string option, string value) { fieldVsNumberOptionHandler(tests, maxFieldIndex, &byteLenLE, option, value); }
+        void handlerByteLenLT(string option, string value) { fieldVsNumberOptionHandler(tests, maxFieldIndex, &byteLenLT, option, value); }
+        void handlerByteLenGE(string option, string value) { fieldVsNumberOptionHandler(tests, maxFieldIndex, &byteLenGE, option, value); }
+        void handlerByteLenGT(string option, string value) { fieldVsNumberOptionHandler(tests, maxFieldIndex, &byteLenGT, option, value); }
+        void handlerByteLenEQ(string option, string value) { fieldVsNumberOptionHandler(tests, maxFieldIndex, &byteLenEQ, option, value); }
+        void handlerByteLenNE(string option, string value) { fieldVsNumberOptionHandler(tests, maxFieldIndex, &byteLenNE, option, value); }
+
         void handlerFFLE(string option, string value) { fieldVsFieldOptionHandler(tests, maxFieldIndex, &ffLE, option, value); }
         void handlerFFLT(string option, string value) { fieldVsFieldOptionHandler(tests, maxFieldIndex, &ffLT, option, value); }
         void handlerFFGE(string option, string value) { fieldVsFieldOptionHandler(tests, maxFieldIndex, &ffGE, option, value); }
@@ -731,6 +767,20 @@ struct TsvFilterOptions
                 "iregex",          "FIELD:REGEX   FIELD matches regular expression, case-insensitive.", &handlerIRegexMatch,
                 "not-regex",       "FIELD:REGEX   FIELD does not match regular expression.", &handlerRegexNotMatch,
                 "not-iregex",      "FIELD:REGEX   FIELD does not match regular expression, case-insensitive.", &handlerIRegexNotMatch,
+
+                "char-len-le",     "FIELD:NUM   character-length(FIELD) <= NUM.", &handlerCharLenLE,
+                "char-len-lt",     "FIELD:NUM   character-length(FIELD) < NUM.", &handlerCharLenLT,
+                "char-len-ge",     "FIELD:NUM   character-length(FIELD) >= NUM.", &handlerCharLenGE,
+                "char-len-gt",     "FIELD:NUM   character-length(FIELD) > NUM.", &handlerCharLenGT,
+                "char-len-eq",     "FIELD:NUM   character-length(FIELD) == NUM.", &handlerCharLenEQ,
+                "char-len-ne",     "FIELD:NUM   character-length(FIELD) != NUM.", &handlerCharLenNE,
+
+                "byte-len-le",     "FIELD:NUM   byte-length(FIELD) <= NUM.", &handlerByteLenLE,
+                "byte-len-lt",     "FIELD:NUM   byte-length(FIELD) < NUM.", &handlerByteLenLT,
+                "byte-len-ge",     "FIELD:NUM   byte-length(FIELD) >= NUM.", &handlerByteLenGE,
+                "byte-len-gt",     "FIELD:NUM   byte-length(FIELD) > NUM.", &handlerByteLenGT,
+                "byte-len-eq",     "FIELD:NUM   byte-length(FIELD) == NUM.", &handlerByteLenEQ,
+                "byte-len-ne",     "FIELD:NUM   byte-length(FIELD) != NUM.", &handlerByteLenNE,
 
                 "ff-le",           "FIELD1:FIELD2   FIELD1 <= FIELD2 (numeric).", &handlerFFLE,
                 "ff-lt",           "FIELD1:FIELD2   FIELD1 <  FIELD2 (numeric).", &handlerFFLT,
