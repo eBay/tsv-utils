@@ -92,10 +92,6 @@ _tsv_append()
 }
 complete -F _tsv_append tsv-append
 
-
-
-
-
 _tsv_filter()
 {
     local cur prev opts
