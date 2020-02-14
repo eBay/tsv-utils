@@ -714,6 +714,449 @@ F1	F2	F3	F4
 100	102	abc	AbC
 100	103	abc	AbC
 
+====Character and Byte Length tests===
+
+====[tsv-filter --header --char-len-eq 3:0 input1.tsv]====
+F1	F2	F3	F4
+100	100		AbC
+100	101		
+
+====[tsv-filter --header --char-len-eq 3:1 input1.tsv]====
+F1	F2	F3	F4
+1	1.0	a	A
+2	2.	b	B
+0	0.0	z	AzB
+-2	-2.0	ß	ss
+
+====[tsv-filter --header --char-len-eq 3:2 input1.tsv]====
+F1	F2	F3	F4
+
+====[tsv-filter --header --char-len-ne 3:0 input1.tsv]====
+F1	F2	F3	F4
+1	1.0	a	A
+2	2.	b	B
+10	10.1	abc	ABC
+100	100	abc	AbC
+0	0.0	z	AzB
+-1	-0.1	abc def	abc def
+-2	-2.0	ß	ss
+0.	100.	àbc	ÀBC
+0.0	100.0	àßc	ÀssC
+-0.0	-100.0	àßc	ÀSSC
+100	100	abc	
+100	102	abc	AbC
+100	103	abc	AbC
+
+====[tsv-filter --header --char-len-ne 3:1 input1.tsv]====
+F1	F2	F3	F4
+10	10.1	abc	ABC
+100	100	abc	AbC
+-1	-0.1	abc def	abc def
+0.	100.	àbc	ÀBC
+0.0	100.0	àßc	ÀssC
+-0.0	-100.0	àßc	ÀSSC
+100	100		AbC
+100	100	abc	
+100	101		
+100	102	abc	AbC
+100	103	abc	AbC
+
+====[tsv-filter --header --char-len-ne 3:2 input1.tsv]====
+F1	F2	F3	F4
+1	1.0	a	A
+2	2.	b	B
+10	10.1	abc	ABC
+100	100	abc	AbC
+0	0.0	z	AzB
+-1	-0.1	abc def	abc def
+-2	-2.0	ß	ss
+0.	100.	àbc	ÀBC
+0.0	100.0	àßc	ÀssC
+-0.0	-100.0	àßc	ÀSSC
+100	100		AbC
+100	100	abc	
+100	101		
+100	102	abc	AbC
+100	103	abc	AbC
+
+====[tsv-filter --header --char-len-le 4:2 input1.tsv]====
+F1	F2	F3	F4
+1	1.0	a	A
+2	2.	b	B
+-2	-2.0	ß	ss
+100	100	abc	
+100	101		
+
+====[tsv-filter --header --char-len-lt 4:2 input1.tsv]====
+F1	F2	F3	F4
+1	1.0	a	A
+2	2.	b	B
+100	100	abc	
+100	101		
+
+====[tsv-filter --header --char-len-gt 4:2 input1.tsv]====
+F1	F2	F3	F4
+10	10.1	abc	ABC
+100	100	abc	AbC
+0	0.0	z	AzB
+-1	-0.1	abc def	abc def
+0.	100.	àbc	ÀBC
+0.0	100.0	àßc	ÀssC
+-0.0	-100.0	àßc	ÀSSC
+100	100		AbC
+100	102	abc	AbC
+100	103	abc	AbC
+
+====[tsv-filter --header --char-len-ge 4:2 input1.tsv]====
+F1	F2	F3	F4
+10	10.1	abc	ABC
+100	100	abc	AbC
+0	0.0	z	AzB
+-1	-0.1	abc def	abc def
+-2	-2.0	ß	ss
+0.	100.	àbc	ÀBC
+0.0	100.0	àßc	ÀssC
+-0.0	-100.0	àßc	ÀSSC
+100	100		AbC
+100	102	abc	AbC
+100	103	abc	AbC
+
+====[tsv-filter --header --byte-len-eq 3:0 input1.tsv]====
+F1	F2	F3	F4
+100	100		AbC
+100	101		
+
+====[tsv-filter --header --byte-len-eq 3:1 input1.tsv]====
+F1	F2	F3	F4
+1	1.0	a	A
+2	2.	b	B
+0	0.0	z	AzB
+
+====[tsv-filter --header --byte-len-eq 3:2 input1.tsv]====
+F1	F2	F3	F4
+-2	-2.0	ß	ss
+
+====[tsv-filter --header --byte-len-ne 3:0 input1.tsv]====
+F1	F2	F3	F4
+1	1.0	a	A
+2	2.	b	B
+10	10.1	abc	ABC
+100	100	abc	AbC
+0	0.0	z	AzB
+-1	-0.1	abc def	abc def
+-2	-2.0	ß	ss
+0.	100.	àbc	ÀBC
+0.0	100.0	àßc	ÀssC
+-0.0	-100.0	àßc	ÀSSC
+100	100	abc	
+100	102	abc	AbC
+100	103	abc	AbC
+
+====[tsv-filter --header --byte-len-ne 3:1 input1.tsv]====
+F1	F2	F3	F4
+10	10.1	abc	ABC
+100	100	abc	AbC
+-1	-0.1	abc def	abc def
+-2	-2.0	ß	ss
+0.	100.	àbc	ÀBC
+0.0	100.0	àßc	ÀssC
+-0.0	-100.0	àßc	ÀSSC
+100	100		AbC
+100	100	abc	
+100	101		
+100	102	abc	AbC
+100	103	abc	AbC
+
+====[tsv-filter --header --byte-len-ne 3:2 input1.tsv]====
+F1	F2	F3	F4
+1	1.0	a	A
+2	2.	b	B
+10	10.1	abc	ABC
+100	100	abc	AbC
+0	0.0	z	AzB
+-1	-0.1	abc def	abc def
+0.	100.	àbc	ÀBC
+0.0	100.0	àßc	ÀssC
+-0.0	-100.0	àßc	ÀSSC
+100	100		AbC
+100	100	abc	
+100	101		
+100	102	abc	AbC
+100	103	abc	AbC
+
+====[tsv-filter --header --byte-len-le 4:2 input1.tsv]====
+F1	F2	F3	F4
+1	1.0	a	A
+2	2.	b	B
+-2	-2.0	ß	ss
+100	100	abc	
+100	101		
+
+====[tsv-filter --header --byte-len-lt 4:2 input1.tsv]====
+F1	F2	F3	F4
+1	1.0	a	A
+2	2.	b	B
+100	100	abc	
+100	101		
+
+====[tsv-filter --header --byte-len-gt 4:2 input1.tsv]====
+F1	F2	F3	F4
+10	10.1	abc	ABC
+100	100	abc	AbC
+0	0.0	z	AzB
+-1	-0.1	abc def	abc def
+0.	100.	àbc	ÀBC
+0.0	100.0	àßc	ÀssC
+-0.0	-100.0	àßc	ÀSSC
+100	100		AbC
+100	102	abc	AbC
+100	103	abc	AbC
+
+====[tsv-filter --header --byte-len-ge 4:2 input1.tsv]====
+F1	F2	F3	F4
+10	10.1	abc	ABC
+100	100	abc	AbC
+0	0.0	z	AzB
+-1	-0.1	abc def	abc def
+-2	-2.0	ß	ss
+0.	100.	àbc	ÀBC
+0.0	100.0	àßc	ÀssC
+-0.0	-100.0	àßc	ÀSSC
+100	100		AbC
+100	102	abc	AbC
+100	103	abc	AbC
+
+====[tsv-filter --header --char-len-le 3:3 input_unicode.tsv]====
+Language	Text 1	Text 2	Text 3
+Mixed1	a-雪	a	abcd
+Mixed2	ab-雪雪	ab	abc
+Mixed3	abc-雪	abc	ab
+Mixed6	ab-雪	雪	abc
+Mixed7	abc-雪	雪雪	ab
+Mixed8	abcd-雪	雪雪雪	a
+Mixed11	abc-雪	षि	ab
+Mixed12	abcd-雪	षिषि	a
+Mixed13	a-雪	षिषिषि	abcd
+Mixed16	abcd-雪	aषि雪	a
+
+====[tsv-filter --header --char-len-lt 3:3 input_unicode.tsv]====
+Language	Text 1	Text 2	Text 3
+Mixed1	a-雪	a	abcd
+Mixed2	ab-雪雪	ab	abc
+Mixed6	ab-雪	雪	abc
+Mixed7	abc-雪	雪雪	ab
+Mixed11	abc-雪	षि	ab
+Mixed12	abcd-雪	षिषि	a
+
+====[tsv-filter --header --char-len-ge 3:3 input_unicode.tsv]====
+Language	Text 1	Text 2	Text 3
+English	snow storm	soccer player	town hall
+Chinese (Simplified)	雪风暴	足球运动员	市政厅
+Chinese (Traditional)	雪風暴	足球運動員	市政廳
+French	Tempête de neige	joueur de foot	mairie
+Georgian	თოვლის ქარიშხალი	ფეხბურთის მოთამაშე	მუნიციპალიტეტი
+German	Schneesturm	Fußballspieler	Rathaus
+Greek	Χιονοθύελλα	ποδοσφαιριστής	Δημαρχείο
+Japanese	吹雪	サッカー選手	町役場
+Russian	Снежная буря	футболист	ратуша
+Spanish	Tormenta de nieve	jugador de fútbol	Ayuntamiento
+Vietnamese	Bão tuyết	cầuthủ bóng đá	Thị trấn
+Mixed3	abc-雪	abc	ab
+Mixed4	abcd-雪雪	abcd	a
+Mixed5	a-雪	abcde	abcd
+Mixed8	abcd-雪	雪雪雪	a
+Mixed9	a-雪	雪雪雪雪	abcd
+Mixed10	ab-雪	雪雪雪雪雪	abc
+Mixed13	a-雪	षिषिषि	abcd
+Mixed14	ab-雪	षिषिषिषि	abc
+Mixed15	abc-雪	षिषिषिषिषि	ab
+Mixed16	abcd-雪	aषि雪	a
+
+====[tsv-filter --header --char-len-gt 3:3 input_unicode.tsv]====
+Language	Text 1	Text 2	Text 3
+English	snow storm	soccer player	town hall
+Chinese (Simplified)	雪风暴	足球运动员	市政厅
+Chinese (Traditional)	雪風暴	足球運動員	市政廳
+French	Tempête de neige	joueur de foot	mairie
+Georgian	თოვლის ქარიშხალი	ფეხბურთის მოთამაშე	მუნიციპალიტეტი
+German	Schneesturm	Fußballspieler	Rathaus
+Greek	Χιονοθύελλα	ποδοσφαιριστής	Δημαρχείο
+Japanese	吹雪	サッカー選手	町役場
+Russian	Снежная буря	футболист	ратуша
+Spanish	Tormenta de nieve	jugador de fútbol	Ayuntamiento
+Vietnamese	Bão tuyết	cầuthủ bóng đá	Thị trấn
+Mixed4	abcd-雪雪	abcd	a
+Mixed5	a-雪	abcde	abcd
+Mixed9	a-雪	雪雪雪雪	abcd
+Mixed10	ab-雪	雪雪雪雪雪	abc
+Mixed14	ab-雪	षिषिषिषि	abc
+Mixed15	abc-雪	षिषिषिषिषि	ab
+
+====[tsv-filter --header --char-len-eq 3:3 input_unicode.tsv]====
+Language	Text 1	Text 2	Text 3
+Mixed3	abc-雪	abc	ab
+Mixed8	abcd-雪	雪雪雪	a
+Mixed13	a-雪	षिषिषि	abcd
+Mixed16	abcd-雪	aषि雪	a
+
+====[tsv-filter --header --char-len-ne 3:3 input_unicode.tsv]====
+Language	Text 1	Text 2	Text 3
+English	snow storm	soccer player	town hall
+Chinese (Simplified)	雪风暴	足球运动员	市政厅
+Chinese (Traditional)	雪風暴	足球運動員	市政廳
+French	Tempête de neige	joueur de foot	mairie
+Georgian	თოვლის ქარიშხალი	ფეხბურთის მოთამაშე	მუნიციპალიტეტი
+German	Schneesturm	Fußballspieler	Rathaus
+Greek	Χιονοθύελλα	ποδοσφαιριστής	Δημαρχείο
+Japanese	吹雪	サッカー選手	町役場
+Russian	Снежная буря	футболист	ратуша
+Spanish	Tormenta de nieve	jugador de fútbol	Ayuntamiento
+Vietnamese	Bão tuyết	cầuthủ bóng đá	Thị trấn
+Mixed1	a-雪	a	abcd
+Mixed2	ab-雪雪	ab	abc
+Mixed4	abcd-雪雪	abcd	a
+Mixed5	a-雪	abcde	abcd
+Mixed6	ab-雪	雪	abc
+Mixed7	abc-雪	雪雪	ab
+Mixed9	a-雪	雪雪雪雪	abcd
+Mixed10	ab-雪	雪雪雪雪雪	abc
+Mixed11	abc-雪	षि	ab
+Mixed12	abcd-雪	षिषि	a
+Mixed14	ab-雪	षिषिषिषि	abc
+Mixed15	abc-雪	षिषिषिषिषि	ab
+
+====[tsv-filter --header --byte-len-le 3:3 input_unicode.tsv]====
+Language	Text 1	Text 2	Text 3
+Mixed1	a-雪	a	abcd
+Mixed2	ab-雪雪	ab	abc
+Mixed3	abc-雪	abc	ab
+Mixed6	ab-雪	雪	abc
+
+====[tsv-filter --header --byte-len-lt 3:3 input_unicode.tsv]====
+Language	Text 1	Text 2	Text 3
+Mixed1	a-雪	a	abcd
+Mixed2	ab-雪雪	ab	abc
+
+====[tsv-filter --header --byte-len-ge 3:3 input_unicode.tsv]====
+Language	Text 1	Text 2	Text 3
+English	snow storm	soccer player	town hall
+Chinese (Simplified)	雪风暴	足球运动员	市政厅
+Chinese (Traditional)	雪風暴	足球運動員	市政廳
+French	Tempête de neige	joueur de foot	mairie
+Georgian	თოვლის ქარიშხალი	ფეხბურთის მოთამაშე	მუნიციპალიტეტი
+German	Schneesturm	Fußballspieler	Rathaus
+Greek	Χιονοθύελλα	ποδοσφαιριστής	Δημαρχείο
+Japanese	吹雪	サッカー選手	町役場
+Russian	Снежная буря	футболист	ратуша
+Spanish	Tormenta de nieve	jugador de fútbol	Ayuntamiento
+Vietnamese	Bão tuyết	cầuthủ bóng đá	Thị trấn
+Mixed3	abc-雪	abc	ab
+Mixed4	abcd-雪雪	abcd	a
+Mixed5	a-雪	abcde	abcd
+Mixed6	ab-雪	雪	abc
+Mixed7	abc-雪	雪雪	ab
+Mixed8	abcd-雪	雪雪雪	a
+Mixed9	a-雪	雪雪雪雪	abcd
+Mixed10	ab-雪	雪雪雪雪雪	abc
+Mixed11	abc-雪	षि	ab
+Mixed12	abcd-雪	षिषि	a
+Mixed13	a-雪	षिषिषि	abcd
+Mixed14	ab-雪	षिषिषिषि	abc
+Mixed15	abc-雪	षिषिषिषिषि	ab
+Mixed16	abcd-雪	aषि雪	a
+
+====[tsv-filter --header --byte-len-gt 3:3 input_unicode.tsv]====
+Language	Text 1	Text 2	Text 3
+English	snow storm	soccer player	town hall
+Chinese (Simplified)	雪风暴	足球运动员	市政厅
+Chinese (Traditional)	雪風暴	足球運動員	市政廳
+French	Tempête de neige	joueur de foot	mairie
+Georgian	თოვლის ქარიშხალი	ფეხბურთის მოთამაშე	მუნიციპალიტეტი
+German	Schneesturm	Fußballspieler	Rathaus
+Greek	Χιονοθύελλα	ποδοσφαιριστής	Δημαρχείο
+Japanese	吹雪	サッカー選手	町役場
+Russian	Снежная буря	футболист	ратуша
+Spanish	Tormenta de nieve	jugador de fútbol	Ayuntamiento
+Vietnamese	Bão tuyết	cầuthủ bóng đá	Thị trấn
+Mixed4	abcd-雪雪	abcd	a
+Mixed5	a-雪	abcde	abcd
+Mixed7	abc-雪	雪雪	ab
+Mixed8	abcd-雪	雪雪雪	a
+Mixed9	a-雪	雪雪雪雪	abcd
+Mixed10	ab-雪	雪雪雪雪雪	abc
+Mixed11	abc-雪	षि	ab
+Mixed12	abcd-雪	षिषि	a
+Mixed13	a-雪	षिषिषि	abcd
+Mixed14	ab-雪	षिषिषिषि	abc
+Mixed15	abc-雪	षिषिषिषिषि	ab
+Mixed16	abcd-雪	aषि雪	a
+
+====[tsv-filter --header --byte-len-eq 3:3 input_unicode.tsv]====
+Language	Text 1	Text 2	Text 3
+Mixed3	abc-雪	abc	ab
+Mixed6	ab-雪	雪	abc
+
+====[tsv-filter --header --byte-len-ne 3:3 input_unicode.tsv]====
+Language	Text 1	Text 2	Text 3
+English	snow storm	soccer player	town hall
+Chinese (Simplified)	雪风暴	足球运动员	市政厅
+Chinese (Traditional)	雪風暴	足球運動員	市政廳
+French	Tempête de neige	joueur de foot	mairie
+Georgian	თოვლის ქარიშხალი	ფეხბურთის მოთამაშე	მუნიციპალიტეტი
+German	Schneesturm	Fußballspieler	Rathaus
+Greek	Χιονοθύελλα	ποδοσφαιριστής	Δημαρχείο
+Japanese	吹雪	サッカー選手	町役場
+Russian	Снежная буря	футболист	ратуша
+Spanish	Tormenta de nieve	jugador de fútbol	Ayuntamiento
+Vietnamese	Bão tuyết	cầuthủ bóng đá	Thị trấn
+Mixed1	a-雪	a	abcd
+Mixed2	ab-雪雪	ab	abc
+Mixed4	abcd-雪雪	abcd	a
+Mixed5	a-雪	abcde	abcd
+Mixed7	abc-雪	雪雪	ab
+Mixed8	abcd-雪	雪雪雪	a
+Mixed9	a-雪	雪雪雪雪	abcd
+Mixed10	ab-雪	雪雪雪雪雪	abc
+Mixed11	abc-雪	षि	ab
+Mixed12	abcd-雪	षिषि	a
+Mixed13	a-雪	षिषिषि	abcd
+Mixed14	ab-雪	षिषिषिषि	abc
+Mixed15	abc-雪	षिषिषिषिषि	ab
+Mixed16	abcd-雪	aषि雪	a
+
+====[tsv-filter --header --char-len-lt 1:3 input_unicode.tsv]====
+Language	Text 1	Text 2	Text 3
+
+====[tsv-filter --header --char-len-le 2:2 input_unicode.tsv]====
+Language	Text 1	Text 2	Text 3
+Japanese	吹雪	サッカー選手	町役場
+
+====[tsv-filter --header --char-len-ge 4:2 input_unicode.tsv]====
+Language	Text 1	Text 2	Text 3
+English	snow storm	soccer player	town hall
+Chinese (Simplified)	雪风暴	足球运动员	市政厅
+Chinese (Traditional)	雪風暴	足球運動員	市政廳
+French	Tempête de neige	joueur de foot	mairie
+Georgian	თოვლის ქარიშხალი	ფეხბურთის მოთამაშე	მუნიციპალიტეტი
+German	Schneesturm	Fußballspieler	Rathaus
+Greek	Χιονοθύελλα	ποδοσφαιριστής	Δημαρχείο
+Japanese	吹雪	サッカー選手	町役場
+Russian	Снежная буря	футболист	ратуша
+Spanish	Tormenta de nieve	jugador de fútbol	Ayuntamiento
+Vietnamese	Bão tuyết	cầuthủ bóng đá	Thị trấn
+Mixed1	a-雪	a	abcd
+Mixed2	ab-雪雪	ab	abc
+Mixed3	abc-雪	abc	ab
+Mixed5	a-雪	abcde	abcd
+Mixed6	ab-雪	雪	abc
+Mixed7	abc-雪	雪雪	ab
+Mixed9	a-雪	雪雪雪雪	abcd
+Mixed10	ab-雪	雪雪雪雪雪	abc
+Mixed11	abc-雪	षि	ab
+Mixed13	a-雪	षिषिषि	abcd
+Mixed14	ab-雪	षिषिषिषि	abc
+Mixed15	abc-雪	षिषिषिषिषि	ab
+
 ====Field vs Field===
 
 ====[tsv-filter --header --ff-eq 1:2 input1.tsv]====
