@@ -135,6 +135,12 @@ tests if field 3 is less than 500. A more complete example:
 This outputs all lines from file data.tsv where field 1 is greater than 50 and less
 than 100, and field 2 is less than or equal to 1000. The header is also output.
 
+Field lists can be used to specify multiple fields at once. For example:
+
+  tsv-filter --not-blank 1-10 --str-ne 1,2,5:'--' data.tsv
+
+tests that fields 1-10 are not blank and fields 1,2,5 are not "--".
+
 Tests available include:
   * Test if a field is empty (no characters) or blank (empty or whitespace only).
   * Test if a field is interpretable as a number, a finite number, NaN, or Infinity.
@@ -751,54 +757,54 @@ struct TsvFilterOptions
                 std.getopt.config.caseInsensitive,
                 "d|delimiter",     "CHR  Field delimiter. Default: TAB. (Single byte UTF-8 characters only.)", &delim,
 
-                "empty",           "FIELD       True if field is empty.", &handlerFldEmpty,
-                "not-empty",       "FIELD       True if field is not empty.", &handlerFldNotEmpty,
-                "blank",           "FIELD       True if field is empty or all whitespace.", &handlerFldBlank,
-                "not-blank",       "FIELD       True if field contains a non-whitespace character.", &handlerFldNotBlank,
+                "empty",           "<field-list>       True if FIELD is empty.", &handlerFldEmpty,
+                "not-empty",       "<field-list>       True if FIELD is not empty.", &handlerFldNotEmpty,
+                "blank",           "<field-list>       True if FIELD is empty or all whitespace.", &handlerFldBlank,
+                "not-blank",       "<field-list>       True if FIELD contains a non-whitespace character.", &handlerFldNotBlank,
 
-                "is-numeric",      "FIELD       True if field is interpretable as a number.", &handlerFldIsNumeric,
-                "is-finite",       "FIELD       True if field is interpretable as a number and is not NaN or infinity.", &handlerFldIsFinite,
-                "is-nan",          "FIELD       True if field is NaN.", &handlerFldIsNaN,
-                "is-infinity",     "FIELD       True if field is infinity.", &handlerFldIsInfinity,
+                "is-numeric",      "<field-list>       True if FIELD is interpretable as a number.", &handlerFldIsNumeric,
+                "is-finite",       "<field-list>       True if FIELD is interpretable as a number and is not NaN or infinity.", &handlerFldIsFinite,
+                "is-nan",          "<field-list>       True if FIELD is NaN.", &handlerFldIsNaN,
+                "is-infinity",     "<field-list>       True if FIELD is infinity.", &handlerFldIsInfinity,
 
-                "le",              "FIELD:NUM   FIELD <= NUM (numeric).", &handlerNumLE,
-                "lt",              "FIELD:NUM   FIELD <  NUM (numeric).", &handlerNumLT,
-                "ge",              "FIELD:NUM   FIELD >= NUM (numeric).", &handlerNumGE,
-                "gt",              "FIELD:NUM   FIELD >  NUM (numeric).", &handlerNumGT,
-                "eq",              "FIELD:NUM   FIELD == NUM (numeric).", &handlerNumEQ,
-                "ne",              "FIELD:NUM   FIELD != NUM (numeric).", &handlerNumNE,
+                "le",              "<field-list>:NUM   FIELD <= NUM (numeric).", &handlerNumLE,
+                "lt",              "<field-list>:NUM   FIELD <  NUM (numeric).", &handlerNumLT,
+                "ge",              "<field-list>:NUM   FIELD >= NUM (numeric).", &handlerNumGE,
+                "gt",              "<field-list>:NUM   FIELD >  NUM (numeric).", &handlerNumGT,
+                "eq",              "<field-list>:NUM   FIELD == NUM (numeric).", &handlerNumEQ,
+                "ne",              "<field-list>:NUM   FIELD != NUM (numeric).", &handlerNumNE,
 
-                "str-le",          "FIELD:STR   FIELD <= STR (string).", &handlerStrLE,
-                "str-lt",          "FIELD:STR   FIELD <  STR (string).", &handlerStrLT,
-                "str-ge",          "FIELD:STR   FIELD >= STR (string).", &handlerStrGE,
-                "str-gt",          "FIELD:STR   FIELD >  STR (string).", &handlerStrGT,
-                "str-eq",          "FIELD:STR   FIELD == STR (string).", &handlerStrEQ,
-                "istr-eq",         "FIELD:STR   FIELD == STR (string, case-insensitive).", &handlerIStrEQ,
-                "str-ne",          "FIELD:STR   FIELD != STR (string).", &handlerStrNE,
-                "istr-ne",         "FIELD:STR   FIELD != STR (string, case-insensitive).", &handlerIStrNE,
-                "str-in-fld",      "FIELD:STR   FIELD contains STR (substring search).", &handlerStrInFld,
-                "istr-in-fld",     "FIELD:STR   FIELD contains STR (substring search, case-insensitive).", &handlerIStrInFld,
-                "str-not-in-fld",  "FIELD:STR   FIELD does not contain STR (substring search).", &handlerStrNotInFld,
-                "istr-not-in-fld", "FIELD:STR   FIELD does not contain STR (substring search, case-insensitive).", &handlerIStrNotInFld,
+                "str-le",          "<field-list>:STR   FIELD <= STR (string).", &handlerStrLE,
+                "str-lt",          "<field-list>:STR   FIELD <  STR (string).", &handlerStrLT,
+                "str-ge",          "<field-list>:STR   FIELD >= STR (string).", &handlerStrGE,
+                "str-gt",          "<field-list>:STR   FIELD >  STR (string).", &handlerStrGT,
+                "str-eq",          "<field-list>:STR   FIELD == STR (string).", &handlerStrEQ,
+                "istr-eq",         "<field-list>:STR   FIELD == STR (string, case-insensitive).", &handlerIStrEQ,
+                "str-ne",          "<field-list>:STR   FIELD != STR (string).", &handlerStrNE,
+                "istr-ne",         "<field-list>:STR   FIELD != STR (string, case-insensitive).", &handlerIStrNE,
+                "str-in-fld",      "<field-list>:STR   FIELD contains STR (substring search).", &handlerStrInFld,
+                "istr-in-fld",     "<field-list>:STR   FIELD contains STR (substring search, case-insensitive).", &handlerIStrInFld,
+                "str-not-in-fld",  "<field-list>:STR   FIELD does not contain STR (substring search).", &handlerStrNotInFld,
+                "istr-not-in-fld", "<field-list>:STR   FIELD does not contain STR (substring search, case-insensitive).", &handlerIStrNotInFld,
 
-                "regex",           "FIELD:REGEX   FIELD matches regular expression.", &handlerRegexMatch,
-                "iregex",          "FIELD:REGEX   FIELD matches regular expression, case-insensitive.", &handlerIRegexMatch,
-                "not-regex",       "FIELD:REGEX   FIELD does not match regular expression.", &handlerRegexNotMatch,
-                "not-iregex",      "FIELD:REGEX   FIELD does not match regular expression, case-insensitive.", &handlerIRegexNotMatch,
+                "regex",           "<field-list>:REGEX   FIELD matches regular expression.", &handlerRegexMatch,
+                "iregex",          "<field-list>:REGEX   FIELD matches regular expression, case-insensitive.", &handlerIRegexMatch,
+                "not-regex",       "<field-list>:REGEX   FIELD does not match regular expression.", &handlerRegexNotMatch,
+                "not-iregex",      "<field-list>:REGEX   FIELD does not match regular expression, case-insensitive.", &handlerIRegexNotMatch,
 
-                "char-len-le",     "FIELD:NUM   character-length(FIELD) <= NUM.", &handlerCharLenLE,
-                "char-len-lt",     "FIELD:NUM   character-length(FIELD) < NUM.", &handlerCharLenLT,
-                "char-len-ge",     "FIELD:NUM   character-length(FIELD) >= NUM.", &handlerCharLenGE,
-                "char-len-gt",     "FIELD:NUM   character-length(FIELD) > NUM.", &handlerCharLenGT,
-                "char-len-eq",     "FIELD:NUM   character-length(FIELD) == NUM.", &handlerCharLenEQ,
-                "char-len-ne",     "FIELD:NUM   character-length(FIELD) != NUM.", &handlerCharLenNE,
+                "char-len-le",     "<field-list>:NUM   character-length(FIELD) <= NUM.", &handlerCharLenLE,
+                "char-len-lt",     "<field-list>:NUM   character-length(FIELD) < NUM.", &handlerCharLenLT,
+                "char-len-ge",     "<field-list>:NUM   character-length(FIELD) >= NUM.", &handlerCharLenGE,
+                "char-len-gt",     "<field-list>:NUM   character-length(FIELD) > NUM.", &handlerCharLenGT,
+                "char-len-eq",     "<field-list>:NUM   character-length(FIELD) == NUM.", &handlerCharLenEQ,
+                "char-len-ne",     "<field-list>:NUM   character-length(FIELD) != NUM.", &handlerCharLenNE,
 
-                "byte-len-le",     "FIELD:NUM   byte-length(FIELD) <= NUM.", &handlerByteLenLE,
-                "byte-len-lt",     "FIELD:NUM   byte-length(FIELD) < NUM.", &handlerByteLenLT,
-                "byte-len-ge",     "FIELD:NUM   byte-length(FIELD) >= NUM.", &handlerByteLenGE,
-                "byte-len-gt",     "FIELD:NUM   byte-length(FIELD) > NUM.", &handlerByteLenGT,
-                "byte-len-eq",     "FIELD:NUM   byte-length(FIELD) == NUM.", &handlerByteLenEQ,
-                "byte-len-ne",     "FIELD:NUM   byte-length(FIELD) != NUM.", &handlerByteLenNE,
+                "byte-len-le",     "<field-list>:NUM   byte-length(FIELD) <= NUM.", &handlerByteLenLE,
+                "byte-len-lt",     "<field-list>:NUM   byte-length(FIELD) < NUM.", &handlerByteLenLT,
+                "byte-len-ge",     "<field-list>:NUM   byte-length(FIELD) >= NUM.", &handlerByteLenGE,
+                "byte-len-gt",     "<field-list>:NUM   byte-length(FIELD) > NUM.", &handlerByteLenGT,
+                "byte-len-eq",     "<field-list>:NUM   byte-length(FIELD) == NUM.", &handlerByteLenEQ,
+                "byte-len-ne",     "<field-list>:NUM   byte-length(FIELD) != NUM.", &handlerByteLenNE,
 
                 "ff-le",           "FIELD1:FIELD2   FIELD1 <= FIELD2 (numeric).", &handlerFFLE,
                 "ff-lt",           "FIELD1:FIELD2   FIELD1 <  FIELD2 (numeric).", &handlerFFLT,

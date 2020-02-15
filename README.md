@@ -82,6 +82,11 @@ $ tsv-filter -H --str-eq 2:red --ge 3:1850 --lt 3:1950 data.tsv | tsv-pretty | h
 114  red    1931   1412
 ```
 
+Field lists can be used to specify multiple fields at once. The following command tests that fields 1-30 are all less than 100:
+```
+$ tsv-filter --lt 1-30:100 data.tsv
+```
+
 `tsv-filter` is the most widely applicable of the tools, as dataset pruning is a common task. It is stream oriented, so it can handle arbitrarily large files. It is fast, quite a bit faster than other tools the author has tried. This makes it ideal for preparing data for applications like R and Pandas. It is also convenient for quickly answering simple questions about a dataset. For example, to count the number of records with a non-zero value in field 4, use the command:
 ```
 $ tsv-filter --ne 4:0 file.tsv | wc -l
