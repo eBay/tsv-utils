@@ -190,6 +190,29 @@ runtest ${prog} "--header --char-len-lt 1:3 input_unicode.tsv" ${basic_tests_1}
 runtest ${prog} "--header --char-len-le 2:2 input_unicode.tsv" ${basic_tests_1}
 runtest ${prog} "--header --char-len-ge 4:2 input_unicode.tsv" ${basic_tests_1}
 
+# Field List tests
+echo "" >> ${basic_tests_1}; echo "====Field list tests===" >> ${basic_tests_1}
+runtest ${prog} "--header --ge 4-6:25 input4.tsv" ${basic_tests_1}
+runtest ${prog} "--header --gt 4-6:25 input4.tsv" ${basic_tests_1}
+runtest ${prog} "--header --eq 6-4,8:0 input4.tsv" ${basic_tests_1}
+runtest ${prog} "--header --ne 4-6,8-9:0 input4.tsv" ${basic_tests_1}
+runtest ${prog} "--header --or --eq 4-6,8-9:0 input4.tsv" ${basic_tests_1}
+runtest ${prog} "--header --lt 4,5:0 input4.tsv" ${basic_tests_1}
+runtest ${prog} "--header --lt 4,5:-1 input4.tsv" ${basic_tests_1}
+runtest ${prog} "--header --char-len-ge 2-7:2 input4.tsv" ${basic_tests_1}
+runtest ${prog} "--header --blank 2,3 input4.tsv" ${basic_tests_1}
+runtest ${prog} "--header --empty 2,3,7 input4.tsv" ${basic_tests_1}
+runtest ${prog} "--header --str-eq 4-6:0 input4.tsv" ${basic_tests_1}
+runtest ${prog} "--header --str-in-fld 2-3,7:ab input4.tsv" ${basic_tests_1}
+runtest ${prog} "--header --str-in-fld 2-3:ab input4.tsv" ${basic_tests_1}
+runtest ${prog} "--header --str-not-in-fld 2-3:ab input4.tsv" ${basic_tests_1}
+runtest ${prog} "--header --or --istr-eq 2-3:abc input4.tsv" ${basic_tests_1}
+runtest ${prog} "--header --or --istr-eq 2-3:ABC input4.tsv" ${basic_tests_1}
+runtest ${prog} "--header --istr-in-fld 2-3:ab input4.tsv" ${basic_tests_1}
+runtest ${prog} "--header --or --regex 2-3,7:^.*b.*d$ input4.tsv" ${basic_tests_1}
+runtest ${prog} "--header --not-regex 2-3,7:^.*b.*d$ input4.tsv" ${basic_tests_1}
+runtest ${prog} "--header --or --iregex 7,3,2:^.*b.*d$ input4.tsv" ${basic_tests_1}
+
 # Field vs Field tests
 echo "" >> ${basic_tests_1}; echo "====Field vs Field===" >> ${basic_tests_1}
 

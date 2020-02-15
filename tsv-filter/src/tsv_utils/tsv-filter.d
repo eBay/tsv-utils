@@ -52,9 +52,9 @@ int main(string[] cmdArgs)
         resetAll();
     }
     try tsvFilter(cmdopt, cmdArgs[1..$]);
-    catch (Exception exc)
+    catch (Exception e)
     {
-        stderr.writefln("Error [%s]: %s", cmdopt.programName, exc.msg);
+        stderr.writefln("Error [%s]: %s", cmdopt.programName, e.msg);
         return 1;
     }
     return 0;
@@ -353,96 +353,106 @@ bool ffRelDiffGT(const char[][] fields, size_t index1, size_t index2, double val
  * optimization, the maximum field index is also tracked. This allows early termination of
  * line splitting.
  */
-
 void fieldUnaryOptionHandler(
     ref FieldsPredicate[] tests, ref size_t maxFieldIndex, FieldUnaryPredicate fn, string option, string optionVal)
 {
-    size_t field;
-    try field = optionVal.to!size_t;
-    catch (Exception exc)
-    {
-        throw new Exception(
-            format("Invalid value in option: '--%s %s'. Expected: '--%s <field>' where field is a 1-upped integer.",
-                   option, optionVal, option));
-    }
+    import std.range : enumerate;
+    import std.typecons : Yes, No;
+    import tsv_utils.common.utils :  parseFieldList;
 
-    if (field == 0)
+    try foreach (fieldNum, fieldIndex;
+                 optionVal.parseFieldList!(size_t, Yes.convertToZeroBasedIndex).enumerate(1))
+        {
+            tests ~= makeFieldUnaryDelegate(fn, fieldIndex);
+            maxFieldIndex = (fieldIndex > maxFieldIndex) ? fieldIndex : maxFieldIndex;
+        }
+    catch (Exception e)
     {
-        throw new Exception(
-            format("Invalid option: '--%s %s'. Zero is not a valid field index.", option, optionVal));
+         import std.format : format;
+         e.msg = format("[--%s %s]. %s\n   Expected: '--%s <field>' or '--%s <field-list>'.",
+                        option, optionVal, e.msg, option, option);
+         throw e;
     }
-
-    immutable size_t zeroBasedIndex = field - 1;
-    tests ~= makeFieldUnaryDelegate(fn, zeroBasedIndex);
-    maxFieldIndex = (zeroBasedIndex > maxFieldIndex) ? zeroBasedIndex : maxFieldIndex;
 }
 
 void fieldVsNumberOptionHandler(
     ref FieldsPredicate[] tests, ref size_t maxFieldIndex, FieldVsNumberPredicate fn, string option, string optionVal)
 {
-    immutable valSplit = findSplit(optionVal, ":");
-    if (valSplit[1].length == 0 || valSplit[2].length == 0)
+    import std.range : enumerate;
+    import std.typecons : Yes, No;
+    import tsv_utils.common.utils :  parseFieldList;
+
+    auto formatErrorMsg(string option, string optionVal, string errorMessage="")
     {
-        throw new Exception(
-            format("Invalid option: '%s %s'. Expected: '%s <field>:<val>' where <field> and <val> are numbers.",
-                   option, optionVal, option));
-    }
-    size_t field;
-    double value;
-    try
-    {
-        field = valSplit[0].to!size_t;
-        value = valSplit[2].to!double;
-    }
-    catch (Exception exc)
-    {
-        throw new Exception(
-            format("Invalid numeric values in option: '--%s %s'. Expected: '--%s <field>:<val>' where <field> and <val> are numbers.",
-                   option, optionVal, option));
+        import std.format;
+
+        string optionalSpace = (errorMessage.length == 0) ? "" : " ";
+        return format(
+            "Invalid option: '--%s %s'.%s%s\n   Expected: '--%s <field>:<val>' or '--%s <field-list>:<val> where <val> is a number.",
+            option, optionVal, optionalSpace, errorMessage, option, option);
     }
 
-    if (field == 0)
+    immutable valSplit = findSplit(optionVal, ":");
+
+    if (valSplit[1].length == 0 || valSplit[2].length == 0)
     {
-        throw new Exception(
-            format("Invalid option: '--%s %s'. Zero is not a valid field index.", option, optionVal));
+        throw new Exception(formatErrorMsg(option, optionVal));
     }
-    immutable size_t zeroBasedIndex = field - 1;
-    tests ~= makeFieldVsNumberDelegate(fn, zeroBasedIndex, value);
-    maxFieldIndex = (zeroBasedIndex > maxFieldIndex) ? zeroBasedIndex : maxFieldIndex;
+
+    double value;
+    try value = valSplit[2].to!double;
+    catch (Exception e)
+    {
+        throw new Exception(formatErrorMsg(option, optionVal, e.msg));
+    }
+
+    try foreach (fieldNum, fieldIndex;
+                 valSplit[0].parseFieldList!(size_t, Yes.convertToZeroBasedIndex).enumerate(1))
+        {
+            tests ~= makeFieldVsNumberDelegate(fn, fieldIndex, value);
+            maxFieldIndex = (fieldIndex > maxFieldIndex) ? fieldIndex : maxFieldIndex;
+        }
+    catch (Exception e)
+    {
+        import std.format : format;
+        e.msg = format(
+            "[--%s %s]. %s\n   Expected: '--%s <field>:<val>' or '--%s <field-list>:<val> where <val> is a number.",
+            option, optionVal, e.msg, option, option);
+        throw e;
+    }
 }
 
 void fieldVsStringOptionHandler(
     ref FieldsPredicate[] tests, ref size_t maxFieldIndex, FieldVsStringPredicate fn, string option, string optionVal)
 {
+    import std.range : enumerate;
+    import std.typecons : Yes, No;
+    import tsv_utils.common.utils :  parseFieldList;
+
     immutable valSplit = findSplit(optionVal, ":");
     if (valSplit[1].length == 0 || valSplit[2].length == 0)
     {
         throw new Exception(
-            format("Invalid option: '--%s %s'. Expected: '--%s <field>:<val>' where <field> is a number and <val> is a string.",
-                   option, optionVal, option));
-    }
-    size_t field;
-    string value;
-    try
-    {
-        field = valSplit[0].to!size_t;
-        value = valSplit[2].to!string;
-    }
-    catch (Exception exc)
-    {
-        throw new Exception(
-            format("Invalid values in option: '--%s %s'. Expected: '--%s <field>:<val>' where <field> is a number and <val> a string.",
-                   option, optionVal, option));
+            format("Invalid option: '--%s %s'.\n   Expected: '--%s <field>:<val>' or '--%s <field-list>:<val>' where <val> is a string.",
+                   option, optionVal, option, option));
     }
 
-    if (field == 0)
+    string value = valSplit[2].to!string;
+
+    try foreach (fieldNum, fieldIndex;
+                 valSplit[0].parseFieldList!(size_t, Yes.convertToZeroBasedIndex).enumerate(1))
+        {
+            tests ~= makeFieldVsStringDelegate(fn, fieldIndex, value);
+            maxFieldIndex = (fieldIndex > maxFieldIndex) ? fieldIndex : maxFieldIndex;
+        }
+    catch (Exception e)
     {
-        throw new Exception(
-            format("Invalid option: '--%s %s'. Zero is not a valid field index.", option, optionVal));
+        import std.format : format;
+        e.msg = format(
+            "[--%s %s]. %s\n   Expected: '--%s <field>:<val>' or '--%s <field-list>:<val>' where <val> is a string.",
+            option, optionVal, e.msg, option, option);
+        throw e;
     }
-    immutable size_t zeroBasedIndex = field - 1;
-    tests ~= makeFieldVsStringDelegate(fn, zeroBasedIndex, value);
-    maxFieldIndex = (zeroBasedIndex > maxFieldIndex) ? zeroBasedIndex : maxFieldIndex;
 }
 
 /* The fieldVsIStringOptionHandler lower-cases the command line argument, assuming the
@@ -451,71 +461,79 @@ void fieldVsStringOptionHandler(
 void fieldVsIStringOptionHandler(
     ref FieldsPredicate[] tests, ref size_t maxFieldIndex, FieldVsIStringPredicate fn, string option, string optionVal)
 {
+    import std.range : enumerate;
+    import std.typecons : Yes, No;
+    import tsv_utils.common.utils :  parseFieldList;
+
     immutable valSplit = findSplit(optionVal, ":");
     if (valSplit[1].length == 0 || valSplit[2].length == 0)
     {
         throw new Exception(
-            format("Invalid option: '--%s %s'. Expected: '--%s <field>:<val>' where <field> is a number and <val> is a string.",
-                   option, optionVal, option));
-    }
-    size_t field;
-    string value;
-    try
-    {
-        field = valSplit[0].to!size_t;
-        value = valSplit[2].to!string;
-    }
-    catch (Exception exc)
-    {
-        throw new Exception(
-            format("Invalid values in option: '--%s %s'. Expected: '--%s <field>:<val>' where <field> is a number and <val> a string.",
-                   option, optionVal, option));
+            format("Invalid option: '--%s %s'.\n   Expected: '--%s <field>:<val>' or '--%s <field-list>:<val>' where <val> is a string.",
+                   option, optionVal, option, option));
     }
 
-    if (field == 0)
+    string value = valSplit[2].to!string;
+
+    try foreach (fieldNum, fieldIndex;
+                 valSplit[0].parseFieldList!(size_t, Yes.convertToZeroBasedIndex).enumerate(1))
+        {
+            tests ~= makeFieldVsIStringDelegate(fn, fieldIndex, value.to!dstring.toLower);
+            maxFieldIndex = (fieldIndex > maxFieldIndex) ? fieldIndex : maxFieldIndex;
+        }
+    catch (Exception e)
     {
-        throw new Exception(
-            format("Invalid option: '--%s %s'. Zero is not a valid field index.", option, optionVal));
+        import std.format : format;
+        e.msg = format(
+            "[--%s %s]. %s\n   Expected: '--%s <field>:<val>' or '--%s <field-list>:<val>' where <val> is a string.",
+            option, optionVal, e.msg, option, option);
+        throw e;
     }
-    immutable size_t zeroBasedIndex = field - 1;
-    tests ~= makeFieldVsIStringDelegate(fn, zeroBasedIndex, value.to!dstring.toLower);
-    maxFieldIndex = (zeroBasedIndex > maxFieldIndex) ? zeroBasedIndex : maxFieldIndex;
 }
 
 void fieldVsRegexOptionHandler(
     ref FieldsPredicate[] tests, ref size_t maxFieldIndex, FieldVsRegexPredicate fn, string option, string optionVal,
     bool caseSensitive)
 {
+    import std.range : enumerate;
+    import std.typecons : Yes, No;
+    import tsv_utils.common.utils :  parseFieldList;
+
     immutable valSplit = findSplit(optionVal, ":");
     if (valSplit[1].length == 0 || valSplit[2].length == 0)
     {
         throw new Exception(
-            format("Invalid option: '--%s %s'. Expected: '--%s <field>:<val>' where <field> is a number and <val> is a regular expression.",
-                   option, optionVal, option));
+            format("Invalid option: '--%s %s'.\n   Expected: '--%s <field>:<val>' or '--%s <field-list>:<val>' where <val> is a regular expression.",
+                   option, optionVal, option, option));
     }
-    size_t field;
+
     Regex!char value;
     try
     {
         immutable modifiers = caseSensitive ? "" : "i";
-        field = valSplit[0].to!size_t;
         value = regex(valSplit[2], modifiers);
     }
-    catch (Exception exc)
+    catch (Exception e)
     {
         throw new Exception(
-            format("Invalid values in option: '--%s %s'. Expected: '--%s <field>:<val>' where <field> is a number and <val> is a regular expression.",
-                   option, optionVal, option));
+            format("Invalid regular expression: '--%s %s'. %s\n   Expected: '--%s <field>:<val>' or '--%s <field-list>:<val>' where <val> is a regular expression.",
+                   option, optionVal, e.msg, option, option));
     }
 
-    if (field == 0)
+    try foreach (fieldNum, fieldIndex;
+                 valSplit[0].parseFieldList!(size_t, Yes.convertToZeroBasedIndex).enumerate(1))
+        {
+            tests ~= makeFieldVsRegexDelegate(fn, fieldIndex, value);
+            maxFieldIndex = (fieldIndex > maxFieldIndex) ? fieldIndex : maxFieldIndex;
+        }
+    catch (Exception e)
     {
-        throw new Exception(
-            format("Invalid option: '--%s %s'. Zero is not a valid field index.", option, optionVal));
+        import std.format : format;
+        e.msg = format(
+            "[--%s %s]. %s\n   Expected: '--%s <field>:<val>' or '--%s <field-list>:<val>' where <val> is a regular expression.",
+            option, optionVal, e.msg, option, option);
+        throw e;
     }
-    immutable size_t zeroBasedIndex = field - 1;
-    tests ~= makeFieldVsRegexDelegate(fn, zeroBasedIndex, value);
-    maxFieldIndex = (zeroBasedIndex > maxFieldIndex) ? zeroBasedIndex : maxFieldIndex;
 }
 
 void fieldVsFieldOptionHandler(
@@ -535,7 +553,7 @@ void fieldVsFieldOptionHandler(
         field1 = valSplit[0].to!size_t;
         field2 = valSplit[2].to!size_t;
     }
-    catch (Exception exc)
+    catch (Exception e)
     {
         throw new Exception(
             format("Invalid values in option: '--%s %s'. Expected: '--%s <field1>:<field2>' where fields are 1-upped integers.",
@@ -583,7 +601,7 @@ void fieldFieldNumOptionHandler(
                 field2 = valSplit2[0].to!size_t;
                 value = valSplit2[2].to!double;
             }
-            catch (Exception exc)
+            catch (Exception e)
             {
                 invalidOption = true;
             }
@@ -824,9 +842,9 @@ struct TsvFilterOptions
                 return tuple(false, 0);
             }
         }
-        catch (Exception exc)
+        catch (Exception e)
         {
-            stderr.writefln("[%s] Error processing command line arguments: %s", programName, exc.msg);
+            stderr.writefln("[%s] Error processing command line arguments: %s", programName, e.msg);
             return tuple(false, 1);
         }
         return tuple(true, 0);
@@ -920,11 +938,11 @@ void tsvFilter(const TsvFilterOptions cmdopt, const string[] inputFiles)
                         }
                     }
                 }
-                catch (Exception exc)
+                catch (Exception e)
                 {
                     throw new Exception(
                         format("Could not process line or field: %s\n  File: %s Line: %s%s",
-                               exc.msg, (filename == "-") ? "Standard Input" : filename, lineNum,
+                               e.msg, (filename == "-") ? "Standard Input" : filename, lineNum,
                                (lineNum == 1) ? "\n  Is this a header line? Use --header to skip." : ""));
                 }
             }
