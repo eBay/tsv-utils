@@ -5,107 +5,138 @@ Error test set 1
 Error [tsv-filter]: Cannot open file `nosuchfile.tsv' in mode `rb' (No such file or directory)
 
 ====[tsv-filter --header --gt 0:10 input1.tsv]====
-[tsv-filter] Error processing command line arguments: Invalid option: '--gt 0:10'. Zero is not a valid field index.
+[tsv-filter] Error processing command line arguments: [--gt 0:10]. Field numbers must be greater than zero: '0'
+   Expected: '--gt <field>:<val>' or '--gt <field-list>:<val> where <val> is a number.
 
 ====[tsv-filter --header --lt -1:10 input1.tsv]====
 [tsv-filter] Error processing command line arguments: Missing value for argument --lt.
 
 ====[tsv-filter --header --ne abc:15 input1.tsv]====
-[tsv-filter] Error processing command line arguments: Invalid numeric values in option: '--ne abc:15'. Expected: '--ne <field>:<val>' where <field> and <val> are numbers.
+[tsv-filter] Error processing command line arguments: [--ne abc:15]. Unexpected 'a' when converting from type string to type long
+   Expected: '--ne <field>:<val>' or '--ne <field-list>:<val> where <val> is a number.
 
 ====[tsv-filter --header --eq 2:def input1.tsv]====
-[tsv-filter] Error processing command line arguments: Invalid numeric values in option: '--eq 2:def'. Expected: '--eq <field>:<val>' where <field> and <val> are numbers.
+[tsv-filter] Error processing command line arguments: Invalid option: '--eq 2:def'. no digits seen
+   Expected: '--eq <field>:<val>' or '--eq <field-list>:<val> where <val> is a number.
 
 ====[tsv-filter --header --le 1000:10 input1.tsv]====
 Error [tsv-filter]: Not enough fields in line. File: input1.tsv, Line: 2
 F1	F2	F3	F4
 
 ====[tsv-filter --header --le 1: input1.tsv]====
-[tsv-filter] Error processing command line arguments: Invalid option: 'le 1:'. Expected: 'le <field>:<val>' where <field> and <val> are numbers.
+[tsv-filter] Error processing command line arguments: Invalid option: '--le 1:'.
+   Expected: '--le <field>:<val>' or '--le <field-list>:<val> where <val> is a number.
 
 ====[tsv-filter --header --le 1 input1.tsv]====
-[tsv-filter] Error processing command line arguments: Invalid option: 'le 1'. Expected: 'le <field>:<val>' where <field> and <val> are numbers.
+[tsv-filter] Error processing command line arguments: Invalid option: '--le 1'.
+   Expected: '--le <field>:<val>' or '--le <field-list>:<val> where <val> is a number.
 
 ====[tsv-filter --header --le :10 input1.tsv]====
-[tsv-filter] Error processing command line arguments: Invalid numeric values in option: '--le :10'. Expected: '--le <field>:<val>' where <field> and <val> are numbers.
+[tsv-filter] Error processing command line arguments: [--le :10]. Empty field number.
+   Expected: '--le <field>:<val>' or '--le <field-list>:<val> where <val> is a number.
 
 ====[tsv-filter --header --le : input1.tsv]====
-[tsv-filter] Error processing command line arguments: Invalid option: 'le :'. Expected: 'le <field>:<val>' where <field> and <val> are numbers.
+[tsv-filter] Error processing command line arguments: Invalid option: '--le :'.
+   Expected: '--le <field>:<val>' or '--le <field-list>:<val> where <val> is a number.
 
 ====[tsv-filter --header --empty 23g input1.tsv]====
-[tsv-filter] Error processing command line arguments: Invalid value in option: '--empty 23g'. Expected: '--empty <field>' where field is a 1-upped integer.
+[tsv-filter] Error processing command line arguments: [--empty 23g]. Unexpected 'g' when converting from type string to type long
+   Expected: '--empty <field>' or '--empty <field-list>'.
 
 ====[tsv-filter --header --empty 0 input1.tsv]====
-[tsv-filter] Error processing command line arguments: Invalid option: '--empty 0'. Zero is not a valid field index.
+[tsv-filter] Error processing command line arguments: [--empty 0]. Field numbers must be greater than zero: '0'
+   Expected: '--empty <field>' or '--empty <field-list>'.
 
 ====[tsv-filter --header --str-gt 0:abc input1.tsv]====
-[tsv-filter] Error processing command line arguments: Invalid option: '--str-gt 0:abc'. Zero is not a valid field index.
+[tsv-filter] Error processing command line arguments: [--str-gt 0:abc]. Field numbers must be greater than zero: '0'
+   Expected: '--str-gt <field>:<val>' or '--str-gt <field-list>:<val>' where <val> is a string.
 
 ====[tsv-filter --header --str-lt -1:ABC input1.tsv]====
 [tsv-filter] Error processing command line arguments: Missing value for argument --str-lt.
 
 ====[tsv-filter --header --str-ne abc:a22 input1.tsv]====
-[tsv-filter] Error processing command line arguments: Invalid values in option: '--str-ne abc:a22'. Expected: '--str-ne <field>:<val>' where <field> is a number and <val> a string.
+[tsv-filter] Error processing command line arguments: [--str-ne abc:a22]. Unexpected 'a' when converting from type string to type long
+   Expected: '--str-ne <field>:<val>' or '--str-ne <field-list>:<val>' where <val> is a string.
 
 ====[tsv-filter --header --str-eq 2.2:def input1.tsv]====
-[tsv-filter] Error processing command line arguments: Invalid values in option: '--str-eq 2.2:def'. Expected: '--str-eq <field>:<val>' where <field> is a number and <val> a string.
+[tsv-filter] Error processing command line arguments: [--str-eq 2.2:def]. Unexpected '.' when converting from type string to type long
+   Expected: '--str-eq <field>:<val>' or '--str-eq <field-list>:<val>' where <val> is a string.
 
 ====[tsv-filter --header --str-eq 0:def input1.tsv]====
-[tsv-filter] Error processing command line arguments: Invalid option: '--str-eq 0:def'. Zero is not a valid field index.
+[tsv-filter] Error processing command line arguments: [--str-eq 0:def]. Field numbers must be greater than zero: '0'
+   Expected: '--str-eq <field>:<val>' or '--str-eq <field-list>:<val>' where <val> is a string.
 
 ====[tsv-filter --header --str-eq :def input1.tsv]====
-[tsv-filter] Error processing command line arguments: Invalid values in option: '--str-eq :def'. Expected: '--str-eq <field>:<val>' where <field> is a number and <val> a string.
+[tsv-filter] Error processing command line arguments: [--str-eq :def]. Empty field number.
+   Expected: '--str-eq <field>:<val>' or '--str-eq <field-list>:<val>' where <val> is a string.
 
 ====[tsv-filter --header --str-eq 2: input1.tsv]====
-[tsv-filter] Error processing command line arguments: Invalid option: '--str-eq 2:'. Expected: '--str-eq <field>:<val>' where <field> is a number and <val> is a string.
+[tsv-filter] Error processing command line arguments: Invalid option: '--str-eq 2:'.
+   Expected: '--str-eq <field>:<val>' or '--str-eq <field-list>:<val>' where <val> is a string.
 
 ====[tsv-filter --header --str-eq : input1.tsv]====
-[tsv-filter] Error processing command line arguments: Invalid option: '--str-eq :'. Expected: '--str-eq <field>:<val>' where <field> is a number and <val> is a string.
+[tsv-filter] Error processing command line arguments: Invalid option: '--str-eq :'.
+   Expected: '--str-eq <field>:<val>' or '--str-eq <field-list>:<val>' where <val> is a string.
 
 ====[tsv-filter --header --istr-eq 2.2:def input1.tsv]====
-[tsv-filter] Error processing command line arguments: Invalid values in option: '--istr-eq 2.2:def'. Expected: '--istr-eq <field>:<val>' where <field> is a number and <val> a string.
+[tsv-filter] Error processing command line arguments: [--istr-eq 2.2:def]. Unexpected '.' when converting from type string to type long
+   Expected: '--istr-eq <field>:<val>' or '--istr-eq <field-list>:<val>' where <val> is a string.
 
 ====[tsv-filter --header --istr-eq 0:def input1.tsv]====
-[tsv-filter] Error processing command line arguments: Invalid option: '--istr-eq 0:def'. Zero is not a valid field index.
+[tsv-filter] Error processing command line arguments: [--istr-eq 0:def]. Field numbers must be greater than zero: '0'
+   Expected: '--istr-eq <field>:<val>' or '--istr-eq <field-list>:<val>' where <val> is a string.
 
 ====[tsv-filter --header --istr-eq :def input1.tsv]====
-[tsv-filter] Error processing command line arguments: Invalid values in option: '--istr-eq :def'. Expected: '--istr-eq <field>:<val>' where <field> is a number and <val> a string.
+[tsv-filter] Error processing command line arguments: [--istr-eq :def]. Empty field number.
+   Expected: '--istr-eq <field>:<val>' or '--istr-eq <field-list>:<val>' where <val> is a string.
 
 ====[tsv-filter --header --istr-eq 2: input1.tsv]====
-[tsv-filter] Error processing command line arguments: Invalid option: '--istr-eq 2:'. Expected: '--istr-eq <field>:<val>' where <field> is a number and <val> is a string.
+[tsv-filter] Error processing command line arguments: Invalid option: '--istr-eq 2:'.
+   Expected: '--istr-eq <field>:<val>' or '--istr-eq <field-list>:<val>' where <val> is a string.
 
 ====[tsv-filter --header --istr-eq : input1.tsv]====
-[tsv-filter] Error processing command line arguments: Invalid option: '--istr-eq :'. Expected: '--istr-eq <field>:<val>' where <field> is a number and <val> is a string.
+[tsv-filter] Error processing command line arguments: Invalid option: '--istr-eq :'.
+   Expected: '--istr-eq <field>:<val>' or '--istr-eq <field-list>:<val>' where <val> is a string.
 
 ====[tsv-filter --header --regex z:^A[b|B]C$ input1.tsv]====
-[tsv-filter] Error processing command line arguments: Invalid values in option: '--regex z:^A[b|B]C$'. Expected: '--regex <field>:<val>' where <field> is a number and <val> is a regular expression.
+[tsv-filter] Error processing command line arguments: [--regex z:^A[b|B]C$]. Unexpected 'z' when converting from type string to type long
+   Expected: '--regex <field>:<val>' or '--regex <field-list>:<val>' where <val> is a regular expression.
 
 ====[tsv-filter --header --regex 0:^A[b|B]C$ input1.tsv]====
-[tsv-filter] Error processing command line arguments: Invalid option: '--regex 0:^A[b|B]C$'. Zero is not a valid field index.
+[tsv-filter] Error processing command line arguments: [--regex 0:^A[b|B]C$]. Field numbers must be greater than zero: '0'
+   Expected: '--regex <field>:<val>' or '--regex <field-list>:<val>' where <val> is a regular expression.
 
 ====[tsv-filter --header --regex :^A[b|B]C$ input1.tsv]====
-[tsv-filter] Error processing command line arguments: Invalid values in option: '--regex :^A[b|B]C$'. Expected: '--regex <field>:<val>' where <field> is a number and <val> is a regular expression.
+[tsv-filter] Error processing command line arguments: [--regex :^A[b|B]C$]. Empty field number.
+   Expected: '--regex <field>:<val>' or '--regex <field-list>:<val>' where <val> is a regular expression.
 
 ====[tsv-filter --header --regex 3: input1.tsv]====
-[tsv-filter] Error processing command line arguments: Invalid option: '--regex 3:'. Expected: '--regex <field>:<val>' where <field> is a number and <val> is a regular expression.
+[tsv-filter] Error processing command line arguments: Invalid option: '--regex 3:'.
+   Expected: '--regex <field>:<val>' or '--regex <field-list>:<val>' where <val> is a regular expression.
 
 ====[tsv-filter --header --regex : input1.tsv]====
-[tsv-filter] Error processing command line arguments: Invalid option: '--regex :'. Expected: '--regex <field>:<val>' where <field> is a number and <val> is a regular expression.
+[tsv-filter] Error processing command line arguments: Invalid option: '--regex :'.
+   Expected: '--regex <field>:<val>' or '--regex <field-list>:<val>' where <val> is a regular expression.
 
 ====[tsv-filter --header --iregex a:^A[b|B]C$ input1.tsv]====
-[tsv-filter] Error processing command line arguments: Invalid values in option: '--iregex a:^A[b|B]C$'. Expected: '--iregex <field>:<val>' where <field> is a number and <val> is a regular expression.
+[tsv-filter] Error processing command line arguments: [--iregex a:^A[b|B]C$]. Unexpected 'a' when converting from type string to type long
+   Expected: '--iregex <field>:<val>' or '--iregex <field-list>:<val>' where <val> is a regular expression.
 
 ====[tsv-filter --header --iregex 0:^A[b|B]C$ input1.tsv]====
-[tsv-filter] Error processing command line arguments: Invalid option: '--iregex 0:^A[b|B]C$'. Zero is not a valid field index.
+[tsv-filter] Error processing command line arguments: [--iregex 0:^A[b|B]C$]. Field numbers must be greater than zero: '0'
+   Expected: '--iregex <field>:<val>' or '--iregex <field-list>:<val>' where <val> is a regular expression.
 
 ====[tsv-filter --header --iregex :^A[b|B]C$ input1.tsv]====
-[tsv-filter] Error processing command line arguments: Invalid values in option: '--iregex :^A[b|B]C$'. Expected: '--iregex <field>:<val>' where <field> is a number and <val> is a regular expression.
+[tsv-filter] Error processing command line arguments: [--iregex :^A[b|B]C$]. Empty field number.
+   Expected: '--iregex <field>:<val>' or '--iregex <field-list>:<val>' where <val> is a regular expression.
 
 ====[tsv-filter --header --iregex 3: input1.tsv]====
-[tsv-filter] Error processing command line arguments: Invalid option: '--iregex 3:'. Expected: '--iregex <field>:<val>' where <field> is a number and <val> is a regular expression.
+[tsv-filter] Error processing command line arguments: Invalid option: '--iregex 3:'.
+   Expected: '--iregex <field>:<val>' or '--iregex <field-list>:<val>' where <val> is a regular expression.
 
 ====[tsv-filter --header --iregex : input1.tsv]====
-[tsv-filter] Error processing command line arguments: Invalid option: '--iregex :'. Expected: '--iregex <field>:<val>' where <field> is a number and <val> is a regular expression.
+[tsv-filter] Error processing command line arguments: Invalid option: '--iregex :'.
+   Expected: '--iregex <field>:<val>' or '--iregex <field-list>:<val>' where <val> is a regular expression.
 
 ====[tsv-filter --header --ff-gt 0:1 input1.tsv]====
 [tsv-filter] Error processing command line arguments: Invalid option: '--ff-gt 0:1'. Zero is not a valid field index.

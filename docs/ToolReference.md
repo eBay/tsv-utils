@@ -108,58 +108,58 @@ Filter lines of tab-delimited files via comparison tests against fields. Multipl
 **Tests:**
 
 Empty and blank field tests:
-* `--empty FIELD` - True if field is empty (no characters)
-* `--not-empty FIELD` - True if field is not empty.
-* `--blank FIELD` - True if field is empty or all whitespace.
-* `--not-blank FIELD` - True if field contains a non-whitespace character.
+* `--empty <field-list>` - True if field is empty (no characters)
+* `--not-empty <field-list>` - True if field is not empty.
+* `--blank <field-list>` - True if field is empty or all whitespace.
+* `--not-blank <field-list>` - True if field contains a non-whitespace character.
 
 Numeric type tests:
-* `--is-numeric FIELD` - True if the field can be interpreted as a number.
-* `--is-finite FIELD` - True if the field can be interpreted as a number, and it is not NaN or infinity.
-* `--is-nan FIELD` - True if the field is NaN (including: "nan", "NaN", "NAN").
-* `--is-infinity FIELD` - True if the field is infinity (including: "inf", "INF", "-inf", "-INF")
+* `--is-numeric <field-list>` - True if the field can be interpreted as a number.
+* `--is-finite <field-list>` - True if the field can be interpreted as a number, and it is not NaN or infinity.
+* `--is-nan <field-list>` - True if the field is NaN (including: "nan", "NaN", "NAN").
+* `--is-infinity <field-list>` - True if the field is infinity (including: "inf", "INF", "-inf", "-INF")
 
 Numeric comparisons:
-* `--le FIELD:NUM` - FIELD <= NUM (numeric).
-* `--lt FIELD:NUM` - FIELD <  NUM (numeric).
-* `--ge FIELD:NUM` - FIELD >= NUM (numeric).
-* `--gt FIELD:NUM` - FIELD >  NUM (numeric).
-* `--eq FIELD:NUM` - FIELD == NUM (numeric).
-* `--ne FIELD:NUM` - FIELD != NUM (numeric).
+* `--le <field-list>:NUM` - FIELD <= NUM (numeric).
+* `--lt <field-list>:NUM` - FIELD <  NUM (numeric).
+* `--ge <field-list>:NUM` - FIELD >= NUM (numeric).
+* `--gt <field-list>:NUM` - FIELD >  NUM (numeric).
+* `--eq <field-list>:NUM` - FIELD == NUM (numeric).
+* `--ne <field-list>:NUM` - FIELD != NUM (numeric).
 
 String comparisons:
-* `--str-le FIELD:STR` - FIELD <= STR (string).
-* `--str-lt FIELD:STR` - FIELD <  STR (string).
-* `--str-ge FIELD:STR` - FIELD >= STR (string).
-* `--str-gt FIELD:STR` - FIELD >  STR (string).
-* `--str-eq FIELD:STR` - FIELD == STR (string).
-* `--istr-eq FIELD:STR` - FIELD == STR (string, case-insensitive).
-* `--str-ne FIELD:STR` - FIELD != STR (string).
-* `--istr-ne FIELD:STR` - FIELD != STR (string, case-insensitive).
-* `--str-in-fld FIELD:STR` - FIELD contains STR (substring search).
-* `--istr-in-fld FIELD:STR` - FIELD contains STR (substring search, case-insensitive).
-* `--str-not-in-fld FIELD:STR` - FIELD does not contain STR (substring search).
-* `--istr-not-in-fld FIELD:STR` - FIELD does not contain STR (substring search, case-insensitive).
+* `--str-le <field-list>:STR` - FIELD <= STR (string).
+* `--str-lt <field-list>:STR` - FIELD <  STR (string).
+* `--str-ge <field-list>:STR` - FIELD >= STR (string).
+* `--str-gt <field-list>:STR` - FIELD >  STR (string).
+* `--str-eq <field-list>:STR` - FIELD == STR (string).
+* `--istr-eq <field-list>:STR` - FIELD == STR (string, case-insensitive).
+* `--str-ne <field-list>:STR` - FIELD != STR (string).
+* `--istr-ne <field-list>:STR` - FIELD != STR (string, case-insensitive).
+* `--str-in-fld <field-list>:STR` - FIELD contains STR (substring search).
+* `--istr-in-fld <field-list>:STR` - FIELD contains STR (substring search, case-insensitive).
+* `--str-not-in-fld <field-list>:STR` - FIELD does not contain STR (substring search).
+* `--istr-not-in-fld <field-list>:STR` - FIELD does not contain STR (substring search, case-insensitive).
 
 Regular expression tests:
-* `--regex FIELD:REGEX` - FIELD matches regular expression.
-* `--iregex FIELD:REGEX` - FIELD matches regular expression, case-insensitive.
-* `--not-regex FIELD:REGEX` - FIELD does not match regular expression.
-* `--not-iregex FIELD:REGEX` - FIELD does not match regular expression, case-insensitive.
+* `--regex <field-list>:REGEX` - FIELD matches regular expression.
+* `--iregex <field-list>:REGEX` - FIELD matches regular expression, case-insensitive.
+* `--not-regex <field-list>:REGEX` - FIELD does not match regular expression.
+* `--not-iregex <field-list>:REGEX` - FIELD does not match regular expression, case-insensitive.
 
 Field length tests
-* `--char-len-le FIELD:NUM` - FIELD character length <= NUM.
-* `--char-len-lt FIELD:NUM` - FIELD character length < NUM.
-* `--char-len-ge FIELD:NUM` - FIELD character length >= NUM.
-* `--char-len-gt FIELD:NUM` - FIELD character length > NUM.
-* `--char-len-eq FIELD:NUM` - FIELD character length == NUM.
-* `--char-len-ne FIELD:NUM` - FIELD character length != NUM.
-* `--byte-len-le FIELD:NUM` - FIELD byte length <= NUM.
-* `--byte-len-lt FIELD:NUM` - FIELD byte length < NUM.
-* `--byte-len-ge FIELD:NUM` - FIELD byte length >= NUM.
-* `--byte-len-gt FIELD:NUM` - FIELD byte length > NUM.
-* `--byte-len-eq FIELD:NUM` - FIELD byte length == NUM.
-* `--byte-len-ne FIELD:NUM` - FIELD byte length != NUM.
+* `--char-len-le <field-list>:NUM` - FIELD character length <= NUM.
+* `--char-len-lt <field-list>:NUM` - FIELD character length < NUM.
+* `--char-len-ge <field-list>:NUM` - FIELD character length >= NUM.
+* `--char-len-gt <field-list>:NUM` - FIELD character length > NUM.
+* `--char-len-eq <field-list>:NUM` - FIELD character length == NUM.
+* `--char-len-ne <field-list>:NUM` - FIELD character length != NUM.
+* `--byte-len-le <field-list>:NUM` - FIELD byte length <= NUM.
+* `--byte-len-lt <field-list>:NUM` - FIELD byte length < NUM.
+* `--byte-len-ge <field-list>:NUM` - FIELD byte length >= NUM.
+* `--byte-len-gt <field-list>:NUM` - FIELD byte length > NUM.
+* `--byte-len-eq <field-list>:NUM` - FIELD byte length == NUM.
+* `--byte-len-ne <field-list>:NUM` - FIELD byte length != NUM.
 
 Field to field comparisons:
 * `--ff-le FIELD1:FIELD2` - FIELD1 <= FIELD2 (numeric).
@@ -195,6 +195,20 @@ $ tsv-filter --header --str-eq 3:foo --str-in-fld 4:bar data.tsv
 
 $ # Field 3 == field 4 (numeric test)
 $ tsv-filter --header --ff-eq 3:4 data.tsv
+```
+
+Field lists:
+
+Field lists can be used to run the same test on multiple fields. For example:
+```
+$ # Test that fields 1-10 are not blank
+$ tsv-filter --not-blank 1-10 data.tsv
+
+$ # Test that fields 1-5 are not zero
+$ tsv-filter --ne 1-5:0
+
+$ # Test that fields 1-5, 7, and 10-20 are less than 100
+$ tsv-filter --lt 1-5,7,10-20:100
 ```
 
 Regular expressions:
