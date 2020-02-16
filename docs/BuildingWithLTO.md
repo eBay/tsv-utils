@@ -42,7 +42,7 @@ For a more detailed introduction to PGO see [Profile-Guided Optimization with LD
 
 ## Building the TSV Utilities with LTO and PGO
 
-The pre-built binaries available from the [releases page](https://github.com/eBay/tsv-utils/releases) are compiled with LTO and PGO for both D libraries and the TSV Utilities code. This is not enabled by default when building from source code. The reason is simple: LTO is still an early stage technology. Testing on a wider variety of platforms is needed before making it the default.
+The prebuilt binaries available from the [releases page](https://github.com/eBay/tsv-utils/releases) are compiled with LTO and PGO for both D libraries and the TSV Utilities code. This is not enabled by default when building from source code. The reason is simple: LTO is still an early stage technology. Testing on a wider variety of platforms is needed before making it the default.
 
 However, LTO and PGO builds can be enabled by setting makefile parameters. Testing with the built-in test suite should provide confidence in the resulting applications. The TSV Utilities makefile takes care of invoking both `ldc-build-runtime` and `ldc2` with the necessary parameters.
 
