@@ -33,7 +33,7 @@ The MacOS benchmarks were run 25 times, the Linux benchmarks 35 times. The 10th 
 
 ## TSV Utilities performance improvements post the March 2017 Study
 
-eBay's TSV Utilities became materially faster between the March 2017 and April 2018 studies. The tables below show these changes. The pre-built binary for release v1.1.11 was used as a proxy for the March 2017 versions. v1.1.11 was released after the March 2017 study, but is largely unchanged.
+eBay's TSV Utilities became materially faster between the March 2017 and April 2018 studies. The tables below show these changes. The prebuilt binary for release v1.1.11 was used as a proxy for the March 2017 versions. v1.1.11 was released after the March 2017 study, but is largely unchanged.
 
 | Benchmark | MacOS<br>March 2017<br>(v1.1.11) | MacOS<br>April 2018<br>(v1.1.19) | MacOS<br>Delta | Linux<br>March 2017<br>(v1.1.11) | Linux<br>April 2018<br>(v1.1.19) | Linux<br>Delta |
 | ----------------------------- | -------: | -------: | -------: | -------: | -------: | -------: |
@@ -117,7 +117,7 @@ Tests were run on April 14, 2018. The latest released version of each tool was u
 
 ### Tools
 
-GNU Awk, GNU cut and mawk are available on most platforms via standard package managers. The xsv and csvtk packages were downloaded from pre-built binaries on their respective GitHub releases pages. eBay's TSV Utilities releases are also from the pre-built binaries available from GitHub.
+GNU Awk, GNU cut and mawk are available on most platforms via standard package managers. The xsv and csvtk packages were downloaded from prebuilt binaries on their respective GitHub releases pages. eBay's TSV Utilities releases are also from the prebuilt binaries available from GitHub.
 
 * [GNU Awk](https://www.gnu.org/software/gawk/) - Version 4.2.1. Written in C.
 * [mawk](https://invisible-island.net/mawk/mawk.html) - MacOs: Version 1.3.4; Linux: Version 1.3.3. Written in C.
