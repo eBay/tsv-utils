@@ -378,6 +378,26 @@ runtest ${prog} "--header --iregex 0:^A[b|B]C$ input1.tsv" ${error_tests_1}
 runtest ${prog} "--header --iregex :^A[b|B]C$ input1.tsv" ${error_tests_1}
 runtest ${prog} "--header --iregex 3: input1.tsv" ${error_tests_1}
 runtest ${prog} "--header --iregex : input1.tsv" ${error_tests_1}
+
+# Detailed error messages for invalid regular expressions are subject to change,
+# so use a simple error and only capture the first line.
+
+echo "" >> ${error_tests_1}
+echo "====[tsv-filter --header --regex 4:abc(d|e input1.tsv 2>&1 | head -n 1]====" >> ${error_tests_1}
+${prog} --header --regex 4:'abc(d|e' input1.tsv 2>&1 | head -n 1 >> ${error_tests_1}
+
+echo "" >> ${error_tests_1}
+echo "====[tsv-filter --header --iregex 4:abc(d|e input1.tsv 2>&1 | head -n 1]====" >> ${error_tests_1}
+${prog} --header --iregex 4:'abc(d|e' input1.tsv 2>&1 | head -n 1 >> ${error_tests_1}
+
+echo "" >> ${error_tests_1}
+echo "====[tsv-filter --header --not-regex 4:abc(d|e input1.tsv 2>&1 | head -n 1]====" >> ${error_tests_1}
+${prog} --header --not-regex 4:'abc(d|e' input1.tsv 2>&1 | head -n 1 >> ${error_tests_1}
+
+echo "" >> ${error_tests_1}
+echo "====[tsv-filter --header --not-iregex 4:abc(d|e input1.tsv 2>&1 | head -n 1]====" >> ${error_tests_1}
+${prog} --header --not-iregex 4:'abc(d|e' input1.tsv 2>&1 | head -n 1 >> ${error_tests_1}
+
 runtest ${prog} "--header --ff-gt 0:1 input1.tsv" ${error_tests_1}
 runtest ${prog} "--header --ff-gt 1:0 input1.tsv" ${error_tests_1}
 runtest ${prog} "--header --ff-lt -1:2 input1.tsv" ${error_tests_1}
@@ -401,6 +421,7 @@ runtest ${prog} "--header --ff-absdiff-le g:2:0.5 input1.tsv" ${error_tests_1}
 runtest ${prog} "--header --ff-absdiff-le :2:0.5 input1.tsv" ${error_tests_1}
 runtest ${prog} "--eq 2:1 input1.tsv" ${error_tests_1}
 
+# Standard input tests
 echo "" >> ${error_tests_1}; echo "====[cat input_3x2.tsv | tsv-filter --ge 2:23]====" >> ${error_tests_1}
 cat input_3x2.tsv | ${prog} --ge 2:23 >> ${error_tests_1} 2>&1
 

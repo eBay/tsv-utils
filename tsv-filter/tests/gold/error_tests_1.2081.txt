@@ -138,6 +138,18 @@ F1	F2	F3	F4
 [tsv-filter] Error processing command line arguments: Invalid option: '--iregex :'.
    Expected: '--iregex <field>:<val>' or '--iregex <field-list>:<val>' where <val> is a regular expression.
 
+====[tsv-filter --header --regex 4:abc(d|e input1.tsv 2>&1 | head -n 1]====
+[tsv-filter] Error processing command line arguments: Invalid regular expression: '--regex 4:abc(d|e'. no matching ')'
+
+====[tsv-filter --header --iregex 4:abc(d|e input1.tsv 2>&1 | head -n 1]====
+[tsv-filter] Error processing command line arguments: Invalid regular expression: '--iregex 4:abc(d|e'. no matching ')'
+
+====[tsv-filter --header --not-regex 4:abc(d|e input1.tsv 2>&1 | head -n 1]====
+[tsv-filter] Error processing command line arguments: Invalid regular expression: '--not-regex 4:abc(d|e'. no matching ')'
+
+====[tsv-filter --header --not-iregex 4:abc(d|e input1.tsv 2>&1 | head -n 1]====
+[tsv-filter] Error processing command line arguments: Invalid regular expression: '--not-iregex 4:abc(d|e'. no matching ')'
+
 ====[tsv-filter --header --ff-gt 0:1 input1.tsv]====
 [tsv-filter] Error processing command line arguments: Invalid option: '--ff-gt 0:1'. Zero is not a valid field index.
 
