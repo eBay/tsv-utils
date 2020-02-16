@@ -91,6 +91,8 @@ The above passes `file-a.tsv`, `file-b.tsv`, and the first 1000 lines of `file-c
 
 ## tsv-filter reference
 
+_Note: See the [tsv-filter](../README.md#tsv-filter) description in the project [README](../README.md) for a tutorial style introduction._
+
 **Synopsis:** tsv-filter [options] [file...]
 
 Filter lines of tab-delimited files via comparison tests against fields. Multiple tests can be specified, by default they are evaluated as AND clause. Lines satisfying the tests are written to standard output.

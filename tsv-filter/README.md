@@ -2,7 +2,6 @@ _Visit the eBay TSV utilities [main page](../README.md)_
 
 # tsv-filter
 
-
 Filter lines by running tests against individual fields. Multiple tests can be specified in a single call. A variety of numeric and string comparison tests are available, including regular expressions.
 
 Consider a file having 4 fields: `id`, `color`, `year`, `count`. Using [tsv-pretty](#tsv-pretty) to view the first few lines:
@@ -15,7 +14,7 @@ $ tsv-pretty data.tsv | head -n 5
 103  yellow  1873    180
 ```
 
-The following command finds all entries where 'year' is 2008:
+The following command finds all entries where 'year' (field 3) is 2008:
 ```
 $ tsv-filter -H --eq 3:2008 data.tsv
 ```
@@ -32,7 +31,7 @@ Multiple tests can be specified. The following command finds `red` entries with 
 $ tsv-filter -H --str-eq 2:red --ge 3:1850 --lt 3:1950 data.tsv
 ```
 
-Viewing the first few results:
+Viewing the first few results produced by this command:
 ```
 $ tsv-filter -H --str-eq 2:red --ge 3:1850 --lt 3:1950 data.tsv | tsv-pretty | head -n 5
  id  color  year  count
@@ -55,7 +54,7 @@ $ tsv-filter -H data1.tsv data2.tsv data3.tsv --str-eq 2:red --ge 3:1850 --lt 3:
 $ tsv-filter -H *.tsv --str-eq 2:red --ge 3:1850 --lt 3:1950
 ```
 
-Numeric comparisons are among the most useful tests. The basic numeric operators include:
+Numeric comparisons are among the most useful tests. Numeric operators include:
 * Equality: `--eq`, `--ne` (equal, not-equal).
 * Relational: `--lt`, `--le`, `--gt`, `--ge` (less-than, less-equal, greater-than, greater-equal).
 
@@ -64,7 +63,7 @@ Several filters are available to help with invalid entries. Assume there is a me
 $ tsv-filter -H messy.tsv --not-empty 1-4
 ```
 
-The above command used a "field list" to specify running the test on each of fields 1-4. The test can be "inverted" to see the lines that were filtered out:
+The above command uses a "field list" to specify running the test on each of fields 1-4. The test can be "inverted" to see the lines that were filtered out:
 ```
 $ tsv-filter -H messy.tsv --invert --not-empty 1-4 | head -n 5 | tsv-pretty
  id  color   year  count
@@ -76,9 +75,9 @@ $ tsv-filter -H messy.tsv --invert --not-empty 1-4 | head -n 5 | tsv-pretty
 
 There are several filters for testing characteristics of numeric data. The most useful are:
 * `--is-numeric` - Test if the data in a field can be interpreted as a number.
-* `--is-finite` - Test if the data in a field can be interpreted as a number, but not NAN (not-a-number) or infinity. This is useful when working with data where floating point calculations may have produced NAN or infinity values.
+* `--is-finite` - Test if the data in a field can be interpreted as a number, but not NaN (not-a-number) or infinity. This is useful when working with data where floating point calculations may have produced NaN or infinity values.
 
-By default, all tests specified must be satisfied for a line to pass a filter. This can be changed using the `--or` option. For example, the following command finds records where 'count' is less than 100 or greater than 1000:
+By default, all tests specified must be satisfied for a line to pass a filter. This can be changed using the `--or` option. For example, the following command finds records where 'count' (field 4) is less than 100 or greater than 1000:
 ```
 $ tsv-filter -H --or --lt 4:100 --gt 4:1000 data.tsv | head -n 5 | tsv-pretty
  id  color  year  count
@@ -94,14 +93,14 @@ A number of string and regular expression tests are available. These include:
 * Relational operators: `--str-lt`, `--str-gt`, etc.
 * Case insensitive tests: `--istr-eq`, `--istr-in-fld`, etc.
 * Regular expressions: `--regex`, `--not-regex`, etc.
-* Length: `--char-len-lt`, `--byte-len-gt`, etc.
+* Field length: `--char-len-lt`, `--byte-len-gt`, etc.
 
-The earlier `--not-empty` example showed a "field list". Fields lists specify a set of fields and can be used with most operators. For example, the following command ensures that fields 1-3 and 7 are less-than 100:
+The earlier `--not-empty` example uses a "field list". Fields lists specify a set of fields and can be used with most operators. For example, the following command ensures that fields 1-3 and 7 are less-than 100:
 ```
 $ tsv-filter -H --lt 1-3,7:100 file.tsv
 ```
 
-Most of the TSV Utilities support field lists. See [Field numbers and field-lists](docs/ToolReference.md#field-numbers-and-field-lists) in the [Tools reference](docs/ToolReference.md) document for details.
+Most of the TSV Utilities tools support field lists. See [Field numbers and field-lists](docs/ToolReference.md#field-numbers-and-field-lists) in the [Tools reference](docs/ToolReference.md) document for details.
 
 Bash completion is especially helpful with `tsv-filter`. It allows quickly seeing and selecting from the different operators available. See [bash completion](docs/TipsAndTricks.md#enable-bash-completion) on the [Tips and tricks](docs/TipsAndTricks.md) page for setup information.
 
@@ -112,4 +111,4 @@ This makes `tsv-filter` ideal for preparing data for applications like R and Pan
 $ tsv-filter --ne 4:0 file.tsv | wc -l
 ```
 
-See the [tsv-filter reference](docs/ToolReference.md#tsv-filter-reference) for more details and the full list of operators.
+See the [tsv-filter reference](../docs/ToolReference.md#tsv-filter-reference) for more details and the full list of operators.
