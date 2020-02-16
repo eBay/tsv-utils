@@ -4,7 +4,7 @@ _Visit the eBay TSV utilities [main page](../README.md)_
 
 Filter lines by running tests against individual fields. Multiple tests can be specified in a single call. A variety of numeric and string comparison tests are available, including regular expressions.
 
-Consider a file having 4 fields: `id`, `color`, `year`, `count`. Using [tsv-pretty](#tsv-pretty) to view the first few lines:
+Consider a file having 4 fields: `id`, `color`, `year`, `count`. Using [tsv-pretty](../README.md#tsv-pretty) to view the first few lines:
 ```
 $ tsv-pretty data.tsv | head -n 5
  id  color   year  count
@@ -100,11 +100,11 @@ The earlier `--not-empty` example uses a "field list". Fields lists specify a se
 $ tsv-filter -H --lt 1-3,7:100 file.tsv
 ```
 
-Most of the TSV Utilities tools support field lists. See [Field numbers and field-lists](docs/ToolReference.md#field-numbers-and-field-lists) in the [Tools reference](docs/ToolReference.md) document for details.
+Most of the TSV Utilities tools support field lists. See [Field numbers and field-lists](../docs/ToolReference.md#field-numbers-and-field-lists) in the [Tools reference](../docs/ToolReference.md) document for details.
 
-Bash completion is especially helpful with `tsv-filter`. It allows quickly seeing and selecting from the different operators available. See [bash completion](docs/TipsAndTricks.md#enable-bash-completion) on the [Tips and tricks](docs/TipsAndTricks.md) page for setup information.
+Bash completion is especially helpful with `tsv-filter`. It allows quickly seeing and selecting from the different operators available. See [bash completion](../docs/TipsAndTricks.md#enable-bash-completion) on the [Tips and tricks](../docs/TipsAndTricks.md) page for setup information.
 
-`tsv-filter` is perhaps the most broadly applicable of the TSV Utilities tools, as dataset pruning is such a common task. It is stream oriented, so it can handle arbitrarily large files. It is fast, quite a bit faster than other tools the author has tried. (See the "Numeric row filter" and "Regular expression row filter" tests in the [2018 Benchmark Summary](docs/Performance.md#2018-benchmark-summary).)
+`tsv-filter` is perhaps the most broadly applicable of the TSV Utilities tools, as dataset pruning is such a common task. It is stream oriented, so it can handle arbitrarily large files. It is fast, quite a bit faster than other tools the author has tried. (See the "Numeric row filter" and "Regular expression row filter" tests in the [2018 Benchmark Summary](../docs/Performance.md#2018-benchmark-summary).)
 
 This makes `tsv-filter` ideal for preparing data for applications like R and Pandas. It is also convenient for quickly answering simple questions about a dataset. For example, to count the number of records with a non-zero value in field 4, use the command:
 ```
