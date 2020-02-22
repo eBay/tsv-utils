@@ -282,6 +282,10 @@ A strict delimited format like TSV has many advantages for data processing over 
 
 Note that many CSV files do not use escapes, and in-fact follow a strict delimited format using comma as the delimiter. Such files can be processed reliably by this toolkit and Unix tools by specifying the delimiter character. However, when there is doubt, using a `csv2tsv` converter adds reliability.
 
+`csv2tsv` differs from many csv-to-tsv conversion tools in that it produces output free of CSV escapes. Many conversion tools produce data with CSV style escapes, but switching the field delimiter from comma to TAB. Such data cannot be reliably processed by Unix tools like `cut`, `awk`, `sort`, etc.
+
+`csv2tsv` avoids escapes by replacing TAB and newline characters in the data with a single space. These characters are rare in data mining scenarios, and space is usually a good substitute in cases where they do occur. The replacement string is customizable to enable alternate handling when needed.
+
 The `csv2tsv` converter often has a second benefit: regularizing newlines. CSV files are often exported using Windows newline conventions. `csv2tsv` converts all newlines to Unix format.
 
 See [Comparing TSV and CSV formats](docs/comparing-tsv-and-csv.md) for more information on CSV escapes and other differences between CSV and TSV formats.

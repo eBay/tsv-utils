@@ -42,6 +42,15 @@ ghi	Say "hello, world!"	jkl
 
 The similarity between TSV and CSV can lead to confusion about which tools are appropriate. Furthering this confusion, it is somewhat common to have data files using comma as the field delimiter, but without comma, quote, or newlines in the data. No CSV escapes are needed in these files, with the implication that traditional Unix tools like `cut` and `awk` can be used to process these files. Such files are sometimes referred to as "simple CSV". They are equivalent to TSV files with comma as a field delimiter. Traditional Unix tools and [tsv-utils](../README.md) tools can process these files correctly by specifying the field delimiter. However, "simple csv" is a very ad hoc and ill defined notion. A simple precaution when working with these files is to run a CSV-to-TSV converter like [csv2tsv](ToolReference.md#csv2tsv-reference) prior to other processing steps.
 
+Note that many CSV-to-TSV conversion tools don't actually remove the CSV escapes. Instead these tools replace comma with TAB as the record delimiter, but still use CSV escapes to represent TAB, newline, and quote characters in the data. Such data cannot be reliably processed by Unix tools like `sort`, `awk`, and `cut`. The tsv-utils [csv2tsv](ToolReference.md#csv2tsv-reference) tool avoids escapes by replacing TAB and newline with a space (customizable). This works well in the vast majority of data mining scenarios.
+
+To see what a specific CSV-to-TSV conversion tool does, convert CSV data containing quotes, commas, TABs, newlines, and double-quoted fields. For example:
+```
+$ echo $'Line,Field1,Field2\n1,"Comma: |,|","Quote: |""|"\n"2","TAB: |\t|","Newline: |\n|"' | <csv-to-tsv-converter>
+```
+
+Approaches that generate CSV escapes will enclose a number of the output fields in double quotes.
+
 References:
 - [Wikipedia: Tab-separated values](https://en.wikipedia.org/wiki/Tab-separated_values) - Useful description of TSV format.
 - [IANA TSV specification](https://www.iana.org/assignments/media-types/text/tab-separated-values) - Formal definition of the tab-separated-values mime type.
