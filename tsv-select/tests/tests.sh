@@ -18,10 +18,6 @@ runtest () {
     return 0
 }
 
-## Note: input1.tsv has duplicate values in fields 2 & 3. Tests with those fields
-## as keys that have append values need to use --allow-duplicate-keys (unless
-## testing error handling).
-
 basic_tests_1=${odir}/basic_tests_1.txt
 
 echo "Basic tests set 1" > ${basic_tests_1}

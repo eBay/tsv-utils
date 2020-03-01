@@ -263,7 +263,7 @@ Fields numbers start with one. They are comma separated, and ranges can be used.
 * `--V|version` - Print version information and exit.
 * `--H|header` - Treat the first line of each file as a header.
 * `--f|fields <field-list>` - (Required) Fields to extract. Fields are output in the order listed.
-* `--r|rest none|first|last` - Location for remaining fields. Default: none
+* `--r|rest first|last` - Location for remaining fields. Default: none
 * `--d|delimiter CHR` - Character to use as field delimiter. Default: TAB. (Single byte UTF-8 characters only.)
 
 **Examples:**

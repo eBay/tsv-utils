@@ -26,34 +26,68 @@ import std.typecons : tuple, Tuple;
 
 // 'Heredoc' style help text. When printed it is followed by a getopt formatted option list.
 immutable helpText = q"EOS
-Synopsis: tsv-select -f <field-list> [options] [file...]
+Synopsis: tsv-select [options] [file...]
 
-tsv-select reads files or standard input and writes specified fields to standard
-output in the order listed. Similar to 'cut' with the ability to reorder fields.
+tsv-select reads files or standard input and writes selected fields to
+standard output. Fields are written in the order listed. This is similar
+to Unix 'cut', but with the ability to reorder fields.
 
-Fields numbers start with one. They are comma separated and ranges can be used.
-Fields can be listed more than once, and fields not listed can be output using
-the --rest option. Multiple files with header lines can be managed with the
---header option, which retains the header of the first file and drops the rest.
+Fields numbers start with one. Multiple fields and field ranges can be
+specified (comma separated). Fields can be repeated, and fields not
+listed can be output using the '--rest' option. Use '--H|header' to
+retain the header line from only the first file.
+
+Fields can be excluded using '--e|exclude'. All fields not excluded are
+output. '--f|fields' can be used with '--e|exclude' to change the order
+of non-excluded fields.
 
 Examples:
 
-   tsv-select -f 4,2,9 file1.tsv file2.tsv
-   tsv-select -f 1,4-7,11 file1.tsv
-   tsv-select -f 1,7-4,11 file1.tsv
-   tsv-select -f 2,4,6 --rest last file1.txt
+   # Keep the first field from two files
+   tsv-select -f 1 file1.tsv file2.tsv
+
+   # Keep fields 1 and 2, retain the header from the first file
+   tsv-select -H -f 1,2 file1.tsv file2.tsv
+
+   # Field reordering and field ranges
+   tsv-select -f 3,2,1 file.tsv
+   tsv-select -f 1,4-7,11 file.tsv
+   tsv-select -f 1,7-4,11 file.tsv
+
+   # Repeating fields
+   tsv-select -f 1,2,1 file.tsv
+   tsv-select -f 1-3,3-1 file.tsv
+
+   # Move field 5 to the front
+   tsv-select -f 5 --rest last file.tsv
+
+   # Move fields 4 and 5 to the end
+   tsv-select -f 4,5 --rest first file.tsv
+
+   # Drop the first field, keep everything else
+   tsv-select --exclude 1 file.tsv
+
+   # Drop fields 3-10
+   tsv-select -e 3-10 file.tsv
+
+   # Move field 2 to the front and drop fields 10-15
+   tsv-select -f 2 -e 10-15 file.tsv
+
+   # Move field 2 to the end, dropping fields 10-15
+   tsv-select -f 2 -rest first -e 10-15 file.tsv
+
+   # Read from standard input
    cat file*.tsv | tsv-select -f 3,2,1
 
-Fields can be excluded using '--e|exclude' option. All fields not excluded
-get written out. '-f|--fields' can be used with '--e|exclude' to change the
-order of the non-excluded fields.
+   # Read from a file and standard input. The '--' terminates command
+   # option processing, '-' represents standard input.
+   cat file1.tsv | tsv-select -f 1-3 -- - file2.tsv
 
-Examples:
-
-   tsv-select --exclude 1 file.tsv      # Write field 2 to end of line
-   tsv-select -f 2,1 -e 10-15 file.tsv  # Swap first two, then all except 10-15
-
-One of '-f|--fields' or '-e|--exclude' is required.
+Notes:
+* One of '--f|fields' or '--e|exclude' is required.
+* Fields specified by '--f|fields' and '--e|exclude' cannot overlap.
+* Each line must have all fields specfied by '--f|fields'. Otherwise
+  line length can vary.
 
 Options:
 EOS";
@@ -63,14 +97,14 @@ EOS";
 struct TsvSelectOptions
 {
     // The allowed values for the --rest option.
-    enum RestOption { none, first, last, unspecified };
+    enum RestOption { none, first, last};
 
     string programName;
     bool hasHeader = false;       // --H|header
     char delim = '\t';            // --d|delimiter
     size_t[] fields;              // --f|fields
     size_t[] excludedFieldsArg;   // --e|exclude
-    RestOption restArg = RestOption.unspecified;    // --rest none|first|last
+    RestOption restArg;           // --rest first|last (none is hidden default)
     bool versionWanted = false;   // --V|version
     bool[] excludedFieldsTable;   // Derived. Lookup table for excluded fields.
 
@@ -110,7 +144,7 @@ struct TsvSelectOptions
                 "e|exclude",   "<field-list>     Fields to exclude.",
                 excludedFieldsArg.makeFieldListOptionHandler!(size_t, Yes.convertToZeroBasedIndex),
 
-                "r|rest",      "none|first|last  Output location for fields not included in '--f|fields'. Default: 'none', or 'last' if '--e|exclude' is used.", &restArg,
+                "r|rest",      "first|last  Output location for fields not included in '--f|fields'. By default, other fields not output unless '--excluded' is used.", &restArg,
                 "d|delimiter", "CHR              Character to use as field delimiter. Default: TAB. (Single byte UTF-8 characters only.)", &delim,
                 std.getopt.config.caseSensitive,
                 "V|version",   "                 Print version information and exit.", &versionWanted,
@@ -138,11 +172,7 @@ struct TsvSelectOptions
                 throw new Exception("One of '--f|fields' or '--e|exclude' is required.");
             }
 
-            if (excludedFieldsArg.length == 0)
-            {
-                if (restArg == RestOption.unspecified) restArg = RestOption.none;
-            }
-            else
+            if (excludedFieldsArg.length > 0)
             {
                 /* Make sure selected and excluded fields do not overlap. */
                 foreach (e; excludedFieldsArg)
@@ -156,15 +186,8 @@ struct TsvSelectOptions
                     }
                 }
 
-                /* '--exclude' changes '--rest' default to 'last'. 'none' is not valid. */
-                if (restArg == RestOption.none)
-                {
-                    throw new Exception("'--rest none' cannot be used with '--e|exclude'. Use '--rest first' or '--rest last' (default).");
-                }
-                else if (restArg == RestOption.unspecified)
-                {
-                    restArg = RestOption.last;
-                }
+                /* '--exclude' changes '--rest' default to 'last'. */
+                if (restArg == RestOption.none) restArg = RestOption.last;
 
                 /* Build the excluded field lookup table. */
                 size_t maxExcludedField = excludedFieldsArg.maxElement;
@@ -219,9 +242,6 @@ int main(string[] cmdArgs)
         case TsvSelectOptions.RestOption.last:
             tsvSelect!(RestLocation.last)(cmdopt, cmdArgs[1..$]);
             break;
-        case TsvSelectOptions.RestOption.unspecified:
-            assert(false, "cmdopt.restArg unspecified after command line processing.");
-            break;
         }
     }
     catch (Exception exc)
@@ -270,7 +290,10 @@ void tsvSelect(RestLocation rest)(const TsvSelectOptions cmdopt, const string[] 
     else static if (rest == RestLocation.last)
         assert(cmdopt.restArg == TsvSelectOptions.RestOption.last);
     else
-        static assert (false, "rest template argument does not match cmdopt.restArg.");
+        static assert(false, "rest template argument does not match cmdopt.restArg.");
+
+    /* The algorithm here assumes RestOption.none is not used with --exclude-fields. */
+    assert(cmdopt.excludedFieldsTable.length == 0 || rest != RestLocation.none);
 
     /* InputFieldReordering copies select fields from an input line to a new buffer.
      * The buffer is reordered in the process.
