@@ -31,7 +31,7 @@ Synopsis: tsv-select -f <field-list> [options] [file...]
 tsv-select reads files or standard input and writes specified fields to standard
 output in the order listed. Similar to 'cut' with the ability to reorder fields.
 
-Fields numbers start with one. They are comma separated, and ranges can be used.
+Fields numbers start with one. They are comma separated and ranges can be used.
 Fields can be listed more than once, and fields not listed can be output using
 the --rest option. Multiple files with header lines can be managed with the
 --header option, which retains the header of the first file and drops the rest.
@@ -41,8 +41,19 @@ Examples:
    tsv-select -f 4,2,9 file1.tsv file2.tsv
    tsv-select -f 1,4-7,11 file1.tsv
    tsv-select -f 1,7-4,11 file1.tsv
-   tsv-select --delimiter ' ' -f 2,4,6 --rest last file1.txt
+   tsv-select -f 2,4,6 --rest last file1.txt
    cat file*.tsv | tsv-select -f 3,2,1
+
+Fields can be excluded using '--e|exclude' option. All fields not excluded
+get written out. '-f|--fields' can be used with '--e|exclude' to change the
+order of the non-excluded fields.
+
+Examples:
+
+   tsv-select --exclude 1 file.tsv      # Write field 2 to end of line
+   tsv-select -f 2,1 -e 10-15 file.tsv  # Swap first two, then all except 10-15
+
+One of '-f|--fields' or '-e|--exclude' is required.
 
 Options:
 EOS";
@@ -52,14 +63,16 @@ EOS";
 struct TsvSelectOptions
 {
     // The allowed values for the --rest option.
-    enum RestOptionVal { none, first, last };
+    enum RestOption { none, first, last, unspecified };
 
     string programName;
-    bool hasHeader = false;     // --H|header
-    char delim = '\t';          // --d|delimiter
-    size_t[] fields;            // --f|fields
-    RestOptionVal rest;         // --rest none|first|last
-    bool versionWanted = false; // --V|version
+    bool hasHeader = false;       // --H|header
+    char delim = '\t';            // --d|delimiter
+    size_t[] fields;              // --f|fields
+    size_t[] excludedFieldsArg;   // --e|exclude
+    RestOption restArg = RestOption.unspecified;    // --rest none|first|last
+    bool versionWanted = false;   // --V|version
+    bool[] excludedFieldsTable;   // Derived. Lookup table for excluded fields.
 
     /** Process command line arguments (getopt cover).
      *
@@ -74,7 +87,7 @@ struct TsvSelectOptions
      */
     auto processArgs (ref string[] cmdArgs)
     {
-        import std.algorithm : any, each;
+        import std.algorithm : any, each, maxElement;
         import std.getopt;
         import std.path : baseName, stripExtension;
         import std.typecons : Yes, No;
@@ -91,10 +104,13 @@ struct TsvSelectOptions
                 "H|header",    "                 Treat the first line of each file as a header.", &hasHeader,
                 std.getopt.config.caseInsensitive,
 
-                "f|fields",    "<field-list>     (Required) Fields to extract. Fields are output in the order listed.",
+                "f|fields",    "<field-list>     Fields to retain. Fields are output in the order listed.",
                 fields.makeFieldListOptionHandler!(size_t, Yes.convertToZeroBasedIndex),
 
-                "r|rest",      "none|first|last  Location for remaining fields. Default: none", &rest,
+                "e|exclude",   "<field-list>     Fields to exclude.",
+                excludedFieldsArg.makeFieldListOptionHandler!(size_t, Yes.convertToZeroBasedIndex),
+
+                "r|rest",      "none|first|last  Output location for fields not included in '--f|fields'. Default: 'none', or 'last' if '--e|exclude' is used.", &restArg,
                 "d|delimiter", "CHR              Character to use as field delimiter. Default: TAB. (Single byte UTF-8 characters only.)", &delim,
                 std.getopt.config.caseSensitive,
                 "V|version",   "                 Print version information and exit.", &versionWanted,
@@ -113,10 +129,47 @@ struct TsvSelectOptions
                 return tuple(false, 0);
             }
 
-            /* Consistency checks */
-            if (fields.length == 0)
+            /*
+             * Consistency checks and derivations.
+             */
+
+            if (fields.length == 0 && excludedFieldsArg.length == 0)
             {
-                throw new Exception("Required option --f|fields was not supplied.");
+                throw new Exception("One of '--f|fields' or '--e|exclude' is required.");
+            }
+
+            if (excludedFieldsArg.length == 0)
+            {
+                if (restArg == RestOption.unspecified) restArg = RestOption.none;
+            }
+            else
+            {
+                /* Make sure selected and excluded fields do not overlap. */
+                foreach (e; excludedFieldsArg)
+                {
+                    foreach (f; fields)
+                    {
+                        if (e == f)
+                        {
+                            throw new Exception("'--f|fields' and '--e|exclude' have overlapping fields.");
+                        }
+                    }
+                }
+
+                /* '--exclude' changes '--rest' default to 'last'. 'none' is not valid. */
+                if (restArg == RestOption.none)
+                {
+                    throw new Exception("'--rest none' cannot be used with '--e|exclude'. Use '--rest first' or '--rest last' (default).");
+                }
+                else if (restArg == RestOption.unspecified)
+                {
+                    restArg = RestOption.last;
+                }
+
+                /* Build the excluded field lookup table. */
+                size_t maxExcludedField = excludedFieldsArg.maxElement;
+                excludedFieldsTable.length = maxExcludedField + 1;          // Initialized to false
+                foreach (e; excludedFieldsArg) excludedFieldsTable[e] = true;
             }
         }
         catch (Exception exc)
@@ -155,16 +208,19 @@ int main(string[] cmdArgs)
          * are removed by command line processing (getopt). The program name and any files
          * remain. Pass the files to tsvSelect.
          */
-        final switch (cmdopt.rest)
+        final switch (cmdopt.restArg)
         {
-        case TsvSelectOptions.RestOptionVal.none:
-            tsvSelect!(CTERestLocation.none)(cmdopt, cmdArgs[1..$]);
+        case TsvSelectOptions.RestOption.none:
+            tsvSelect!(RestLocation.none)(cmdopt, cmdArgs[1..$]);
             break;
-        case TsvSelectOptions.RestOptionVal.first:
-            tsvSelect!(CTERestLocation.first)(cmdopt, cmdArgs[1..$]);
+        case TsvSelectOptions.RestOption.first:
+            tsvSelect!(RestLocation.first)(cmdopt, cmdArgs[1..$]);
             break;
-        case TsvSelectOptions.RestOptionVal.last:
-            tsvSelect!(CTERestLocation.last)(cmdopt, cmdArgs[1..$]);
+        case TsvSelectOptions.RestOption.last:
+            tsvSelect!(RestLocation.last)(cmdopt, cmdArgs[1..$]);
+            break;
+        case TsvSelectOptions.RestOption.unspecified:
+            assert(false, "cmdopt.restArg unspecified after command line processing.");
             break;
         }
     }
@@ -181,12 +237,12 @@ int main(string[] cmdArgs)
 
 /** Enumeration of the different specializations of the tsvSelect template.
  *
- * CTERestLocation is logically equivalent to the TsvSelectOptions.RestOptionVal enum. It
+ * RestLocation is logically equivalent to the TsvSelectOptions.RestOption enum. It
  * is used by main to choose the appropriate tsvSelect template instantiation to call. It
  * is distinct from the TsvSelectOptions enum to separate it from the end-user UI. The
  * TsvSelectOptions version specifies the text of allowed values in command line arguments.
  */
-enum CTERestLocation { none, first, last };
+enum RestLocation { none, first, last };
 
 /** tsvSelect does the primary work of the tsv-select program.
  *
@@ -199,7 +255,7 @@ enum CTERestLocation { none, first, last };
  * in a larger program, but is faster. Run-time improvements of 25% were measured compared
  * to the non-templatized version. (Note: 'cte' stands for 'compile time evaluation'.)
  */
-void tsvSelect(CTERestLocation cteRest)(const TsvSelectOptions cmdopt, const string[] inputFiles)
+void tsvSelect(RestLocation rest)(const TsvSelectOptions cmdopt, const string[] inputFiles)
 {
     import tsv_utils.common.utils: BufferedOutputRange, bufferedByLine, InputFieldReordering, throwIfWindowsNewlineOnUnix;
     import std.algorithm: splitter;
@@ -207,14 +263,14 @@ void tsvSelect(CTERestLocation cteRest)(const TsvSelectOptions cmdopt, const str
     import std.range;
 
     // Ensure the correct template instantiation was called.
-    static if (cteRest == CTERestLocation.none)
-        assert(cmdopt.rest == TsvSelectOptions.RestOptionVal.none);
-    else static if (cteRest == CTERestLocation.first)
-        assert(cmdopt.rest == TsvSelectOptions.RestOptionVal.first);
-    else static if (cteRest == CTERestLocation.last)
-        assert(cmdopt.rest == TsvSelectOptions.RestOptionVal.last);
+    static if (rest == RestLocation.none)
+        assert(cmdopt.restArg == TsvSelectOptions.RestOption.none);
+    else static if (rest == RestLocation.first)
+        assert(cmdopt.restArg == TsvSelectOptions.RestOption.first);
+    else static if (rest == RestLocation.last)
+        assert(cmdopt.restArg == TsvSelectOptions.RestOption.last);
     else
-        static assert (false, "Unexpected cteRest value.");
+        static assert (false, "rest template argument does not match cmdopt.restArg.");
 
     /* InputFieldReordering copies select fields from an input line to a new buffer.
      * The buffer is reordered in the process.
@@ -227,7 +283,7 @@ void tsvSelect(CTERestLocation cteRest)(const TsvSelectOptions cmdopt, const str
      * that grows as needed and is reused for each line. Typically it'll grow only
      * on the first line.
      */
-    static if (cteRest != CTERestLocation.none)
+    static if (rest != RestLocation.none)
     {
         auto leftOverFieldsAppender = appender!(char[][]);
     }
@@ -252,7 +308,7 @@ void tsvSelect(CTERestLocation cteRest)(const TsvSelectOptions cmdopt, const str
                 continue;   // Drop the header line from all but the first file.
             }
 
-            static if (cteRest != CTERestLocation.none)
+            static if (rest != RestLocation.none)
             {
                 leftOverFieldsAppender.clear;
 
@@ -266,22 +322,35 @@ void tsvSelect(CTERestLocation cteRest)(const TsvSelectOptions cmdopt, const str
 
             foreach (fieldIndex, fieldValue; line.splitter(cmdopt.delim).enumerate)
             {
-                static if (cteRest == CTERestLocation.none)
+                static if (rest == RestLocation.none)
                 {
                     fieldReordering.processNextField(fieldIndex, fieldValue);
                     if (fieldReordering.allFieldsFilled) break;
                 }
                 else
                 {
-                    nextFieldStart += fieldValue.length + 1;
-                    immutable numMatched = fieldReordering.processNextField(fieldIndex, fieldValue);
+                    /* Processing with 'rest' fields. States:
+                     *  - Excluded fields and specified fields remain
+                     *  - Only specified fields remain
+                     *  - Only excluded fields remain
+                     */
 
-                    if (numMatched == 0)
+                    nextFieldStart += fieldValue.length + 1;
+                    bool excludedFieldsRemain = fieldIndex < cmdopt.excludedFieldsTable.length;
+                    immutable isExcluded = excludedFieldsRemain && cmdopt.excludedFieldsTable[fieldIndex];
+
+                    if (!isExcluded)
                     {
-                        assert(!fieldReordering.allFieldsFilled);
-                        leftOverFieldsAppender.put(fieldValue);
+                        immutable numMatched = fieldReordering.processNextField(fieldIndex, fieldValue);
+
+                        if (numMatched == 0) leftOverFieldsAppender.put(fieldValue);
                     }
-                    else if (fieldReordering.allFieldsFilled)
+                    else if (fieldIndex + 1 == cmdopt.excludedFieldsTable.length)
+                    {
+                        excludedFieldsRemain = false;
+                    }
+
+                    if (fieldReordering.allFieldsFilled && !excludedFieldsRemain)
                     {
                         /* Processed all specified fields. Bulk append any fields
                          * remaining on the line. Cases:
@@ -307,22 +376,22 @@ void tsvSelect(CTERestLocation cteRest)(const TsvSelectOptions cmdopt, const str
 
             // Write the re-ordered line.
 
-            static if (cteRest == CTERestLocation.first)
+            static if (rest == RestLocation.first)
             {
                 if (leftOverFieldsAppender.data.length > 0)
                 {
                     bufferedOutput.joinAppend(leftOverFieldsAppender.data, cmdopt.delim);
-                    bufferedOutput.append(cmdopt.delim);
+                    if (cmdopt.fields.length > 0) bufferedOutput.append(cmdopt.delim);
                 }
             }
 
             bufferedOutput.joinAppend(fieldReordering.outputFields, cmdopt.delim);
 
-            static if (cteRest == CTERestLocation.last)
+            static if (rest == RestLocation.last)
             {
                 if (leftOverFieldsAppender.data.length > 0)
                 {
-                    bufferedOutput.append(cmdopt.delim);
+                    if (cmdopt.fields.length > 0) bufferedOutput.append(cmdopt.delim);
                     bufferedOutput.joinAppend(leftOverFieldsAppender.data, cmdopt.delim);
                 }
             }

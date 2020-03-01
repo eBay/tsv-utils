@@ -65,10 +65,37 @@ runtest ${prog} "-f 4,3 -r last input1.tsv" ${basic_tests_1}
 runtest ${prog} "-f 3,1,4 -r last input1.tsv" ${basic_tests_1}
 runtest ${prog} "-f 4,3,2,1 -r last input1.tsv" ${basic_tests_1}
 
+# Exclusions - Individual fields and ranges
+runtest ${prog} "--exclude 1 input1.tsv" ${basic_tests_1}
+runtest ${prog} "-e 2 input1.tsv" ${basic_tests_1}
+runtest ${prog} "-e 3 input1.tsv" ${basic_tests_1}
+runtest ${prog} "-e 4 input1.tsv" ${basic_tests_1}
+runtest ${prog} "-e 1,2 input1.tsv" ${basic_tests_1}
+runtest ${prog} "-e 2-1 input1.tsv" ${basic_tests_1}
+runtest ${prog} "-e 2,3 input1.tsv" ${basic_tests_1}
+runtest ${prog} "-e 4,3 input1.tsv" ${basic_tests_1}
+runtest ${prog} "-e 1,3-4 input1.tsv" ${basic_tests_1}
+runtest ${prog} "-e 1-4 input1.tsv" ${basic_tests_1}
+runtest ${prog} "-e 1-5 input1.tsv" ${basic_tests_1}
+runtest ${prog} "-e 5-10 input1.tsv" ${basic_tests_1}
+
+# Exclusions - Combined with --fields and --rest
+runtest ${prog} "-e 1,2 --rest last input1.tsv" ${basic_tests_1}
+runtest ${prog} "-e 1,2 --rest first input1.tsv" ${basic_tests_1}
+runtest ${prog} "-e 1 -f 3 input1.tsv" ${basic_tests_1}
+runtest ${prog} "-e 1 -f 3 --rest last input1.tsv" ${basic_tests_1}
+runtest ${prog} "-e 1 -f 3 --rest first input1.tsv" ${basic_tests_1}
+runtest ${prog} "-e 2 -f 4,1 input1.tsv" ${basic_tests_1}
+runtest ${prog} "-e 2 -f 4,1 --rest first input1.tsv" ${basic_tests_1}
+runtest ${prog} "-e 2,3 -f 4,1 input1.tsv" ${basic_tests_1}
+runtest ${prog} "-e 2,3 -f 4,1 --rest first input1.tsv" ${basic_tests_1}
+runtest ${prog} "-e 2,3,5 -f 4,1 input1.tsv" ${basic_tests_1}
+
 # 1 field file
 runtest ${prog} "-f 1 input_1field.tsv" ${basic_tests_1}
 runtest ${prog} "-f 1 --rest first input_1field.tsv" ${basic_tests_1}
 runtest ${prog} "-f 1 --rest last input_1field.tsv" ${basic_tests_1}
+runtest ${prog} "--exclude 1 input_1field.tsv" ${basic_tests_1}
 
 # 2 field file
 runtest ${prog} "-f 1 input_2fields.tsv" ${basic_tests_1}
@@ -83,6 +110,9 @@ runtest ${prog} "-f 1,2 --rest last input_2fields.tsv" ${basic_tests_1}
 runtest ${prog} "-f 2,1 input_2fields.tsv" ${basic_tests_1}
 runtest ${prog} "-f 2,1 --rest first input_2fields.tsv" ${basic_tests_1}
 runtest ${prog} "-f 2,1 --rest last input_2fields.tsv" ${basic_tests_1}
+runtest ${prog} "-e 1 input_2fields.tsv" ${basic_tests_1}
+runtest ${prog} "-e 2 input_2fields.tsv" ${basic_tests_1}
+runtest ${prog} "-e 1-2 input_2fields.tsv" ${basic_tests_1}
 
 # 3+ field file
 runtest ${prog} "-f 1 input_3plus_fields.tsv" ${basic_tests_1}
@@ -94,6 +124,15 @@ runtest ${prog} "-f 3,1,2 --rest first input_3plus_fields.tsv" ${basic_tests_1}
 runtest ${prog} "-f 1 --rest last input_3plus_fields.tsv" ${basic_tests_1}
 runtest ${prog} "-f 1,3 --rest last input_3plus_fields.tsv" ${basic_tests_1}
 runtest ${prog} "-f 2,1,3 --rest last input_3plus_fields.tsv" ${basic_tests_1}
+
+runtest ${prog} "--exclude 1 input_3plus_fields.tsv" ${basic_tests_1}
+runtest ${prog} "-e 3 input_3plus_fields.tsv" ${basic_tests_1}
+runtest ${prog} "-e 1-3 input_3plus_fields.tsv" ${basic_tests_1}
+runtest ${prog} "-e 4 input_3plus_fields.tsv" ${basic_tests_1}
+runtest ${prog} "-e 5 input_3plus_fields.tsv" ${basic_tests_1}
+runtest ${prog} "-e 4-10 input_3plus_fields.tsv" ${basic_tests_1}
+runtest ${prog} "-e 1 -f 3 --rest last input_3plus_fields.tsv" ${basic_tests_1}
+runtest ${prog} "-e 1 -f 3 --rest first input_3plus_fields.tsv" ${basic_tests_1}
 
 # Alternate delimiter
 runtest ${prog} "-f 1 --delimiter ^  input_2plus_hat_delim.tsv" ${basic_tests_1}
@@ -109,6 +148,12 @@ runtest ${prog} "-f 2 -d ^ --rest last input_2plus_hat_delim.tsv" ${basic_tests_
 runtest ${prog} "-f 2,1 -d ^ --rest last input_2plus_hat_delim.tsv" ${basic_tests_1}
 runtest ${prog} "-f 1,2 -d ^ --rest last input_2plus_hat_delim.tsv" ${basic_tests_1}
 
+runtest ${prog} "--exclude 1 --delimiter ^  input_2plus_hat_delim.tsv" ${basic_tests_1}
+runtest ${prog} "--exclude 2 --delimiter ^  input_2plus_hat_delim.tsv" ${basic_tests_1}
+runtest ${prog} "--exclude 1-2 --delimiter ^  input_2plus_hat_delim.tsv" ${basic_tests_1}
+runtest ${prog} "--exclude 3-10 --delimiter ^  input_2plus_hat_delim.tsv" ${basic_tests_1}
+runtest ${prog} "--exclude 2 --fields 1 --rest first --delimiter ^  input_2plus_hat_delim.tsv" ${basic_tests_1}
+
 echo "" >> ${basic_tests_1}; echo "====Multi-file & stdin Tests===" >> ${basic_tests_1}
 runtest ${prog} "-f 2,1 input_3x2.tsv input_emptyfile.tsv input_3x1.tsv input_3x0.tsv input_3x3.tsv" ${basic_tests_1}
 
@@ -123,6 +168,10 @@ cat input_3x2.tsv | ${prog} -f 2,1 -- input_3x3.tsv - input_3x1.tsv >> ${basic_t
 runtest ${prog} "--header -f 1 input_header1.tsv" ${basic_tests_1}
 runtest ${prog} "-H -f 2 input_header1.tsv input_header2.tsv input_header3.tsv input_header4.tsv" ${basic_tests_1}
 runtest ${prog} "-H -f 1,2,3 input_header3.tsv input_header3.tsv input_header1.tsv" ${basic_tests_1}
+
+runtest ${prog} "--header --exclude 1 input_header1.tsv" ${basic_tests_1}
+runtest ${prog} "-H -e 2 input_header1.tsv input_header2.tsv input_header3.tsv input_header4.tsv" ${basic_tests_1}
+runtest ${prog} "-H -e 1,2,3 input_header3.tsv input_header3.tsv input_header1.tsv" ${basic_tests_1}
 
 ## Help and Version printing
 
@@ -181,6 +230,14 @@ runtest ${prog} "-f 1,3- input1.tsv" ${error_tests_1}
 runtest ${prog} "-f input1.tsv" ${error_tests_1}
 runtest ${prog} "-f 1, input1.tsv" ${error_tests_1}
 runtest ${prog} "-f 1.1 input1.tsv" ${error_tests_1}
+
+runtest ${prog} "-e 0 input1.tsv" ${error_tests_1}
+runtest ${prog} "-e 1 -f 1 input1.tsv" ${error_tests_1}
+runtest ${prog} "-e 1-5 -f 3 input1.tsv" ${error_tests_1}
+runtest ${prog} "-e 7,10 -f 1,3,8-14 input1.tsv" ${error_tests_1}
+runtest ${prog} "-e 7,10 -f 1,3,8-14 input1.tsv" ${error_tests_1}
+runtest ${prog} "-e 1-1000 -f 2000-1000 input1.tsv" ${error_tests_1}
+
 
 # Windows line ending detection
 runtest ${prog} "-f 1 input1_dos.tsv" ${error_tests_1}
