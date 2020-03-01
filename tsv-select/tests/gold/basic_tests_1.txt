@@ -432,6 +432,14 @@ DEF	ABC
 8
 9
 
+11
+12
+13
+14
+15
+16
+17
+
 ====[tsv-select -f 3 input_3plus_fields.tsv]====
 UUU
 CCC
@@ -441,6 +449,14 @@ sss
 
  
 
+
+
+
+B
+BB
+Ä
+ÄÄ
+ÄAÄ
 done
 
 ====[tsv-select -f 2,3 --rest first input_3plus_fields.tsv]====
@@ -452,7 +468,15 @@ done
 6	e-e		
 7	sp-sp	2020	2021	 	 
 8	empty-last	
-9	last-row	done
+9			|	next-line-6-empty	
+					
+11		
+12	C	D	A	B
+13	CC	DD	EE	AA	BB
+14	ä	Ö	ö	ß	Ä
+15	ää	ÖÖ	öö	ßß	ÄÄ
+16	äaä	ÖOÖ	öoö	ßsß	ÄAÄ
+17	last-row	done
 
 ====[tsv-select -f 1 --rest first input_3plus_fields.tsv]====
 ggg	UUU	101	1
@@ -463,7 +487,15 @@ ssssss	sss	18	16	f6	f7	f8	f9	f10	4
 		e-e	6
  	 	sp-sp	2020	2021	7
 empty-last		8
-last-row	done	9
+next-line-6-empty				|	9
+					
+		11
+A	B	C	D	12
+AA	BB	CC	DD	EE	13
+ß	Ä	ä	Ö	ö	14
+ßß	ÄÄ	ää	ÖÖ	öö	15
+ßsß	ÄAÄ	äaä	ÖOÖ	öoö	16
+last-row	done	17
 
 ====[tsv-select -f 3,1 --rest first input_3plus_fields.tsv]====
 ggg	101	UUU	1
@@ -474,7 +506,15 @@ ssssss	18	16	f6	f7	f8	f9	f10	sss	4
 	e-e		6
  	sp-sp	2020	2021	 	7
 empty-last		8
-last-row	done	9
+next-line-6-empty			|		9
+					
+		11
+A	C	D	B	12
+AA	CC	DD	EE	BB	13
+ß	ä	Ö	ö	Ä	14
+ßß	ää	ÖÖ	öö	ÄÄ	15
+ßsß	äaä	ÖOÖ	öoö	ÄAÄ	16
+last-row	done	17
 
 ====[tsv-select -f 3,1,2 --rest first input_3plus_fields.tsv]====
 101	UUU	1	ggg
@@ -485,7 +525,15 @@ SSS	3	ßßß
 e-e		6	
 sp-sp	2020	2021	 	7	 
 	8	empty-last
-done	9	last-row
+		|		9	next-line-6-empty
+					
+	11	
+C	D	B	12	A
+CC	DD	EE	BB	13	AA
+ä	Ö	ö	Ä	14	ß
+ää	ÖÖ	öö	ÄÄ	15	ßß
+äaä	ÖOÖ	öoö	ÄAÄ	16	ßsß
+done	17	last-row
 
 ====[tsv-select -f 1 --rest last input_3plus_fields.tsv]====
 1	ggg	UUU	101
@@ -496,7 +544,15 @@ done	9	last-row
 6			e-e
 7	 	 	sp-sp	2020	2021
 8	empty-last	
-9	last-row	done
+9	next-line-6-empty				|
+					
+11		
+12	A	B	C	D
+13	AA	BB	CC	DD	EE
+14	ß	Ä	ä	Ö	ö
+15	ßß	ÄÄ	ää	ÖÖ	öö
+16	ßsß	ÄAÄ	äaä	ÖOÖ	öoö
+17	last-row	done
 
 ====[tsv-select -f 1,3 --rest last input_3plus_fields.tsv]====
 1	UUU	ggg	101
@@ -507,7 +563,15 @@ done	9	last-row
 6			e-e
 7	 	 	sp-sp	2020	2021
 8		empty-last
-9	done	last-row
+9		next-line-6-empty			|
+					
+11		
+12	B	A	C	D
+13	BB	AA	CC	DD	EE
+14	Ä	ß	ä	Ö	ö
+15	ÄÄ	ßß	ää	ÖÖ	öö
+16	ÄAÄ	ßsß	äaä	ÖOÖ	öoö
+17	done	last-row
 
 ====[tsv-select -f 2,1,3 --rest last input_3plus_fields.tsv]====
 ggg	1	UUU	101
@@ -518,7 +582,15 @@ ssssss	4	sss	18	16	f6	f7	f8	f9	f10
 	6		e-e
  	7	 	sp-sp	2020	2021
 empty-last	8	
-last-row	9	done
+next-line-6-empty	9				|
+					
+	11	
+A	12	B	C	D
+AA	13	BB	CC	DD	EE
+ß	14	Ä	ä	Ö	ö
+ßß	15	ÄÄ	ää	ÖÖ	öö
+ßsß	16	ÄAÄ	äaä	ÖOÖ	öoö
+last-row	17	done
 
 ====[tsv-select -f 1 --delimiter ^  input_2plus_hat_delim.tsv]====
 f1
