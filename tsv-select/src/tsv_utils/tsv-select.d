@@ -251,11 +251,19 @@ void tsvSelect(CTERestLocation cteRest)(const TsvSelectOptions cmdopt, const str
             {
                 continue;   // Drop the header line from all but the first file.
             }
+
             static if (cteRest != CTERestLocation.none)
             {
                 leftOverFieldsAppender.clear;
+
+                /* Track the field location in the line. This enables bulk appending
+                 * after the last specified field has been processed.
+                 */
+                size_t nextFieldStart = 0;
             }
+
             fieldReordering.initNewLine;
+
             foreach (fieldIndex, fieldValue; line.splitter(cmdopt.delim).enumerate)
             {
                 static if (cteRest == CTERestLocation.none)
@@ -265,10 +273,30 @@ void tsvSelect(CTERestLocation cteRest)(const TsvSelectOptions cmdopt, const str
                 }
                 else
                 {
+                    nextFieldStart += fieldValue.length + 1;
                     immutable numMatched = fieldReordering.processNextField(fieldIndex, fieldValue);
-                    if (numMatched == 0) leftOverFieldsAppender.put(fieldValue);
+
+                    if (numMatched == 0)
+                    {
+                        assert(!fieldReordering.allFieldsFilled);
+                        leftOverFieldsAppender.put(fieldValue);
+                    }
+                    else if (fieldReordering.allFieldsFilled)
+                    {
+                        /* Processed all specified fields. Bulk append any fields
+                         * remaining on the line. Cases:
+                         * - Current field is last field:
+                         */
+                        if (nextFieldStart <= line.length)
+                        {
+                            leftOverFieldsAppender.put(line[nextFieldStart .. $]);
+                        }
+
+                        break;
+                    }
                 }
             }
+
             // Finished with all fields in the line.
             if (!fieldReordering.allFieldsFilled)
             {
