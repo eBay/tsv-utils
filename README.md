@@ -40,7 +40,7 @@ The tools work like traditional Unix command line utilities such as `cut`, `sort
 
 The rest of this section contains descriptions of each tool. Click on the links below to jump directly to one of the tools. Full documentation is available in the [tool reference](docs/ToolReference.md).
 
-* [tsv-filter](#tsv-filter) - Filter lines using numeric, string and regular expression comparisons against individual fields. (This description also provides an introduction to features found throughout the toolkit.)
+* [tsv-filter](#tsv-filter) - Filter lines using numeric, string and regular expression comparisons against individual fields. This description also provides an introduction to features found throughout the toolkit.
 * [tsv-select](#tsv-select) - Keep a subset of columns (fields). Like `cut`, but with field reordering.
 * [tsv-uniq](#tsv-uniq) - Filter out duplicate lines using either the full line or individual fields as a key.
 * [tsv-summarize](#tsv-summarize) - Summary statistics on selected fields, against the full data set or grouped by key.
