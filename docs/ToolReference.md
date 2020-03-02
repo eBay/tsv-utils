@@ -252,7 +252,7 @@ _**Tip:**_ Bash completion is very helpful when using commands like `tsv-filter`
 
 ## tsv-select reference
 
-**Synopsis:** tsv-select -f <field-list> [options] [file...]
+**Synopsis:** tsv-select [options] [file...]
 
 tsv-select reads files or standard input and writes specified fields to standard output in the order listed. Similar to `cut` with the ability to reorder fields.
 
