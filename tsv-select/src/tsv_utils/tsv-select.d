@@ -86,7 +86,7 @@ Examples:
 Notes:
 * One of '--f|fields' or '--e|exclude' is required.
 * Fields specified by '--f|fields' and '--e|exclude' cannot overlap.
-* Each line must have all fields specfied by '--f|fields'. Otherwise
+* Each line must have all fields specified by '--f|fields'. Otherwise
   line length can vary.
 
 Options:
