@@ -37,5 +37,9 @@ $prog profile_data_3.tsv -H -f 5,3,1 > /dev/null
 $prog profile_data_3.tsv -H -f 1-3 > /dev/null
 $prog profile_data_3.tsv -H -f 7 > /dev/null
 $prog profile_data_3.tsv -H -f 3-6 > /dev/null
+$prog profile_data_1.tsv -H -f 5 --rest last > /dev/null
+$prog profile_data_1.tsv -H -f 1 --rest first > /dev/null
+$prog -H --exclude 1 profile_data_1.tsv profile_data_2.tsv profile_data_3.tsv -H > /dev/null
+$prog profile_data_3.tsv --exclude 2-4 > /dev/null
 
 ${ldc_profdata_tool} merge -o app.profdata profile.*.raw

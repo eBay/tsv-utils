@@ -252,7 +252,7 @@ _**Tip:**_ Bash completion is very helpful when using commands like `tsv-filter`
 
 ## tsv-select reference
 
-**Synopsis:** tsv-select -f <field-list> [options] [file...]
+**Synopsis:** tsv-select [options] [file...]
 
 tsv-select reads files or standard input and writes specified fields to standard output in the order listed. Similar to `cut` with the ability to reorder fields.
 
@@ -263,13 +263,13 @@ Fields numbers start with one. They are comma separated, and ranges can be used.
 * `--V|version` - Print version information and exit.
 * `--H|header` - Treat the first line of each file as a header.
 * `--f|fields <field-list>` - (Required) Fields to extract. Fields are output in the order listed.
-* `--r|rest none|first|last` - Location for remaining fields. Default: none
+* `--r|rest first|last` - Location for remaining fields. Default: none
 * `--d|delimiter CHR` - Character to use as field delimiter. Default: TAB. (Single byte UTF-8 characters only.)
 
 **Examples:**
 ```
 $ # Output fields 2 and 1, in that order
-$ tsv-select -f 2,1 --rest first data.tsv
+$ tsv-select -f 2,1 data.tsv
 
 $ # Move field 1 to the end of the line
 $ tsv-select -f 1 --rest first data.tsv

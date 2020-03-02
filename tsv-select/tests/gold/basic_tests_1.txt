@@ -331,6 +331,248 @@ f23-empty			6
 f23-space	 	 	7
 1931	Z	0.0	8
 
+====[tsv-select --exclude 1 input1.tsv]====
+f2	f3	f4
+ggg	UUU	101
+f1-empty	CCC	5734
+ßßß	SSS	 7
+sss	f4-empty	
+ÀBC		1367
+		f23-empty
+ 	 	f23-space
+0.0	Z	1931
+
+====[tsv-select -e 2 input1.tsv]====
+f1	f3	f4
+1	UUU	101
+	CCC	5734
+3	SSS	 7
+4	f4-empty	
+5		1367
+6		f23-empty
+7	 	f23-space
+8	Z	1931
+
+====[tsv-select -e 3 input1.tsv]====
+f1	f2	f4
+1	ggg	101
+	f1-empty	5734
+3	ßßß	 7
+4	sss	
+5	ÀBC	1367
+6		f23-empty
+7	 	f23-space
+8	0.0	1931
+
+====[tsv-select -e 4 input1.tsv]====
+f1	f2	f3
+1	ggg	UUU
+	f1-empty	CCC
+3	ßßß	SSS
+4	sss	f4-empty
+5	ÀBC	
+6		
+7	 	 
+8	0.0	Z
+
+====[tsv-select -e 1,2 input1.tsv]====
+f3	f4
+UUU	101
+CCC	5734
+SSS	 7
+f4-empty	
+	1367
+	f23-empty
+ 	f23-space
+Z	1931
+
+====[tsv-select -e 2-1 input1.tsv]====
+f3	f4
+UUU	101
+CCC	5734
+SSS	 7
+f4-empty	
+	1367
+	f23-empty
+ 	f23-space
+Z	1931
+
+====[tsv-select -e 2,3 input1.tsv]====
+f1	f4
+1	101
+	5734
+3	 7
+4	
+5	1367
+6	f23-empty
+7	f23-space
+8	1931
+
+====[tsv-select -e 4,3 input1.tsv]====
+f1	f2
+1	ggg
+	f1-empty
+3	ßßß
+4	sss
+5	ÀBC
+6	
+7	 
+8	0.0
+
+====[tsv-select -e 1,3-4 input1.tsv]====
+f2
+ggg
+f1-empty
+ßßß
+sss
+ÀBC
+
+ 
+0.0
+
+====[tsv-select -e 1-4 input1.tsv]====
+
+
+
+
+
+
+
+
+
+
+====[tsv-select -e 1-5 input1.tsv]====
+
+
+
+
+
+
+
+
+
+
+====[tsv-select -e 5-10 input1.tsv]====
+f1	f2	f3	f4
+1	ggg	UUU	101
+	f1-empty	CCC	5734
+3	ßßß	SSS	 7
+4	sss	f4-empty	
+5	ÀBC		1367
+6			f23-empty
+7	 	 	f23-space
+8	0.0	Z	1931
+
+====[tsv-select -e 1,2 --rest last input1.tsv]====
+f3	f4
+UUU	101
+CCC	5734
+SSS	 7
+f4-empty	
+	1367
+	f23-empty
+ 	f23-space
+Z	1931
+
+====[tsv-select -e 1,2 --rest first input1.tsv]====
+f3	f4
+UUU	101
+CCC	5734
+SSS	 7
+f4-empty	
+	1367
+	f23-empty
+ 	f23-space
+Z	1931
+
+====[tsv-select -e 1 -f 3 input1.tsv]====
+f3	f2	f4
+UUU	ggg	101
+CCC	f1-empty	5734
+SSS	ßßß	 7
+f4-empty	sss	
+	ÀBC	1367
+		f23-empty
+ 	 	f23-space
+Z	0.0	1931
+
+====[tsv-select -e 1 -f 3 --rest last input1.tsv]====
+f3	f2	f4
+UUU	ggg	101
+CCC	f1-empty	5734
+SSS	ßßß	 7
+f4-empty	sss	
+	ÀBC	1367
+		f23-empty
+ 	 	f23-space
+Z	0.0	1931
+
+====[tsv-select -e 1 -f 3 --rest first input1.tsv]====
+f2	f4	f3
+ggg	101	UUU
+f1-empty	5734	CCC
+ßßß	 7	SSS
+sss		f4-empty
+ÀBC	1367	
+	f23-empty	
+ 	f23-space	 
+0.0	1931	Z
+
+====[tsv-select -e 2 -f 4,1 input1.tsv]====
+f4	f1	f3
+101	1	UUU
+5734		CCC
+ 7	3	SSS
+	4	f4-empty
+1367	5	
+f23-empty	6	
+f23-space	7	 
+1931	8	Z
+
+====[tsv-select -e 2 -f 4,1 --rest first input1.tsv]====
+f3	f4	f1
+UUU	101	1
+CCC	5734	
+SSS	 7	3
+f4-empty		4
+	1367	5
+	f23-empty	6
+ 	f23-space	7
+Z	1931	8
+
+====[tsv-select -e 2,3 -f 4,1 input1.tsv]====
+f4	f1
+101	1
+5734	
+ 7	3
+	4
+1367	5
+f23-empty	6
+f23-space	7
+1931	8
+
+====[tsv-select -e 2,3 -f 4,1 --rest first input1.tsv]====
+f4	f1
+101	1
+5734	
+ 7	3
+	4
+1367	5
+f23-empty	6
+f23-space	7
+1931	8
+
+====[tsv-select -e 2,3,5 -f 4,1 input1.tsv]====
+f4	f1
+101	1
+5734	
+ 7	3
+	4
+1367	5
+f23-empty	6
+f23-space	7
+1931	8
+
 ====[tsv-select -f 1 input_1field.tsv]====
 1
 2 abc def
@@ -348,6 +590,12 @@ f23-space	 	 	7
 2 abc def
 3
 4 567 89-10
+
+====[tsv-select --exclude 1 input_1field.tsv]====
+
+
+
+
 
 ====[tsv-select -f 1 input_2fields.tsv]====
 f1
@@ -421,6 +669,24 @@ def	abc
 456	123
 DEF	ABC
 
+====[tsv-select -e 1 input_2fields.tsv]====
+f2
+def
+456
+DEF
+
+====[tsv-select -e 2 input_2fields.tsv]====
+f1
+abc
+123
+ABC
+
+====[tsv-select -e 1-2 input_2fields.tsv]====
+
+
+
+
+
 ====[tsv-select -f 1 input_3plus_fields.tsv]====
 1
 2
@@ -432,6 +698,14 @@ DEF	ABC
 8
 9
 
+11
+12
+13
+14
+15
+16
+17
+
 ====[tsv-select -f 3 input_3plus_fields.tsv]====
 UUU
 CCC
@@ -441,6 +715,14 @@ sss
 
  
 
+
+
+
+B
+BB
+Ä
+ÄÄ
+ÄAÄ
 done
 
 ====[tsv-select -f 2,3 --rest first input_3plus_fields.tsv]====
@@ -452,7 +734,15 @@ done
 6	e-e		
 7	sp-sp	2020	2021	 	 
 8	empty-last	
-9	last-row	done
+9			|	next-line-6-empty	
+					
+11		
+12	C	D	A	B
+13	CC	DD	EE	AA	BB
+14	ä	Ö	ö	ß	Ä
+15	ää	ÖÖ	öö	ßß	ÄÄ
+16	äaä	ÖOÖ	öoö	ßsß	ÄAÄ
+17	last-row	done
 
 ====[tsv-select -f 1 --rest first input_3plus_fields.tsv]====
 ggg	UUU	101	1
@@ -463,7 +753,15 @@ ssssss	sss	18	16	f6	f7	f8	f9	f10	4
 		e-e	6
  	 	sp-sp	2020	2021	7
 empty-last		8
-last-row	done	9
+next-line-6-empty				|	9
+					
+		11
+A	B	C	D	12
+AA	BB	CC	DD	EE	13
+ß	Ä	ä	Ö	ö	14
+ßß	ÄÄ	ää	ÖÖ	öö	15
+ßsß	ÄAÄ	äaä	ÖOÖ	öoö	16
+last-row	done	17
 
 ====[tsv-select -f 3,1 --rest first input_3plus_fields.tsv]====
 ggg	101	UUU	1
@@ -474,7 +772,15 @@ ssssss	18	16	f6	f7	f8	f9	f10	sss	4
 	e-e		6
  	sp-sp	2020	2021	 	7
 empty-last		8
-last-row	done	9
+next-line-6-empty			|		9
+					
+		11
+A	C	D	B	12
+AA	CC	DD	EE	BB	13
+ß	ä	Ö	ö	Ä	14
+ßß	ää	ÖÖ	öö	ÄÄ	15
+ßsß	äaä	ÖOÖ	öoö	ÄAÄ	16
+last-row	done	17
 
 ====[tsv-select -f 3,1,2 --rest first input_3plus_fields.tsv]====
 101	UUU	1	ggg
@@ -485,7 +791,15 @@ SSS	3	ßßß
 e-e		6	
 sp-sp	2020	2021	 	7	 
 	8	empty-last
-done	9	last-row
+		|		9	next-line-6-empty
+					
+	11	
+C	D	B	12	A
+CC	DD	EE	BB	13	AA
+ä	Ö	ö	Ä	14	ß
+ää	ÖÖ	öö	ÄÄ	15	ßß
+äaä	ÖOÖ	öoö	ÄAÄ	16	ßsß
+done	17	last-row
 
 ====[tsv-select -f 1 --rest last input_3plus_fields.tsv]====
 1	ggg	UUU	101
@@ -496,7 +810,15 @@ done	9	last-row
 6			e-e
 7	 	 	sp-sp	2020	2021
 8	empty-last	
-9	last-row	done
+9	next-line-6-empty				|
+					
+11		
+12	A	B	C	D
+13	AA	BB	CC	DD	EE
+14	ß	Ä	ä	Ö	ö
+15	ßß	ÄÄ	ää	ÖÖ	öö
+16	ßsß	ÄAÄ	äaä	ÖOÖ	öoö
+17	last-row	done
 
 ====[tsv-select -f 1,3 --rest last input_3plus_fields.tsv]====
 1	UUU	ggg	101
@@ -507,7 +829,15 @@ done	9	last-row
 6			e-e
 7	 	 	sp-sp	2020	2021
 8		empty-last
-9	done	last-row
+9		next-line-6-empty			|
+					
+11		
+12	B	A	C	D
+13	BB	AA	CC	DD	EE
+14	Ä	ß	ä	Ö	ö
+15	ÄÄ	ßß	ää	ÖÖ	öö
+16	ÄAÄ	ßsß	äaä	ÖOÖ	öoö
+17	done	last-row
 
 ====[tsv-select -f 2,1,3 --rest last input_3plus_fields.tsv]====
 ggg	1	UUU	101
@@ -518,7 +848,167 @@ ssssss	4	sss	18	16	f6	f7	f8	f9	f10
 	6		e-e
  	7	 	sp-sp	2020	2021
 empty-last	8	
-last-row	9	done
+next-line-6-empty	9				|
+					
+	11	
+A	12	B	C	D
+AA	13	BB	CC	DD	EE
+ß	14	Ä	ä	Ö	ö
+ßß	15	ÄÄ	ää	ÖÖ	öö
+ßsß	16	ÄAÄ	äaä	ÖOÖ	öoö
+last-row	17	done
+
+====[tsv-select --exclude 1 input_3plus_fields.tsv]====
+ggg	UUU	101
+ggg	CCC	5734	52
+ßßß	SSS
+ssssss	sss	18	16	f6	f7	f8	f9	f10
+ÀBC		1367	1331	1234	4567
+		e-e
+ 	 	sp-sp	2020	2021
+empty-last	
+next-line-6-empty				|
+				
+	
+A	B	C	D
+AA	BB	CC	DD	EE
+ß	Ä	ä	Ö	ö
+ßß	ÄÄ	ää	ÖÖ	öö
+ßsß	ÄAÄ	äaä	ÖOÖ	öoö
+last-row	done
+
+====[tsv-select -e 3 input_3plus_fields.tsv]====
+1	ggg	101
+2	ggg	5734	52
+3	ßßß
+4	ssssss	18	16	f6	f7	f8	f9	f10
+5	ÀBC	1367	1331	1234	4567
+6		e-e
+7	 	sp-sp	2020	2021
+8	empty-last
+9	next-line-6-empty			|
+				
+11	
+12	A	C	D
+13	AA	CC	DD	EE
+14	ß	ä	Ö	ö
+15	ßß	ää	ÖÖ	öö
+16	ßsß	äaä	ÖOÖ	öoö
+17	last-row
+
+====[tsv-select -e 1-3 input_3plus_fields.tsv]====
+101
+5734	52
+
+18	16	f6	f7	f8	f9	f10
+1367	1331	1234	4567
+e-e
+sp-sp	2020	2021
+
+		|
+		
+
+C	D
+CC	DD	EE
+ä	Ö	ö
+ää	ÖÖ	öö
+äaä	ÖOÖ	öoö
+
+
+====[tsv-select -e 4 input_3plus_fields.tsv]====
+1	ggg	UUU
+2	ggg	CCC	52
+3	ßßß	SSS
+4	ssssss	sss	16	f6	f7	f8	f9	f10
+5	ÀBC		1331	1234	4567
+6		
+7	 	 	2020	2021
+8	empty-last	
+9	next-line-6-empty			|
+				
+11		
+12	A	B	D
+13	AA	BB	DD	EE
+14	ß	Ä	Ö	ö
+15	ßß	ÄÄ	ÖÖ	öö
+16	ßsß	ÄAÄ	ÖOÖ	öoö
+17	last-row	done
+
+====[tsv-select -e 5 input_3plus_fields.tsv]====
+1	ggg	UUU	101
+2	ggg	CCC	5734
+3	ßßß	SSS
+4	ssssss	sss	18	f6	f7	f8	f9	f10
+5	ÀBC		1367	1234	4567
+6			e-e
+7	 	 	sp-sp	2021
+8	empty-last	
+9	next-line-6-empty			|
+				
+11		
+12	A	B	C
+13	AA	BB	CC	EE
+14	ß	Ä	ä	ö
+15	ßß	ÄÄ	ää	öö
+16	ßsß	ÄAÄ	äaä	öoö
+17	last-row	done
+
+====[tsv-select -e 4-10 input_3plus_fields.tsv]====
+1	ggg	UUU
+2	ggg	CCC
+3	ßßß	SSS
+4	ssssss	sss
+5	ÀBC	
+6		
+7	 	 
+8	empty-last	
+9	next-line-6-empty	
+		
+11		
+12	A	B
+13	AA	BB
+14	ß	Ä
+15	ßß	ÄÄ
+16	ßsß	ÄAÄ
+17	last-row	done
+
+====[tsv-select -e 1 -f 3 --rest last input_3plus_fields.tsv]====
+UUU	ggg	101
+CCC	ggg	5734	52
+SSS	ßßß
+sss	ssssss	18	16	f6	f7	f8	f9	f10
+	ÀBC	1367	1331	1234	4567
+		e-e
+ 	 	sp-sp	2020	2021
+	empty-last
+	next-line-6-empty			|
+				
+	
+B	A	C	D
+BB	AA	CC	DD	EE
+Ä	ß	ä	Ö	ö
+ÄÄ	ßß	ää	ÖÖ	öö
+ÄAÄ	ßsß	äaä	ÖOÖ	öoö
+done	last-row
+
+====[tsv-select -e 1 -f 3 --rest first input_3plus_fields.tsv]====
+ggg	101	UUU
+ggg	5734	52	CCC
+ßßß	SSS
+ssssss	18	16	f6	f7	f8	f9	f10	sss
+ÀBC	1367	1331	1234	4567	
+	e-e	
+ 	sp-sp	2020	2021	 
+empty-last	
+next-line-6-empty			|	
+				
+	
+A	C	D	B
+AA	CC	DD	EE	BB
+ß	ä	Ö	ö	Ä
+ßß	ää	ÖÖ	öö	ÄÄ
+ßsß	äaä	ÖOÖ	öoö	ÄAÄ
+last-row	done
 
 ====[tsv-select -f 1 --delimiter ^  input_2plus_hat_delim.tsv]====
 f1
@@ -616,6 +1106,46 @@ abc^def^ghi
 123^456^789^
 ^abc^
 
+====[tsv-select --exclude 1 --delimiter ^  input_2plus_hat_delim.tsv]====
+f2
+def^ghi
+^
+^^
+456^789^
+abc^
+
+====[tsv-select --exclude 2 --delimiter ^  input_2plus_hat_delim.tsv]====
+f1
+abc^ghi
+^
+^^
+123^789^
+^
+
+====[tsv-select --exclude 1-2 --delimiter ^  input_2plus_hat_delim.tsv]====
+
+ghi
+
+^
+789^
+
+
+====[tsv-select --exclude 3-10 --delimiter ^  input_2plus_hat_delim.tsv]====
+f1^f2
+abc^def
+^
+^
+123^456
+^abc
+
+====[tsv-select --exclude 2 --fields 1 --rest first --delimiter ^  input_2plus_hat_delim.tsv]====
+f1
+ghi^abc
+^
+^^
+789^^123
+^
+
 ====Multi-file & stdin Tests===
 
 ====[tsv-select -f 2,1 input_3x2.tsv input_emptyfile.tsv input_3x1.tsv input_3x0.tsv input_3x3.tsv]====
@@ -664,6 +1194,24 @@ field2
 field1	field2	field3
 11567	12567	13567
 21567	22567	23567
+
+====[tsv-select --header --exclude 1 input_header1.tsv]====
+field2	field3
+12567	13567
+22567	23567
+
+====[tsv-select -H -e 2 input_header1.tsv input_header2.tsv input_header3.tsv input_header4.tsv]====
+field1	field3
+11567	13567
+21567	23567
+11987	13987
+11888	13888
+21888	23888
+
+====[tsv-select -H -e 1,2,3 input_header3.tsv input_header3.tsv input_header1.tsv]====
+
+
+
 
 Help and Version printing 1
 -----------------

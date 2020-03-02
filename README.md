@@ -40,7 +40,7 @@ The tools work like traditional Unix command line utilities such as `cut`, `sort
 
 The rest of this section contains descriptions of each tool. Click on the links below to jump directly to one of the tools. Full documentation is available in the [tool reference](docs/ToolReference.md).
 
-* [tsv-filter](#tsv-filter) - Filter lines using numeric, string and regular expression comparisons against individual fields. (This description also provides an introduction to features found throughout the toolkit.)
+* [tsv-filter](#tsv-filter) - Filter lines using numeric, string and regular expression comparisons against individual fields. This description also provides an introduction to features found throughout the toolkit.
 * [tsv-select](#tsv-select) - Keep a subset of columns (fields). Like `cut`, but with field reordering.
 * [tsv-uniq](#tsv-uniq) - Filter out duplicate lines using either the full line or individual fields as a key.
 * [tsv-summarize](#tsv-summarize) - Summary statistics on selected fields, against the full data set or grouped by key.
@@ -167,9 +167,29 @@ See the [tsv-filter reference](docs/ToolReference.md#tsv-filter-reference) for m
 
 ### tsv-select
 
-A version of the Unix `cut` utility with the additional ability to re-order the fields. It also helps with header lines by keeping only the header from the first file (`--header` option). The following command writes fields [4, 2, 9, 10, 11] from a pair of files to stdout:
+A version of the Unix `cut` utility with the additional ability to re-order the fields. The following command writes fields [4, 2, 9, 10, 11] from a pair of files to stdout:
 ```
 $ tsv-select -f 4,2,9-11 file1.tsv file2.tsv
+```
+
+Fields can be listed more than once, and fields not listed can be output using the `--rest` option. When working with multiple files, the `--header` option can be used to retain only the header from the first file.
+
+Examples:
+```
+$ # Output fields 2 and 1, in that order
+$ tsv-select -f 2,1 data.tsv
+
+$ # Move field 7 to the start of the line
+$ tsv-select -f 7 --rest last data.tsv
+
+$ # Move field 1 to the end of the line
+$ tsv-select -f 1 --rest first data.tsv
+
+$ # Output a range of fields in reverse order
+$ tsv-select -f 30-3 data.tsv
+
+$ # Multiple files with header lines. Keep only one header.
+$ tsv-select data*.tsv -H --fields 1,2,4-7,14
 ```
 
 See the [tsv-select reference](docs/ToolReference.md#tsv-select-reference) for details.
