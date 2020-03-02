@@ -206,16 +206,16 @@ _tsv_select()
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
-    opts="--help --version --header --fields --rest --delimiter"
+    opts="--help --version --header --fields --exclude --rest --delimiter"
 
     # Options requiring an argument or precluding other options
     # Options with a restricted set of arguments (ie. -r|--rest) have their own case clause.
     case $prev in
-        -h|--help|-V|--version|-f|--fields|-d|--delimiter)
+        -h|--help|-V|--version|-f|--fields|-e|--exclude|-d|--delimiter)
             return
             ;;
         -r|--rest)
-            COMPREPLY=( $(compgen -W "none first last" -- ${cur}) )
+            COMPREPLY=( $(compgen -W "first last" -- ${cur}) )
             return
             ;;
     esac
