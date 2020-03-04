@@ -130,6 +130,10 @@ runtest ${prog} "-e 4-10 input_3plus_fields.tsv" ${basic_tests_1}
 runtest ${prog} "-e 1 -f 3 --rest last input_3plus_fields.tsv" ${basic_tests_1}
 runtest ${prog} "-e 1 -f 3 --rest first input_3plus_fields.tsv" ${basic_tests_1}
 
+runtest ${prog} "-e 1048576 input1.tsv" ${basic_tests_1}
+runtest ${prog} "-e 5-1048576 input1.tsv" ${basic_tests_1}
+runtest ${prog} "-e 4-1048576 input1.tsv" ${basic_tests_1}
+
 # Alternate delimiter
 runtest ${prog} "-f 1 --delimiter ^  input_2plus_hat_delim.tsv" ${basic_tests_1}
 runtest ${prog} "-f 2 -d ^  input_2plus_hat_delim.tsv" ${basic_tests_1}
@@ -234,6 +238,10 @@ runtest ${prog} "-e 7,10 -f 1,3,8-14 input1.tsv" ${error_tests_1}
 runtest ${prog} "-e 7,10 -f 1,3,8-14 input1.tsv" ${error_tests_1}
 runtest ${prog} "-e 1-1000 -f 2000-1000 input1.tsv" ${error_tests_1}
 
+runtest ${prog} "-e 1048577 input1.tsv" ${error_tests_1}
+runtest ${prog} "-e 1048578 input1.tsv" ${error_tests_1}
+runtest ${prog} "-e 4-1048577 input1.tsv" ${error_tests_1}
+runtest ${prog} "-e 4-1048578 input1.tsv" ${error_tests_1}
 
 # Windows line ending detection
 runtest ${prog} "-f 1 input1_dos.tsv" ${error_tests_1}
