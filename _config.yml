@@ -1,6 +1,6 @@
 theme: jekyll-theme-slate
 title: "eBay's TSV Utilities"
-description: "Command line tools for tabular data files written in the D programming language."
+description: "Command line tools for large tabular data files."
 encoding: utf-8
 markdown: kramdown
 kramdown:
