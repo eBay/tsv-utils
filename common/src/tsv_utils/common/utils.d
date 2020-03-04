@@ -150,8 +150,19 @@ if (isSomeChar!C)
         }
     }
 
-    /** processNextField maps an input field to the correct locations in the outputFields
-     * array. It should be called once for each field on the line, in the order found.
+    /** processNextField maps an input field to the correct locations in the
+     * outputFields array.
+     *
+     * processNextField should be called once for each field on the line, in the order
+     * found. The processing of the line can terminate once allFieldsFilled returns
+     * true.
+     *
+     * The return value is the number of output fields the input field maps to. Zero
+     * means the field is not mapped to the output fields array.
+     *
+     * If, prior to allFieldsProcessed returning true, any fields on the input line
+     * are not passed to processNextField, the caller should either ensure the fields
+     * are not part of the output fields or have partial lines enabled.
      */
     final size_t processNextField(size_t fieldIndex, C[] fieldValue) pure nothrow @safe @nogc
     {

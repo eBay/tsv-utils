@@ -940,7 +940,7 @@ if (isOutputRange!(OutputRange, char))
  *
  * When done reading all lines, the "min" heap is in reverse of weighted selection
  * order. Weighted selection order is obtained by removing each element one at at time
- * from the heap. The underlying data store will have the elements in weighted selction
+ * from the heap. The underlying data store will have the elements in weighted selection
  * order (largest weights first).
  *
  * Generating output in weighted order is useful for several reasons:
