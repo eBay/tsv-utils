@@ -122,6 +122,7 @@ struct TsvSelectOptions
     auto processArgs (ref string[] cmdArgs)
     {
         import std.algorithm : any, each, maxElement;
+        import std.format : format;
         import std.getopt;
         import std.path : baseName, stripExtension;
         import std.typecons : Yes, No;
@@ -189,8 +190,23 @@ struct TsvSelectOptions
                 /* '--exclude' changes '--rest' default to 'last'. */
                 if (restArg == RestOption.none) restArg = RestOption.last;
 
-                /* Build the excluded field lookup table. */
+                /* Build the excluded field lookup table.
+                 *
+                 * Note: Users won't have any reason to expect memory is allocated based
+                 * on the max field number. However, users might pick arbitrarily large
+                 * numbers when trimming fields. So, limit the max field number to something
+                 * big but reasonable (more than 1 million). The limit can be raised if use
+                 * cases arise.
+                 */
                 size_t maxExcludedField = excludedFieldsArg.maxElement;
+                size_t maxAllowedExcludedField = 1024 * 1024;
+
+                if (maxExcludedField >= maxAllowedExcludedField)
+                {
+                    throw new Exception(format("Maximum allowed '--e|exclude' field number is %d.",
+                                               maxAllowedExcludedField));
+                }
+
                 excludedFieldsTable.length = maxExcludedField + 1;          // Initialized to false
                 foreach (e; excludedFieldsArg) excludedFieldsTable[e] = true;
             }
