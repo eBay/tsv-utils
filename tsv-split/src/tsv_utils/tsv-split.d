@@ -217,6 +217,7 @@ struct SplitOutputFiles
 {
     import std.conv : to;
     import std.file : exists;
+    import std.format : format;
     import std.stdio : File;
 
     static struct OutputFile
@@ -250,9 +251,20 @@ struct SplitOutputFiles
 
         _outputFiles.length = numFiles;
 
-        foreach (i, ref f; _outputFiles) f.filename = _filePrefix ~ i.to!string ~ _fileSuffix;
+        /* Filename assignment. */
+        uint numPrintDigits = 1;
+        uint x = _numFiles - 1;
+        while (x >= 10)
+        {
+            x /= 10;
+            ++numPrintDigits;
+        }
 
-        import std.stdio;
+        foreach (i, ref f; _outputFiles)
+        {
+
+            f.filename = format("%s%.*d%s", _filePrefix, numPrintDigits, i, _fileSuffix);
+        }
     }
 
     /* Destructor ensures all files are flushed and closed.
