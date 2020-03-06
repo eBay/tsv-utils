@@ -213,6 +213,19 @@ struct TsvSplitOptions
     }
 }
 
+/** A SplitOutputFiles struct holds the collection of output files.
+ *
+ * This struct manages the collection of output files. This includes filenames,
+ * opening and closing files, and writing data and header lines.
+ *
+ * The main properties of the output file set are specified in the constuctor. The
+ * exception is the header line. This is not known until the first input file is
+ * read, so it is specified in a separate 'setHeader' call.
+ *
+ * Individual output files are written to based on their zero-based index in the
+ * output collection. The caller selects the output file number to write to and
+ * calls 'writeDataLine' to write a line. The header is written if needed.
+ */
 struct SplitOutputFiles
 {
     import std.conv : to;
@@ -303,8 +316,8 @@ struct SplitOutputFiles
 
     /* Sets the header line.
      *
-     * Should be called prior to writeln when headers are being written. This is
-     * operation is separate from the constructor because the header is not known
+     * Should be called prior to writeDataLine when headers are being written. This
+     * is operation is separate from the constructor because the header is not known
      * until the first line of a file is read.
      *
      * Headers are only written if 'writeHeaders' is specified as true in the
@@ -316,8 +329,10 @@ struct SplitOutputFiles
         _header = header.to!string;
     }
 
-    /* Picks a random file to close. */
-    void closeSomeFile()
+    /* Picks a random file to close. Used when the open file handle limit has been
+     * reached.
+     */
+    private void closeSomeFile()
     {
         import std.random : uniform;
         assert(_numOpenFiles > 0);
@@ -337,35 +352,42 @@ struct SplitOutputFiles
             }
         }
 
-        assert(false, "[SplitOutputFiles.closeOutputFile]: Could not find file to close.");
+        assert(false, "[SplitOutputFiles.closeSomeFile]: Could not find file to close.");
     }
 
-    void writeDataLine(uint key, const char[] data)
+    /* Write a line to the specified file number.
+     *
+     * A header is written to the file if headers are being written and this is the
+     * first data written to the file.
+     */
+    void writeDataLine(uint fileNum, const char[] data)
     {
-        assert(key < _numFiles);
-        assert(key < _outputFiles.length);
+        assert(fileNum < _numFiles);
+        assert(fileNum < _outputFiles.length);
         assert(_numOpenFiles <= _maxOpenFiles);
 
-        if (!_outputFiles[key].isOpen)
+        OutputFile* outputFile = &_outputFiles[fileNum];
+
+        if (!outputFile.isOpen)
         {
             if (_numOpenFiles == _maxOpenFiles) closeSomeFile();
             assert(_numOpenFiles < _maxOpenFiles);
 
-            _outputFiles[key].ofile = _outputFiles[key].filename.File("a");
-            _outputFiles[key].isOpen = true;
+            outputFile.ofile = outputFile.filename.File("a");
+            outputFile.isOpen = true;
             _numOpenFiles++;
 
-            if (!_outputFiles[key].hasData)
+            if (!outputFile.hasData)
             {
-                ulong filesize = _outputFiles[key].ofile.size;
-                _outputFiles[key].hasData = (filesize > 0 && filesize != ulong.max);
+                ulong filesize = outputFile.ofile.size;
+                outputFile.hasData = (filesize > 0 && filesize != ulong.max);
             }
         }
 
-        if (_writeHeaders && !_outputFiles[key].hasData) _outputFiles[key].ofile.writeln(_header);
+        if (_writeHeaders && !outputFile.hasData) outputFile.ofile.writeln(_header);
 
-        _outputFiles[key].ofile.writeln(data);
-        _outputFiles[key].hasData = true;
+        outputFile.ofile.writeln(data);
+        outputFile.hasData = true;
     }
 }
 
@@ -454,8 +476,8 @@ void splitLinesRandomly(TsvSplitOptions cmdopt, ref SplitOutputFiles outputFiles
             }
             else
             {
-                immutable uint n = uniform(0, cmdopt.numFiles, randomGenerator);
-                outputFiles.writeDataLine(n, line);
+                immutable uint outputFileNum = uniform(0, cmdopt.numFiles, randomGenerator);
+                outputFiles.writeDataLine(outputFileNum, line);
             }
         }
 
@@ -538,8 +560,8 @@ void splitLinesByKey(TsvSplitOptions cmdopt, ref SplitOutputFiles outputFiles)
                 }
 
                 hasher.finish;
-                immutable uint n = hasher.get % cmdopt.numFiles;
-                outputFiles.writeDataLine(n, line);
+                immutable uint outputFileNum = hasher.get % cmdopt.numFiles;
+                outputFiles.writeDataLine(outputFileNum, line);
             }
         }
 
