@@ -58,6 +58,17 @@ else
 immutable helpText = q"EOS
 Synopsis: tsv-split [options] [file...]
 
+Splits input files into a specified number of output files. There are
+two modes of operation:
+
+* Random assignment (--n|num-files NUM): Each input line is written to a
+  randomly selected output file. NUM output files are written.
+
+* Random assignment by key (--n|num-files NUM, --k|key-fields FIELDS):
+  Input lines are written to output files using fields as a key. Each
+  unique key is randomly assigned to an output file. All lines with the
+  same key are written to the same file. NUM output files are written.
+
 Options:
 EOS";
 
