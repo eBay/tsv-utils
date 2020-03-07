@@ -86,11 +86,13 @@ struct TsvSplitOptions
     bool staticSeed = false;                   /// --s|static-seed
     uint seedValueOptionArg = 0;               /// --v|seed-value
     char delim = '\t';                         /// --d|delimiter
+    uint maxOpenFilesArg = 0;                  /// --max-open-files
     bool versionWanted = false;                /// --V|version
     bool hasHeader = false;                    /// Derived. True if either '--H|header' or '--I|header-in-only' is set.
     bool keyIsFullLine = false;                /// Derived. True if '--f|fields 0' is specfied.
     bool usingUnpredictableSeed = true;        /// Derived from --static-seed, --seed-value
     uint seed = 0;                             /// Derived from --static-seed, --seed-value
+    uint maxOpenOutputFiles;                   /// Derived.
 
     /** Process tsv-split command line arguments.
      *
@@ -111,7 +113,7 @@ struct TsvSplitOptions
      */
     auto processArgs(ref string[] cmdArgs)
     {
-        import std.algorithm : any, canFind, each;
+        import std.algorithm : any, canFind, each, min;
         import std.file : exists, isDir;
         import std.format : format;
         import std.getopt;
@@ -149,6 +151,7 @@ struct TsvSplitOptions
                 std.getopt.config.caseInsensitive,
 
                 "d|delimiter",      "CHR  Field delimiter.", &delim,
+                "max-open-files",   "NUM  Maximum open file handles. Min of 5 required.", &maxOpenFilesArg,
 
                 std.getopt.config.caseSensitive,
                 "V|version",        "     Print version information and exit.", &versionWanted,
@@ -166,6 +169,10 @@ struct TsvSplitOptions
                 writeln(tsvutilsVersionNotice("tsv-split"));
                 return tuple(false, 0);
             }
+
+            /*
+             * Validation and derivations.
+             */
 
             if (numFiles < 2) throw new Exception("'--n|num-files is required and must be two or more.");
 
@@ -211,7 +218,63 @@ struct TsvSplitOptions
             else if (staticSeed) seed = 2438424139;
             else assert(0, "Internal error, invalid seed option states.");
 
-            /* Assume remaining args are files. Use standard input if files were not provided. */
+            /* Maximum number of open files.
+             *
+             * Derive maxOpenOutputFiles. Inputs:
+             * - Internal default limit: 4096. This is a somewhat conservative setting.
+             * - rlimit open files limit. Defined by '$ ulimit -n'.
+             * - '--max-open-files' (maxOpenFilesArg). This adjusts the internal limit,
+             *   but only up to the rlimit value.
+             * - Four open files are reserved for stdin, stdout, stderr, and one input
+             *   file.
+             */
+
+            immutable uint internalDefaultMaxOpenFiles = 4096;
+            immutable uint numReservedOpenFiles = 4;
+            immutable uint rlimitOpenFilesLimit = rlimitCurrOpenFilesLimit();
+
+            if (maxOpenFilesArg != 0 && maxOpenFilesArg <= numReservedOpenFiles)
+            {
+                throw new Exception(
+                    format("'--max-open-files' must be at least %d.",
+                           numReservedOpenFiles + 1));
+            }
+
+            if (maxOpenFilesArg > rlimitOpenFilesLimit)
+            {
+                throw new Exception(
+                    format("'--max-open-files' value (%d) greater current system limit (%d)." ~
+                           "\nRun 'ulimit -n' to see the soft limit." ~
+                           "\nRun 'ulimit -Hn' to see the hard limit." ~
+                           "\nRun 'ulimit -Sn NUM' to change the soft limit.",
+                           maxOpenFilesArg, rlimitOpenFilesLimit));
+            }
+
+            if (rlimitOpenFilesLimit <= numReservedOpenFiles)
+            {
+                throw new Exception(
+                    format("System open file limit too small. Current value: %d. Must be %d or more." ~
+                           "\nRun 'ulimit -n' to see the soft limit." ~
+                           "\nRun 'ulimit -Hn' to see the hard limit." ~
+                           "\nRun 'ulimit -Sn NUM' to change the soft limit.",
+                           rlimitOpenFilesLimit, numReservedOpenFiles + 1));
+            }
+
+            immutable uint openFilesLimit =
+                (maxOpenFilesArg != 0)
+                ? maxOpenFilesArg
+                : min(internalDefaultMaxOpenFiles, rlimitOpenFilesLimit);
+
+            assert(openFilesLimit > numReservedOpenFiles);
+
+            maxOpenOutputFiles = openFilesLimit - numReservedOpenFiles;
+
+            /* Remaining command line args.
+             *
+             * Assume remaining args are files. Use standard input if files were not
+             * provided.
+             */
+
             files ~= (cmdArgs.length > 1) ? cmdArgs[1 .. $] : ["-"];
             cmdArgs.length = 1;
         }
@@ -440,35 +503,11 @@ uint rlimitCurrOpenFilesLimit()
  */
 void tsvSplit(TsvSplitOptions cmdopt)
 {
-    import std.algorithm : min;
-    import std.conv : to;
     import std.format : format;
 
-    /* Get the maximum number of open files.
-     *
-     * Internally limit to 4096 for the process (conversative) and the number
-     * specified by '$ ulimit -n'. Four open files are reserved for standard input
-     * standard output, standard error, and the input file.
-     */
-    immutable uint tsvSplitMaxOpenFiles = 4096;
-    immutable uint numReservedOpenFiles = 4;
-    immutable uint rlimitOpenFilesLimit = rlimitCurrOpenFilesLimit();
-
-    if (rlimitOpenFilesLimit <= numReservedOpenFiles)
-    {
-        throw new Exception(
-            format("Open file limit too small. Current value: %d. Must be %d or more." ~
-                   "\nRun 'ulimit -n' to see the soft limit." ~
-                   "\nRun 'ulimit -Hn' to see the hard limit." ~
-                   "\nRun 'ulimit -Sn NUM' to change the soft limit.",
-                   rlimitOpenFilesLimit, numReservedOpenFiles + 1));
-    }
-
-    immutable uint openFilesLimit = min(tsvSplitMaxOpenFiles, rlimitOpenFilesLimit);
-    immutable uint maxOpenOutputFiles = openFilesLimit - numReservedOpenFiles;
-
-    auto outputFiles = SplitOutputFiles(cmdopt.numFiles, cmdopt.dir, cmdopt.prefix,
-                                        cmdopt.suffix, cmdopt.headerInOut, maxOpenOutputFiles);
+    auto outputFiles =
+        SplitOutputFiles(cmdopt.numFiles, cmdopt.dir, cmdopt.prefix,
+                         cmdopt.suffix, cmdopt.headerInOut, cmdopt.maxOpenOutputFiles);
 
     if (!cmdopt.appendToExistingFiles)
     {
