@@ -1,5 +1,5 @@
 /**
-Utilities used by tsv-utils applications. InputFieldReordering, BufferedOututRange,
+Utilities used by tsv-utils applications. InputFieldReordering, BufferedOutputRange,
 and a several others.
 
 Utilities in this file:

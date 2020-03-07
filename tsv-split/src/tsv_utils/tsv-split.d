@@ -58,8 +58,10 @@ else
 immutable helpText = q"EOS
 Synopsis: tsv-split [options] [file...]
 
-Splits input files into a specified number of output files. There are
-two modes of operation:
+Split input files into multiple output files. Modes of operation:
+
+* Fixed number of lines per file (--l|lines-per-file NUM): Each input
+  block of NUM lines is written to a new file.
 
 * Random assignment (--n|num-files NUM): Each input line is written to a
   randomly selected output file. NUM output files are written.
@@ -88,7 +90,8 @@ struct TsvSplitOptions
     string[] files;                            /// Input files
     bool headerInOut = false;                  /// --H|header
     bool headerIn = false;                     /// --I|header-in-only
-    uint numFiles = 0;                         /// --n|num-files (Required)
+    size_t linesPerFile = 0;                   /// --l|lines-per-file
+    uint numFiles = 0;                         /// --n|num-files
     size_t[] keyFields;                        /// --k|key-fields
     string dir;                                /// --dir
     string prefix = "part_";                   /// --prefix
@@ -146,7 +149,8 @@ struct TsvSplitOptions
                 "I|header-in-only", "     Input files have a header line. Do not write the header to output files.", &headerIn,
                 std.getopt.config.caseInsensitive,
 
-                "n|num-files",      "NUM  (Required) Number of files to write.", &numFiles,
+                "l|lines-per-file", "NUM  Number of lines to write to each file.", &linesPerFile,
+                "n|num-files",      "NUM  Number of files to write.", &numFiles,
                 "k|key-fields",     "<field-list>  Fields to use as key. Lines with the same key are written to the same output file. Use '--k|key-fields 0' to use the entire line as the key.",
                 keyFields.makeFieldListOptionHandler!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero),
 
@@ -185,7 +189,25 @@ struct TsvSplitOptions
              * Validation and derivations.
              */
 
-            if (numFiles < 2) throw new Exception("'--n|num-files is required and must be two or more.");
+            if (linesPerFile == 0 && numFiles == 0)
+            {
+                throw new Exception ("Either '--l|lines-per-file' or '--n|num-files' is required.");
+            }
+
+            if (linesPerFile != 0 && numFiles != 0)
+            {
+                throw new Exception ("'--l|lines-per-file' and '--n|num-files' cannot be used together.");
+            }
+
+            if (linesPerFile != 0 && keyFields.length != 0)
+            {
+                throw new Exception ("'--l|lines-per-file' and '--k|key-fields' cannot be used together.");
+            }
+
+            if (numFiles == 1)
+            {
+                throw new Exception("'--n|num-files must be two or more.");
+            }
 
             if (keyFields.length > 0)
             {
@@ -229,7 +251,7 @@ struct TsvSplitOptions
             else if (staticSeed) seed = 2438424139;
             else assert(0, "Internal error, invalid seed option states.");
 
-            /* Maximum number of open files.
+            /* Maximum number of open files. Mainly applies when --num-files is used.
              *
              * Derive maxOpenOutputFiles. Inputs:
              * - Internal default limit: 4096. This is a somewhat conservative setting.
@@ -516,25 +538,39 @@ void tsvSplit(TsvSplitOptions cmdopt)
 {
     import std.format : format;
 
-    auto outputFiles =
-        SplitOutputFiles(cmdopt.numFiles, cmdopt.dir, cmdopt.prefix,
-                         cmdopt.suffix, cmdopt.headerInOut, cmdopt.maxOpenOutputFiles);
-
-    if (!cmdopt.appendToExistingFiles)
+    if (cmdopt.linesPerFile != 0)
     {
-        string existingFile = outputFiles.checkIfFilesExist;
+        splitByLineCount(cmdopt);
+    }
+    else
+    {
+        /* Split into a specified number of files. */
 
-        if (existingFile.length != 0)
+        auto outputFiles =
+            SplitOutputFiles(cmdopt.numFiles, cmdopt.dir, cmdopt.prefix,
+                             cmdopt.suffix, cmdopt.headerInOut, cmdopt.maxOpenOutputFiles);
+
+        if (!cmdopt.appendToExistingFiles)
         {
-            throw new Exception(
-                format("One or more output files already exist. Use '--a|append' to append to existing files. File: '%s'.",
-                       existingFile));
+            string existingFile = outputFiles.checkIfFilesExist;
+
+            if (existingFile.length != 0)
+            {
+                throw new Exception(
+                    format("One or more output files already exist. Use '--a|append' to append to existing files. File: '%s'.",
+                           existingFile));
+            }
+        }
+
+        if (cmdopt.keyFields.length == 0)
+        {
+            splitLinesRandomly(cmdopt, outputFiles);
+        }
+        else
+        {
+            splitLinesByKey(cmdopt, outputFiles);
         }
     }
-
-    /* Call the actual splitting routines. */
-    if (cmdopt.keyFields.length == 0) splitLinesRandomly(cmdopt, outputFiles);
-    else splitLinesByKey(cmdopt, outputFiles);
 }
 
 void splitLinesRandomly(TsvSplitOptions cmdopt, ref SplitOutputFiles outputFiles)
@@ -545,8 +581,7 @@ void splitLinesRandomly(TsvSplitOptions cmdopt, ref SplitOutputFiles outputFiles
     auto randomGenerator = Random(cmdopt.seed);
 
     /* Process each line. */
-    bool headerSet = false;
-    foreach (filename; cmdopt.files)
+    foreach (inputFileNum, filename; cmdopt.files)
     {
         auto inputStream = (filename == "-") ? stdin : filename.File();
         foreach (ulong fileLineNum, line; inputStream.bufferedByLine!(KeepTerminator.no).enumerate(1))
@@ -554,11 +589,7 @@ void splitLinesRandomly(TsvSplitOptions cmdopt, ref SplitOutputFiles outputFiles
             if (fileLineNum == 1) throwIfWindowsNewlineOnUnix(line, filename, fileLineNum);
             if (fileLineNum == 1 && cmdopt.hasHeader)
             {
-                if (!headerSet)
-                {
-                    outputFiles.setHeader(line);
-                    headerSet = true;
-                }
+                if (inputFileNum == 0) outputFiles.setHeader(line);
             }
             else
             {
@@ -591,8 +622,7 @@ void splitLinesByKey(TsvSplitOptions cmdopt, ref SplitOutputFiles outputFiles)
     auto keyFieldsReordering = cmdopt.keyIsFullLine ? null : new InputFieldReordering!char(cmdopt.keyFields);
 
     /* Process each line. */
-    bool headerSet = false;
-    foreach (filename; cmdopt.files)
+    foreach (inputFileNum, filename; cmdopt.files)
     {
         auto inputStream = (filename == "-") ? stdin : filename.File();
         foreach (ulong fileLineNum, line; inputStream.bufferedByLine!(KeepTerminator.no).enumerate(1))
@@ -600,11 +630,7 @@ void splitLinesByKey(TsvSplitOptions cmdopt, ref SplitOutputFiles outputFiles)
             if (fileLineNum == 1) throwIfWindowsNewlineOnUnix(line, filename, fileLineNum);
             if (fileLineNum == 1 && cmdopt.hasHeader)
             {
-                if (!headerSet)
-                {
-                    outputFiles.setHeader(line);
-                    headerSet = true;
-                }
+                if (inputFileNum == 0) outputFiles.setHeader(line);
             }
             else
             {
@@ -657,5 +683,132 @@ void splitLinesByKey(TsvSplitOptions cmdopt, ref SplitOutputFiles outputFiles)
          * output files exceeds the open file limit.
          */
         if (filename != "-") inputStream.close;
+    }
+}
+
+struct OutputFileSequence
+{
+    import std.conv : to;
+    import std.file : exists;
+    import std.format : format;
+    import std.path : buildPath;
+    import std.stdio : File;
+
+    private size_t _linesPerFile;
+    private string _dir;
+    private string _filePrefix;
+    private string _fileSuffix;
+    private bool _writeHeaders;
+    private bool _appendToExistingFiles;
+
+    private string _header;
+
+    private size_t _nextFileNum;
+    private string _currFileName;
+    private File _currOFile;
+    private size_t _currLinesWritten;
+    private bool _currFileOpen;
+
+    this(size_t linesPerFile, string dir, string filePrefix, string fileSuffix,
+         bool writeHeaders, bool appendToExisting)
+    {
+            _linesPerFile = linesPerFile;
+            _dir = dir;
+            _filePrefix = filePrefix;
+            _fileSuffix = fileSuffix;
+            _writeHeaders = writeHeaders;
+            _appendToExistingFiles = appendToExisting;
+    }
+
+    ~this()
+    {
+        if (_currFileOpen)
+        {
+            _currOFile.flush;
+            _currOFile.close;
+            _currFileOpen = false;
+        }
+    }
+
+     /* Sets the header line.
+     *
+     * Should be called prior to writeDataLine when headers are being written. This
+     * is operation is separate from the constructor because the header is not known
+     * until the first line of a file is read.
+     *
+     * Headers are only written if 'writeHeaders' is specified as true in the
+     * constructor. As a convenience, this routine can be called even if headers are
+     * not being written.
+     */
+    void setHeader(const char[] header)
+    {
+        _header = header.to!string;
+    }
+
+    void writeDataLine(const char[] data)
+    {
+        /* See if a new file needs to be opened. */
+        if (_currLinesWritten == 0)
+        {
+            _currFileName =
+                buildPath(_dir, format("%s%d%s", _filePrefix, _nextFileNum, _fileSuffix));
+
+            if (!_appendToExistingFiles && _currFileName.exists)
+            {
+                throw new Exception(
+                format("Output file already exists. Use '--a|append' to append to existing files. File: '%s'.",
+                       _currFileName));
+            }
+
+            _currOFile = _currFileName.File("a");
+            _currFileOpen = true;
+            ++_nextFileNum;
+
+            if (_writeHeaders)
+            {
+                ulong filesize = _currOFile.size;
+                if (filesize == 0 || filesize == ulong.max)
+                {
+                    _currOFile.writeln(_header);
+                }
+            }
+        }
+
+        _currOFile.writeln(data);
+        ++_currLinesWritten;
+
+        if (_currLinesWritten == _linesPerFile)
+        {
+            _currOFile.flush;
+            _currOFile.close;
+            _currFileOpen = false;
+            _currLinesWritten = 0;
+        }
+    }
+}
+
+void splitByLineCount(TsvSplitOptions cmdopt)
+{
+    import tsv_utils.common.utils : bufferedByLine, throwIfWindowsNewlineOnUnix;
+
+    auto outputFiles =
+        OutputFileSequence(cmdopt.linesPerFile, cmdopt.dir, cmdopt.prefix, cmdopt.suffix,
+                           cmdopt.headerInOut, cmdopt.appendToExistingFiles);
+
+    foreach (inputFileNum, filename; cmdopt.files)
+    {
+        auto inputStream = (filename == "-") ? stdin : filename.File();
+        foreach (ulong fileLineNum, line; inputStream.bufferedByLine!(KeepTerminator.no).enumerate(1))
+        {
+            if (fileLineNum == 1) throwIfWindowsNewlineOnUnix(line, filename, fileLineNum);
+            if (fileLineNum == 1 && cmdopt.hasHeader)
+            {
+                if (inputFileNum == 0) outputFiles.setHeader(line);
+            }
+            else
+            {
+                outputFiles.writeDataLine(line);
+            }
+        }
     }
 }
