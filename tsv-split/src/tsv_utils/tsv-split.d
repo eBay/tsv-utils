@@ -79,6 +79,7 @@ struct TsvSplitOptions
     bool headerIn = false;                     /// --I|header-in-only
     uint numFiles = 0;                         /// --n|num-files (Required)
     size_t[] keyFields;                        /// --k|key-fields
+    string dir;                                /// --dir
     string prefix = "part_";                   /// --prefix
     string suffix = ".tsv";                    /// --suffix
     bool appendToExistingFiles = false;        /// --a|append
@@ -111,9 +112,11 @@ struct TsvSplitOptions
     auto processArgs(ref string[] cmdArgs)
     {
         import std.algorithm : any, canFind, each;
+        import std.file : exists, isDir;
+        import std.format : format;
         import std.getopt;
         import std.math : isNaN;
-        import std.path : baseName, stripExtension;
+        import std.path : baseName, expandTilde, stripExtension;
         import std.typecons : Yes, No;
         import tsv_utils.common.utils : makeFieldListOptionHandler;
 
@@ -131,9 +134,10 @@ struct TsvSplitOptions
                 std.getopt.config.caseInsensitive,
 
                 "n|num-files",      "NUM  (Required) Number of files to write.", &numFiles,
-                "k|key-fields",     "<field-list>  Fields to use as key. Use '--k|key-fields 0' to use the entire line as the key.",
+                "k|key-fields",     "<field-list>  Fields to use as key. Lines with the same key are written to the same output file. Use '--k|key-fields 0' to use the entire line as the key.",
                 keyFields.makeFieldListOptionHandler!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero),
 
+                "dir",              "STR  Directory to write to. Default: Current working directory.", &dir,
                 "prefix",           "STR  Filename prefix. Default: 'part_'", &prefix,
                 "suffix",           "STR  Filename suffix. Default: '.tsv'", &suffix,
                 "a|append",         "     Append to existing files.", &appendToExistingFiles,
@@ -190,6 +194,13 @@ struct TsvSplitOptions
 
             hasHeader = headerInOut || headerIn;
 
+            if (!dir.empty)
+            {
+                dir = dir.expandTilde;
+                if (!dir.exists) throw new Exception(format("Directory does not exist: --dir '%s'", dir));
+                else if (!dir.isDir) throw new Exception(format("Path is not a directory: --dir '%s'", dir));
+            }
+
             /* Seed. */
             import std.random : unpredictableSeed;
 
@@ -231,6 +242,7 @@ struct SplitOutputFiles
     import std.conv : to;
     import std.file : exists;
     import std.format : format;
+    import std.path : buildPath;
     import std.stdio : File;
 
     static struct OutputFile
@@ -242,8 +254,6 @@ struct SplitOutputFiles
     }
 
     private uint _numFiles;
-    private string _filePrefix;
-    private string _fileSuffix;
     private bool _writeHeaders;
     private uint _maxOpenFiles;
 
@@ -251,14 +261,12 @@ struct SplitOutputFiles
     private uint _numOpenFiles = 0;
     private string _header;
 
-    this(uint numFiles, string filePrefix, string fileSuffix, bool writeHeaders, uint maxOpenFiles)
+    this(uint numFiles, string dir, string filePrefix, string fileSuffix, bool writeHeaders, uint maxOpenFiles)
     {
         assert(numFiles >= 2);
         assert(maxOpenFiles >= 1);
 
         _numFiles = numFiles;
-        _filePrefix = filePrefix;
-        _fileSuffix = fileSuffix;
         _writeHeaders = writeHeaders;
         _maxOpenFiles = maxOpenFiles;
 
@@ -275,8 +283,8 @@ struct SplitOutputFiles
 
         foreach (i, ref f; _outputFiles)
         {
-
-            f.filename = format("%s%.*d%s", _filePrefix, numPrintDigits, i, _fileSuffix);
+            f.filename =
+                buildPath(dir, format("%s%.*d%s", filePrefix, numPrintDigits, i, fileSuffix));
         }
     }
 
@@ -432,8 +440,8 @@ void tsvSplit(TsvSplitOptions cmdopt)
         : rlimitMaxOpenFiles.rlim_cur.to!uint - numReservedOpenFiles;
 
 
-    auto outputFiles = SplitOutputFiles(cmdopt.numFiles, cmdopt.prefix, cmdopt.suffix,
-                                        cmdopt.headerInOut, maxOpenFiles);
+    auto outputFiles = SplitOutputFiles(cmdopt.numFiles, cmdopt.dir, cmdopt.prefix,
+                                        cmdopt.suffix, cmdopt.headerInOut, maxOpenFiles);
 
     if (!cmdopt.appendToExistingFiles)
     {
