@@ -399,12 +399,48 @@ struct SplitOutputFiles
     }
 }
 
+/* Get the rlimit current number of open files the process is allowed.
+ *
+ * This routine returns the current soft limit on the number of open files the process
+ * is allowed. This is the number returned by the command: '$ ulimit -n'.
+ *
+ * This routine translates this value to a 'uint', as tsv-split uses 'uint' for
+ * tracking output files. The rlimit 'rlim_t' type is usually 'ulong' or 'long'.
+ * RLIM_INFINITY and any value larger than 'uint.max' is translated to 'uint.max'.
+ *
+ * An exception is thrown if call to 'getrlimit' fails.
+ */
+uint rlimitCurrOpenFilesLimit()
+{
+    import core.sys.posix.sys.resource :
+        rlim_t, rlimit, getrlimit, RLIMIT_NOFILE, RLIM_INFINITY, RLIM_SAVED_CUR;
+    import std.conv : to;
+
+    uint currOpenFileLimit = uint.max;
+
+    rlimit rlimitMaxOpenFiles;
+
+    if (getrlimit(RLIMIT_NOFILE, &rlimitMaxOpenFiles) != 0)
+    {
+        throw new Exception("Internal error: getrlimit call failed");
+    }
+
+    if (rlimitMaxOpenFiles.rlim_cur != RLIM_INFINITY &&
+        rlimitMaxOpenFiles.rlim_cur != RLIM_SAVED_CUR &&
+        rlimitMaxOpenFiles.rlim_cur >= 0 &&
+        rlimitMaxOpenFiles.rlim_cur <= uint.max)
+    {
+        currOpenFileLimit = rlimitMaxOpenFiles.rlim_cur.to!uint;
+    }
+
+    return currOpenFileLimit;
+}
 
 /** Invokes the proper split routine based on the command line arguments.
  */
 void tsvSplit(TsvSplitOptions cmdopt)
 {
-    import core.sys.posix.sys.resource : rlim_t, rlimit, getrlimit, RLIMIT_NOFILE;
+    import std.algorithm : min;
     import std.conv : to;
     import std.format : format;
 
@@ -416,32 +452,23 @@ void tsvSplit(TsvSplitOptions cmdopt)
      */
     immutable uint tsvSplitMaxOpenFiles = 4096;
     immutable uint numReservedOpenFiles = 4;
+    immutable uint rlimitOpenFilesLimit = rlimitCurrOpenFilesLimit();
 
-    rlimit rlimitMaxOpenFiles;
-
-    if (getrlimit(RLIMIT_NOFILE, &rlimitMaxOpenFiles) != 0)
-    {
-        throw new Exception("Internal error: getrlimit call failed");
-    }
-
-    if (rlimitMaxOpenFiles.rlim_cur <= numReservedOpenFiles)
+    if (rlimitOpenFilesLimit <= numReservedOpenFiles)
     {
         throw new Exception(
             format("Open file limit too small. Current value: %d. Must be %d or more." ~
                    "\nRun 'ulimit -n' to see the soft limit." ~
                    "\nRun 'ulimit -Hn' to see the hard limit." ~
                    "\nRun 'ulimit -Sn NUM' to change the soft limit.",
-                   rlimitMaxOpenFiles.rlim_cur, numReservedOpenFiles + 1));
+                   rlimitOpenFilesLimit, numReservedOpenFiles + 1));
     }
 
-    immutable uint maxOpenFiles =
-        (tsvSplitMaxOpenFiles.to!rlim_t <= rlimitMaxOpenFiles.rlim_cur)
-        ? tsvSplitMaxOpenFiles - numReservedOpenFiles
-        : rlimitMaxOpenFiles.rlim_cur.to!uint - numReservedOpenFiles;
-
+    immutable uint openFilesLimit = min(tsvSplitMaxOpenFiles, rlimitOpenFilesLimit);
+    immutable uint maxOpenOutputFiles = openFilesLimit - numReservedOpenFiles;
 
     auto outputFiles = SplitOutputFiles(cmdopt.numFiles, cmdopt.dir, cmdopt.prefix,
-                                        cmdopt.suffix, cmdopt.headerInOut, maxOpenFiles);
+                                        cmdopt.suffix, cmdopt.headerInOut, maxOpenOutputFiles);
 
     if (!cmdopt.appendToExistingFiles)
     {
@@ -455,6 +482,7 @@ void tsvSplit(TsvSplitOptions cmdopt)
         }
     }
 
+    /* Call the actual splitting routines. */
     if (cmdopt.keyFields.length == 0) splitLinesRandomly(cmdopt, outputFiles);
     else splitLinesByKey(cmdopt, outputFiles);
 }
