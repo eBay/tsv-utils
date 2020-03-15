@@ -79,19 +79,21 @@ runtest_wdir () {
 }
 help_and_version_tests=${odir}/help_and_version_tests.txt
 lines_per_file_tests=${odir}/lines_per_file_tests.txt
+random_assignment_tests=${odir}/random_assignment_tests.txt
+key_assignment_tests=${odir}/key_assignment_tests.txt
 
-echo "Basic tests set 1" > ${lines_per_file_tests}
+echo "Lines per file tests" > ${lines_per_file_tests}
 echo "-----------------" >> ${lines_per_file_tests}
 
-runtest_wdir ${prog} "-l 1 ${testdir_relpath}/input1x5.txt" ${lines_per_file_tests}
-runtest_wdir ${prog} "-l 2 ${testdir_relpath}/input1x5.txt" ${lines_per_file_tests}
+runtest_wdir ${prog} "--lines-per-file 1 ${testdir_relpath}/input1x5.txt" ${lines_per_file_tests}
+runtest_wdir ${prog} "--lines-per-file 2 ${testdir_relpath}/input1x5.txt" ${lines_per_file_tests}
 runtest_wdir ${prog} "-l 3 ${testdir_relpath}/input1x5.txt" ${lines_per_file_tests}
 runtest_wdir ${prog} "-l 4 ${testdir_relpath}/input1x5.txt" ${lines_per_file_tests}
 runtest_wdir ${prog} "-l 5 ${testdir_relpath}/input1x5.txt" ${lines_per_file_tests}
 runtest_wdir ${prog} "-l 6 ${testdir_relpath}/input1x5.txt" ${lines_per_file_tests}
 
-runtest_wdir ${prog} "-l 1 --header ${testdir_relpath}/input1x5.txt" ${lines_per_file_tests}
-runtest_wdir ${prog} "-l 2 -H ${testdir_relpath}/input1x5.txt" ${lines_per_file_tests}
+runtest_wdir ${prog} "--lines-per-file 1 --header ${testdir_relpath}/input1x5.txt" ${lines_per_file_tests}
+runtest_wdir ${prog} "--lines-per-file 2 -H ${testdir_relpath}/input1x5.txt" ${lines_per_file_tests}
 runtest_wdir ${prog} "-l 3 -H ${testdir_relpath}/input1x5.txt" ${lines_per_file_tests}
 runtest_wdir ${prog} "-l 4 -H ${testdir_relpath}/input1x5.txt" ${lines_per_file_tests}
 runtest_wdir ${prog} "-l 5 -H ${testdir_relpath}/input1x5.txt" ${lines_per_file_tests}

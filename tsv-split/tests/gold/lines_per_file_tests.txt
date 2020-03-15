@@ -1,7 +1,7 @@
-Basic tests set 1
+Lines per file tests
 -----------------
 
-====[tsv-split -l 1 ../input1x5.txt]====
+====[tsv-split --lines-per-file 1 ../input1x5.txt]====
 ==> ./tsvsplit_workdir/part_0.tsv <==
 input1x5.txt: line 1
 
@@ -17,7 +17,7 @@ input1x5.txt: line 4
 ==> ./tsvsplit_workdir/part_4.tsv <==
 input1x5.txt: line 5
 
-====[tsv-split -l 2 ../input1x5.txt]====
+====[tsv-split --lines-per-file 2 ../input1x5.txt]====
 ==> ./tsvsplit_workdir/part_0.tsv <==
 input1x5.txt: line 1
 input1x5.txt: line 2
@@ -63,7 +63,7 @@ input1x5.txt: line 3
 input1x5.txt: line 4
 input1x5.txt: line 5
 
-====[tsv-split -l 1 --header ../input1x5.txt]====
+====[tsv-split --lines-per-file 1 --header ../input1x5.txt]====
 ==> ./tsvsplit_workdir/part_0.tsv <==
 input1x5.txt: line 1
 input1x5.txt: line 2
@@ -80,7 +80,7 @@ input1x5.txt: line 4
 input1x5.txt: line 1
 input1x5.txt: line 5
 
-====[tsv-split -l 2 -H ../input1x5.txt]====
+====[tsv-split --lines-per-file 2 -H ../input1x5.txt]====
 ==> ./tsvsplit_workdir/part_0.tsv <==
 input1x5.txt: line 1
 input1x5.txt: line 2
