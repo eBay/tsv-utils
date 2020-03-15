@@ -812,3 +812,73 @@ void splitByLineCount(TsvSplitOptions cmdopt)
         }
     }
 }
+
+unittest
+{
+    /* TsvSplitOptions unit tests.
+     * 
+     * Very basic here. Mostly covered in executable tests, especially error cases, as
+     * errors write to stderr.
+     */
+    {
+        auto args = ["unittest", "--lines-per-file", "10"];
+        TsvSplitOptions cmdopt;
+        const r = cmdopt.processArgs(args);
+
+        assert(cmdopt.files == ["-"]);
+        assert(cmdopt.linesPerFile == 10);
+        assert(cmdopt.keyFields.empty);
+        assert(cmdopt.numFiles == 0);
+        assert(cmdopt.hasHeader == false);
+    }
+    {
+        auto args = ["unittest", "--num-files", "20"];
+        TsvSplitOptions cmdopt;
+        const r = cmdopt.processArgs(args);
+
+        assert(cmdopt.files == ["-"]);
+        assert(cmdopt.linesPerFile == 0);
+        assert(cmdopt.keyFields.empty);
+        assert(cmdopt.numFiles == 20);
+        assert(cmdopt.hasHeader == false);
+    }
+    {
+        auto args = ["unittest", "-n", "5", "--key-fields", "1-3"];
+        TsvSplitOptions cmdopt;
+        const r = cmdopt.processArgs(args);
+
+        assert(cmdopt.linesPerFile == 0);
+        assert(cmdopt.keyFields == [0, 1, 2]);
+        assert(cmdopt.numFiles == 5);
+        assert(cmdopt.hasHeader == false);
+        assert(cmdopt.keyIsFullLine == false);
+    }
+    {
+        auto args = ["unittest", "-n", "5", "-k", "0"];
+        TsvSplitOptions cmdopt;
+        const r = cmdopt.processArgs(args);
+
+        assert(cmdopt.linesPerFile == 0);
+        assert(cmdopt.numFiles == 5);
+        assert(cmdopt.hasHeader == false);
+        assert(cmdopt.keyIsFullLine == true);
+    }
+    {
+        auto args = ["unittest", "-n", "2", "--header"];
+        TsvSplitOptions cmdopt;
+        const r = cmdopt.processArgs(args);
+
+        assert(cmdopt.headerInOut == true);
+        assert(cmdopt.hasHeader == true);
+        assert(cmdopt.headerIn == false);
+    }
+    {
+        auto args = ["unittest", "-n", "2", "--header-in-only"];
+        TsvSplitOptions cmdopt;
+        const r = cmdopt.processArgs(args);
+
+        assert(cmdopt.headerInOut == false);
+        assert(cmdopt.hasHeader == true);
+        assert(cmdopt.headerIn == true);
+    }
+}
