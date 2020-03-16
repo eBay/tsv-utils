@@ -1,0 +1,891 @@
+Random assignment tests
+-----------------------
+
+====[tsv-split --static-seed --num-files 2 ../input1x5.txt]====
+==> ./tsvsplit_workdir/part_0.tsv <==
+input1x5.txt: line 1
+
+==> ./tsvsplit_workdir/part_1.tsv <==
+input1x5.txt: line 2
+input1x5.txt: line 3
+input1x5.txt: line 4
+input1x5.txt: line 5
+
+====[tsv-split -s -n 3 ../input1x5.txt]====
+==> ./tsvsplit_workdir/part_0.tsv <==
+input1x5.txt: line 2
+input1x5.txt: line 3
+
+==> ./tsvsplit_workdir/part_1.tsv <==
+input1x5.txt: line 4
+
+==> ./tsvsplit_workdir/part_2.tsv <==
+input1x5.txt: line 1
+input1x5.txt: line 5
+
+====[tsv-split -s -n 5 ../input1x5.txt]====
+==> ./tsvsplit_workdir/part_0.tsv <==
+input1x5.txt: line 1
+
+==> ./tsvsplit_workdir/part_1.tsv <==
+input1x5.txt: line 3
+input1x5.txt: line 5
+
+==> ./tsvsplit_workdir/part_4.tsv <==
+input1x5.txt: line 2
+input1x5.txt: line 4
+
+====[tsv-split -s -n 10 ../input1x5.txt]====
+==> ./tsvsplit_workdir/part_0.tsv <==
+input1x5.txt: line 1
+
+==> ./tsvsplit_workdir/part_1.tsv <==
+input1x5.txt: line 3
+input1x5.txt: line 5
+
+==> ./tsvsplit_workdir/part_9.tsv <==
+input1x5.txt: line 2
+input1x5.txt: line 4
+
+====[tsv-split -s -n 11 ../input1x5.txt]====
+==> ./tsvsplit_workdir/part_02.tsv <==
+input1x5.txt: line 1
+
+==> ./tsvsplit_workdir/part_03.tsv <==
+input1x5.txt: line 5
+
+==> ./tsvsplit_workdir/part_05.tsv <==
+input1x5.txt: line 2
+
+==> ./tsvsplit_workdir/part_07.tsv <==
+input1x5.txt: line 3
+
+==> ./tsvsplit_workdir/part_09.tsv <==
+input1x5.txt: line 4
+
+====[tsv-split -s -n 101 ../input1x5.txt]====
+==> ./tsvsplit_workdir/part_027.tsv <==
+input1x5.txt: line 4
+
+==> ./tsvsplit_workdir/part_028.tsv <==
+input1x5.txt: line 1
+input1x5.txt: line 5
+
+==> ./tsvsplit_workdir/part_057.tsv <==
+input1x5.txt: line 2
+
+==> ./tsvsplit_workdir/part_073.tsv <==
+input1x5.txt: line 3
+
+====[tsv-split -s --num-files 2 ../input1x3.txt ../input1x5.txt]====
+==> ./tsvsplit_workdir/part_0.tsv <==
+input1x3.txt: line 1
+input1x5.txt: line 4
+input1x5.txt: line 5
+
+==> ./tsvsplit_workdir/part_1.tsv <==
+input1x3.txt: line 2
+input1x3.txt: line 3
+input1x5.txt: line 1
+input1x5.txt: line 2
+input1x5.txt: line 3
+
+====[tsv-split -s -n 11 ../input1x3.txt ../input1x5.txt]====
+==> ./tsvsplit_workdir/part_00.tsv <==
+input1x5.txt: line 5
+
+==> ./tsvsplit_workdir/part_02.tsv <==
+input1x3.txt: line 1
+
+==> ./tsvsplit_workdir/part_03.tsv <==
+input1x5.txt: line 2
+
+==> ./tsvsplit_workdir/part_05.tsv <==
+input1x3.txt: line 2
+input1x5.txt: line 3
+
+==> ./tsvsplit_workdir/part_07.tsv <==
+input1x3.txt: line 3
+
+==> ./tsvsplit_workdir/part_09.tsv <==
+input1x5.txt: line 1
+input1x5.txt: line 4
+
+====[tsv-split -s -n 101 ../input1x3.txt ../input1x5.txt]====
+==> ./tsvsplit_workdir/part_027.tsv <==
+input1x5.txt: line 1
+
+==> ./tsvsplit_workdir/part_028.tsv <==
+input1x3.txt: line 1
+input1x5.txt: line 2
+
+==> ./tsvsplit_workdir/part_041.tsv <==
+input1x5.txt: line 3
+
+==> ./tsvsplit_workdir/part_047.tsv <==
+input1x5.txt: line 4
+
+==> ./tsvsplit_workdir/part_056.tsv <==
+input1x5.txt: line 5
+
+==> ./tsvsplit_workdir/part_057.tsv <==
+input1x3.txt: line 2
+
+==> ./tsvsplit_workdir/part_073.tsv <==
+input1x3.txt: line 3
+
+====[tsv-split --seed-value 15017 --num-files 2 ../input1x5.txt]====
+==> ./tsvsplit_workdir/part_0.tsv <==
+input1x5.txt: line 2
+input1x5.txt: line 3
+input1x5.txt: line 4
+input1x5.txt: line 5
+
+==> ./tsvsplit_workdir/part_1.tsv <==
+input1x5.txt: line 1
+
+====[tsv-split -v 15017 -n 3 ../input1x5.txt]====
+==> ./tsvsplit_workdir/part_0.tsv <==
+input1x5.txt: line 3
+input1x5.txt: line 4
+input1x5.txt: line 5
+
+==> ./tsvsplit_workdir/part_1.tsv <==
+input1x5.txt: line 1
+
+==> ./tsvsplit_workdir/part_2.tsv <==
+input1x5.txt: line 2
+
+====[tsv-split -v 15017 -n 11 ../input1x5.txt]====
+==> ./tsvsplit_workdir/part_02.tsv <==
+input1x5.txt: line 2
+
+==> ./tsvsplit_workdir/part_03.tsv <==
+input1x5.txt: line 1
+input1x5.txt: line 4
+
+==> ./tsvsplit_workdir/part_07.tsv <==
+input1x5.txt: line 3
+input1x5.txt: line 5
+
+====[tsv-split -v 15017 -n 2 ../input1x3.txt ../input1x5.txt]====
+==> ./tsvsplit_workdir/part_0.tsv <==
+input1x3.txt: line 2
+input1x3.txt: line 3
+input1x5.txt: line 1
+input1x5.txt: line 2
+input1x5.txt: line 3
+
+==> ./tsvsplit_workdir/part_1.tsv <==
+input1x3.txt: line 1
+input1x5.txt: line 4
+input1x5.txt: line 5
+
+====[tsv-split -v 15017 -n 3 ../input1x3.txt ../input1x5.txt]====
+==> ./tsvsplit_workdir/part_0.tsv <==
+input1x3.txt: line 3
+input1x5.txt: line 1
+input1x5.txt: line 2
+input1x5.txt: line 3
+
+==> ./tsvsplit_workdir/part_1.tsv <==
+input1x3.txt: line 1
+input1x5.txt: line 4
+
+==> ./tsvsplit_workdir/part_2.tsv <==
+input1x3.txt: line 2
+input1x5.txt: line 5
+
+====[tsv-split -v 15017 -n 101 ../input1x3.txt ../input1x5.txt]====
+==> ./tsvsplit_workdir/part_032.tsv <==
+input1x5.txt: line 2
+
+==> ./tsvsplit_workdir/part_047.tsv <==
+input1x3.txt: line 2
+
+==> ./tsvsplit_workdir/part_050.tsv <==
+input1x5.txt: line 5
+
+==> ./tsvsplit_workdir/part_069.tsv <==
+input1x3.txt: line 1
+
+==> ./tsvsplit_workdir/part_070.tsv <==
+input1x5.txt: line 4
+
+==> ./tsvsplit_workdir/part_082.tsv <==
+input1x5.txt: line 3
+
+==> ./tsvsplit_workdir/part_094.tsv <==
+input1x3.txt: line 3
+
+==> ./tsvsplit_workdir/part_100.tsv <==
+input1x5.txt: line 1
+
+====[tsv-split -v 15017 -n 2 -H ../input1x5.txt]====
+==> ./tsvsplit_workdir/part_0.tsv <==
+input1x5.txt: line 1
+input1x5.txt: line 3
+input1x5.txt: line 4
+input1x5.txt: line 5
+
+==> ./tsvsplit_workdir/part_1.tsv <==
+input1x5.txt: line 1
+input1x5.txt: line 2
+
+====[tsv-split -v 15017 -n 3 -H ../input1x5.txt]====
+==> ./tsvsplit_workdir/part_0.tsv <==
+input1x5.txt: line 1
+input1x5.txt: line 4
+input1x5.txt: line 5
+
+==> ./tsvsplit_workdir/part_1.tsv <==
+input1x5.txt: line 1
+input1x5.txt: line 2
+
+==> ./tsvsplit_workdir/part_2.tsv <==
+input1x5.txt: line 1
+input1x5.txt: line 3
+
+====[tsv-split -v 15017 -n 2 -H ../input1x3.txt ../input1x5.txt]====
+==> ./tsvsplit_workdir/part_0.tsv <==
+input1x3.txt: line 1
+input1x3.txt: line 3
+input1x5.txt: line 2
+input1x5.txt: line 3
+input1x5.txt: line 4
+input1x5.txt: line 5
+
+==> ./tsvsplit_workdir/part_1.tsv <==
+input1x3.txt: line 1
+input1x3.txt: line 2
+
+====[tsv-split -v 15017 -n 3 -H ../input1x3.txt ../input1x5.txt]====
+==> ./tsvsplit_workdir/part_0.tsv <==
+input1x3.txt: line 1
+input1x5.txt: line 2
+input1x5.txt: line 3
+input1x5.txt: line 4
+input1x5.txt: line 5
+
+==> ./tsvsplit_workdir/part_1.tsv <==
+input1x3.txt: line 1
+input1x3.txt: line 2
+
+==> ./tsvsplit_workdir/part_2.tsv <==
+input1x3.txt: line 1
+input1x3.txt: line 3
+
+====[tsv-split -v 15017 -n 2 -I ../input1x5.txt]====
+==> ./tsvsplit_workdir/part_0.tsv <==
+input1x5.txt: line 3
+input1x5.txt: line 4
+input1x5.txt: line 5
+
+==> ./tsvsplit_workdir/part_1.tsv <==
+input1x5.txt: line 2
+
+====[tsv-split -v 15017 -n 3 -I ../input1x5.txt]====
+==> ./tsvsplit_workdir/part_0.tsv <==
+input1x5.txt: line 4
+input1x5.txt: line 5
+
+==> ./tsvsplit_workdir/part_1.tsv <==
+input1x5.txt: line 2
+
+==> ./tsvsplit_workdir/part_2.tsv <==
+input1x5.txt: line 3
+
+====[tsv-split -v 15017 -n 2 -I ../input1x3.txt ../input1x5.txt]====
+==> ./tsvsplit_workdir/part_0.tsv <==
+input1x3.txt: line 3
+input1x5.txt: line 2
+input1x5.txt: line 3
+input1x5.txt: line 4
+input1x5.txt: line 5
+
+==> ./tsvsplit_workdir/part_1.tsv <==
+input1x3.txt: line 2
+
+====[tsv-split -v 15017 -n 3 -I ../input1x3.txt ../input1x5.txt]====
+==> ./tsvsplit_workdir/part_0.tsv <==
+input1x5.txt: line 2
+input1x5.txt: line 3
+input1x5.txt: line 4
+input1x5.txt: line 5
+
+==> ./tsvsplit_workdir/part_1.tsv <==
+input1x3.txt: line 2
+
+==> ./tsvsplit_workdir/part_2.tsv <==
+input1x3.txt: line 3
+
+====[tsv-split -v 15017 -n 3 --prefix pre_ ../input1x3.txt ../input1x5.txt]====
+==> ./tsvsplit_workdir/pre_0.tsv <==
+input1x3.txt: line 3
+input1x5.txt: line 1
+input1x5.txt: line 2
+input1x5.txt: line 3
+
+==> ./tsvsplit_workdir/pre_1.tsv <==
+input1x3.txt: line 1
+input1x5.txt: line 4
+
+==> ./tsvsplit_workdir/pre_2.tsv <==
+input1x3.txt: line 2
+input1x5.txt: line 5
+
+====[tsv-split -v 15017 -n 101 --prefix pre_ ../input1x3.txt ../input1x5.txt]====
+==> ./tsvsplit_workdir/pre_032.tsv <==
+input1x5.txt: line 2
+
+==> ./tsvsplit_workdir/pre_047.tsv <==
+input1x3.txt: line 2
+
+==> ./tsvsplit_workdir/pre_050.tsv <==
+input1x5.txt: line 5
+
+==> ./tsvsplit_workdir/pre_069.tsv <==
+input1x3.txt: line 1
+
+==> ./tsvsplit_workdir/pre_070.tsv <==
+input1x5.txt: line 4
+
+==> ./tsvsplit_workdir/pre_082.tsv <==
+input1x5.txt: line 3
+
+==> ./tsvsplit_workdir/pre_094.tsv <==
+input1x3.txt: line 3
+
+==> ./tsvsplit_workdir/pre_100.tsv <==
+input1x5.txt: line 1
+
+====[tsv-split -v 15017 -n 3 --suffix .txt ../input1x3.txt ../input1x5.txt]====
+==> ./tsvsplit_workdir/part_0.txt <==
+input1x3.txt: line 3
+input1x5.txt: line 1
+input1x5.txt: line 2
+input1x5.txt: line 3
+
+==> ./tsvsplit_workdir/part_1.txt <==
+input1x3.txt: line 1
+input1x5.txt: line 4
+
+==> ./tsvsplit_workdir/part_2.txt <==
+input1x3.txt: line 2
+input1x5.txt: line 5
+
+====[tsv-split -v 15017 -n 101 --suffix .txt ../input1x3.txt ../input1x5.txt]====
+==> ./tsvsplit_workdir/part_032.txt <==
+input1x5.txt: line 2
+
+==> ./tsvsplit_workdir/part_047.txt <==
+input1x3.txt: line 2
+
+==> ./tsvsplit_workdir/part_050.txt <==
+input1x5.txt: line 5
+
+==> ./tsvsplit_workdir/part_069.txt <==
+input1x3.txt: line 1
+
+==> ./tsvsplit_workdir/part_070.txt <==
+input1x5.txt: line 4
+
+==> ./tsvsplit_workdir/part_082.txt <==
+input1x5.txt: line 3
+
+==> ./tsvsplit_workdir/part_094.txt <==
+input1x3.txt: line 3
+
+==> ./tsvsplit_workdir/part_100.txt <==
+input1x5.txt: line 1
+
+====[tsv-split -v 15017 -n 3 --prefix pre_ --suffix .txt ../input1x3.txt ../input1x5.txt]====
+==> ./tsvsplit_workdir/pre_0.txt <==
+input1x3.txt: line 3
+input1x5.txt: line 1
+input1x5.txt: line 2
+input1x5.txt: line 3
+
+==> ./tsvsplit_workdir/pre_1.txt <==
+input1x3.txt: line 1
+input1x5.txt: line 4
+
+==> ./tsvsplit_workdir/pre_2.txt <==
+input1x3.txt: line 2
+input1x5.txt: line 5
+
+====[tsv-split -v 15017 -n 101 --prefix pre_ --suffix .txt ../input1x3.txt ../input1x5.txt]====
+==> ./tsvsplit_workdir/pre_032.txt <==
+input1x5.txt: line 2
+
+==> ./tsvsplit_workdir/pre_047.txt <==
+input1x3.txt: line 2
+
+==> ./tsvsplit_workdir/pre_050.txt <==
+input1x5.txt: line 5
+
+==> ./tsvsplit_workdir/pre_069.txt <==
+input1x3.txt: line 1
+
+==> ./tsvsplit_workdir/pre_070.txt <==
+input1x5.txt: line 4
+
+==> ./tsvsplit_workdir/pre_082.txt <==
+input1x5.txt: line 3
+
+==> ./tsvsplit_workdir/pre_094.txt <==
+input1x3.txt: line 3
+
+==> ./tsvsplit_workdir/pre_100.txt <==
+input1x5.txt: line 1
+
+====[tsv-split -v 15017 -n 3 --dir odir --prefix pre_ ../input1x3.txt ../input1x5.txt]====
+==> ./tsvsplit_workdir/odir/pre_0.tsv <==
+input1x3.txt: line 3
+input1x5.txt: line 1
+input1x5.txt: line 2
+input1x5.txt: line 3
+
+==> ./tsvsplit_workdir/odir/pre_1.tsv <==
+input1x3.txt: line 1
+input1x5.txt: line 4
+
+==> ./tsvsplit_workdir/odir/pre_2.tsv <==
+input1x3.txt: line 2
+input1x5.txt: line 5
+
+====[tsv-split -v 15017 -n 3 --dir odir --prefix pre_ ../input1x3.txt ../input1x5.txt]====
+==> ./tsvsplit_workdir/odir/pre_0.tsv <==
+input1x3.txt: line 3
+input1x5.txt: line 1
+input1x5.txt: line 2
+input1x5.txt: line 3
+
+==> ./tsvsplit_workdir/odir/pre_1.tsv <==
+input1x3.txt: line 1
+input1x5.txt: line 4
+
+==> ./tsvsplit_workdir/odir/pre_2.tsv <==
+input1x3.txt: line 2
+input1x5.txt: line 5
+
+====[tsv-split -v 15017 -n 3 --dir odir --suffix .txt ../input1x3.txt ../input1x5.txt]====
+==> ./tsvsplit_workdir/odir/part_0.txt <==
+input1x3.txt: line 3
+input1x5.txt: line 1
+input1x5.txt: line 2
+input1x5.txt: line 3
+
+==> ./tsvsplit_workdir/odir/part_1.txt <==
+input1x3.txt: line 1
+input1x5.txt: line 4
+
+==> ./tsvsplit_workdir/odir/part_2.txt <==
+input1x3.txt: line 2
+input1x5.txt: line 5
+
+====[tsv-split -v 15017 -n 3 --dir odir --prefix pre_ --suffix .txt ../input1x3.txt ../input1x5.txt]====
+==> ./tsvsplit_workdir/odir/pre_0.txt <==
+input1x3.txt: line 3
+input1x5.txt: line 1
+input1x5.txt: line 2
+input1x5.txt: line 3
+
+==> ./tsvsplit_workdir/odir/pre_1.txt <==
+input1x3.txt: line 1
+input1x5.txt: line 4
+
+==> ./tsvsplit_workdir/odir/pre_2.txt <==
+input1x3.txt: line 2
+input1x5.txt: line 5
+
+====[tsv-split -v 15017 -n 101 --dir odir --prefix pre_ --suffix .txt ../input1x3.txt ../input1x5.txt]====
+==> ./tsvsplit_workdir/odir/pre_032.txt <==
+input1x5.txt: line 2
+
+==> ./tsvsplit_workdir/odir/pre_047.txt <==
+input1x3.txt: line 2
+
+==> ./tsvsplit_workdir/odir/pre_050.txt <==
+input1x5.txt: line 5
+
+==> ./tsvsplit_workdir/odir/pre_069.txt <==
+input1x3.txt: line 1
+
+==> ./tsvsplit_workdir/odir/pre_070.txt <==
+input1x5.txt: line 4
+
+==> ./tsvsplit_workdir/odir/pre_082.txt <==
+input1x5.txt: line 3
+
+==> ./tsvsplit_workdir/odir/pre_094.txt <==
+input1x3.txt: line 3
+
+==> ./tsvsplit_workdir/odir/pre_100.txt <==
+input1x5.txt: line 1
+
+====[tsv-split -v 15017 -n 101 --max-open-files 5 ../input1x3.txt ../input1x5.txt]====
+==> ./tsvsplit_workdir/part_032.tsv <==
+input1x5.txt: line 2
+
+==> ./tsvsplit_workdir/part_047.tsv <==
+input1x3.txt: line 2
+
+==> ./tsvsplit_workdir/part_050.tsv <==
+input1x5.txt: line 5
+
+==> ./tsvsplit_workdir/part_069.tsv <==
+input1x3.txt: line 1
+
+==> ./tsvsplit_workdir/part_070.tsv <==
+input1x5.txt: line 4
+
+==> ./tsvsplit_workdir/part_082.tsv <==
+input1x5.txt: line 3
+
+==> ./tsvsplit_workdir/part_094.tsv <==
+input1x3.txt: line 3
+
+==> ./tsvsplit_workdir/part_100.tsv <==
+input1x5.txt: line 1
+
+====[tsv-split -v 15017 -n 101 --max-open-files 6 ../input1x3.txt ../input1x5.txt]====
+==> ./tsvsplit_workdir/part_032.tsv <==
+input1x5.txt: line 2
+
+==> ./tsvsplit_workdir/part_047.tsv <==
+input1x3.txt: line 2
+
+==> ./tsvsplit_workdir/part_050.tsv <==
+input1x5.txt: line 5
+
+==> ./tsvsplit_workdir/part_069.tsv <==
+input1x3.txt: line 1
+
+==> ./tsvsplit_workdir/part_070.tsv <==
+input1x5.txt: line 4
+
+==> ./tsvsplit_workdir/part_082.tsv <==
+input1x5.txt: line 3
+
+==> ./tsvsplit_workdir/part_094.tsv <==
+input1x3.txt: line 3
+
+==> ./tsvsplit_workdir/part_100.tsv <==
+input1x5.txt: line 1
+
+====[tsv-split -v 15017 -n 101 --max-open-files 11 ../input1x3.txt ../input1x5.txt]====
+==> ./tsvsplit_workdir/part_032.tsv <==
+input1x5.txt: line 2
+
+==> ./tsvsplit_workdir/part_047.tsv <==
+input1x3.txt: line 2
+
+==> ./tsvsplit_workdir/part_050.tsv <==
+input1x5.txt: line 5
+
+==> ./tsvsplit_workdir/part_069.tsv <==
+input1x3.txt: line 1
+
+==> ./tsvsplit_workdir/part_070.tsv <==
+input1x5.txt: line 4
+
+==> ./tsvsplit_workdir/part_082.tsv <==
+input1x5.txt: line 3
+
+==> ./tsvsplit_workdir/part_094.tsv <==
+input1x3.txt: line 3
+
+==> ./tsvsplit_workdir/part_100.tsv <==
+input1x5.txt: line 1
+
+====[tsv-split -v 15017 -n 101 --max-open-files 12 ../input1x3.txt ../input1x5.txt]====
+==> ./tsvsplit_workdir/part_032.tsv <==
+input1x5.txt: line 2
+
+==> ./tsvsplit_workdir/part_047.tsv <==
+input1x3.txt: line 2
+
+==> ./tsvsplit_workdir/part_050.tsv <==
+input1x5.txt: line 5
+
+==> ./tsvsplit_workdir/part_069.tsv <==
+input1x3.txt: line 1
+
+==> ./tsvsplit_workdir/part_070.tsv <==
+input1x5.txt: line 4
+
+==> ./tsvsplit_workdir/part_082.tsv <==
+input1x5.txt: line 3
+
+==> ./tsvsplit_workdir/part_094.tsv <==
+input1x3.txt: line 3
+
+==> ./tsvsplit_workdir/part_100.tsv <==
+input1x5.txt: line 1
+
+====[tsv-split -v 15017 -n 101 --max-open-files 13 ../input1x3.txt ../input1x5.txt]====
+==> ./tsvsplit_workdir/part_032.tsv <==
+input1x5.txt: line 2
+
+==> ./tsvsplit_workdir/part_047.tsv <==
+input1x3.txt: line 2
+
+==> ./tsvsplit_workdir/part_050.tsv <==
+input1x5.txt: line 5
+
+==> ./tsvsplit_workdir/part_069.tsv <==
+input1x3.txt: line 1
+
+==> ./tsvsplit_workdir/part_070.tsv <==
+input1x5.txt: line 4
+
+==> ./tsvsplit_workdir/part_082.tsv <==
+input1x5.txt: line 3
+
+==> ./tsvsplit_workdir/part_094.tsv <==
+input1x3.txt: line 3
+
+==> ./tsvsplit_workdir/part_100.tsv <==
+input1x5.txt: line 1
+
+====[ulimit -Sn 5 && tsv-split -v 15017 -n 101 ../input1x3.txt ../input1x5.txt]====
+==> ./tsvsplit_workdir/part_032.tsv <==
+input1x5.txt: line 2
+
+==> ./tsvsplit_workdir/part_047.tsv <==
+input1x3.txt: line 2
+
+==> ./tsvsplit_workdir/part_050.tsv <==
+input1x5.txt: line 5
+
+==> ./tsvsplit_workdir/part_069.tsv <==
+input1x3.txt: line 1
+
+==> ./tsvsplit_workdir/part_070.tsv <==
+input1x5.txt: line 4
+
+==> ./tsvsplit_workdir/part_082.tsv <==
+input1x5.txt: line 3
+
+==> ./tsvsplit_workdir/part_094.tsv <==
+input1x3.txt: line 3
+
+==> ./tsvsplit_workdir/part_100.tsv <==
+input1x5.txt: line 1
+
+====[ulimit -Sn 5 && tsv-split -v 15017 -n 101 --max-open-files 5 ../input1x3.txt ../input1x5.txt]====
+==> ./tsvsplit_workdir/part_032.tsv <==
+input1x5.txt: line 2
+
+==> ./tsvsplit_workdir/part_047.tsv <==
+input1x3.txt: line 2
+
+==> ./tsvsplit_workdir/part_050.tsv <==
+input1x5.txt: line 5
+
+==> ./tsvsplit_workdir/part_069.tsv <==
+input1x3.txt: line 1
+
+==> ./tsvsplit_workdir/part_070.tsv <==
+input1x5.txt: line 4
+
+==> ./tsvsplit_workdir/part_082.tsv <==
+input1x5.txt: line 3
+
+==> ./tsvsplit_workdir/part_094.tsv <==
+input1x3.txt: line 3
+
+==> ./tsvsplit_workdir/part_100.tsv <==
+input1x5.txt: line 1
+
+====[ulimit -Sn 6 && tsv-split -v 15017 -n 101 ../input1x3.txt ../input1x5.txt]====
+==> ./tsvsplit_workdir/part_032.tsv <==
+input1x5.txt: line 2
+
+==> ./tsvsplit_workdir/part_047.tsv <==
+input1x3.txt: line 2
+
+==> ./tsvsplit_workdir/part_050.tsv <==
+input1x5.txt: line 5
+
+==> ./tsvsplit_workdir/part_069.tsv <==
+input1x3.txt: line 1
+
+==> ./tsvsplit_workdir/part_070.tsv <==
+input1x5.txt: line 4
+
+==> ./tsvsplit_workdir/part_082.tsv <==
+input1x5.txt: line 3
+
+==> ./tsvsplit_workdir/part_094.tsv <==
+input1x3.txt: line 3
+
+==> ./tsvsplit_workdir/part_100.tsv <==
+input1x5.txt: line 1
+
+====[tsv-split -v 15017 -n 3 --append ../input1x5.txt]====
+====[tsv-split -v 15017 -n 3 --append ../input1x5.txt]====
+==> ./tsvsplit_workdir/part_0.tsv <==
+input1x5.txt: line 3
+input1x5.txt: line 4
+input1x5.txt: line 5
+input1x5.txt: line 3
+input1x5.txt: line 4
+input1x5.txt: line 5
+
+==> ./tsvsplit_workdir/part_1.tsv <==
+input1x5.txt: line 1
+input1x5.txt: line 1
+
+==> ./tsvsplit_workdir/part_2.tsv <==
+input1x5.txt: line 2
+input1x5.txt: line 2
+
+====[tsv-split -v 15017 -n 3 -H --append ../input1x5.txt]====
+====[tsv-split -v 15017 -n 3 -H --append ../input1x5.txt]====
+==> ./tsvsplit_workdir/part_0.tsv <==
+input1x5.txt: line 1
+input1x5.txt: line 4
+input1x5.txt: line 5
+input1x5.txt: line 4
+input1x5.txt: line 5
+
+==> ./tsvsplit_workdir/part_1.tsv <==
+input1x5.txt: line 1
+input1x5.txt: line 2
+input1x5.txt: line 2
+
+==> ./tsvsplit_workdir/part_2.tsv <==
+input1x5.txt: line 1
+input1x5.txt: line 3
+input1x5.txt: line 3
+
+====[tsv-split -v 15017 -n 3 -I -a ../input1x5.txt]====
+====[tsv-split -v 15017 -n 3 -I -a ../input1x5.txt]====
+==> ./tsvsplit_workdir/part_0.tsv <==
+input1x5.txt: line 4
+input1x5.txt: line 5
+input1x5.txt: line 4
+input1x5.txt: line 5
+
+==> ./tsvsplit_workdir/part_1.tsv <==
+input1x5.txt: line 2
+input1x5.txt: line 2
+
+==> ./tsvsplit_workdir/part_2.tsv <==
+input1x5.txt: line 3
+input1x5.txt: line 3
+
+====[cat ../input1x5.txt | tsv-split -s -n 101]====
+==> ./tsvsplit_workdir/part_027.tsv <==
+input1x5.txt: line 4
+
+==> ./tsvsplit_workdir/part_028.tsv <==
+input1x5.txt: line 1
+input1x5.txt: line 5
+
+==> ./tsvsplit_workdir/part_057.tsv <==
+input1x5.txt: line 2
+
+==> ./tsvsplit_workdir/part_073.tsv <==
+input1x5.txt: line 3
+
+====[cat ../input1x5.txt | tsv-split -s -n 101 -H]====
+==> ./tsvsplit_workdir/part_027.tsv <==
+input1x5.txt: line 1
+input1x5.txt: line 5
+
+==> ./tsvsplit_workdir/part_028.tsv <==
+input1x5.txt: line 1
+input1x5.txt: line 2
+
+==> ./tsvsplit_workdir/part_057.tsv <==
+input1x5.txt: line 1
+input1x5.txt: line 3
+
+==> ./tsvsplit_workdir/part_073.tsv <==
+input1x5.txt: line 1
+input1x5.txt: line 4
+
+====[cat ../input1x5.txt | tsv-split -s -n 101 -I]====
+==> ./tsvsplit_workdir/part_027.tsv <==
+input1x5.txt: line 5
+
+==> ./tsvsplit_workdir/part_028.tsv <==
+input1x5.txt: line 2
+
+==> ./tsvsplit_workdir/part_057.tsv <==
+input1x5.txt: line 3
+
+==> ./tsvsplit_workdir/part_073.tsv <==
+input1x5.txt: line 4
+
+====[cat ../input1x5.txt | tsv-split -v 15017 -n 101 -- ../input1x3.txt -]====
+==> ./tsvsplit_workdir/part_032.tsv <==
+input1x5.txt: line 2
+
+==> ./tsvsplit_workdir/part_047.tsv <==
+input1x3.txt: line 2
+
+==> ./tsvsplit_workdir/part_050.tsv <==
+input1x5.txt: line 5
+
+==> ./tsvsplit_workdir/part_069.tsv <==
+input1x3.txt: line 1
+
+==> ./tsvsplit_workdir/part_070.tsv <==
+input1x5.txt: line 4
+
+==> ./tsvsplit_workdir/part_082.tsv <==
+input1x5.txt: line 3
+
+==> ./tsvsplit_workdir/part_094.tsv <==
+input1x3.txt: line 3
+
+==> ./tsvsplit_workdir/part_100.tsv <==
+input1x5.txt: line 1
+
+====[cat ../input1x5.txt | tsv-split -v 15017 -n 101 -H -- ../input1x3.txt -]====
+==> ./tsvsplit_workdir/part_032.tsv <==
+input1x3.txt: line 1
+input1x5.txt: line 4
+
+==> ./tsvsplit_workdir/part_047.tsv <==
+input1x3.txt: line 1
+input1x3.txt: line 3
+
+==> ./tsvsplit_workdir/part_069.tsv <==
+input1x3.txt: line 1
+input1x3.txt: line 2
+
+==> ./tsvsplit_workdir/part_082.tsv <==
+input1x3.txt: line 1
+input1x5.txt: line 5
+
+==> ./tsvsplit_workdir/part_094.tsv <==
+input1x3.txt: line 1
+input1x5.txt: line 2
+
+==> ./tsvsplit_workdir/part_100.tsv <==
+input1x3.txt: line 1
+input1x5.txt: line 3
+
+====[cat ../input1x5.txt | tsv-split -v 15017 -n 101 -I -- ../input1x3.txt -]====
+==> ./tsvsplit_workdir/part_032.tsv <==
+input1x5.txt: line 4
+
+==> ./tsvsplit_workdir/part_047.tsv <==
+input1x3.txt: line 3
+
+==> ./tsvsplit_workdir/part_069.tsv <==
+input1x3.txt: line 2
+
+==> ./tsvsplit_workdir/part_082.tsv <==
+input1x5.txt: line 5
+
+==> ./tsvsplit_workdir/part_094.tsv <==
+input1x5.txt: line 2
+
+==> ./tsvsplit_workdir/part_100.tsv <==
+input1x5.txt: line 3

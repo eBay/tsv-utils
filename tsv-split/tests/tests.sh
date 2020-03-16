@@ -59,24 +59,129 @@ workdir="./tsvsplit_workdir"
 testdir_relpath='..'
 
 runtest_wdir () {
-    echo "" >> $3
-    echo "====[tsv-split $2]====" >> $3
+    prog=$1
+    shift
+    
+    args=$1
+    shift
+
+    output_file=$1
+    shift
+
+    dir=$1
+    
+    echo "" >> ${output_file}
+    echo "====[tsv-split ${args}]====" >> ${output_file}
 
     rm -rf ${workdir}
 
     output_dir="${workdir}"
-    if [[ ! -z "$4" ]]; then
-        output_dir="${workdir}/${4}"
+    if [[ ! -z "${dir}" ]]; then
+        output_dir="${workdir}/${dir}"
     fi
 
     mkdir -p ${output_dir}
-    ( cd ${workdir} && $1 $2 >> ${testdir_relpath}/${3} 2>&1 )
-    tail -n +1 ${output_dir}/* >> $3 2>&1
+    ( cd ${workdir} && ${prog} ${args} >> ${testdir_relpath}/${output_file} 2>&1 )
+    tail -n +1 ${output_dir}/* >> ${output_file} 2>&1
 
     rm -rf ${workdir}
 
     return 0
 }
+
+## This variant appends multiple file sets. Each input file is
+## provided as a separate argument.
+##
+## Arguments: program, args, output-file, file1 [... fileN]
+runtest_wdir_append () {
+    prog=$1
+    shift
+    
+    args=$1
+    shift
+
+    output_file=$1
+    shift
+
+    input_file=$1
+    shift
+    
+    echo "" >> $output_file
+    rm -rf ${workdir}
+    mkdir -p ${workdir}
+
+    while [ ! -z "$input_file" ]
+    do
+        echo "====[tsv-split $args $input_file]====" >> $output_file
+        ( cd ${workdir} && $prog $args $input_file >> ${testdir_relpath}/${output_file} 2>&1 )
+        input_file=$1
+        shift
+    done
+    
+    tail -n +1 ${workdir}/* >> ${output_file} 2>&1
+    rm -rf ${workdir}
+
+    return 0
+}
+
+## This variant sets the ulimit open files limit
+## Arguments: program, args, output-file, max-open-files
+runtest_wdir_ulimit () {
+    prog=$1
+    shift
+    
+    args=$1
+    shift
+
+    output_file=$1
+    shift
+
+    ulimit_max_open_files=$1
+    
+    echo "" >> ${output_file}
+    echo "====[ulimit -Sn ${ulimit_max_open_files} && tsv-split ${args}]====" >> ${output_file}
+
+    rm -rf ${workdir}
+    mkdir -p ${workdir}
+    ( cd ${workdir} && ulimit -Sn ${ulimit_max_open_files} && ${prog} ${args} >> ${testdir_relpath}/${output_file} 2>&1 )
+    tail -n +1 ${output_dir}/* >> ${output_file} 2>&1
+
+    rm -rf ${workdir}
+
+    return 0
+}
+
+## This variant cats a file to standard input
+## Arguments: program, args, output-file, input-file
+runtest_wdir_stdin () {
+    prog=$1
+    shift
+    
+    args=$1
+    shift
+
+    output_file=$1
+    shift
+
+    input_file=$1
+    
+    echo "" >> ${output_file}
+    echo "====[cat ${input_file} | tsv-split ${args}]====" >> ${output_file}
+
+    rm -rf ${workdir}
+    mkdir -p ${workdir}
+    ( cd ${workdir} && cat ${input_file} | ${prog} ${args} >> ${testdir_relpath}/${output_file} 2>&1 )
+    tail -n +1 ${workdir}/* >> ${output_file} 2>&1
+
+    rm -rf ${workdir}
+
+    return 0
+}
+
+##
+## Tests begin here
+##
+
 help_and_version_tests=${odir}/help_and_version_tests.txt
 lines_per_file_tests=${odir}/lines_per_file_tests.txt
 random_assignment_tests=${odir}/random_assignment_tests.txt
@@ -127,6 +232,143 @@ runtest_wdir ${prog} "-l 3 --prefix pre ${testdir_relpath}/input1x5.txt" ${lines
 
 runtest_wdir ${prog} "-l 3 --dir odir ${testdir_relpath}/input1x5.txt" ${lines_per_file_tests} odir
 runtest_wdir ${prog} "-l 3 --dir odir --prefix pre_ --suffix _post ${testdir_relpath}/input1x5.txt" ${lines_per_file_tests} odir
+
+runtest_wdir_append ${prog} "-l 3 --append" ${lines_per_file_tests} ${testdir_relpath}/input1x5.txt ${testdir_relpath}/input1x5.txt
+runtest_wdir_append ${prog} "-H -l 3 -a" ${lines_per_file_tests} ${testdir_relpath}/input1x5.txt ${testdir_relpath}/input1x5.txt ${testdir_relpath}/input1x3.txt
+runtest_wdir_append ${prog} "-I -l 3 --append" ${lines_per_file_tests} ${testdir_relpath}/input1x5.txt ${testdir_relpath}/input1x5.txt ${testdir_relpath}/input1x3.txt
+
+runtest_wdir_stdin ${prog} "-l 3" ${lines_per_file_tests} ${testdir_relpath}/input1x5.txt
+runtest_wdir_stdin ${prog} "-H -l 3" ${lines_per_file_tests} ${testdir_relpath}/input1x5.txt
+runtest_wdir_stdin ${prog} "-I -l 3" ${lines_per_file_tests} ${testdir_relpath}/input1x5.txt
+
+runtest_wdir_stdin ${prog} "-l 3 -- - ${testdir_relpath}/input1x3.txt" ${lines_per_file_tests} ${testdir_relpath}/input1x5.txt
+runtest_wdir_stdin ${prog} "-H -l 3 -- - ${testdir_relpath}/input1x3.txt" ${lines_per_file_tests} ${testdir_relpath}/input1x5.txt
+runtest_wdir_stdin ${prog} "-I -l 3 -- - ${testdir_relpath}/input1x3.txt" ${lines_per_file_tests} ${testdir_relpath}/input1x5.txt
+
+echo "Random assignment tests" > ${random_assignment_tests}
+echo "-----------------------" >> ${random_assignment_tests}
+
+runtest_wdir ${prog} "--static-seed --num-files 2 ${testdir_relpath}/input1x5.txt" ${random_assignment_tests}
+runtest_wdir ${prog} "-s -n 3 ${testdir_relpath}/input1x5.txt" ${random_assignment_tests}
+runtest_wdir ${prog} "-s -n 5 ${testdir_relpath}/input1x5.txt" ${random_assignment_tests}
+runtest_wdir ${prog} "-s -n 10 ${testdir_relpath}/input1x5.txt" ${random_assignment_tests}
+runtest_wdir ${prog} "-s -n 11 ${testdir_relpath}/input1x5.txt" ${random_assignment_tests}
+runtest_wdir ${prog} "-s -n 101 ${testdir_relpath}/input1x5.txt" ${random_assignment_tests}
+
+runtest_wdir ${prog} "-s --num-files 2 ${testdir_relpath}/input1x3.txt ${testdir_relpath}/input1x5.txt" ${random_assignment_tests}
+runtest_wdir ${prog} "-s -n 11 ${testdir_relpath}/input1x3.txt ${testdir_relpath}/input1x5.txt" ${random_assignment_tests}
+runtest_wdir ${prog} "-s -n 101 ${testdir_relpath}/input1x3.txt ${testdir_relpath}/input1x5.txt" ${random_assignment_tests}
+
+runtest_wdir ${prog} "--seed-value 15017 --num-files 2 ${testdir_relpath}/input1x5.txt" ${random_assignment_tests}
+runtest_wdir ${prog} "-v 15017 -n 3 ${testdir_relpath}/input1x5.txt" ${random_assignment_tests}
+runtest_wdir ${prog} "-v 15017 -n 11 ${testdir_relpath}/input1x5.txt" ${random_assignment_tests}
+runtest_wdir ${prog} "-v 15017 -n 2 ${testdir_relpath}/input1x3.txt ${testdir_relpath}/input1x5.txt" ${random_assignment_tests}
+runtest_wdir ${prog} "-v 15017 -n 3 ${testdir_relpath}/input1x3.txt ${testdir_relpath}/input1x5.txt" ${random_assignment_tests}
+runtest_wdir ${prog} "-v 15017 -n 101 ${testdir_relpath}/input1x3.txt ${testdir_relpath}/input1x5.txt" ${random_assignment_tests}
+
+runtest_wdir ${prog} "-v 15017 -n 2 -H ${testdir_relpath}/input1x5.txt" ${random_assignment_tests}
+runtest_wdir ${prog} "-v 15017 -n 3 -H ${testdir_relpath}/input1x5.txt" ${random_assignment_tests}
+runtest_wdir ${prog} "-v 15017 -n 2 -H ${testdir_relpath}/input1x3.txt ${testdir_relpath}/input1x5.txt" ${random_assignment_tests}
+runtest_wdir ${prog} "-v 15017 -n 3 -H ${testdir_relpath}/input1x3.txt ${testdir_relpath}/input1x5.txt" ${random_assignment_tests}
+
+runtest_wdir ${prog} "-v 15017 -n 2 -I ${testdir_relpath}/input1x5.txt" ${random_assignment_tests}
+runtest_wdir ${prog} "-v 15017 -n 3 -I ${testdir_relpath}/input1x5.txt" ${random_assignment_tests}
+runtest_wdir ${prog} "-v 15017 -n 2 -I ${testdir_relpath}/input1x3.txt ${testdir_relpath}/input1x5.txt" ${random_assignment_tests}
+runtest_wdir ${prog} "-v 15017 -n 3 -I ${testdir_relpath}/input1x3.txt ${testdir_relpath}/input1x5.txt" ${random_assignment_tests}
+
+runtest_wdir ${prog} "-v 15017 -n 3 --prefix pre_ ${testdir_relpath}/input1x3.txt ${testdir_relpath}/input1x5.txt" ${random_assignment_tests}
+runtest_wdir ${prog} "-v 15017 -n 101 --prefix pre_ ${testdir_relpath}/input1x3.txt ${testdir_relpath}/input1x5.txt" ${random_assignment_tests}
+runtest_wdir ${prog} "-v 15017 -n 3 --suffix .txt ${testdir_relpath}/input1x3.txt ${testdir_relpath}/input1x5.txt" ${random_assignment_tests}
+runtest_wdir ${prog} "-v 15017 -n 101 --suffix .txt ${testdir_relpath}/input1x3.txt ${testdir_relpath}/input1x5.txt" ${random_assignment_tests}
+runtest_wdir ${prog} "-v 15017 -n 3 --prefix pre_ --suffix .txt ${testdir_relpath}/input1x3.txt ${testdir_relpath}/input1x5.txt" ${random_assignment_tests}
+runtest_wdir ${prog} "-v 15017 -n 101 --prefix pre_ --suffix .txt ${testdir_relpath}/input1x3.txt ${testdir_relpath}/input1x5.txt" ${random_assignment_tests}
+
+runtest_wdir ${prog} "-v 15017 -n 3 --dir odir --prefix pre_ ${testdir_relpath}/input1x3.txt ${testdir_relpath}/input1x5.txt" ${random_assignment_tests} odir
+runtest_wdir ${prog} "-v 15017 -n 3 --dir odir --prefix pre_ ${testdir_relpath}/input1x3.txt ${testdir_relpath}/input1x5.txt" ${random_assignment_tests} odir
+runtest_wdir ${prog} "-v 15017 -n 3 --dir odir --suffix .txt ${testdir_relpath}/input1x3.txt ${testdir_relpath}/input1x5.txt" ${random_assignment_tests} odir
+runtest_wdir ${prog} "-v 15017 -n 3 --dir odir --prefix pre_ --suffix .txt ${testdir_relpath}/input1x3.txt ${testdir_relpath}/input1x5.txt" ${random_assignment_tests} odir
+runtest_wdir ${prog} "-v 15017 -n 101 --dir odir --prefix pre_ --suffix .txt ${testdir_relpath}/input1x3.txt ${testdir_relpath}/input1x5.txt" ${random_assignment_tests} odir
+
+runtest_wdir ${prog} "-v 15017 -n 101 --max-open-files 5 ${testdir_relpath}/input1x3.txt ${testdir_relpath}/input1x5.txt" ${random_assignment_tests}
+runtest_wdir ${prog} "-v 15017 -n 101 --max-open-files 6 ${testdir_relpath}/input1x3.txt ${testdir_relpath}/input1x5.txt" ${random_assignment_tests}
+runtest_wdir ${prog} "-v 15017 -n 101 --max-open-files 11 ${testdir_relpath}/input1x3.txt ${testdir_relpath}/input1x5.txt" ${random_assignment_tests}
+runtest_wdir ${prog} "-v 15017 -n 101 --max-open-files 12 ${testdir_relpath}/input1x3.txt ${testdir_relpath}/input1x5.txt" ${random_assignment_tests}
+runtest_wdir ${prog} "-v 15017 -n 101 --max-open-files 13 ${testdir_relpath}/input1x3.txt ${testdir_relpath}/input1x5.txt" ${random_assignment_tests}
+
+runtest_wdir_ulimit ${prog} "-v 15017 -n 101 ${testdir_relpath}/input1x3.txt ${testdir_relpath}/input1x5.txt" ${random_assignment_tests} 5
+runtest_wdir_ulimit ${prog} "-v 15017 -n 101 --max-open-files 5 ${testdir_relpath}/input1x3.txt ${testdir_relpath}/input1x5.txt" ${random_assignment_tests} 5
+runtest_wdir_ulimit ${prog} "-v 15017 -n 101 ${testdir_relpath}/input1x3.txt ${testdir_relpath}/input1x5.txt" ${random_assignment_tests} 6
+
+runtest_wdir_append ${prog} "-v 15017 -n 3 --append" ${random_assignment_tests} ${testdir_relpath}/input1x5.txt ${testdir_relpath}/input1x5.txt
+runtest_wdir_append ${prog} "-v 15017 -n 3 -H --append" ${random_assignment_tests} ${testdir_relpath}/input1x5.txt ${testdir_relpath}/input1x5.txt
+runtest_wdir_append ${prog} "-v 15017 -n 3 -I -a" ${random_assignment_tests} ${testdir_relpath}/input1x5.txt ${testdir_relpath}/input1x5.txt
+
+
+runtest_wdir_stdin ${prog} "-s -n 101" ${random_assignment_tests} ${testdir_relpath}/input1x5.txt
+runtest_wdir_stdin ${prog} "-s -n 101 -H" ${random_assignment_tests} ${testdir_relpath}/input1x5.txt
+runtest_wdir_stdin ${prog} "-s -n 101 -I" ${random_assignment_tests} ${testdir_relpath}/input1x5.txt
+
+runtest_wdir_stdin ${prog} "-v 15017 -n 101 -- ${testdir_relpath}/input1x3.txt -" ${random_assignment_tests} ${testdir_relpath}/input1x5.txt
+runtest_wdir_stdin ${prog} "-v 15017 -n 101 -H -- ${testdir_relpath}/input1x3.txt -" ${random_assignment_tests} ${testdir_relpath}/input1x5.txt
+runtest_wdir_stdin ${prog} "-v 15017 -n 101 -I -- ${testdir_relpath}/input1x3.txt -" ${random_assignment_tests} ${testdir_relpath}/input1x5.txt
+
+
+echo "Key assignment tests" > ${key_assignment_tests}
+echo "--------------------" >> ${key_assignment_tests}
+
+runtest_wdir ${prog} "--static-seed --num-files 2 --key-fields 1 ${testdir_relpath}/input4x58.tsv" ${key_assignment_tests}
+runtest_wdir ${prog} "-s -n 2 -k 3 ${testdir_relpath}/input4x58.tsv" ${key_assignment_tests}
+runtest_wdir ${prog} "-s -n 10 -k 3 ${testdir_relpath}/input4x58.tsv" ${key_assignment_tests}
+runtest_wdir ${prog} "-s -n 11 -k 3 ${testdir_relpath}/input4x58.tsv" ${key_assignment_tests}
+runtest_wdir ${prog} "-s -n 101 -k 3 ${testdir_relpath}/input4x58.tsv" ${key_assignment_tests}
+runtest_wdir ${prog} "-s -n 2 -k 1,3 ${testdir_relpath}/input4x58.tsv" ${key_assignment_tests}
+runtest_wdir ${prog} "-s -n 17 -k 1,3 ${testdir_relpath}/input4x58.tsv" ${key_assignment_tests}
+runtest_wdir ${prog} "-s -n 101 -k 1,3 ${testdir_relpath}/input4x58.tsv" ${key_assignment_tests}
+runtest_wdir ${prog} "-s -n 2 -k 1,3,4 ${testdir_relpath}/input4x58.tsv" ${key_assignment_tests}
+
+runtest_wdir ${prog} "--seed-value 15017 --num-files 2 --key-fields 1 ${testdir_relpath}/input4x58.tsv" ${key_assignment_tests}
+runtest_wdir ${prog} "-v 15017 -n 101 -k 3 ${testdir_relpath}/input4x58.tsv" ${key_assignment_tests}
+
+runtest_wdir ${prog} "-v 15017 -n 101 -k 0 ${testdir_relpath}/input4x58.tsv ${testdir_relpath}/input4x18.tsv" ${key_assignment_tests}
+runtest_wdir ${prog} "-v 15017 -n 101 -k 1,3 ${testdir_relpath}/input4x58.tsv ${testdir_relpath}/input4x18.tsv" ${key_assignment_tests}
+
+runtest_wdir ${prog} "--header --static-seed --num-files 2 --key-fields 1 ${testdir_relpath}/input4x58.tsv" ${key_assignment_tests}
+runtest_wdir ${prog} "-H -v 15017 -n 101 -k 1,3 ${testdir_relpath}/input4x58.tsv ${testdir_relpath}/input4x18.tsv" ${key_assignment_tests}
+
+runtest_wdir ${prog} "--header-in-only --static-seed --num-files 2 --key-fields 1 ${testdir_relpath}/input4x58.tsv" ${key_assignment_tests}
+runtest_wdir ${prog} "-I -s -n 11 -k 3 ${testdir_relpath}/input4x58.tsv" ${key_assignment_tests}
+runtest_wdir ${prog} "-I -s -n 101 -k 1,3 ${testdir_relpath}/input4x58.tsv" ${key_assignment_tests}
+runtest_wdir ${prog} "-I -v 15017 -n 101 -k 1,3 ${testdir_relpath}/input4x58.tsv ${testdir_relpath}/input4x18.tsv" ${key_assignment_tests}
+
+runtest_wdir ${prog} "-H -s -n 2 -k 1 --prefix pre_ ${testdir_relpath}/input4x58.tsv" ${key_assignment_tests}
+runtest_wdir ${prog} "-H -s -n 2 -k 1 --suffix _suf ${testdir_relpath}/input4x58.tsv" ${key_assignment_tests}
+runtest_wdir ${prog} "-H -s -n 2 -k 1 --prefix pre_ --suffix _suf ${testdir_relpath}/input4x58.tsv" ${key_assignment_tests}
+
+runtest_wdir ${prog} "-H -s -n 2 -k 1 --dir odir ${testdir_relpath}/input4x58.tsv" ${key_assignment_tests} odir
+runtest_wdir ${prog} "-H -s -n 2 -k 1 --prefix pre_ --dir odir ${testdir_relpath}/input4x58.tsv" ${key_assignment_tests} odir
+runtest_wdir ${prog} "-H -s -n 2 -k 1 --suffix _suf --dir odir ${testdir_relpath}/input4x58.tsv" ${key_assignment_tests} odir
+runtest_wdir ${prog} "-H -s -n 2 -k 1 --prefix pre_ --suffix _suf --dir odir ${testdir_relpath}/input4x58.tsv" ${key_assignment_tests} odir
+
+runtest_wdir ${prog} "-s -n 101 --max-open-files 5 -k 3 ${testdir_relpath}/input4x58.tsv" ${key_assignment_tests}
+runtest_wdir ${prog} "-s -n 101 --max-open-files 6 -k 3 ${testdir_relpath}/input4x58.tsv" ${key_assignment_tests}
+runtest_wdir ${prog} "-s -n 101 --max-open-files 22 -k 3 ${testdir_relpath}/input4x58.tsv" ${key_assignment_tests}
+runtest_wdir ${prog} "-s -n 101 --max-open-files 23 -k 3 ${testdir_relpath}/input4x58.tsv" ${key_assignment_tests}
+runtest_wdir ${prog} "-s -n 101 --max-open-files 24 -k 3 ${testdir_relpath}/input4x58.tsv" ${key_assignment_tests}
+
+runtest_wdir_ulimit ${prog} "-s -n 101 -k 3 ${testdir_relpath}/input4x58.tsv" ${key_assignment_tests} 5
+runtest_wdir_ulimit ${prog} "-s -n 101 --max-open-files 5 -k 3 ${testdir_relpath}/input4x58.tsv" ${key_assignment_tests} 5
+runtest_wdir_ulimit ${prog} "-s -n 101 -k 3 ${testdir_relpath}/input4x58.tsv" ${key_assignment_tests} 6
+
+runtest_wdir_append ${prog} "-s -n 11 -k 3 --append" ${key_assignment_tests} ${testdir_relpath}/input4x58.tsv ${testdir_relpath}/input4x58.tsv
+runtest_wdir_append ${prog} "-s -n 11 -k 3 -H --append" ${key_assignment_tests} ${testdir_relpath}/input4x58.tsv ${testdir_relpath}/input4x58.tsv
+runtest_wdir_append ${prog} "-s -n 11 -k 3 -I -a" ${key_assignment_tests} ${testdir_relpath}/input4x58.tsv ${testdir_relpath}/input4x58.tsv
+
+runtest_wdir_stdin ${prog} "-s -n 101 -k 3" ${key_assignment_tests} ${testdir_relpath}/input4x58.tsv
+runtest_wdir_stdin ${prog} "-s -n 101 -k 3 -H" ${key_assignment_tests} ${testdir_relpath}/input4x58.tsv
+runtest_wdir_stdin ${prog} "-s -n 101 -k 3 -I" ${key_assignment_tests} ${testdir_relpath}/input4x58.tsv
+runtest_wdir_stdin ${prog} "-v 15017 -n 101 -k 1,3 -- - ${testdir_relpath}/input4x18.tsv" ${key_assignment_tests} ${testdir_relpath}/input4x58.tsv
+runtest_wdir_stdin ${prog} "-v 15017 -n 101 -k 1,3 -H -- - ${testdir_relpath}/input4x18.tsv" ${key_assignment_tests} ${testdir_relpath}/input4x58.tsv
+runtest_wdir_stdin ${prog} "-v 15017 -n 101 -k 1,3 -I -- - ${testdir_relpath}/input4x18.tsv" ${key_assignment_tests} ${testdir_relpath}/input4x58.tsv
 
 ## Help and Version printing
 
