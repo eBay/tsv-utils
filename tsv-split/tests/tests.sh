@@ -409,6 +409,7 @@ runtest ${prog} "-n 1 input4x58.tsv" ${error_tests_1}
 runtest ${prog} "-n 0 -k 1 input4x58.tsv" ${error_tests_1}
 runtest ${prog} "-n 1 -k 1 input4x58.tsv" ${error_tests_1}
 runtest ${prog} "-n 2 -k 1.5 input4x58.tsv" ${error_tests_1}
+runtest ${prog} "-n 2 -k 0,1 input4x58.tsv" ${error_tests_1}
 runtest ${prog} "-n 2 -k -1 input4x58.tsv" ${error_tests_1}
 runtest ${prog} "-n 10 -k 99 input4x58.tsv" ${error_tests_1}
 runtest ${prog} "-n 10 --max-open-files 4 input1x5.txt" ${error_tests_1}
@@ -418,6 +419,8 @@ runtest ${prog} "-n 10 -k 1 --dir no-such-directory input4x58.tsv" ${error_tests
 runtest ${prog} "-l 10 -k 1 input4x58.tsv" ${error_tests_1}
 runtest ${prog} "-l 10 -n 3 input4x58.tsv" ${error_tests_1}
 runtest ${prog} "-l 10 -n 3 -k 1 input4x58.tsv" ${error_tests_1}
+runtest ${prog} "-l 10 --header --header-in-only input4x58.tsv" ${error_tests_1}
+runtest_wdir_ulimit ${prog} "-s -n 101 -k 3 --max-open-files 6 ${testdir_relpath}/input4x58.tsv" ${error_tests_1} 5
 runtest_wdir_ulimit ${prog} "-s -n 101 -k 3 ${testdir_relpath}/input4x58.tsv" ${error_tests_1} 4
 runtest_wdir_append ${prog} "-l 3" ${error_tests_1} ${testdir_relpath}/input1x5.txt ${testdir_relpath}/input1x5.txt
 runtest_wdir_append ${prog} "-v 15017 -n 3" ${error_tests_1} ${testdir_relpath}/input1x5.txt ${testdir_relpath}/input1x5.txt

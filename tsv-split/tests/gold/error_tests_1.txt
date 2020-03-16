@@ -28,6 +28,9 @@ Error [tsv-split]: Cannot open file `no-such-file.txt' in mode `rb' (No such fil
 ====[tsv-sample -n 2 -k 1.5 input4x58.tsv]====
 [tsv-split] Error processing command line arguments: [--k|key-fields] Unexpected '.' when converting from type string to type ulong
 
+====[tsv-sample -n 2 -k 0,1 input4x58.tsv]====
+[tsv-split] Error processing command line arguments: Whole line as key (--k|key-fields 0) cannot be combined with multiple fields.
+
 ====[tsv-sample -n 2 -k -1 input4x58.tsv]====
 [tsv-split] Error processing command line arguments: [--k|key-fields] Incomplete ranges are not supported: '-1'
 
@@ -54,6 +57,15 @@ Error [tsv-split]: Not enough fields in line. File: input4x58.tsv, Line: 1
 
 ====[tsv-sample -l 10 -n 3 -k 1 input4x58.tsv]====
 [tsv-split] Error processing command line arguments: '--l|lines-per-file' and '--n|num-files' cannot be used together.
+
+====[tsv-sample -l 10 --header --header-in-only input4x58.tsv]====
+[tsv-split] Error processing command line arguments: Use only one of '--H|header' and '--I|header-in-only'.
+
+====[ulimit -Sn 5 && tsv-split -s -n 101 -k 3 --max-open-files 6 ../input4x58.tsv]====
+[tsv-split] Error processing command line arguments: '--max-open-files' value (6) greater current system limit (5).
+Run 'ulimit -n' to see the soft limit.
+Run 'ulimit -Hn' to see the hard limit.
+Run 'ulimit -Sn NUM' to change the soft limit.
 
 ====[ulimit -Sn 4 && tsv-split -s -n 101 -k 3 ../input4x58.tsv]====
 [tsv-split] Error processing command line arguments: System open file limit too small. Current value: 4. Must be 5 or more.
