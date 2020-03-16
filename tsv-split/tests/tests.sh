@@ -118,7 +118,7 @@ runtest_wdir_append () {
         shift
     done
     
-    tail -n +1 ${workdir}/* >> ${output_file} 2>&1
+    tail -n +1 ${workdir}/* >> ${output_file} 2>/dev/null
     rm -rf ${workdir}
 
     return 0
@@ -144,7 +144,7 @@ runtest_wdir_ulimit () {
     rm -rf ${workdir}
     mkdir -p ${workdir}
     ( cd ${workdir} && ulimit -Sn ${ulimit_max_open_files} && ${prog} ${args} >> ${testdir_relpath}/${output_file} 2>&1 )
-    tail -n +1 ${output_dir}/* >> ${output_file} 2>&1
+    tail -n +1 ${output_dir}/* >> ${output_file} 2>/dev/null
 
     rm -rf ${workdir}
 
@@ -303,7 +303,6 @@ runtest_wdir_append ${prog} "-v 15017 -n 3 --append" ${random_assignment_tests} 
 runtest_wdir_append ${prog} "-v 15017 -n 3 -H --append" ${random_assignment_tests} ${testdir_relpath}/input1x5.txt ${testdir_relpath}/input1x5.txt
 runtest_wdir_append ${prog} "-v 15017 -n 3 -I -a" ${random_assignment_tests} ${testdir_relpath}/input1x5.txt ${testdir_relpath}/input1x5.txt
 
-
 runtest_wdir_stdin ${prog} "-s -n 101" ${random_assignment_tests} ${testdir_relpath}/input1x5.txt
 runtest_wdir_stdin ${prog} "-s -n 101 -H" ${random_assignment_tests} ${testdir_relpath}/input1x5.txt
 runtest_wdir_stdin ${prog} "-s -n 101 -I" ${random_assignment_tests} ${testdir_relpath}/input1x5.txt
@@ -370,6 +369,11 @@ runtest_wdir_stdin ${prog} "-v 15017 -n 101 -k 1,3 -- - ${testdir_relpath}/input
 runtest_wdir_stdin ${prog} "-v 15017 -n 101 -k 1,3 -H -- - ${testdir_relpath}/input4x18.tsv" ${key_assignment_tests} ${testdir_relpath}/input4x58.tsv
 runtest_wdir_stdin ${prog} "-v 15017 -n 101 -k 1,3 -I -- - ${testdir_relpath}/input4x18.tsv" ${key_assignment_tests} ${testdir_relpath}/input4x58.tsv
 
+runtest_wdir ${prog} "--delimiter : -s -n 101 -k 3 ${testdir_relpath}/input4x58_colon-delim.tsv" ${key_assignment_tests}
+runtest_wdir ${prog} "-d : -H -s -n 101 -k 3 ${testdir_relpath}/input4x58_colon-delim.tsv" ${key_assignment_tests}
+runtest_wdir ${prog} "-d : -I -s -n 101 -k 3 ${testdir_relpath}/input4x58_colon-delim.tsv" ${key_assignment_tests}
+
+
 ## Help and Version printing
 
 echo "" >> ${help_and_version_tests}
@@ -396,3 +400,25 @@ error_tests_1=${odir}/error_tests_1.txt
 echo "Error test set 1" > ${error_tests_1}
 echo "----------------" >> ${error_tests_1}
 
+runtest ${prog} "input1x5.txt" ${error_tests_1}
+runtest ${prog} "-l 10 no-such-file.txt" ${error_tests_1}
+runtest ${prog} "-n 10 no-such-file.txt" ${error_tests_1}
+runtest ${prog} "-n 10 -k 3 no-such-file.txt" ${error_tests_1}
+runtest ${prog} "-n 0 input4x58.tsv" ${error_tests_1}
+runtest ${prog} "-n 1 input4x58.tsv" ${error_tests_1}
+runtest ${prog} "-n 0 -k 1 input4x58.tsv" ${error_tests_1}
+runtest ${prog} "-n 1 -k 1 input4x58.tsv" ${error_tests_1}
+runtest ${prog} "-n 2 -k 1.5 input4x58.tsv" ${error_tests_1}
+runtest ${prog} "-n 2 -k -1 input4x58.tsv" ${error_tests_1}
+runtest ${prog} "-n 10 -k 99 input4x58.tsv" ${error_tests_1}
+runtest ${prog} "-n 10 --max-open-files 4 input1x5.txt" ${error_tests_1}
+runtest ${prog} "-l 10 --dir no-such-directory input1x5.txt" ${error_tests_1}
+runtest ${prog} "-n 10 --dir no-such-directory input1x5.txt" ${error_tests_1}
+runtest ${prog} "-n 10 -k 1 --dir no-such-directory input4x58.tsv" ${error_tests_1}
+runtest ${prog} "-l 10 -k 1 input4x58.tsv" ${error_tests_1}
+runtest ${prog} "-l 10 -n 3 input4x58.tsv" ${error_tests_1}
+runtest ${prog} "-l 10 -n 3 -k 1 input4x58.tsv" ${error_tests_1}
+runtest_wdir_ulimit ${prog} "-s -n 101 -k 3 ${testdir_relpath}/input4x58.tsv" ${error_tests_1} 4
+runtest_wdir_append ${prog} "-l 3" ${error_tests_1} ${testdir_relpath}/input1x5.txt ${testdir_relpath}/input1x5.txt
+runtest_wdir_append ${prog} "-v 15017 -n 3" ${error_tests_1} ${testdir_relpath}/input1x5.txt ${testdir_relpath}/input1x5.txt
+runtest_wdir_append ${prog} "-s -n 11 -k 3" ${error_tests_1} ${testdir_relpath}/input4x18.tsv ${testdir_relpath}/input4x18.tsv
