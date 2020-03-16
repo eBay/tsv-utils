@@ -1,4 +1,4 @@
-#! /bin/sh
+#!/usr/bin/env bash
 
 ## Most tsv-summarize testing is done as unit tests. Unit tests include operators,
 ## summarizers, and non-error cases of command line handling. Tests executed by this

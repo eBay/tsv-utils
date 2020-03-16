@@ -1,4 +1,4 @@
-#! /bin/sh
+#!/usr/bin/env bash
 
 ## Most tsv-append testing is done as unit tests. Tests executed by this script are
 ## run against the final executable. This provides a sanity check that the

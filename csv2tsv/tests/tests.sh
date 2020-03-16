@@ -1,4 +1,4 @@
-#! /bin/sh
+#!/usr/bin/env bash
 
 # Note: Majority of testing for this app is in the unit tests built into the code.
 # These tests do some basic, plus file handling and error cases.
