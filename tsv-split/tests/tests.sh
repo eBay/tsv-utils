@@ -1,4 +1,4 @@
-#! /bin/sh
+#!/usr/bin/env bash
 
 ## Most tsv-split testing is done using this script, which runs against the final
 ## executable. There are some unit tests in the code, but it is hard to capture

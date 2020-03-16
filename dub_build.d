@@ -56,7 +56,7 @@ int main(string[] args) {
 
     // Note: At present 'common' is a source library and does not need a standalone compilation step.
     auto packageName = "tsv-utils";
-    auto subPackages = ["csv2tsv", "keep-header", "number-lines", "tsv-append", "tsv-filter", "tsv-join", "tsv-pretty", "tsv-sample", "tsv-select", "tsv-summarize", "tsv-uniq"];
+    auto subPackages = ["csv2tsv", "keep-header", "number-lines", "tsv-append", "tsv-filter", "tsv-join", "tsv-pretty", "tsv-sample", "tsv-select", "tsv-split", "tsv-summarize", "tsv-uniq"];
     auto buildCmdArgs = ["dub", "build", "<package>", "--force", "-b"];
     buildCmdArgs ~= debugBuild ? "debug" : "release";
     if (compiler.length > 0) {
