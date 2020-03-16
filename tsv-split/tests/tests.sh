@@ -81,7 +81,7 @@ runtest_wdir () {
     fi
 
     mkdir -p ${output_dir}
-    ( cd ${workdir} && ${prog} ${args} >> ${testdir_relpath}/${output_file} 2>&1 )
+    ( cd ${workdir} && ${prog} --DRT-covopt="dstpath:../" ${args} >> ${testdir_relpath}/${output_file} 2>&1 )
     tail -n +1 ${output_dir}/* >> ${output_file} 2>&1
 
     rm -rf ${workdir}
@@ -113,7 +113,7 @@ runtest_wdir_append () {
     while [ ! -z "$input_file" ]
     do
         echo "====[tsv-split $args $input_file]====" >> $output_file
-        ( cd ${workdir} && $prog $args $input_file >> ${testdir_relpath}/${output_file} 2>&1 )
+        ( cd ${workdir} && $prog --DRT-covopt="dstpath:../" $args $input_file >> ${testdir_relpath}/${output_file} 2>&1 )
         input_file=$1
         shift
     done
@@ -143,7 +143,7 @@ runtest_wdir_ulimit () {
 
     rm -rf ${workdir}
     mkdir -p ${workdir}
-    ( cd ${workdir} && ulimit -Sn ${ulimit_max_open_files} && ${prog} ${args} >> ${testdir_relpath}/${output_file} 2>&1 )
+    ( cd ${workdir} && ulimit -Sn ${ulimit_max_open_files} && ${prog} --DRT-covopt="dstpath:../" ${args} >> ${testdir_relpath}/${output_file} 2>&1 )
     tail -n +1 ${output_dir}/* >> ${output_file} 2>/dev/null
 
     rm -rf ${workdir}
@@ -170,7 +170,7 @@ runtest_wdir_stdin () {
 
     rm -rf ${workdir}
     mkdir -p ${workdir}
-    ( cd ${workdir} && cat ${input_file} | ${prog} ${args} >> ${testdir_relpath}/${output_file} 2>&1 )
+    ( cd ${workdir} && cat ${input_file} | ${prog} --DRT-covopt="dstpath:../" ${args} >> ${testdir_relpath}/${output_file} 2>&1 )
     tail -n +1 ${workdir}/* >> ${output_file} 2>&1
 
     rm -rf ${workdir}
