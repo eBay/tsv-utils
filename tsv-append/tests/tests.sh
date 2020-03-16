@@ -7,7 +7,7 @@
 ## Instead, these tests focus on areas that are hard to test in unit tests.
 
 if [ $# -le 1 ]; then
-    echo "Insufficient arguments. A program name and output director are required."
+    echo "Insufficient arguments. A program name and output directory are required."
     exit 1
 fi
 
