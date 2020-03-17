@@ -102,30 +102,29 @@ Output files: By default, files are written to the current directory and
 have names of the form 'part_NNN.tsv', with 'NNN' being a number. The
 output directory and file names are customizable.
 
-Header lines: The most useful ways to handle input with headers is either
-to write a header line to all output files or to exclude headers from all
-output files. '--H|header' and '--I|header-in-only' provide these options.
-The best choice depends on the follow-up processing. All tsv-utils tools
-support header lines in multiple input files, but many other tools do not.
-For example, GNU parallel works best on files without header lines.
+Header lines: There are two ways to handle input with headers: write a
+header to all output files (--H|header), or exclude headers from all
+output files ('--I|header-in-only'). The best choice depends on the
+follow-up processing. All tsv-utils tools support header lines in multiple
+input files, but many other tools do not. For example, GNU parallel works
+best on files without header lines.
 
-About random assignment (--n|num-files): Random distribution of records to
-a set of files is a common task. When data fits in memory the preferred
-approach is often to shuffle the data and split it into fixed sized
-blocks. E.g. 'tsv-sample data.tsv | tsv-split -l NUM'. However, alternate
-approaches are needed when data is too large for convenient shuffling.
-tsv-split's random assignment feature is useful in this case. Each input
-line is randomly written to one of a fixed number of files. Note that
-output files will have similar but not identical numbers of records.
+Random assignment (--n|num-files): Random distribution of records to a set
+of files is a common task. When data fits in memory the preferred approach
+is usually to shuffle the data and split it into fixed sized blocks. E.g.
+'tsv-sample data.tsv | tsv-split -l NUM'. However, alternate approaches
+are needed when data is too large for convenient shuffling. tsv-split's
+random assignment feature is useful in this case. Each input line is
+written a randomly selected output file. Note that output files will have
+similar but not identical numbers of records.
 
-About random assignment by key (--n|num-files NUM, --k|key-fields FIELDS):
-This operation splits a data sets into multiple files sharded by key. All
-records with the same key are written to the same file. This partitioning
-is useful for parallelizing subsequent computation based on the key. For
-example, duplicate removal based on a key ('tsv-uniq --fields') or
-statistical calculations based on a key ('tsv-summarize --group-by').
-Parallelizing these operations can be done with tools like GNU parallel,
-which simplifies concurrent operations on multiple files.
+Random assignment by key (--n|num-files NUM, --k|key-fields FIELDS): This
+operation splits a data set into multiple files sharded by key. All lines
+with the same key are written to the same file. This partitioning aids in
+parallelizing subsequent computation based on the key. For example,
+statistical calculation ('tsv-summarize --group-by') or duplicate removal
+('tsv-uniq --fields'). These operations can be parallized using tools like
+GNU parallel, which simplifies concurrent operations on multiple files.
 
 Random seed: By default, each tsv-split invocation using random assignment
 or random assignment by key produces different assignments to the output
@@ -138,9 +137,9 @@ output file already exists. '--a|append' changes this so that lines are
 appended to existing files. (Header lines are not appended to files with
 data.) This is useful when adding new data to files created by a previous
 tsv-split run. Random assignment should use the same '--n|num-files' value
-and different random seeds each run (avoid '--s|static-seed'). Random
+each run, but different random seeds (avoid '--s|static-seed'). Random
 assignment by key should use the same '--n|num-files', '--k|key-fields',
-and seed ('--s|static-seed', --v|seed-value) each run.
+and seed ('--s|static-seed' or '--v|seed-value') each run.
 
 Max number of open files: Random assignment and random assignment by key
 are dramatically faster when all output files are kept open. However,
@@ -148,9 +147,9 @@ keeping a large numbers of open files can bump into system limits or limit
 resources available to other processes. By default, tsv-split uses up to
 4096 open files or the system per-process limit, whichever is smaller.
 This can be changed using '--max-open-files', though it cannot be set
-larger than the system limit. The system limit varies considerably. On
-many systems it is unlimited, but it can be quite small. On MacOS it is
-often set to 256. Use Unix 'ulimit' to display and modify the limits:
+larger than the system limit. The system limit varies considerably between
+systems. On many systems it is unlimited. On MacOS it is often set to 256.
+Use Unix 'ulimit' to display and modify the limits:
 * 'ulimit -n' - Show the "soft limit". The per-process maximum.
 * 'ulimit -Hn' - Show the "hard limit". The max allowed soft limit.
 * 'ulimit -Sn NUM' - Change the "soft limit" to NUM.
@@ -174,7 +173,7 @@ Examples:
   tsv-split data.tsv --num-files 1000
 
   # Randomly assign lines to 1000 files while keeping unique keys from
-  # field 3 together. 
+  # field 3 together.
   tsv-split data.tsv --num-files 1000 -k 3
 
   # Randomly assign lines to 1000 files. Later, randomly assign lines
@@ -943,7 +942,7 @@ void splitByLineCount(TsvSplitOptions cmdopt)
 unittest
 {
     /* TsvSplitOptions unit tests.
-     * 
+     *
      * Very basic here. Mostly covered in executable tests, especially error cases, as
      * errors write to stderr.
      */
