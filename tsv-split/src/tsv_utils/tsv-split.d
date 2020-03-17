@@ -58,18 +58,138 @@ else
 immutable helpText = q"EOS
 Synopsis: tsv-split [options] [file...]
 
-Split input files into multiple output files. Modes of operation:
+Split input lines into multiple output files. There are three modes of
+operation:
 
 * Fixed number of lines per file (--l|lines-per-file NUM): Each input
-  block of NUM lines is written to a new file.
+  block of NUM lines is written to a new file. Similar to Unix 'split'.
 
 * Random assignment (--n|num-files NUM): Each input line is written to a
-  randomly selected output file. NUM output files are written.
+  randomly selected output file. Random selection is from NUM files.
 
 * Random assignment by key (--n|num-files NUM, --k|key-fields FIELDS):
   Input lines are written to output files using fields as a key. Each
-  unique key is randomly assigned to an output file. All lines with the
-  same key are written to the same file. NUM output files are written.
+  unique key is randomly assigned to one of NUM output files. All lines
+  with the same key are written to the same file.
+
+Output files: By default, files are written to the current directory and
+have names of the form 'part_NNN.tsv', with 'NNN' being a number. The
+output directory and file names are customizable.
+
+Use '--help-verbose' for more detailed information.
+
+Options:
+EOS";
+
+immutable helpTextVerbose = q"EOS
+Synopsis: tsv-split [options] [file...]
+
+Split input lines into multiple output files. There are three modes of
+operation:
+
+* Fixed number of lines per file (--l|lines-per-file NUM): Each input
+  block of NUM lines is written to a new file. Similar to Unix 'split'.
+
+* Random assignment (--n|num-files NUM): Each input line is written to a
+  randomly selected output file. Random selection is from NUM files.
+
+* Random assignment by key (--n|num-files NUM, --k|key-fields FIELDS):
+  Input lines are written to output files using fields as a key. Each
+  unique key is randomly assigned to one of NUM output files. All lines
+  with the same key are written to the same file.
+
+Output files: By default, files are written to the current directory and
+have names of the form 'part_NNN.tsv', with 'NNN' being a number. The
+output directory and file names are customizable.
+
+Header lines: The most useful ways to handle input with headers is either
+to write a header line to all output files or to exclude headers from all
+output files. '--H|header' and '--I|header-in-only' provide these options.
+The best choice depends on the follow-up processing. All tsv-utils tools
+support header lines in multiple input files, but many other tools do not.
+For example, GNU parallel works best on files without header lines.
+
+About random assignment (--n|num-files): Random distribution of records to
+a set of files is a common task. When data fits in memory the preferred
+approach is often to shuffle the data and split it into fixed sized
+blocks. E.g. 'tsv-sample data.tsv | tsv-split -l NUM'. However, alternate
+approaches are needed when data is too large for convenient shuffling.
+tsv-split's random assignment feature is useful in this case. Each input
+line is randomly written to one of a fixed number of files. Note that
+output files will have similar but not identical numbers of records.
+
+About random assignment by key (--n|num-files NUM, --k|key-fields FIELDS):
+This operation splits a data sets into multiple files sharded by key. All
+records with the same key are written to the same file. This partitioning
+is useful for parallelizing subsequent computation based on the key. For
+example, duplicate removal based on a key ('tsv-uniq --fields') or
+statistical calculations based on a key ('tsv-summarize --group-by').
+Parallelizing these operations can be done with tools like GNU parallel,
+which simplifies concurrent operations on multiple files.
+
+Random seed: By default, each tsv-split invocation using random assignment
+or random assignment by key produces different assignments to the output
+files. Using '--s|static-seed' changes this so multiple runs produce the
+same assignments. This works by using the same random seed each run. The
+seed can be specified using '--v|seed-value'.
+
+Appending to existing files: By default, an error is triggered if an
+output file already exists. '--a|append' changes this so that lines are
+appended to existing files. (Header lines are not appended to files with
+data.) This is useful when adding new data to files created by a previous
+tsv-split run. Random assignment should use the same '--n|num-files' value
+and different random seeds each run (avoid '--s|static-seed'). Random
+assignment by key should use the same '--n|num-files', '--k|key-fields',
+and seed ('--s|static-seed', --v|seed-value) each run.
+
+Max number of open files: Random assignment and random assignment by key
+are dramatically faster when all output files are kept open. However,
+keeping a large numbers of open files can bump into system limits or limit
+resources available to other processes. By default, tsv-split uses up to
+4096 open files or the system per-process limit, whichever is smaller.
+This can be changed using '--max-open-files', though it cannot be set
+larger than the system limit. The system limit varies considerably. On
+many systems it is unlimited, but it can be quite small. On MacOS it is
+often set to 256. Use Unix 'ulimit' to display and modify the limits:
+* 'ulimit -n' - Show the "soft limit". The per-process maximum.
+* 'ulimit -Hn' - Show the "hard limit". The max allowed soft limit.
+* 'ulimit -Sn NUM' - Change the "soft limit" to NUM.
+
+Examples:
+
+  # Split a 10 million line file into 1000 files, 10,000 lines each.
+  # Output files are part_000.tsv, part_001.tsv, ... part_999.tsv.
+  tsv-split data.tsv --lines-per-file 10000
+
+  # Same as the previous example, but write files to a subdirectory.
+  tsv-split data.tsv --dir split_files -l 10000
+
+  # Split a file into 10,000 line files, writing a header line to each
+  tsv-split data.tsv -H -l 10000
+
+  # Same as the previous example, but dropping the header line.
+  tsv-split data.tsv -I -l 10000
+
+  # Randomly assign lines to 1000 files
+  tsv-split data.tsv --num-files 1000
+
+  # Randomly assign lines to 1000 files while keeping unique keys from
+  # field 3 together. 
+  tsv-split data.tsv --num-files 1000 -k 3
+
+  # Randomly assign lines to 1000 files. Later, randomly assign lines
+  # from a second data file to the same output files.
+  tsv-split data1.tsv -n 1000
+  tsv-split data2.tsv -n 1000 --append
+
+  # Randomly assign lines to 1000 files using field 3 as a key.
+  # Later, add a second file to the same output files.
+  tsv-split data1.tsv -n 1000 -k 3 --static-seed
+  tsv-split data2.tsv -n 1000 -k 3 --static-seed --append
+
+  # Change the system per-process open file limit for one command.
+  # The parens create a subshell. The current shell is not changed.
+  ( ulimit -Sn 1000 && tsv-split --num-files 1000 data.txt )
 
 Options:
 EOS";
@@ -88,6 +208,7 @@ struct TsvSplitOptions
 {
     string programName;                        /// Program name
     string[] files;                            /// Input files
+    bool helpVerbose = false;                  /// --help-verbose
     bool headerInOut = false;                  /// --H|header
     bool headerIn = false;                     /// --I|header-in-only
     size_t linesPerFile = 0;                   /// --l|lines-per-file
@@ -143,14 +264,15 @@ struct TsvSplitOptions
             arraySep = ",";    // Use comma to separate values in command line options
             auto r = getopt(
                 cmdArgs,
+                "help-verbose",    "     Print more detailed help.", &helpVerbose,
 
                 std.getopt.config.caseSensitive,
-                "H|header",         "     Input files have a header line. Write the header to output files.", &headerInOut,
+                "H|header",         "     Input files have a header line. Write the header to each output file.", &headerInOut,
                 "I|header-in-only", "     Input files have a header line. Do not write the header to output files.", &headerIn,
                 std.getopt.config.caseInsensitive,
 
-                "l|lines-per-file", "NUM  Number of lines to write to each file.", &linesPerFile,
-                "n|num-files",      "NUM  Number of files to write.", &numFiles,
+                "l|lines-per-file", "NUM  Number of lines to write to each output file (excluding the header line).", &linesPerFile,
+                "n|num-files",      "NUM  Number of output files to generate.", &numFiles,
                 "k|key-fields",     "<field-list>  Fields to use as key. Lines with the same key are written to the same output file. Use '--k|key-fields 0' to use the entire line as the key.",
                 keyFields.makeFieldListOptionHandler!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero),
 
@@ -166,7 +288,7 @@ struct TsvSplitOptions
                 std.getopt.config.caseInsensitive,
 
                 "d|delimiter",      "CHR  Field delimiter.", &delim,
-                "max-open-files",   "NUM  Maximum open file handles. Min of 5 required.", &maxOpenFilesArg,
+                "max-open-files",   "NUM  Maximum open file handles to use. Min of 5 required.", &maxOpenFilesArg,
 
                 std.getopt.config.caseSensitive,
                 "V|version",        "     Print version information and exit.", &versionWanted,
@@ -176,6 +298,11 @@ struct TsvSplitOptions
             if (r.helpWanted)
             {
                 defaultGetoptPrinter(helpText, r.options);
+                return tuple(false, 0);
+            }
+            else if (helpVerbose)
+            {
+                defaultGetoptPrinter(helpTextVerbose, r.options);
                 return tuple(false, 0);
             }
             else if (versionWanted)
