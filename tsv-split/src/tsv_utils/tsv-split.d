@@ -72,9 +72,9 @@ operation:
   unique key is randomly assigned to one of NUM output files. All lines
   with the same key are written to the same file.
 
-Output files: By default, files are written to the current directory and
-have names of the form 'part_NNN.tsv', with 'NNN' being a number. The
-output directory and file names are customizable.
+By default, files are written to the current directory and have names
+of the form 'part_NNN.tsv', with 'NNN' being a number. The output
+directory and file names are customizable.
 
 Use '--help-verbose' for more detailed information.
 
@@ -119,12 +119,12 @@ written a randomly selected output file. Note that output files will have
 similar but not identical numbers of records.
 
 Random assignment by key (--n|num-files NUM, --k|key-fields FIELDS): This
-operation splits a data set into multiple files sharded by key. All lines
-with the same key are written to the same file. This partitioning aids in
-parallelizing subsequent computation based on the key. For example,
-statistical calculation ('tsv-summarize --group-by') or duplicate removal
-('tsv-uniq --fields'). These operations can be parallized using tools like
-GNU parallel, which simplifies concurrent operations on multiple files.
+splits a data set into multiple files sharded by key. All lines with the
+same key are written to the same file. This partitioning enables parallel
+computation based on the key. For example, statistical calculation
+('tsv-summarize --group-by') or duplicate removal ('tsv-uniq --fields').
+These operations can be parallelized using tools like GNU parallel, which
+simplifies concurrent operations on multiple files.
 
 Random seed: By default, each tsv-split invocation using random assignment
 or random assignment by key produces different assignments to the output
@@ -161,13 +161,13 @@ Examples:
   tsv-split data.tsv --lines-per-file 10000
 
   # Same as the previous example, but write files to a subdirectory.
-  tsv-split data.tsv --dir split_files -l 10000
+  tsv-split data.tsv --dir split_files --lines-per-file 10000
 
   # Split a file into 10,000 line files, writing a header line to each
-  tsv-split data.tsv -H -l 10000
+  tsv-split data.tsv -H --lines-per-file 10000
 
   # Same as the previous example, but dropping the header line.
-  tsv-split data.tsv -I -l 10000
+  tsv-split data.tsv -I --lines-per-file 10000
 
   # Randomly assign lines to 1000 files
   tsv-split data.tsv --num-files 1000
@@ -187,7 +187,7 @@ Examples:
   tsv-split data2.tsv -n 1000 -k 3 --static-seed --append
 
   # Change the system per-process open file limit for one command.
-  # The parens create a subshell. The current shell is not changed.
+  # The parens create a sub-shell. The current shell is not changed.
   ( ulimit -Sn 1000 && tsv-split --num-files 1000 data.txt )
 
 Options:
