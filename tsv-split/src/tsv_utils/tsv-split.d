@@ -448,8 +448,9 @@ struct TsvSplitOptions
 
 /** A SplitOutputFiles struct holds the collection of output files.
  *
- * This struct manages the collection of output files. This includes filenames,
- * opening and closing files, and writing data and header lines.
+ * This struct manages the collection of output files used when writing to multiple
+ * files at once. This includes constructing filenames, opening and closing files,
+ * and writing data and header lines.
  *
  * The main properties of the output file set are specified in the constuctor. The
  * exception is the header line. This is not known until the first input file is
@@ -621,7 +622,7 @@ struct SplitOutputFiles
     }
 }
 
-/* Get the rlimit current number of open files the process is allowed.
+/** Get the rlimit current number of open files the process is allowed.
  *
  * This routine returns the current soft limit on the number of open files the process
  * is allowed. This is the number returned by the command: '$ ulimit -n'.
@@ -659,6 +660,10 @@ uint rlimitCurrOpenFilesLimit()
 }
 
 /** Invokes the proper split routine based on the command line arguments.
+ *
+ * This routine is the top-level control after command line argument processing is
+ * done. It's primary job is to set up data structures and invoke the correct
+ * processing routine based on the command line arguments.
  */
 void tsvSplit(TsvSplitOptions cmdopt)
 {
@@ -699,6 +704,8 @@ void tsvSplit(TsvSplitOptions cmdopt)
     }
 }
 
+/** Write input lines to multiple files, randomly selecting an output file for each line.
+ */
 void splitLinesRandomly(TsvSplitOptions cmdopt, ref SplitOutputFiles outputFiles)
 {
     import std.random : Random = Mt19937, uniform;
@@ -733,6 +740,12 @@ void splitLinesRandomly(TsvSplitOptions cmdopt, ref SplitOutputFiles outputFiles
     }
 }
 
+/** Write input lines to multiple output files using fields as a random selection key.
+ *
+ * Each input line is written to an output file. The output file is chosen using
+ * fields as a key. Each unique key is assigned to a file. All lines having the
+ * same key are written to the same file.
+ */
 void splitLinesByKey(TsvSplitOptions cmdopt, ref SplitOutputFiles outputFiles)
 {
     import std.algorithm : splitter;
@@ -812,8 +825,22 @@ void splitLinesByKey(TsvSplitOptions cmdopt, ref SplitOutputFiles outputFiles)
     }
 }
 
+/** An OutputFileSequence struct represents a series of files to write blocks of
+ * input lines to.
+ *
+ * The struct manages the output files written to when splitting by input lines
+ * by blocks (line count). The constructor takes the information about output
+ * directory, file names, and the lines per file count. The caller set the
+ * header line and passed each input line.
+ *
+ * Each line is written to current output file. A new output file is created
+ * when the requisite number of lines has been written to the current file.
+ *
+ * This struct uses a simple buffering mechanism to improve output performance.
+ */
 struct OutputFileSequence
 {
+    import std.array : appender;
     import std.conv : to;
     import std.file : exists;
     import std.format : format;
@@ -835,6 +862,10 @@ struct OutputFileSequence
     private size_t _currLinesWritten;
     private bool _currFileOpen;
 
+    private auto _outputBuffer = appender!(char[]);
+    private enum _bufferReserveSize = 1024L * 1024L;        // 1 MB
+    private enum _bufferFlushSize = 1024L * (1024L - 64L);
+
     this(size_t linesPerFile, string dir, string filePrefix, string fileSuffix,
          bool writeHeaders, bool appendToExisting)
     {
@@ -844,12 +875,18 @@ struct OutputFileSequence
             _fileSuffix = fileSuffix;
             _writeHeaders = writeHeaders;
             _appendToExistingFiles = appendToExisting;
+            _outputBuffer.reserve(_bufferReserveSize);
     }
 
     ~this()
     {
         if (_currFileOpen)
         {
+            if (_outputBuffer.data.length > 0)
+            {
+                _currOFile.write(_outputBuffer.data);
+                _outputBuffer.clear;
+            }
             _currOFile.flush;
             _currOFile.close;
             _currFileOpen = false;
@@ -895,13 +932,22 @@ struct OutputFileSequence
                 ulong filesize = _currOFile.size;
                 if (filesize == 0 || filesize == ulong.max)
                 {
-                    _currOFile.writeln(_header);
+                    put(_outputBuffer, _header);
+                    put(_outputBuffer, '\n');
                 }
             }
         }
 
-        _currOFile.writeln(data);
+        put(_outputBuffer, data);
+        put(_outputBuffer, '\n');
         ++_currLinesWritten;
+
+        if (_currLinesWritten == _linesPerFile ||
+            _outputBuffer.data.length >= _bufferFlushSize)
+        {
+            _currOFile.write(_outputBuffer.data);
+            _outputBuffer.clear;
+        }
 
         if (_currLinesWritten == _linesPerFile)
         {
@@ -912,7 +958,8 @@ struct OutputFileSequence
         }
     }
 }
-
+/** Write input lines to multiple files, splitting based on line count.
+ */
 void splitByLineCount(TsvSplitOptions cmdopt)
 {
     import tsv_utils.common.utils : bufferedByLine, throwIfWindowsNewlineOnUnix;
