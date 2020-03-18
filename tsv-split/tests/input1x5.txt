@@ -1,0 +1,5 @@
+input1x5.txt: line 1
+input1x5.txt: line 2
+input1x5.txt: line 3
+input1x5.txt: line 4
+input1x5.txt: line 5

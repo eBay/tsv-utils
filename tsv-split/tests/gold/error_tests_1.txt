@@ -1,0 +1,139 @@
+Error test set 1
+----------------
+
+====[tsv-sample input1x5.txt]====
+[tsv-split] Error processing command line arguments: Either '--l|lines-per-file' or '--n|num-files' is required.
+
+====[tsv-sample -l 10 no-such-file.txt]====
+Error [tsv-split]: Cannot open file `no-such-file.txt' in mode `rb' (No such file or directory)
+
+====[tsv-sample -n 10 no-such-file.txt]====
+Error [tsv-split]: Cannot open file `no-such-file.txt' in mode `rb' (No such file or directory)
+
+====[tsv-sample -n 10 -k 3 no-such-file.txt]====
+Error [tsv-split]: Cannot open file `no-such-file.txt' in mode `rb' (No such file or directory)
+
+====[tsv-sample -n 0 input4x58.tsv]====
+[tsv-split] Error processing command line arguments: Either '--l|lines-per-file' or '--n|num-files' is required.
+
+====[tsv-sample -n 1 input4x58.tsv]====
+[tsv-split] Error processing command line arguments: '--n|num-files must be two or more.
+
+====[tsv-sample -n 0 -k 1 input4x58.tsv]====
+[tsv-split] Error processing command line arguments: Either '--l|lines-per-file' or '--n|num-files' is required.
+
+====[tsv-sample -n 1 -k 1 input4x58.tsv]====
+[tsv-split] Error processing command line arguments: '--n|num-files must be two or more.
+
+====[tsv-sample -n 2 -k 1.5 input4x58.tsv]====
+[tsv-split] Error processing command line arguments: [--k|key-fields] Unexpected '.' when converting from type string to type ulong
+
+====[tsv-sample -n 2 -k 0,1 input4x58.tsv]====
+[tsv-split] Error processing command line arguments: Whole line as key (--k|key-fields 0) cannot be combined with multiple fields.
+
+====[tsv-sample -n 2 -k -1 input4x58.tsv]====
+[tsv-split] Error processing command line arguments: [--k|key-fields] Incomplete ranges are not supported: '-1'
+
+====[tsv-sample -n 10 -k 99 input4x58.tsv]====
+Error [tsv-split]: Not enough fields in line. File: input4x58.tsv, Line: 1
+
+====[tsv-sample -n 10 --max-open-files 4 input1x5.txt]====
+[tsv-split] Error processing command line arguments: '--max-open-files' must be at least 5.
+
+====[tsv-sample -l 10 --dir no-such-directory input1x5.txt]====
+[tsv-split] Error processing command line arguments: Directory does not exist: --dir 'no-such-directory'
+
+====[tsv-sample -n 10 --dir no-such-directory input1x5.txt]====
+[tsv-split] Error processing command line arguments: Directory does not exist: --dir 'no-such-directory'
+
+====[tsv-sample -n 10 -k 1 --dir no-such-directory input4x58.tsv]====
+[tsv-split] Error processing command line arguments: Directory does not exist: --dir 'no-such-directory'
+
+====[tsv-sample -l 10 -k 1 input4x58.tsv]====
+[tsv-split] Error processing command line arguments: '--l|lines-per-file' and '--k|key-fields' cannot be used together.
+
+====[tsv-sample -l 10 -n 3 input4x58.tsv]====
+[tsv-split] Error processing command line arguments: '--l|lines-per-file' and '--n|num-files' cannot be used together.
+
+====[tsv-sample -l 10 -n 3 -k 1 input4x58.tsv]====
+[tsv-split] Error processing command line arguments: '--l|lines-per-file' and '--n|num-files' cannot be used together.
+
+====[tsv-sample -l 10 --header --header-in-only input4x58.tsv]====
+[tsv-split] Error processing command line arguments: Use only one of '--H|header' and '--I|header-in-only'.
+
+====[ulimit -Sn 5 && tsv-split -s -n 101 -k 3 --max-open-files 6 ../input4x58.tsv]====
+[tsv-split] Error processing command line arguments: '--max-open-files' value (6) greater current system limit (5).
+Run 'ulimit -n' to see the soft limit.
+Run 'ulimit -Hn' to see the hard limit.
+Run 'ulimit -Sn NUM' to change the soft limit.
+
+====[ulimit -Sn 4 && tsv-split -s -n 101 -k 3 ../input4x58.tsv]====
+[tsv-split] Error processing command line arguments: System open file limit too small. Current value: 4. Must be 5 or more.
+Run 'ulimit -n' to see the soft limit.
+Run 'ulimit -Hn' to see the hard limit.
+Run 'ulimit -Sn NUM' to change the soft limit.
+
+====[tsv-split -l 3 ../input1x5.txt]====
+====[tsv-split -l 3 ../input1x5.txt]====
+Error [tsv-split]: Output file already exists. Use '--a|append' to append to existing files. File: 'part_0.tsv'.
+==> ./tsvsplit_workdir/part_0.tsv <==
+input1x5.txt: line 1
+input1x5.txt: line 2
+input1x5.txt: line 3
+
+==> ./tsvsplit_workdir/part_1.tsv <==
+input1x5.txt: line 4
+input1x5.txt: line 5
+
+====[tsv-split -v 15017 -n 3 ../input1x5.txt]====
+====[tsv-split -v 15017 -n 3 ../input1x5.txt]====
+Error [tsv-split]: One or more output files already exist. Use '--a|append' to append to existing files. File: 'part_0.tsv'.
+==> ./tsvsplit_workdir/part_0.tsv <==
+input1x5.txt: line 3
+input1x5.txt: line 4
+input1x5.txt: line 5
+
+==> ./tsvsplit_workdir/part_1.tsv <==
+input1x5.txt: line 1
+
+==> ./tsvsplit_workdir/part_2.tsv <==
+input1x5.txt: line 2
+
+====[tsv-split -s -n 11 -k 3 ../input4x18.tsv]====
+====[tsv-split -s -n 11 -k 3 ../input4x18.tsv]====
+Error [tsv-split]: One or more output files already exist. Use '--a|append' to append to existing files. File: 'part_00.tsv'.
+==> ./tsvsplit_workdir/part_00.tsv <==
+BLUTROT	2142	TÜPFELSUMPFHUHN	1
+
+==> ./tsvsplit_workdir/part_01.tsv <==
+jaune	2090	Weißwangengans	4
+
+==> ./tsvsplit_workdir/part_03.tsv <==
+ébène	2142	Орёл	2
+
+==> ./tsvsplit_workdir/part_04.tsv <==
+c-1	c-2	c-3	c-4
+
+==> ./tsvsplit_workdir/part_05.tsv <==
+pechschwarz	2079	Araqua-pintado	1
+blutrot	2093	Araqua-pintado	2
+GRÜNSPAN	2145	pipit de godlewski	4
+
+==> ./tsvsplit_workdir/part_06.tsv <==
+Grünspan	2105	Macuco	0
+
+==> ./tsvsplit_workdir/part_08.tsv <==
+marrón	2121	Marreca-cabocla	2
+blutrot	2137	Marreca-cabocla	1
+
+==> ./tsvsplit_workdir/part_09.tsv <==
+jaune	2104	Tüpfelsumpfhuhn	1
+dorado	2147	Tüpfelsumpfhuhn	1
+
+==> ./tsvsplit_workdir/part_10.tsv <==
+fumée	2129	Löffelente	0
+türkis	2097	Голубь	2
+Grünspan	2100	Purpurreiher	1
+rouge	2058	Pipit de Godlewski	4
+jaune	2058	Purpurreiher	2
+jaune	2097	Purpurreiher	4

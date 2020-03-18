@@ -1,4 +1,4 @@
-#! /bin/sh
+#!/usr/bin/env bash
 
 ## Most tsv-append testing is done as unit tests. Tests executed by this script are
 ## run against the final executable. This provides a sanity check that the
@@ -7,7 +7,7 @@
 ## Instead, these tests focus on areas that are hard to test in unit tests.
 
 if [ $# -le 1 ]; then
-    echo "Insufficient arguments. A program name and output director are required."
+    echo "Insufficient arguments. A program name and output directory are required."
     exit 1
 fi
 

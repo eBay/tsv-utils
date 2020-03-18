@@ -1,0 +1,4509 @@
+Key assignment tests
+--------------------
+
+====[tsv-split --static-seed --num-files 2 --key-fields 1 ../input4x58.tsv]====
+==> ./tsvsplit_workdir/part_0.tsv <==
+púrpura	2088	Macuco	1
+blutrot	2142	Tüpfelsumpfhuhn	1
+BLUTROT	2142	TÜPFELSUMPFHUHN	1
+blutrot	2118	Tüpfelsumpfhuhn	4
+Cerise	2076	Malvasía Cabeciblanca	4
+schneeweiß	2117	Porrón Islándico	4
+café	2088	Purpurreiher	2
+暗紅色/暗赤色	2015	Malvasía Cabeciblanca	2
+grünspan	2145	PIPIT DE GODLEWSKI	4
+púrpura	2070	Macreuse à bec jaune	2
+blutrot	2121	Воробей	4
+púrpura	2092	Macreuse à bec jaune	4
+blutrot	2117	Tüpfelsumpfhuhn	0
+púrpura	2093	Macreuse à bec jaune	4
+schneeweiß	2121	Porrón Islándico	1
+dorado	2045	Лебедь	2
+café	2062	Purpurreiher	4
+Cerise	2119	Malvasía Cabeciblanca	4
+café	2100	Purpurreiher	2
+BLUTROT	2142	TÜPFELSUMPFHUHN	1
+grünspan	2145	PIPIT DE GODLEWSKI	4
+blutrot	2143	Tüpfelsumpfhuhn	4
+púrpura	2119	Macuco	4
+púrpura	2145	Macreuse à bec jaune	2
+blutrot	2149	Tüpfelsumpfhuhn	1
+blutrot	2120	Tüpfelsumpfhuhn	1
+café	2041	Purpurreiher	4
+café	2019	Marreca-cabocla	1
+
+==> ./tsvsplit_workdir/part_1.tsv <==
+c-1	c-2	c-3	c-4
+Blutrot	2142	tüpfelsumpfhuhn	1
+Indigo	2056	Голубь	1
+Indigo	2141	Голубь	1
+Orange-red	2089	Purpurreiher	1
+rouge	2132	Löffelente	4
+zitronengelb	2136	Macreuse à bec jaune	3
+Grünspan	2145	Pipit de Godlewski	4
+GRÜNSPAN	2145	pipit de godlewski	4
+Blutrot	2142	tüpfelsumpfhuhn	1
+zitronengelb	2083	Macreuse à bec jaune	4
+marrón	2102	Weißwangengans	1
+rouge	2146	Löffelente	1
+noir	2082	Weißwangengans	1
+noir	2094	Weißwangengans	4
+blanc	2137	Голубь	2
+rouge	2135	Marreca-cabocla	1
+красный	2049	Weißwangengans	3
+noir	2115	Weißwangengans	2
+blanc	2109	Голубь	3
+Grünspan	2082	Pipit de Godlewski	2
+GRÜNSPAN	2145	pipit de godlewski	4
+Indigo	2138	Голубь	4
+Grünspan	2053	Pipit de Godlewski	4
+blanc	2038	Голубь	0
+Grünspan	2071	Pipit de Godlewski	3
+rouge	2037	Marreca-cabocla	0
+fumée	2113	Araqua-pintado	0
+marrón	2034	Weißwangengans	1
+fumée	2124	Araqua-pintado	0
+
+====[tsv-split -s -n 2 -k 3 ../input4x58.tsv]====
+==> ./tsvsplit_workdir/part_0.tsv <==
+c-1	c-2	c-3	c-4
+blutrot	2142	Tüpfelsumpfhuhn	1
+Blutrot	2142	tüpfelsumpfhuhn	1
+BLUTROT	2142	TÜPFELSUMPFHUHN	1
+Indigo	2056	Голубь	1
+Indigo	2141	Голубь	1
+blutrot	2118	Tüpfelsumpfhuhn	4
+Cerise	2076	Malvasía Cabeciblanca	4
+暗紅色/暗赤色	2015	Malvasía Cabeciblanca	2
+zitronengelb	2136	Macreuse à bec jaune	3
+Grünspan	2145	Pipit de Godlewski	4
+grünspan	2145	PIPIT DE GODLEWSKI	4
+Blutrot	2142	tüpfelsumpfhuhn	1
+zitronengelb	2083	Macreuse à bec jaune	4
+púrpura	2070	Macreuse à bec jaune	2
+blutrot	2121	Воробей	4
+púrpura	2092	Macreuse à bec jaune	4
+blutrot	2117	Tüpfelsumpfhuhn	0
+púrpura	2093	Macreuse à bec jaune	4
+dorado	2045	Лебедь	2
+Cerise	2119	Malvasía Cabeciblanca	4
+blanc	2137	Голубь	2
+BLUTROT	2142	TÜPFELSUMPFHUHN	1
+rouge	2135	Marreca-cabocla	1
+grünspan	2145	PIPIT DE GODLEWSKI	4
+blanc	2109	Голубь	3
+blutrot	2143	Tüpfelsumpfhuhn	4
+púrpura	2145	Macreuse à bec jaune	2
+Grünspan	2082	Pipit de Godlewski	2
+blutrot	2149	Tüpfelsumpfhuhn	1
+blutrot	2120	Tüpfelsumpfhuhn	1
+Indigo	2138	Голубь	4
+café	2019	Marreca-cabocla	1
+Grünspan	2053	Pipit de Godlewski	4
+blanc	2038	Голубь	0
+Grünspan	2071	Pipit de Godlewski	3
+rouge	2037	Marreca-cabocla	0
+fumée	2113	Araqua-pintado	0
+fumée	2124	Araqua-pintado	0
+
+==> ./tsvsplit_workdir/part_1.tsv <==
+púrpura	2088	Macuco	1
+schneeweiß	2117	Porrón Islándico	4
+café	2088	Purpurreiher	2
+Orange-red	2089	Purpurreiher	1
+rouge	2132	Löffelente	4
+GRÜNSPAN	2145	pipit de godlewski	4
+marrón	2102	Weißwangengans	1
+rouge	2146	Löffelente	1
+schneeweiß	2121	Porrón Islándico	1
+café	2062	Purpurreiher	4
+noir	2082	Weißwangengans	1
+noir	2094	Weißwangengans	4
+café	2100	Purpurreiher	2
+красный	2049	Weißwangengans	3
+noir	2115	Weißwangengans	2
+púrpura	2119	Macuco	4
+café	2041	Purpurreiher	4
+GRÜNSPAN	2145	pipit de godlewski	4
+marrón	2034	Weißwangengans	1
+
+====[tsv-split -s -n 10 -k 3 ../input4x58.tsv]====
+==> ./tsvsplit_workdir/part_0.tsv <==
+Cerise	2076	Malvasía Cabeciblanca	4
+暗紅色/暗赤色	2015	Malvasía Cabeciblanca	2
+grünspan	2145	PIPIT DE GODLEWSKI	4
+Cerise	2119	Malvasía Cabeciblanca	4
+grünspan	2145	PIPIT DE GODLEWSKI	4
+
+==> ./tsvsplit_workdir/part_1.tsv <==
+rouge	2132	Löffelente	4
+rouge	2146	Löffelente	1
+
+==> ./tsvsplit_workdir/part_2.tsv <==
+Blutrot	2142	tüpfelsumpfhuhn	1
+BLUTROT	2142	TÜPFELSUMPFHUHN	1
+Indigo	2056	Голубь	1
+Indigo	2141	Голубь	1
+zitronengelb	2136	Macreuse à bec jaune	3
+Blutrot	2142	tüpfelsumpfhuhn	1
+zitronengelb	2083	Macreuse à bec jaune	4
+púrpura	2070	Macreuse à bec jaune	2
+blutrot	2121	Воробей	4
+púrpura	2092	Macreuse à bec jaune	4
+púrpura	2093	Macreuse à bec jaune	4
+blanc	2137	Голубь	2
+BLUTROT	2142	TÜPFELSUMPFHUHN	1
+blanc	2109	Голубь	3
+púrpura	2145	Macreuse à bec jaune	2
+Indigo	2138	Голубь	4
+blanc	2038	Голубь	0
+fumée	2113	Araqua-pintado	0
+fumée	2124	Araqua-pintado	0
+
+==> ./tsvsplit_workdir/part_3.tsv <==
+púrpura	2088	Macuco	1
+schneeweiß	2117	Porrón Islándico	4
+GRÜNSPAN	2145	pipit de godlewski	4
+schneeweiß	2121	Porrón Islándico	1
+púrpura	2119	Macuco	4
+GRÜNSPAN	2145	pipit de godlewski	4
+
+==> ./tsvsplit_workdir/part_4.tsv <==
+Grünspan	2145	Pipit de Godlewski	4
+dorado	2045	Лебедь	2
+rouge	2135	Marreca-cabocla	1
+Grünspan	2082	Pipit de Godlewski	2
+café	2019	Marreca-cabocla	1
+Grünspan	2053	Pipit de Godlewski	4
+Grünspan	2071	Pipit de Godlewski	3
+rouge	2037	Marreca-cabocla	0
+
+==> ./tsvsplit_workdir/part_5.tsv <==
+marrón	2102	Weißwangengans	1
+noir	2082	Weißwangengans	1
+noir	2094	Weißwangengans	4
+красный	2049	Weißwangengans	3
+noir	2115	Weißwangengans	2
+marrón	2034	Weißwangengans	1
+
+==> ./tsvsplit_workdir/part_6.tsv <==
+c-1	c-2	c-3	c-4
+
+==> ./tsvsplit_workdir/part_7.tsv <==
+café	2088	Purpurreiher	2
+Orange-red	2089	Purpurreiher	1
+café	2062	Purpurreiher	4
+café	2100	Purpurreiher	2
+café	2041	Purpurreiher	4
+
+==> ./tsvsplit_workdir/part_8.tsv <==
+blutrot	2142	Tüpfelsumpfhuhn	1
+blutrot	2118	Tüpfelsumpfhuhn	4
+blutrot	2117	Tüpfelsumpfhuhn	0
+blutrot	2143	Tüpfelsumpfhuhn	4
+blutrot	2149	Tüpfelsumpfhuhn	1
+blutrot	2120	Tüpfelsumpfhuhn	1
+
+====[tsv-split -s -n 11 -k 3 ../input4x58.tsv]====
+==> ./tsvsplit_workdir/part_00.tsv <==
+BLUTROT	2142	TÜPFELSUMPFHUHN	1
+BLUTROT	2142	TÜPFELSUMPFHUHN	1
+
+==> ./tsvsplit_workdir/part_01.tsv <==
+blutrot	2121	Воробей	4
+marrón	2102	Weißwangengans	1
+noir	2082	Weißwangengans	1
+noir	2094	Weißwangengans	4
+красный	2049	Weißwangengans	3
+noir	2115	Weißwangengans	2
+marrón	2034	Weißwangengans	1
+
+==> ./tsvsplit_workdir/part_02.tsv <==
+schneeweiß	2117	Porrón Islándico	4
+schneeweiß	2121	Porrón Islándico	1
+
+==> ./tsvsplit_workdir/part_03.tsv <==
+Cerise	2076	Malvasía Cabeciblanca	4
+暗紅色/暗赤色	2015	Malvasía Cabeciblanca	2
+zitronengelb	2136	Macreuse à bec jaune	3
+zitronengelb	2083	Macreuse à bec jaune	4
+púrpura	2070	Macreuse à bec jaune	2
+púrpura	2092	Macreuse à bec jaune	4
+púrpura	2093	Macreuse à bec jaune	4
+dorado	2045	Лебедь	2
+Cerise	2119	Malvasía Cabeciblanca	4
+púrpura	2145	Macreuse à bec jaune	2
+
+==> ./tsvsplit_workdir/part_04.tsv <==
+c-1	c-2	c-3	c-4
+grünspan	2145	PIPIT DE GODLEWSKI	4
+grünspan	2145	PIPIT DE GODLEWSKI	4
+
+==> ./tsvsplit_workdir/part_05.tsv <==
+GRÜNSPAN	2145	pipit de godlewski	4
+GRÜNSPAN	2145	pipit de godlewski	4
+fumée	2113	Araqua-pintado	0
+fumée	2124	Araqua-pintado	0
+
+==> ./tsvsplit_workdir/part_06.tsv <==
+púrpura	2088	Macuco	1
+púrpura	2119	Macuco	4
+
+==> ./tsvsplit_workdir/part_07.tsv <==
+Blutrot	2142	tüpfelsumpfhuhn	1
+Blutrot	2142	tüpfelsumpfhuhn	1
+
+==> ./tsvsplit_workdir/part_08.tsv <==
+rouge	2135	Marreca-cabocla	1
+café	2019	Marreca-cabocla	1
+rouge	2037	Marreca-cabocla	0
+
+==> ./tsvsplit_workdir/part_09.tsv <==
+blutrot	2142	Tüpfelsumpfhuhn	1
+blutrot	2118	Tüpfelsumpfhuhn	4
+blutrot	2117	Tüpfelsumpfhuhn	0
+blutrot	2143	Tüpfelsumpfhuhn	4
+blutrot	2149	Tüpfelsumpfhuhn	1
+blutrot	2120	Tüpfelsumpfhuhn	1
+
+==> ./tsvsplit_workdir/part_10.tsv <==
+Indigo	2056	Голубь	1
+Indigo	2141	Голубь	1
+café	2088	Purpurreiher	2
+Orange-red	2089	Purpurreiher	1
+rouge	2132	Löffelente	4
+Grünspan	2145	Pipit de Godlewski	4
+rouge	2146	Löffelente	1
+café	2062	Purpurreiher	4
+blanc	2137	Голубь	2
+café	2100	Purpurreiher	2
+blanc	2109	Голубь	3
+Grünspan	2082	Pipit de Godlewski	2
+café	2041	Purpurreiher	4
+Indigo	2138	Голубь	4
+Grünspan	2053	Pipit de Godlewski	4
+blanc	2038	Голубь	0
+Grünspan	2071	Pipit de Godlewski	3
+
+====[tsv-split -s -n 101 -k 3 ../input4x58.tsv]====
+==> ./tsvsplit_workdir/part_000.tsv <==
+dorado	2045	Лебедь	2
+
+==> ./tsvsplit_workdir/part_004.tsv <==
+Blutrot	2142	tüpfelsumpfhuhn	1
+Blutrot	2142	tüpfelsumpfhuhn	1
+
+==> ./tsvsplit_workdir/part_005.tsv <==
+BLUTROT	2142	TÜPFELSUMPFHUHN	1
+BLUTROT	2142	TÜPFELSUMPFHUHN	1
+
+==> ./tsvsplit_workdir/part_011.tsv <==
+púrpura	2088	Macuco	1
+púrpura	2119	Macuco	4
+
+==> ./tsvsplit_workdir/part_014.tsv <==
+blutrot	2121	Воробей	4
+
+==> ./tsvsplit_workdir/part_016.tsv <==
+Grünspan	2145	Pipit de Godlewski	4
+Grünspan	2082	Pipit de Godlewski	2
+Grünspan	2053	Pipit de Godlewski	4
+Grünspan	2071	Pipit de Godlewski	3
+
+==> ./tsvsplit_workdir/part_028.tsv <==
+rouge	2135	Marreca-cabocla	1
+café	2019	Marreca-cabocla	1
+rouge	2037	Marreca-cabocla	0
+
+==> ./tsvsplit_workdir/part_032.tsv <==
+blutrot	2142	Tüpfelsumpfhuhn	1
+blutrot	2118	Tüpfelsumpfhuhn	4
+blutrot	2117	Tüpfelsumpfhuhn	0
+blutrot	2143	Tüpfelsumpfhuhn	4
+blutrot	2149	Tüpfelsumpfhuhn	1
+blutrot	2120	Tüpfelsumpfhuhn	1
+
+==> ./tsvsplit_workdir/part_033.tsv <==
+grünspan	2145	PIPIT DE GODLEWSKI	4
+grünspan	2145	PIPIT DE GODLEWSKI	4
+
+==> ./tsvsplit_workdir/part_035.tsv <==
+fumée	2113	Araqua-pintado	0
+fumée	2124	Araqua-pintado	0
+
+==> ./tsvsplit_workdir/part_037.tsv <==
+schneeweiß	2117	Porrón Islándico	4
+schneeweiß	2121	Porrón Islándico	1
+
+==> ./tsvsplit_workdir/part_051.tsv <==
+zitronengelb	2136	Macreuse à bec jaune	3
+zitronengelb	2083	Macreuse à bec jaune	4
+púrpura	2070	Macreuse à bec jaune	2
+púrpura	2092	Macreuse à bec jaune	4
+púrpura	2093	Macreuse à bec jaune	4
+púrpura	2145	Macreuse à bec jaune	2
+
+==> ./tsvsplit_workdir/part_055.tsv <==
+Indigo	2056	Голубь	1
+Indigo	2141	Голубь	1
+blanc	2137	Голубь	2
+blanc	2109	Голубь	3
+Indigo	2138	Голубь	4
+blanc	2038	Голубь	0
+
+==> ./tsvsplit_workdir/part_068.tsv <==
+GRÜNSPAN	2145	pipit de godlewski	4
+GRÜNSPAN	2145	pipit de godlewski	4
+
+==> ./tsvsplit_workdir/part_070.tsv <==
+rouge	2132	Löffelente	4
+rouge	2146	Löffelente	1
+
+==> ./tsvsplit_workdir/part_072.tsv <==
+marrón	2102	Weißwangengans	1
+noir	2082	Weißwangengans	1
+noir	2094	Weißwangengans	4
+красный	2049	Weißwangengans	3
+noir	2115	Weißwangengans	2
+marrón	2034	Weißwangengans	1
+
+==> ./tsvsplit_workdir/part_080.tsv <==
+Cerise	2076	Malvasía Cabeciblanca	4
+暗紅色/暗赤色	2015	Malvasía Cabeciblanca	2
+Cerise	2119	Malvasía Cabeciblanca	4
+
+==> ./tsvsplit_workdir/part_087.tsv <==
+café	2088	Purpurreiher	2
+Orange-red	2089	Purpurreiher	1
+café	2062	Purpurreiher	4
+café	2100	Purpurreiher	2
+café	2041	Purpurreiher	4
+
+==> ./tsvsplit_workdir/part_093.tsv <==
+c-1	c-2	c-3	c-4
+
+====[tsv-split -s -n 2 -k 1,3 ../input4x58.tsv]====
+==> ./tsvsplit_workdir/part_0.tsv <==
+c-1	c-2	c-3	c-4
+púrpura	2088	Macuco	1
+blutrot	2142	Tüpfelsumpfhuhn	1
+Blutrot	2142	tüpfelsumpfhuhn	1
+Indigo	2056	Голубь	1
+Indigo	2141	Голубь	1
+blutrot	2118	Tüpfelsumpfhuhn	4
+Cerise	2076	Malvasía Cabeciblanca	4
+schneeweiß	2117	Porrón Islándico	4
+暗紅色/暗赤色	2015	Malvasía Cabeciblanca	2
+rouge	2132	Löffelente	4
+zitronengelb	2136	Macreuse à bec jaune	3
+grünspan	2145	PIPIT DE GODLEWSKI	4
+GRÜNSPAN	2145	pipit de godlewski	4
+Blutrot	2142	tüpfelsumpfhuhn	1
+zitronengelb	2083	Macreuse à bec jaune	4
+rouge	2146	Löffelente	1
+blutrot	2117	Tüpfelsumpfhuhn	0
+schneeweiß	2121	Porrón Islándico	1
+Cerise	2119	Malvasía Cabeciblanca	4
+blanc	2137	Голубь	2
+grünspan	2145	PIPIT DE GODLEWSKI	4
+blanc	2109	Голубь	3
+blutrot	2143	Tüpfelsumpfhuhn	4
+púrpura	2119	Macuco	4
+blutrot	2149	Tüpfelsumpfhuhn	1
+blutrot	2120	Tüpfelsumpfhuhn	1
+GRÜNSPAN	2145	pipit de godlewski	4
+Indigo	2138	Голубь	4
+blanc	2038	Голубь	0
+
+==> ./tsvsplit_workdir/part_1.tsv <==
+BLUTROT	2142	TÜPFELSUMPFHUHN	1
+café	2088	Purpurreiher	2
+Orange-red	2089	Purpurreiher	1
+Grünspan	2145	Pipit de Godlewski	4
+púrpura	2070	Macreuse à bec jaune	2
+blutrot	2121	Воробей	4
+marrón	2102	Weißwangengans	1
+púrpura	2092	Macreuse à bec jaune	4
+púrpura	2093	Macreuse à bec jaune	4
+dorado	2045	Лебедь	2
+café	2062	Purpurreiher	4
+noir	2082	Weißwangengans	1
+noir	2094	Weißwangengans	4
+café	2100	Purpurreiher	2
+BLUTROT	2142	TÜPFELSUMPFHUHN	1
+rouge	2135	Marreca-cabocla	1
+красный	2049	Weißwangengans	3
+noir	2115	Weißwangengans	2
+púrpura	2145	Macreuse à bec jaune	2
+Grünspan	2082	Pipit de Godlewski	2
+café	2041	Purpurreiher	4
+café	2019	Marreca-cabocla	1
+Grünspan	2053	Pipit de Godlewski	4
+Grünspan	2071	Pipit de Godlewski	3
+rouge	2037	Marreca-cabocla	0
+fumée	2113	Araqua-pintado	0
+marrón	2034	Weißwangengans	1
+fumée	2124	Araqua-pintado	0
+
+====[tsv-split -s -n 17 -k 1,3 ../input4x58.tsv]====
+==> ./tsvsplit_workdir/part_00.tsv <==
+fumée	2113	Araqua-pintado	0
+fumée	2124	Araqua-pintado	0
+
+==> ./tsvsplit_workdir/part_02.tsv <==
+Cerise	2076	Malvasía Cabeciblanca	4
+grünspan	2145	PIPIT DE GODLEWSKI	4
+púrpura	2070	Macreuse à bec jaune	2
+púrpura	2092	Macreuse à bec jaune	4
+púrpura	2093	Macreuse à bec jaune	4
+Cerise	2119	Malvasía Cabeciblanca	4
+grünspan	2145	PIPIT DE GODLEWSKI	4
+púrpura	2145	Macreuse à bec jaune	2
+
+==> ./tsvsplit_workdir/part_03.tsv <==
+schneeweiß	2117	Porrón Islándico	4
+schneeweiß	2121	Porrón Islándico	1
+blanc	2137	Голубь	2
+blanc	2109	Голубь	3
+blanc	2038	Голубь	0
+
+==> ./tsvsplit_workdir/part_04.tsv <==
+BLUTROT	2142	TÜPFELSUMPFHUHN	1
+GRÜNSPAN	2145	pipit de godlewski	4
+BLUTROT	2142	TÜPFELSUMPFHUHN	1
+GRÜNSPAN	2145	pipit de godlewski	4
+
+==> ./tsvsplit_workdir/part_05.tsv <==
+Grünspan	2145	Pipit de Godlewski	4
+marrón	2102	Weißwangengans	1
+Grünspan	2082	Pipit de Godlewski	2
+Grünspan	2053	Pipit de Godlewski	4
+Grünspan	2071	Pipit de Godlewski	3
+marrón	2034	Weißwangengans	1
+
+==> ./tsvsplit_workdir/part_06.tsv <==
+暗紅色/暗赤色	2015	Malvasía Cabeciblanca	2
+
+==> ./tsvsplit_workdir/part_07.tsv <==
+Blutrot	2142	tüpfelsumpfhuhn	1
+rouge	2132	Löffelente	4
+Blutrot	2142	tüpfelsumpfhuhn	1
+rouge	2146	Löffelente	1
+красный	2049	Weißwangengans	3
+
+==> ./tsvsplit_workdir/part_08.tsv <==
+Orange-red	2089	Purpurreiher	1
+
+==> ./tsvsplit_workdir/part_09.tsv <==
+blutrot	2121	Воробей	4
+
+==> ./tsvsplit_workdir/part_10.tsv <==
+púrpura	2088	Macuco	1
+café	2088	Purpurreiher	2
+café	2062	Purpurreiher	4
+café	2100	Purpurreiher	2
+púrpura	2119	Macuco	4
+café	2041	Purpurreiher	4
+
+==> ./tsvsplit_workdir/part_11.tsv <==
+c-1	c-2	c-3	c-4
+café	2019	Marreca-cabocla	1
+
+==> ./tsvsplit_workdir/part_12.tsv <==
+dorado	2045	Лебедь	2
+rouge	2135	Marreca-cabocla	1
+rouge	2037	Marreca-cabocla	0
+
+==> ./tsvsplit_workdir/part_15.tsv <==
+zitronengelb	2136	Macreuse à bec jaune	3
+zitronengelb	2083	Macreuse à bec jaune	4
+
+==> ./tsvsplit_workdir/part_16.tsv <==
+blutrot	2142	Tüpfelsumpfhuhn	1
+Indigo	2056	Голубь	1
+Indigo	2141	Голубь	1
+blutrot	2118	Tüpfelsumpfhuhn	4
+blutrot	2117	Tüpfelsumpfhuhn	0
+noir	2082	Weißwangengans	1
+noir	2094	Weißwangengans	4
+noir	2115	Weißwangengans	2
+blutrot	2143	Tüpfelsumpfhuhn	4
+blutrot	2149	Tüpfelsumpfhuhn	1
+blutrot	2120	Tüpfelsumpfhuhn	1
+Indigo	2138	Голубь	4
+
+====[tsv-split -s -n 101 -k 1,3 ../input4x58.tsv]====
+==> ./tsvsplit_workdir/part_010.tsv <==
+красный	2049	Weißwangengans	3
+
+==> ./tsvsplit_workdir/part_012.tsv <==
+暗紅色/暗赤色	2015	Malvasía Cabeciblanca	2
+
+==> ./tsvsplit_workdir/part_020.tsv <==
+blanc	2137	Голубь	2
+blanc	2109	Голубь	3
+blanc	2038	Голубь	0
+
+==> ./tsvsplit_workdir/part_021.tsv <==
+Cerise	2076	Malvasía Cabeciblanca	4
+Cerise	2119	Malvasía Cabeciblanca	4
+
+==> ./tsvsplit_workdir/part_024.tsv <==
+grünspan	2145	PIPIT DE GODLEWSKI	4
+grünspan	2145	PIPIT DE GODLEWSKI	4
+
+==> ./tsvsplit_workdir/part_027.tsv <==
+Orange-red	2089	Purpurreiher	1
+
+==> ./tsvsplit_workdir/part_031.tsv <==
+Blutrot	2142	tüpfelsumpfhuhn	1
+Blutrot	2142	tüpfelsumpfhuhn	1
+
+==> ./tsvsplit_workdir/part_035.tsv <==
+marrón	2102	Weißwangengans	1
+dorado	2045	Лебедь	2
+café	2019	Marreca-cabocla	1
+marrón	2034	Weißwangengans	1
+
+==> ./tsvsplit_workdir/part_036.tsv <==
+blutrot	2142	Tüpfelsumpfhuhn	1
+blutrot	2118	Tüpfelsumpfhuhn	4
+blutrot	2117	Tüpfelsumpfhuhn	0
+blutrot	2143	Tüpfelsumpfhuhn	4
+blutrot	2149	Tüpfelsumpfhuhn	1
+blutrot	2120	Tüpfelsumpfhuhn	1
+
+==> ./tsvsplit_workdir/part_038.tsv <==
+rouge	2135	Marreca-cabocla	1
+rouge	2037	Marreca-cabocla	0
+
+==> ./tsvsplit_workdir/part_043.tsv <==
+Indigo	2056	Голубь	1
+Indigo	2141	Голубь	1
+Indigo	2138	Голубь	4
+
+==> ./tsvsplit_workdir/part_046.tsv <==
+púrpura	2070	Macreuse à bec jaune	2
+púrpura	2092	Macreuse à bec jaune	4
+púrpura	2093	Macreuse à bec jaune	4
+púrpura	2145	Macreuse à bec jaune	2
+
+==> ./tsvsplit_workdir/part_047.tsv <==
+fumée	2113	Araqua-pintado	0
+fumée	2124	Araqua-pintado	0
+
+==> ./tsvsplit_workdir/part_052.tsv <==
+zitronengelb	2136	Macreuse à bec jaune	3
+zitronengelb	2083	Macreuse à bec jaune	4
+
+==> ./tsvsplit_workdir/part_070.tsv <==
+café	2088	Purpurreiher	2
+café	2062	Purpurreiher	4
+café	2100	Purpurreiher	2
+café	2041	Purpurreiher	4
+
+==> ./tsvsplit_workdir/part_072.tsv <==
+BLUTROT	2142	TÜPFELSUMPFHUHN	1
+noir	2082	Weißwangengans	1
+noir	2094	Weißwangengans	4
+BLUTROT	2142	TÜPFELSUMPFHUHN	1
+noir	2115	Weißwangengans	2
+
+==> ./tsvsplit_workdir/part_075.tsv <==
+púrpura	2088	Macuco	1
+púrpura	2119	Macuco	4
+
+==> ./tsvsplit_workdir/part_076.tsv <==
+c-1	c-2	c-3	c-4
+
+==> ./tsvsplit_workdir/part_080.tsv <==
+Grünspan	2145	Pipit de Godlewski	4
+Grünspan	2082	Pipit de Godlewski	2
+Grünspan	2053	Pipit de Godlewski	4
+Grünspan	2071	Pipit de Godlewski	3
+
+==> ./tsvsplit_workdir/part_084.tsv <==
+blutrot	2121	Воробей	4
+
+==> ./tsvsplit_workdir/part_095.tsv <==
+schneeweiß	2117	Porrón Islándico	4
+GRÜNSPAN	2145	pipit de godlewski	4
+schneeweiß	2121	Porrón Islándico	1
+GRÜNSPAN	2145	pipit de godlewski	4
+
+==> ./tsvsplit_workdir/part_096.tsv <==
+rouge	2132	Löffelente	4
+rouge	2146	Löffelente	1
+
+====[tsv-split -s -n 2 -k 1,3,4 ../input4x58.tsv]====
+==> ./tsvsplit_workdir/part_0.tsv <==
+c-1	c-2	c-3	c-4
+Indigo	2056	Голубь	1
+Indigo	2141	Голубь	1
+Cerise	2076	Malvasía Cabeciblanca	4
+café	2088	Purpurreiher	2
+Orange-red	2089	Purpurreiher	1
+rouge	2132	Löffelente	4
+grünspan	2145	PIPIT DE GODLEWSKI	4
+púrpura	2070	Macreuse à bec jaune	2
+marrón	2102	Weißwangengans	1
+púrpura	2092	Macreuse à bec jaune	4
+rouge	2146	Löffelente	1
+púrpura	2093	Macreuse à bec jaune	4
+dorado	2045	Лебедь	2
+Cerise	2119	Malvasía Cabeciblanca	4
+noir	2094	Weißwangengans	4
+blanc	2137	Голубь	2
+café	2100	Purpurreiher	2
+grünspan	2145	PIPIT DE GODLEWSKI	4
+blanc	2109	Голубь	3
+púrpura	2119	Macuco	4
+púrpura	2145	Macreuse à bec jaune	2
+Grünspan	2082	Pipit de Godlewski	2
+Indigo	2138	Голубь	4
+café	2019	Marreca-cabocla	1
+blanc	2038	Голубь	0
+Grünspan	2071	Pipit de Godlewski	3
+marrón	2034	Weißwangengans	1
+
+==> ./tsvsplit_workdir/part_1.tsv <==
+púrpura	2088	Macuco	1
+blutrot	2142	Tüpfelsumpfhuhn	1
+Blutrot	2142	tüpfelsumpfhuhn	1
+BLUTROT	2142	TÜPFELSUMPFHUHN	1
+blutrot	2118	Tüpfelsumpfhuhn	4
+schneeweiß	2117	Porrón Islándico	4
+暗紅色/暗赤色	2015	Malvasía Cabeciblanca	2
+zitronengelb	2136	Macreuse à bec jaune	3
+Grünspan	2145	Pipit de Godlewski	4
+GRÜNSPAN	2145	pipit de godlewski	4
+Blutrot	2142	tüpfelsumpfhuhn	1
+zitronengelb	2083	Macreuse à bec jaune	4
+blutrot	2121	Воробей	4
+blutrot	2117	Tüpfelsumpfhuhn	0
+schneeweiß	2121	Porrón Islándico	1
+café	2062	Purpurreiher	4
+noir	2082	Weißwangengans	1
+BLUTROT	2142	TÜPFELSUMPFHUHN	1
+rouge	2135	Marreca-cabocla	1
+красный	2049	Weißwangengans	3
+noir	2115	Weißwangengans	2
+blutrot	2143	Tüpfelsumpfhuhn	4
+blutrot	2149	Tüpfelsumpfhuhn	1
+blutrot	2120	Tüpfelsumpfhuhn	1
+café	2041	Purpurreiher	4
+GRÜNSPAN	2145	pipit de godlewski	4
+Grünspan	2053	Pipit de Godlewski	4
+rouge	2037	Marreca-cabocla	0
+fumée	2113	Araqua-pintado	0
+fumée	2124	Araqua-pintado	0
+
+====[tsv-split --seed-value 15017 --num-files 2 --key-fields 1 ../input4x58.tsv]====
+==> ./tsvsplit_workdir/part_0.tsv <==
+c-1	c-2	c-3	c-4
+púrpura	2088	Macuco	1
+blutrot	2142	Tüpfelsumpfhuhn	1
+Blutrot	2142	tüpfelsumpfhuhn	1
+BLUTROT	2142	TÜPFELSUMPFHUHN	1
+blutrot	2118	Tüpfelsumpfhuhn	4
+Cerise	2076	Malvasía Cabeciblanca	4
+café	2088	Purpurreiher	2
+Orange-red	2089	Purpurreiher	1
+暗紅色/暗赤色	2015	Malvasía Cabeciblanca	2
+grünspan	2145	PIPIT DE GODLEWSKI	4
+Blutrot	2142	tüpfelsumpfhuhn	1
+púrpura	2070	Macreuse à bec jaune	2
+blutrot	2121	Воробей	4
+púrpura	2092	Macreuse à bec jaune	4
+blutrot	2117	Tüpfelsumpfhuhn	0
+púrpura	2093	Macreuse à bec jaune	4
+café	2062	Purpurreiher	4
+Cerise	2119	Malvasía Cabeciblanca	4
+noir	2082	Weißwangengans	1
+noir	2094	Weißwangengans	4
+blanc	2137	Голубь	2
+café	2100	Purpurreiher	2
+BLUTROT	2142	TÜPFELSUMPFHUHN	1
+noir	2115	Weißwangengans	2
+grünspan	2145	PIPIT DE GODLEWSKI	4
+blanc	2109	Голубь	3
+blutrot	2143	Tüpfelsumpfhuhn	4
+púrpura	2119	Macuco	4
+púrpura	2145	Macreuse à bec jaune	2
+blutrot	2149	Tüpfelsumpfhuhn	1
+blutrot	2120	Tüpfelsumpfhuhn	1
+café	2041	Purpurreiher	4
+café	2019	Marreca-cabocla	1
+blanc	2038	Голубь	0
+fumée	2113	Araqua-pintado	0
+fumée	2124	Araqua-pintado	0
+
+==> ./tsvsplit_workdir/part_1.tsv <==
+Indigo	2056	Голубь	1
+Indigo	2141	Голубь	1
+schneeweiß	2117	Porrón Islándico	4
+rouge	2132	Löffelente	4
+zitronengelb	2136	Macreuse à bec jaune	3
+Grünspan	2145	Pipit de Godlewski	4
+GRÜNSPAN	2145	pipit de godlewski	4
+zitronengelb	2083	Macreuse à bec jaune	4
+marrón	2102	Weißwangengans	1
+rouge	2146	Löffelente	1
+schneeweiß	2121	Porrón Islándico	1
+dorado	2045	Лебедь	2
+rouge	2135	Marreca-cabocla	1
+красный	2049	Weißwangengans	3
+Grünspan	2082	Pipit de Godlewski	2
+GRÜNSPAN	2145	pipit de godlewski	4
+Indigo	2138	Голубь	4
+Grünspan	2053	Pipit de Godlewski	4
+Grünspan	2071	Pipit de Godlewski	3
+rouge	2037	Marreca-cabocla	0
+marrón	2034	Weißwangengans	1
+
+====[tsv-split -v 15017 -n 101 -k 3 ../input4x58.tsv]====
+==> ./tsvsplit_workdir/part_006.tsv <==
+Blutrot	2142	tüpfelsumpfhuhn	1
+Blutrot	2142	tüpfelsumpfhuhn	1
+
+==> ./tsvsplit_workdir/part_015.tsv <==
+púrpura	2088	Macuco	1
+púrpura	2119	Macuco	4
+
+==> ./tsvsplit_workdir/part_026.tsv <==
+rouge	2132	Löffelente	4
+rouge	2146	Löffelente	1
+
+==> ./tsvsplit_workdir/part_029.tsv <==
+dorado	2045	Лебедь	2
+
+==> ./tsvsplit_workdir/part_032.tsv <==
+c-1	c-2	c-3	c-4
+
+==> ./tsvsplit_workdir/part_055.tsv <==
+BLUTROT	2142	TÜPFELSUMPFHUHN	1
+Indigo	2056	Голубь	1
+Indigo	2141	Голубь	1
+blanc	2137	Голубь	2
+BLUTROT	2142	TÜPFELSUMPFHUHN	1
+blanc	2109	Голубь	3
+Indigo	2138	Голубь	4
+blanc	2038	Голубь	0
+fumée	2113	Araqua-pintado	0
+fumée	2124	Araqua-pintado	0
+
+==> ./tsvsplit_workdir/part_056.tsv <==
+café	2088	Purpurreiher	2
+Orange-red	2089	Purpurreiher	1
+café	2062	Purpurreiher	4
+café	2100	Purpurreiher	2
+café	2041	Purpurreiher	4
+
+==> ./tsvsplit_workdir/part_059.tsv <==
+grünspan	2145	PIPIT DE GODLEWSKI	4
+grünspan	2145	PIPIT DE GODLEWSKI	4
+
+==> ./tsvsplit_workdir/part_066.tsv <==
+blutrot	2121	Воробей	4
+
+==> ./tsvsplit_workdir/part_067.tsv <==
+zitronengelb	2136	Macreuse à bec jaune	3
+zitronengelb	2083	Macreuse à bec jaune	4
+púrpura	2070	Macreuse à bec jaune	2
+púrpura	2092	Macreuse à bec jaune	4
+púrpura	2093	Macreuse à bec jaune	4
+púrpura	2145	Macreuse à bec jaune	2
+
+==> ./tsvsplit_workdir/part_078.tsv <==
+Grünspan	2145	Pipit de Godlewski	4
+Grünspan	2082	Pipit de Godlewski	2
+Grünspan	2053	Pipit de Godlewski	4
+Grünspan	2071	Pipit de Godlewski	3
+
+==> ./tsvsplit_workdir/part_079.tsv <==
+marrón	2102	Weißwangengans	1
+noir	2082	Weißwangengans	1
+noir	2094	Weißwangengans	4
+красный	2049	Weißwangengans	3
+noir	2115	Weißwangengans	2
+marrón	2034	Weißwangengans	1
+
+==> ./tsvsplit_workdir/part_083.tsv <==
+rouge	2135	Marreca-cabocla	1
+café	2019	Marreca-cabocla	1
+rouge	2037	Marreca-cabocla	0
+
+==> ./tsvsplit_workdir/part_084.tsv <==
+schneeweiß	2117	Porrón Islándico	4
+schneeweiß	2121	Porrón Islándico	1
+
+==> ./tsvsplit_workdir/part_087.tsv <==
+GRÜNSPAN	2145	pipit de godlewski	4
+GRÜNSPAN	2145	pipit de godlewski	4
+
+==> ./tsvsplit_workdir/part_088.tsv <==
+blutrot	2142	Tüpfelsumpfhuhn	1
+blutrot	2118	Tüpfelsumpfhuhn	4
+blutrot	2117	Tüpfelsumpfhuhn	0
+blutrot	2143	Tüpfelsumpfhuhn	4
+blutrot	2149	Tüpfelsumpfhuhn	1
+blutrot	2120	Tüpfelsumpfhuhn	1
+
+==> ./tsvsplit_workdir/part_099.tsv <==
+Cerise	2076	Malvasía Cabeciblanca	4
+暗紅色/暗赤色	2015	Malvasía Cabeciblanca	2
+Cerise	2119	Malvasía Cabeciblanca	4
+
+====[tsv-split -v 15017 -n 101 -k 0 ../input4x58.tsv ../input4x18.tsv]====
+==> ./tsvsplit_workdir/part_000.tsv <==
+ébène	2142	Орёл	2
+fumée	2129	Löffelente	0
+
+==> ./tsvsplit_workdir/part_001.tsv <==
+zitronengelb	2136	Macreuse à bec jaune	3
+
+==> ./tsvsplit_workdir/part_002.tsv <==
+rouge	2146	Löffelente	1
+
+==> ./tsvsplit_workdir/part_003.tsv <==
+blutrot	2142	Tüpfelsumpfhuhn	1
+
+==> ./tsvsplit_workdir/part_007.tsv <==
+púrpura	2070	Macreuse à bec jaune	2
+jaune	2090	Weißwangengans	4
+
+==> ./tsvsplit_workdir/part_008.tsv <==
+púrpura	2092	Macreuse à bec jaune	4
+
+==> ./tsvsplit_workdir/part_009.tsv <==
+красный	2049	Weißwangengans	3
+
+==> ./tsvsplit_workdir/part_012.tsv <==
+púrpura	2088	Macuco	1
+
+==> ./tsvsplit_workdir/part_019.tsv <==
+blutrot	2118	Tüpfelsumpfhuhn	4
+café	2088	Purpurreiher	2
+
+==> ./tsvsplit_workdir/part_020.tsv <==
+GRÜNSPAN	2145	pipit de godlewski	4
+blutrot	2143	Tüpfelsumpfhuhn	4
+púrpura	2145	Macreuse à bec jaune	2
+GRÜNSPAN	2145	pipit de godlewski	4
+GRÜNSPAN	2145	pipit de godlewski	4
+
+==> ./tsvsplit_workdir/part_023.tsv <==
+Indigo	2056	Голубь	1
+Orange-red	2089	Purpurreiher	1
+
+==> ./tsvsplit_workdir/part_028.tsv <==
+blutrot	2149	Tüpfelsumpfhuhn	1
+café	2019	Marreca-cabocla	1
+blutrot	2093	Araqua-pintado	2
+
+==> ./tsvsplit_workdir/part_029.tsv <==
+rouge	2058	Pipit de Godlewski	4
+
+==> ./tsvsplit_workdir/part_031.tsv <==
+zitronengelb	2083	Macreuse à bec jaune	4
+
+==> ./tsvsplit_workdir/part_032.tsv <==
+rouge	2132	Löffelente	4
+
+==> ./tsvsplit_workdir/part_033.tsv <==
+marrón	2121	Marreca-cabocla	2
+
+==> ./tsvsplit_workdir/part_034.tsv <==
+café	2041	Purpurreiher	4
+blanc	2038	Голубь	0
+
+==> ./tsvsplit_workdir/part_035.tsv <==
+rouge	2037	Marreca-cabocla	0
+
+==> ./tsvsplit_workdir/part_044.tsv <==
+grünspan	2145	PIPIT DE GODLEWSKI	4
+grünspan	2145	PIPIT DE GODLEWSKI	4
+
+==> ./tsvsplit_workdir/part_047.tsv <==
+Grünspan	2100	Purpurreiher	1
+
+==> ./tsvsplit_workdir/part_048.tsv <==
+blutrot	2137	Marreca-cabocla	1
+
+==> ./tsvsplit_workdir/part_049.tsv <==
+blutrot	2121	Воробей	4
+
+==> ./tsvsplit_workdir/part_050.tsv <==
+Cerise	2119	Malvasía Cabeciblanca	4
+
+==> ./tsvsplit_workdir/part_052.tsv <==
+türkis	2097	Голубь	2
+
+==> ./tsvsplit_workdir/part_055.tsv <==
+dorado	2045	Лебедь	2
+
+==> ./tsvsplit_workdir/part_056.tsv <==
+café	2062	Purpurreiher	4
+
+==> ./tsvsplit_workdir/part_057.tsv <==
+noir	2094	Weißwangengans	4
+
+==> ./tsvsplit_workdir/part_058.tsv <==
+blutrot	2120	Tüpfelsumpfhuhn	1
+
+==> ./tsvsplit_workdir/part_059.tsv <==
+pechschwarz	2079	Araqua-pintado	1
+
+==> ./tsvsplit_workdir/part_063.tsv <==
+púrpura	2119	Macuco	4
+
+==> ./tsvsplit_workdir/part_064.tsv <==
+Cerise	2076	Malvasía Cabeciblanca	4
+暗紅色/暗赤色	2015	Malvasía Cabeciblanca	2
+jaune	2058	Purpurreiher	2
+
+==> ./tsvsplit_workdir/part_065.tsv <==
+jaune	2104	Tüpfelsumpfhuhn	1
+
+==> ./tsvsplit_workdir/part_066.tsv <==
+Grünspan	2145	Pipit de Godlewski	4
+
+==> ./tsvsplit_workdir/part_067.tsv <==
+marrón	2102	Weißwangengans	1
+blanc	2137	Голубь	2
+Indigo	2138	Голубь	4
+
+==> ./tsvsplit_workdir/part_076.tsv <==
+schneeweiß	2121	Porrón Islándico	1
+
+==> ./tsvsplit_workdir/part_078.tsv <==
+café	2100	Purpurreiher	2
+noir	2115	Weißwangengans	2
+
+==> ./tsvsplit_workdir/part_079.tsv <==
+rouge	2135	Marreca-cabocla	1
+
+==> ./tsvsplit_workdir/part_080.tsv <==
+noir	2082	Weißwangengans	1
+Grünspan	2053	Pipit de Godlewski	4
+
+==> ./tsvsplit_workdir/part_082.tsv <==
+Blutrot	2142	tüpfelsumpfhuhn	1
+Indigo	2141	Голубь	1
+Blutrot	2142	tüpfelsumpfhuhn	1
+
+==> ./tsvsplit_workdir/part_083.tsv <==
+Grünspan	2105	Macuco	0
+jaune	2097	Purpurreiher	4
+
+==> ./tsvsplit_workdir/part_085.tsv <==
+BLUTROT	2142	TÜPFELSUMPFHUHN	1
+BLUTROT	2142	TÜPFELSUMPFHUHN	1
+blanc	2109	Голубь	3
+BLUTROT	2142	TÜPFELSUMPFHUHN	1
+
+==> ./tsvsplit_workdir/part_086.tsv <==
+blutrot	2117	Tüpfelsumpfhuhn	0
+marrón	2034	Weißwangengans	1
+
+==> ./tsvsplit_workdir/part_090.tsv <==
+púrpura	2093	Macreuse à bec jaune	4
+fumée	2124	Araqua-pintado	0
+
+==> ./tsvsplit_workdir/part_096.tsv <==
+c-1	c-2	c-3	c-4
+schneeweiß	2117	Porrón Islándico	4
+fumée	2113	Araqua-pintado	0
+c-1	c-2	c-3	c-4
+
+==> ./tsvsplit_workdir/part_097.tsv <==
+dorado	2147	Tüpfelsumpfhuhn	1
+
+==> ./tsvsplit_workdir/part_099.tsv <==
+Grünspan	2082	Pipit de Godlewski	2
+
+==> ./tsvsplit_workdir/part_100.tsv <==
+Grünspan	2071	Pipit de Godlewski	3
+
+====[tsv-split -v 15017 -n 101 -k 1,3 ../input4x58.tsv ../input4x18.tsv]====
+==> ./tsvsplit_workdir/part_000.tsv <==
+café	2088	Purpurreiher	2
+café	2062	Purpurreiher	4
+café	2100	Purpurreiher	2
+café	2041	Purpurreiher	4
+
+==> ./tsvsplit_workdir/part_001.tsv <==
+Indigo	2056	Голубь	1
+Indigo	2141	Голубь	1
+Indigo	2138	Голубь	4
+
+==> ./tsvsplit_workdir/part_003.tsv <==
+dorado	2045	Лебедь	2
+
+==> ./tsvsplit_workdir/part_008.tsv <==
+rouge	2135	Marreca-cabocla	1
+rouge	2037	Marreca-cabocla	0
+
+==> ./tsvsplit_workdir/part_009.tsv <==
+türkis	2097	Голубь	2
+
+==> ./tsvsplit_workdir/part_010.tsv <==
+blutrot	2093	Araqua-pintado	2
+
+==> ./tsvsplit_workdir/part_011.tsv <==
+púrpura	2088	Macuco	1
+púrpura	2119	Macuco	4
+
+==> ./tsvsplit_workdir/part_015.tsv <==
+c-1	c-2	c-3	c-4
+c-1	c-2	c-3	c-4
+
+==> ./tsvsplit_workdir/part_023.tsv <==
+暗紅色/暗赤色	2015	Malvasía Cabeciblanca	2
+blutrot	2121	Воробей	4
+
+==> ./tsvsplit_workdir/part_027.tsv <==
+marrón	2121	Marreca-cabocla	2
+
+==> ./tsvsplit_workdir/part_034.tsv <==
+café	2019	Marreca-cabocla	1
+
+==> ./tsvsplit_workdir/part_037.tsv <==
+blanc	2137	Голубь	2
+blanc	2109	Голубь	3
+blanc	2038	Голубь	0
+
+==> ./tsvsplit_workdir/part_040.tsv <==
+ébène	2142	Орёл	2
+
+==> ./tsvsplit_workdir/part_041.tsv <==
+schneeweiß	2117	Porrón Islándico	4
+schneeweiß	2121	Porrón Islándico	1
+jaune	2104	Tüpfelsumpfhuhn	1
+
+==> ./tsvsplit_workdir/part_042.tsv <==
+rouge	2132	Löffelente	4
+rouge	2146	Löffelente	1
+
+==> ./tsvsplit_workdir/part_048.tsv <==
+noir	2082	Weißwangengans	1
+noir	2094	Weißwangengans	4
+noir	2115	Weißwangengans	2
+
+==> ./tsvsplit_workdir/part_049.tsv <==
+Grünspan	2105	Macuco	0
+
+==> ./tsvsplit_workdir/part_050.tsv <==
+dorado	2147	Tüpfelsumpfhuhn	1
+
+==> ./tsvsplit_workdir/part_055.tsv <==
+Grünspan	2100	Purpurreiher	1
+
+==> ./tsvsplit_workdir/part_058.tsv <==
+Grünspan	2145	Pipit de Godlewski	4
+Grünspan	2082	Pipit de Godlewski	2
+Grünspan	2053	Pipit de Godlewski	4
+Grünspan	2071	Pipit de Godlewski	3
+
+==> ./tsvsplit_workdir/part_059.tsv <==
+Orange-red	2089	Purpurreiher	1
+
+==> ./tsvsplit_workdir/part_062.tsv <==
+zitronengelb	2136	Macreuse à bec jaune	3
+zitronengelb	2083	Macreuse à bec jaune	4
+
+==> ./tsvsplit_workdir/part_065.tsv <==
+красный	2049	Weißwangengans	3
+
+==> ./tsvsplit_workdir/part_069.tsv <==
+Blutrot	2142	tüpfelsumpfhuhn	1
+Blutrot	2142	tüpfelsumpfhuhn	1
+
+==> ./tsvsplit_workdir/part_070.tsv <==
+marrón	2102	Weißwangengans	1
+marrón	2034	Weißwangengans	1
+
+==> ./tsvsplit_workdir/part_077.tsv <==
+rouge	2058	Pipit de Godlewski	4
+
+==> ./tsvsplit_workdir/part_080.tsv <==
+fumée	2113	Araqua-pintado	0
+fumée	2124	Araqua-pintado	0
+
+==> ./tsvsplit_workdir/part_082.tsv <==
+púrpura	2070	Macreuse à bec jaune	2
+púrpura	2092	Macreuse à bec jaune	4
+púrpura	2093	Macreuse à bec jaune	4
+púrpura	2145	Macreuse à bec jaune	2
+
+==> ./tsvsplit_workdir/part_085.tsv <==
+blutrot	2142	Tüpfelsumpfhuhn	1
+blutrot	2118	Tüpfelsumpfhuhn	4
+blutrot	2117	Tüpfelsumpfhuhn	0
+blutrot	2143	Tüpfelsumpfhuhn	4
+blutrot	2149	Tüpfelsumpfhuhn	1
+blutrot	2120	Tüpfelsumpfhuhn	1
+jaune	2090	Weißwangengans	4
+
+==> ./tsvsplit_workdir/part_086.tsv <==
+pechschwarz	2079	Araqua-pintado	1
+
+==> ./tsvsplit_workdir/part_090.tsv <==
+BLUTROT	2142	TÜPFELSUMPFHUHN	1
+BLUTROT	2142	TÜPFELSUMPFHUHN	1
+blutrot	2137	Marreca-cabocla	1
+BLUTROT	2142	TÜPFELSUMPFHUHN	1
+
+==> ./tsvsplit_workdir/part_092.tsv <==
+Cerise	2076	Malvasía Cabeciblanca	4
+grünspan	2145	PIPIT DE GODLEWSKI	4
+Cerise	2119	Malvasía Cabeciblanca	4
+grünspan	2145	PIPIT DE GODLEWSKI	4
+fumée	2129	Löffelente	0
+
+==> ./tsvsplit_workdir/part_096.tsv <==
+jaune	2058	Purpurreiher	2
+jaune	2097	Purpurreiher	4
+
+==> ./tsvsplit_workdir/part_098.tsv <==
+GRÜNSPAN	2145	pipit de godlewski	4
+GRÜNSPAN	2145	pipit de godlewski	4
+GRÜNSPAN	2145	pipit de godlewski	4
+
+====[tsv-split --header --static-seed --num-files 2 --key-fields 1 ../input4x58.tsv]====
+==> ./tsvsplit_workdir/part_0.tsv <==
+c-1	c-2	c-3	c-4
+púrpura	2088	Macuco	1
+blutrot	2142	Tüpfelsumpfhuhn	1
+BLUTROT	2142	TÜPFELSUMPFHUHN	1
+blutrot	2118	Tüpfelsumpfhuhn	4
+Cerise	2076	Malvasía Cabeciblanca	4
+schneeweiß	2117	Porrón Islándico	4
+café	2088	Purpurreiher	2
+暗紅色/暗赤色	2015	Malvasía Cabeciblanca	2
+grünspan	2145	PIPIT DE GODLEWSKI	4
+púrpura	2070	Macreuse à bec jaune	2
+blutrot	2121	Воробей	4
+púrpura	2092	Macreuse à bec jaune	4
+blutrot	2117	Tüpfelsumpfhuhn	0
+púrpura	2093	Macreuse à bec jaune	4
+schneeweiß	2121	Porrón Islándico	1
+dorado	2045	Лебедь	2
+café	2062	Purpurreiher	4
+Cerise	2119	Malvasía Cabeciblanca	4
+café	2100	Purpurreiher	2
+BLUTROT	2142	TÜPFELSUMPFHUHN	1
+grünspan	2145	PIPIT DE GODLEWSKI	4
+blutrot	2143	Tüpfelsumpfhuhn	4
+púrpura	2119	Macuco	4
+púrpura	2145	Macreuse à bec jaune	2
+blutrot	2149	Tüpfelsumpfhuhn	1
+blutrot	2120	Tüpfelsumpfhuhn	1
+café	2041	Purpurreiher	4
+café	2019	Marreca-cabocla	1
+
+==> ./tsvsplit_workdir/part_1.tsv <==
+c-1	c-2	c-3	c-4
+Blutrot	2142	tüpfelsumpfhuhn	1
+Indigo	2056	Голубь	1
+Indigo	2141	Голубь	1
+Orange-red	2089	Purpurreiher	1
+rouge	2132	Löffelente	4
+zitronengelb	2136	Macreuse à bec jaune	3
+Grünspan	2145	Pipit de Godlewski	4
+GRÜNSPAN	2145	pipit de godlewski	4
+Blutrot	2142	tüpfelsumpfhuhn	1
+zitronengelb	2083	Macreuse à bec jaune	4
+marrón	2102	Weißwangengans	1
+rouge	2146	Löffelente	1
+noir	2082	Weißwangengans	1
+noir	2094	Weißwangengans	4
+blanc	2137	Голубь	2
+rouge	2135	Marreca-cabocla	1
+красный	2049	Weißwangengans	3
+noir	2115	Weißwangengans	2
+blanc	2109	Голубь	3
+Grünspan	2082	Pipit de Godlewski	2
+GRÜNSPAN	2145	pipit de godlewski	4
+Indigo	2138	Голубь	4
+Grünspan	2053	Pipit de Godlewski	4
+blanc	2038	Голубь	0
+Grünspan	2071	Pipit de Godlewski	3
+rouge	2037	Marreca-cabocla	0
+fumée	2113	Araqua-pintado	0
+marrón	2034	Weißwangengans	1
+fumée	2124	Araqua-pintado	0
+
+====[tsv-split -H -v 15017 -n 101 -k 1,3 ../input4x58.tsv ../input4x18.tsv]====
+==> ./tsvsplit_workdir/part_000.tsv <==
+c-1	c-2	c-3	c-4
+café	2088	Purpurreiher	2
+café	2062	Purpurreiher	4
+café	2100	Purpurreiher	2
+café	2041	Purpurreiher	4
+
+==> ./tsvsplit_workdir/part_001.tsv <==
+c-1	c-2	c-3	c-4
+Indigo	2056	Голубь	1
+Indigo	2141	Голубь	1
+Indigo	2138	Голубь	4
+
+==> ./tsvsplit_workdir/part_003.tsv <==
+c-1	c-2	c-3	c-4
+dorado	2045	Лебедь	2
+
+==> ./tsvsplit_workdir/part_008.tsv <==
+c-1	c-2	c-3	c-4
+rouge	2135	Marreca-cabocla	1
+rouge	2037	Marreca-cabocla	0
+
+==> ./tsvsplit_workdir/part_009.tsv <==
+c-1	c-2	c-3	c-4
+türkis	2097	Голубь	2
+
+==> ./tsvsplit_workdir/part_010.tsv <==
+c-1	c-2	c-3	c-4
+blutrot	2093	Araqua-pintado	2
+
+==> ./tsvsplit_workdir/part_011.tsv <==
+c-1	c-2	c-3	c-4
+púrpura	2088	Macuco	1
+púrpura	2119	Macuco	4
+
+==> ./tsvsplit_workdir/part_023.tsv <==
+c-1	c-2	c-3	c-4
+暗紅色/暗赤色	2015	Malvasía Cabeciblanca	2
+blutrot	2121	Воробей	4
+
+==> ./tsvsplit_workdir/part_027.tsv <==
+c-1	c-2	c-3	c-4
+marrón	2121	Marreca-cabocla	2
+
+==> ./tsvsplit_workdir/part_034.tsv <==
+c-1	c-2	c-3	c-4
+café	2019	Marreca-cabocla	1
+
+==> ./tsvsplit_workdir/part_037.tsv <==
+c-1	c-2	c-3	c-4
+blanc	2137	Голубь	2
+blanc	2109	Голубь	3
+blanc	2038	Голубь	0
+
+==> ./tsvsplit_workdir/part_040.tsv <==
+c-1	c-2	c-3	c-4
+ébène	2142	Орёл	2
+
+==> ./tsvsplit_workdir/part_041.tsv <==
+c-1	c-2	c-3	c-4
+schneeweiß	2117	Porrón Islándico	4
+schneeweiß	2121	Porrón Islándico	1
+jaune	2104	Tüpfelsumpfhuhn	1
+
+==> ./tsvsplit_workdir/part_042.tsv <==
+c-1	c-2	c-3	c-4
+rouge	2132	Löffelente	4
+rouge	2146	Löffelente	1
+
+==> ./tsvsplit_workdir/part_048.tsv <==
+c-1	c-2	c-3	c-4
+noir	2082	Weißwangengans	1
+noir	2094	Weißwangengans	4
+noir	2115	Weißwangengans	2
+
+==> ./tsvsplit_workdir/part_049.tsv <==
+c-1	c-2	c-3	c-4
+Grünspan	2105	Macuco	0
+
+==> ./tsvsplit_workdir/part_050.tsv <==
+c-1	c-2	c-3	c-4
+dorado	2147	Tüpfelsumpfhuhn	1
+
+==> ./tsvsplit_workdir/part_055.tsv <==
+c-1	c-2	c-3	c-4
+Grünspan	2100	Purpurreiher	1
+
+==> ./tsvsplit_workdir/part_058.tsv <==
+c-1	c-2	c-3	c-4
+Grünspan	2145	Pipit de Godlewski	4
+Grünspan	2082	Pipit de Godlewski	2
+Grünspan	2053	Pipit de Godlewski	4
+Grünspan	2071	Pipit de Godlewski	3
+
+==> ./tsvsplit_workdir/part_059.tsv <==
+c-1	c-2	c-3	c-4
+Orange-red	2089	Purpurreiher	1
+
+==> ./tsvsplit_workdir/part_062.tsv <==
+c-1	c-2	c-3	c-4
+zitronengelb	2136	Macreuse à bec jaune	3
+zitronengelb	2083	Macreuse à bec jaune	4
+
+==> ./tsvsplit_workdir/part_065.tsv <==
+c-1	c-2	c-3	c-4
+красный	2049	Weißwangengans	3
+
+==> ./tsvsplit_workdir/part_069.tsv <==
+c-1	c-2	c-3	c-4
+Blutrot	2142	tüpfelsumpfhuhn	1
+Blutrot	2142	tüpfelsumpfhuhn	1
+
+==> ./tsvsplit_workdir/part_070.tsv <==
+c-1	c-2	c-3	c-4
+marrón	2102	Weißwangengans	1
+marrón	2034	Weißwangengans	1
+
+==> ./tsvsplit_workdir/part_077.tsv <==
+c-1	c-2	c-3	c-4
+rouge	2058	Pipit de Godlewski	4
+
+==> ./tsvsplit_workdir/part_080.tsv <==
+c-1	c-2	c-3	c-4
+fumée	2113	Araqua-pintado	0
+fumée	2124	Araqua-pintado	0
+
+==> ./tsvsplit_workdir/part_082.tsv <==
+c-1	c-2	c-3	c-4
+púrpura	2070	Macreuse à bec jaune	2
+púrpura	2092	Macreuse à bec jaune	4
+púrpura	2093	Macreuse à bec jaune	4
+púrpura	2145	Macreuse à bec jaune	2
+
+==> ./tsvsplit_workdir/part_085.tsv <==
+c-1	c-2	c-3	c-4
+blutrot	2142	Tüpfelsumpfhuhn	1
+blutrot	2118	Tüpfelsumpfhuhn	4
+blutrot	2117	Tüpfelsumpfhuhn	0
+blutrot	2143	Tüpfelsumpfhuhn	4
+blutrot	2149	Tüpfelsumpfhuhn	1
+blutrot	2120	Tüpfelsumpfhuhn	1
+jaune	2090	Weißwangengans	4
+
+==> ./tsvsplit_workdir/part_086.tsv <==
+c-1	c-2	c-3	c-4
+pechschwarz	2079	Araqua-pintado	1
+
+==> ./tsvsplit_workdir/part_090.tsv <==
+c-1	c-2	c-3	c-4
+BLUTROT	2142	TÜPFELSUMPFHUHN	1
+BLUTROT	2142	TÜPFELSUMPFHUHN	1
+blutrot	2137	Marreca-cabocla	1
+BLUTROT	2142	TÜPFELSUMPFHUHN	1
+
+==> ./tsvsplit_workdir/part_092.tsv <==
+c-1	c-2	c-3	c-4
+Cerise	2076	Malvasía Cabeciblanca	4
+grünspan	2145	PIPIT DE GODLEWSKI	4
+Cerise	2119	Malvasía Cabeciblanca	4
+grünspan	2145	PIPIT DE GODLEWSKI	4
+fumée	2129	Löffelente	0
+
+==> ./tsvsplit_workdir/part_096.tsv <==
+c-1	c-2	c-3	c-4
+jaune	2058	Purpurreiher	2
+jaune	2097	Purpurreiher	4
+
+==> ./tsvsplit_workdir/part_098.tsv <==
+c-1	c-2	c-3	c-4
+GRÜNSPAN	2145	pipit de godlewski	4
+GRÜNSPAN	2145	pipit de godlewski	4
+GRÜNSPAN	2145	pipit de godlewski	4
+
+====[tsv-split --header-in-only --static-seed --num-files 2 --key-fields 1 ../input4x58.tsv]====
+==> ./tsvsplit_workdir/part_0.tsv <==
+púrpura	2088	Macuco	1
+blutrot	2142	Tüpfelsumpfhuhn	1
+BLUTROT	2142	TÜPFELSUMPFHUHN	1
+blutrot	2118	Tüpfelsumpfhuhn	4
+Cerise	2076	Malvasía Cabeciblanca	4
+schneeweiß	2117	Porrón Islándico	4
+café	2088	Purpurreiher	2
+暗紅色/暗赤色	2015	Malvasía Cabeciblanca	2
+grünspan	2145	PIPIT DE GODLEWSKI	4
+púrpura	2070	Macreuse à bec jaune	2
+blutrot	2121	Воробей	4
+púrpura	2092	Macreuse à bec jaune	4
+blutrot	2117	Tüpfelsumpfhuhn	0
+púrpura	2093	Macreuse à bec jaune	4
+schneeweiß	2121	Porrón Islándico	1
+dorado	2045	Лебедь	2
+café	2062	Purpurreiher	4
+Cerise	2119	Malvasía Cabeciblanca	4
+café	2100	Purpurreiher	2
+BLUTROT	2142	TÜPFELSUMPFHUHN	1
+grünspan	2145	PIPIT DE GODLEWSKI	4
+blutrot	2143	Tüpfelsumpfhuhn	4
+púrpura	2119	Macuco	4
+púrpura	2145	Macreuse à bec jaune	2
+blutrot	2149	Tüpfelsumpfhuhn	1
+blutrot	2120	Tüpfelsumpfhuhn	1
+café	2041	Purpurreiher	4
+café	2019	Marreca-cabocla	1
+
+==> ./tsvsplit_workdir/part_1.tsv <==
+Blutrot	2142	tüpfelsumpfhuhn	1
+Indigo	2056	Голубь	1
+Indigo	2141	Голубь	1
+Orange-red	2089	Purpurreiher	1
+rouge	2132	Löffelente	4
+zitronengelb	2136	Macreuse à bec jaune	3
+Grünspan	2145	Pipit de Godlewski	4
+GRÜNSPAN	2145	pipit de godlewski	4
+Blutrot	2142	tüpfelsumpfhuhn	1
+zitronengelb	2083	Macreuse à bec jaune	4
+marrón	2102	Weißwangengans	1
+rouge	2146	Löffelente	1
+noir	2082	Weißwangengans	1
+noir	2094	Weißwangengans	4
+blanc	2137	Голубь	2
+rouge	2135	Marreca-cabocla	1
+красный	2049	Weißwangengans	3
+noir	2115	Weißwangengans	2
+blanc	2109	Голубь	3
+Grünspan	2082	Pipit de Godlewski	2
+GRÜNSPAN	2145	pipit de godlewski	4
+Indigo	2138	Голубь	4
+Grünspan	2053	Pipit de Godlewski	4
+blanc	2038	Голубь	0
+Grünspan	2071	Pipit de Godlewski	3
+rouge	2037	Marreca-cabocla	0
+fumée	2113	Araqua-pintado	0
+marrón	2034	Weißwangengans	1
+fumée	2124	Araqua-pintado	0
+
+====[tsv-split -I -s -n 11 -k 3 ../input4x58.tsv]====
+==> ./tsvsplit_workdir/part_00.tsv <==
+BLUTROT	2142	TÜPFELSUMPFHUHN	1
+BLUTROT	2142	TÜPFELSUMPFHUHN	1
+
+==> ./tsvsplit_workdir/part_01.tsv <==
+blutrot	2121	Воробей	4
+marrón	2102	Weißwangengans	1
+noir	2082	Weißwangengans	1
+noir	2094	Weißwangengans	4
+красный	2049	Weißwangengans	3
+noir	2115	Weißwangengans	2
+marrón	2034	Weißwangengans	1
+
+==> ./tsvsplit_workdir/part_02.tsv <==
+schneeweiß	2117	Porrón Islándico	4
+schneeweiß	2121	Porrón Islándico	1
+
+==> ./tsvsplit_workdir/part_03.tsv <==
+Cerise	2076	Malvasía Cabeciblanca	4
+暗紅色/暗赤色	2015	Malvasía Cabeciblanca	2
+zitronengelb	2136	Macreuse à bec jaune	3
+zitronengelb	2083	Macreuse à bec jaune	4
+púrpura	2070	Macreuse à bec jaune	2
+púrpura	2092	Macreuse à bec jaune	4
+púrpura	2093	Macreuse à bec jaune	4
+dorado	2045	Лебедь	2
+Cerise	2119	Malvasía Cabeciblanca	4
+púrpura	2145	Macreuse à bec jaune	2
+
+==> ./tsvsplit_workdir/part_04.tsv <==
+grünspan	2145	PIPIT DE GODLEWSKI	4
+grünspan	2145	PIPIT DE GODLEWSKI	4
+
+==> ./tsvsplit_workdir/part_05.tsv <==
+GRÜNSPAN	2145	pipit de godlewski	4
+GRÜNSPAN	2145	pipit de godlewski	4
+fumée	2113	Araqua-pintado	0
+fumée	2124	Araqua-pintado	0
+
+==> ./tsvsplit_workdir/part_06.tsv <==
+púrpura	2088	Macuco	1
+púrpura	2119	Macuco	4
+
+==> ./tsvsplit_workdir/part_07.tsv <==
+Blutrot	2142	tüpfelsumpfhuhn	1
+Blutrot	2142	tüpfelsumpfhuhn	1
+
+==> ./tsvsplit_workdir/part_08.tsv <==
+rouge	2135	Marreca-cabocla	1
+café	2019	Marreca-cabocla	1
+rouge	2037	Marreca-cabocla	0
+
+==> ./tsvsplit_workdir/part_09.tsv <==
+blutrot	2142	Tüpfelsumpfhuhn	1
+blutrot	2118	Tüpfelsumpfhuhn	4
+blutrot	2117	Tüpfelsumpfhuhn	0
+blutrot	2143	Tüpfelsumpfhuhn	4
+blutrot	2149	Tüpfelsumpfhuhn	1
+blutrot	2120	Tüpfelsumpfhuhn	1
+
+==> ./tsvsplit_workdir/part_10.tsv <==
+Indigo	2056	Голубь	1
+Indigo	2141	Голубь	1
+café	2088	Purpurreiher	2
+Orange-red	2089	Purpurreiher	1
+rouge	2132	Löffelente	4
+Grünspan	2145	Pipit de Godlewski	4
+rouge	2146	Löffelente	1
+café	2062	Purpurreiher	4
+blanc	2137	Голубь	2
+café	2100	Purpurreiher	2
+blanc	2109	Голубь	3
+Grünspan	2082	Pipit de Godlewski	2
+café	2041	Purpurreiher	4
+Indigo	2138	Голубь	4
+Grünspan	2053	Pipit de Godlewski	4
+blanc	2038	Голубь	0
+Grünspan	2071	Pipit de Godlewski	3
+
+====[tsv-split -I -s -n 101 -k 1,3 ../input4x58.tsv]====
+==> ./tsvsplit_workdir/part_010.tsv <==
+красный	2049	Weißwangengans	3
+
+==> ./tsvsplit_workdir/part_012.tsv <==
+暗紅色/暗赤色	2015	Malvasía Cabeciblanca	2
+
+==> ./tsvsplit_workdir/part_020.tsv <==
+blanc	2137	Голубь	2
+blanc	2109	Голубь	3
+blanc	2038	Голубь	0
+
+==> ./tsvsplit_workdir/part_021.tsv <==
+Cerise	2076	Malvasía Cabeciblanca	4
+Cerise	2119	Malvasía Cabeciblanca	4
+
+==> ./tsvsplit_workdir/part_024.tsv <==
+grünspan	2145	PIPIT DE GODLEWSKI	4
+grünspan	2145	PIPIT DE GODLEWSKI	4
+
+==> ./tsvsplit_workdir/part_027.tsv <==
+Orange-red	2089	Purpurreiher	1
+
+==> ./tsvsplit_workdir/part_031.tsv <==
+Blutrot	2142	tüpfelsumpfhuhn	1
+Blutrot	2142	tüpfelsumpfhuhn	1
+
+==> ./tsvsplit_workdir/part_035.tsv <==
+marrón	2102	Weißwangengans	1
+dorado	2045	Лебедь	2
+café	2019	Marreca-cabocla	1
+marrón	2034	Weißwangengans	1
+
+==> ./tsvsplit_workdir/part_036.tsv <==
+blutrot	2142	Tüpfelsumpfhuhn	1
+blutrot	2118	Tüpfelsumpfhuhn	4
+blutrot	2117	Tüpfelsumpfhuhn	0
+blutrot	2143	Tüpfelsumpfhuhn	4
+blutrot	2149	Tüpfelsumpfhuhn	1
+blutrot	2120	Tüpfelsumpfhuhn	1
+
+==> ./tsvsplit_workdir/part_038.tsv <==
+rouge	2135	Marreca-cabocla	1
+rouge	2037	Marreca-cabocla	0
+
+==> ./tsvsplit_workdir/part_043.tsv <==
+Indigo	2056	Голубь	1
+Indigo	2141	Голубь	1
+Indigo	2138	Голубь	4
+
+==> ./tsvsplit_workdir/part_046.tsv <==
+púrpura	2070	Macreuse à bec jaune	2
+púrpura	2092	Macreuse à bec jaune	4
+púrpura	2093	Macreuse à bec jaune	4
+púrpura	2145	Macreuse à bec jaune	2
+
+==> ./tsvsplit_workdir/part_047.tsv <==
+fumée	2113	Araqua-pintado	0
+fumée	2124	Araqua-pintado	0
+
+==> ./tsvsplit_workdir/part_052.tsv <==
+zitronengelb	2136	Macreuse à bec jaune	3
+zitronengelb	2083	Macreuse à bec jaune	4
+
+==> ./tsvsplit_workdir/part_070.tsv <==
+café	2088	Purpurreiher	2
+café	2062	Purpurreiher	4
+café	2100	Purpurreiher	2
+café	2041	Purpurreiher	4
+
+==> ./tsvsplit_workdir/part_072.tsv <==
+BLUTROT	2142	TÜPFELSUMPFHUHN	1
+noir	2082	Weißwangengans	1
+noir	2094	Weißwangengans	4
+BLUTROT	2142	TÜPFELSUMPFHUHN	1
+noir	2115	Weißwangengans	2
+
+==> ./tsvsplit_workdir/part_075.tsv <==
+púrpura	2088	Macuco	1
+púrpura	2119	Macuco	4
+
+==> ./tsvsplit_workdir/part_080.tsv <==
+Grünspan	2145	Pipit de Godlewski	4
+Grünspan	2082	Pipit de Godlewski	2
+Grünspan	2053	Pipit de Godlewski	4
+Grünspan	2071	Pipit de Godlewski	3
+
+==> ./tsvsplit_workdir/part_084.tsv <==
+blutrot	2121	Воробей	4
+
+==> ./tsvsplit_workdir/part_095.tsv <==
+schneeweiß	2117	Porrón Islándico	4
+GRÜNSPAN	2145	pipit de godlewski	4
+schneeweiß	2121	Porrón Islándico	1
+GRÜNSPAN	2145	pipit de godlewski	4
+
+==> ./tsvsplit_workdir/part_096.tsv <==
+rouge	2132	Löffelente	4
+rouge	2146	Löffelente	1
+
+====[tsv-split -I -v 15017 -n 101 -k 1,3 ../input4x58.tsv ../input4x18.tsv]====
+==> ./tsvsplit_workdir/part_000.tsv <==
+café	2088	Purpurreiher	2
+café	2062	Purpurreiher	4
+café	2100	Purpurreiher	2
+café	2041	Purpurreiher	4
+
+==> ./tsvsplit_workdir/part_001.tsv <==
+Indigo	2056	Голубь	1
+Indigo	2141	Голубь	1
+Indigo	2138	Голубь	4
+
+==> ./tsvsplit_workdir/part_003.tsv <==
+dorado	2045	Лебедь	2
+
+==> ./tsvsplit_workdir/part_008.tsv <==
+rouge	2135	Marreca-cabocla	1
+rouge	2037	Marreca-cabocla	0
+
+==> ./tsvsplit_workdir/part_009.tsv <==
+türkis	2097	Голубь	2
+
+==> ./tsvsplit_workdir/part_010.tsv <==
+blutrot	2093	Araqua-pintado	2
+
+==> ./tsvsplit_workdir/part_011.tsv <==
+púrpura	2088	Macuco	1
+púrpura	2119	Macuco	4
+
+==> ./tsvsplit_workdir/part_023.tsv <==
+暗紅色/暗赤色	2015	Malvasía Cabeciblanca	2
+blutrot	2121	Воробей	4
+
+==> ./tsvsplit_workdir/part_027.tsv <==
+marrón	2121	Marreca-cabocla	2
+
+==> ./tsvsplit_workdir/part_034.tsv <==
+café	2019	Marreca-cabocla	1
+
+==> ./tsvsplit_workdir/part_037.tsv <==
+blanc	2137	Голубь	2
+blanc	2109	Голубь	3
+blanc	2038	Голубь	0
+
+==> ./tsvsplit_workdir/part_040.tsv <==
+ébène	2142	Орёл	2
+
+==> ./tsvsplit_workdir/part_041.tsv <==
+schneeweiß	2117	Porrón Islándico	4
+schneeweiß	2121	Porrón Islándico	1
+jaune	2104	Tüpfelsumpfhuhn	1
+
+==> ./tsvsplit_workdir/part_042.tsv <==
+rouge	2132	Löffelente	4
+rouge	2146	Löffelente	1
+
+==> ./tsvsplit_workdir/part_048.tsv <==
+noir	2082	Weißwangengans	1
+noir	2094	Weißwangengans	4
+noir	2115	Weißwangengans	2
+
+==> ./tsvsplit_workdir/part_049.tsv <==
+Grünspan	2105	Macuco	0
+
+==> ./tsvsplit_workdir/part_050.tsv <==
+dorado	2147	Tüpfelsumpfhuhn	1
+
+==> ./tsvsplit_workdir/part_055.tsv <==
+Grünspan	2100	Purpurreiher	1
+
+==> ./tsvsplit_workdir/part_058.tsv <==
+Grünspan	2145	Pipit de Godlewski	4
+Grünspan	2082	Pipit de Godlewski	2
+Grünspan	2053	Pipit de Godlewski	4
+Grünspan	2071	Pipit de Godlewski	3
+
+==> ./tsvsplit_workdir/part_059.tsv <==
+Orange-red	2089	Purpurreiher	1
+
+==> ./tsvsplit_workdir/part_062.tsv <==
+zitronengelb	2136	Macreuse à bec jaune	3
+zitronengelb	2083	Macreuse à bec jaune	4
+
+==> ./tsvsplit_workdir/part_065.tsv <==
+красный	2049	Weißwangengans	3
+
+==> ./tsvsplit_workdir/part_069.tsv <==
+Blutrot	2142	tüpfelsumpfhuhn	1
+Blutrot	2142	tüpfelsumpfhuhn	1
+
+==> ./tsvsplit_workdir/part_070.tsv <==
+marrón	2102	Weißwangengans	1
+marrón	2034	Weißwangengans	1
+
+==> ./tsvsplit_workdir/part_077.tsv <==
+rouge	2058	Pipit de Godlewski	4
+
+==> ./tsvsplit_workdir/part_080.tsv <==
+fumée	2113	Araqua-pintado	0
+fumée	2124	Araqua-pintado	0
+
+==> ./tsvsplit_workdir/part_082.tsv <==
+púrpura	2070	Macreuse à bec jaune	2
+púrpura	2092	Macreuse à bec jaune	4
+púrpura	2093	Macreuse à bec jaune	4
+púrpura	2145	Macreuse à bec jaune	2
+
+==> ./tsvsplit_workdir/part_085.tsv <==
+blutrot	2142	Tüpfelsumpfhuhn	1
+blutrot	2118	Tüpfelsumpfhuhn	4
+blutrot	2117	Tüpfelsumpfhuhn	0
+blutrot	2143	Tüpfelsumpfhuhn	4
+blutrot	2149	Tüpfelsumpfhuhn	1
+blutrot	2120	Tüpfelsumpfhuhn	1
+jaune	2090	Weißwangengans	4
+
+==> ./tsvsplit_workdir/part_086.tsv <==
+pechschwarz	2079	Araqua-pintado	1
+
+==> ./tsvsplit_workdir/part_090.tsv <==
+BLUTROT	2142	TÜPFELSUMPFHUHN	1
+BLUTROT	2142	TÜPFELSUMPFHUHN	1
+blutrot	2137	Marreca-cabocla	1
+BLUTROT	2142	TÜPFELSUMPFHUHN	1
+
+==> ./tsvsplit_workdir/part_092.tsv <==
+Cerise	2076	Malvasía Cabeciblanca	4
+grünspan	2145	PIPIT DE GODLEWSKI	4
+Cerise	2119	Malvasía Cabeciblanca	4
+grünspan	2145	PIPIT DE GODLEWSKI	4
+fumée	2129	Löffelente	0
+
+==> ./tsvsplit_workdir/part_096.tsv <==
+jaune	2058	Purpurreiher	2
+jaune	2097	Purpurreiher	4
+
+==> ./tsvsplit_workdir/part_098.tsv <==
+GRÜNSPAN	2145	pipit de godlewski	4
+GRÜNSPAN	2145	pipit de godlewski	4
+GRÜNSPAN	2145	pipit de godlewski	4
+
+====[tsv-split -H -s -n 2 -k 1 --prefix pre_ ../input4x58.tsv]====
+==> ./tsvsplit_workdir/pre_0.tsv <==
+c-1	c-2	c-3	c-4
+púrpura	2088	Macuco	1
+blutrot	2142	Tüpfelsumpfhuhn	1
+BLUTROT	2142	TÜPFELSUMPFHUHN	1
+blutrot	2118	Tüpfelsumpfhuhn	4
+Cerise	2076	Malvasía Cabeciblanca	4
+schneeweiß	2117	Porrón Islándico	4
+café	2088	Purpurreiher	2
+暗紅色/暗赤色	2015	Malvasía Cabeciblanca	2
+grünspan	2145	PIPIT DE GODLEWSKI	4
+púrpura	2070	Macreuse à bec jaune	2
+blutrot	2121	Воробей	4
+púrpura	2092	Macreuse à bec jaune	4
+blutrot	2117	Tüpfelsumpfhuhn	0
+púrpura	2093	Macreuse à bec jaune	4
+schneeweiß	2121	Porrón Islándico	1
+dorado	2045	Лебедь	2
+café	2062	Purpurreiher	4
+Cerise	2119	Malvasía Cabeciblanca	4
+café	2100	Purpurreiher	2
+BLUTROT	2142	TÜPFELSUMPFHUHN	1
+grünspan	2145	PIPIT DE GODLEWSKI	4
+blutrot	2143	Tüpfelsumpfhuhn	4
+púrpura	2119	Macuco	4
+púrpura	2145	Macreuse à bec jaune	2
+blutrot	2149	Tüpfelsumpfhuhn	1
+blutrot	2120	Tüpfelsumpfhuhn	1
+café	2041	Purpurreiher	4
+café	2019	Marreca-cabocla	1
+
+==> ./tsvsplit_workdir/pre_1.tsv <==
+c-1	c-2	c-3	c-4
+Blutrot	2142	tüpfelsumpfhuhn	1
+Indigo	2056	Голубь	1
+Indigo	2141	Голубь	1
+Orange-red	2089	Purpurreiher	1
+rouge	2132	Löffelente	4
+zitronengelb	2136	Macreuse à bec jaune	3
+Grünspan	2145	Pipit de Godlewski	4
+GRÜNSPAN	2145	pipit de godlewski	4
+Blutrot	2142	tüpfelsumpfhuhn	1
+zitronengelb	2083	Macreuse à bec jaune	4
+marrón	2102	Weißwangengans	1
+rouge	2146	Löffelente	1
+noir	2082	Weißwangengans	1
+noir	2094	Weißwangengans	4
+blanc	2137	Голубь	2
+rouge	2135	Marreca-cabocla	1
+красный	2049	Weißwangengans	3
+noir	2115	Weißwangengans	2
+blanc	2109	Голубь	3
+Grünspan	2082	Pipit de Godlewski	2
+GRÜNSPAN	2145	pipit de godlewski	4
+Indigo	2138	Голубь	4
+Grünspan	2053	Pipit de Godlewski	4
+blanc	2038	Голубь	0
+Grünspan	2071	Pipit de Godlewski	3
+rouge	2037	Marreca-cabocla	0
+fumée	2113	Araqua-pintado	0
+marrón	2034	Weißwangengans	1
+fumée	2124	Araqua-pintado	0
+
+====[tsv-split -H -s -n 2 -k 1 --suffix _suf ../input4x58.tsv]====
+==> ./tsvsplit_workdir/part_0_suf <==
+c-1	c-2	c-3	c-4
+púrpura	2088	Macuco	1
+blutrot	2142	Tüpfelsumpfhuhn	1
+BLUTROT	2142	TÜPFELSUMPFHUHN	1
+blutrot	2118	Tüpfelsumpfhuhn	4
+Cerise	2076	Malvasía Cabeciblanca	4
+schneeweiß	2117	Porrón Islándico	4
+café	2088	Purpurreiher	2
+暗紅色/暗赤色	2015	Malvasía Cabeciblanca	2
+grünspan	2145	PIPIT DE GODLEWSKI	4
+púrpura	2070	Macreuse à bec jaune	2
+blutrot	2121	Воробей	4
+púrpura	2092	Macreuse à bec jaune	4
+blutrot	2117	Tüpfelsumpfhuhn	0
+púrpura	2093	Macreuse à bec jaune	4
+schneeweiß	2121	Porrón Islándico	1
+dorado	2045	Лебедь	2
+café	2062	Purpurreiher	4
+Cerise	2119	Malvasía Cabeciblanca	4
+café	2100	Purpurreiher	2
+BLUTROT	2142	TÜPFELSUMPFHUHN	1
+grünspan	2145	PIPIT DE GODLEWSKI	4
+blutrot	2143	Tüpfelsumpfhuhn	4
+púrpura	2119	Macuco	4
+púrpura	2145	Macreuse à bec jaune	2
+blutrot	2149	Tüpfelsumpfhuhn	1
+blutrot	2120	Tüpfelsumpfhuhn	1
+café	2041	Purpurreiher	4
+café	2019	Marreca-cabocla	1
+
+==> ./tsvsplit_workdir/part_1_suf <==
+c-1	c-2	c-3	c-4
+Blutrot	2142	tüpfelsumpfhuhn	1
+Indigo	2056	Голубь	1
+Indigo	2141	Голубь	1
+Orange-red	2089	Purpurreiher	1
+rouge	2132	Löffelente	4
+zitronengelb	2136	Macreuse à bec jaune	3
+Grünspan	2145	Pipit de Godlewski	4
+GRÜNSPAN	2145	pipit de godlewski	4
+Blutrot	2142	tüpfelsumpfhuhn	1
+zitronengelb	2083	Macreuse à bec jaune	4
+marrón	2102	Weißwangengans	1
+rouge	2146	Löffelente	1
+noir	2082	Weißwangengans	1
+noir	2094	Weißwangengans	4
+blanc	2137	Голубь	2
+rouge	2135	Marreca-cabocla	1
+красный	2049	Weißwangengans	3
+noir	2115	Weißwangengans	2
+blanc	2109	Голубь	3
+Grünspan	2082	Pipit de Godlewski	2
+GRÜNSPAN	2145	pipit de godlewski	4
+Indigo	2138	Голубь	4
+Grünspan	2053	Pipit de Godlewski	4
+blanc	2038	Голубь	0
+Grünspan	2071	Pipit de Godlewski	3
+rouge	2037	Marreca-cabocla	0
+fumée	2113	Araqua-pintado	0
+marrón	2034	Weißwangengans	1
+fumée	2124	Araqua-pintado	0
+
+====[tsv-split -H -s -n 2 -k 1 --prefix pre_ --suffix _suf ../input4x58.tsv]====
+==> ./tsvsplit_workdir/pre_0_suf <==
+c-1	c-2	c-3	c-4
+púrpura	2088	Macuco	1
+blutrot	2142	Tüpfelsumpfhuhn	1
+BLUTROT	2142	TÜPFELSUMPFHUHN	1
+blutrot	2118	Tüpfelsumpfhuhn	4
+Cerise	2076	Malvasía Cabeciblanca	4
+schneeweiß	2117	Porrón Islándico	4
+café	2088	Purpurreiher	2
+暗紅色/暗赤色	2015	Malvasía Cabeciblanca	2
+grünspan	2145	PIPIT DE GODLEWSKI	4
+púrpura	2070	Macreuse à bec jaune	2
+blutrot	2121	Воробей	4
+púrpura	2092	Macreuse à bec jaune	4
+blutrot	2117	Tüpfelsumpfhuhn	0
+púrpura	2093	Macreuse à bec jaune	4
+schneeweiß	2121	Porrón Islándico	1
+dorado	2045	Лебедь	2
+café	2062	Purpurreiher	4
+Cerise	2119	Malvasía Cabeciblanca	4
+café	2100	Purpurreiher	2
+BLUTROT	2142	TÜPFELSUMPFHUHN	1
+grünspan	2145	PIPIT DE GODLEWSKI	4
+blutrot	2143	Tüpfelsumpfhuhn	4
+púrpura	2119	Macuco	4
+púrpura	2145	Macreuse à bec jaune	2
+blutrot	2149	Tüpfelsumpfhuhn	1
+blutrot	2120	Tüpfelsumpfhuhn	1
+café	2041	Purpurreiher	4
+café	2019	Marreca-cabocla	1
+
+==> ./tsvsplit_workdir/pre_1_suf <==
+c-1	c-2	c-3	c-4
+Blutrot	2142	tüpfelsumpfhuhn	1
+Indigo	2056	Голубь	1
+Indigo	2141	Голубь	1
+Orange-red	2089	Purpurreiher	1
+rouge	2132	Löffelente	4
+zitronengelb	2136	Macreuse à bec jaune	3
+Grünspan	2145	Pipit de Godlewski	4
+GRÜNSPAN	2145	pipit de godlewski	4
+Blutrot	2142	tüpfelsumpfhuhn	1
+zitronengelb	2083	Macreuse à bec jaune	4
+marrón	2102	Weißwangengans	1
+rouge	2146	Löffelente	1
+noir	2082	Weißwangengans	1
+noir	2094	Weißwangengans	4
+blanc	2137	Голубь	2
+rouge	2135	Marreca-cabocla	1
+красный	2049	Weißwangengans	3
+noir	2115	Weißwangengans	2
+blanc	2109	Голубь	3
+Grünspan	2082	Pipit de Godlewski	2
+GRÜNSPAN	2145	pipit de godlewski	4
+Indigo	2138	Голубь	4
+Grünspan	2053	Pipit de Godlewski	4
+blanc	2038	Голубь	0
+Grünspan	2071	Pipit de Godlewski	3
+rouge	2037	Marreca-cabocla	0
+fumée	2113	Araqua-pintado	0
+marrón	2034	Weißwangengans	1
+fumée	2124	Araqua-pintado	0
+
+====[tsv-split -H -s -n 2 -k 1 --dir odir ../input4x58.tsv]====
+==> ./tsvsplit_workdir/odir/part_0.tsv <==
+c-1	c-2	c-3	c-4
+púrpura	2088	Macuco	1
+blutrot	2142	Tüpfelsumpfhuhn	1
+BLUTROT	2142	TÜPFELSUMPFHUHN	1
+blutrot	2118	Tüpfelsumpfhuhn	4
+Cerise	2076	Malvasía Cabeciblanca	4
+schneeweiß	2117	Porrón Islándico	4
+café	2088	Purpurreiher	2
+暗紅色/暗赤色	2015	Malvasía Cabeciblanca	2
+grünspan	2145	PIPIT DE GODLEWSKI	4
+púrpura	2070	Macreuse à bec jaune	2
+blutrot	2121	Воробей	4
+púrpura	2092	Macreuse à bec jaune	4
+blutrot	2117	Tüpfelsumpfhuhn	0
+púrpura	2093	Macreuse à bec jaune	4
+schneeweiß	2121	Porrón Islándico	1
+dorado	2045	Лебедь	2
+café	2062	Purpurreiher	4
+Cerise	2119	Malvasía Cabeciblanca	4
+café	2100	Purpurreiher	2
+BLUTROT	2142	TÜPFELSUMPFHUHN	1
+grünspan	2145	PIPIT DE GODLEWSKI	4
+blutrot	2143	Tüpfelsumpfhuhn	4
+púrpura	2119	Macuco	4
+púrpura	2145	Macreuse à bec jaune	2
+blutrot	2149	Tüpfelsumpfhuhn	1
+blutrot	2120	Tüpfelsumpfhuhn	1
+café	2041	Purpurreiher	4
+café	2019	Marreca-cabocla	1
+
+==> ./tsvsplit_workdir/odir/part_1.tsv <==
+c-1	c-2	c-3	c-4
+Blutrot	2142	tüpfelsumpfhuhn	1
+Indigo	2056	Голубь	1
+Indigo	2141	Голубь	1
+Orange-red	2089	Purpurreiher	1
+rouge	2132	Löffelente	4
+zitronengelb	2136	Macreuse à bec jaune	3
+Grünspan	2145	Pipit de Godlewski	4
+GRÜNSPAN	2145	pipit de godlewski	4
+Blutrot	2142	tüpfelsumpfhuhn	1
+zitronengelb	2083	Macreuse à bec jaune	4
+marrón	2102	Weißwangengans	1
+rouge	2146	Löffelente	1
+noir	2082	Weißwangengans	1
+noir	2094	Weißwangengans	4
+blanc	2137	Голубь	2
+rouge	2135	Marreca-cabocla	1
+красный	2049	Weißwangengans	3
+noir	2115	Weißwangengans	2
+blanc	2109	Голубь	3
+Grünspan	2082	Pipit de Godlewski	2
+GRÜNSPAN	2145	pipit de godlewski	4
+Indigo	2138	Голубь	4
+Grünspan	2053	Pipit de Godlewski	4
+blanc	2038	Голубь	0
+Grünspan	2071	Pipit de Godlewski	3
+rouge	2037	Marreca-cabocla	0
+fumée	2113	Araqua-pintado	0
+marrón	2034	Weißwangengans	1
+fumée	2124	Araqua-pintado	0
+
+====[tsv-split -H -s -n 2 -k 1 --prefix pre_ --dir odir ../input4x58.tsv]====
+==> ./tsvsplit_workdir/odir/pre_0.tsv <==
+c-1	c-2	c-3	c-4
+púrpura	2088	Macuco	1
+blutrot	2142	Tüpfelsumpfhuhn	1
+BLUTROT	2142	TÜPFELSUMPFHUHN	1
+blutrot	2118	Tüpfelsumpfhuhn	4
+Cerise	2076	Malvasía Cabeciblanca	4
+schneeweiß	2117	Porrón Islándico	4
+café	2088	Purpurreiher	2
+暗紅色/暗赤色	2015	Malvasía Cabeciblanca	2
+grünspan	2145	PIPIT DE GODLEWSKI	4
+púrpura	2070	Macreuse à bec jaune	2
+blutrot	2121	Воробей	4
+púrpura	2092	Macreuse à bec jaune	4
+blutrot	2117	Tüpfelsumpfhuhn	0
+púrpura	2093	Macreuse à bec jaune	4
+schneeweiß	2121	Porrón Islándico	1
+dorado	2045	Лебедь	2
+café	2062	Purpurreiher	4
+Cerise	2119	Malvasía Cabeciblanca	4
+café	2100	Purpurreiher	2
+BLUTROT	2142	TÜPFELSUMPFHUHN	1
+grünspan	2145	PIPIT DE GODLEWSKI	4
+blutrot	2143	Tüpfelsumpfhuhn	4
+púrpura	2119	Macuco	4
+púrpura	2145	Macreuse à bec jaune	2
+blutrot	2149	Tüpfelsumpfhuhn	1
+blutrot	2120	Tüpfelsumpfhuhn	1
+café	2041	Purpurreiher	4
+café	2019	Marreca-cabocla	1
+
+==> ./tsvsplit_workdir/odir/pre_1.tsv <==
+c-1	c-2	c-3	c-4
+Blutrot	2142	tüpfelsumpfhuhn	1
+Indigo	2056	Голубь	1
+Indigo	2141	Голубь	1
+Orange-red	2089	Purpurreiher	1
+rouge	2132	Löffelente	4
+zitronengelb	2136	Macreuse à bec jaune	3
+Grünspan	2145	Pipit de Godlewski	4
+GRÜNSPAN	2145	pipit de godlewski	4
+Blutrot	2142	tüpfelsumpfhuhn	1
+zitronengelb	2083	Macreuse à bec jaune	4
+marrón	2102	Weißwangengans	1
+rouge	2146	Löffelente	1
+noir	2082	Weißwangengans	1
+noir	2094	Weißwangengans	4
+blanc	2137	Голубь	2
+rouge	2135	Marreca-cabocla	1
+красный	2049	Weißwangengans	3
+noir	2115	Weißwangengans	2
+blanc	2109	Голубь	3
+Grünspan	2082	Pipit de Godlewski	2
+GRÜNSPAN	2145	pipit de godlewski	4
+Indigo	2138	Голубь	4
+Grünspan	2053	Pipit de Godlewski	4
+blanc	2038	Голубь	0
+Grünspan	2071	Pipit de Godlewski	3
+rouge	2037	Marreca-cabocla	0
+fumée	2113	Araqua-pintado	0
+marrón	2034	Weißwangengans	1
+fumée	2124	Araqua-pintado	0
+
+====[tsv-split -H -s -n 2 -k 1 --suffix _suf --dir odir ../input4x58.tsv]====
+==> ./tsvsplit_workdir/odir/part_0_suf <==
+c-1	c-2	c-3	c-4
+púrpura	2088	Macuco	1
+blutrot	2142	Tüpfelsumpfhuhn	1
+BLUTROT	2142	TÜPFELSUMPFHUHN	1
+blutrot	2118	Tüpfelsumpfhuhn	4
+Cerise	2076	Malvasía Cabeciblanca	4
+schneeweiß	2117	Porrón Islándico	4
+café	2088	Purpurreiher	2
+暗紅色/暗赤色	2015	Malvasía Cabeciblanca	2
+grünspan	2145	PIPIT DE GODLEWSKI	4
+púrpura	2070	Macreuse à bec jaune	2
+blutrot	2121	Воробей	4
+púrpura	2092	Macreuse à bec jaune	4
+blutrot	2117	Tüpfelsumpfhuhn	0
+púrpura	2093	Macreuse à bec jaune	4
+schneeweiß	2121	Porrón Islándico	1
+dorado	2045	Лебедь	2
+café	2062	Purpurreiher	4
+Cerise	2119	Malvasía Cabeciblanca	4
+café	2100	Purpurreiher	2
+BLUTROT	2142	TÜPFELSUMPFHUHN	1
+grünspan	2145	PIPIT DE GODLEWSKI	4
+blutrot	2143	Tüpfelsumpfhuhn	4
+púrpura	2119	Macuco	4
+púrpura	2145	Macreuse à bec jaune	2
+blutrot	2149	Tüpfelsumpfhuhn	1
+blutrot	2120	Tüpfelsumpfhuhn	1
+café	2041	Purpurreiher	4
+café	2019	Marreca-cabocla	1
+
+==> ./tsvsplit_workdir/odir/part_1_suf <==
+c-1	c-2	c-3	c-4
+Blutrot	2142	tüpfelsumpfhuhn	1
+Indigo	2056	Голубь	1
+Indigo	2141	Голубь	1
+Orange-red	2089	Purpurreiher	1
+rouge	2132	Löffelente	4
+zitronengelb	2136	Macreuse à bec jaune	3
+Grünspan	2145	Pipit de Godlewski	4
+GRÜNSPAN	2145	pipit de godlewski	4
+Blutrot	2142	tüpfelsumpfhuhn	1
+zitronengelb	2083	Macreuse à bec jaune	4
+marrón	2102	Weißwangengans	1
+rouge	2146	Löffelente	1
+noir	2082	Weißwangengans	1
+noir	2094	Weißwangengans	4
+blanc	2137	Голубь	2
+rouge	2135	Marreca-cabocla	1
+красный	2049	Weißwangengans	3
+noir	2115	Weißwangengans	2
+blanc	2109	Голубь	3
+Grünspan	2082	Pipit de Godlewski	2
+GRÜNSPAN	2145	pipit de godlewski	4
+Indigo	2138	Голубь	4
+Grünspan	2053	Pipit de Godlewski	4
+blanc	2038	Голубь	0
+Grünspan	2071	Pipit de Godlewski	3
+rouge	2037	Marreca-cabocla	0
+fumée	2113	Araqua-pintado	0
+marrón	2034	Weißwangengans	1
+fumée	2124	Araqua-pintado	0
+
+====[tsv-split -H -s -n 2 -k 1 --prefix pre_ --suffix _suf --dir odir ../input4x58.tsv]====
+==> ./tsvsplit_workdir/odir/pre_0_suf <==
+c-1	c-2	c-3	c-4
+púrpura	2088	Macuco	1
+blutrot	2142	Tüpfelsumpfhuhn	1
+BLUTROT	2142	TÜPFELSUMPFHUHN	1
+blutrot	2118	Tüpfelsumpfhuhn	4
+Cerise	2076	Malvasía Cabeciblanca	4
+schneeweiß	2117	Porrón Islándico	4
+café	2088	Purpurreiher	2
+暗紅色/暗赤色	2015	Malvasía Cabeciblanca	2
+grünspan	2145	PIPIT DE GODLEWSKI	4
+púrpura	2070	Macreuse à bec jaune	2
+blutrot	2121	Воробей	4
+púrpura	2092	Macreuse à bec jaune	4
+blutrot	2117	Tüpfelsumpfhuhn	0
+púrpura	2093	Macreuse à bec jaune	4
+schneeweiß	2121	Porrón Islándico	1
+dorado	2045	Лебедь	2
+café	2062	Purpurreiher	4
+Cerise	2119	Malvasía Cabeciblanca	4
+café	2100	Purpurreiher	2
+BLUTROT	2142	TÜPFELSUMPFHUHN	1
+grünspan	2145	PIPIT DE GODLEWSKI	4
+blutrot	2143	Tüpfelsumpfhuhn	4
+púrpura	2119	Macuco	4
+púrpura	2145	Macreuse à bec jaune	2
+blutrot	2149	Tüpfelsumpfhuhn	1
+blutrot	2120	Tüpfelsumpfhuhn	1
+café	2041	Purpurreiher	4
+café	2019	Marreca-cabocla	1
+
+==> ./tsvsplit_workdir/odir/pre_1_suf <==
+c-1	c-2	c-3	c-4
+Blutrot	2142	tüpfelsumpfhuhn	1
+Indigo	2056	Голубь	1
+Indigo	2141	Голубь	1
+Orange-red	2089	Purpurreiher	1
+rouge	2132	Löffelente	4
+zitronengelb	2136	Macreuse à bec jaune	3
+Grünspan	2145	Pipit de Godlewski	4
+GRÜNSPAN	2145	pipit de godlewski	4
+Blutrot	2142	tüpfelsumpfhuhn	1
+zitronengelb	2083	Macreuse à bec jaune	4
+marrón	2102	Weißwangengans	1
+rouge	2146	Löffelente	1
+noir	2082	Weißwangengans	1
+noir	2094	Weißwangengans	4
+blanc	2137	Голубь	2
+rouge	2135	Marreca-cabocla	1
+красный	2049	Weißwangengans	3
+noir	2115	Weißwangengans	2
+blanc	2109	Голубь	3
+Grünspan	2082	Pipit de Godlewski	2
+GRÜNSPAN	2145	pipit de godlewski	4
+Indigo	2138	Голубь	4
+Grünspan	2053	Pipit de Godlewski	4
+blanc	2038	Голубь	0
+Grünspan	2071	Pipit de Godlewski	3
+rouge	2037	Marreca-cabocla	0
+fumée	2113	Araqua-pintado	0
+marrón	2034	Weißwangengans	1
+fumée	2124	Araqua-pintado	0
+
+====[tsv-split -s -n 101 --max-open-files 5 -k 3 ../input4x58.tsv]====
+==> ./tsvsplit_workdir/part_000.tsv <==
+dorado	2045	Лебедь	2
+
+==> ./tsvsplit_workdir/part_004.tsv <==
+Blutrot	2142	tüpfelsumpfhuhn	1
+Blutrot	2142	tüpfelsumpfhuhn	1
+
+==> ./tsvsplit_workdir/part_005.tsv <==
+BLUTROT	2142	TÜPFELSUMPFHUHN	1
+BLUTROT	2142	TÜPFELSUMPFHUHN	1
+
+==> ./tsvsplit_workdir/part_011.tsv <==
+púrpura	2088	Macuco	1
+púrpura	2119	Macuco	4
+
+==> ./tsvsplit_workdir/part_014.tsv <==
+blutrot	2121	Воробей	4
+
+==> ./tsvsplit_workdir/part_016.tsv <==
+Grünspan	2145	Pipit de Godlewski	4
+Grünspan	2082	Pipit de Godlewski	2
+Grünspan	2053	Pipit de Godlewski	4
+Grünspan	2071	Pipit de Godlewski	3
+
+==> ./tsvsplit_workdir/part_028.tsv <==
+rouge	2135	Marreca-cabocla	1
+café	2019	Marreca-cabocla	1
+rouge	2037	Marreca-cabocla	0
+
+==> ./tsvsplit_workdir/part_032.tsv <==
+blutrot	2142	Tüpfelsumpfhuhn	1
+blutrot	2118	Tüpfelsumpfhuhn	4
+blutrot	2117	Tüpfelsumpfhuhn	0
+blutrot	2143	Tüpfelsumpfhuhn	4
+blutrot	2149	Tüpfelsumpfhuhn	1
+blutrot	2120	Tüpfelsumpfhuhn	1
+
+==> ./tsvsplit_workdir/part_033.tsv <==
+grünspan	2145	PIPIT DE GODLEWSKI	4
+grünspan	2145	PIPIT DE GODLEWSKI	4
+
+==> ./tsvsplit_workdir/part_035.tsv <==
+fumée	2113	Araqua-pintado	0
+fumée	2124	Araqua-pintado	0
+
+==> ./tsvsplit_workdir/part_037.tsv <==
+schneeweiß	2117	Porrón Islándico	4
+schneeweiß	2121	Porrón Islándico	1
+
+==> ./tsvsplit_workdir/part_051.tsv <==
+zitronengelb	2136	Macreuse à bec jaune	3
+zitronengelb	2083	Macreuse à bec jaune	4
+púrpura	2070	Macreuse à bec jaune	2
+púrpura	2092	Macreuse à bec jaune	4
+púrpura	2093	Macreuse à bec jaune	4
+púrpura	2145	Macreuse à bec jaune	2
+
+==> ./tsvsplit_workdir/part_055.tsv <==
+Indigo	2056	Голубь	1
+Indigo	2141	Голубь	1
+blanc	2137	Голубь	2
+blanc	2109	Голубь	3
+Indigo	2138	Голубь	4
+blanc	2038	Голубь	0
+
+==> ./tsvsplit_workdir/part_068.tsv <==
+GRÜNSPAN	2145	pipit de godlewski	4
+GRÜNSPAN	2145	pipit de godlewski	4
+
+==> ./tsvsplit_workdir/part_070.tsv <==
+rouge	2132	Löffelente	4
+rouge	2146	Löffelente	1
+
+==> ./tsvsplit_workdir/part_072.tsv <==
+marrón	2102	Weißwangengans	1
+noir	2082	Weißwangengans	1
+noir	2094	Weißwangengans	4
+красный	2049	Weißwangengans	3
+noir	2115	Weißwangengans	2
+marrón	2034	Weißwangengans	1
+
+==> ./tsvsplit_workdir/part_080.tsv <==
+Cerise	2076	Malvasía Cabeciblanca	4
+暗紅色/暗赤色	2015	Malvasía Cabeciblanca	2
+Cerise	2119	Malvasía Cabeciblanca	4
+
+==> ./tsvsplit_workdir/part_087.tsv <==
+café	2088	Purpurreiher	2
+Orange-red	2089	Purpurreiher	1
+café	2062	Purpurreiher	4
+café	2100	Purpurreiher	2
+café	2041	Purpurreiher	4
+
+==> ./tsvsplit_workdir/part_093.tsv <==
+c-1	c-2	c-3	c-4
+
+====[tsv-split -s -n 101 --max-open-files 6 -k 3 ../input4x58.tsv]====
+==> ./tsvsplit_workdir/part_000.tsv <==
+dorado	2045	Лебедь	2
+
+==> ./tsvsplit_workdir/part_004.tsv <==
+Blutrot	2142	tüpfelsumpfhuhn	1
+Blutrot	2142	tüpfelsumpfhuhn	1
+
+==> ./tsvsplit_workdir/part_005.tsv <==
+BLUTROT	2142	TÜPFELSUMPFHUHN	1
+BLUTROT	2142	TÜPFELSUMPFHUHN	1
+
+==> ./tsvsplit_workdir/part_011.tsv <==
+púrpura	2088	Macuco	1
+púrpura	2119	Macuco	4
+
+==> ./tsvsplit_workdir/part_014.tsv <==
+blutrot	2121	Воробей	4
+
+==> ./tsvsplit_workdir/part_016.tsv <==
+Grünspan	2145	Pipit de Godlewski	4
+Grünspan	2082	Pipit de Godlewski	2
+Grünspan	2053	Pipit de Godlewski	4
+Grünspan	2071	Pipit de Godlewski	3
+
+==> ./tsvsplit_workdir/part_028.tsv <==
+rouge	2135	Marreca-cabocla	1
+café	2019	Marreca-cabocla	1
+rouge	2037	Marreca-cabocla	0
+
+==> ./tsvsplit_workdir/part_032.tsv <==
+blutrot	2142	Tüpfelsumpfhuhn	1
+blutrot	2118	Tüpfelsumpfhuhn	4
+blutrot	2117	Tüpfelsumpfhuhn	0
+blutrot	2143	Tüpfelsumpfhuhn	4
+blutrot	2149	Tüpfelsumpfhuhn	1
+blutrot	2120	Tüpfelsumpfhuhn	1
+
+==> ./tsvsplit_workdir/part_033.tsv <==
+grünspan	2145	PIPIT DE GODLEWSKI	4
+grünspan	2145	PIPIT DE GODLEWSKI	4
+
+==> ./tsvsplit_workdir/part_035.tsv <==
+fumée	2113	Araqua-pintado	0
+fumée	2124	Araqua-pintado	0
+
+==> ./tsvsplit_workdir/part_037.tsv <==
+schneeweiß	2117	Porrón Islándico	4
+schneeweiß	2121	Porrón Islándico	1
+
+==> ./tsvsplit_workdir/part_051.tsv <==
+zitronengelb	2136	Macreuse à bec jaune	3
+zitronengelb	2083	Macreuse à bec jaune	4
+púrpura	2070	Macreuse à bec jaune	2
+púrpura	2092	Macreuse à bec jaune	4
+púrpura	2093	Macreuse à bec jaune	4
+púrpura	2145	Macreuse à bec jaune	2
+
+==> ./tsvsplit_workdir/part_055.tsv <==
+Indigo	2056	Голубь	1
+Indigo	2141	Голубь	1
+blanc	2137	Голубь	2
+blanc	2109	Голубь	3
+Indigo	2138	Голубь	4
+blanc	2038	Голубь	0
+
+==> ./tsvsplit_workdir/part_068.tsv <==
+GRÜNSPAN	2145	pipit de godlewski	4
+GRÜNSPAN	2145	pipit de godlewski	4
+
+==> ./tsvsplit_workdir/part_070.tsv <==
+rouge	2132	Löffelente	4
+rouge	2146	Löffelente	1
+
+==> ./tsvsplit_workdir/part_072.tsv <==
+marrón	2102	Weißwangengans	1
+noir	2082	Weißwangengans	1
+noir	2094	Weißwangengans	4
+красный	2049	Weißwangengans	3
+noir	2115	Weißwangengans	2
+marrón	2034	Weißwangengans	1
+
+==> ./tsvsplit_workdir/part_080.tsv <==
+Cerise	2076	Malvasía Cabeciblanca	4
+暗紅色/暗赤色	2015	Malvasía Cabeciblanca	2
+Cerise	2119	Malvasía Cabeciblanca	4
+
+==> ./tsvsplit_workdir/part_087.tsv <==
+café	2088	Purpurreiher	2
+Orange-red	2089	Purpurreiher	1
+café	2062	Purpurreiher	4
+café	2100	Purpurreiher	2
+café	2041	Purpurreiher	4
+
+==> ./tsvsplit_workdir/part_093.tsv <==
+c-1	c-2	c-3	c-4
+
+====[tsv-split -s -n 101 --max-open-files 22 -k 3 ../input4x58.tsv]====
+==> ./tsvsplit_workdir/part_000.tsv <==
+dorado	2045	Лебедь	2
+
+==> ./tsvsplit_workdir/part_004.tsv <==
+Blutrot	2142	tüpfelsumpfhuhn	1
+Blutrot	2142	tüpfelsumpfhuhn	1
+
+==> ./tsvsplit_workdir/part_005.tsv <==
+BLUTROT	2142	TÜPFELSUMPFHUHN	1
+BLUTROT	2142	TÜPFELSUMPFHUHN	1
+
+==> ./tsvsplit_workdir/part_011.tsv <==
+púrpura	2088	Macuco	1
+púrpura	2119	Macuco	4
+
+==> ./tsvsplit_workdir/part_014.tsv <==
+blutrot	2121	Воробей	4
+
+==> ./tsvsplit_workdir/part_016.tsv <==
+Grünspan	2145	Pipit de Godlewski	4
+Grünspan	2082	Pipit de Godlewski	2
+Grünspan	2053	Pipit de Godlewski	4
+Grünspan	2071	Pipit de Godlewski	3
+
+==> ./tsvsplit_workdir/part_028.tsv <==
+rouge	2135	Marreca-cabocla	1
+café	2019	Marreca-cabocla	1
+rouge	2037	Marreca-cabocla	0
+
+==> ./tsvsplit_workdir/part_032.tsv <==
+blutrot	2142	Tüpfelsumpfhuhn	1
+blutrot	2118	Tüpfelsumpfhuhn	4
+blutrot	2117	Tüpfelsumpfhuhn	0
+blutrot	2143	Tüpfelsumpfhuhn	4
+blutrot	2149	Tüpfelsumpfhuhn	1
+blutrot	2120	Tüpfelsumpfhuhn	1
+
+==> ./tsvsplit_workdir/part_033.tsv <==
+grünspan	2145	PIPIT DE GODLEWSKI	4
+grünspan	2145	PIPIT DE GODLEWSKI	4
+
+==> ./tsvsplit_workdir/part_035.tsv <==
+fumée	2113	Araqua-pintado	0
+fumée	2124	Araqua-pintado	0
+
+==> ./tsvsplit_workdir/part_037.tsv <==
+schneeweiß	2117	Porrón Islándico	4
+schneeweiß	2121	Porrón Islándico	1
+
+==> ./tsvsplit_workdir/part_051.tsv <==
+zitronengelb	2136	Macreuse à bec jaune	3
+zitronengelb	2083	Macreuse à bec jaune	4
+púrpura	2070	Macreuse à bec jaune	2
+púrpura	2092	Macreuse à bec jaune	4
+púrpura	2093	Macreuse à bec jaune	4
+púrpura	2145	Macreuse à bec jaune	2
+
+==> ./tsvsplit_workdir/part_055.tsv <==
+Indigo	2056	Голубь	1
+Indigo	2141	Голубь	1
+blanc	2137	Голубь	2
+blanc	2109	Голубь	3
+Indigo	2138	Голубь	4
+blanc	2038	Голубь	0
+
+==> ./tsvsplit_workdir/part_068.tsv <==
+GRÜNSPAN	2145	pipit de godlewski	4
+GRÜNSPAN	2145	pipit de godlewski	4
+
+==> ./tsvsplit_workdir/part_070.tsv <==
+rouge	2132	Löffelente	4
+rouge	2146	Löffelente	1
+
+==> ./tsvsplit_workdir/part_072.tsv <==
+marrón	2102	Weißwangengans	1
+noir	2082	Weißwangengans	1
+noir	2094	Weißwangengans	4
+красный	2049	Weißwangengans	3
+noir	2115	Weißwangengans	2
+marrón	2034	Weißwangengans	1
+
+==> ./tsvsplit_workdir/part_080.tsv <==
+Cerise	2076	Malvasía Cabeciblanca	4
+暗紅色/暗赤色	2015	Malvasía Cabeciblanca	2
+Cerise	2119	Malvasía Cabeciblanca	4
+
+==> ./tsvsplit_workdir/part_087.tsv <==
+café	2088	Purpurreiher	2
+Orange-red	2089	Purpurreiher	1
+café	2062	Purpurreiher	4
+café	2100	Purpurreiher	2
+café	2041	Purpurreiher	4
+
+==> ./tsvsplit_workdir/part_093.tsv <==
+c-1	c-2	c-3	c-4
+
+====[tsv-split -s -n 101 --max-open-files 23 -k 3 ../input4x58.tsv]====
+==> ./tsvsplit_workdir/part_000.tsv <==
+dorado	2045	Лебедь	2
+
+==> ./tsvsplit_workdir/part_004.tsv <==
+Blutrot	2142	tüpfelsumpfhuhn	1
+Blutrot	2142	tüpfelsumpfhuhn	1
+
+==> ./tsvsplit_workdir/part_005.tsv <==
+BLUTROT	2142	TÜPFELSUMPFHUHN	1
+BLUTROT	2142	TÜPFELSUMPFHUHN	1
+
+==> ./tsvsplit_workdir/part_011.tsv <==
+púrpura	2088	Macuco	1
+púrpura	2119	Macuco	4
+
+==> ./tsvsplit_workdir/part_014.tsv <==
+blutrot	2121	Воробей	4
+
+==> ./tsvsplit_workdir/part_016.tsv <==
+Grünspan	2145	Pipit de Godlewski	4
+Grünspan	2082	Pipit de Godlewski	2
+Grünspan	2053	Pipit de Godlewski	4
+Grünspan	2071	Pipit de Godlewski	3
+
+==> ./tsvsplit_workdir/part_028.tsv <==
+rouge	2135	Marreca-cabocla	1
+café	2019	Marreca-cabocla	1
+rouge	2037	Marreca-cabocla	0
+
+==> ./tsvsplit_workdir/part_032.tsv <==
+blutrot	2142	Tüpfelsumpfhuhn	1
+blutrot	2118	Tüpfelsumpfhuhn	4
+blutrot	2117	Tüpfelsumpfhuhn	0
+blutrot	2143	Tüpfelsumpfhuhn	4
+blutrot	2149	Tüpfelsumpfhuhn	1
+blutrot	2120	Tüpfelsumpfhuhn	1
+
+==> ./tsvsplit_workdir/part_033.tsv <==
+grünspan	2145	PIPIT DE GODLEWSKI	4
+grünspan	2145	PIPIT DE GODLEWSKI	4
+
+==> ./tsvsplit_workdir/part_035.tsv <==
+fumée	2113	Araqua-pintado	0
+fumée	2124	Araqua-pintado	0
+
+==> ./tsvsplit_workdir/part_037.tsv <==
+schneeweiß	2117	Porrón Islándico	4
+schneeweiß	2121	Porrón Islándico	1
+
+==> ./tsvsplit_workdir/part_051.tsv <==
+zitronengelb	2136	Macreuse à bec jaune	3
+zitronengelb	2083	Macreuse à bec jaune	4
+púrpura	2070	Macreuse à bec jaune	2
+púrpura	2092	Macreuse à bec jaune	4
+púrpura	2093	Macreuse à bec jaune	4
+púrpura	2145	Macreuse à bec jaune	2
+
+==> ./tsvsplit_workdir/part_055.tsv <==
+Indigo	2056	Голубь	1
+Indigo	2141	Голубь	1
+blanc	2137	Голубь	2
+blanc	2109	Голубь	3
+Indigo	2138	Голубь	4
+blanc	2038	Голубь	0
+
+==> ./tsvsplit_workdir/part_068.tsv <==
+GRÜNSPAN	2145	pipit de godlewski	4
+GRÜNSPAN	2145	pipit de godlewski	4
+
+==> ./tsvsplit_workdir/part_070.tsv <==
+rouge	2132	Löffelente	4
+rouge	2146	Löffelente	1
+
+==> ./tsvsplit_workdir/part_072.tsv <==
+marrón	2102	Weißwangengans	1
+noir	2082	Weißwangengans	1
+noir	2094	Weißwangengans	4
+красный	2049	Weißwangengans	3
+noir	2115	Weißwangengans	2
+marrón	2034	Weißwangengans	1
+
+==> ./tsvsplit_workdir/part_080.tsv <==
+Cerise	2076	Malvasía Cabeciblanca	4
+暗紅色/暗赤色	2015	Malvasía Cabeciblanca	2
+Cerise	2119	Malvasía Cabeciblanca	4
+
+==> ./tsvsplit_workdir/part_087.tsv <==
+café	2088	Purpurreiher	2
+Orange-red	2089	Purpurreiher	1
+café	2062	Purpurreiher	4
+café	2100	Purpurreiher	2
+café	2041	Purpurreiher	4
+
+==> ./tsvsplit_workdir/part_093.tsv <==
+c-1	c-2	c-3	c-4
+
+====[tsv-split -s -n 101 --max-open-files 24 -k 3 ../input4x58.tsv]====
+==> ./tsvsplit_workdir/part_000.tsv <==
+dorado	2045	Лебедь	2
+
+==> ./tsvsplit_workdir/part_004.tsv <==
+Blutrot	2142	tüpfelsumpfhuhn	1
+Blutrot	2142	tüpfelsumpfhuhn	1
+
+==> ./tsvsplit_workdir/part_005.tsv <==
+BLUTROT	2142	TÜPFELSUMPFHUHN	1
+BLUTROT	2142	TÜPFELSUMPFHUHN	1
+
+==> ./tsvsplit_workdir/part_011.tsv <==
+púrpura	2088	Macuco	1
+púrpura	2119	Macuco	4
+
+==> ./tsvsplit_workdir/part_014.tsv <==
+blutrot	2121	Воробей	4
+
+==> ./tsvsplit_workdir/part_016.tsv <==
+Grünspan	2145	Pipit de Godlewski	4
+Grünspan	2082	Pipit de Godlewski	2
+Grünspan	2053	Pipit de Godlewski	4
+Grünspan	2071	Pipit de Godlewski	3
+
+==> ./tsvsplit_workdir/part_028.tsv <==
+rouge	2135	Marreca-cabocla	1
+café	2019	Marreca-cabocla	1
+rouge	2037	Marreca-cabocla	0
+
+==> ./tsvsplit_workdir/part_032.tsv <==
+blutrot	2142	Tüpfelsumpfhuhn	1
+blutrot	2118	Tüpfelsumpfhuhn	4
+blutrot	2117	Tüpfelsumpfhuhn	0
+blutrot	2143	Tüpfelsumpfhuhn	4
+blutrot	2149	Tüpfelsumpfhuhn	1
+blutrot	2120	Tüpfelsumpfhuhn	1
+
+==> ./tsvsplit_workdir/part_033.tsv <==
+grünspan	2145	PIPIT DE GODLEWSKI	4
+grünspan	2145	PIPIT DE GODLEWSKI	4
+
+==> ./tsvsplit_workdir/part_035.tsv <==
+fumée	2113	Araqua-pintado	0
+fumée	2124	Araqua-pintado	0
+
+==> ./tsvsplit_workdir/part_037.tsv <==
+schneeweiß	2117	Porrón Islándico	4
+schneeweiß	2121	Porrón Islándico	1
+
+==> ./tsvsplit_workdir/part_051.tsv <==
+zitronengelb	2136	Macreuse à bec jaune	3
+zitronengelb	2083	Macreuse à bec jaune	4
+púrpura	2070	Macreuse à bec jaune	2
+púrpura	2092	Macreuse à bec jaune	4
+púrpura	2093	Macreuse à bec jaune	4
+púrpura	2145	Macreuse à bec jaune	2
+
+==> ./tsvsplit_workdir/part_055.tsv <==
+Indigo	2056	Голубь	1
+Indigo	2141	Голубь	1
+blanc	2137	Голубь	2
+blanc	2109	Голубь	3
+Indigo	2138	Голубь	4
+blanc	2038	Голубь	0
+
+==> ./tsvsplit_workdir/part_068.tsv <==
+GRÜNSPAN	2145	pipit de godlewski	4
+GRÜNSPAN	2145	pipit de godlewski	4
+
+==> ./tsvsplit_workdir/part_070.tsv <==
+rouge	2132	Löffelente	4
+rouge	2146	Löffelente	1
+
+==> ./tsvsplit_workdir/part_072.tsv <==
+marrón	2102	Weißwangengans	1
+noir	2082	Weißwangengans	1
+noir	2094	Weißwangengans	4
+красный	2049	Weißwangengans	3
+noir	2115	Weißwangengans	2
+marrón	2034	Weißwangengans	1
+
+==> ./tsvsplit_workdir/part_080.tsv <==
+Cerise	2076	Malvasía Cabeciblanca	4
+暗紅色/暗赤色	2015	Malvasía Cabeciblanca	2
+Cerise	2119	Malvasía Cabeciblanca	4
+
+==> ./tsvsplit_workdir/part_087.tsv <==
+café	2088	Purpurreiher	2
+Orange-red	2089	Purpurreiher	1
+café	2062	Purpurreiher	4
+café	2100	Purpurreiher	2
+café	2041	Purpurreiher	4
+
+==> ./tsvsplit_workdir/part_093.tsv <==
+c-1	c-2	c-3	c-4
+
+====[ulimit -Sn 5 && tsv-split -s -n 101 -k 3 ../input4x58.tsv]====
+==> ./tsvsplit_workdir/part_000.tsv <==
+dorado	2045	Лебедь	2
+
+==> ./tsvsplit_workdir/part_004.tsv <==
+Blutrot	2142	tüpfelsumpfhuhn	1
+Blutrot	2142	tüpfelsumpfhuhn	1
+
+==> ./tsvsplit_workdir/part_005.tsv <==
+BLUTROT	2142	TÜPFELSUMPFHUHN	1
+BLUTROT	2142	TÜPFELSUMPFHUHN	1
+
+==> ./tsvsplit_workdir/part_011.tsv <==
+púrpura	2088	Macuco	1
+púrpura	2119	Macuco	4
+
+==> ./tsvsplit_workdir/part_014.tsv <==
+blutrot	2121	Воробей	4
+
+==> ./tsvsplit_workdir/part_016.tsv <==
+Grünspan	2145	Pipit de Godlewski	4
+Grünspan	2082	Pipit de Godlewski	2
+Grünspan	2053	Pipit de Godlewski	4
+Grünspan	2071	Pipit de Godlewski	3
+
+==> ./tsvsplit_workdir/part_028.tsv <==
+rouge	2135	Marreca-cabocla	1
+café	2019	Marreca-cabocla	1
+rouge	2037	Marreca-cabocla	0
+
+==> ./tsvsplit_workdir/part_032.tsv <==
+blutrot	2142	Tüpfelsumpfhuhn	1
+blutrot	2118	Tüpfelsumpfhuhn	4
+blutrot	2117	Tüpfelsumpfhuhn	0
+blutrot	2143	Tüpfelsumpfhuhn	4
+blutrot	2149	Tüpfelsumpfhuhn	1
+blutrot	2120	Tüpfelsumpfhuhn	1
+
+==> ./tsvsplit_workdir/part_033.tsv <==
+grünspan	2145	PIPIT DE GODLEWSKI	4
+grünspan	2145	PIPIT DE GODLEWSKI	4
+
+==> ./tsvsplit_workdir/part_035.tsv <==
+fumée	2113	Araqua-pintado	0
+fumée	2124	Araqua-pintado	0
+
+==> ./tsvsplit_workdir/part_037.tsv <==
+schneeweiß	2117	Porrón Islándico	4
+schneeweiß	2121	Porrón Islándico	1
+
+==> ./tsvsplit_workdir/part_051.tsv <==
+zitronengelb	2136	Macreuse à bec jaune	3
+zitronengelb	2083	Macreuse à bec jaune	4
+púrpura	2070	Macreuse à bec jaune	2
+púrpura	2092	Macreuse à bec jaune	4
+púrpura	2093	Macreuse à bec jaune	4
+púrpura	2145	Macreuse à bec jaune	2
+
+==> ./tsvsplit_workdir/part_055.tsv <==
+Indigo	2056	Голубь	1
+Indigo	2141	Голубь	1
+blanc	2137	Голубь	2
+blanc	2109	Голубь	3
+Indigo	2138	Голубь	4
+blanc	2038	Голубь	0
+
+==> ./tsvsplit_workdir/part_068.tsv <==
+GRÜNSPAN	2145	pipit de godlewski	4
+GRÜNSPAN	2145	pipit de godlewski	4
+
+==> ./tsvsplit_workdir/part_070.tsv <==
+rouge	2132	Löffelente	4
+rouge	2146	Löffelente	1
+
+==> ./tsvsplit_workdir/part_072.tsv <==
+marrón	2102	Weißwangengans	1
+noir	2082	Weißwangengans	1
+noir	2094	Weißwangengans	4
+красный	2049	Weißwangengans	3
+noir	2115	Weißwangengans	2
+marrón	2034	Weißwangengans	1
+
+==> ./tsvsplit_workdir/part_080.tsv <==
+Cerise	2076	Malvasía Cabeciblanca	4
+暗紅色/暗赤色	2015	Malvasía Cabeciblanca	2
+Cerise	2119	Malvasía Cabeciblanca	4
+
+==> ./tsvsplit_workdir/part_087.tsv <==
+café	2088	Purpurreiher	2
+Orange-red	2089	Purpurreiher	1
+café	2062	Purpurreiher	4
+café	2100	Purpurreiher	2
+café	2041	Purpurreiher	4
+
+==> ./tsvsplit_workdir/part_093.tsv <==
+c-1	c-2	c-3	c-4
+
+====[ulimit -Sn 5 && tsv-split -s -n 101 --max-open-files 5 -k 3 ../input4x58.tsv]====
+==> ./tsvsplit_workdir/part_000.tsv <==
+dorado	2045	Лебедь	2
+
+==> ./tsvsplit_workdir/part_004.tsv <==
+Blutrot	2142	tüpfelsumpfhuhn	1
+Blutrot	2142	tüpfelsumpfhuhn	1
+
+==> ./tsvsplit_workdir/part_005.tsv <==
+BLUTROT	2142	TÜPFELSUMPFHUHN	1
+BLUTROT	2142	TÜPFELSUMPFHUHN	1
+
+==> ./tsvsplit_workdir/part_011.tsv <==
+púrpura	2088	Macuco	1
+púrpura	2119	Macuco	4
+
+==> ./tsvsplit_workdir/part_014.tsv <==
+blutrot	2121	Воробей	4
+
+==> ./tsvsplit_workdir/part_016.tsv <==
+Grünspan	2145	Pipit de Godlewski	4
+Grünspan	2082	Pipit de Godlewski	2
+Grünspan	2053	Pipit de Godlewski	4
+Grünspan	2071	Pipit de Godlewski	3
+
+==> ./tsvsplit_workdir/part_028.tsv <==
+rouge	2135	Marreca-cabocla	1
+café	2019	Marreca-cabocla	1
+rouge	2037	Marreca-cabocla	0
+
+==> ./tsvsplit_workdir/part_032.tsv <==
+blutrot	2142	Tüpfelsumpfhuhn	1
+blutrot	2118	Tüpfelsumpfhuhn	4
+blutrot	2117	Tüpfelsumpfhuhn	0
+blutrot	2143	Tüpfelsumpfhuhn	4
+blutrot	2149	Tüpfelsumpfhuhn	1
+blutrot	2120	Tüpfelsumpfhuhn	1
+
+==> ./tsvsplit_workdir/part_033.tsv <==
+grünspan	2145	PIPIT DE GODLEWSKI	4
+grünspan	2145	PIPIT DE GODLEWSKI	4
+
+==> ./tsvsplit_workdir/part_035.tsv <==
+fumée	2113	Araqua-pintado	0
+fumée	2124	Araqua-pintado	0
+
+==> ./tsvsplit_workdir/part_037.tsv <==
+schneeweiß	2117	Porrón Islándico	4
+schneeweiß	2121	Porrón Islándico	1
+
+==> ./tsvsplit_workdir/part_051.tsv <==
+zitronengelb	2136	Macreuse à bec jaune	3
+zitronengelb	2083	Macreuse à bec jaune	4
+púrpura	2070	Macreuse à bec jaune	2
+púrpura	2092	Macreuse à bec jaune	4
+púrpura	2093	Macreuse à bec jaune	4
+púrpura	2145	Macreuse à bec jaune	2
+
+==> ./tsvsplit_workdir/part_055.tsv <==
+Indigo	2056	Голубь	1
+Indigo	2141	Голубь	1
+blanc	2137	Голубь	2
+blanc	2109	Голубь	3
+Indigo	2138	Голубь	4
+blanc	2038	Голубь	0
+
+==> ./tsvsplit_workdir/part_068.tsv <==
+GRÜNSPAN	2145	pipit de godlewski	4
+GRÜNSPAN	2145	pipit de godlewski	4
+
+==> ./tsvsplit_workdir/part_070.tsv <==
+rouge	2132	Löffelente	4
+rouge	2146	Löffelente	1
+
+==> ./tsvsplit_workdir/part_072.tsv <==
+marrón	2102	Weißwangengans	1
+noir	2082	Weißwangengans	1
+noir	2094	Weißwangengans	4
+красный	2049	Weißwangengans	3
+noir	2115	Weißwangengans	2
+marrón	2034	Weißwangengans	1
+
+==> ./tsvsplit_workdir/part_080.tsv <==
+Cerise	2076	Malvasía Cabeciblanca	4
+暗紅色/暗赤色	2015	Malvasía Cabeciblanca	2
+Cerise	2119	Malvasía Cabeciblanca	4
+
+==> ./tsvsplit_workdir/part_087.tsv <==
+café	2088	Purpurreiher	2
+Orange-red	2089	Purpurreiher	1
+café	2062	Purpurreiher	4
+café	2100	Purpurreiher	2
+café	2041	Purpurreiher	4
+
+==> ./tsvsplit_workdir/part_093.tsv <==
+c-1	c-2	c-3	c-4
+
+====[ulimit -Sn 6 && tsv-split -s -n 101 -k 3 ../input4x58.tsv]====
+==> ./tsvsplit_workdir/part_000.tsv <==
+dorado	2045	Лебедь	2
+
+==> ./tsvsplit_workdir/part_004.tsv <==
+Blutrot	2142	tüpfelsumpfhuhn	1
+Blutrot	2142	tüpfelsumpfhuhn	1
+
+==> ./tsvsplit_workdir/part_005.tsv <==
+BLUTROT	2142	TÜPFELSUMPFHUHN	1
+BLUTROT	2142	TÜPFELSUMPFHUHN	1
+
+==> ./tsvsplit_workdir/part_011.tsv <==
+púrpura	2088	Macuco	1
+púrpura	2119	Macuco	4
+
+==> ./tsvsplit_workdir/part_014.tsv <==
+blutrot	2121	Воробей	4
+
+==> ./tsvsplit_workdir/part_016.tsv <==
+Grünspan	2145	Pipit de Godlewski	4
+Grünspan	2082	Pipit de Godlewski	2
+Grünspan	2053	Pipit de Godlewski	4
+Grünspan	2071	Pipit de Godlewski	3
+
+==> ./tsvsplit_workdir/part_028.tsv <==
+rouge	2135	Marreca-cabocla	1
+café	2019	Marreca-cabocla	1
+rouge	2037	Marreca-cabocla	0
+
+==> ./tsvsplit_workdir/part_032.tsv <==
+blutrot	2142	Tüpfelsumpfhuhn	1
+blutrot	2118	Tüpfelsumpfhuhn	4
+blutrot	2117	Tüpfelsumpfhuhn	0
+blutrot	2143	Tüpfelsumpfhuhn	4
+blutrot	2149	Tüpfelsumpfhuhn	1
+blutrot	2120	Tüpfelsumpfhuhn	1
+
+==> ./tsvsplit_workdir/part_033.tsv <==
+grünspan	2145	PIPIT DE GODLEWSKI	4
+grünspan	2145	PIPIT DE GODLEWSKI	4
+
+==> ./tsvsplit_workdir/part_035.tsv <==
+fumée	2113	Araqua-pintado	0
+fumée	2124	Araqua-pintado	0
+
+==> ./tsvsplit_workdir/part_037.tsv <==
+schneeweiß	2117	Porrón Islándico	4
+schneeweiß	2121	Porrón Islándico	1
+
+==> ./tsvsplit_workdir/part_051.tsv <==
+zitronengelb	2136	Macreuse à bec jaune	3
+zitronengelb	2083	Macreuse à bec jaune	4
+púrpura	2070	Macreuse à bec jaune	2
+púrpura	2092	Macreuse à bec jaune	4
+púrpura	2093	Macreuse à bec jaune	4
+púrpura	2145	Macreuse à bec jaune	2
+
+==> ./tsvsplit_workdir/part_055.tsv <==
+Indigo	2056	Голубь	1
+Indigo	2141	Голубь	1
+blanc	2137	Голубь	2
+blanc	2109	Голубь	3
+Indigo	2138	Голубь	4
+blanc	2038	Голубь	0
+
+==> ./tsvsplit_workdir/part_068.tsv <==
+GRÜNSPAN	2145	pipit de godlewski	4
+GRÜNSPAN	2145	pipit de godlewski	4
+
+==> ./tsvsplit_workdir/part_070.tsv <==
+rouge	2132	Löffelente	4
+rouge	2146	Löffelente	1
+
+==> ./tsvsplit_workdir/part_072.tsv <==
+marrón	2102	Weißwangengans	1
+noir	2082	Weißwangengans	1
+noir	2094	Weißwangengans	4
+красный	2049	Weißwangengans	3
+noir	2115	Weißwangengans	2
+marrón	2034	Weißwangengans	1
+
+==> ./tsvsplit_workdir/part_080.tsv <==
+Cerise	2076	Malvasía Cabeciblanca	4
+暗紅色/暗赤色	2015	Malvasía Cabeciblanca	2
+Cerise	2119	Malvasía Cabeciblanca	4
+
+==> ./tsvsplit_workdir/part_087.tsv <==
+café	2088	Purpurreiher	2
+Orange-red	2089	Purpurreiher	1
+café	2062	Purpurreiher	4
+café	2100	Purpurreiher	2
+café	2041	Purpurreiher	4
+
+==> ./tsvsplit_workdir/part_093.tsv <==
+c-1	c-2	c-3	c-4
+
+====[tsv-split -s -n 11 -k 3 --append ../input4x58.tsv]====
+====[tsv-split -s -n 11 -k 3 --append ../input4x58.tsv]====
+==> ./tsvsplit_workdir/part_00.tsv <==
+BLUTROT	2142	TÜPFELSUMPFHUHN	1
+BLUTROT	2142	TÜPFELSUMPFHUHN	1
+BLUTROT	2142	TÜPFELSUMPFHUHN	1
+BLUTROT	2142	TÜPFELSUMPFHUHN	1
+
+==> ./tsvsplit_workdir/part_01.tsv <==
+blutrot	2121	Воробей	4
+marrón	2102	Weißwangengans	1
+noir	2082	Weißwangengans	1
+noir	2094	Weißwangengans	4
+красный	2049	Weißwangengans	3
+noir	2115	Weißwangengans	2
+marrón	2034	Weißwangengans	1
+blutrot	2121	Воробей	4
+marrón	2102	Weißwangengans	1
+noir	2082	Weißwangengans	1
+noir	2094	Weißwangengans	4
+красный	2049	Weißwangengans	3
+noir	2115	Weißwangengans	2
+marrón	2034	Weißwangengans	1
+
+==> ./tsvsplit_workdir/part_02.tsv <==
+schneeweiß	2117	Porrón Islándico	4
+schneeweiß	2121	Porrón Islándico	1
+schneeweiß	2117	Porrón Islándico	4
+schneeweiß	2121	Porrón Islándico	1
+
+==> ./tsvsplit_workdir/part_03.tsv <==
+Cerise	2076	Malvasía Cabeciblanca	4
+暗紅色/暗赤色	2015	Malvasía Cabeciblanca	2
+zitronengelb	2136	Macreuse à bec jaune	3
+zitronengelb	2083	Macreuse à bec jaune	4
+púrpura	2070	Macreuse à bec jaune	2
+púrpura	2092	Macreuse à bec jaune	4
+púrpura	2093	Macreuse à bec jaune	4
+dorado	2045	Лебедь	2
+Cerise	2119	Malvasía Cabeciblanca	4
+púrpura	2145	Macreuse à bec jaune	2
+Cerise	2076	Malvasía Cabeciblanca	4
+暗紅色/暗赤色	2015	Malvasía Cabeciblanca	2
+zitronengelb	2136	Macreuse à bec jaune	3
+zitronengelb	2083	Macreuse à bec jaune	4
+púrpura	2070	Macreuse à bec jaune	2
+púrpura	2092	Macreuse à bec jaune	4
+púrpura	2093	Macreuse à bec jaune	4
+dorado	2045	Лебедь	2
+Cerise	2119	Malvasía Cabeciblanca	4
+púrpura	2145	Macreuse à bec jaune	2
+
+==> ./tsvsplit_workdir/part_04.tsv <==
+c-1	c-2	c-3	c-4
+grünspan	2145	PIPIT DE GODLEWSKI	4
+grünspan	2145	PIPIT DE GODLEWSKI	4
+c-1	c-2	c-3	c-4
+grünspan	2145	PIPIT DE GODLEWSKI	4
+grünspan	2145	PIPIT DE GODLEWSKI	4
+
+==> ./tsvsplit_workdir/part_05.tsv <==
+GRÜNSPAN	2145	pipit de godlewski	4
+GRÜNSPAN	2145	pipit de godlewski	4
+fumée	2113	Araqua-pintado	0
+fumée	2124	Araqua-pintado	0
+GRÜNSPAN	2145	pipit de godlewski	4
+GRÜNSPAN	2145	pipit de godlewski	4
+fumée	2113	Araqua-pintado	0
+fumée	2124	Araqua-pintado	0
+
+==> ./tsvsplit_workdir/part_06.tsv <==
+púrpura	2088	Macuco	1
+púrpura	2119	Macuco	4
+púrpura	2088	Macuco	1
+púrpura	2119	Macuco	4
+
+==> ./tsvsplit_workdir/part_07.tsv <==
+Blutrot	2142	tüpfelsumpfhuhn	1
+Blutrot	2142	tüpfelsumpfhuhn	1
+Blutrot	2142	tüpfelsumpfhuhn	1
+Blutrot	2142	tüpfelsumpfhuhn	1
+
+==> ./tsvsplit_workdir/part_08.tsv <==
+rouge	2135	Marreca-cabocla	1
+café	2019	Marreca-cabocla	1
+rouge	2037	Marreca-cabocla	0
+rouge	2135	Marreca-cabocla	1
+café	2019	Marreca-cabocla	1
+rouge	2037	Marreca-cabocla	0
+
+==> ./tsvsplit_workdir/part_09.tsv <==
+blutrot	2142	Tüpfelsumpfhuhn	1
+blutrot	2118	Tüpfelsumpfhuhn	4
+blutrot	2117	Tüpfelsumpfhuhn	0
+blutrot	2143	Tüpfelsumpfhuhn	4
+blutrot	2149	Tüpfelsumpfhuhn	1
+blutrot	2120	Tüpfelsumpfhuhn	1
+blutrot	2142	Tüpfelsumpfhuhn	1
+blutrot	2118	Tüpfelsumpfhuhn	4
+blutrot	2117	Tüpfelsumpfhuhn	0
+blutrot	2143	Tüpfelsumpfhuhn	4
+blutrot	2149	Tüpfelsumpfhuhn	1
+blutrot	2120	Tüpfelsumpfhuhn	1
+
+==> ./tsvsplit_workdir/part_10.tsv <==
+Indigo	2056	Голубь	1
+Indigo	2141	Голубь	1
+café	2088	Purpurreiher	2
+Orange-red	2089	Purpurreiher	1
+rouge	2132	Löffelente	4
+Grünspan	2145	Pipit de Godlewski	4
+rouge	2146	Löffelente	1
+café	2062	Purpurreiher	4
+blanc	2137	Голубь	2
+café	2100	Purpurreiher	2
+blanc	2109	Голубь	3
+Grünspan	2082	Pipit de Godlewski	2
+café	2041	Purpurreiher	4
+Indigo	2138	Голубь	4
+Grünspan	2053	Pipit de Godlewski	4
+blanc	2038	Голубь	0
+Grünspan	2071	Pipit de Godlewski	3
+Indigo	2056	Голубь	1
+Indigo	2141	Голубь	1
+café	2088	Purpurreiher	2
+Orange-red	2089	Purpurreiher	1
+rouge	2132	Löffelente	4
+Grünspan	2145	Pipit de Godlewski	4
+rouge	2146	Löffelente	1
+café	2062	Purpurreiher	4
+blanc	2137	Голубь	2
+café	2100	Purpurreiher	2
+blanc	2109	Голубь	3
+Grünspan	2082	Pipit de Godlewski	2
+café	2041	Purpurreiher	4
+Indigo	2138	Голубь	4
+Grünspan	2053	Pipit de Godlewski	4
+blanc	2038	Голубь	0
+Grünspan	2071	Pipit de Godlewski	3
+
+====[tsv-split -s -n 11 -k 3 -H --append ../input4x58.tsv]====
+====[tsv-split -s -n 11 -k 3 -H --append ../input4x58.tsv]====
+==> ./tsvsplit_workdir/part_00.tsv <==
+c-1	c-2	c-3	c-4
+BLUTROT	2142	TÜPFELSUMPFHUHN	1
+BLUTROT	2142	TÜPFELSUMPFHUHN	1
+BLUTROT	2142	TÜPFELSUMPFHUHN	1
+BLUTROT	2142	TÜPFELSUMPFHUHN	1
+
+==> ./tsvsplit_workdir/part_01.tsv <==
+c-1	c-2	c-3	c-4
+blutrot	2121	Воробей	4
+marrón	2102	Weißwangengans	1
+noir	2082	Weißwangengans	1
+noir	2094	Weißwangengans	4
+красный	2049	Weißwangengans	3
+noir	2115	Weißwangengans	2
+marrón	2034	Weißwangengans	1
+blutrot	2121	Воробей	4
+marrón	2102	Weißwangengans	1
+noir	2082	Weißwangengans	1
+noir	2094	Weißwangengans	4
+красный	2049	Weißwangengans	3
+noir	2115	Weißwangengans	2
+marrón	2034	Weißwangengans	1
+
+==> ./tsvsplit_workdir/part_02.tsv <==
+c-1	c-2	c-3	c-4
+schneeweiß	2117	Porrón Islándico	4
+schneeweiß	2121	Porrón Islándico	1
+schneeweiß	2117	Porrón Islándico	4
+schneeweiß	2121	Porrón Islándico	1
+
+==> ./tsvsplit_workdir/part_03.tsv <==
+c-1	c-2	c-3	c-4
+Cerise	2076	Malvasía Cabeciblanca	4
+暗紅色/暗赤色	2015	Malvasía Cabeciblanca	2
+zitronengelb	2136	Macreuse à bec jaune	3
+zitronengelb	2083	Macreuse à bec jaune	4
+púrpura	2070	Macreuse à bec jaune	2
+púrpura	2092	Macreuse à bec jaune	4
+púrpura	2093	Macreuse à bec jaune	4
+dorado	2045	Лебедь	2
+Cerise	2119	Malvasía Cabeciblanca	4
+púrpura	2145	Macreuse à bec jaune	2
+Cerise	2076	Malvasía Cabeciblanca	4
+暗紅色/暗赤色	2015	Malvasía Cabeciblanca	2
+zitronengelb	2136	Macreuse à bec jaune	3
+zitronengelb	2083	Macreuse à bec jaune	4
+púrpura	2070	Macreuse à bec jaune	2
+púrpura	2092	Macreuse à bec jaune	4
+púrpura	2093	Macreuse à bec jaune	4
+dorado	2045	Лебедь	2
+Cerise	2119	Malvasía Cabeciblanca	4
+púrpura	2145	Macreuse à bec jaune	2
+
+==> ./tsvsplit_workdir/part_04.tsv <==
+c-1	c-2	c-3	c-4
+grünspan	2145	PIPIT DE GODLEWSKI	4
+grünspan	2145	PIPIT DE GODLEWSKI	4
+grünspan	2145	PIPIT DE GODLEWSKI	4
+grünspan	2145	PIPIT DE GODLEWSKI	4
+
+==> ./tsvsplit_workdir/part_05.tsv <==
+c-1	c-2	c-3	c-4
+GRÜNSPAN	2145	pipit de godlewski	4
+GRÜNSPAN	2145	pipit de godlewski	4
+fumée	2113	Araqua-pintado	0
+fumée	2124	Araqua-pintado	0
+GRÜNSPAN	2145	pipit de godlewski	4
+GRÜNSPAN	2145	pipit de godlewski	4
+fumée	2113	Araqua-pintado	0
+fumée	2124	Araqua-pintado	0
+
+==> ./tsvsplit_workdir/part_06.tsv <==
+c-1	c-2	c-3	c-4
+púrpura	2088	Macuco	1
+púrpura	2119	Macuco	4
+púrpura	2088	Macuco	1
+púrpura	2119	Macuco	4
+
+==> ./tsvsplit_workdir/part_07.tsv <==
+c-1	c-2	c-3	c-4
+Blutrot	2142	tüpfelsumpfhuhn	1
+Blutrot	2142	tüpfelsumpfhuhn	1
+Blutrot	2142	tüpfelsumpfhuhn	1
+Blutrot	2142	tüpfelsumpfhuhn	1
+
+==> ./tsvsplit_workdir/part_08.tsv <==
+c-1	c-2	c-3	c-4
+rouge	2135	Marreca-cabocla	1
+café	2019	Marreca-cabocla	1
+rouge	2037	Marreca-cabocla	0
+rouge	2135	Marreca-cabocla	1
+café	2019	Marreca-cabocla	1
+rouge	2037	Marreca-cabocla	0
+
+==> ./tsvsplit_workdir/part_09.tsv <==
+c-1	c-2	c-3	c-4
+blutrot	2142	Tüpfelsumpfhuhn	1
+blutrot	2118	Tüpfelsumpfhuhn	4
+blutrot	2117	Tüpfelsumpfhuhn	0
+blutrot	2143	Tüpfelsumpfhuhn	4
+blutrot	2149	Tüpfelsumpfhuhn	1
+blutrot	2120	Tüpfelsumpfhuhn	1
+blutrot	2142	Tüpfelsumpfhuhn	1
+blutrot	2118	Tüpfelsumpfhuhn	4
+blutrot	2117	Tüpfelsumpfhuhn	0
+blutrot	2143	Tüpfelsumpfhuhn	4
+blutrot	2149	Tüpfelsumpfhuhn	1
+blutrot	2120	Tüpfelsumpfhuhn	1
+
+==> ./tsvsplit_workdir/part_10.tsv <==
+c-1	c-2	c-3	c-4
+Indigo	2056	Голубь	1
+Indigo	2141	Голубь	1
+café	2088	Purpurreiher	2
+Orange-red	2089	Purpurreiher	1
+rouge	2132	Löffelente	4
+Grünspan	2145	Pipit de Godlewski	4
+rouge	2146	Löffelente	1
+café	2062	Purpurreiher	4
+blanc	2137	Голубь	2
+café	2100	Purpurreiher	2
+blanc	2109	Голубь	3
+Grünspan	2082	Pipit de Godlewski	2
+café	2041	Purpurreiher	4
+Indigo	2138	Голубь	4
+Grünspan	2053	Pipit de Godlewski	4
+blanc	2038	Голубь	0
+Grünspan	2071	Pipit de Godlewski	3
+Indigo	2056	Голубь	1
+Indigo	2141	Голубь	1
+café	2088	Purpurreiher	2
+Orange-red	2089	Purpurreiher	1
+rouge	2132	Löffelente	4
+Grünspan	2145	Pipit de Godlewski	4
+rouge	2146	Löffelente	1
+café	2062	Purpurreiher	4
+blanc	2137	Голубь	2
+café	2100	Purpurreiher	2
+blanc	2109	Голубь	3
+Grünspan	2082	Pipit de Godlewski	2
+café	2041	Purpurreiher	4
+Indigo	2138	Голубь	4
+Grünspan	2053	Pipit de Godlewski	4
+blanc	2038	Голубь	0
+Grünspan	2071	Pipit de Godlewski	3
+
+====[tsv-split -s -n 11 -k 3 -I -a ../input4x58.tsv]====
+====[tsv-split -s -n 11 -k 3 -I -a ../input4x58.tsv]====
+==> ./tsvsplit_workdir/part_00.tsv <==
+BLUTROT	2142	TÜPFELSUMPFHUHN	1
+BLUTROT	2142	TÜPFELSUMPFHUHN	1
+BLUTROT	2142	TÜPFELSUMPFHUHN	1
+BLUTROT	2142	TÜPFELSUMPFHUHN	1
+
+==> ./tsvsplit_workdir/part_01.tsv <==
+blutrot	2121	Воробей	4
+marrón	2102	Weißwangengans	1
+noir	2082	Weißwangengans	1
+noir	2094	Weißwangengans	4
+красный	2049	Weißwangengans	3
+noir	2115	Weißwangengans	2
+marrón	2034	Weißwangengans	1
+blutrot	2121	Воробей	4
+marrón	2102	Weißwangengans	1
+noir	2082	Weißwangengans	1
+noir	2094	Weißwangengans	4
+красный	2049	Weißwangengans	3
+noir	2115	Weißwangengans	2
+marrón	2034	Weißwangengans	1
+
+==> ./tsvsplit_workdir/part_02.tsv <==
+schneeweiß	2117	Porrón Islándico	4
+schneeweiß	2121	Porrón Islándico	1
+schneeweiß	2117	Porrón Islándico	4
+schneeweiß	2121	Porrón Islándico	1
+
+==> ./tsvsplit_workdir/part_03.tsv <==
+Cerise	2076	Malvasía Cabeciblanca	4
+暗紅色/暗赤色	2015	Malvasía Cabeciblanca	2
+zitronengelb	2136	Macreuse à bec jaune	3
+zitronengelb	2083	Macreuse à bec jaune	4
+púrpura	2070	Macreuse à bec jaune	2
+púrpura	2092	Macreuse à bec jaune	4
+púrpura	2093	Macreuse à bec jaune	4
+dorado	2045	Лебедь	2
+Cerise	2119	Malvasía Cabeciblanca	4
+púrpura	2145	Macreuse à bec jaune	2
+Cerise	2076	Malvasía Cabeciblanca	4
+暗紅色/暗赤色	2015	Malvasía Cabeciblanca	2
+zitronengelb	2136	Macreuse à bec jaune	3
+zitronengelb	2083	Macreuse à bec jaune	4
+púrpura	2070	Macreuse à bec jaune	2
+púrpura	2092	Macreuse à bec jaune	4
+púrpura	2093	Macreuse à bec jaune	4
+dorado	2045	Лебедь	2
+Cerise	2119	Malvasía Cabeciblanca	4
+púrpura	2145	Macreuse à bec jaune	2
+
+==> ./tsvsplit_workdir/part_04.tsv <==
+grünspan	2145	PIPIT DE GODLEWSKI	4
+grünspan	2145	PIPIT DE GODLEWSKI	4
+grünspan	2145	PIPIT DE GODLEWSKI	4
+grünspan	2145	PIPIT DE GODLEWSKI	4
+
+==> ./tsvsplit_workdir/part_05.tsv <==
+GRÜNSPAN	2145	pipit de godlewski	4
+GRÜNSPAN	2145	pipit de godlewski	4
+fumée	2113	Araqua-pintado	0
+fumée	2124	Araqua-pintado	0
+GRÜNSPAN	2145	pipit de godlewski	4
+GRÜNSPAN	2145	pipit de godlewski	4
+fumée	2113	Araqua-pintado	0
+fumée	2124	Araqua-pintado	0
+
+==> ./tsvsplit_workdir/part_06.tsv <==
+púrpura	2088	Macuco	1
+púrpura	2119	Macuco	4
+púrpura	2088	Macuco	1
+púrpura	2119	Macuco	4
+
+==> ./tsvsplit_workdir/part_07.tsv <==
+Blutrot	2142	tüpfelsumpfhuhn	1
+Blutrot	2142	tüpfelsumpfhuhn	1
+Blutrot	2142	tüpfelsumpfhuhn	1
+Blutrot	2142	tüpfelsumpfhuhn	1
+
+==> ./tsvsplit_workdir/part_08.tsv <==
+rouge	2135	Marreca-cabocla	1
+café	2019	Marreca-cabocla	1
+rouge	2037	Marreca-cabocla	0
+rouge	2135	Marreca-cabocla	1
+café	2019	Marreca-cabocla	1
+rouge	2037	Marreca-cabocla	0
+
+==> ./tsvsplit_workdir/part_09.tsv <==
+blutrot	2142	Tüpfelsumpfhuhn	1
+blutrot	2118	Tüpfelsumpfhuhn	4
+blutrot	2117	Tüpfelsumpfhuhn	0
+blutrot	2143	Tüpfelsumpfhuhn	4
+blutrot	2149	Tüpfelsumpfhuhn	1
+blutrot	2120	Tüpfelsumpfhuhn	1
+blutrot	2142	Tüpfelsumpfhuhn	1
+blutrot	2118	Tüpfelsumpfhuhn	4
+blutrot	2117	Tüpfelsumpfhuhn	0
+blutrot	2143	Tüpfelsumpfhuhn	4
+blutrot	2149	Tüpfelsumpfhuhn	1
+blutrot	2120	Tüpfelsumpfhuhn	1
+
+==> ./tsvsplit_workdir/part_10.tsv <==
+Indigo	2056	Голубь	1
+Indigo	2141	Голубь	1
+café	2088	Purpurreiher	2
+Orange-red	2089	Purpurreiher	1
+rouge	2132	Löffelente	4
+Grünspan	2145	Pipit de Godlewski	4
+rouge	2146	Löffelente	1
+café	2062	Purpurreiher	4
+blanc	2137	Голубь	2
+café	2100	Purpurreiher	2
+blanc	2109	Голубь	3
+Grünspan	2082	Pipit de Godlewski	2
+café	2041	Purpurreiher	4
+Indigo	2138	Голубь	4
+Grünspan	2053	Pipit de Godlewski	4
+blanc	2038	Голубь	0
+Grünspan	2071	Pipit de Godlewski	3
+Indigo	2056	Голубь	1
+Indigo	2141	Голубь	1
+café	2088	Purpurreiher	2
+Orange-red	2089	Purpurreiher	1
+rouge	2132	Löffelente	4
+Grünspan	2145	Pipit de Godlewski	4
+rouge	2146	Löffelente	1
+café	2062	Purpurreiher	4
+blanc	2137	Голубь	2
+café	2100	Purpurreiher	2
+blanc	2109	Голубь	3
+Grünspan	2082	Pipit de Godlewski	2
+café	2041	Purpurreiher	4
+Indigo	2138	Голубь	4
+Grünspan	2053	Pipit de Godlewski	4
+blanc	2038	Голубь	0
+Grünspan	2071	Pipit de Godlewski	3
+
+====[cat ../input4x58.tsv | tsv-split -s -n 101 -k 3]====
+==> ./tsvsplit_workdir/part_000.tsv <==
+dorado	2045	Лебедь	2
+
+==> ./tsvsplit_workdir/part_004.tsv <==
+Blutrot	2142	tüpfelsumpfhuhn	1
+Blutrot	2142	tüpfelsumpfhuhn	1
+
+==> ./tsvsplit_workdir/part_005.tsv <==
+BLUTROT	2142	TÜPFELSUMPFHUHN	1
+BLUTROT	2142	TÜPFELSUMPFHUHN	1
+
+==> ./tsvsplit_workdir/part_011.tsv <==
+púrpura	2088	Macuco	1
+púrpura	2119	Macuco	4
+
+==> ./tsvsplit_workdir/part_014.tsv <==
+blutrot	2121	Воробей	4
+
+==> ./tsvsplit_workdir/part_016.tsv <==
+Grünspan	2145	Pipit de Godlewski	4
+Grünspan	2082	Pipit de Godlewski	2
+Grünspan	2053	Pipit de Godlewski	4
+Grünspan	2071	Pipit de Godlewski	3
+
+==> ./tsvsplit_workdir/part_028.tsv <==
+rouge	2135	Marreca-cabocla	1
+café	2019	Marreca-cabocla	1
+rouge	2037	Marreca-cabocla	0
+
+==> ./tsvsplit_workdir/part_032.tsv <==
+blutrot	2142	Tüpfelsumpfhuhn	1
+blutrot	2118	Tüpfelsumpfhuhn	4
+blutrot	2117	Tüpfelsumpfhuhn	0
+blutrot	2143	Tüpfelsumpfhuhn	4
+blutrot	2149	Tüpfelsumpfhuhn	1
+blutrot	2120	Tüpfelsumpfhuhn	1
+
+==> ./tsvsplit_workdir/part_033.tsv <==
+grünspan	2145	PIPIT DE GODLEWSKI	4
+grünspan	2145	PIPIT DE GODLEWSKI	4
+
+==> ./tsvsplit_workdir/part_035.tsv <==
+fumée	2113	Araqua-pintado	0
+fumée	2124	Araqua-pintado	0
+
+==> ./tsvsplit_workdir/part_037.tsv <==
+schneeweiß	2117	Porrón Islándico	4
+schneeweiß	2121	Porrón Islándico	1
+
+==> ./tsvsplit_workdir/part_051.tsv <==
+zitronengelb	2136	Macreuse à bec jaune	3
+zitronengelb	2083	Macreuse à bec jaune	4
+púrpura	2070	Macreuse à bec jaune	2
+púrpura	2092	Macreuse à bec jaune	4
+púrpura	2093	Macreuse à bec jaune	4
+púrpura	2145	Macreuse à bec jaune	2
+
+==> ./tsvsplit_workdir/part_055.tsv <==
+Indigo	2056	Голубь	1
+Indigo	2141	Голубь	1
+blanc	2137	Голубь	2
+blanc	2109	Голубь	3
+Indigo	2138	Голубь	4
+blanc	2038	Голубь	0
+
+==> ./tsvsplit_workdir/part_068.tsv <==
+GRÜNSPAN	2145	pipit de godlewski	4
+GRÜNSPAN	2145	pipit de godlewski	4
+
+==> ./tsvsplit_workdir/part_070.tsv <==
+rouge	2132	Löffelente	4
+rouge	2146	Löffelente	1
+
+==> ./tsvsplit_workdir/part_072.tsv <==
+marrón	2102	Weißwangengans	1
+noir	2082	Weißwangengans	1
+noir	2094	Weißwangengans	4
+красный	2049	Weißwangengans	3
+noir	2115	Weißwangengans	2
+marrón	2034	Weißwangengans	1
+
+==> ./tsvsplit_workdir/part_080.tsv <==
+Cerise	2076	Malvasía Cabeciblanca	4
+暗紅色/暗赤色	2015	Malvasía Cabeciblanca	2
+Cerise	2119	Malvasía Cabeciblanca	4
+
+==> ./tsvsplit_workdir/part_087.tsv <==
+café	2088	Purpurreiher	2
+Orange-red	2089	Purpurreiher	1
+café	2062	Purpurreiher	4
+café	2100	Purpurreiher	2
+café	2041	Purpurreiher	4
+
+==> ./tsvsplit_workdir/part_093.tsv <==
+c-1	c-2	c-3	c-4
+
+====[cat ../input4x58.tsv | tsv-split -s -n 101 -k 3 -H]====
+==> ./tsvsplit_workdir/part_000.tsv <==
+c-1	c-2	c-3	c-4
+dorado	2045	Лебедь	2
+
+==> ./tsvsplit_workdir/part_004.tsv <==
+c-1	c-2	c-3	c-4
+Blutrot	2142	tüpfelsumpfhuhn	1
+Blutrot	2142	tüpfelsumpfhuhn	1
+
+==> ./tsvsplit_workdir/part_005.tsv <==
+c-1	c-2	c-3	c-4
+BLUTROT	2142	TÜPFELSUMPFHUHN	1
+BLUTROT	2142	TÜPFELSUMPFHUHN	1
+
+==> ./tsvsplit_workdir/part_011.tsv <==
+c-1	c-2	c-3	c-4
+púrpura	2088	Macuco	1
+púrpura	2119	Macuco	4
+
+==> ./tsvsplit_workdir/part_014.tsv <==
+c-1	c-2	c-3	c-4
+blutrot	2121	Воробей	4
+
+==> ./tsvsplit_workdir/part_016.tsv <==
+c-1	c-2	c-3	c-4
+Grünspan	2145	Pipit de Godlewski	4
+Grünspan	2082	Pipit de Godlewski	2
+Grünspan	2053	Pipit de Godlewski	4
+Grünspan	2071	Pipit de Godlewski	3
+
+==> ./tsvsplit_workdir/part_028.tsv <==
+c-1	c-2	c-3	c-4
+rouge	2135	Marreca-cabocla	1
+café	2019	Marreca-cabocla	1
+rouge	2037	Marreca-cabocla	0
+
+==> ./tsvsplit_workdir/part_032.tsv <==
+c-1	c-2	c-3	c-4
+blutrot	2142	Tüpfelsumpfhuhn	1
+blutrot	2118	Tüpfelsumpfhuhn	4
+blutrot	2117	Tüpfelsumpfhuhn	0
+blutrot	2143	Tüpfelsumpfhuhn	4
+blutrot	2149	Tüpfelsumpfhuhn	1
+blutrot	2120	Tüpfelsumpfhuhn	1
+
+==> ./tsvsplit_workdir/part_033.tsv <==
+c-1	c-2	c-3	c-4
+grünspan	2145	PIPIT DE GODLEWSKI	4
+grünspan	2145	PIPIT DE GODLEWSKI	4
+
+==> ./tsvsplit_workdir/part_035.tsv <==
+c-1	c-2	c-3	c-4
+fumée	2113	Araqua-pintado	0
+fumée	2124	Araqua-pintado	0
+
+==> ./tsvsplit_workdir/part_037.tsv <==
+c-1	c-2	c-3	c-4
+schneeweiß	2117	Porrón Islándico	4
+schneeweiß	2121	Porrón Islándico	1
+
+==> ./tsvsplit_workdir/part_051.tsv <==
+c-1	c-2	c-3	c-4
+zitronengelb	2136	Macreuse à bec jaune	3
+zitronengelb	2083	Macreuse à bec jaune	4
+púrpura	2070	Macreuse à bec jaune	2
+púrpura	2092	Macreuse à bec jaune	4
+púrpura	2093	Macreuse à bec jaune	4
+púrpura	2145	Macreuse à bec jaune	2
+
+==> ./tsvsplit_workdir/part_055.tsv <==
+c-1	c-2	c-3	c-4
+Indigo	2056	Голубь	1
+Indigo	2141	Голубь	1
+blanc	2137	Голубь	2
+blanc	2109	Голубь	3
+Indigo	2138	Голубь	4
+blanc	2038	Голубь	0
+
+==> ./tsvsplit_workdir/part_068.tsv <==
+c-1	c-2	c-3	c-4
+GRÜNSPAN	2145	pipit de godlewski	4
+GRÜNSPAN	2145	pipit de godlewski	4
+
+==> ./tsvsplit_workdir/part_070.tsv <==
+c-1	c-2	c-3	c-4
+rouge	2132	Löffelente	4
+rouge	2146	Löffelente	1
+
+==> ./tsvsplit_workdir/part_072.tsv <==
+c-1	c-2	c-3	c-4
+marrón	2102	Weißwangengans	1
+noir	2082	Weißwangengans	1
+noir	2094	Weißwangengans	4
+красный	2049	Weißwangengans	3
+noir	2115	Weißwangengans	2
+marrón	2034	Weißwangengans	1
+
+==> ./tsvsplit_workdir/part_080.tsv <==
+c-1	c-2	c-3	c-4
+Cerise	2076	Malvasía Cabeciblanca	4
+暗紅色/暗赤色	2015	Malvasía Cabeciblanca	2
+Cerise	2119	Malvasía Cabeciblanca	4
+
+==> ./tsvsplit_workdir/part_087.tsv <==
+c-1	c-2	c-3	c-4
+café	2088	Purpurreiher	2
+Orange-red	2089	Purpurreiher	1
+café	2062	Purpurreiher	4
+café	2100	Purpurreiher	2
+café	2041	Purpurreiher	4
+
+====[cat ../input4x58.tsv | tsv-split -s -n 101 -k 3 -I]====
+==> ./tsvsplit_workdir/part_000.tsv <==
+dorado	2045	Лебедь	2
+
+==> ./tsvsplit_workdir/part_004.tsv <==
+Blutrot	2142	tüpfelsumpfhuhn	1
+Blutrot	2142	tüpfelsumpfhuhn	1
+
+==> ./tsvsplit_workdir/part_005.tsv <==
+BLUTROT	2142	TÜPFELSUMPFHUHN	1
+BLUTROT	2142	TÜPFELSUMPFHUHN	1
+
+==> ./tsvsplit_workdir/part_011.tsv <==
+púrpura	2088	Macuco	1
+púrpura	2119	Macuco	4
+
+==> ./tsvsplit_workdir/part_014.tsv <==
+blutrot	2121	Воробей	4
+
+==> ./tsvsplit_workdir/part_016.tsv <==
+Grünspan	2145	Pipit de Godlewski	4
+Grünspan	2082	Pipit de Godlewski	2
+Grünspan	2053	Pipit de Godlewski	4
+Grünspan	2071	Pipit de Godlewski	3
+
+==> ./tsvsplit_workdir/part_028.tsv <==
+rouge	2135	Marreca-cabocla	1
+café	2019	Marreca-cabocla	1
+rouge	2037	Marreca-cabocla	0
+
+==> ./tsvsplit_workdir/part_032.tsv <==
+blutrot	2142	Tüpfelsumpfhuhn	1
+blutrot	2118	Tüpfelsumpfhuhn	4
+blutrot	2117	Tüpfelsumpfhuhn	0
+blutrot	2143	Tüpfelsumpfhuhn	4
+blutrot	2149	Tüpfelsumpfhuhn	1
+blutrot	2120	Tüpfelsumpfhuhn	1
+
+==> ./tsvsplit_workdir/part_033.tsv <==
+grünspan	2145	PIPIT DE GODLEWSKI	4
+grünspan	2145	PIPIT DE GODLEWSKI	4
+
+==> ./tsvsplit_workdir/part_035.tsv <==
+fumée	2113	Araqua-pintado	0
+fumée	2124	Araqua-pintado	0
+
+==> ./tsvsplit_workdir/part_037.tsv <==
+schneeweiß	2117	Porrón Islándico	4
+schneeweiß	2121	Porrón Islándico	1
+
+==> ./tsvsplit_workdir/part_051.tsv <==
+zitronengelb	2136	Macreuse à bec jaune	3
+zitronengelb	2083	Macreuse à bec jaune	4
+púrpura	2070	Macreuse à bec jaune	2
+púrpura	2092	Macreuse à bec jaune	4
+púrpura	2093	Macreuse à bec jaune	4
+púrpura	2145	Macreuse à bec jaune	2
+
+==> ./tsvsplit_workdir/part_055.tsv <==
+Indigo	2056	Голубь	1
+Indigo	2141	Голубь	1
+blanc	2137	Голубь	2
+blanc	2109	Голубь	3
+Indigo	2138	Голубь	4
+blanc	2038	Голубь	0
+
+==> ./tsvsplit_workdir/part_068.tsv <==
+GRÜNSPAN	2145	pipit de godlewski	4
+GRÜNSPAN	2145	pipit de godlewski	4
+
+==> ./tsvsplit_workdir/part_070.tsv <==
+rouge	2132	Löffelente	4
+rouge	2146	Löffelente	1
+
+==> ./tsvsplit_workdir/part_072.tsv <==
+marrón	2102	Weißwangengans	1
+noir	2082	Weißwangengans	1
+noir	2094	Weißwangengans	4
+красный	2049	Weißwangengans	3
+noir	2115	Weißwangengans	2
+marrón	2034	Weißwangengans	1
+
+==> ./tsvsplit_workdir/part_080.tsv <==
+Cerise	2076	Malvasía Cabeciblanca	4
+暗紅色/暗赤色	2015	Malvasía Cabeciblanca	2
+Cerise	2119	Malvasía Cabeciblanca	4
+
+==> ./tsvsplit_workdir/part_087.tsv <==
+café	2088	Purpurreiher	2
+Orange-red	2089	Purpurreiher	1
+café	2062	Purpurreiher	4
+café	2100	Purpurreiher	2
+café	2041	Purpurreiher	4
+
+====[cat ../input4x58.tsv | tsv-split -v 15017 -n 101 -k 1,3 -- - ../input4x18.tsv]====
+==> ./tsvsplit_workdir/part_000.tsv <==
+café	2088	Purpurreiher	2
+café	2062	Purpurreiher	4
+café	2100	Purpurreiher	2
+café	2041	Purpurreiher	4
+
+==> ./tsvsplit_workdir/part_001.tsv <==
+Indigo	2056	Голубь	1
+Indigo	2141	Голубь	1
+Indigo	2138	Голубь	4
+
+==> ./tsvsplit_workdir/part_003.tsv <==
+dorado	2045	Лебедь	2
+
+==> ./tsvsplit_workdir/part_008.tsv <==
+rouge	2135	Marreca-cabocla	1
+rouge	2037	Marreca-cabocla	0
+
+==> ./tsvsplit_workdir/part_009.tsv <==
+türkis	2097	Голубь	2
+
+==> ./tsvsplit_workdir/part_010.tsv <==
+blutrot	2093	Araqua-pintado	2
+
+==> ./tsvsplit_workdir/part_011.tsv <==
+púrpura	2088	Macuco	1
+púrpura	2119	Macuco	4
+
+==> ./tsvsplit_workdir/part_015.tsv <==
+c-1	c-2	c-3	c-4
+c-1	c-2	c-3	c-4
+
+==> ./tsvsplit_workdir/part_023.tsv <==
+暗紅色/暗赤色	2015	Malvasía Cabeciblanca	2
+blutrot	2121	Воробей	4
+
+==> ./tsvsplit_workdir/part_027.tsv <==
+marrón	2121	Marreca-cabocla	2
+
+==> ./tsvsplit_workdir/part_034.tsv <==
+café	2019	Marreca-cabocla	1
+
+==> ./tsvsplit_workdir/part_037.tsv <==
+blanc	2137	Голубь	2
+blanc	2109	Голубь	3
+blanc	2038	Голубь	0
+
+==> ./tsvsplit_workdir/part_040.tsv <==
+ébène	2142	Орёл	2
+
+==> ./tsvsplit_workdir/part_041.tsv <==
+schneeweiß	2117	Porrón Islándico	4
+schneeweiß	2121	Porrón Islándico	1
+jaune	2104	Tüpfelsumpfhuhn	1
+
+==> ./tsvsplit_workdir/part_042.tsv <==
+rouge	2132	Löffelente	4
+rouge	2146	Löffelente	1
+
+==> ./tsvsplit_workdir/part_048.tsv <==
+noir	2082	Weißwangengans	1
+noir	2094	Weißwangengans	4
+noir	2115	Weißwangengans	2
+
+==> ./tsvsplit_workdir/part_049.tsv <==
+Grünspan	2105	Macuco	0
+
+==> ./tsvsplit_workdir/part_050.tsv <==
+dorado	2147	Tüpfelsumpfhuhn	1
+
+==> ./tsvsplit_workdir/part_055.tsv <==
+Grünspan	2100	Purpurreiher	1
+
+==> ./tsvsplit_workdir/part_058.tsv <==
+Grünspan	2145	Pipit de Godlewski	4
+Grünspan	2082	Pipit de Godlewski	2
+Grünspan	2053	Pipit de Godlewski	4
+Grünspan	2071	Pipit de Godlewski	3
+
+==> ./tsvsplit_workdir/part_059.tsv <==
+Orange-red	2089	Purpurreiher	1
+
+==> ./tsvsplit_workdir/part_062.tsv <==
+zitronengelb	2136	Macreuse à bec jaune	3
+zitronengelb	2083	Macreuse à bec jaune	4
+
+==> ./tsvsplit_workdir/part_065.tsv <==
+красный	2049	Weißwangengans	3
+
+==> ./tsvsplit_workdir/part_069.tsv <==
+Blutrot	2142	tüpfelsumpfhuhn	1
+Blutrot	2142	tüpfelsumpfhuhn	1
+
+==> ./tsvsplit_workdir/part_070.tsv <==
+marrón	2102	Weißwangengans	1
+marrón	2034	Weißwangengans	1
+
+==> ./tsvsplit_workdir/part_077.tsv <==
+rouge	2058	Pipit de Godlewski	4
+
+==> ./tsvsplit_workdir/part_080.tsv <==
+fumée	2113	Araqua-pintado	0
+fumée	2124	Araqua-pintado	0
+
+==> ./tsvsplit_workdir/part_082.tsv <==
+púrpura	2070	Macreuse à bec jaune	2
+púrpura	2092	Macreuse à bec jaune	4
+púrpura	2093	Macreuse à bec jaune	4
+púrpura	2145	Macreuse à bec jaune	2
+
+==> ./tsvsplit_workdir/part_085.tsv <==
+blutrot	2142	Tüpfelsumpfhuhn	1
+blutrot	2118	Tüpfelsumpfhuhn	4
+blutrot	2117	Tüpfelsumpfhuhn	0
+blutrot	2143	Tüpfelsumpfhuhn	4
+blutrot	2149	Tüpfelsumpfhuhn	1
+blutrot	2120	Tüpfelsumpfhuhn	1
+jaune	2090	Weißwangengans	4
+
+==> ./tsvsplit_workdir/part_086.tsv <==
+pechschwarz	2079	Araqua-pintado	1
+
+==> ./tsvsplit_workdir/part_090.tsv <==
+BLUTROT	2142	TÜPFELSUMPFHUHN	1
+BLUTROT	2142	TÜPFELSUMPFHUHN	1
+blutrot	2137	Marreca-cabocla	1
+BLUTROT	2142	TÜPFELSUMPFHUHN	1
+
+==> ./tsvsplit_workdir/part_092.tsv <==
+Cerise	2076	Malvasía Cabeciblanca	4
+grünspan	2145	PIPIT DE GODLEWSKI	4
+Cerise	2119	Malvasía Cabeciblanca	4
+grünspan	2145	PIPIT DE GODLEWSKI	4
+fumée	2129	Löffelente	0
+
+==> ./tsvsplit_workdir/part_096.tsv <==
+jaune	2058	Purpurreiher	2
+jaune	2097	Purpurreiher	4
+
+==> ./tsvsplit_workdir/part_098.tsv <==
+GRÜNSPAN	2145	pipit de godlewski	4
+GRÜNSPAN	2145	pipit de godlewski	4
+GRÜNSPAN	2145	pipit de godlewski	4
+
+====[cat ../input4x58.tsv | tsv-split -v 15017 -n 101 -k 1,3 -H -- - ../input4x18.tsv]====
+==> ./tsvsplit_workdir/part_000.tsv <==
+c-1	c-2	c-3	c-4
+café	2088	Purpurreiher	2
+café	2062	Purpurreiher	4
+café	2100	Purpurreiher	2
+café	2041	Purpurreiher	4
+
+==> ./tsvsplit_workdir/part_001.tsv <==
+c-1	c-2	c-3	c-4
+Indigo	2056	Голубь	1
+Indigo	2141	Голубь	1
+Indigo	2138	Голубь	4
+
+==> ./tsvsplit_workdir/part_003.tsv <==
+c-1	c-2	c-3	c-4
+dorado	2045	Лебедь	2
+
+==> ./tsvsplit_workdir/part_008.tsv <==
+c-1	c-2	c-3	c-4
+rouge	2135	Marreca-cabocla	1
+rouge	2037	Marreca-cabocla	0
+
+==> ./tsvsplit_workdir/part_009.tsv <==
+c-1	c-2	c-3	c-4
+türkis	2097	Голубь	2
+
+==> ./tsvsplit_workdir/part_010.tsv <==
+c-1	c-2	c-3	c-4
+blutrot	2093	Araqua-pintado	2
+
+==> ./tsvsplit_workdir/part_011.tsv <==
+c-1	c-2	c-3	c-4
+púrpura	2088	Macuco	1
+púrpura	2119	Macuco	4
+
+==> ./tsvsplit_workdir/part_023.tsv <==
+c-1	c-2	c-3	c-4
+暗紅色/暗赤色	2015	Malvasía Cabeciblanca	2
+blutrot	2121	Воробей	4
+
+==> ./tsvsplit_workdir/part_027.tsv <==
+c-1	c-2	c-3	c-4
+marrón	2121	Marreca-cabocla	2
+
+==> ./tsvsplit_workdir/part_034.tsv <==
+c-1	c-2	c-3	c-4
+café	2019	Marreca-cabocla	1
+
+==> ./tsvsplit_workdir/part_037.tsv <==
+c-1	c-2	c-3	c-4
+blanc	2137	Голубь	2
+blanc	2109	Голубь	3
+blanc	2038	Голубь	0
+
+==> ./tsvsplit_workdir/part_040.tsv <==
+c-1	c-2	c-3	c-4
+ébène	2142	Орёл	2
+
+==> ./tsvsplit_workdir/part_041.tsv <==
+c-1	c-2	c-3	c-4
+schneeweiß	2117	Porrón Islándico	4
+schneeweiß	2121	Porrón Islándico	1
+jaune	2104	Tüpfelsumpfhuhn	1
+
+==> ./tsvsplit_workdir/part_042.tsv <==
+c-1	c-2	c-3	c-4
+rouge	2132	Löffelente	4
+rouge	2146	Löffelente	1
+
+==> ./tsvsplit_workdir/part_048.tsv <==
+c-1	c-2	c-3	c-4
+noir	2082	Weißwangengans	1
+noir	2094	Weißwangengans	4
+noir	2115	Weißwangengans	2
+
+==> ./tsvsplit_workdir/part_049.tsv <==
+c-1	c-2	c-3	c-4
+Grünspan	2105	Macuco	0
+
+==> ./tsvsplit_workdir/part_050.tsv <==
+c-1	c-2	c-3	c-4
+dorado	2147	Tüpfelsumpfhuhn	1
+
+==> ./tsvsplit_workdir/part_055.tsv <==
+c-1	c-2	c-3	c-4
+Grünspan	2100	Purpurreiher	1
+
+==> ./tsvsplit_workdir/part_058.tsv <==
+c-1	c-2	c-3	c-4
+Grünspan	2145	Pipit de Godlewski	4
+Grünspan	2082	Pipit de Godlewski	2
+Grünspan	2053	Pipit de Godlewski	4
+Grünspan	2071	Pipit de Godlewski	3
+
+==> ./tsvsplit_workdir/part_059.tsv <==
+c-1	c-2	c-3	c-4
+Orange-red	2089	Purpurreiher	1
+
+==> ./tsvsplit_workdir/part_062.tsv <==
+c-1	c-2	c-3	c-4
+zitronengelb	2136	Macreuse à bec jaune	3
+zitronengelb	2083	Macreuse à bec jaune	4
+
+==> ./tsvsplit_workdir/part_065.tsv <==
+c-1	c-2	c-3	c-4
+красный	2049	Weißwangengans	3
+
+==> ./tsvsplit_workdir/part_069.tsv <==
+c-1	c-2	c-3	c-4
+Blutrot	2142	tüpfelsumpfhuhn	1
+Blutrot	2142	tüpfelsumpfhuhn	1
+
+==> ./tsvsplit_workdir/part_070.tsv <==
+c-1	c-2	c-3	c-4
+marrón	2102	Weißwangengans	1
+marrón	2034	Weißwangengans	1
+
+==> ./tsvsplit_workdir/part_077.tsv <==
+c-1	c-2	c-3	c-4
+rouge	2058	Pipit de Godlewski	4
+
+==> ./tsvsplit_workdir/part_080.tsv <==
+c-1	c-2	c-3	c-4
+fumée	2113	Araqua-pintado	0
+fumée	2124	Araqua-pintado	0
+
+==> ./tsvsplit_workdir/part_082.tsv <==
+c-1	c-2	c-3	c-4
+púrpura	2070	Macreuse à bec jaune	2
+púrpura	2092	Macreuse à bec jaune	4
+púrpura	2093	Macreuse à bec jaune	4
+púrpura	2145	Macreuse à bec jaune	2
+
+==> ./tsvsplit_workdir/part_085.tsv <==
+c-1	c-2	c-3	c-4
+blutrot	2142	Tüpfelsumpfhuhn	1
+blutrot	2118	Tüpfelsumpfhuhn	4
+blutrot	2117	Tüpfelsumpfhuhn	0
+blutrot	2143	Tüpfelsumpfhuhn	4
+blutrot	2149	Tüpfelsumpfhuhn	1
+blutrot	2120	Tüpfelsumpfhuhn	1
+jaune	2090	Weißwangengans	4
+
+==> ./tsvsplit_workdir/part_086.tsv <==
+c-1	c-2	c-3	c-4
+pechschwarz	2079	Araqua-pintado	1
+
+==> ./tsvsplit_workdir/part_090.tsv <==
+c-1	c-2	c-3	c-4
+BLUTROT	2142	TÜPFELSUMPFHUHN	1
+BLUTROT	2142	TÜPFELSUMPFHUHN	1
+blutrot	2137	Marreca-cabocla	1
+BLUTROT	2142	TÜPFELSUMPFHUHN	1
+
+==> ./tsvsplit_workdir/part_092.tsv <==
+c-1	c-2	c-3	c-4
+Cerise	2076	Malvasía Cabeciblanca	4
+grünspan	2145	PIPIT DE GODLEWSKI	4
+Cerise	2119	Malvasía Cabeciblanca	4
+grünspan	2145	PIPIT DE GODLEWSKI	4
+fumée	2129	Löffelente	0
+
+==> ./tsvsplit_workdir/part_096.tsv <==
+c-1	c-2	c-3	c-4
+jaune	2058	Purpurreiher	2
+jaune	2097	Purpurreiher	4
+
+==> ./tsvsplit_workdir/part_098.tsv <==
+c-1	c-2	c-3	c-4
+GRÜNSPAN	2145	pipit de godlewski	4
+GRÜNSPAN	2145	pipit de godlewski	4
+GRÜNSPAN	2145	pipit de godlewski	4
+
+====[cat ../input4x58.tsv | tsv-split -v 15017 -n 101 -k 1,3 -I -- - ../input4x18.tsv]====
+==> ./tsvsplit_workdir/part_000.tsv <==
+café	2088	Purpurreiher	2
+café	2062	Purpurreiher	4
+café	2100	Purpurreiher	2
+café	2041	Purpurreiher	4
+
+==> ./tsvsplit_workdir/part_001.tsv <==
+Indigo	2056	Голубь	1
+Indigo	2141	Голубь	1
+Indigo	2138	Голубь	4
+
+==> ./tsvsplit_workdir/part_003.tsv <==
+dorado	2045	Лебедь	2
+
+==> ./tsvsplit_workdir/part_008.tsv <==
+rouge	2135	Marreca-cabocla	1
+rouge	2037	Marreca-cabocla	0
+
+==> ./tsvsplit_workdir/part_009.tsv <==
+türkis	2097	Голубь	2
+
+==> ./tsvsplit_workdir/part_010.tsv <==
+blutrot	2093	Araqua-pintado	2
+
+==> ./tsvsplit_workdir/part_011.tsv <==
+púrpura	2088	Macuco	1
+púrpura	2119	Macuco	4
+
+==> ./tsvsplit_workdir/part_023.tsv <==
+暗紅色/暗赤色	2015	Malvasía Cabeciblanca	2
+blutrot	2121	Воробей	4
+
+==> ./tsvsplit_workdir/part_027.tsv <==
+marrón	2121	Marreca-cabocla	2
+
+==> ./tsvsplit_workdir/part_034.tsv <==
+café	2019	Marreca-cabocla	1
+
+==> ./tsvsplit_workdir/part_037.tsv <==
+blanc	2137	Голубь	2
+blanc	2109	Голубь	3
+blanc	2038	Голубь	0
+
+==> ./tsvsplit_workdir/part_040.tsv <==
+ébène	2142	Орёл	2
+
+==> ./tsvsplit_workdir/part_041.tsv <==
+schneeweiß	2117	Porrón Islándico	4
+schneeweiß	2121	Porrón Islándico	1
+jaune	2104	Tüpfelsumpfhuhn	1
+
+==> ./tsvsplit_workdir/part_042.tsv <==
+rouge	2132	Löffelente	4
+rouge	2146	Löffelente	1
+
+==> ./tsvsplit_workdir/part_048.tsv <==
+noir	2082	Weißwangengans	1
+noir	2094	Weißwangengans	4
+noir	2115	Weißwangengans	2
+
+==> ./tsvsplit_workdir/part_049.tsv <==
+Grünspan	2105	Macuco	0
+
+==> ./tsvsplit_workdir/part_050.tsv <==
+dorado	2147	Tüpfelsumpfhuhn	1
+
+==> ./tsvsplit_workdir/part_055.tsv <==
+Grünspan	2100	Purpurreiher	1
+
+==> ./tsvsplit_workdir/part_058.tsv <==
+Grünspan	2145	Pipit de Godlewski	4
+Grünspan	2082	Pipit de Godlewski	2
+Grünspan	2053	Pipit de Godlewski	4
+Grünspan	2071	Pipit de Godlewski	3
+
+==> ./tsvsplit_workdir/part_059.tsv <==
+Orange-red	2089	Purpurreiher	1
+
+==> ./tsvsplit_workdir/part_062.tsv <==
+zitronengelb	2136	Macreuse à bec jaune	3
+zitronengelb	2083	Macreuse à bec jaune	4
+
+==> ./tsvsplit_workdir/part_065.tsv <==
+красный	2049	Weißwangengans	3
+
+==> ./tsvsplit_workdir/part_069.tsv <==
+Blutrot	2142	tüpfelsumpfhuhn	1
+Blutrot	2142	tüpfelsumpfhuhn	1
+
+==> ./tsvsplit_workdir/part_070.tsv <==
+marrón	2102	Weißwangengans	1
+marrón	2034	Weißwangengans	1
+
+==> ./tsvsplit_workdir/part_077.tsv <==
+rouge	2058	Pipit de Godlewski	4
+
+==> ./tsvsplit_workdir/part_080.tsv <==
+fumée	2113	Araqua-pintado	0
+fumée	2124	Araqua-pintado	0
+
+==> ./tsvsplit_workdir/part_082.tsv <==
+púrpura	2070	Macreuse à bec jaune	2
+púrpura	2092	Macreuse à bec jaune	4
+púrpura	2093	Macreuse à bec jaune	4
+púrpura	2145	Macreuse à bec jaune	2
+
+==> ./tsvsplit_workdir/part_085.tsv <==
+blutrot	2142	Tüpfelsumpfhuhn	1
+blutrot	2118	Tüpfelsumpfhuhn	4
+blutrot	2117	Tüpfelsumpfhuhn	0
+blutrot	2143	Tüpfelsumpfhuhn	4
+blutrot	2149	Tüpfelsumpfhuhn	1
+blutrot	2120	Tüpfelsumpfhuhn	1
+jaune	2090	Weißwangengans	4
+
+==> ./tsvsplit_workdir/part_086.tsv <==
+pechschwarz	2079	Araqua-pintado	1
+
+==> ./tsvsplit_workdir/part_090.tsv <==
+BLUTROT	2142	TÜPFELSUMPFHUHN	1
+BLUTROT	2142	TÜPFELSUMPFHUHN	1
+blutrot	2137	Marreca-cabocla	1
+BLUTROT	2142	TÜPFELSUMPFHUHN	1
+
+==> ./tsvsplit_workdir/part_092.tsv <==
+Cerise	2076	Malvasía Cabeciblanca	4
+grünspan	2145	PIPIT DE GODLEWSKI	4
+Cerise	2119	Malvasía Cabeciblanca	4
+grünspan	2145	PIPIT DE GODLEWSKI	4
+fumée	2129	Löffelente	0
+
+==> ./tsvsplit_workdir/part_096.tsv <==
+jaune	2058	Purpurreiher	2
+jaune	2097	Purpurreiher	4
+
+==> ./tsvsplit_workdir/part_098.tsv <==
+GRÜNSPAN	2145	pipit de godlewski	4
+GRÜNSPAN	2145	pipit de godlewski	4
+GRÜNSPAN	2145	pipit de godlewski	4
+
+====[tsv-split --delimiter : -s -n 101 -k 3 ../input4x58_colon-delim.tsv]====
+==> ./tsvsplit_workdir/part_000.tsv <==
+dorado:2045:Лебедь:2
+
+==> ./tsvsplit_workdir/part_004.tsv <==
+Blutrot:2142:tüpfelsumpfhuhn:1
+Blutrot:2142:tüpfelsumpfhuhn:1
+
+==> ./tsvsplit_workdir/part_005.tsv <==
+BLUTROT:2142:TÜPFELSUMPFHUHN:1
+BLUTROT:2142:TÜPFELSUMPFHUHN:1
+
+==> ./tsvsplit_workdir/part_011.tsv <==
+púrpura:2088:Macuco:1
+púrpura:2119:Macuco:4
+
+==> ./tsvsplit_workdir/part_014.tsv <==
+blutrot:2121:Воробей:4
+
+==> ./tsvsplit_workdir/part_016.tsv <==
+Grünspan:2145:Pipit de Godlewski:4
+Grünspan:2082:Pipit de Godlewski:2
+Grünspan:2053:Pipit de Godlewski:4
+Grünspan:2071:Pipit de Godlewski:3
+
+==> ./tsvsplit_workdir/part_028.tsv <==
+rouge:2135:Marreca-cabocla:1
+café:2019:Marreca-cabocla:1
+rouge:2037:Marreca-cabocla:0
+
+==> ./tsvsplit_workdir/part_032.tsv <==
+blutrot:2142:Tüpfelsumpfhuhn:1
+blutrot:2118:Tüpfelsumpfhuhn:4
+blutrot:2117:Tüpfelsumpfhuhn:0
+blutrot:2143:Tüpfelsumpfhuhn:4
+blutrot:2149:Tüpfelsumpfhuhn:1
+blutrot:2120:Tüpfelsumpfhuhn:1
+
+==> ./tsvsplit_workdir/part_033.tsv <==
+grünspan:2145:PIPIT DE GODLEWSKI:4
+grünspan:2145:PIPIT DE GODLEWSKI:4
+
+==> ./tsvsplit_workdir/part_035.tsv <==
+fumée:2113:Araqua-pintado:0
+fumée:2124:Araqua-pintado:0
+
+==> ./tsvsplit_workdir/part_037.tsv <==
+schneeweiß:2117:Porrón Islándico:4
+schneeweiß:2121:Porrón Islándico:1
+
+==> ./tsvsplit_workdir/part_051.tsv <==
+zitronengelb:2136:Macreuse à bec jaune:3
+zitronengelb:2083:Macreuse à bec jaune:4
+púrpura:2070:Macreuse à bec jaune:2
+púrpura:2092:Macreuse à bec jaune:4
+púrpura:2093:Macreuse à bec jaune:4
+púrpura:2145:Macreuse à bec jaune:2
+
+==> ./tsvsplit_workdir/part_055.tsv <==
+Indigo:2056:Голубь:1
+Indigo:2141:Голубь:1
+blanc:2137:Голубь:2
+blanc:2109:Голубь:3
+Indigo:2138:Голубь:4
+blanc:2038:Голубь:0
+
+==> ./tsvsplit_workdir/part_068.tsv <==
+GRÜNSPAN:2145:pipit de godlewski:4
+GRÜNSPAN:2145:pipit de godlewski:4
+
+==> ./tsvsplit_workdir/part_070.tsv <==
+rouge:2132:Löffelente:4
+rouge:2146:Löffelente:1
+
+==> ./tsvsplit_workdir/part_072.tsv <==
+marrón:2102:Weißwangengans:1
+noir:2082:Weißwangengans:1
+noir:2094:Weißwangengans:4
+красный:2049:Weißwangengans:3
+noir:2115:Weißwangengans:2
+marrón:2034:Weißwangengans:1
+
+==> ./tsvsplit_workdir/part_080.tsv <==
+Cerise:2076:Malvasía Cabeciblanca:4
+暗紅色/暗赤色:2015:Malvasía Cabeciblanca:2
+Cerise:2119:Malvasía Cabeciblanca:4
+
+==> ./tsvsplit_workdir/part_087.tsv <==
+café:2088:Purpurreiher:2
+Orange-red:2089:Purpurreiher:1
+café:2062:Purpurreiher:4
+café:2100:Purpurreiher:2
+café:2041:Purpurreiher:4
+
+==> ./tsvsplit_workdir/part_093.tsv <==
+c-1:c-2:c-3:c-4
+
+====[tsv-split -d : -H -s -n 101 -k 3 ../input4x58_colon-delim.tsv]====
+==> ./tsvsplit_workdir/part_000.tsv <==
+c-1:c-2:c-3:c-4
+dorado:2045:Лебедь:2
+
+==> ./tsvsplit_workdir/part_004.tsv <==
+c-1:c-2:c-3:c-4
+Blutrot:2142:tüpfelsumpfhuhn:1
+Blutrot:2142:tüpfelsumpfhuhn:1
+
+==> ./tsvsplit_workdir/part_005.tsv <==
+c-1:c-2:c-3:c-4
+BLUTROT:2142:TÜPFELSUMPFHUHN:1
+BLUTROT:2142:TÜPFELSUMPFHUHN:1
+
+==> ./tsvsplit_workdir/part_011.tsv <==
+c-1:c-2:c-3:c-4
+púrpura:2088:Macuco:1
+púrpura:2119:Macuco:4
+
+==> ./tsvsplit_workdir/part_014.tsv <==
+c-1:c-2:c-3:c-4
+blutrot:2121:Воробей:4
+
+==> ./tsvsplit_workdir/part_016.tsv <==
+c-1:c-2:c-3:c-4
+Grünspan:2145:Pipit de Godlewski:4
+Grünspan:2082:Pipit de Godlewski:2
+Grünspan:2053:Pipit de Godlewski:4
+Grünspan:2071:Pipit de Godlewski:3
+
+==> ./tsvsplit_workdir/part_028.tsv <==
+c-1:c-2:c-3:c-4
+rouge:2135:Marreca-cabocla:1
+café:2019:Marreca-cabocla:1
+rouge:2037:Marreca-cabocla:0
+
+==> ./tsvsplit_workdir/part_032.tsv <==
+c-1:c-2:c-3:c-4
+blutrot:2142:Tüpfelsumpfhuhn:1
+blutrot:2118:Tüpfelsumpfhuhn:4
+blutrot:2117:Tüpfelsumpfhuhn:0
+blutrot:2143:Tüpfelsumpfhuhn:4
+blutrot:2149:Tüpfelsumpfhuhn:1
+blutrot:2120:Tüpfelsumpfhuhn:1
+
+==> ./tsvsplit_workdir/part_033.tsv <==
+c-1:c-2:c-3:c-4
+grünspan:2145:PIPIT DE GODLEWSKI:4
+grünspan:2145:PIPIT DE GODLEWSKI:4
+
+==> ./tsvsplit_workdir/part_035.tsv <==
+c-1:c-2:c-3:c-4
+fumée:2113:Araqua-pintado:0
+fumée:2124:Araqua-pintado:0
+
+==> ./tsvsplit_workdir/part_037.tsv <==
+c-1:c-2:c-3:c-4
+schneeweiß:2117:Porrón Islándico:4
+schneeweiß:2121:Porrón Islándico:1
+
+==> ./tsvsplit_workdir/part_051.tsv <==
+c-1:c-2:c-3:c-4
+zitronengelb:2136:Macreuse à bec jaune:3
+zitronengelb:2083:Macreuse à bec jaune:4
+púrpura:2070:Macreuse à bec jaune:2
+púrpura:2092:Macreuse à bec jaune:4
+púrpura:2093:Macreuse à bec jaune:4
+púrpura:2145:Macreuse à bec jaune:2
+
+==> ./tsvsplit_workdir/part_055.tsv <==
+c-1:c-2:c-3:c-4
+Indigo:2056:Голубь:1
+Indigo:2141:Голубь:1
+blanc:2137:Голубь:2
+blanc:2109:Голубь:3
+Indigo:2138:Голубь:4
+blanc:2038:Голубь:0
+
+==> ./tsvsplit_workdir/part_068.tsv <==
+c-1:c-2:c-3:c-4
+GRÜNSPAN:2145:pipit de godlewski:4
+GRÜNSPAN:2145:pipit de godlewski:4
+
+==> ./tsvsplit_workdir/part_070.tsv <==
+c-1:c-2:c-3:c-4
+rouge:2132:Löffelente:4
+rouge:2146:Löffelente:1
+
+==> ./tsvsplit_workdir/part_072.tsv <==
+c-1:c-2:c-3:c-4
+marrón:2102:Weißwangengans:1
+noir:2082:Weißwangengans:1
+noir:2094:Weißwangengans:4
+красный:2049:Weißwangengans:3
+noir:2115:Weißwangengans:2
+marrón:2034:Weißwangengans:1
+
+==> ./tsvsplit_workdir/part_080.tsv <==
+c-1:c-2:c-3:c-4
+Cerise:2076:Malvasía Cabeciblanca:4
+暗紅色/暗赤色:2015:Malvasía Cabeciblanca:2
+Cerise:2119:Malvasía Cabeciblanca:4
+
+==> ./tsvsplit_workdir/part_087.tsv <==
+c-1:c-2:c-3:c-4
+café:2088:Purpurreiher:2
+Orange-red:2089:Purpurreiher:1
+café:2062:Purpurreiher:4
+café:2100:Purpurreiher:2
+café:2041:Purpurreiher:4
+
+====[tsv-split -d : -I -s -n 101 -k 3 ../input4x58_colon-delim.tsv]====
+==> ./tsvsplit_workdir/part_000.tsv <==
+dorado:2045:Лебедь:2
+
+==> ./tsvsplit_workdir/part_004.tsv <==
+Blutrot:2142:tüpfelsumpfhuhn:1
+Blutrot:2142:tüpfelsumpfhuhn:1
+
+==> ./tsvsplit_workdir/part_005.tsv <==
+BLUTROT:2142:TÜPFELSUMPFHUHN:1
+BLUTROT:2142:TÜPFELSUMPFHUHN:1
+
+==> ./tsvsplit_workdir/part_011.tsv <==
+púrpura:2088:Macuco:1
+púrpura:2119:Macuco:4
+
+==> ./tsvsplit_workdir/part_014.tsv <==
+blutrot:2121:Воробей:4
+
+==> ./tsvsplit_workdir/part_016.tsv <==
+Grünspan:2145:Pipit de Godlewski:4
+Grünspan:2082:Pipit de Godlewski:2
+Grünspan:2053:Pipit de Godlewski:4
+Grünspan:2071:Pipit de Godlewski:3
+
+==> ./tsvsplit_workdir/part_028.tsv <==
+rouge:2135:Marreca-cabocla:1
+café:2019:Marreca-cabocla:1
+rouge:2037:Marreca-cabocla:0
+
+==> ./tsvsplit_workdir/part_032.tsv <==
+blutrot:2142:Tüpfelsumpfhuhn:1
+blutrot:2118:Tüpfelsumpfhuhn:4
+blutrot:2117:Tüpfelsumpfhuhn:0
+blutrot:2143:Tüpfelsumpfhuhn:4
+blutrot:2149:Tüpfelsumpfhuhn:1
+blutrot:2120:Tüpfelsumpfhuhn:1
+
+==> ./tsvsplit_workdir/part_033.tsv <==
+grünspan:2145:PIPIT DE GODLEWSKI:4
+grünspan:2145:PIPIT DE GODLEWSKI:4
+
+==> ./tsvsplit_workdir/part_035.tsv <==
+fumée:2113:Araqua-pintado:0
+fumée:2124:Araqua-pintado:0
+
+==> ./tsvsplit_workdir/part_037.tsv <==
+schneeweiß:2117:Porrón Islándico:4
+schneeweiß:2121:Porrón Islándico:1
+
+==> ./tsvsplit_workdir/part_051.tsv <==
+zitronengelb:2136:Macreuse à bec jaune:3
+zitronengelb:2083:Macreuse à bec jaune:4
+púrpura:2070:Macreuse à bec jaune:2
+púrpura:2092:Macreuse à bec jaune:4
+púrpura:2093:Macreuse à bec jaune:4
+púrpura:2145:Macreuse à bec jaune:2
+
+==> ./tsvsplit_workdir/part_055.tsv <==
+Indigo:2056:Голубь:1
+Indigo:2141:Голубь:1
+blanc:2137:Голубь:2
+blanc:2109:Голубь:3
+Indigo:2138:Голубь:4
+blanc:2038:Голубь:0
+
+==> ./tsvsplit_workdir/part_068.tsv <==
+GRÜNSPAN:2145:pipit de godlewski:4
+GRÜNSPAN:2145:pipit de godlewski:4
+
+==> ./tsvsplit_workdir/part_070.tsv <==
+rouge:2132:Löffelente:4
+rouge:2146:Löffelente:1
+
+==> ./tsvsplit_workdir/part_072.tsv <==
+marrón:2102:Weißwangengans:1
+noir:2082:Weißwangengans:1
+noir:2094:Weißwangengans:4
+красный:2049:Weißwangengans:3
+noir:2115:Weißwangengans:2
+marrón:2034:Weißwangengans:1
+
+==> ./tsvsplit_workdir/part_080.tsv <==
+Cerise:2076:Malvasía Cabeciblanca:4
+暗紅色/暗赤色:2015:Malvasía Cabeciblanca:2
+Cerise:2119:Malvasía Cabeciblanca:4
+
+==> ./tsvsplit_workdir/part_087.tsv <==
+café:2088:Purpurreiher:2
+Orange-red:2089:Purpurreiher:1
+café:2062:Purpurreiher:4
+café:2100:Purpurreiher:2
+café:2041:Purpurreiher:4

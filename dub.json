@@ -18,6 +18,7 @@
         "./tsv-pretty/",
         "./tsv-sample/",
         "./tsv-select/",
+        "./tsv-split/",
         "./tsv-summarize/",
         "./tsv-uniq/"
     ],

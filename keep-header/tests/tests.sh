@@ -1,4 +1,4 @@
-#! /bin/sh
+#!/usr/bin/env bash
 
 if [ $# -le 1 ]; then
     echo "Insufficient arguments. A program name and output directory are required."

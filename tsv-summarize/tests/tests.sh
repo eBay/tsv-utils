@@ -1,4 +1,4 @@
-#! /bin/sh
+#!/usr/bin/env bash
 
 ## Most tsv-summarize testing is done as unit tests. Unit tests include operators,
 ## summarizers, and non-error cases of command line handling. Tests executed by this
@@ -8,7 +8,7 @@
 ## input files, etc.
 
 if [ $# -le 1 ]; then
-    echo "Insufficient arguments. A program name and output director are required."
+    echo "Insufficient arguments. A program name and output directory are required."
     exit 1
 fi
 

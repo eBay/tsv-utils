@@ -1,9 +1,9 @@
-#! /bin/sh
+#!/usr/bin/env bash
 
 ## Command line tests of the build executable
 
 if [ $# -le 1 ]; then
-    echo "Insufficient arguments. A program name and output director are required."
+    echo "Insufficient arguments. A program name and output directory are required."
     exit 1
 fi
 

@@ -1,0 +1,30 @@
+{
+    "name": "tsv-split",
+    "description": "Split a file into multiple files.",
+    "homepage": "https://github.com/eBay/tsv-utils",
+    "authors": ["Jon Degenhardt"],
+    "copyright": "Copyright (c) 2020, eBay Inc.",
+    "license": "BSL-1.0",
+    "targetType": "executable",
+    "configurations": [
+        {
+            "name" : "executable",
+            "targetName": "tsv-split",
+            "targetPath": "../bin/",
+            "mainSourceFile": "src/tsv_utils/tsv-split.d",
+            "dependencies": {
+                "tsv-utils:common": { "path": ".." }
+            }
+        },
+        {
+            "name": "unittest",
+            "targetType": "none"
+        }
+    ],
+    "buildTypes": {
+        "debug": { "buildOptions": ["debugMode", "optimize"] },
+        "release": { "buildOptions": ["releaseMode", "optimize", "inline"],
+                     "dflags": ["-boundscheck=off"],
+                     "dflags-osx-ldc": ["-flto=thin"] }
+    }
+}

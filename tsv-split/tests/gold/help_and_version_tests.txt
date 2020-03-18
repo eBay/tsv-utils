@@ -1,0 +1,12 @@
+
+Help and Version printing 1
+-----------------
+
+====[tsv-split --help | grep -c Synopsis]====
+1
+====[tsv-split --help-verbose | grep -c Synopsis]====
+1
+====[tsv-split --version | grep -c 'tsv-split (eBay/tsv-utils)']====
+1
+====[tsv-split -V | grep -c 'tsv-split (eBay/tsv-utils)']====
+1
