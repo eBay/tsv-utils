@@ -39,9 +39,10 @@ $prog --dir odir profile_data_2.tsv --lines-per-file 20 -H     ; rm odir/*
 $prog --dir odir profile_data_2.tsv --num-files 100 -H         ; rm odir/*
 $prog --dir odir profile_data_2.tsv --num-files 100 -I         ; rm odir/*
 $prog --dir odir profile_data_2.tsv --num-files 5 -k 1         ; rm odir/*
-cat profile_data_2.tsv | $prog --dir odir --num-files 100 -k 1 -I    ; rm odir/*
-cat profile_data_2.tsv | $prog --dir odir --num-files 100 -k 2,4 -H  ; rm odir/*
-cat profile_data_2.tsv | $prog --dir odir --num-files 100 -k 1,3     ; rm odir/*
+cat profile_data_2.tsv | $prog --dir odir --lines-per-file 100 -I    ; rm odir/*
+cat profile_data_2.tsv | $prog --dir odir --num-files 100 -I         ; rm odir/*
+cat profile_data_2.tsv | $prog --dir odir --num-files 100 -k 2,4 -I  ; rm odir/*
+cat profile_data_2.tsv | $prog --dir odir --num-files 100 -k 1,3 -H  ; rm odir/*
 
 $prog --dir odir profile_data_3.tsv --lines-per-file 300       ; rm odir/*
 $prog --dir odir profile_data_3.tsv --num-files 200 --max-open-files 20          ; rm odir/*
