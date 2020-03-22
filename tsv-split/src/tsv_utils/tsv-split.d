@@ -825,166 +825,156 @@ void splitLinesByKey(TsvSplitOptions cmdopt, ref SplitOutputFiles outputFiles)
     }
 }
 
-/** An OutputFileSequence struct represents a series of files to write blocks of
- * input lines to.
- *
- * The struct manages the output files written to when splitting by input lines
- * by blocks (line count). The constructor takes the information about output
- * directory, file names, and the lines per file count. The caller set the
- * header line and passed each input line.
- *
- * Each line is written to current output file. A new output file is created
- * when the requisite number of lines has been written to the current file.
- *
- * This struct uses a simple buffering mechanism to improve output performance.
+/** Write input lines to multiple files, splitting based on line count.
  */
-struct OutputFileSequence
+void splitByLineCount(TsvSplitOptions cmdopt)
 {
+    import std.algorithm : countUntil;
     import std.array : appender;
-    import std.conv : to;
     import std.file : exists;
     import std.format : format;
     import std.path : buildPath;
     import std.stdio : File;
 
-    private size_t _linesPerFile;
-    private string _dir;
-    private string _filePrefix;
-    private string _fileSuffix;
-    private bool _writeHeaders;
-    private bool _appendToExistingFiles;
+    enum ReadBufferSize = 1024L * 512L;
+    ubyte[] readBuffer = new ubyte[ReadBufferSize];
 
-    private string _header;
+    auto header = appender!(ubyte[])();
+    bool headerSaved = !cmdopt.headerInOut;  // True if 'header' has been saved, or does not need to be.
+    size_t nextOutputFileNum = 0;
+    File outputFile;
+    string outputFileName;
+    bool isOutputFileOpen = false;           // Open file status tracked separately due to phobos bugs
+    size_t outputFileRemainingLines;
 
-    private size_t _nextFileNum;
-    private string _currFileName;
-    private File _currOFile;
-    private size_t _currLinesWritten;
-    private bool _currFileOpen;
-
-    private auto _outputBuffer = appender!(char[]);
-    private enum _bufferReserveSize = 1024L * 1024L;        // 1 MB
-    private enum _bufferFlushSize = 1024L * (1024L - 64L);
-
-    this(size_t linesPerFile, string dir, string filePrefix, string fileSuffix,
-         bool writeHeaders, bool appendToExisting)
+    foreach (filename; cmdopt.files)
     {
-            _linesPerFile = linesPerFile;
-            _dir = dir;
-            _filePrefix = filePrefix;
-            _fileSuffix = fileSuffix;
-            _writeHeaders = writeHeaders;
-            _appendToExistingFiles = appendToExisting;
-            _outputBuffer.reserve(_bufferReserveSize);
-    }
+        auto inputStream = (filename == "-") ? stdin : filename.File("rb");
+        bool isReadingHeader = cmdopt.hasHeader;
 
-    ~this()
-    {
-        if (_currFileOpen)
+        foreach (ref ubyte[] inputChunk; inputStream.byChunk(readBuffer))
         {
-            if (_outputBuffer.data.length > 0)
+            size_t nextOutputChunkStart = 0;
+
+            // writefln("---> Processing chunk. inputChunk.length: %d", inputChunk.length);
+
+            if (isReadingHeader)
             {
-                _currOFile.write(_outputBuffer.data);
-                _outputBuffer.clear;
-            }
-            _currOFile.flush;
-            _currOFile.close;
-            _currFileOpen = false;
-        }
-    }
+                immutable newlineIndex = inputChunk.countUntil('\n');
 
-     /* Sets the header line.
-     *
-     * Should be called prior to writeDataLine when headers are being written. This
-     * is operation is separate from the constructor because the header is not known
-     * until the first line of a file is read.
-     *
-     * Headers are only written if 'writeHeaders' is specified as true in the
-     * constructor. As a convenience, this routine can be called even if headers are
-     * not being written.
-     */
-    void setHeader(const char[] header)
-    {
-        _header = header.to!string;
-    }
-
-    void writeDataLine(const char[] data)
-    {
-        /* See if a new file needs to be opened. */
-        if (_currLinesWritten == 0)
-        {
-            _currFileName =
-                buildPath(_dir, format("%s%d%s", _filePrefix, _nextFileNum, _fileSuffix));
-
-            if (!_appendToExistingFiles && _currFileName.exists)
-            {
-                throw new Exception(
-                format("Output file already exists. Use '--a|append' to append to existing files. File: '%s'.",
-                       _currFileName));
-            }
-
-            _currOFile = _currFileName.File("a");
-            _currFileOpen = true;
-            ++_nextFileNum;
-
-            if (_writeHeaders)
-            {
-                ulong filesize = _currOFile.size;
-                if (filesize == 0 || filesize == ulong.max)
+                if (newlineIndex == -1)
                 {
-                    put(_outputBuffer, _header);
-                    put(_outputBuffer, '\n');
+                    /* Rare case - Header line longer than read buffer. Keep reading
+                     * the header.
+                     */
+                    if (!headerSaved) put(header, inputChunk);
+                    continue;
+                }
+                else
+                {
+                    if (!headerSaved)
+                    {
+                        put(header, inputChunk[0 .. newlineIndex + 1]);
+                        headerSaved = true;
+                    }
+                    isReadingHeader = false;
+                    nextOutputChunkStart = newlineIndex + 1;
                 }
             }
-        }
 
-        put(_outputBuffer, data);
-        put(_outputBuffer, '\n');
-        ++_currLinesWritten;
+            /* Done with the header. Process the rest of the inputChunk. */
+            // writefln("---> Done with header. nextOutputChunkStart: %d", nextOutputChunkStart);
 
-        if (_currLinesWritten == _linesPerFile ||
-            _outputBuffer.data.length >= _bufferFlushSize)
-        {
-            _currOFile.write(_outputBuffer.data);
-            _outputBuffer.clear;
-        }
+            auto remainingInputChunk = inputChunk[nextOutputChunkStart .. $];
 
-        if (_currLinesWritten == _linesPerFile)
-        {
-            _currOFile.flush;
-            _currOFile.close;
-            _currFileOpen = false;
-            _currLinesWritten = 0;
+            while (!remainingInputChunk.empty)
+            {
+                // writefln("   ---> Chunk processing loop. remainingInputChunk.length: %d", remainingInputChunk.length);
+                /* See if the next output file needs to be opened. */
+                if (!isOutputFileOpen)
+                {
+                    outputFileName =
+                        buildPath(cmdopt.dir, format("%s%d%s", cmdopt.prefix, nextOutputFileNum, cmdopt.suffix));
+
+                    if (!cmdopt.appendToExistingFiles && outputFileName.exists)
+                    {
+                        throw new Exception(
+                            format("Output file already exists. Use '--a|append' to append to existing files. File: '%s'.",
+                                   outputFileName));
+                    }
+
+                    outputFile = outputFileName.File("ab");
+                    isOutputFileOpen = true;
+                    ++nextOutputFileNum;
+                    outputFileRemainingLines = cmdopt.linesPerFile;
+
+                    assert(headerSaved);
+
+                    if (cmdopt.headerInOut)
+                    {
+                        ulong filesize = outputFile.size;
+                        //if (filesize == 0 || filesize == ulong.max) outputFile.write(cast(char[]) header.data);
+                        if (filesize == 0 || filesize == ulong.max) outputFile.rawWrite(header.data);
+                    }
+                }
+
+                /* Find more newlines for the current output file. */
+
+                assert(outputFileRemainingLines > 0);
+
+                size_t nextOutputChunkEnd = nextOutputChunkStart;
+
+                while (outputFileRemainingLines != 0 && !remainingInputChunk.empty)
+                {
+                    /* Note: newLineIndex is relative to 'remainingInputChunk', not
+                     * 'inputChunk'. Updates to variables referring to 'inputChunk'
+                     * need to reflect this. In particular, 'nextOutputChunkEnd'.
+                     */
+                    immutable newlineIndex = remainingInputChunk.countUntil('\n');
+
+                    if (newlineIndex == -1)
+                    {
+                        nextOutputChunkEnd = inputChunk.length;
+                        // writefln("   ---> End of chunk. nextOutputChunkEnd: %d", nextOutputChunkEnd);
+                    }
+                    else
+                    {
+                        --outputFileRemainingLines;
+                        nextOutputChunkEnd += (newlineIndex + 1);
+                    }
+
+                    remainingInputChunk = inputChunk[nextOutputChunkEnd .. $];
+                }
+
+                // writeln("   ---> Finished reading chunk.");
+                // writefln("      ---> outputFileRemainingLines: %d", outputFileRemainingLines);
+                // writefln("      ---> nextOutputChunkStart: %d; nextOutputChunkEnd: %d",
+                //         nextOutputChunkStart, nextOutputChunkEnd);
+
+                assert(nextOutputChunkStart < nextOutputChunkEnd);
+                assert(nextOutputChunkEnd <= inputChunk.length);
+
+                //outputFile.write(cast(char[]) inputChunk[nextOutputChunkStart .. nextOutputChunkEnd]);
+                outputFile.rawWrite(inputChunk[nextOutputChunkStart .. nextOutputChunkEnd]);
+
+                // writeln("---> Finished writing chunk");
+
+                if (outputFileRemainingLines == 0)
+                {
+                    // writeln("---> Closing outputFile.");
+                    outputFile.flush;
+                    outputFile.close;
+                    isOutputFileOpen = false;
+                }
+
+                nextOutputChunkStart = nextOutputChunkEnd;
+
+                assert(remainingInputChunk.length == inputChunk.length - nextOutputChunkStart);
+            }
         }
     }
 }
-/** Write input lines to multiple files, splitting based on line count.
- */
-void splitByLineCount(TsvSplitOptions cmdopt)
-{
-    import tsv_utils.common.utils : bufferedByLine, throwIfWindowsNewlineOnUnix;
 
-    auto outputFiles =
-        OutputFileSequence(cmdopt.linesPerFile, cmdopt.dir, cmdopt.prefix, cmdopt.suffix,
-                           cmdopt.headerInOut, cmdopt.appendToExistingFiles);
-
-    foreach (inputFileNum, filename; cmdopt.files)
-    {
-        auto inputStream = (filename == "-") ? stdin : filename.File();
-        foreach (ulong fileLineNum, line; inputStream.bufferedByLine!(KeepTerminator.no).enumerate(1))
-        {
-            if (fileLineNum == 1) throwIfWindowsNewlineOnUnix(line, filename, fileLineNum);
-            if (fileLineNum == 1 && cmdopt.hasHeader)
-            {
-                if (inputFileNum == 0) outputFiles.setHeader(line);
-            }
-            else
-            {
-                outputFiles.writeDataLine(line);
-            }
-        }
-    }
-}
 
 unittest
 {
