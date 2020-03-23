@@ -446,13 +446,13 @@ struct TsvSplitOptions
     }
 }
 
+/* TsvSplitOptions unit tests (command-line argument processing).
+ *
+ * Very basic tests. Most cases are covered in executable tests, especially error cases,
+ * as errors write to stderr.
+ */
 unittest
 {
-    /* TsvSplitOptions unit tests (command-line argument processing).
-     *
-     * Very basic tests. Most cases are covered in executable tests, especially error
-     * cases, as errors write to stderr.
-     */
     {
         auto args = ["unittest", "--lines-per-file", "10"];
         TsvSplitOptions cmdopt;
@@ -666,7 +666,7 @@ struct SplitOutputFiles
         }
     }
 
-    /* Destructor ensures all files are flushed and closed.
+    /* Destructor ensures all files are closed.
      *
      * Note: A dual check on whether the file is open is made. This is to avoid a
      * Phobos bug where std.File doesn't properly maintain the state of open files
@@ -680,7 +680,6 @@ struct SplitOutputFiles
             {
                 assert(_numOpenFiles >= 1);
 
-                f.ofile.flush;
                 f.ofile.close;
                 f.isOpen = false;
                 _numOpenFiles--;
@@ -729,7 +728,6 @@ struct SplitOutputFiles
         {
             if (_outputFiles[i].isOpen)
             {
-                _outputFiles[i].ofile.flush;
                 _outputFiles[i].ofile.close;
                 _outputFiles[i].isOpen = false;
                 _numOpenFiles--;
@@ -899,8 +897,11 @@ void splitLinesByKey(TsvSplitOptions cmdopt, ref SplitOutputFiles outputFiles)
 }
 
 /** Write input lines to multiple files, splitting based on line count.
+ *
+ * Note: readBufferSize is an argument primarily for unit test purposes. Normal uses
+ * should use the default value.
  */
-void splitByLineCount(TsvSplitOptions cmdopt)
+void splitByLineCount(TsvSplitOptions cmdopt, const size_t readBufferSize = 1024L * 512L)
 {
     import std.array : appender;
     import std.file : exists;
@@ -908,8 +909,8 @@ void splitByLineCount(TsvSplitOptions cmdopt)
     import std.path : buildPath;
     import std.stdio : File;
 
-    enum ReadBufferSize = 1024L * 512L;
-    ubyte[] readBuffer = new ubyte[ReadBufferSize];
+    assert (readBufferSize > 0);
+    ubyte[] readBuffer = new ubyte[readBufferSize];
 
     auto header = appender!(ubyte[])();
     bool headerSaved = !cmdopt.headerInOut;  // True if 'header' has been saved, or does not need to be.
@@ -1051,7 +1052,6 @@ void splitByLineCount(TsvSplitOptions cmdopt)
                 if (outputFileRemainingLines == 0)
                 {
                     // writeln("---> Closing outputFile.");
-                    outputFile.flush;
                     outputFile.close;
                     isOutputFileOpen = false;
                 }
@@ -1059,6 +1059,137 @@ void splitByLineCount(TsvSplitOptions cmdopt)
                 nextOutputChunkStart = nextOutputChunkEnd;
 
                 assert(remainingInputChunk.length == inputChunk.length - nextOutputChunkStart);
+            }
+        }
+    }
+}
+
+/* splitByLineCount unit tests.
+ *
+ * These tests are primarily for buffer management. There are several edge cases
+ * that are difficult to test against the executable.
+ */
+unittest
+{
+    import tsv_utils.common.unittest_utils;   // tsv unit test helpers, from common/src/.
+    import std.algorithm : min;
+    import std.array : appender;
+    import std.conv : to;
+    import std.file : mkdir, rmdirRecurse;
+    import std.format : format;
+    import std.path : buildPath;
+    import std.process : escapeShellCommand, executeShell;
+
+    void testTsvSplitByLineCount(string[] cmdArgs, string expectedDir,
+                                 size_t readBufferSize = 1024L * 512L)
+    {
+        import std.array : appender;
+        import std.format : format;
+
+        assert(cmdArgs.length > 0, "[testTsvSplitByLineCount] cmdArgs must not be empty.");
+
+        auto formatAssertMessage(T...)(string msg, T formatArgs)
+        {
+            auto formatString = "[testTsvSplitByLineCount] %s: " ~ msg;
+            return format(formatString, cmdArgs[0], formatArgs);
+        }
+
+        TsvSplitOptions cmdopt;
+        auto savedCmdArgs = cmdArgs.to!string;
+        auto r = cmdopt.processArgs(cmdArgs);
+        assert(r[0], formatAssertMessage("Invalid command lines arg: '%s'.", savedCmdArgs));
+        assert(cmdopt.linesPerFile != 0, "[testTsvSplitByLineCount] --lines-per-file is required.");
+        assert(!cmdopt.dir.empty, "[testTsvSplitByLineCount] --dir is required.");
+
+        splitByLineCount(cmdopt, readBufferSize);
+
+        /* Diff command setup. */
+        auto diffCmdArgs = ["diff", expectedDir, cmdopt.dir];
+        auto diffResult = executeShell(escapeShellCommand(diffCmdArgs));
+        assert(diffResult.status == 0,
+               format("[testTsvSplitByLineCount]\n  cmd: %s\n  readBufferSize: %d\n  expectedDir: %s\n------ Diff ------%s\n-------",
+                      savedCmdArgs, readBufferSize, expectedDir, diffResult.output));
+    }
+
+    /* Test setup
+     *
+     * Input files have names: input_NxM.txt, where N is the number of characters in
+     * each row and M is the number of rows (lines). Twenty file total files:
+     *    input_0x2.txt ... input 5x5.txt.
+     *
+     */
+
+    auto inputDir = makeUnittestTempDir("tsv_split_lc_input");
+    auto outputDir = makeUnittestTempDir("tsv_split_lc_output");
+    auto expectedDir = makeUnittestTempDir("tsv_split_lc_expected");
+    writeln("=====> ", inputDir);
+
+    string[5] outputRowData =
+        [
+            "abcde",
+            "fghij",
+            "klmno",
+            "pqrst",
+            "uvwxy"
+        ];
+
+    /* Create the input files. */
+    foreach (inputLineLength; 0 .. 6)
+    {
+        foreach (inputFileNumLines; 2 .. 6)
+        {
+            auto fname = buildPath(inputDir, format("input_%dx%d.txt", inputLineLength, inputFileNumLines));
+            auto ofile = fname.File("w");
+            auto output = appender!(char[])();
+            foreach (m; 0 .. inputFileNumLines)
+            {
+                put(output, outputRowData[m][0 .. inputLineLength]);
+                put(output, '\n');
+            }
+            ofile.write(output.data);
+            ofile.close;
+        }
+    }
+
+    foreach (inputLineLength; 0 .. 6)
+    {
+        foreach (inputFileNumLines; 2 .. 6)
+        {
+            auto inputFile =
+                buildPath(inputDir, format("input_%dx%d.txt", inputLineLength, inputFileNumLines));
+
+            foreach (outputFileNumLines; 1 .. min(5, inputFileNumLines))
+            {
+                auto expectedSubDir =
+                    buildPath(expectedDir, format("%dx%d_by_%d", inputLineLength,
+                                                  inputFileNumLines, outputFileNumLines));
+                mkdir(expectedSubDir);
+
+
+                size_t filenum = 0;
+                size_t linesWritten = 0;
+                while (linesWritten < inputFileNumLines)
+                {
+
+                    auto expectedFile = buildPath(expectedSubDir, format("part_%d.tsv", filenum));
+                    auto f = expectedFile.File("w");
+                    auto linesToWrite = min(outputFileNumLines, inputFileNumLines - linesWritten);
+                    foreach (line; outputRowData[linesWritten .. linesWritten + linesToWrite])
+                    {
+                        f.writeln(line[0 .. inputLineLength]);
+                    }
+                    linesWritten += linesToWrite;
+                    ++filenum;
+                }
+
+                auto outputSubDir =
+                    buildPath(outputDir, format("%dx%d_by_%d", inputLineLength,
+                                                inputFileNumLines, outputFileNumLines));
+                mkdir(outputSubDir);
+
+                testTsvSplitByLineCount(
+                    ["test", "--lines-per-file", outputFileNumLines.to!string, "--dir", outputSubDir, inputFile],
+                    expectedSubDir);
             }
         }
     }
