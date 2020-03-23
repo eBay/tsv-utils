@@ -1,5 +1,8 @@
 /**
-Command line tool for splitting files.
+Command line tool for splitting a files (or files) into multiple output files.
+Several methods for splitting are available, including splitting by line count,
+splitting by random assignment, and splitting by random assignment based on
+key fields.
 
 Copyright (c) 2020, eBay Inc.
 Initially written by Jon Degenhardt
@@ -944,11 +947,8 @@ void splitByLineCount(TsvSplitOptions cmdopt, const size_t readBufferSize = 1024
         {
             size_t nextOutputChunkStart = 0;
 
-            // writefln("---> Processing chunk. inputChunk.length: %d", inputChunk.length);
-
             if (isReadingHeader)
             {
-                // immutable newlineIndex = inputChunk.countUntil('\n');
                 immutable newlineIndex = nextNewlineIndex(inputChunk);
 
                 if (newlineIndex == -1)
@@ -972,13 +972,11 @@ void splitByLineCount(TsvSplitOptions cmdopt, const size_t readBufferSize = 1024
             }
 
             /* Done with the header. Process the rest of the inputChunk. */
-            // writefln("---> Done with header. nextOutputChunkStart: %d", nextOutputChunkStart);
 
             auto remainingInputChunk = inputChunk[nextOutputChunkStart .. $];
 
             while (!remainingInputChunk.empty)
             {
-                // writefln("   ---> Chunk processing loop. remainingInputChunk.length: %d", remainingInputChunk.length);
                 /* See if the next output file needs to be opened. */
                 if (!isOutputFileOpen)
                 {
@@ -1002,7 +1000,6 @@ void splitByLineCount(TsvSplitOptions cmdopt, const size_t readBufferSize = 1024
                     if (cmdopt.headerInOut)
                     {
                         ulong filesize = outputFile.size;
-                        //if (filesize == 0 || filesize == ulong.max) outputFile.write(cast(char[]) header.data);
                         if (filesize == 0 || filesize == ulong.max) outputFile.rawWrite(header.data);
                     }
                 }
@@ -1019,13 +1016,11 @@ void splitByLineCount(TsvSplitOptions cmdopt, const size_t readBufferSize = 1024
                      * 'inputChunk'. Updates to variables referring to 'inputChunk'
                      * need to reflect this. In particular, 'nextOutputChunkEnd'.
                      */
-                    // immutable newlineIndex = remainingInputChunk.countUntil('\n');
                     immutable newlineIndex = nextNewlineIndex(remainingInputChunk);
 
                     if (newlineIndex == -1)
                     {
                         nextOutputChunkEnd = inputChunk.length;
-                        // writefln("   ---> End of chunk. nextOutputChunkEnd: %d", nextOutputChunkEnd);
                     }
                     else
                     {
@@ -1036,22 +1031,13 @@ void splitByLineCount(TsvSplitOptions cmdopt, const size_t readBufferSize = 1024
                     remainingInputChunk = inputChunk[nextOutputChunkEnd .. $];
                 }
 
-                // writeln("   ---> Finished reading chunk.");
-                // writefln("      ---> outputFileRemainingLines: %d", outputFileRemainingLines);
-                // writefln("      ---> nextOutputChunkStart: %d; nextOutputChunkEnd: %d",
-                //         nextOutputChunkStart, nextOutputChunkEnd);
-
                 assert(nextOutputChunkStart < nextOutputChunkEnd);
                 assert(nextOutputChunkEnd <= inputChunk.length);
 
-                // outputFile.write(cast(char[]) inputChunk[nextOutputChunkStart .. nextOutputChunkEnd]);
                 outputFile.rawWrite(inputChunk[nextOutputChunkStart .. nextOutputChunkEnd]);
-
-                // writeln("---> Finished writing chunk");
 
                 if (outputFileRemainingLines == 0)
                 {
-                    // writeln("---> Closing outputFile.");
                     outputFile.close;
                     isOutputFileOpen = false;
                 }
@@ -1066,7 +1052,8 @@ void splitByLineCount(TsvSplitOptions cmdopt, const size_t readBufferSize = 1024
 
 /* splitByLineCount unit tests.
  *
- * These tests are primarily for buffer management. There are several edge cases
+ * These tests are primarily for buffer management. There are edge cases involving the
+ * interaction buffer size, input file size, lines-per-file, and newline placement
  * that are difficult to test against the executable.
  */
 unittest
@@ -1075,40 +1062,58 @@ unittest
     import std.algorithm : min;
     import std.array : appender;
     import std.conv : to;
-    import std.file : mkdir, rmdirRecurse;
+    import std.file : exists, mkdir, rmdirRecurse;
     import std.format : format;
     import std.path : buildPath;
     import std.process : escapeShellCommand, executeShell;
 
     /* Test setup
      *
-     * Input files have names: input_NxM.txt, where N is the number of characters in
-     * each row and M is the number of rows (lines). Twenty five files total:
-     *    input_0x2.txt ... input 5x5.txt.
+     * A set of twenty file input files is created, with names: input_NxM.txt, where
+     * N is the number of characters in each row and M is the number of rows (lines).
+     * The resulting files are put in the "lc_input" directory ('inputDir' variable)
+     * and have names:
+     *    input_0x2.txt, input_0x3.txt, ... input_5x5.txt.
      *
-     * A standalone setup will produce expected result files for splitting all of these
-     * files from 1 to 5 lines-per-file. This will duplicate the splitByLineCount output.
+     * A standalone block of code produces the expected result files for splitting an
+     * input file into a set of output files. This duplicates the splitByLineCount
+     * output. This is done for lines-per-file counts 1 to 5. Each result set is place
+     * ina subdirectory under "lc_expected" ('expectedDir' variable). Subdirectories
+     * have names like: "0x2_by_1", "0x3_by_1", ..., "5x5_by_4".
      *
-     * splitByLine will be called for using all of these same --lines-per-file, but also
-     * using a series of different ReadBufferSizes. This should ensure no edge cases were
-     * missed.
+     * splitByLine is called for all the same input files and lines-per-file settings used
+     * to produce the expected output. This is done via testSplitByLineCount, which calls
+     * command line argument processing and splitByLine, similar to how the main program
+     * works. The results are written to a subdirectory. The subdirectory is compared to
+     * the expected output directory using the system 'diff' command.
+     *
+     * splitByLine is multiple times for each expected output case. The different calls
+     * iterate over a series of small ReadBufferSizes. This is how tests for edge cases
+     * in the readBufferSize vs line lengths, newline placement, etc., is accomplished.
+     *
+     * Note: One way to understand what is going on is to comment out the line:
+     *
+     *    scope(exit) testDir.rmdirRecurse;
+     *
+     * Then run the test (e.g. 'make test') and look at the directory structure left
+     * behind. Print out the 'testDir' directory to see where it is located.
      */
 
-    /* This routine acts as a surrogate for main() and tsvSplit(). It makes the call to
-     * splitByLineCount and calls diff to compare the output directory to the expected
-     * directory.
+    /* testSplitByLineCount acts as a surrogate for main() and tsvSplit(). It makes the
+     * call to splitByLineCount and calls 'diff' to compare the output directory to the
+     * expected directory. An assert is thrown if the directories do not match.
      */
-    void testTsvSplitByLineCount(string[] cmdArgs, string expectedDir,
+    static void testSplitByLineCount(string[] cmdArgs, string expectedDir,
                                  size_t readBufferSize = 1024L * 512L)
     {
         import std.array : appender;
         import std.format : format;
 
-        assert(cmdArgs.length > 0, "[testTsvSplitByLineCount] cmdArgs must not be empty.");
+        assert(cmdArgs.length > 0, "[testSplitByLineCount] cmdArgs must not be empty.");
 
         auto formatAssertMessage(T...)(string msg, T formatArgs)
         {
-            auto formatString = "[testTsvSplitByLineCount] %s: " ~ msg;
+            auto formatString = "[testSplitByLineCount] %s: " ~ msg;
             return format(formatString, cmdArgs[0], formatArgs);
         }
 
@@ -1116,8 +1121,8 @@ unittest
         auto savedCmdArgs = cmdArgs.to!string;
         auto r = cmdopt.processArgs(cmdArgs);
         assert(r[0], formatAssertMessage("Invalid command lines arg: '%s'.", savedCmdArgs));
-        assert(cmdopt.linesPerFile != 0, "[testTsvSplitByLineCount] --lines-per-file is required.");
-        assert(!cmdopt.dir.empty, "[testTsvSplitByLineCount] --dir is required.");
+        assert(cmdopt.linesPerFile != 0, "[testSplitByLineCount] --lines-per-file is required.");
+        assert(!cmdopt.dir.empty, "[testSplitByLineCount] --dir is required.");
 
         splitByLineCount(cmdopt, readBufferSize);
 
@@ -1125,19 +1130,25 @@ unittest
         auto diffCmdArgs = ["diff", expectedDir, cmdopt.dir];
         auto diffResult = executeShell(escapeShellCommand(diffCmdArgs));
         assert(diffResult.status == 0,
-               format("[testTsvSplitByLineCount]\n  cmd: %s\n  readBufferSize: %d\n  expectedDir: %s\n------ Diff ------%s\n-------",
+               format("[testSplitByLineCount]\n  cmd: %s\n  readBufferSize: %d\n  expectedDir: %s\n------ Diff ------%s\n-------",
                       savedCmdArgs, readBufferSize, expectedDir, diffResult.output));
     }
 
-    auto inputDir = makeUnittestTempDir("tsv_split_lc_input");
-    scope(exit) inputDir.rmdirRecurse;
+    auto testDir = makeUnittestTempDir("tsv_split");
+    scope(exit) testDir.rmdirRecurse;
 
-    auto outputDir = makeUnittestTempDir("tsv_split_lc_output");
-    scope(exit) outputDir.rmdirRecurse;
+    auto inputDir = buildPath(testDir, "lc_input");
+    auto outputDir = buildPath(testDir, "lc_output");
+    auto expectedDir = buildPath(testDir, "lc_expected");
 
-    auto expectedDir = makeUnittestTempDir("tsv_split_lc_expected");
-    scope(exit) expectedDir.rmdirRecurse;
+    mkdir(inputDir);
+    mkdir(outputDir);
+    mkdir(expectedDir);
 
+    static string buildInputFilePath(string dir, long inputLineLength, long inputFileNumLines)
+    {
+        return buildPath(dir, format("input_%dx%d.txt", inputLineLength, inputFileNumLines));
+    }
 
     string[5] outputRowData =
         [
@@ -1148,31 +1159,31 @@ unittest
             "uvwxy"
         ];
 
-    /* Create the input files. */
+    /* The main test loop. Iterates over input line lengths, numbers of rows,
+     * lines-per-file, and finally readBufferSize lengths. All combos are tested.
+     */
     foreach (inputLineLength; 0 .. 6)
     {
         foreach (inputFileNumLines; 2 .. 6)
         {
-            auto fname = buildPath(inputDir, format("input_%dx%d.txt", inputLineLength, inputFileNumLines));
-            auto ofile = fname.File("w");
-            auto output = appender!(char[])();
-            foreach (m; 0 .. inputFileNumLines)
+            auto inputFile = buildInputFilePath(inputDir, inputLineLength, inputFileNumLines);
+
             {
-                put(output, outputRowData[m][0 .. inputLineLength]);
-                put(output, '\n');
+                auto ofile = inputFile.File("w");
+                auto output = appender!(char[])();
+                foreach (m; 0 .. inputFileNumLines)
+                {
+                    put(output, outputRowData[m][0 .. inputLineLength]);
+                    put(output, '\n');
+                }
+                ofile.write(output.data);
+                ofile.close;
             }
-            ofile.write(output.data);
-            ofile.close;
-        }
-    }
 
-    foreach (inputLineLength; 0 .. 6)
-    {
-        foreach (inputFileNumLines; 2 .. 6)
-        {
-            auto inputFile =
-                buildPath(inputDir, format("input_%dx%d.txt", inputLineLength, inputFileNumLines));
-
+            /* Iterate over the different lines-per-file lengths.
+             * - Create an expected output directory and files for each.
+             * - Test with different readBufferSize values.
+             */
             foreach (outputFileNumLines; 1 .. min(5, inputFileNumLines))
             {
                 auto expectedSubDir =
@@ -1180,13 +1191,11 @@ unittest
                                                   inputFileNumLines, outputFileNumLines));
                 mkdir(expectedSubDir);
 
-
                 size_t filenum = 0;
                 size_t linesWritten = 0;
                 while (linesWritten < inputFileNumLines)
                 {
-
-                    auto expectedFile = buildPath(expectedSubDir, format("part_%d.tsv", filenum));
+                    auto expectedFile = buildPath(expectedSubDir, format("part_%d.txt", filenum));
                     auto f = expectedFile.File("w");
                     auto linesToWrite = min(outputFileNumLines, inputFileNumLines - linesWritten);
                     foreach (line; outputRowData[linesWritten .. linesWritten + linesToWrite])
@@ -1195,15 +1204,21 @@ unittest
                     }
                     linesWritten += linesToWrite;
                     ++filenum;
+                    f.close;
                 }
 
+                /* Test the different readBufferSizes.
+                 * - An output directory is created for the run and deleted afterward.
+                 * - First test the default size.
+                 * - Then iterate overs small readBufferSize values.
+                 */
                 auto outputSubDir =
                     buildPath(outputDir, format("%dx%d_by_%d", inputLineLength,
                                                 inputFileNumLines, outputFileNumLines));
                 mkdir(outputSubDir);
 
-                testTsvSplitByLineCount(
-                    ["test", "--lines-per-file", outputFileNumLines.to!string, "--dir", outputSubDir, inputFile],
+                testSplitByLineCount(
+                    ["test", "--lines-per-file", outputFileNumLines.to!string, "--suffix", ".txt", "--dir", outputSubDir, inputFile],
                     expectedSubDir);
 
                 outputSubDir.rmdirRecurse;
@@ -1212,13 +1227,90 @@ unittest
                 {
                      mkdir(outputSubDir);
 
-                     testTsvSplitByLineCount(
-                         ["test", "--lines-per-file", outputFileNumLines.to!string, "--dir", outputSubDir, inputFile],
+                     testSplitByLineCount(
+                         ["test", "--lines-per-file", outputFileNumLines.to!string, "--suffix", ".txt", "--dir", outputSubDir, inputFile],
                          expectedSubDir, readBufSize);
 
                      outputSubDir.rmdirRecurse;
                 }
             }
+        }
+    }
+
+    {
+        /* Tests for the special case where readBufferSize is smaller than the header
+         * line. We'll reuse the input_5x4.txt input file and write 1 line-per-file.
+         */
+        immutable inputLineLength = 5;
+        immutable inputFileNumLines = 4;
+        immutable outputFileNumLines = 1;
+
+        auto inputFile = buildInputFilePath(inputDir, inputLineLength, inputFileNumLines);
+        assert(inputFile.exists);
+
+        auto expectedSubDirHeader =
+            buildPath(expectedDir, format("%dx%d_by_%d_header", inputLineLength,
+                                          inputFileNumLines, outputFileNumLines));
+
+        auto expectedSubDirHeaderInOnly =
+            buildPath(expectedDir, format("%dx%d_by_%d_header_in_only", inputLineLength,
+                                          inputFileNumLines, outputFileNumLines));
+
+        mkdir(expectedSubDirHeader);
+        mkdir(expectedSubDirHeaderInOnly);
+
+        /* Generate the expected results. Cheat by starting with linesWritten = 1. This
+         * automatically excludes the header line, but keeps the loop code consistent
+         * with the main test loop.
+         */
+        size_t filenum = 0;
+        size_t linesWritten = 1;
+        while (linesWritten < inputFileNumLines)
+        {
+            auto expectedFileHeader = buildPath(expectedSubDirHeader, format("part_%d.txt", filenum));
+            auto expectedFileHeaderInOnly = buildPath(expectedSubDirHeaderInOnly,
+                                                      format("part_%d.txt", filenum));
+            auto fHeader = expectedFileHeader.File("w");
+            auto fHeaderInOnly = expectedFileHeaderInOnly.File("w");
+            auto linesToWrite = min(outputFileNumLines, inputFileNumLines - linesWritten);
+
+            fHeader.writeln(outputRowData[0][0 .. inputLineLength]);
+            foreach (line; outputRowData[linesWritten .. linesWritten + linesToWrite])
+            {
+                fHeader.writeln(line[0 .. inputLineLength]);
+                fHeaderInOnly.writeln(line[0 .. inputLineLength]);
+            }
+            linesWritten += linesToWrite;
+            ++filenum;
+            fHeader.close;
+            fHeaderInOnly.close;
+        }
+
+        /* Now run the tests. */
+        auto outputSubDirHeader =
+            buildPath(outputDir, format("%dx%d_by_%d_header", inputLineLength,
+                                        inputFileNumLines, outputFileNumLines));
+        auto outputSubDirHeaderInOnly =
+            buildPath(outputDir, format("%dx%d_by_%d_header_in_only", inputLineLength,
+                                        inputFileNumLines, outputFileNumLines));
+
+        foreach (readBufSize; 1 .. 6)
+        {
+            mkdir(outputSubDirHeader);
+            mkdir(outputSubDirHeaderInOnly);
+
+            testSplitByLineCount(
+                ["test", "--header", "--lines-per-file", outputFileNumLines.to!string, "--suffix", ".txt",
+                 "--dir", outputSubDirHeader, inputFile],
+                expectedSubDirHeader, readBufSize);
+
+            testSplitByLineCount(
+                ["test", "--header-in-only", "--lines-per-file", outputFileNumLines.to!string, "--suffix", ".txt",
+                 "--dir", outputSubDirHeaderInOnly, inputFile],
+                expectedSubDirHeaderInOnly, readBufSize);
+
+            outputSubDirHeader.rmdirRecurse;
+            outputSubDirHeaderInOnly.rmdirRecurse;
         }
     }
 }
