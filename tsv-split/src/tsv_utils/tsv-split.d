@@ -446,11 +446,166 @@ struct TsvSplitOptions
     }
 }
 
-/** A SplitOutputFiles struct holds the collection of output files.
+unittest
+{
+    /* TsvSplitOptions unit tests (command-line argument processing).
+     *
+     * Very basic tests. Most cases are covered in executable tests, especially error
+     * cases, as errors write to stderr.
+     */
+    {
+        auto args = ["unittest", "--lines-per-file", "10"];
+        TsvSplitOptions cmdopt;
+        const r = cmdopt.processArgs(args);
+
+        assert(cmdopt.files == ["-"]);
+        assert(cmdopt.linesPerFile == 10);
+        assert(cmdopt.keyFields.empty);
+        assert(cmdopt.numFiles == 0);
+        assert(cmdopt.hasHeader == false);
+    }
+    {
+        auto args = ["unittest", "--num-files", "20"];
+        TsvSplitOptions cmdopt;
+        const r = cmdopt.processArgs(args);
+
+        assert(cmdopt.files == ["-"]);
+        assert(cmdopt.linesPerFile == 0);
+        assert(cmdopt.keyFields.empty);
+        assert(cmdopt.numFiles == 20);
+        assert(cmdopt.hasHeader == false);
+    }
+    {
+        auto args = ["unittest", "-n", "5", "--key-fields", "1-3"];
+        TsvSplitOptions cmdopt;
+        const r = cmdopt.processArgs(args);
+
+        assert(cmdopt.linesPerFile == 0);
+        assert(cmdopt.keyFields == [0, 1, 2]);
+        assert(cmdopt.numFiles == 5);
+        assert(cmdopt.hasHeader == false);
+        assert(cmdopt.keyIsFullLine == false);
+    }
+    {
+        auto args = ["unittest", "-n", "5", "-k", "0"];
+        TsvSplitOptions cmdopt;
+        const r = cmdopt.processArgs(args);
+
+        assert(cmdopt.linesPerFile == 0);
+        assert(cmdopt.numFiles == 5);
+        assert(cmdopt.hasHeader == false);
+        assert(cmdopt.keyIsFullLine == true);
+    }
+    {
+        auto args = ["unittest", "-n", "2", "--header"];
+        TsvSplitOptions cmdopt;
+        const r = cmdopt.processArgs(args);
+
+        assert(cmdopt.headerInOut == true);
+        assert(cmdopt.hasHeader == true);
+        assert(cmdopt.headerIn == false);
+    }
+    {
+        auto args = ["unittest", "-n", "2", "--header-in-only"];
+        TsvSplitOptions cmdopt;
+        const r = cmdopt.processArgs(args);
+
+        assert(cmdopt.headerInOut == false);
+        assert(cmdopt.hasHeader == true);
+        assert(cmdopt.headerIn == true);
+    }
+}
+
+/** Get the rlimit current number of open files the process is allowed.
  *
- * This struct manages the collection of output files used when writing to multiple
+ * This routine returns the current soft limit on the number of open files the process
+ * is allowed. This is the number returned by the command: '$ ulimit -n'.
+ *
+ * This routine translates this value to a 'uint', as tsv-split uses 'uint' for
+ * tracking output files. The rlimit 'rlim_t' type is usually 'ulong' or 'long'.
+ * RLIM_INFINITY and any value larger than 'uint.max' is translated to 'uint.max'.
+ *
+ * An exception is thrown if call to 'getrlimit' fails.
+ */
+uint rlimitCurrOpenFilesLimit()
+{
+    import core.sys.posix.sys.resource :
+        rlim_t, rlimit, getrlimit, RLIMIT_NOFILE, RLIM_INFINITY, RLIM_SAVED_CUR;
+    import std.conv : to;
+
+    uint currOpenFileLimit = uint.max;
+
+    rlimit rlimitMaxOpenFiles;
+
+    if (getrlimit(RLIMIT_NOFILE, &rlimitMaxOpenFiles) != 0)
+    {
+        throw new Exception("Internal error: getrlimit call failed");
+    }
+
+    if (rlimitMaxOpenFiles.rlim_cur != RLIM_INFINITY &&
+        rlimitMaxOpenFiles.rlim_cur != RLIM_SAVED_CUR &&
+        rlimitMaxOpenFiles.rlim_cur >= 0 &&
+        rlimitMaxOpenFiles.rlim_cur <= uint.max)
+    {
+        currOpenFileLimit = rlimitMaxOpenFiles.rlim_cur.to!uint;
+    }
+
+    return currOpenFileLimit;
+}
+
+/** Invokes the proper split routine based on the command line arguments.
+ *
+ * This routine is the top-level control after command line argument processing is
+ * done. It's primary job is to set up data structures and invoke the correct
+ * processing routine based on the command line arguments.
+ */
+void tsvSplit(TsvSplitOptions cmdopt)
+{
+    import std.format : format;
+
+    if (cmdopt.linesPerFile != 0)
+    {
+        splitByLineCount(cmdopt);
+    }
+    else
+    {
+        /* Randomly distribute input lines to a specified number of files. */
+
+        auto outputFiles =
+            SplitOutputFiles(cmdopt.numFiles, cmdopt.dir, cmdopt.prefix,
+                             cmdopt.suffix, cmdopt.headerInOut, cmdopt.maxOpenOutputFiles);
+
+        if (!cmdopt.appendToExistingFiles)
+        {
+            string existingFile = outputFiles.checkIfFilesExist;
+
+            if (existingFile.length != 0)
+            {
+                throw new Exception(
+                    format("One or more output files already exist. Use '--a|append' to append to existing files. File: '%s'.",
+                           existingFile));
+            }
+        }
+
+        if (cmdopt.keyFields.length == 0)
+        {
+            splitLinesRandomly(cmdopt, outputFiles);
+        }
+        else
+        {
+            splitLinesByKey(cmdopt, outputFiles);
+        }
+    }
+}
+
+/** A SplitOutputFiles struct holds a collection of output files.
+ *
+ * This struct manages a collection of output files used when writing to multiple
  * files at once. This includes constructing filenames, opening and closing files,
  * and writing data and header lines.
+ *
+ * Both random assignment (splitLinesRandomly) and random assignment by key
+ * (splitLinesByKey) use a SplitOutputFiles struct to manage output files.
  *
  * The main properties of the output file set are specified in the constuctor. The
  * exception is the header line. This is not known until the first input file is
@@ -533,7 +688,7 @@ struct SplitOutputFiles
         }
     }
 
-    /* Checks if any of the files already exist.
+    /* Check if any of the files already exist.
      *
      * Returns the empty string if none of the files exist. Otherwise returns the
      * filename of the first existing file found. This is to facilitate error
@@ -548,7 +703,7 @@ struct SplitOutputFiles
     /* Sets the header line.
      *
      * Should be called prior to writeDataLine when headers are being written. This
-     * is operation is separate from the constructor because the header is not known
+     * method is separate from the constructor because the header is not available
      * until the first line of a file is read.
      *
      * Headers are only written if 'writeHeaders' is specified as true in the
@@ -619,88 +774,6 @@ struct SplitOutputFiles
 
         outputFile.ofile.writeln(data);
         outputFile.hasData = true;
-    }
-}
-
-/** Get the rlimit current number of open files the process is allowed.
- *
- * This routine returns the current soft limit on the number of open files the process
- * is allowed. This is the number returned by the command: '$ ulimit -n'.
- *
- * This routine translates this value to a 'uint', as tsv-split uses 'uint' for
- * tracking output files. The rlimit 'rlim_t' type is usually 'ulong' or 'long'.
- * RLIM_INFINITY and any value larger than 'uint.max' is translated to 'uint.max'.
- *
- * An exception is thrown if call to 'getrlimit' fails.
- */
-uint rlimitCurrOpenFilesLimit()
-{
-    import core.sys.posix.sys.resource :
-        rlim_t, rlimit, getrlimit, RLIMIT_NOFILE, RLIM_INFINITY, RLIM_SAVED_CUR;
-    import std.conv : to;
-
-    uint currOpenFileLimit = uint.max;
-
-    rlimit rlimitMaxOpenFiles;
-
-    if (getrlimit(RLIMIT_NOFILE, &rlimitMaxOpenFiles) != 0)
-    {
-        throw new Exception("Internal error: getrlimit call failed");
-    }
-
-    if (rlimitMaxOpenFiles.rlim_cur != RLIM_INFINITY &&
-        rlimitMaxOpenFiles.rlim_cur != RLIM_SAVED_CUR &&
-        rlimitMaxOpenFiles.rlim_cur >= 0 &&
-        rlimitMaxOpenFiles.rlim_cur <= uint.max)
-    {
-        currOpenFileLimit = rlimitMaxOpenFiles.rlim_cur.to!uint;
-    }
-
-    return currOpenFileLimit;
-}
-
-/** Invokes the proper split routine based on the command line arguments.
- *
- * This routine is the top-level control after command line argument processing is
- * done. It's primary job is to set up data structures and invoke the correct
- * processing routine based on the command line arguments.
- */
-void tsvSplit(TsvSplitOptions cmdopt)
-{
-    import std.format : format;
-
-    if (cmdopt.linesPerFile != 0)
-    {
-        splitByLineCount(cmdopt);
-    }
-    else
-    {
-        /* Split into a specified number of files. */
-
-        auto outputFiles =
-            SplitOutputFiles(cmdopt.numFiles, cmdopt.dir, cmdopt.prefix,
-                             cmdopt.suffix, cmdopt.headerInOut, cmdopt.maxOpenOutputFiles);
-
-        if (!cmdopt.appendToExistingFiles)
-        {
-            string existingFile = outputFiles.checkIfFilesExist;
-
-            if (existingFile.length != 0)
-            {
-                throw new Exception(
-                    format("One or more output files already exist. Use '--a|append' to append to existing files. File: '%s'.",
-                           existingFile));
-            }
-        }
-
-        if (cmdopt.keyFields.length == 0)
-        {
-            splitLinesRandomly(cmdopt, outputFiles);
-        }
-        else
-        {
-            splitLinesByKey(cmdopt, outputFiles);
-        }
     }
 }
 
@@ -829,7 +902,6 @@ void splitLinesByKey(TsvSplitOptions cmdopt, ref SplitOutputFiles outputFiles)
  */
 void splitByLineCount(TsvSplitOptions cmdopt)
 {
-    import std.algorithm : countUntil;
     import std.array : appender;
     import std.file : exists;
     import std.format : format;
@@ -847,6 +919,21 @@ void splitByLineCount(TsvSplitOptions cmdopt)
     bool isOutputFileOpen = false;           // Open file status tracked separately due to phobos bugs
     size_t outputFileRemainingLines;
 
+    /* nextNewlineIndex finds the index of the next newline character. It is an
+     * alternative to std.algorithm.countUntil. Invoking 'find' directly results
+     * 'memchr' being used (faster). The current 'countUntil' implementation does
+     * forward to find, but the way it is done avoids the memchr call optimization.
+     */
+    static long nextNewlineIndex(const ubyte[] buffer)
+    {
+        import std.algorithm : find;
+        immutable ubyte newlineChar = '\n';
+        immutable size_t buflen = buffer.length;
+        immutable size_t findlen = buffer.find(newlineChar).length;
+
+        return findlen > 0 ? buflen - findlen : -1;
+    }
+
     foreach (filename; cmdopt.files)
     {
         auto inputStream = (filename == "-") ? stdin : filename.File("rb");
@@ -860,7 +947,8 @@ void splitByLineCount(TsvSplitOptions cmdopt)
 
             if (isReadingHeader)
             {
-                immutable newlineIndex = inputChunk.countUntil('\n');
+                // immutable newlineIndex = inputChunk.countUntil('\n');
+                immutable newlineIndex = nextNewlineIndex(inputChunk);
 
                 if (newlineIndex == -1)
                 {
@@ -930,7 +1018,8 @@ void splitByLineCount(TsvSplitOptions cmdopt)
                      * 'inputChunk'. Updates to variables referring to 'inputChunk'
                      * need to reflect this. In particular, 'nextOutputChunkEnd'.
                      */
-                    immutable newlineIndex = remainingInputChunk.countUntil('\n');
+                    // immutable newlineIndex = remainingInputChunk.countUntil('\n');
+                    immutable newlineIndex = nextNewlineIndex(remainingInputChunk);
 
                     if (newlineIndex == -1)
                     {
@@ -954,7 +1043,7 @@ void splitByLineCount(TsvSplitOptions cmdopt)
                 assert(nextOutputChunkStart < nextOutputChunkEnd);
                 assert(nextOutputChunkEnd <= inputChunk.length);
 
-                //outputFile.write(cast(char[]) inputChunk[nextOutputChunkStart .. nextOutputChunkEnd]);
+                // outputFile.write(cast(char[]) inputChunk[nextOutputChunkStart .. nextOutputChunkEnd]);
                 outputFile.rawWrite(inputChunk[nextOutputChunkStart .. nextOutputChunkEnd]);
 
                 // writeln("---> Finished writing chunk");
@@ -972,76 +1061,5 @@ void splitByLineCount(TsvSplitOptions cmdopt)
                 assert(remainingInputChunk.length == inputChunk.length - nextOutputChunkStart);
             }
         }
-    }
-}
-
-
-unittest
-{
-    /* TsvSplitOptions unit tests.
-     *
-     * Very basic here. Mostly covered in executable tests, especially error cases, as
-     * errors write to stderr.
-     */
-    {
-        auto args = ["unittest", "--lines-per-file", "10"];
-        TsvSplitOptions cmdopt;
-        const r = cmdopt.processArgs(args);
-
-        assert(cmdopt.files == ["-"]);
-        assert(cmdopt.linesPerFile == 10);
-        assert(cmdopt.keyFields.empty);
-        assert(cmdopt.numFiles == 0);
-        assert(cmdopt.hasHeader == false);
-    }
-    {
-        auto args = ["unittest", "--num-files", "20"];
-        TsvSplitOptions cmdopt;
-        const r = cmdopt.processArgs(args);
-
-        assert(cmdopt.files == ["-"]);
-        assert(cmdopt.linesPerFile == 0);
-        assert(cmdopt.keyFields.empty);
-        assert(cmdopt.numFiles == 20);
-        assert(cmdopt.hasHeader == false);
-    }
-    {
-        auto args = ["unittest", "-n", "5", "--key-fields", "1-3"];
-        TsvSplitOptions cmdopt;
-        const r = cmdopt.processArgs(args);
-
-        assert(cmdopt.linesPerFile == 0);
-        assert(cmdopt.keyFields == [0, 1, 2]);
-        assert(cmdopt.numFiles == 5);
-        assert(cmdopt.hasHeader == false);
-        assert(cmdopt.keyIsFullLine == false);
-    }
-    {
-        auto args = ["unittest", "-n", "5", "-k", "0"];
-        TsvSplitOptions cmdopt;
-        const r = cmdopt.processArgs(args);
-
-        assert(cmdopt.linesPerFile == 0);
-        assert(cmdopt.numFiles == 5);
-        assert(cmdopt.hasHeader == false);
-        assert(cmdopt.keyIsFullLine == true);
-    }
-    {
-        auto args = ["unittest", "-n", "2", "--header"];
-        TsvSplitOptions cmdopt;
-        const r = cmdopt.processArgs(args);
-
-        assert(cmdopt.headerInOut == true);
-        assert(cmdopt.hasHeader == true);
-        assert(cmdopt.headerIn == false);
-    }
-    {
-        auto args = ["unittest", "-n", "2", "--header-in-only"];
-        TsvSplitOptions cmdopt;
-        const r = cmdopt.processArgs(args);
-
-        assert(cmdopt.headerInOut == false);
-        assert(cmdopt.hasHeader == true);
-        assert(cmdopt.headerIn == true);
     }
 }
