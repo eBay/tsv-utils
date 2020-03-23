@@ -1080,6 +1080,24 @@ unittest
     import std.path : buildPath;
     import std.process : escapeShellCommand, executeShell;
 
+    /* Test setup
+     *
+     * Input files have names: input_NxM.txt, where N is the number of characters in
+     * each row and M is the number of rows (lines). Twenty five files total:
+     *    input_0x2.txt ... input 5x5.txt.
+     *
+     * A standalone setup will produce expected result files for splitting all of these
+     * files from 1 to 5 lines-per-file. This will duplicate the splitByLineCount output.
+     *
+     * splitByLine will be called for using all of these same --lines-per-file, but also
+     * using a series of different ReadBufferSizes. This should ensure no edge cases were
+     * missed.
+     */
+
+    /* This routine acts as a surrogate for main() and tsvSplit(). It makes the call to
+     * splitByLineCount and calls diff to compare the output directory to the expected
+     * directory.
+     */
     void testTsvSplitByLineCount(string[] cmdArgs, string expectedDir,
                                  size_t readBufferSize = 1024L * 512L)
     {
@@ -1111,18 +1129,15 @@ unittest
                       savedCmdArgs, readBufferSize, expectedDir, diffResult.output));
     }
 
-    /* Test setup
-     *
-     * Input files have names: input_NxM.txt, where N is the number of characters in
-     * each row and M is the number of rows (lines). Twenty file total files:
-     *    input_0x2.txt ... input 5x5.txt.
-     *
-     */
-
     auto inputDir = makeUnittestTempDir("tsv_split_lc_input");
+    scope(exit) inputDir.rmdirRecurse;
+
     auto outputDir = makeUnittestTempDir("tsv_split_lc_output");
+    scope(exit) outputDir.rmdirRecurse;
+
     auto expectedDir = makeUnittestTempDir("tsv_split_lc_expected");
-    writeln("=====> ", inputDir);
+    scope(exit) expectedDir.rmdirRecurse;
+
 
     string[5] outputRowData =
         [
@@ -1190,6 +1205,19 @@ unittest
                 testTsvSplitByLineCount(
                     ["test", "--lines-per-file", outputFileNumLines.to!string, "--dir", outputSubDir, inputFile],
                     expectedSubDir);
+
+                outputSubDir.rmdirRecurse;
+
+                foreach (readBufSize; 1 .. 8)
+                {
+                     mkdir(outputSubDir);
+
+                     testTsvSplitByLineCount(
+                         ["test", "--lines-per-file", outputFileNumLines.to!string, "--dir", outputSubDir, inputFile],
+                         expectedSubDir, readBufSize);
+
+                     outputSubDir.rmdirRecurse;
+                }
             }
         }
     }
