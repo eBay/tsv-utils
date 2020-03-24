@@ -451,6 +451,24 @@ struct TsvSplitOptions
              * No suffix if reading from standard input.
              */
             if (suffix == invalidFileSuffix) suffix = files[0].extension;
+
+            /* Ensure forward slash is not included in the filename prefix and suffix.
+             * Forward slash is an invalid Unix filename character. However, open file
+             * calls could match a directory path, resulting in unintended file
+             * creation.
+             *
+             * The other invalid filename character on Unix is the NULL character.
+             * However, the NULL character cannot be entered via Unix command lines,
+             * so there is no need to test for it explicitly.
+             */
+            if (prefix.canFind('/'))
+            {
+                throw new Exception("'--prefix' cannot contain forward slash characters. Use '--dir' to specify an output directory.");
+            }
+            if (suffix.canFind('/'))
+            {
+                throw new Exception("'--suffix' cannot contain forward slash characters. Use '--dir' to specify an output directory.");
+            }
         }
         catch (Exception exc)
         {
