@@ -76,7 +76,9 @@ operation:
   with the same key are written to the same file.
 
 By default, files are written to the current directory and have names
-of the form 'part_NNN.tsv', with 'NNN' being a number. The output
+of the form 'part_NNN<suffix>', with 'NNN' being a number and <suffix>
+being the extension of the first input file. If the input file is
+'file.txt', the names will take the form 'part_NNN.txt'. The output
 directory and file names are customizable.
 
 Use '--help-verbose' for more detailed information.
@@ -102,8 +104,11 @@ operation:
   with the same key are written to the same file.
 
 Output files: By default, files are written to the current directory and
-have names of the form 'part_NNN.tsv', with 'NNN' being a number. The
-output directory and file names are customizable.
+have names of the form 'part_NNN<suffix>', with 'NNN' being a number and
+<suffix> being the extension of the first input file. If the input file is
+'file.txt', the names will take the form 'part_NNN.txt'. The suffix is
+empty when reading from standard input. The output directory and file
+names are customizable.
 
 Header lines: There are two ways to handle input with headers: write a
 header to all output files (--H|header), or exclude headers from all
@@ -160,20 +165,20 @@ Use Unix 'ulimit' to display and modify the limits:
 Examples:
 
   # Split a 10 million line file into 1000 files, 10,000 lines each.
-  # Output files are part_000.tsv, part_001.tsv, ... part_999.tsv.
-  tsv-split data.tsv --lines-per-file 10000
+  # Output files are part_000.txt, part_001.txt, ... part_999.txt.
+  tsv-split data.txt --lines-per-file 10000
 
   # Same as the previous example, but write files to a subdirectory.
-  tsv-split data.tsv --dir split_files --lines-per-file 10000
+  tsv-split data.txt --dir split_files --lines-per-file 10000
 
   # Split a file into 10,000 line files, writing a header line to each
-  tsv-split data.tsv -H --lines-per-file 10000
+  tsv-split data.txt -H --lines-per-file 10000
 
   # Same as the previous example, but dropping the header line.
-  tsv-split data.tsv -I --lines-per-file 10000
+  tsv-split data.txt -I --lines-per-file 10000
 
   # Randomly assign lines to 1000 files
-  tsv-split data.tsv --num-files 1000
+  tsv-split data.txt --num-files 1000
 
   # Randomly assign lines to 1000 files while keeping unique keys from
   # field 3 together.
@@ -208,6 +213,8 @@ EOS";
  */
 struct TsvSplitOptions
 {
+    enum invalidFileSuffix = "///////";
+
     string programName;                        /// Program name
     string[] files;                            /// Input files
     bool helpVerbose = false;                  /// --help-verbose
@@ -218,7 +225,7 @@ struct TsvSplitOptions
     size_t[] keyFields;                        /// --k|key-fields
     string dir;                                /// --dir
     string prefix = "part_";                   /// --prefix
-    string suffix = ".tsv";                    /// --suffix
+    string suffix = invalidFileSuffix;         /// --suffix
     bool appendToExistingFiles = false;        /// --a|append
     bool staticSeed = false;                   /// --s|static-seed
     uint seedValueOptionArg = 0;               /// --v|seed-value
@@ -255,7 +262,7 @@ struct TsvSplitOptions
         import std.format : format;
         import std.getopt;
         import std.math : isNaN;
-        import std.path : baseName, expandTilde, stripExtension;
+        import std.path : baseName, expandTilde, extension, stripExtension;
         import std.typecons : Yes, No;
         import tsv_utils.common.utils : makeFieldListOptionHandler;
 
@@ -280,7 +287,7 @@ struct TsvSplitOptions
 
                 "dir",              "STR  Directory to write to. Default: Current working directory.", &dir,
                 "prefix",           "STR  Filename prefix. Default: 'part_'", &prefix,
-                "suffix",           "STR  Filename suffix. Default: '.tsv'", &suffix,
+                "suffix",           "STR  Filename suffix. Default: First input file extension. None for standard input.", &suffix,
                 "a|append",         "     Append to existing files.", &appendToExistingFiles,
 
                 "s|static-seed",    "     Use the same random seed every run.", &staticSeed,
@@ -439,6 +446,11 @@ struct TsvSplitOptions
 
             files ~= (cmdArgs.length > 1) ? cmdArgs[1 .. $] : ["-"];
             cmdArgs.length = 1;
+
+            /* Suffix - If not provided, use the extension of the first input file.
+             * No suffix if reading from standard input.
+             */
+            if (suffix == invalidFileSuffix) suffix = files[0].extension;
         }
         catch (Exception exc)
         {
@@ -516,6 +528,78 @@ unittest
         assert(cmdopt.headerInOut == false);
         assert(cmdopt.hasHeader == true);
         assert(cmdopt.headerIn == true);
+    }
+    {
+        auto args = ["unittest", "-n", "2"];
+        TsvSplitOptions cmdopt;
+        const r = cmdopt.processArgs(args);
+
+        assert(cmdopt.files == ["-"]);
+        assert(cmdopt.suffix == "");
+    }
+    {
+        auto args = ["unittest", "-n", "2", "--", "-"];
+        TsvSplitOptions cmdopt;
+        const r = cmdopt.processArgs(args);
+
+        assert(cmdopt.files == ["-"]);
+        assert(cmdopt.suffix == "");
+    }
+    {
+        auto args = ["unittest", "-n", "2", "--suffix", "_123"];
+        TsvSplitOptions cmdopt;
+        const r = cmdopt.processArgs(args);
+
+        assert(cmdopt.files == ["-"]);
+        assert(cmdopt.suffix == "_123");
+    }
+    {
+        auto args = ["unittest", "-n", "2", "somefile.txt"];
+        TsvSplitOptions cmdopt;
+        const r = cmdopt.processArgs(args);
+
+        assert(cmdopt.files == ["somefile.txt"]);
+        assert(cmdopt.suffix == ".txt");
+    }
+    {
+        auto args = ["unittest", "-n", "2", "somefile.txt", "anotherfile.pqr"];
+        TsvSplitOptions cmdopt;
+        const r = cmdopt.processArgs(args);
+
+        assert(cmdopt.files == ["somefile.txt", "anotherfile.pqr"]);
+        assert(cmdopt.suffix == ".txt");
+    }
+    {
+        auto args = ["unittest", "-n", "2", "--suffix", ".X", "somefile.txt", "anotherfile.pqr"];
+        TsvSplitOptions cmdopt;
+        const r = cmdopt.processArgs(args);
+
+        assert(cmdopt.files == ["somefile.txt", "anotherfile.pqr"]);
+        assert(cmdopt.suffix == ".X");
+    }
+    {
+        auto args = ["unittest", "-n", "2", "--suffix", "", "somefile.txt"];
+        TsvSplitOptions cmdopt;
+        const r = cmdopt.processArgs(args);
+
+        assert(cmdopt.files == ["somefile.txt"]);
+        assert(cmdopt.suffix == "");
+    }
+    {
+        auto args = ["unittest", "-n", "2", "--", "-", "somefile.txt"];
+        TsvSplitOptions cmdopt;
+        const r = cmdopt.processArgs(args);
+
+        assert(cmdopt.files == ["-", "somefile.txt"]);
+        assert(cmdopt.suffix == "");
+    }
+    {
+        auto args = ["unittest", "-n", "2", "--", "somefile.txt", "-"];
+        TsvSplitOptions cmdopt;
+        const r = cmdopt.processArgs(args);
+
+        assert(cmdopt.files == ["somefile.txt", "-"]);
+        assert(cmdopt.suffix == ".txt");
     }
 }
 
@@ -1218,7 +1302,7 @@ unittest
                 mkdir(outputSubDir);
 
                 testSplitByLineCount(
-                    ["test", "--lines-per-file", outputFileNumLines.to!string, "--suffix", ".txt", "--dir", outputSubDir, inputFile],
+                    ["test", "--lines-per-file", outputFileNumLines.to!string, "--dir", outputSubDir, inputFile],
                     expectedSubDir);
 
                 outputSubDir.rmdirRecurse;
@@ -1228,7 +1312,7 @@ unittest
                      mkdir(outputSubDir);
 
                      testSplitByLineCount(
-                         ["test", "--lines-per-file", outputFileNumLines.to!string, "--suffix", ".txt", "--dir", outputSubDir, inputFile],
+                         ["test", "--lines-per-file", outputFileNumLines.to!string, "--dir", outputSubDir, inputFile],
                          expectedSubDir, readBufSize);
 
                      outputSubDir.rmdirRecurse;
@@ -1300,12 +1384,12 @@ unittest
             mkdir(outputSubDirHeaderInOnly);
 
             testSplitByLineCount(
-                ["test", "--header", "--lines-per-file", outputFileNumLines.to!string, "--suffix", ".txt",
-                 "--dir", outputSubDirHeader, inputFile],
+                ["test", "--header", "--lines-per-file", outputFileNumLines.to!string, "--dir",
+                 outputSubDirHeader, inputFile],
                 expectedSubDirHeader, readBufSize);
 
             testSplitByLineCount(
-                ["test", "--header-in-only", "--lines-per-file", outputFileNumLines.to!string, "--suffix", ".txt",
+                ["test", "--header-in-only", "--lines-per-file", outputFileNumLines.to!string,
                  "--dir", outputSubDirHeaderInOnly, inputFile],
                 expectedSubDirHeaderInOnly, readBufSize);
 
