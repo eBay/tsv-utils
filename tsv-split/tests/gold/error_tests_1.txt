@@ -61,6 +61,12 @@ Error [tsv-split]: Not enough fields in line. File: input4x58.tsv, Line: 1
 ====[tsv-sample -l 10 --header --header-in-only input4x58.tsv]====
 [tsv-split] Error processing command line arguments: Use only one of '--H|header' and '--I|header-in-only'.
 
+====[tsv-sample -n 2 --prefix dir/file input4x58.tsv]====
+[tsv-split] Error processing command line arguments: '--prefix' cannot contain forward slash characters. Use '--dir' to specify an output directory.
+
+====[tsv-sample -n 2 --suffix ab/cd input4x58.tsv]====
+[tsv-split] Error processing command line arguments: '--suffix' cannot contain forward slash characters. Use '--dir' to specify an output directory.
+
 ====[ulimit -Sn 5 && tsv-split -s -n 101 -k 3 --max-open-files 6 ../input4x58.tsv]====
 [tsv-split] Error processing command line arguments: '--max-open-files' value (6) greater current system limit (5).
 Run 'ulimit -n' to see the soft limit.
