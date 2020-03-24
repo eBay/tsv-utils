@@ -75,28 +75,28 @@ Run 'ulimit -Sn NUM' to change the soft limit.
 
 ====[tsv-split -l 3 ../input1x5.txt]====
 ====[tsv-split -l 3 ../input1x5.txt]====
-Error [tsv-split]: Output file already exists. Use '--a|append' to append to existing files. File: 'part_0.tsv'.
-==> ./tsvsplit_workdir/part_0.tsv <==
+Error [tsv-split]: Output file already exists. Use '--a|append' to append to existing files. File: 'part_0.txt'.
+==> ./tsvsplit_workdir/part_0.txt <==
 input1x5.txt: line 1
 input1x5.txt: line 2
 input1x5.txt: line 3
 
-==> ./tsvsplit_workdir/part_1.tsv <==
+==> ./tsvsplit_workdir/part_1.txt <==
 input1x5.txt: line 4
 input1x5.txt: line 5
 
 ====[tsv-split -v 15017 -n 3 ../input1x5.txt]====
 ====[tsv-split -v 15017 -n 3 ../input1x5.txt]====
-Error [tsv-split]: One or more output files already exist. Use '--a|append' to append to existing files. File: 'part_0.tsv'.
-==> ./tsvsplit_workdir/part_0.tsv <==
+Error [tsv-split]: One or more output files already exist. Use '--a|append' to append to existing files. File: 'part_0.txt'.
+==> ./tsvsplit_workdir/part_0.txt <==
 input1x5.txt: line 3
 input1x5.txt: line 4
 input1x5.txt: line 5
 
-==> ./tsvsplit_workdir/part_1.tsv <==
+==> ./tsvsplit_workdir/part_1.txt <==
 input1x5.txt: line 1
 
-==> ./tsvsplit_workdir/part_2.tsv <==
+==> ./tsvsplit_workdir/part_2.txt <==
 input1x5.txt: line 2
 
 ====[tsv-split -s -n 11 -k 3 ../input4x18.tsv]====
