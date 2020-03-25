@@ -107,7 +107,9 @@ Output files: By default, files are written to the current directory and
 have names of the form 'part_NNN<suffix>', with 'NNN' being a number and
 <suffix> being the extension of the first input file. If the input file is
 'file.txt', the names will take the form 'part_NNN.txt'. The suffix is
-empty when reading from standard input. The output directory and file
+empty when reading from standard input. The numeric part defaults to 3
+digits for '--l|lines-per-files'. For '--n|num-files' enough digits are
+used so all filenames are the same length. The output directory and file
 names are customizable.
 
 Header lines: There are two ways to handle input with headers: write a
@@ -226,6 +228,7 @@ struct TsvSplitOptions
     string dir;                                /// --dir
     string prefix = "part_";                   /// --prefix
     string suffix = invalidFileSuffix;         /// --suffix
+    uint digitWidth = 0;                       /// --w|digit-width
     bool appendToExistingFiles = false;        /// --a|append
     bool staticSeed = false;                   /// --s|static-seed
     uint seedValueOptionArg = 0;               /// --v|seed-value
@@ -288,6 +291,7 @@ struct TsvSplitOptions
                 "dir",              "STR  Directory to write to. Default: Current working directory.", &dir,
                 "prefix",           "STR  Filename prefix. Default: 'part_'", &prefix,
                 "suffix",           "STR  Filename suffix. Default: First input file extension. None for standard input.", &suffix,
+                "w|digit-width",    "NUM  Number of digits in filename numeric portion. Default: '--l|lines-per-file': 3. '--n|num-files': Chosen so filenames have the same length. '--w|digit-width 0' uses the default.", &digitWidth,
                 "a|append",         "     Append to existing files.", &appendToExistingFiles,
 
                 "s|static-seed",    "     Use the same random seed every run.", &staticSeed,
@@ -469,6 +473,29 @@ struct TsvSplitOptions
             {
                 throw new Exception("'--suffix' cannot contain forward slash characters. Use '--dir' to specify an output directory.");
             }
+
+            /* Digit width - If not specified, or specified as zero, the width is
+             * determined by the number of files for --num-files, or defaulted to 3
+             * for --lines-per-file.
+             */
+            if (digitWidth == 0)
+            {
+                if (numFiles > 0)
+                {
+                    digitWidth = 1;
+                    uint n = numFiles - 1;
+                    while (n >= 10)
+                    {
+                        n /= 10;
+                        ++digitWidth;
+                    }
+                }
+                else
+                {
+                    digitWidth = 3;
+                }
+            }
+            assert(digitWidth != 0);
         }
         catch (Exception exc)
         {
@@ -481,11 +508,14 @@ struct TsvSplitOptions
 
 /* TsvSplitOptions unit tests (command-line argument processing).
  *
- * Very basic tests. Most cases are covered in executable tests, especially error cases,
+ * Basic tests. Many cases are covered in executable tests, including all error cases,
  * as errors write to stderr.
  */
 unittest
 {
+    import std.conv : to;
+    import std.format : format;
+
     {
         auto args = ["unittest", "--lines-per-file", "10"];
         TsvSplitOptions cmdopt;
@@ -547,78 +577,61 @@ unittest
         assert(cmdopt.hasHeader == true);
         assert(cmdopt.headerIn == true);
     }
+
+    static void testSuffix(string[] args, string expectedSuffix, string[] expectedFiles)
     {
-        auto args = ["unittest", "-n", "2"];
         TsvSplitOptions cmdopt;
+        auto savedArgs = args.to!string;
         const r = cmdopt.processArgs(args);
 
-        assert(cmdopt.files == ["-"]);
-        assert(cmdopt.suffix == "");
+        assert(r[0], format("[testSuffix] cmdopt.processArgs(%s) returned false.", savedArgs));
+        assert(cmdopt.suffix == expectedSuffix,
+               format("[testSuffix] Incorrect cmdopt.suffix. Expected: '%s', Actual: '%s'\n   cmdopt.processArgs(%s)",
+                      expectedSuffix, cmdopt.suffix, savedArgs));
+        assert(cmdopt.files == expectedFiles,
+               format("[testSuffix] Incorrect cmdopt.files. Expected: %s, Actual: %s\n   cmdopt.processArgs(%s)",
+                      expectedFiles, cmdopt.files, savedArgs));
     }
+
+    testSuffix(["unittest", "-n", "2"], "", ["-"]);
+    testSuffix(["unittest", "-n", "2", "--", "-"], "", ["-"]);
+    testSuffix(["unittest", "-n", "2", "--suffix", "_123"], "_123", ["-"]);
+    testSuffix(["unittest", "-n", "2", "somefile.txt"], ".txt", ["somefile.txt"]);
+    testSuffix(["unittest", "-n", "2", "somefile.txt", "anotherfile.pqr"],
+               ".txt", ["somefile.txt", "anotherfile.pqr"]);
+    testSuffix(["unittest", "-n", "2", "--suffix", ".X", "somefile.txt", "anotherfile.pqr"],
+               ".X", ["somefile.txt", "anotherfile.pqr"]);
+    testSuffix(["unittest", "-n", "2", "--suffix", "", "somefile.txt"],
+               "", ["somefile.txt"]);
+    testSuffix(["unittest", "-n", "2", "--", "-", "somefile.txt"],
+               "", ["-", "somefile.txt"]);
+    testSuffix(["unittest", "-n", "2", "--", "somefile.txt", "-"],
+               ".txt", ["somefile.txt", "-"]);
+
+    static void testDigitWidth(string[] args, uint expected)
     {
-        auto args = ["unittest", "-n", "2", "--", "-"];
         TsvSplitOptions cmdopt;
+        auto savedArgs = args.to!string;
         const r = cmdopt.processArgs(args);
 
-        assert(cmdopt.files == ["-"]);
-        assert(cmdopt.suffix == "");
+        assert(r[0], format("[testDigitWidth] cmdopt.processArgs(%s) returned false.", savedArgs));
+        assert(cmdopt.digitWidth == expected,
+               format("[testDigitWidth] Incorrect cmdopt.digitWidth. Expected: %d, Actual: %d\n   cmdopt.processArgs(%s)",
+                      expected, cmdopt.digitWidth, savedArgs));
     }
-    {
-        auto args = ["unittest", "-n", "2", "--suffix", "_123"];
-        TsvSplitOptions cmdopt;
-        const r = cmdopt.processArgs(args);
 
-        assert(cmdopt.files == ["-"]);
-        assert(cmdopt.suffix == "_123");
-    }
-    {
-        auto args = ["unittest", "-n", "2", "somefile.txt"];
-        TsvSplitOptions cmdopt;
-        const r = cmdopt.processArgs(args);
-
-        assert(cmdopt.files == ["somefile.txt"]);
-        assert(cmdopt.suffix == ".txt");
-    }
-    {
-        auto args = ["unittest", "-n", "2", "somefile.txt", "anotherfile.pqr"];
-        TsvSplitOptions cmdopt;
-        const r = cmdopt.processArgs(args);
-
-        assert(cmdopt.files == ["somefile.txt", "anotherfile.pqr"]);
-        assert(cmdopt.suffix == ".txt");
-    }
-    {
-        auto args = ["unittest", "-n", "2", "--suffix", ".X", "somefile.txt", "anotherfile.pqr"];
-        TsvSplitOptions cmdopt;
-        const r = cmdopt.processArgs(args);
-
-        assert(cmdopt.files == ["somefile.txt", "anotherfile.pqr"]);
-        assert(cmdopt.suffix == ".X");
-    }
-    {
-        auto args = ["unittest", "-n", "2", "--suffix", "", "somefile.txt"];
-        TsvSplitOptions cmdopt;
-        const r = cmdopt.processArgs(args);
-
-        assert(cmdopt.files == ["somefile.txt"]);
-        assert(cmdopt.suffix == "");
-    }
-    {
-        auto args = ["unittest", "-n", "2", "--", "-", "somefile.txt"];
-        TsvSplitOptions cmdopt;
-        const r = cmdopt.processArgs(args);
-
-        assert(cmdopt.files == ["-", "somefile.txt"]);
-        assert(cmdopt.suffix == "");
-    }
-    {
-        auto args = ["unittest", "-n", "2", "--", "somefile.txt", "-"];
-        TsvSplitOptions cmdopt;
-        const r = cmdopt.processArgs(args);
-
-        assert(cmdopt.files == ["somefile.txt", "-"]);
-        assert(cmdopt.suffix == ".txt");
-    }
+    testDigitWidth(["unittest", "-n", "2"], 1);
+    testDigitWidth(["unittest", "-n", "2", "--digit-width" , "0"], 1);
+    testDigitWidth(["unittest", "-n", "10"], 1);
+    testDigitWidth(["unittest", "-n", "11"], 2);
+    testDigitWidth(["unittest", "-n", "555"], 3);
+    testDigitWidth(["unittest", "-n", "555", "--digit-width" , "2"], 2);
+    testDigitWidth(["unittest", "-n", "555", "--digit-width" , "4"], 4);
+    testDigitWidth(["unittest", "-l", "10"], 3);
+    testDigitWidth(["unittest", "-l", "10000"], 3);
+    testDigitWidth(["unittest", "-l", "10000", "--digit-width", "0"], 3);
+    testDigitWidth(["unittest", "-l", "10000", "--digit-width", "1"], 1);
+    testDigitWidth(["unittest", "-l", "10000", "--digit-width", "5"], 5);
 }
 
 /** Get the rlimit current number of open files the process is allowed.
@@ -677,8 +690,8 @@ void tsvSplit(TsvSplitOptions cmdopt)
         /* Randomly distribute input lines to a specified number of files. */
 
         auto outputFiles =
-            SplitOutputFiles(cmdopt.numFiles, cmdopt.dir, cmdopt.prefix,
-                             cmdopt.suffix, cmdopt.headerInOut, cmdopt.maxOpenOutputFiles);
+            SplitOutputFiles(cmdopt.numFiles, cmdopt.dir, cmdopt.prefix, cmdopt.suffix,
+                             cmdopt.digitWidth, cmdopt.headerInOut, cmdopt.maxOpenOutputFiles);
 
         if (!cmdopt.appendToExistingFiles)
         {
@@ -744,7 +757,8 @@ struct SplitOutputFiles
     private uint _numOpenFiles = 0;
     private string _header;
 
-    this(uint numFiles, string dir, string filePrefix, string fileSuffix, bool writeHeaders, uint maxOpenFiles)
+    this(uint numFiles, string dir, string filePrefix, string fileSuffix,
+         uint fileDigitWidth, bool writeHeaders, uint maxOpenFiles)
     {
         assert(numFiles >= 2);
         assert(maxOpenFiles >= 1);
@@ -756,18 +770,10 @@ struct SplitOutputFiles
         _outputFiles.length = numFiles;
 
         /* Filename assignment. */
-        uint numPrintDigits = 1;
-        uint x = _numFiles - 1;
-        while (x >= 10)
-        {
-            x /= 10;
-            ++numPrintDigits;
-        }
-
         foreach (i, ref f; _outputFiles)
         {
             f.filename =
-                buildPath(dir, format("%s%.*d%s", filePrefix, numPrintDigits, i, fileSuffix));
+                buildPath(dir, format("%s%.*d%s", filePrefix, fileDigitWidth, i, fileSuffix));
         }
     }
 
@@ -1083,7 +1089,9 @@ void splitByLineCount(TsvSplitOptions cmdopt, const size_t readBufferSize = 1024
                 if (!isOutputFileOpen)
                 {
                     outputFileName =
-                        buildPath(cmdopt.dir, format("%s%d%s", cmdopt.prefix, nextOutputFileNum, cmdopt.suffix));
+                        buildPath(cmdopt.dir,
+                                  format("%s%.*d%s", cmdopt.prefix,
+                                         cmdopt.digitWidth, nextOutputFileNum, cmdopt.suffix));
 
                     if (!cmdopt.appendToExistingFiles && outputFileName.exists)
                     {
@@ -1320,7 +1328,8 @@ unittest
                 mkdir(outputSubDir);
 
                 testSplitByLineCount(
-                    ["test", "--lines-per-file", outputFileNumLines.to!string, "--dir", outputSubDir, inputFile],
+                    ["test", "--lines-per-file", outputFileNumLines.to!string, "--dir", outputSubDir,
+                     "--digit-width", "1", inputFile],
                     expectedSubDir);
 
                 outputSubDir.rmdirRecurse;
@@ -1330,7 +1339,8 @@ unittest
                      mkdir(outputSubDir);
 
                      testSplitByLineCount(
-                         ["test", "--lines-per-file", outputFileNumLines.to!string, "--dir", outputSubDir, inputFile],
+                         ["test", "--lines-per-file", outputFileNumLines.to!string, "--dir", outputSubDir,
+                          "--digit-width", "1", inputFile],
                          expectedSubDir, readBufSize);
 
                      outputSubDir.rmdirRecurse;
@@ -1402,13 +1412,13 @@ unittest
             mkdir(outputSubDirHeaderInOnly);
 
             testSplitByLineCount(
-                ["test", "--header", "--lines-per-file", outputFileNumLines.to!string, "--dir",
-                 outputSubDirHeader, inputFile],
+                ["test", "--header", "--lines-per-file", outputFileNumLines.to!string,
+                 "--dir", outputSubDirHeader, "--digit-width", "1", inputFile],
                 expectedSubDirHeader, readBufSize);
 
             testSplitByLineCount(
                 ["test", "--header-in-only", "--lines-per-file", outputFileNumLines.to!string,
-                 "--dir", outputSubDirHeaderInOnly, inputFile],
+                 "--dir", outputSubDirHeaderInOnly, "--digit-width", "1", inputFile],
                 expectedSubDirHeaderInOnly, readBufSize);
 
             outputSubDirHeader.rmdirRecurse;
