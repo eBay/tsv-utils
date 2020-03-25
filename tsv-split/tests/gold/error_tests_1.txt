@@ -81,13 +81,13 @@ Run 'ulimit -Sn NUM' to change the soft limit.
 
 ====[tsv-split -l 3 ../input1x5.txt]====
 ====[tsv-split -l 3 ../input1x5.txt]====
-Error [tsv-split]: Output file already exists. Use '--a|append' to append to existing files. File: 'part_0.txt'.
-==> ./tsvsplit_workdir/part_0.txt <==
+Error [tsv-split]: Output file already exists. Use '--a|append' to append to existing files. File: 'part_000.txt'.
+==> ./tsvsplit_workdir/part_000.txt <==
 input1x5.txt: line 1
 input1x5.txt: line 2
 input1x5.txt: line 3
 
-==> ./tsvsplit_workdir/part_1.txt <==
+==> ./tsvsplit_workdir/part_001.txt <==
 input1x5.txt: line 4
 input1x5.txt: line 5
 
