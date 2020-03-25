@@ -2239,6 +2239,38 @@ fumée	2113	Araqua-pintado	0
 marrón	2034	Weißwangengans	1
 fumée	2124	Araqua-pintado	0
 
+====[tsv-split -v 15017 -n 20 -k 0 --digit-width 1 ../input1x5.txt]====
+==> ./tsvsplit_workdir/part_14.txt <==
+input1x5.txt: line 2
+
+==> ./tsvsplit_workdir/part_15.txt <==
+input1x5.txt: line 4
+
+==> ./tsvsplit_workdir/part_5.txt <==
+input1x5.txt: line 5
+
+==> ./tsvsplit_workdir/part_6.txt <==
+input1x5.txt: line 1
+
+==> ./tsvsplit_workdir/part_8.txt <==
+input1x5.txt: line 3
+
+====[tsv-split -v 15017 -n 20 -k 0 -w 5 ../input1x5.txt]====
+==> ./tsvsplit_workdir/part_00005.txt <==
+input1x5.txt: line 5
+
+==> ./tsvsplit_workdir/part_00006.txt <==
+input1x5.txt: line 1
+
+==> ./tsvsplit_workdir/part_00008.txt <==
+input1x5.txt: line 3
+
+==> ./tsvsplit_workdir/part_00014.txt <==
+input1x5.txt: line 2
+
+==> ./tsvsplit_workdir/part_00015.txt <==
+input1x5.txt: line 4
+
 ====[tsv-split -s -n 101 --max-open-files 5 -k 3 ../input4x58.tsv]====
 ==> ./tsvsplit_workdir/part_000.tsv <==
 dorado	2045	Лебедь	2

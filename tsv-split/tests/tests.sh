@@ -14,6 +14,20 @@ shift
 odir=$1
 echo "Testing ${prog}, output to ${odir}"
 
+## A hack for now - Know the exact relative path of the dircat program.
+dircat_prog='../../buildtools/dircat'
+
+if [ ! -e "$dircat_prog" ]; then
+    echo "Program $dircat_prog does not exist."
+    echo "Is 'cd buildtools && make' needed?."
+    exit 1
+fi
+
+if [ ! -x "$dircat_prog" ]; then
+    echo "Program $dircat_prog is not an executable."
+    exit 1
+fi
+
 ##
 ## 'runtest' is used when no files are expected, only output to standard output or
 ## standard error. This routine is used for '--help', '--version', command line error
@@ -36,8 +50,9 @@ runtest () {
 ## in tsv-utils repo. In particular, because 'tsv-split' produces multiple output
 ## files, having a single file comparison basis is setup differently. This version
 ## of 'runtest' generates a directory with multiple files, then concatenates the
-## result files using 'tail -n +1'. This concatenates all files with a header line
-## giving the file name between.
+## result files using 'dircat' from the 'buildtools' directory. This concatenates
+## all files with a header line giving the file name between. The result is similar
+## to 'tail -n +1', but more consistent across platforms.
 ##
 ## For consistency with the other tsv-utils test scripts, this routine takes the
 ## same three arguments as the standard 'runtest' scripts. A fourth logical
@@ -82,7 +97,7 @@ runtest_wdir () {
 
     mkdir -p ${output_dir}
     ( cd ${workdir} && ${prog} --DRT-covopt="dstpath:../" ${args} >> ${testdir_relpath}/${output_file} 2>&1 )
-    tail -n +1 ${output_dir}/* >> ${output_file} 2>&1
+    ${dircat_prog} ${output_dir} >> ${output_file} 2>&1
 
     rm -rf ${workdir}
 
@@ -118,7 +133,7 @@ runtest_wdir_append () {
         shift
     done
     
-    tail -n +1 ${workdir}/* >> ${output_file} 2>/dev/null
+    ${dircat_prog} ${workdir} >> ${output_file} 2>/dev/null
     rm -rf ${workdir}
 
     return 0
@@ -144,7 +159,7 @@ runtest_wdir_ulimit () {
     rm -rf ${workdir}
     mkdir -p ${workdir}
     ( cd ${workdir} && ulimit -Sn ${ulimit_max_open_files} && ${prog} --DRT-covopt="dstpath:../" ${args} >> ${testdir_relpath}/${output_file} 2>&1 )
-    tail -n +1 ${output_dir}/* >> ${output_file} 2>/dev/null
+    ${dircat_prog} ${output_dir} >> ${output_file} 2>/dev/null
 
     rm -rf ${workdir}
 
@@ -233,6 +248,9 @@ runtest_wdir ${prog} "-l 3 --prefix pre ${testdir_relpath}/input1x5.txt" ${lines
 runtest_wdir ${prog} "-l 3 --dir odir ${testdir_relpath}/input1x5.txt" ${lines_per_file_tests} odir
 runtest_wdir ${prog} "-l 3 --dir odir --prefix pre_ --suffix _post ${testdir_relpath}/input1x5.txt" ${lines_per_file_tests} odir
 
+runtest_wdir ${prog} "-l 1 --digit-width 1 ${testdir_relpath}/input1x5.txt" ${lines_per_file_tests}
+runtest_wdir ${prog} "-l 1 -w 5 ${testdir_relpath}/input1x5.txt" ${lines_per_file_tests}
+
 runtest_wdir_append ${prog} "-l 3 --append" ${lines_per_file_tests} ${testdir_relpath}/input1x5.txt ${testdir_relpath}/input1x5.txt
 runtest_wdir_append ${prog} "-H -l 3 -a" ${lines_per_file_tests} ${testdir_relpath}/input1x5.txt ${testdir_relpath}/input1x5.txt ${testdir_relpath}/input1x3.txt
 runtest_wdir_append ${prog} "-I -l 3 --append" ${lines_per_file_tests} ${testdir_relpath}/input1x5.txt ${testdir_relpath}/input1x5.txt ${testdir_relpath}/input1x3.txt
@@ -295,6 +313,9 @@ runtest_wdir ${prog} "-v 15017 -n 101 --max-open-files 11 ${testdir_relpath}/inp
 runtest_wdir ${prog} "-v 15017 -n 101 --max-open-files 12 ${testdir_relpath}/input1x3.txt ${testdir_relpath}/input1x5.txt" ${random_assignment_tests}
 runtest_wdir ${prog} "-v 15017 -n 101 --max-open-files 13 ${testdir_relpath}/input1x3.txt ${testdir_relpath}/input1x5.txt" ${random_assignment_tests}
 
+runtest_wdir ${prog} "-v 15017 -n 20 --digit-width 1 ${testdir_relpath}/input1x5.txt" ${random_assignment_tests}
+runtest_wdir ${prog} "-v 15017 -n 20 -w 5 ${testdir_relpath}/input1x5.txt" ${random_assignment_tests}
+
 runtest_wdir_ulimit ${prog} "-v 15017 -n 101 ${testdir_relpath}/input1x3.txt ${testdir_relpath}/input1x5.txt" ${random_assignment_tests} 5
 runtest_wdir_ulimit ${prog} "-v 15017 -n 101 --max-open-files 5 ${testdir_relpath}/input1x3.txt ${testdir_relpath}/input1x5.txt" ${random_assignment_tests} 5
 runtest_wdir_ulimit ${prog} "-v 15017 -n 101 ${testdir_relpath}/input1x3.txt ${testdir_relpath}/input1x5.txt" ${random_assignment_tests} 6
@@ -347,6 +368,9 @@ runtest_wdir ${prog} "-H -s -n 2 -k 1 --dir odir ${testdir_relpath}/input4x58.ts
 runtest_wdir ${prog} "-H -s -n 2 -k 1 --prefix pre_ --dir odir ${testdir_relpath}/input4x58.tsv" ${key_assignment_tests} odir
 runtest_wdir ${prog} "-H -s -n 2 -k 1 --suffix _suf --dir odir ${testdir_relpath}/input4x58.tsv" ${key_assignment_tests} odir
 runtest_wdir ${prog} "-H -s -n 2 -k 1 --prefix pre_ --suffix _suf --dir odir ${testdir_relpath}/input4x58.tsv" ${key_assignment_tests} odir
+
+runtest_wdir ${prog} "-v 15017 -n 20 -k 0 --digit-width 1 ${testdir_relpath}/input1x5.txt" ${key_assignment_tests}
+runtest_wdir ${prog} "-v 15017 -n 20 -k 0 -w 5 ${testdir_relpath}/input1x5.txt" ${key_assignment_tests}
 
 runtest_wdir ${prog} "-s -n 101 --max-open-files 5 -k 3 ${testdir_relpath}/input4x58.tsv" ${key_assignment_tests}
 runtest_wdir ${prog} "-s -n 101 --max-open-files 6 -k 3 ${testdir_relpath}/input4x58.tsv" ${key_assignment_tests}
