@@ -233,9 +233,6 @@ runtest_wdir ${prog} "-l 3 --prefix pre ${testdir_relpath}/input1x5.txt" ${lines
 runtest_wdir ${prog} "-l 3 --dir odir ${testdir_relpath}/input1x5.txt" ${lines_per_file_tests} odir
 runtest_wdir ${prog} "-l 3 --dir odir --prefix pre_ --suffix _post ${testdir_relpath}/input1x5.txt" ${lines_per_file_tests} odir
 
-runtest_wdir ${prog} "-l 1 --digit-width 1 ${testdir_relpath}/input1x5.txt" ${lines_per_file_tests}
-runtest_wdir ${prog} "-l 1 -w 5 ${testdir_relpath}/input1x5.txt" ${lines_per_file_tests}
-
 runtest_wdir_append ${prog} "-l 3 --append" ${lines_per_file_tests} ${testdir_relpath}/input1x5.txt ${testdir_relpath}/input1x5.txt
 runtest_wdir_append ${prog} "-H -l 3 -a" ${lines_per_file_tests} ${testdir_relpath}/input1x5.txt ${testdir_relpath}/input1x5.txt ${testdir_relpath}/input1x3.txt
 runtest_wdir_append ${prog} "-I -l 3 --append" ${lines_per_file_tests} ${testdir_relpath}/input1x5.txt ${testdir_relpath}/input1x5.txt ${testdir_relpath}/input1x3.txt
@@ -291,9 +288,6 @@ runtest_wdir ${prog} "-v 15017 -n 3 --dir odir --prefix pre_ ${testdir_relpath}/
 runtest_wdir ${prog} "-v 15017 -n 3 --dir odir --suffix .txt ${testdir_relpath}/input1x3.txt ${testdir_relpath}/input1x5.txt" ${random_assignment_tests} odir
 runtest_wdir ${prog} "-v 15017 -n 3 --dir odir --prefix pre_ --suffix .txt ${testdir_relpath}/input1x3.txt ${testdir_relpath}/input1x5.txt" ${random_assignment_tests} odir
 runtest_wdir ${prog} "-v 15017 -n 101 --dir odir --prefix pre_ --suffix .txt ${testdir_relpath}/input1x3.txt ${testdir_relpath}/input1x5.txt" ${random_assignment_tests} odir
-
-runtest_wdir ${prog} "-v 15017 -n 20 --digit-width 1 ${testdir_relpath}/input1x5.txt" ${random_assignment_tests}
-runtest_wdir ${prog} "-v 15017 -n 20 -w 5 ${testdir_relpath}/input1x5.txt" ${random_assignment_tests}
 
 runtest_wdir ${prog} "-v 15017 -n 101 --max-open-files 5 ${testdir_relpath}/input1x3.txt ${testdir_relpath}/input1x5.txt" ${random_assignment_tests}
 runtest_wdir ${prog} "-v 15017 -n 101 --max-open-files 6 ${testdir_relpath}/input1x3.txt ${testdir_relpath}/input1x5.txt" ${random_assignment_tests}
@@ -353,9 +347,6 @@ runtest_wdir ${prog} "-H -s -n 2 -k 1 --dir odir ${testdir_relpath}/input4x58.ts
 runtest_wdir ${prog} "-H -s -n 2 -k 1 --prefix pre_ --dir odir ${testdir_relpath}/input4x58.tsv" ${key_assignment_tests} odir
 runtest_wdir ${prog} "-H -s -n 2 -k 1 --suffix _suf --dir odir ${testdir_relpath}/input4x58.tsv" ${key_assignment_tests} odir
 runtest_wdir ${prog} "-H -s -n 2 -k 1 --prefix pre_ --suffix _suf --dir odir ${testdir_relpath}/input4x58.tsv" ${key_assignment_tests} odir
-
-runtest_wdir ${prog} "-v 15017 -n 20 -k 0 --digit-width 1 ${testdir_relpath}/input1x5.txt" ${key_assignment_tests}
-runtest_wdir ${prog} "-v 15017 -n 20 -k 0 -w 5 ${testdir_relpath}/input1x5.txt" ${key_assignment_tests}
 
 runtest_wdir ${prog} "-s -n 101 --max-open-files 5 -k 3 ${testdir_relpath}/input4x58.tsv" ${key_assignment_tests}
 runtest_wdir ${prog} "-s -n 101 --max-open-files 6 -k 3 ${testdir_relpath}/input4x58.tsv" ${key_assignment_tests}
