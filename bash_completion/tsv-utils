@@ -236,11 +236,11 @@ _tsv_split()
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
-    opts="--help --help-verbose --version --header --header-in-only --lines-per-file --num-files --key-fields --dir --prefix --suffix --append --static-seed --seed-value --delimiter --max-open-files"
+    opts="--help --help-verbose --version --header --header-in-only --lines-per-file --num-files --key-fields --dir --prefix --suffix --digit-width --append --static-seed --seed-value --delimiter --max-open-files"
 
     # Options requiring an argument or precluding other options
     case $prev in
-         -h|--help|--help-verbose|-V|--version|-l|--lines-per-file|-n|--num-files|-k|--key-fields|--dir|--prefix|--suffix|-v|--seed-value|-d|--delimiter|--max-open-files)
+         -h|--help|--help-verbose|-V|--version|-l|--lines-per-file|-n|--num-files|-k|--key-fields|--dir|--prefix|--suffix|-w|--digit-width|-v|--seed-value|-d|--delimiter|--max-open-files)
           return
           ;;
     esac

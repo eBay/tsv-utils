@@ -524,6 +524,34 @@ input1x3.txt: line 3
 ==> ./tsvsplit_workdir/odir/pre_100.txt <==
 input1x5.txt: line 1
 
+====[tsv-split -v 15017 -n 20 --digit-width 1 ../input1x5.txt]====
+==> ./tsvsplit_workdir/part_1.txt <==
+input1x5.txt: line 1
+
+==> ./tsvsplit_workdir/part_10.txt <==
+input1x5.txt: line 4
+input1x5.txt: line 5
+
+==> ./tsvsplit_workdir/part_12.txt <==
+input1x5.txt: line 2
+
+==> ./tsvsplit_workdir/part_14.txt <==
+input1x5.txt: line 3
+
+====[tsv-split -v 15017 -n 20 -w 5 ../input1x5.txt]====
+==> ./tsvsplit_workdir/part_00001.txt <==
+input1x5.txt: line 1
+
+==> ./tsvsplit_workdir/part_00010.txt <==
+input1x5.txt: line 4
+input1x5.txt: line 5
+
+==> ./tsvsplit_workdir/part_00012.txt <==
+input1x5.txt: line 2
+
+==> ./tsvsplit_workdir/part_00014.txt <==
+input1x5.txt: line 3
+
 ====[tsv-split -v 15017 -n 101 --max-open-files 5 ../input1x3.txt ../input1x5.txt]====
 ==> ./tsvsplit_workdir/part_032.txt <==
 input1x5.txt: line 2
