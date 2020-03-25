@@ -14,6 +14,20 @@ shift
 odir=$1
 echo "Testing ${prog}, output to ${odir}"
 
+## A hack for now - Know the exact relative path of the dircat program.
+dircat_prog='../../buildtools/dircat'
+
+if [ ! -e "$dircat_prog" ]; then
+    echo "Program $dircat_prog does not exist."
+    echo "Is 'cd buildtools && make' needed?."
+    exit 1
+fi
+
+if [ ! -x "$dircat_prog" ]; then
+    echo "Program $dircat_prog is not an executable."
+    exit 1
+fi
+
 ##
 ## 'runtest' is used when no files are expected, only output to standard output or
 ## standard error. This routine is used for '--help', '--version', command line error
@@ -36,8 +50,9 @@ runtest () {
 ## in tsv-utils repo. In particular, because 'tsv-split' produces multiple output
 ## files, having a single file comparison basis is setup differently. This version
 ## of 'runtest' generates a directory with multiple files, then concatenates the
-## result files using 'tail -n +1'. This concatenates all files with a header line
-## giving the file name between.
+## result files using 'dircat' from the 'buildtools' directory. This concatenates
+## all files with a header line giving the file name between. The result is similar
+## to 'tail -n +1', but more consistent across platforms.
 ##
 ## For consistency with the other tsv-utils test scripts, this routine takes the
 ## same three arguments as the standard 'runtest' scripts. A fourth logical
@@ -82,7 +97,7 @@ runtest_wdir () {
 
     mkdir -p ${output_dir}
     ( cd ${workdir} && ${prog} --DRT-covopt="dstpath:../" ${args} >> ${testdir_relpath}/${output_file} 2>&1 )
-    tail -n +1 ${output_dir}/* >> ${output_file} 2>&1
+    ${dircat_prog} ${output_dir} >> ${output_file} 2>&1
 
     rm -rf ${workdir}
 
@@ -118,7 +133,7 @@ runtest_wdir_append () {
         shift
     done
     
-    tail -n +1 ${workdir}/* >> ${output_file} 2>/dev/null
+    ${dircat_prog} ${workdir} >> ${output_file} 2>/dev/null
     rm -rf ${workdir}
 
     return 0
@@ -144,7 +159,7 @@ runtest_wdir_ulimit () {
     rm -rf ${workdir}
     mkdir -p ${workdir}
     ( cd ${workdir} && ulimit -Sn ${ulimit_max_open_files} && ${prog} --DRT-covopt="dstpath:../" ${args} >> ${testdir_relpath}/${output_file} 2>&1 )
-    tail -n +1 ${output_dir}/* >> ${output_file} 2>/dev/null
+    ${dircat_prog} ${output_dir} >> ${output_file} 2>/dev/null
 
     rm -rf ${workdir}
 
