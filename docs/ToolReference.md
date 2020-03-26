@@ -80,7 +80,7 @@ Most tools handle the first line of files as a header when given the `-H` or `--
 
 ### Multiple files and standard input
 
-Tools can read from any number of files and from standard input. As per typical Unix behavior, a single dash represents standard input when included in a list of files. Terminate non-file arguments with a double dash (\--) when using a single dash in this fashion. Example:
+Tools can read from any number of files and from standard input. As per typical Unix behavior, a single dash represents standard input when included in a list of files. Terminate non-file arguments with a double dash (`--`) when using a single dash in this fashion. Example:
 ```
 $ head -n 1000 file-c.tsv | tsv-filter --eq 2:1000 -- file-a.tsv file-b.tsv - > out.tsv
 ```
@@ -752,7 +752,7 @@ Features:
 * `--u|underline-header` - Underline the header.
 * `--f|format-floats` - Format floats for better readability. Default: No
 * `--p|precision NUM` - Max floating point precision. Implies --format-floats. Default: 9
-* `--e|replace-empty` - Replace empty fields with '--'.
+* `--e|replace-empty` - Replace empty fields with `--`.
 * `--E|empty-replacement STR` - Replace empty fields with a string.
 * `--d|delimiter CHR` - Field delimiter. Default: TAB. (Single byte UTF-8 characters only.)
 * `--s|space-between-fields NUM` - Spaces between each field (Default: 2)
