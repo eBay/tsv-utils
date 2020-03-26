@@ -254,7 +254,7 @@ _**Tip:**_ Bash completion is very helpful when using commands like `tsv-filter`
 
 **Synopsis:** tsv-select [options] [file...]
 
-tsv-select reads files or standard input and writes specified fields to standard output in the order listed. Similar to `cut` with the ability to reorder fields.
+tsv-select reads files or standard input and writes specified fields to standard output in the order listed. Similar to Unix `cut` with the ability to reorder fields.
 
 Fields numbers start with one. They are comma separated, and ranges can be used. Fields can be listed more than once, and fields not listed can be selected as a group using the `--rest` option. When working with multiple files, the `--header` option can be used to retain the header from the just the first file.
 
