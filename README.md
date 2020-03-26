@@ -167,12 +167,12 @@ See the [tsv-filter reference](docs/ToolReference.md#tsv-filter-reference) for m
 
 ### tsv-select
 
-A version of the Unix `cut` utility with the additional ability to re-order the fields. The following command writes fields [4, 2, 9, 10, 11] from a pair of files to stdout:
+A version of the Unix `cut` utility with the ability to re-order fields. The following command writes fields [4, 2, 9, 10, 11] from a pair of files to stdout:
 ```
 $ tsv-select -f 4,2,9-11 file1.tsv file2.tsv
 ```
 
-Fields can be listed more than once, and fields not listed can be selected as a group using `--r|rest`. Fields can be dropped using `--e|exclude`. When working with multiple files, the `--H|header` option can be used to retain only the header from the first file.
+Fields can be listed more than once, and fields not specified can be selected as a group using `--r|rest`. Fields can be dropped using `--e|exclude`. When working with multiple files, the `--H|header` option can be used to retain the header from just the first file.
 
 Examples:
 ```
