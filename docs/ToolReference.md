@@ -256,39 +256,74 @@ _**Tip:**_ Bash completion is very helpful when using commands like `tsv-filter`
 
 tsv-select reads files or standard input and writes specified fields to standard output in the order listed. Similar to `cut` with the ability to reorder fields.
 
-Fields numbers start with one. They are comma separated, and ranges can be used. Fields can be listed more than once, and fields not listed can be output using the `--rest` option. When working with multiple files, the `--header` option can be used to retain only the header from the first file.
+Fields numbers start with one. They are comma separated, and ranges can be used. Fields can be listed more than once, and fields not listed can be selected as a group using the `--rest` option. When working with multiple files, the `--header` option can be used to retain only the header from the first file.
+
+Fields can be excluded using `--e|exclude`. All fields not excluded are output. `--f|fields` and `--r|rest` can be used with `--e|exclude` to change the order of non-excluded fields.
 
 **Options:**
 * `--h|help` - Print help.
+* `--help-verbose` -  Print more detailed help.
 * `--V|version` - Print version information and exit.
 * `--H|header` - Treat the first line of each file as a header.
-* `--f|fields <field-list>` - (Required) Fields to extract. Fields are output in the order listed.
-* `--r|rest first|last` - Location for remaining fields. Default: none
+* `--f|fields <field-list>` - Fields to retain. Fields are output in the order listed.
+* `--e|--exclude <field-list>` - Fields to exclude.
+* `--r|rest first|last` - Output location for fields not included in the `--f|fields` field-list.
 * `--d|delimiter CHR` - Character to use as field delimiter. Default: TAB. (Single byte UTF-8 characters only.)
+
+**Notes:**
+* One of `--f|fields` or `--e|exclude` is required.
+* Fields specified by `--f|fields` and `--e|exclude` cannot overlap.
+* When `--f|fields` and `--e|exclude` are used together, the effect is to specify `--rest last`. This can be overridden by specifying `--rest first`.
+* Each input line must be long enough to contain all fields specified with `--f|fields`. This is not necessary for `--e|exclude` fields.
 
 **Examples:**
 ```
+$ # Keep the first field from two files
+$ tsv-select -f 1 file1.tsv file2.tsv
+
+$ # Keep fields 1 and 2, retain the header from the first file
+$ tsv-select -H -f 1,2 file1.tsv file2.tsv
+   
 $ # Output fields 2 and 1, in that order
-$ tsv-select -f 2,1 data.tsv
-
-$ # Move field 1 to the end of the line
-$ tsv-select -f 1 --rest first data.tsv
-
-$ # Move fields 7 and 3 to the start of the line
-$ tsv-select -f 7,3 --rest last data.tsv
+$ tsv-select -f 2,1 file.tsv
 
 $ # Output a range of fields
-$ tsv-select -f 3-30 data.tsv
+$ tsv-select -f 3-30 file.tsv
 
 $ # Output a range of fields in reverse order
-$ tsv-select -f 30-3 data.tsv
+$ tsv-select -f 30-3 file.tsv
 
-$ # Multiple files with header lines. Keep only one header.
-$ tsv-select data*.tsv -H --fields 1,2,4-7,14
+$ # Drop the first field, keep everything else
+$ # Equivalent to 'cut -f 2- file.tsv'
+$ tsv-select --exclude 1 file.tsv
+$ tsv-select -e 1 file.tsv
+
+$ # Move field 1 to the end of the line
+$ tsv-select -f 1 --rest first file.tsv
+
+$ # Move fields 7 and 3 to the start of the line
+$ tsv-select -f 7,3 --rest last file.tsv
+
+# Output with repeating fields
+$ tsv-select -f 1,2,1 file.tsv
+$ tsv-select -f 1-3,3-1 file.tsv
+
+$ # Read from standard input
+$ cat file*.tsv | tsv-select -f 1,4-7,11
+
+$ # Read from a file and standard input. The '--' terminates command
+$ # option processing, '-' represents standard input.
+$ cat file1.tsv | tsv-select -f 1-3 -- - file2.tsv
 
 $ # Files using comma as the separator ('simple csv')
 $ # (Note: Does not handle CSV escapes.)
-$ tsv-select -d , --fields 5,1,2 data.csv
+$ tsv-select -d , --fields 5,1,2 file.csv
+
+$ # Move field 2 to the front and drop fields 10-15
+$ tsv-select -f 2 -e 10-15 file.tsv
+
+$ # Move field 2 to the end, dropping fields 10-15
+$ tsv-select -f 2 -rest first -e 10-15 file.tsv
 ```
 
 ---
