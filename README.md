@@ -341,7 +341,7 @@ See the [number-lines reference](docs/ToolReference.md#number-lines-reference) f
 
 ### keep-header
 
-A convenience utility that runs unix commands in a header-aware fashion. It is especially useful with `sort`. `sort` does not know about headers, so the header line ends up wherever it falls in the sort order.  Using `keep-header`, the header line is output first and the rest of the sorted file follows. For example:
+A convenience utility that runs Unix commands in a header-aware fashion. It is especially useful with `sort`. `sort` does not know about headers, so the header line ends up wherever it falls in the sort order.  Using `keep-header`, the header line is output first and the rest of the sorted file follows. For example:
 ```
 $ # Sort a file, keeping the header line at the top.
 $ keep-header myfile.txt -- sort
@@ -349,6 +349,7 @@ $ keep-header myfile.txt -- sort
 
 The command to run is placed after the double dash (`--`). Everything after the initial double dash is part of the command. For example, `sort --ignore-case` is run as follows:
 ```
+$ # Case-insensitive sort, keeping the header line at the top.
 $ keep-header myfile.txt -- sort --ignore-case
 ```
 
@@ -375,8 +376,8 @@ $ keep-header file.txt -- tail -n +100 | head -n 51
 $ # Sort a set of TSV files numerically on field 2, keeping one header.
 $ keep-header *.tsv -- sort -t $'\t' -k2,2n
 
-$ # Same as the previous example, but using the 'tsv-sort-fast' script
-$ # described on the "Tips and Tricks" page.
+$ # Same as the previous example, but using the 'tsv-sort-fast' bash
+$ # script described on the "Tips and Tricks" page.
 $ keep-header *.tsv -- tsv-sort-fast -k2,2n
 ```
 

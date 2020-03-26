@@ -2,7 +2,7 @@ _Visit the eBay TSV utilities [main page](../README.md)_
 
 # keep-header
 
-`keep-header` is a convenience utility that runs unix commands in a header-aware fashion. It is especially useful with `sort`. `sort` does not know about headers, so the header line ends up wherever it falls in the sort order.  Using `keep-header`, the header line is output first and the rest of the sorted file follows. For example:
+`keep-header` is a convenience utility that runs Unix commands in a header-aware fashion. It is especially useful with `sort`. `sort` does not know about headers, so the header line ends up wherever it falls in the sort order.  Using `keep-header`, the header line is output first and the rest of the sorted file follows. For example:
 ```
 $ # Sort a file, keeping the header line at the top.
 $ keep-header myfile.txt -- sort
@@ -10,6 +10,7 @@ $ keep-header myfile.txt -- sort
 
 The command to run is placed after the double dash (`--`). Everything after the initial double dash is part of the command. For example, `sort --ignore-case` is run as follows:
 ```
+$ # Case-insensitive sort, keeping the header line at the top.
 $ keep-header myfile.txt -- sort --ignore-case
 ```
 
