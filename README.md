@@ -48,7 +48,7 @@ The rest of this section contains descriptions of each tool. Click on the links 
 * [tsv-join](#tsv-join) - Join lines from multiple files using fields as a key.
 * [tsv-pretty](#tsv-pretty) - Print TSV data aligned for easier reading on the command-line.
 * [csv2tsv](#csv2tsv) - Convert CSV files to TSV.
-* [tsv-split](#tsv-split) - Split a file into multiple files. Random splits, random splits by key, and splits by blocks of lines.
+* [tsv-split](#tsv-split) - Split data into multiple files. Random splits, random splits by key, and splits by blocks of lines.
 * [tsv-append](#tsv-append) - Concatenate TSV files. Header-aware; supports source file tracking.
 * [number-lines](#number-lines) - Number the input lines.
 * [keep-header](#keep-header) - Run a shell command in a header-aware fashion.
