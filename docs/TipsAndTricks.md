@@ -480,7 +480,7 @@ This took 110 seconds. Here's the parallel version. It produces the same results
 $ parallel tsv-summarize --group-by 2 --max 3 ::: ngram-*.tsv | tsv-summarize --group-by 1 --max 2 | tsv-sort-fast -k1,1n
 ```
 
-Notice that in the "group-by year" example, the second `tsv-summarize` pass is necessary because the entries for each year occur in multiple files. If the files are organized by the group-by key, then the second pass is not necessary. The google ngram files are organized by first letter of the ngram (a file for "a", a file for "b", etc.), so "group-by" operations on the ngram field would not need the second pass. The [tsv-split](ToolReference.md#tsv-split-reference) tool's "random assignment by key" feature can be used to split a data set into files shared by key. This is especially helpful when the number of unique keys in the data set is very large.
+Notice that in the "group-by year" example, the second `tsv-summarize` pass is necessary because the entries for each year occur in multiple files. If the files are organized by the group-by key, then the second pass is not necessary. The google ngram files are organized by first letter of the ngram (a file for "a", a file for "b", etc.), so "group-by" operations on the ngram field would not need the second pass. The [tsv-split](ToolReference.md#tsv-split-reference) tool's "random assignment by key" feature can be used to split a data set into files sharded by key. This is especially helpful when the number of unique keys in the data set is very large.
 
 ### Using GNU Parallel on files with header lines
 
