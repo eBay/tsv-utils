@@ -125,8 +125,8 @@ is usually to shuffle the data and split it into fixed sized blocks. E.g.
 'tsv-sample data.tsv | tsv-split -l NUM'. However, alternate approaches
 are needed when data is too large for convenient shuffling. tsv-split's
 random assignment feature is useful in this case. Each input line is
-written a randomly selected output file. Note that output files will have
-similar but not identical numbers of records.
+written to a randomly selected output file. Note that output files will
+have similar but not identical numbers of records.
 
 Random assignment by key (--n|num-files NUM, --k|key-fields FIELDS): This
 splits a data set into multiple files sharded by key. All lines with the

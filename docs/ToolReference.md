@@ -5,17 +5,18 @@ _Visit the [main page](../README.md)_
 This page provides detailed documentation about the different tools as well as examples. Material for the individual tools is also available via the `--help` option.
 
 * [Common options and behavior](#common-options-and-behavior)
-* [tsv-filter reference](#tsv-filter-reference)
-* [tsv-select reference](#tsv-select-reference)
-* [tsv-summarize reference](#tsv-summarize-reference)
-* [tsv-sample reference](#tsv-sample-reference)
-* [tsv-join reference](#tsv-join-reference)
-* [tsv-uniq reference](#tsv-uniq-reference)
-* [tsv-append reference](#tsv-append-reference)
-* [tsv-pretty reference](#tsv-pretty-reference)
 * [csv2tsv reference](#csv2tsv-reference)
-* [number-lines reference](#number-lines-reference)
 * [keep-header reference](#keep-header-reference)
+* [number-lines reference](#number-lines-reference)
+* [tsv-append reference](#tsv-append-reference)
+* [tsv-filter reference](#tsv-filter-reference)
+* [tsv-join reference](#tsv-join-reference)
+* [tsv-pretty reference](#tsv-pretty-reference)
+* [tsv-sample reference](#tsv-sample-reference)
+* [tsv-select reference](#tsv-select-reference)
+* [tsv-split reference](#tsv-split-reference)
+* [tsv-summarize reference](#tsv-summarize-reference)
+* [tsv-uniq reference](#tsv-uniq-reference)
 
 ___
 
@@ -86,6 +87,144 @@ $ head -n 1000 file-c.tsv | tsv-filter --eq 2:1000 -- file-a.tsv file-b.tsv - > 
 ```
 
 The above passes `file-a.tsv`, `file-b.tsv`, and the first 1000 lines of `file-c.tsv` to `tsv-filter` and write the results to `out.tsv`.
+
+---
+
+## csv2tsv reference
+
+**Synopsis:** csv2tsv [options] [file...]
+
+csv2tsv converts CSV (comma-separated) text to TSV (tab-separated) format. Records are read from files or standard input, converted records are written to standard output.
+
+Both formats represent tabular data, each record on its own line, fields separated by a delimiter character. The key difference is that CSV uses escape sequences to represent newlines and field separators in the data, whereas TSV disallows these characters in the data. The most common field delimiters are comma for CSV and tab for TSV, but any character can be used. See [Comparing TSV and CSV formats](comparing-tsv-and-csv.md) for addition discussion of the formats.
+
+Conversion to TSV is done by removing CSV escape syntax, changing field delimiters, and replacing newlines and tabs in the data. By default, newlines and tabs in the data are replaced by spaces. Most details are customizable.
+
+There is no single spec for CSV, any number of variants can be found. The escape syntax is common enough: fields containing newlines or field delimiters are placed in double quotes. Inside a quoted field, a double quote is represented by a pair of double quotes. As with field separators, the quoting character is customizable.
+
+Behaviors of this program that often vary between CSV implementations:
+* Newlines are supported in quoted fields.
+* Double quotes are permitted in a non-quoted field. However, a field starting with a quote must follow quoting rules.
+* Each record can have a different numbers of fields.
+* The three common forms of newlines are supported: CR, CRLF, LF.
+* A newline will be added if the file does not end with one.
+* No whitespace trimming is done.
+
+This program does not validate CSV correctness, but will terminate with an error upon reaching an inconsistent state. Improperly terminated quoted fields are the primary cause.
+
+UTF-8 input is assumed. Convert other encodings prior to invoking this tool.
+
+**Options:**
+* `--h|help` - Print help.
+* `--help-verbose` - Print detailed help.
+* `--V|version` - Print version information and exit.
+* `--H|header` - Treat the first line of each file as a header. Only the header of the first file is output.
+* `--q|quote CHR` - Quoting character in CSV data. Default: double-quote (")
+* `--c|csv-delim CHR` - Field delimiter in CSV data. Default: comma (,).
+* `--t|tsv-delim CHR` - Field delimiter in TSV data. Default: TAB
+* `--r|replacement STR` - Replacement for newline and TSV field delimiters found in CSV input. Default: Space.
+
+---
+
+## keep-header reference
+
+**Synopsis:** keep-header [file...] \-- program [args]
+
+Execute a command against one or more files in a header-aware fashion. The first line of each file is assumed to be a header. The first header is output unchanged. Remaining lines are sent to the given command via standard input, excluding the header lines of subsequent files. Output from the command is appended to the initial header line. A double dash (\--) delimits the command, similar to how the pipe operator (\|) delimits commands.
+
+The following commands sort files in the usual way, except for retaining a single header line:
+```
+$ keep-header file1.txt -- sort
+$ keep-header file1.txt file2.txt -- sort -k1,1nr
+```
+
+Data can also be read from from standard input. For example:
+```
+$ cat file1.txt | keep-header -- sort
+$ keep-header file1.txt -- sort -r | keep-header -- grep red
+```
+
+The last example can be simplified using a shell command:
+```
+$ keep-header file1.txt -- /bin/sh -c '(sort -r | grep red)'
+```
+
+`keep-header` is especially useful for commands like `sort` and `shuf` that reorder input lines. It is also useful with filtering commands like `grep`, many `awk` uses, and even `tail`, where the header should be retained without filtering or evaluation.
+
+`keep-header` works on any file where the first line is delimited by a newline character. This includes all TSV files and the majority of CSV files. It won't work on CSV files having embedded newlines in the header.
+
+**Options:**
+* `--h|help` - Print help.
+* `--V|version` - Print version information and exit.
+
+---
+
+## number-lines reference
+
+**Synopsis:** number-lines [options] [file...]
+
+number-lines reads from files or standard input and writes each line to standard output preceded by a line number. It is a simplified version of the Unix `nl` program. It supports one feature `nl` does not: the ability to treat the first line of files as a header. This is useful when working with tab-separated-value files. If header processing used, a header line is written for the first file, and the header lines are dropped from any subsequent files.
+
+**Options:**
+* `--h|help` - Print help.
+* `--V|version` - Print version information and exit.
+* `--H|header` - Treat the first line of each file as a header. The first input file's header is output, subsequent file headers are discarded.
+* `--s|header-string STR` - String to use as the header for the line number field. Implies `--header`. Default: 'line'.
+* `--n|start-number NUM` - Number to use for the first line. Default: 1.
+* `--d|delimiter CHR` - Character appended to line number, preceding the rest of the line. Default: TAB (Single byte UTF-8 characters only.)
+
+**Examples:**
+```
+$ # Number lines in a file
+$ number-lines file.tsv
+
+$ # Number lines from multiple files. Treat the first line of each file
+$ # as a header.
+$ number-lines --header data*.tsv
+```
+
+**See Also:**
+
+* [tsv-uniq](#tsv-uniq-reference) supports numbering lines grouped by key.
+
+---
+
+## tsv-append reference
+
+**Synopsis:** tsv-append [options] [file...]
+
+tsv-append concatenates multiple TSV files, similar to the Unix `cat` utility. Unlike `cat`, it is header-aware (`--H|header`), writing the header from only the first file. It also supports source tracking, adding a column indicating the original file to each row. Results are written to standard output.
+
+Concatenation with header support is useful when preparing data for traditional Unix utilities like `sort` and `sed` or applications that read a single file.
+
+Source tracking is useful when creating long/narrow form tabular data, a format used by many statistics and data mining packages. In this scenario, files have been used to capture related data sets, the difference between data sets being a condition represented by the file. For example, results from different variants of an experiment might each be recorded in their own files. Retaining the source file as an output column preserves the condition represented by the file.
+
+The file-name (without extension) is used as the source value. This can customized using the `--f|file` option.
+
+Example: Header processing:
+```
+$ tsv-append -H file1.tsv file2.tsv file3.tsv
+```
+
+Example: Header processing and source tracking:
+```
+$ tsv-append -H -t file1.tsv file2.tsv file3.tsv
+```
+
+Example: Source tracking with custom source values:
+```
+$ tsv-append -H -s test_id -f test1=file1.tsv -f test2=file2.tsv
+ ```
+
+**Options:**
+* `--h|help` - Print help.
+* `--help-verbose` - Print detailed help.
+* `--V|version` - Print version information and exit.
+* `--H|header` - Treat the first line of each file as a header.
+* `--t|track-source` - Track the source file. Adds an column with the source name.
+* `--s|source-header STR` - Use STR as the header for the source column. Implies `--H|header` and `--t|track-source`. Default: 'file'
+* `--f|file STR=FILE` - Read file FILE, using STR as the 'source' value. Implies `--t|track-source`.
+* `--d|delimiter CHR` - Field delimiter. Default: TAB. (Single byte UTF-8 characters only.)
 
 ---
 
@@ -250,6 +389,225 @@ _**Tip:**_ Bash completion is very helpful when using commands like `tsv-filter`
 
 ---
 
+## tsv-join reference
+
+**Synopsis:** tsv-join --filter-file file [options] file [file...]
+
+tsv-join matches input lines against lines from a 'filter' file. The match is based on exact match comparison of one or more 'key' fields. Fields are TAB delimited by default. Matching lines are written to standard output, along with any additional fields from the key file that have been specified.
+
+**Options:**
+* `--h|help` - Print help.
+* `--h|help-verbose` - Print detailed help.
+* `--V|version` - Print version information and exit.
+* `--f|filter-file FILE` - (Required) File with records to use as a filter.
+* `--k|key-fields <field-list>` - Fields to use as join key. Default: 0 (entire line).
+* `--d|data-fields <field-list>` - Data record fields to use as join key, if different than `--key-fields`.
+* `--a|append-fields <field-list>` - Filter fields to append to matched records.
+* `--H|header` - Treat the first line of each file as a header.
+* `--p|prefix STR` - String to use as a prefix for `--append-fields` when writing a header line.
+* `--w|write-all STR` - Output all data records. STR is the `--append-fields` value when writing unmatched records. This is an outer join.
+* `--e|exclude` - Exclude matching records. This is an anti-join.
+* `--delimiter CHR` - Field delimiter. Default: TAB. (Single byte UTF-8 characters only.)
+* `--z|allow-duplicate-keys` - Allow duplicate keys with different append values (last entry wins). Default behavior is that this is an error.
+
+**Examples:**
+
+Filter one file based on another, using the full line as the key.
+```
+$ # Output lines in data.txt that appear in filter.txt
+$ tsv-join -f filter.txt data.txt
+
+$ # Output lines in data.txt that do not appear in filter.txt
+$ tsv-join -f filter.txt --exclude data.txt
+```
+
+Filter multiple files, using fields 2 & 3 as the filter key.
+```
+$ tsv-join -f filter.tsv --key-fields 2,3 data1.tsv data2.tsv data3.tsv
+```
+
+Same as previous, except use field 4 & 5 from the data files.
+```
+$ tsv-join -f filter.tsv --key-fields 2,3 --data-fields 4,5 data1.tsv data2.tsv data3.tsv
+```
+
+Append fields from the filter file to matched records.
+```
+$ tsv-join -f filter.tsv --key-fields 1 --append-fields 2-5 data.tsv
+```
+
+Write out all records from the data file, but when there is no match, write the 'append fields' as NULL. This is an outer join.
+```
+$ tsv-join -f filter.tsv --key-fields 1 --append-fields 2 --write-all NULL data.tsv
+```
+
+Managing headers: Often it's useful to join a field from one data file to anther, where the data fields are related and the headers have the same name in both files. They can be kept distinct by adding a prefix to the filter file header. Example:
+```
+$ tsv-join -f run1.tsv --header --key-fields 1 --append-fields 2 --prefix run1_ run2.tsv
+```
+
+---
+
+## tsv-pretty reference
+
+**Synopsis:** tsv-pretty [options] [file...]
+
+`tsv-pretty` outputs TSV data in a format intended to be more human readable when working on the command line. This is done primarily by lining up data into fixed-width columns. Text is left aligned, numbers are right aligned. Floating points numbers are aligned on the decimal point when feasible.
+
+Processing begins by reading the initial set of lines into memory to determine the field widths and data types of each column. This look-ahead buffer is used for header detection as well. Output begins after this processing is complete.
+
+By default, only the alignment is changed, the actual values are not modified. Several of the formatting options do modify the values.
+
+Features:
+
+* Floating point numbers: Floats can be printed in fixed-width precision, using the same precision for all floats in a column. This makes then line up nicely. Precision is determined by values seen during look-ahead processing. The max precision defaults to 9, this can be changed when smaller or larger values are desired. See the `--f|format-floats` and `--p|precision` options.
+
+* Header lines: Headers are detected automatically when possible. This can be overridden when automatic detection doesn't work as desired. Headers can be underlined and repeated at regular intervals.
+
+* Missing values: A substitute value can be used for empty fields. This is often less confusing than spaces. See `--e|replace-empty` and `--E|empty-replacement`.
+
+* Exponential notion: As part of float formatting, `--f|format-floats` re-formats columns where exponential notation is found so all the values in the column are displayed using exponential notation and the same precision.
+
+* Preamble: A number of initial lines can be designated as a preamble and output unchanged. The preamble is before the header, if a header is present. Preamble lines can be auto-detected via the heuristic that they lack field delimiters. This works well when the field delimiter is a TAB.
+
+* Fonts: Fixed-width fonts are assumed. CJK characters are assumed to be double width. This is not always correct, but works well in most cases.
+
+**Options:**
+
+* `--help-verbose` - Print full help.
+* `--H|header` - Treat the first line of each file as a header.
+* `--x|no-header` -  Assume no header. Turns off automatic header detection.
+* `--l|lookahead NUM` - Lines to read to interpret data before generating output. Default: 1000
+* `--r|repeat-header NUM` - Lines to print before repeating the header. Default: No repeating header
+* `--u|underline-header` - Underline the header.
+* `--f|format-floats` - Format floats for better readability. Default: No
+* `--p|precision NUM` - Max floating point precision. Implies --format-floats. Default: 9
+* `--e|replace-empty` - Replace empty fields with `--`.
+* `--E|empty-replacement STR` - Replace empty fields with a string.
+* `--d|delimiter CHR` - Field delimiter. Default: TAB. (Single byte UTF-8 characters only.)
+* `--s|space-between-fields NUM` - Spaces between each field (Default: 2)
+* `--m|max-text-width NUM` - Max reserved field width for variable width text fields. Default: 40
+* `--a|auto-preamble` - Treat initial lines in a file as a preamble if the line contains no field delimiters. The preamble is output unchanged.
+* `--b|preamble NUM` - Treat the first NUM lines as a preamble and output them unchanged.
+* `--V|version` - Print version information and exit.
+* `--h|help` - This help information.
+
+**Examples:**
+
+A tab-delimited file printed without any formatting:
+```
+$ cat sample.tsv
+Color   Count   Ht      Wt
+Brown   106     202.2   1.5
+Canary Yellow   7       106     0.761
+Chartreuse	1139	77.02   6.22
+Fluorescent Orange	422     1141.7  7.921
+Grey	19	140.3	1.03
+```
+The same file printed with `tsv-pretty`:
+```
+$ tsv-pretty sample.tsv
+Color               Count       Ht     Wt
+Brown                 106   202.2   1.5
+Canary Yellow           7   106     0.761
+Chartreuse           1139    77.02  6.22
+Fluorescent Orange    422  1141.7   7.921
+Grey                   19   140.3   1.03
+```
+Printed with float formatting and header underlining:
+```
+$ tsv-pretty -f -u sample.tsv
+Color               Count       Ht     Wt
+-----               -----       --     --
+Brown                 106   202.20  1.500
+Canary Yellow           7   106.00  0.761
+Chartreuse           1139    77.02  6.220
+Fluorescent Orange    422  1141.70  7.921
+Grey                   19   140.30  1.030
+```
+Printed with setting the precision to one:
+```
+$ tsv-pretty -u -p 1 sample.tsv
+Color               Count      Ht   Wt
+-----               -----      --   --
+Brown                 106   202.2  1.5
+Canary Yellow           7   106.0  0.8
+Chartreuse           1139    77.0  6.2
+Fluorescent Orange    422  1141.7  7.9
+Grey                   19   140.3  1.0
+```
+
+---
+
+## tsv-sample reference
+
+**Synopsis:** tsv-sample [options] [file...]
+
+`tsv-sample` subsamples input lines or randomizes their order. Several techniques are available: shuffling, simple random sampling, weighted random sampling, Bernoulli sampling, and distinct sampling. These are provided via several different modes operation:
+
+* **Shuffling** (_default_): All lines are read into memory and output in random order. All orderings are equally likely.
+* **Simple random sampling** (`--n|num N`): A random sample of `N` lines is selected and written to standard output. Selected lines are written in random order, similar to shuffling. All sample sets and orderings are equally likely. Use `--i|inorder` to preserve the original input order.
+* **Weighted random sampling** (`--n|num N`, `--w|weight-field F`): A weighted sample of N lines is selected using weights from a field on each line. Selected lines are written in weighted selection order. Use `--i|inorder` to preserve the original input order. Omit `--n|num` to shuffle all input lines (weighted shuffling).
+* **Sampling with replacement** (`--r|replace`, `--n|num N`): All lines are read into memory, then lines are selected one at a time at random and written out. Lines can be selected multiple times. Output continues until `N` samples have been written. Output continues forever if `--n|num` is zero or not specified.
+* **Bernoulli sampling** (`--p|prob P`): Lines are read one-at-a-time in a streaming fashion and a random subset is output based on the inclusion probability. For example, `--prob 0.2` gives each line a 20% chance of being selected. All lines have an equal likelihood of being selected. The order of the lines is unchanged.
+* **Distinct sampling** (`--k|key-fields F`, `--p|prob P`): Input lines are sampled based on a key from each line. A key is made up of one or more fields. A subset of the keys are chosen based on the inclusion probability (a "distinct" set of keys). All lines with one of the selected keys are output. This is a streaming operation: a decision is made on each line as it is read. The order of the lines is not changed.
+
+**Sample size**: The `--n|num` option controls the sample size for all sampling methods. In the case of simple and weighted random sampling it also limits the amount of memory required.
+
+**Performance and memory use**: `tsv-sample` is designed for large data sets. Algorithms make one pass over the data, using reservoir sampling and hashing when possible to limit the memory required. Bernoulli sampling and distinct sampling make immediate decisions on each line, with no memory accumulation. They can operate on arbitrary length data streams. Sampling with replacement reads all lines into memory and is limited by available memory. Shuffling also reads all lines into memory and is similarly limited. Simple and weighted random sampling use reservoir sampling algorithms and only need to hold the sample size (`--n|num`) in memory. See [Shuffling large files](TipsAndTricks.md#shuffling-large-files) for ways to use disk when available memory is not sufficient.
+
+**Controlling randomization**: Each run produces a different randomization. Using `--s|static-seed` changes this so multiple runs produce the same randomization. This works by using the same random seed each run. The random seed can be specified using `--v|seed-value`. This takes a non-zero, 32-bit positive integer. A zero value is a no-op and ignored.
+
+**Weighted sampling**: Weighted line order randomization is done using an algorithm for weighted reservoir sampling described by Pavlos Efraimidis and Paul Spirakis. Weights should be positive values representing the relative weight of the entry in the collection. Counts and similar can be used as weights, it is *not* necessary to normalize to a [0,1] interval. Negative values are not meaningful and given the value zero. Input order is not retained, instead lines are output ordered by the randomized weight that was assigned. This means that a smaller valid sample can be produced by taking the first N lines of output. For more information see:
+* Wikipedia: https://en.wikipedia.org/wiki/Reservoir_sampling
+* "Weighted Random Sampling over Data Streams", Pavlos S. Efraimidis (https://arxiv.org/abs/1012.0256)
+
+**Distinct sampling**: Distinct sampling selects a subset based on a key in data. Consider a query log with records consisting of <user, query, clicked-url> triples. Distinct sampling selects all records matching a subset of values from one of the fields. For example, all events for ten percent of the users. This is important for certain types of analysis. Distinct sampling works by converting the specified probability (`--p|prob`) into a set of buckets and mapping every key into one of the buckets. One bucket is used to select records in the sample. Buckets are equal size and therefore may be a bit larger than the inclusion probability. Since every key is assigned a bucket, this method can also be used to fully divide a set of records into distinct groups. (See *Printing random values* below.) The term "distinct sampling" originates from algorithms estimating the number of distinct elements in extremely large data sets.
+
+**Printing random values**: Most of these algorithms work by generating a random value for each line. (See also "Compatibility mode" below.) The nature of these values depends on the sampling algorithm. They are used for both line selection and output ordering. The `--print-random` option can be used to print these values. The random value is prepended to the line separated by the `--d|delimiter` char (TAB by default). The `--gen-random-inorder` option takes this one step further, generating random values for all input lines without changing the input order. The types of values currently used are specific to the sampling algorithm:
+* Shuffling, simple random sampling, Bernoulli sampling: Uniform random value in the interval [0,1].
+* Weighted random sampling: Value in the interval [0,1]. Distribution depends on the values in the weight field.
+* Distinct sampling: An integer, zero and up, representing a selection group (aka. "bucket"). The inclusion probability determines the number of selection groups.
+* Sampling with replacement: Random value printing is not supported.
+
+The specifics behind these random values are subject to change in future releases.
+
+**Compatibility mode**: As described above, many of the sampling algorithms assign a random value to each line. This is useful when printing random values. It has another occasionally useful property: repeated runs with the same static seed but different selection parameters are more compatible with each other, as each line gets assigned the same random value on every run. This property comes at a cost: in some cases there are faster algorithms that don't assign random values to each line. By default, `tsv-sample` will use the fastest algorithm available. The `--compatibility-mode` option changes this, switching to algorithms that assign a random value per line. Printing random values also engages compatibility mode. Compatibility mode is beneficial primarily when using Bernoulli sampling or random sampling:
+* Bernoulli sampling - A run with a larger probability will be a superset of a smaller probability. In the example below, all lines selected in the first run are also selected in the second.
+  ```
+  $ tsv-sample --static-seed --compatibility-mode --prob 0.2 data.tsv
+  $ tsv-sample --static-seed --compatibility-mode --prob 0.3 data.tsv
+  ```
+* Random sampling - A run with a larger sample size will be a superset of a smaller sample size. In the example below, all lines selected in the first run are also selected in the second.
+  ```
+  $ tsv-sample --static-seed --compatibility-mode -n 1000 data.tsv
+  $ tsv-sample --static-seed --compatibility-mode -n 1500 data.tsv
+  ```
+  This works for weighted sampling as well.
+
+**Options:**
+
+* `--h|help` - This help information.
+* `--help-verbose` - Print more detailed help.
+* `--V|version` - Print version information and exit.
+* `--H|header` - Treat the first line of each file as a header.
+* `--n|num NUM` - Maximum number of lines to output. All selected lines are output if not provided or zero.
+* `--p|prob NUM` - Inclusion probability (0.0 < NUM <= 1.0). For Bernoulli sampling, the probability each line is selected output. For distinct sampling, the probability each unique key is selected for output.
+* `--k|key-fields <field-list>` - Fields to use as key for distinct sampling. Use with `--p|prob`. Specify `--k|key-fields 0` to use the entire line as the key.
+* `--w|weight-field NUM` - Field containing weights. All lines get equal weight if not provided or zero.
+* `--r|replace` - Simple random sampling with replacement. Use `--n|num` to specify the sample size.
+* `--s|static-seed` - Use the same random seed every run.
+* `--v|seed-value NUM` - Sets the random seed. Use a non-zero, 32 bit positive integer. Zero is a no-op.
+* `--print-random` - Output the random values that were assigned.
+* `--gen-random-inorder` - Output all lines with assigned random values prepended, no changes to the order of input.
+* `--random-value-header` - Header to use with `--print-random` and `--gen-random-inorder`. Default: `random_value`.
+* `--compatibility-mode` - Turns on "compatibility mode".
+* `--d|delimiter CHR` - Field delimiter.
+* `--prefer-skip-sampling` - (Internal) Prefer the skip-sampling algorithm for Bernoulli sampling. Used for testing and diagnostics.
+* `--prefer-algorithm-r` - (Internal) Prefer Algorithm R for unweighted line order randomization. Used for testing and diagnostics.
+
+---
+
 ## tsv-select reference
 
 **Synopsis:** tsv-select [options] [file...]
@@ -325,6 +683,101 @@ $ tsv-select -f 2 -e 10-15 file.tsv
 $ # Move field 2 to the end, dropping fields 10-15
 $ tsv-select -f 2 -rest first -e 10-15 file.tsv
 ```
+
+---
+
+## tsv-split reference
+
+Synopsis: tsv-split [options] [file...]
+
+Split input lines into multiple output files. There are three modes of operation:
+
+* **Fixed number of lines per file** (`--l|lines-per-file NUM`): Each input block of NUM lines is written to a new file. Similar to Unix `split`.
+
+* **Random assignment** (`--n|num-files NUM`): Each input line is written to a randomly selected output file. Random selection is from NUM files.
+
+* **Random assignment by key** (`--n|num-files NUM`, `--k|key-fields FIELDS`): Input lines are written to output files using fields as a key. Each unique key is randomly assigned to one of NUM output files. All lines with the same key are written to the same file.
+
+**Output files**: By default, files are written to the current directory and have names of the form `part_NNN<suffix>`, with `NNN` being a number and `<suffix>` being the extension of the first input file. If the input file is `file.txt`, the names will take the form `part_NNN.txt`. The suffix is empty when reading from standard input. The numeric part defaults to 3 digits for `--l|lines-per-files`. For `--n|num-files` enough digits are used so all filenames are the same length. The output directory and file names are customizable.
+
+**Header lines**: There are two ways to handle input with headers: write a header to all output files (`--H|header`), or exclude headers from all output files (`--I|header-in-only`). The best choice depends on the follow-up processing. All tsv-utils tools support header lines in multiple input files, but many other tools do not. For example, [GNU parallel](https://www.gnu.org/software/parallel/) works best on files without header lines. (See [Faster processing using GNU parallel(TipsAndTricks.md#faster-processing-using-gnu-parallel) for some info on using GNU parallel and tsv-utils together.)
+
+**About Random assignment** (`--n|num-files`): Random distribution of records to a set of files is a common task. When data fits in memory the preferred approach is usually to shuffle the data and split it into fixed sized blocks. Both of the following command lines accomplish this:
+```
+$ shuf data.tsv | split -l NUM
+$ tsv-sample data.tsv | tsv-split -l NUM
+```
+
+However, alternate approaches are needed when data is too large for convenient shuffling. tsv-split's random assignment feature can be useful in these cases. Each input line is written to a randomly selected output file. Note that output files will have similar but not identical numbers of records.
+
+**About Random assignment by key** (`--n|num-files NUM`, `--k|key-fields FIELDS`): This splits a data set into multiple files sharded by key. All lines with the same key are written to the same file. This partitioning enables parallel computation based on the key. For example, statistical calculation (`tsv-summarize --group-by`) or duplicate removal (`tsv-uniq --fields`). These operations can be parallelized using tools like GNU parallel, which simplifies concurrent operations on multiple files.
+
+**Random seed**: By default, each tsv-split invocation using random assignment or random assignment by key produces different assignments to the output files. Using `--s|static-seed` changes this so multiple runs produce the same assignments. This works by using the same random seed each run. The seed can be specified using `--v|seed-value`.
+
+**Appending to existing files**: By default, an error is triggered if an output file already exists. `--a|append` changes this so that lines are appended to existing files. (Header lines are not appended to files with data.) This is useful when adding new data to files created by a previous `tsv-split` run. Random assignment should use the same `--n|num-files` value each run, but different random seeds (avoid `--s|static-seed`). Random assignment by key should use the same `--n|num-files`, `--k|key-fields`, and seed (`--s|static-seed` or `--v|seed-value`) each run.
+
+**Max number of open files**: Random assignment and random assignment by key are dramatically faster when all output files are kept open. However, keeping a large numbers of open files can bump into system limits or limit resources available to other processes. By default, `tsv-split` uses up to 4096 open files or the system per-process limit, whichever is smaller. This can be changed using `--max-open-files`, though it cannot be set larger than the system limit. The system limit varies considerably between systems. On many systems it is unlimited. On MacOS it is often set to 256. Use Unix `ulimit` to display and modify the limits:
+```
+$ ulimit -n       # Show the "soft limit". The per-process maximum.
+$ ulimit -Hn      # Show the "hard limit". The max allowed soft limit.
+$ ulimit -Sn NUM  # Change the "soft limit" to NUM.
+```
+
+**Examples**:
+```
+$ # Split a 10 million line file into 1000 files, 10,000 lines each.
+$ # Output files are part_000.txt, part_001.txt, ... part_999.txt.
+$ tsv-split data.txt --lines-per-file 10000
+
+$ # Same as the previous example, but write files to a subdirectory.
+$  tsv-split data.txt --dir split_files --lines-per-file 10000
+
+$ # Split a file into 10,000 line files, writing a header line to each
+$ tsv-split data.txt -H --lines-per-file 10000
+
+$ # Same as the previous example, but dropping the header line.
+$ tsv-split data.txt -I --lines-per-file 10000
+
+$ # Randomly assign lines to 1000 files
+$ tsv-split data.txt --num-files 1000
+
+$ # Randomly assign lines to 1000 files while keeping unique keys from
+$  # field 3 together.
+$  tsv-split data.tsv --num-files 1000 -k 3
+
+$ # Randomly assign lines to 1000 files. Later, randomly assign lines
+$ # from a second data file to the same output files.
+$ tsv-split data1.tsv -n 1000
+$ tsv-split data2.tsv -n 1000 --append
+
+$ # Randomly assign lines to 1000 files using field 3 as a key.
+$ # Later, add a second file to the same output files.
+$ tsv-split data1.tsv -n 1000 -k 3 --static-seed
+$ tsv-split data2.tsv -n 1000 -k 3 --static-seed --append
+
+$ # Change the system per-process open file limit for one command.
+$ # The parens create a sub-shell. The current shell is not changed.
+$ ( ulimit -Sn 1000 && tsv-split --num-files 1000 data.txt )
+```
+
+**Options**:
+* `--h|--help` - Print help.
+* `--help-verbose` - Print more detailed help.
+* `--V|--version` -  Print version information and exit.
+* `--H|header` - Input files have a header line. Write the header to each output file.
+* `--I|header-in-only` - Input files have a header line. Do not write the header to output files.
+* `--l|lines-per-file NUM` - Number of lines to write to each output file (excluding the header line).
+* `--n|num-files NUM` - Number of output files to generate.
+* `--k|key-fields <field-list>` - Fields to use as key. Lines with the same key are written to the same output file. Use `--k|key-fields 0` to use the entire line as the key.
+* `--dir STR` - Directory to write to. Default: Current working directory.
+* `--prefix STR` - Filename prefix. Default: `part_`
+* `--suffix STR` - Filename suffix. Default: First input file extension. None for standard input.
+* `--w|digit-width NUM` - Number of digits in filename numeric portion. Default: `--l|lines-per-file`: 3. `--n|num-files`: Chosen so filenames have the same length. `--w|digit-width 0` uses the default.
+* `--a|append` - Append to existing files.
+* `--s|static-seed` - Use the same random seed every run.
+* `--v|seed-value NUM` - Sets the random seed. Use a non-zero, 32 bit positive integer. Zero is a no-op.
+* `--d|delimiter CHR` - Field delimiter.
+* `--max-open-files NUM` - Maximum open file handles to use. Min of 5 required.
 
 ---
 
@@ -443,134 +896,6 @@ _**Tip:**_ Bash completion is very helpful when using commands like `tsv-summari
 
 ---
 
-## tsv-sample reference
-
-**Synopsis:** tsv-sample [options] [file...]
-
-`tsv-sample` subsamples input lines or randomizes their order. Several techniques are available: shuffling, simple random sampling, weighted random sampling, Bernoulli sampling, and distinct sampling. These are provided via several different modes operation:
-
-* **Shuffling** (_default_): All lines are read into memory and output in random order. All orderings are equally likely.
-* **Simple random sampling** (`--n|num N`): A random sample of `N` lines is selected and written to standard output. Selected lines are written in random order, similar to shuffling. All sample sets and orderings are equally likely. Use `--i|inorder` to preserve the original input order.
-* **Weighted random sampling** (`--n|num N`, `--w|weight-field F`): A weighted sample of N lines is selected using weights from a field on each line. Selected lines are written in weighted selection order. Use `--i|inorder` to preserve the original input order. Omit `--n|num` to shuffle all input lines (weighted shuffling).
-* **Sampling with replacement** (`--r|replace`, `--n|num N`): All lines are read into memory, then lines are selected one at a time at random and written out. Lines can be selected multiple times. Output continues until `N` samples have been written. Output continues forever if `--n|num` is zero or not specified.
-* **Bernoulli sampling** (`--p|prob P`): Lines are read one-at-a-time in a streaming fashion and a random subset is output based on the inclusion probability. For example, `--prob 0.2` gives each line a 20% chance of being selected. All lines have an equal likelihood of being selected. The order of the lines is unchanged.
-* **Distinct sampling** (`--k|key-fields F`, `--p|prob P`): Input lines are sampled based on a key from each line. A key is made up of one or more fields. A subset of the keys are chosen based on the inclusion probability (a "distinct" set of keys). All lines with one of the selected keys are output. This is a streaming operation: a decision is made on each line as it is read. The order of the lines is not changed.
-
-**Sample size**: The `--n|num` option controls the sample size for all sampling methods. In the case of simple and weighted random sampling it also limits the amount of memory required.
-
-**Performance and memory use**: `tsv-sample` is designed for large data sets. Algorithms make one pass over the data, using reservoir sampling and hashing when possible to limit the memory required. Bernoulli sampling and distinct sampling make immediate decisions on each line, with no memory accumulation. They can operate on arbitrary length data streams. Sampling with replacement reads all lines into memory and is limited by available memory. Shuffling also reads all lines into memory and is similarly limited. Simple and weighted random sampling use reservoir sampling algorithms and only need to hold the sample size (`--n|num`) in memory. See [Shuffling large files](TipsAndTricks.md#shuffling-large-files) for ways to use disk when available memory is not sufficient.
-
-**Controlling randomization**: Each run produces a different randomization. Using `--s|static-seed` changes this so multiple runs produce the same randomization. This works by using the same random seed each run. The random seed can be specified using `--v|seed-value`. This takes a non-zero, 32-bit positive integer. A zero value is a no-op and ignored.
-
-**Weighted sampling**: Weighted line order randomization is done using an algorithm for weighted reservoir sampling described by Pavlos Efraimidis and Paul Spirakis. Weights should be positive values representing the relative weight of the entry in the collection. Counts and similar can be used as weights, it is *not* necessary to normalize to a [0,1] interval. Negative values are not meaningful and given the value zero. Input order is not retained, instead lines are output ordered by the randomized weight that was assigned. This means that a smaller valid sample can be produced by taking the first N lines of output. For more information see:
-* Wikipedia: https://en.wikipedia.org/wiki/Reservoir_sampling
-* "Weighted Random Sampling over Data Streams", Pavlos S. Efraimidis (https://arxiv.org/abs/1012.0256)
-
-**Distinct sampling**: Distinct sampling selects a subset based on a key in data. Consider a query log with records consisting of <user, query, clicked-url> triples. Distinct sampling selects all records matching a subset of values from one of the fields. For example, all events for ten percent of the users. This is important for certain types of analysis. Distinct sampling works by converting the specified probability (`--p|prob`) into a set of buckets and mapping every key into one of the buckets. One bucket is used to select records in the sample. Buckets are equal size and therefore may be a bit larger than the inclusion probability. Since every key is assigned a bucket, this method can also be used to fully divide a set of records into distinct groups. (See *Printing random values* below.) The term "distinct sampling" originates from algorithms estimating the number of distinct elements in extremely large data sets.
-
-**Printing random values**: Most of these algorithms work by generating a random value for each line. (See also "Compatibility mode" below.) The nature of these values depends on the sampling algorithm. They are used for both line selection and output ordering. The `--print-random` option can be used to print these values. The random value is prepended to the line separated by the `--d|delimiter` char (TAB by default). The `--gen-random-inorder` option takes this one step further, generating random values for all input lines without changing the input order. The types of values currently used are specific to the sampling algorithm:
-* Shuffling, simple random sampling, Bernoulli sampling: Uniform random value in the interval [0,1].
-* Weighted random sampling: Value in the interval [0,1]. Distribution depends on the values in the weight field.
-* Distinct sampling: An integer, zero and up, representing a selection group (aka. "bucket"). The inclusion probability determines the number of selection groups.
-* Sampling with replacement: Random value printing is not supported.
-
-The specifics behind these random values are subject to change in future releases.
-
-**Compatibility mode**: As described above, many of the sampling algorithms assign a random value to each line. This is useful when printing random values. It has another occasionally useful property: repeated runs with the same static seed but different selection parameters are more compatible with each other, as each line gets assigned the same random value on every run. This property comes at a cost: in some cases there are faster algorithms that don't assign random values to each line. By default, `tsv-sample` will use the fastest algorithm available. The `--compatibility-mode` option changes this, switching to algorithms that assign a random value per line. Printing random values also engages compatibility mode. Compatibility mode is beneficial primarily when using Bernoulli sampling or random sampling:
-* Bernoulli sampling - A run with a larger probability will be a superset of a smaller probability. In the example below, all lines selected in the first run are also selected in the second.
-  ```
-  $ tsv-sample --static-seed --compatibility-mode --prob 0.2 data.tsv
-  $ tsv-sample --static-seed --compatibility-mode --prob 0.3 data.tsv
-  ```
-* Random sampling - A run with a larger sample size will be a superset of a smaller sample size. In the example below, all lines selected in the first run are also selected in the second.
-  ```
-  $ tsv-sample --static-seed --compatibility-mode -n 1000 data.tsv
-  $ tsv-sample --static-seed --compatibility-mode -n 1500 data.tsv
-  ```
-  This works for weighted sampling as well.
-
-**Options:**
-
-* `--h|help` - This help information.
-* `--help-verbose` - Print more detailed help.
-* `--V|version` - Print version information and exit.
-* `--H|header` - Treat the first line of each file as a header.
-* `--n|num NUM` - Maximum number of lines to output. All selected lines are output if not provided or zero.
-* `--p|prob NUM` - Inclusion probability (0.0 < NUM <= 1.0). For Bernoulli sampling, the probability each line is selected output. For distinct sampling, the probability each unique key is selected for output.
-* `--k|key-fields <field-list>` - Fields to use as key for distinct sampling. Use with `--p|prob`. Specify `--k|key-fields 0` to use the entire line as the key.
-* `--w|weight-field NUM` - Field containing weights. All lines get equal weight if not provided or zero.
-* `--r|replace` - Simple random sampling with replacement. Use `--n|num` to specify the sample size.
-* `--s|static-seed` - Use the same random seed every run.
-* `--v|seed-value NUM` - Sets the random seed. Use a non-zero, 32 bit positive integer. Zero is a no-op.
-* `--print-random` - Output the random values that were assigned.
-* `--gen-random-inorder` - Output all lines with assigned random values prepended, no changes to the order of input.
-* `--random-value-header` - Header to use with `--print-random` and `--gen-random-inorder`. Default: `random_value`.
-* `--compatibility-mode` - Turns on "compatibility mode".
-* `--d|delimiter CHR` - Field delimiter.
-* `--prefer-skip-sampling` - (Internal) Prefer the skip-sampling algorithm for Bernoulli sampling. Used for testing and diagnostics.
-* `--prefer-algorithm-r` - (Internal) Prefer Algorithm R for unweighted line order randomization. Used for testing and diagnostics.
-
----
-
-## tsv-join reference
-
-**Synopsis:** tsv-join --filter-file file [options] file [file...]
-
-tsv-join matches input lines against lines from a 'filter' file. The match is based on exact match comparison of one or more 'key' fields. Fields are TAB delimited by default. Matching lines are written to standard output, along with any additional fields from the key file that have been specified.
-
-**Options:**
-* `--h|help` - Print help.
-* `--h|help-verbose` - Print detailed help.
-* `--V|version` - Print version information and exit.
-* `--f|filter-file FILE` - (Required) File with records to use as a filter.
-* `--k|key-fields <field-list>` - Fields to use as join key. Default: 0 (entire line).
-* `--d|data-fields <field-list>` - Data record fields to use as join key, if different than `--key-fields`.
-* `--a|append-fields <field-list>` - Filter fields to append to matched records.
-* `--H|header` - Treat the first line of each file as a header.
-* `--p|prefix STR` - String to use as a prefix for `--append-fields` when writing a header line.
-* `--w|write-all STR` - Output all data records. STR is the `--append-fields` value when writing unmatched records. This is an outer join.
-* `--e|exclude` - Exclude matching records. This is an anti-join.
-* `--delimiter CHR` - Field delimiter. Default: TAB. (Single byte UTF-8 characters only.)
-* `--z|allow-duplicate-keys` - Allow duplicate keys with different append values (last entry wins). Default behavior is that this is an error.
-
-**Examples:**
-
-Filter one file based on another, using the full line as the key.
-```
-$ # Output lines in data.txt that appear in filter.txt
-$ tsv-join -f filter.txt data.txt
-
-$ # Output lines in data.txt that do not appear in filter.txt
-$ tsv-join -f filter.txt --exclude data.txt
-```
-
-Filter multiple files, using fields 2 & 3 as the filter key.
-```
-$ tsv-join -f filter.tsv --key-fields 2,3 data1.tsv data2.tsv data3.tsv
-```
-
-Same as previous, except use field 4 & 5 from the data files.
-```
-$ tsv-join -f filter.tsv --key-fields 2,3 --data-fields 4,5 data1.tsv data2.tsv data3.tsv
-```
-
-Append fields from the filter file to matched records.
-```
-$ tsv-join -f filter.tsv --key-fields 1 --append-fields 2-5 data.tsv
-```
-
-Write out all records from the data file, but when there is no match, write the 'append fields' as NULL. This is an outer join.
-```
-$ tsv-join -f filter.tsv --key-fields 1 --append-fields 2 --write-all NULL data.tsv
-```
-
-Managing headers: Often it's useful to join a field from one data file to anther, where the data fields are related and the headers have the same name in both files. They can be kept distinct by adding a prefix to the filter file header. Example:
-```
-$ tsv-join -f run1.tsv --header --key-fields 1 --append-fields 2 --prefix run1_ run2.tsv
-```
-
----
-
 ## tsv-uniq reference
 
 `tsv-uniq` identifies equivalent lines in files or standard input. Input is read line by line, recording a key based on one or more of the fields. Two lines are equivalent if they have the same key. When operating in the default 'uniq' mode, the first time a key is seen the line is written to standard output. Subsequent lines having the same key are discarded. This is similar to the Unix `uniq` program, but based on individual fields and without requiring sorted data.
@@ -676,232 +1001,3 @@ wxyz    1234    stu     3         1
 efgh    5678    stu     2         2
 ABCD    1234    PQR     1         3
 ```
-
----
-
-## tsv-append reference
-
-**Synopsis:** tsv-append [options] [file...]
-
-tsv-append concatenates multiple TSV files, similar to the Unix `cat` utility. Unlike `cat`, it is header-aware (`--H|header`), writing the header from only the first file. It also supports source tracking, adding a column indicating the original file to each row. Results are written to standard output.
-
-Concatenation with header support is useful when preparing data for traditional Unix utilities like `sort` and `sed` or applications that read a single file.
-
-Source tracking is useful when creating long/narrow form tabular data, a format used by many statistics and data mining packages. In this scenario, files have been used to capture related data sets, the difference between data sets being a condition represented by the file. For example, results from different variants of an experiment might each be recorded in their own files. Retaining the source file as an output column preserves the condition represented by the file.
-
-The file-name (without extension) is used as the source value. This can customized using the `--f|file` option.
-
-Example: Header processing:
-```
-$ tsv-append -H file1.tsv file2.tsv file3.tsv
-```
-
-Example: Header processing and source tracking:
-```
-$ tsv-append -H -t file1.tsv file2.tsv file3.tsv
-```
-
-Example: Source tracking with custom source values:
-```
-$ tsv-append -H -s test_id -f test1=file1.tsv -f test2=file2.tsv
- ```
-
-**Options:**
-* `--h|help` - Print help.
-* `--help-verbose` - Print detailed help.
-* `--V|version` - Print version information and exit.
-* `--H|header` - Treat the first line of each file as a header.
-* `--t|track-source` - Track the source file. Adds an column with the source name.
-* `--s|source-header STR` - Use STR as the header for the source column. Implies `--H|header` and `--t|track-source`. Default: 'file'
-* `--f|file STR=FILE` - Read file FILE, using STR as the 'source' value. Implies `--t|track-source`.
-* `--d|delimiter CHR` - Field delimiter. Default: TAB. (Single byte UTF-8 characters only.)
-
----
-
-## tsv-pretty reference
-
-**Synopsis:** tsv-pretty [options] [file...]
-
-`tsv-pretty` outputs TSV data in a format intended to be more human readable when working on the command line. This is done primarily by lining up data into fixed-width columns. Text is left aligned, numbers are right aligned. Floating points numbers are aligned on the decimal point when feasible.
-
-Processing begins by reading the initial set of lines into memory to determine the field widths and data types of each column. This look-ahead buffer is used for header detection as well. Output begins after this processing is complete.
-
-By default, only the alignment is changed, the actual values are not modified. Several of the formatting options do modify the values.
-
-Features:
-
-* Floating point numbers: Floats can be printed in fixed-width precision, using the same precision for all floats in a column. This makes then line up nicely. Precision is determined by values seen during look-ahead processing. The max precision defaults to 9, this can be changed when smaller or larger values are desired. See the `--f|format-floats` and `--p|precision` options.
-
-* Header lines: Headers are detected automatically when possible. This can be overridden when automatic detection doesn't work as desired. Headers can be underlined and repeated at regular intervals.
-
-* Missing values: A substitute value can be used for empty fields. This is often less confusing than spaces. See `--e|replace-empty` and `--E|empty-replacement`.
-
-* Exponential notion: As part of float formatting, `--f|format-floats` re-formats columns where exponential notation is found so all the values in the column are displayed using exponential notation and the same precision.
-
-* Preamble: A number of initial lines can be designated as a preamble and output unchanged. The preamble is before the header, if a header is present. Preamble lines can be auto-detected via the heuristic that they lack field delimiters. This works well when the field delimiter is a TAB.
-
-* Fonts: Fixed-width fonts are assumed. CJK characters are assumed to be double width. This is not always correct, but works well in most cases.
-
-**Options:**
-
-* `--help-verbose` - Print full help.
-* `--H|header` - Treat the first line of each file as a header.
-* `--x|no-header` -  Assume no header. Turns off automatic header detection.
-* `--l|lookahead NUM` - Lines to read to interpret data before generating output. Default: 1000
-* `--r|repeat-header NUM` - Lines to print before repeating the header. Default: No repeating header
-* `--u|underline-header` - Underline the header.
-* `--f|format-floats` - Format floats for better readability. Default: No
-* `--p|precision NUM` - Max floating point precision. Implies --format-floats. Default: 9
-* `--e|replace-empty` - Replace empty fields with `--`.
-* `--E|empty-replacement STR` - Replace empty fields with a string.
-* `--d|delimiter CHR` - Field delimiter. Default: TAB. (Single byte UTF-8 characters only.)
-* `--s|space-between-fields NUM` - Spaces between each field (Default: 2)
-* `--m|max-text-width NUM` - Max reserved field width for variable width text fields. Default: 40
-* `--a|auto-preamble` - Treat initial lines in a file as a preamble if the line contains no field delimiters. The preamble is output unchanged.
-* `--b|preamble NUM` - Treat the first NUM lines as a preamble and output them unchanged.
-* `--V|version` - Print version information and exit.
-* `--h|help` - This help information.
-
-**Examples:**
-
-A tab-delimited file printed without any formatting:
-```
-$ cat sample.tsv
-Color   Count   Ht      Wt
-Brown   106     202.2   1.5
-Canary Yellow   7       106     0.761
-Chartreuse	1139	77.02   6.22
-Fluorescent Orange	422     1141.7  7.921
-Grey	19	140.3	1.03
-```
-The same file printed with `tsv-pretty`:
-```
-$ tsv-pretty sample.tsv
-Color               Count       Ht     Wt
-Brown                 106   202.2   1.5
-Canary Yellow           7   106     0.761
-Chartreuse           1139    77.02  6.22
-Fluorescent Orange    422  1141.7   7.921
-Grey                   19   140.3   1.03
-```
-Printed with float formatting and header underlining:
-```
-$ tsv-pretty -f -u sample.tsv
-Color               Count       Ht     Wt
------               -----       --     --
-Brown                 106   202.20  1.500
-Canary Yellow           7   106.00  0.761
-Chartreuse           1139    77.02  6.220
-Fluorescent Orange    422  1141.70  7.921
-Grey                   19   140.30  1.030
-```
-Printed with setting the precision to one:
-```
-$ tsv-pretty -u -p 1 sample.tsv
-Color               Count      Ht   Wt
------               -----      --   --
-Brown                 106   202.2  1.5
-Canary Yellow           7   106.0  0.8
-Chartreuse           1139    77.0  6.2
-Fluorescent Orange    422  1141.7  7.9
-Grey                   19   140.3  1.0
-```
-
----
-
-## csv2tsv reference
-
-**Synopsis:** csv2tsv [options] [file...]
-
-csv2tsv converts CSV (comma-separated) text to TSV (tab-separated) format. Records are read from files or standard input, converted records are written to standard output.
-
-Both formats represent tabular data, each record on its own line, fields separated by a delimiter character. The key difference is that CSV uses escape sequences to represent newlines and field separators in the data, whereas TSV disallows these characters in the data. The most common field delimiters are comma for CSV and tab for TSV, but any character can be used. See [Comparing TSV and CSV formats](comparing-tsv-and-csv.md) for addition discussion of the formats.
-
-Conversion to TSV is done by removing CSV escape syntax, changing field delimiters, and replacing newlines and tabs in the data. By default, newlines and tabs in the data are replaced by spaces. Most details are customizable.
-
-There is no single spec for CSV, any number of variants can be found. The escape syntax is common enough: fields containing newlines or field delimiters are placed in double quotes. Inside a quoted field, a double quote is represented by a pair of double quotes. As with field separators, the quoting character is customizable.
-
-Behaviors of this program that often vary between CSV implementations:
-* Newlines are supported in quoted fields.
-* Double quotes are permitted in a non-quoted field. However, a field starting with a quote must follow quoting rules.
-* Each record can have a different numbers of fields.
-* The three common forms of newlines are supported: CR, CRLF, LF.
-* A newline will be added if the file does not end with one.
-* No whitespace trimming is done.
-
-This program does not validate CSV correctness, but will terminate with an error upon reaching an inconsistent state. Improperly terminated quoted fields are the primary cause.
-
-UTF-8 input is assumed. Convert other encodings prior to invoking this tool.
-
-**Options:**
-* `--h|help` - Print help.
-* `--help-verbose` - Print detailed help.
-* `--V|version` - Print version information and exit.
-* `--H|header` - Treat the first line of each file as a header. Only the header of the first file is output.
-* `--q|quote CHR` - Quoting character in CSV data. Default: double-quote (")
-* `--c|csv-delim CHR` - Field delimiter in CSV data. Default: comma (,).
-* `--t|tsv-delim CHR` - Field delimiter in TSV data. Default: TAB
-* `--r|replacement STR` - Replacement for newline and TSV field delimiters found in CSV input. Default: Space.
-
----
-
-## number-lines reference
-
-**Synopsis:** number-lines [options] [file...]
-
-number-lines reads from files or standard input and writes each line to standard output preceded by a line number. It is a simplified version of the Unix `nl` program. It supports one feature `nl` does not: the ability to treat the first line of files as a header. This is useful when working with tab-separated-value files. If header processing used, a header line is written for the first file, and the header lines are dropped from any subsequent files.
-
-**Options:**
-* `--h|help` - Print help.
-* `--V|version` - Print version information and exit.
-* `--H|header` - Treat the first line of each file as a header. The first input file's header is output, subsequent file headers are discarded.
-* `--s|header-string STR` - String to use as the header for the line number field. Implies `--header`. Default: 'line'.
-* `--n|start-number NUM` - Number to use for the first line. Default: 1.
-* `--d|delimiter CHR` - Character appended to line number, preceding the rest of the line. Default: TAB (Single byte UTF-8 characters only.)
-
-**Examples:**
-```
-$ # Number lines in a file
-$ number-lines file.tsv
-
-$ # Number lines from multiple files. Treat the first line of each file
-$ # as a header.
-$ number-lines --header data*.tsv
-```
-
-**See Also:**
-
-* [tsv-uniq](#tsv-uniq-reference) supports numbering lines grouped by key.
-
----
-
-## keep-header reference
-
-**Synopsis:** keep-header [file...] \-- program [args]
-
-Execute a command against one or more files in a header-aware fashion. The first line of each file is assumed to be a header. The first header is output unchanged. Remaining lines are sent to the given command via standard input, excluding the header lines of subsequent files. Output from the command is appended to the initial header line. A double dash (\--) delimits the command, similar to how the pipe operator (\|) delimits commands.
-
-The following commands sort files in the usual way, except for retaining a single header line:
-```
-$ keep-header file1.txt -- sort
-$ keep-header file1.txt file2.txt -- sort -k1,1nr
-```
-
-Data can also be read from from standard input. For example:
-```
-$ cat file1.txt | keep-header -- sort
-$ keep-header file1.txt -- sort -r | keep-header -- grep red
-```
-
-The last example can be simplified using a shell command:
-```
-$ keep-header file1.txt -- /bin/sh -c '(sort -r | grep red)'
-```
-
-`keep-header` is especially useful for commands like `sort` and `shuf` that reorder input lines. It is also useful with filtering commands like `grep`, many `awk` uses, and even `tail`, where the header should be retained without filtering or evaluation.
-
-`keep-header` works on any file where the first line is delimited by a newline character. This includes all TSV files and the majority of CSV files. It won't work on CSV files having embedded newlines in the header.
-
-**Options:**
-* `--h|help` - Print help.
-* `--V|version` - Print version information and exit.
