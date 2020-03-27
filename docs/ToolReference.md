@@ -5,18 +5,18 @@ _Visit the [main page](../README.md)_
 This page provides detailed documentation about the different tools as well as examples. Material for the individual tools is also available via the `--help` option.
 
 * [Common options and behavior](#common-options-and-behavior)
-* [csv2tsv reference](#csv2tsv-reference)
-* [keep-header reference](#keep-header-reference)
-* [number-lines reference](#number-lines-reference)
-* [tsv-append reference](#tsv-append-reference)
-* [tsv-filter reference](#tsv-filter-reference)
-* [tsv-join reference](#tsv-join-reference)
-* [tsv-pretty reference](#tsv-pretty-reference)
-* [tsv-sample reference](#tsv-sample-reference)
-* [tsv-select reference](#tsv-select-reference)
-* [tsv-split reference](#tsv-split-reference)
-* [tsv-summarize reference](#tsv-summarize-reference)
-* [tsv-uniq reference](#tsv-uniq-reference)
+* [csv2tsv](#csv2tsv-reference)
+* [keep-header](#keep-header-reference)
+* [number-lines](#number-lines-reference)
+* [tsv-append](#tsv-append-reference)
+* [tsv-filter](#tsv-filter-reference)
+* [tsv-join](#tsv-join-reference)
+* [tsv-pretty](#tsv-pretty-reference)
+* [tsv-sample](#tsv-sample-reference)
+* [tsv-select](#tsv-select-reference)
+* [tsv-split](#tsv-split-reference)
+* [tsv-summarize](#tsv-summarize-reference)
+* [tsv-uniq](#tsv-uniq-reference)
 
 ___
 
