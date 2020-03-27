@@ -340,7 +340,7 @@ $ tsv-split data.txt --num-files 1000 --dir split_files
 $ tsv-split data.tsv --num-files 1000 -key-fields 3 --dir split_files
 ```
 
-See the [tsv-split reference](ToolReference.md#tsv-split-reference) for more information.
+See the [tsv-split reference](docs/ToolReference.md#tsv-split-reference) for more information.
 
 ### tsv-append
 
