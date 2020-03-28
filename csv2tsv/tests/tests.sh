@@ -67,6 +67,41 @@ echo "----------------" >> ${error_tests_1}
 
 runtest ${prog} "nosuchfile.txt" ${error_tests_1}
 runtest ${prog} "--nosuchparam input1.txt" ${error_tests_1}
+
+## The newline character doesn't pass through the runtest function
+## correctly, so the next couple tests write directly to the output file.
+##
+echo ""  >> ${error_tests_1}; echo "====[csv2tsv --quote $'\n' input2.csv]====" >> ${error_tests_1}
+${prog} --quote $'\n' input2.csv >> ${error_tests_1} 2>&1
+
+echo ""  >> ${error_tests_1}; echo "====[csv2tsv --quote $'\r' input2.csv]====" >> ${error_tests_1}
+${prog} --quote $'\r' input2.csv >> ${error_tests_1} 2>&1
+
+echo ""  >> ${error_tests_1}; echo "====[csv2tsv --csv-delim $'\n' input2.csv]====" >> ${error_tests_1}
+${prog} --csv-delim $'\n' input2.csv >> ${error_tests_1} 2>&1
+
+echo ""  >> ${error_tests_1}; echo "====[csv2tsv --csv-delim $'\r' input2.csv]====" >> ${error_tests_1}
+${prog} --csv-delim $'\r' input2.csv >> ${error_tests_1} 2>&1
+
+echo ""  >> ${error_tests_1}; echo "====[csv2tsv --tsv-delim $'\n' input2.csv]====" >> ${error_tests_1}
+${prog} --tsv-delim $'\n' input2.csv >> ${error_tests_1} 2>&1
+
+echo ""  >> ${error_tests_1}; echo "====[csv2tsv --tsv-delim $'\r' input2.csv]====" >> ${error_tests_1}
+${prog} --tsv-delim $'\r' input2.csv >> ${error_tests_1} 2>&1
+
+echo ""  >> ${error_tests_1}; echo "====[csv2tsv --replacement $'\n' input2.csv]====" >> ${error_tests_1}
+${prog} --replacement $'\n' input2.csv >> ${error_tests_1} 2>&1
+
+echo ""  >> ${error_tests_1}; echo "====[csv2tsv --replacement $'\r' input2.csv]====" >> ${error_tests_1}
+${prog} --replacement $'\r' input2.csv >> ${error_tests_1} 2>&1
+
+echo ""  >> ${error_tests_1}; echo "====[csv2tsv -r $'__\n__' input2.csv]====" >> ${error_tests_1}
+${prog} -r $'__\n__' input2.csv >> ${error_tests_1} 2>&1
+
+echo ""  >> ${error_tests_1}; echo "====[csv2tsv -r $'__\r__' input2.csv]====" >> ${error_tests_1}
+${prog} -r $'__\r__' input2.csv >> ${error_tests_1} 2>&1
+
+
 runtest ${prog} "-q x -c x input2.csv" ${error_tests_1}
 runtest ${prog} "-q x -t x input2.csv" ${error_tests_1}
 runtest ${prog} "-t x -r wxyz input2.csv" ${error_tests_1}

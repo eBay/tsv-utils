@@ -12,6 +12,7 @@ License: Boost Licence 1.0 (http://boost.org/LICENSE_1_0.txt)
 module tsv_utils.csv2tsv;
 
 import std.stdio;
+import std.exception : enforce;
 import std.format : format;
 import std.range;
 import std.traits : Unqual;
@@ -122,35 +123,23 @@ struct Csv2tsvOptions
             }
 
             /* Consistency checks. */
-            if (csvQuoteChar == '\n' || csvQuoteChar == '\r')
-            {
-                throw new Exception ("CSV quote character cannot be newline (--q|quote).");
-            }
+            enforce(csvQuoteChar != '\n' && csvQuoteChar != '\r',
+                    "CSV quote character cannot be newline (--q|quote).");
 
-            if (csvQuoteChar == csvDelimChar)
-            {
-                throw new Exception("CSV quote and CSV field delimiter characters must be different (--q|quote, --c|csv-delim).");
-            }
+            enforce(csvQuoteChar != csvDelimChar,
+                    "CSV quote and CSV field delimiter characters must be different (--q|quote, --c|csv-delim).");
 
-            if (csvQuoteChar == tsvDelimChar)
-            {
-                throw new Exception("CSV quote and TSV field delimiter characters must be different (--q|quote, --t|tsv-delim).");
-            }
+            enforce(csvQuoteChar != tsvDelimChar,
+                    "CSV quote and TSV field delimiter characters must be different (--q|quote, --t|tsv-delim).");
 
-            if (csvDelimChar == '\n' || csvDelimChar == '\r')
-            {
-                throw new Exception ("CSV field delimiter cannot be newline (--c|csv-delim).");
-            }
+            enforce(csvDelimChar != '\n' && csvDelimChar != '\r',
+                    "CSV field delimiter cannot be newline (--c|csv-delim).");
 
-            if (tsvDelimChar == '\n' || tsvDelimChar == '\r')
-            {
-                throw new Exception ("TSV field delimiter cannot be newline (--t|tsv-delimiter).");
-            }
+            enforce(tsvDelimChar != '\n' && tsvDelimChar != '\r',
+                    "TSV field delimiter cannot be newline (--t|tsv-delim).");
 
-            if (canFind!(c => (c == '\n' || c == '\r' || c == tsvDelimChar))(tsvDelimReplacement))
-            {
-                throw new Exception ("Replacement character cannot contain newlines or TSV field delimiters (--r|replacement).");
-            }
+            enforce(!canFind!(c => (c == '\n' || c == '\r' || c == tsvDelimChar))(tsvDelimReplacement),
+                    "Replacement character cannot contain newlines or TSV field delimiters (--r|replacement).");
         }
         catch (Exception exc)
         {
@@ -398,13 +387,10 @@ InputLoop: while (!inputStream.empty)
         }
     }
 
-    if (currState == State.QuotedField)
-    {
-        throw new Exception(
+    enforce(currState != State.QuotedField,
             format("Invalid CSV. Improperly terminated quoted field. File: %s, Line: %d",
                    (filename == "-") ? "Standard Input" : filename,
                    currFileLineNumber + recordNum));
-    }
 
     if (fieldNum > 0) put(outputStream, '\n');    // Last line w/o terminating newline.
 }
