@@ -2,25 +2,28 @@ _Visit the eBay TSV utilities [main page](../README.md)_
 
 # tsv-select
 
-A version of the Unix `cut` utility with the additional ability to re-order the fields. The following command writes fields [4, 2, 9, 10, 11] from a pair of files to stdout:
+A version of the Unix `cut` utility with the ability to re-order fields. The following command writes fields [4, 2, 9, 10, 11] from a pair of files to stdout:
 ```
 $ tsv-select -f 4,2,9-11 file1.tsv file2.tsv
 ```
 
-Fields can be listed more than once, and fields not listed can be output using the `--rest` option. When working with multiple files, the `--header` option can be used to retain only the header from the first file.
+Fields can be listed more than once, and fields not listed can be selected as a group using `--r|rest`. Fields can be dropped using `--e|exclude`. When working with multiple files, the `--header` option can be used to retain the header from just the first file.
 
 Examples:
 ```
-$ # Output fields 2 and 1, in that order
+$ # Output fields 2 and 1, in that order.
 $ tsv-select -f 2,1 data.tsv
 
-$ # Move field 7 to the start of the line
+$ # Drop the first field, keep everything else.
+$ tsv-select --exclude 1 file.tsv
+
+$ # Move field 7 to the start of the line.
 $ tsv-select -f 7 --rest last data.tsv
 
-$ # Move field 1 to the end of the line
+$ # Move field 1 to the end of the line.
 $ tsv-select -f 1 --rest first data.tsv
 
-$ # Output a range of fields in reverse order
+$ # Output a range of fields in reverse order.
 $ tsv-select -f 30-3 data.tsv
 
 $ # Multiple files with header lines. Keep only one header.

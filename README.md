@@ -48,6 +48,7 @@ The rest of this section contains descriptions of each tool. Click on the links 
 * [tsv-join](#tsv-join) - Join lines from multiple files using fields as a key.
 * [tsv-pretty](#tsv-pretty) - Print TSV data aligned for easier reading on the command-line.
 * [csv2tsv](#csv2tsv) - Convert CSV files to TSV.
+* [tsv-split](#tsv-split) - Split data into multiple files. Random splits, random splits by key, and splits by blocks of lines.
 * [tsv-append](#tsv-append) - Concatenate TSV files. Header-aware; supports source file tracking.
 * [number-lines](#number-lines) - Number the input lines.
 * [keep-header](#keep-header) - Run a shell command in a header-aware fashion.
@@ -167,25 +168,28 @@ See the [tsv-filter reference](docs/ToolReference.md#tsv-filter-reference) for m
 
 ### tsv-select
 
-A version of the Unix `cut` utility with the additional ability to re-order the fields. The following command writes fields [4, 2, 9, 10, 11] from a pair of files to stdout:
+A version of the Unix `cut` utility with the ability to re-order fields. The following command writes fields [4, 2, 9, 10, 11] from a pair of files to stdout:
 ```
 $ tsv-select -f 4,2,9-11 file1.tsv file2.tsv
 ```
 
-Fields can be listed more than once, and fields not listed can be output using the `--rest` option. When working with multiple files, the `--header` option can be used to retain only the header from the first file.
+Fields can be listed more than once, and fields not specified can be selected as a group using `--r|rest`. Fields can be dropped using `--e|exclude`. When working with multiple files, the `--H|header` option can be used to retain the header from just the first file.
 
 Examples:
 ```
-$ # Output fields 2 and 1, in that order
+$ # Output fields 2 and 1, in that order.
 $ tsv-select -f 2,1 data.tsv
 
-$ # Move field 7 to the start of the line
+$ # Drop the first field, keep everything else.
+$ tsv-select --exclude 1 file.tsv
+
+$ # Move field 7 to the start of the line.
 $ tsv-select -f 7 --rest last data.tsv
 
-$ # Move field 1 to the end of the line
+$ # Move field 1 to the end of the line.
 $ tsv-select -f 1 --rest first data.tsv
 
-$ # Output a range of fields in reverse order
+$ # Output a range of fields in reverse order.
 $ tsv-select -f 30-3 data.tsv
 
 $ # Multiple files with header lines. Keep only one header.
@@ -312,6 +316,31 @@ See [Comparing TSV and CSV formats](docs/comparing-tsv-and-csv.md) for more info
 
 There are many variations of CSV file format. See the [csv2tsv reference](docs/ToolReference.md#csv2tsv-reference) for details of the format variations supported by this tool.
 
+### tsv-split
+
+`tsv-split` is used to split one or more input files into multiple output files. There are three modes of operation:
+* Fixed number of lines per file (`--l|lines-per-file NUM`): Each input block of NUM lines is written to a new file. This is similar to the Unix `split` utility.
+
+* Random assignment (`--n|num-files NUM`): Each input line is written to a randomly selected output file. Random selection is from NUM files.
+
+* Random assignment by key (`--n|num-files NUM, --k|key-fields FIELDS`): Input lines are written to output files using fields as a key. Each unique key is randomly assigned to one of NUM output files. All lines with the same key are written to the same file.
+
+By default, files are written to the current directory and have names of the form `part_NNN<suffix>`, with `NNN` being a number and `<suffix>` being the extension of the first input file. If the input file is `file.txt`, the names will take the form `part_NNN.txt`. The output directory and file names are customizable.
+
+Examples:
+```
+$ # Split a file into files of 10,000 lines each. Output files
+$ # are written to the 'split_files/' directory.
+$ tsv-split data.txt --lines-per-file 10000 --dir split_files
+
+$ # Split a file into 1000 files with lines randomly assigned.
+$ tsv-split data.txt --num-files 1000 --dir split_files
+
+# Randomly assign lines to 1000 files using field 3 as a key.
+$ tsv-split data.tsv --num-files 1000 -key-fields 3 --dir split_files
+```
+
+See the [tsv-split reference](docs/ToolReference.md#tsv-split-reference) for more information.
 
 ### tsv-append
 
@@ -338,14 +367,47 @@ See the [number-lines reference](docs/ToolReference.md#number-lines-reference) f
 
 ### keep-header
 
-A convenience utility that runs unix commands in a header-aware fashion. It is especially useful with `sort`, which puts the header line wherever it falls in the sort order. Using `keep-header`, the header line retains its position as the first line. For example:
+A convenience utility that runs Unix commands in a header-aware fashion. It is especially useful with `sort`. `sort` does not know about headers, so the header line ends up wherever it falls in the sort order.  Using `keep-header`, the header line is output first and the rest of the sorted file follows. For example:
 ```
+$ # Sort a file, keeping the header line at the top.
 $ keep-header myfile.txt -- sort
 ```
 
-It is also useful with `grep`, `awk`, `sed`, similar tools, when the header line should be excluded from the command's action.
+The command to run is placed after the double dash (`--`). Everything after the initial double dash is part of the command. For example, `sort --ignore-case` is run as follows:
+```
+$ # Case-insensitive sort, keeping the header line at the top.
+$ keep-header myfile.txt -- sort --ignore-case
+```
 
-Multiple files can be provided, only the header from the first is retained. The command is executed as specified, so additional command options can be provided. See the [keep-header reference](docs/ToolReference.md#keep-header-reference) for more information.
+Multiple files can be provided, only the header from the first is retained. For example:
+
+```
+$ # Sort a set of files in reverse order, keeping only one header line.
+$ keep-header *.txt -- sort -r
+```
+
+`keep-header` is especially useful for commands like `sort` and `shuf` that reorder input lines. It is also useful with filtering commands like `grep`, many `awk` uses, and even `tail`, where the header should be retained without filtering or evaluation.
+
+Examples:
+```
+$ # 'grep' a file, keeping the header line without needing to match it.
+$ keep-header file.txt -- grep 'some text'
+
+$ # Print the last 10 lines of a file, but keep the header line
+$ keep-header file.txt -- tail
+
+$ # Print lines 100-149 of a file, plus the header
+$ keep-header file.txt -- tail -n +100 | head -n 51
+
+$ # Sort a set of TSV files numerically on field 2, keeping one header.
+$ keep-header *.tsv -- sort -t $'\t' -k2,2n
+
+$ # Same as the previous example, but using the 'tsv-sort-fast' bash
+$ # script described on the "Tips and Tricks" page.
+$ keep-header *.tsv -- tsv-sort-fast -k2,2n
+```
+
+See the [keep-header reference](docs/ToolReference.md#keep-header-reference) for more information.
 
 ---
 

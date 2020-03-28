@@ -415,7 +415,7 @@ Suppose we want to do this with simple random sampling? In simple random samplin
 $ tsv-sample -n 1000000 ngram-*.tsv
 ```
 
-We can't parallelize the `tsv-sample -n` command itself. However, a trick that can be played is to over-sample using Bernoulli sampling, then get the desired number of records with random sampling. Our earlier formula for Bernoulli sample produces on average about 1.19 million records, a reasonable over-sampling for the 1 million records desired. (It is possible for the Bernoulli sample to produce less than 1 million records, but that would be exceptionally rare with this over-sampling rate.) The resulting formula:
+We can't parallelize the `tsv-sample -n` command itself. However, a trick that can be played is to over-sample using Bernoulli sampling, then get the desired number of records with random sampling. Our earlier formula for the Bernoulli sample produces on average about 1.19 million records, a reasonable over-sampling for the 1 million records desired. (It is possible for the Bernoulli sample to produce less than 1 million records, but that would be exceptionally rare with this over-sampling rate.) The resulting formula:
 ```
 $ tsv-sample -p 0.001 ngram-*.tsv | tsv-sample -n 1000000
 ```
@@ -437,7 +437,7 @@ Bernoulli sampling is a bit faster than simple random sampling, so there is some
 
 #### GNU parallel and tsv-summarize
 
-Many `tsv-summary` calculations require seeing all the data all at once and cannot be readily parallelized. Computations like `mean`, `median`, `stdev`, and `quantile` fall into this bucket. However, there are operations that can parallelized. Operations like `sum`, `min` and `max`. We'll use `max` to show an example of how this works. First, we'll `tsv-summarize` to find largest occurrence count (3rd column) in the ngram files:
+Many `tsv-summary` calculations require seeing all the data all at once and cannot be readily parallelized. Computations like `mean`, `median`, `stdev`, and `quantile` fall into this bucket. However, there are operations that can parallelized. Operations like `sum`, `min` and `max`. We'll use `max` to show an example of how this works. First, we'll `tsv-summarize` to find the largest occurrence count (3rd column) in the ngram files:
 ```
 $ tsv-summarize --max 3 ngram-*.tsv
 927838975
@@ -479,6 +479,8 @@ This took 110 seconds. Here's the parallel version. It produces the same results
 ```
 $ parallel tsv-summarize --group-by 2 --max 3 ::: ngram-*.tsv | tsv-summarize --group-by 1 --max 2 | tsv-sort-fast -k1,1n
 ```
+
+Notice that in the "group-by year" example, the second `tsv-summarize` pass is necessary because the entries for each year occur in multiple files. If the files are organized by the group-by key, then the second pass is not necessary. The google ngram files are organized by first letter of the ngram (a file for "a", a file for "b", etc.), so "group-by" operations on the ngram field would not need the second pass. The [tsv-split](ToolReference.md#tsv-split-reference) tool's "random assignment by key" feature can be used to split a data set into files sharded by key. This is especially helpful when the number of unique keys in the data set is very large.
 
 ### Using GNU Parallel on files with header lines
 

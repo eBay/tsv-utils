@@ -32,14 +32,46 @@ tsv-select reads files or standard input and writes selected fields to
 standard output. Fields are written in the order listed. This is similar
 to Unix 'cut', but with the ability to reorder fields.
 
-Fields numbers start with one. Multiple fields and field ranges can be
-specified (comma separated). Fields can be repeated, and fields not
-listed can be output using the '--rest' option. Use '--H|header' to
+Fields numbers start with one. They are comma separated and ranges can be
+used. Fields can be repeated, and fields not included in the '--f|fields'
+option can be selected as a group using '--r|rest'. Fields can be dropped
+using '--e|exclude'. Multiple files with header lines can be managed with
+'--H|header', which retains the header of the first file only.
+
+Examples:
+
+   # Output fields 2 and 1, in that order
+   tsv-select -f 2,1 data.tsv
+
+   # Drop the first field, keep everything else.
+   tsv-select --exclude 1 file.tsv
+
+   # Move the first field to the end
+   tsv-select -f 1 --rest first data.tsv
+
+   # Multiple files with header lines. Keep only one header.
+   tsv-select data*.tsv -H --fields 1,2,4-7,14
+
+Use '--help-verbose' for detailed information.
+
+Options:
+EOS";
+
+immutable helpTextVerbose = q"EOS
+Synopsis: tsv-select [options] [file...]
+
+tsv-select reads files or standard input and writes selected fields to
+standard output. Fields are written in the order listed. This is similar
+to Unix 'cut', but with the ability to reorder fields.
+
+Fields numbers start with one. They are comma separated and ranges can be
+used. Fields can be repeated, and fields not included in the '--f|fields'
+option can be selected as a group using '--r|rest'. Use '--H|header' to
 retain the header line from only the first file.
 
 Fields can be excluded using '--e|exclude'. All fields not excluded are
-output. '--f|fields' can be used with '--e|exclude' to change the order
-of non-excluded fields.
+output. '--f|fields' and '--r|rest' can be used with '--e|exclude' to
+reorder non-excluded fields.
 
 Examples:
 
@@ -67,27 +99,19 @@ Examples:
    # Drop the first field, keep everything else
    tsv-select --exclude 1 file.tsv
 
-   # Drop fields 3-10
-   tsv-select -e 3-10 file.tsv
-
    # Move field 2 to the front and drop fields 10-15
    tsv-select -f 2 -e 10-15 file.tsv
 
    # Move field 2 to the end, dropping fields 10-15
    tsv-select -f 2 -rest first -e 10-15 file.tsv
 
-   # Read from standard input
-   cat file*.tsv | tsv-select -f 3,2,1
-
-   # Read from a file and standard input. The '--' terminates command
-   # option processing, '-' represents standard input.
-   cat file1.tsv | tsv-select -f 1-3 -- - file2.tsv
-
 Notes:
 * One of '--f|fields' or '--e|exclude' is required.
 * Fields specified by '--f|fields' and '--e|exclude' cannot overlap.
-* Each line must have all fields specified by '--f|fields'. Otherwise
-  line length can vary.
+* When '--f|fields' and '--e|exclude' are used together, the effect is to
+  specify '--rest last'. This can be overridden by using '--rest first'.
+* Each input line must be long enough to contain all fields specified with
+  '--f|fields'. This is not necessary for '--e|exclude' fields.
 
 Options:
 EOS";
@@ -99,14 +123,15 @@ struct TsvSelectOptions
     // The allowed values for the --rest option.
     enum RestOption { none, first, last};
 
-    string programName;
-    bool hasHeader = false;       // --H|header
-    char delim = '\t';            // --d|delimiter
-    size_t[] fields;              // --f|fields
-    size_t[] excludedFieldsArg;   // --e|exclude
-    RestOption restArg;           // --rest first|last (none is hidden default)
-    bool versionWanted = false;   // --V|version
-    bool[] excludedFieldsTable;   // Derived. Lookup table for excluded fields.
+    string programName;           /// Program name
+    bool helpVerbose = false;     /// --help-verbose
+    bool hasHeader = false;       /// --H|header
+    char delim = '\t';            /// --d|delimiter
+    size_t[] fields;              /// --f|fields
+    size_t[] excludedFieldsArg;   /// --e|exclude
+    RestOption restArg;           /// --rest first|last (none is hidden default)
+    bool versionWanted = false;   /// --V|version
+    bool[] excludedFieldsTable;   /// Derived. Lookup table for excluded fields.
 
     /** Process command line arguments (getopt cover).
      *
@@ -135,26 +160,33 @@ struct TsvSelectOptions
             arraySep = ",";    // Use comma to separate values in command line options
             auto r = getopt(
                 cmdArgs,
+                "help-verbose",    "     Print more detailed help.", &helpVerbose,
+
                 std.getopt.config.caseSensitive,
-                "H|header",    "                 Treat the first line of each file as a header.", &hasHeader,
+                "H|header",    "              Treat the first line of each file as a header.", &hasHeader,
                 std.getopt.config.caseInsensitive,
 
-                "f|fields",    "<field-list>     Fields to retain. Fields are output in the order listed.",
+                "f|fields",    "<field-list>  Fields to retain. Fields are output in the order listed.",
                 fields.makeFieldListOptionHandler!(size_t, Yes.convertToZeroBasedIndex),
 
-                "e|exclude",   "<field-list>     Fields to exclude.",
+                "e|exclude",   "<field-list>  Fields to exclude.",
                 excludedFieldsArg.makeFieldListOptionHandler!(size_t, Yes.convertToZeroBasedIndex),
 
-                "r|rest",      "first|last  Output location for fields not included in '--f|fields'. By default, other fields not output unless '--excluded' is used.", &restArg,
-                "d|delimiter", "CHR              Character to use as field delimiter. Default: TAB. (Single byte UTF-8 characters only.)", &delim,
+                "r|rest",      "first|last    Output location for fields not included in '--f|fields'.", &restArg,
+                "d|delimiter", "CHR           Character to use as field delimiter. Default: TAB. (Single byte UTF-8 characters only.)", &delim,
                 std.getopt.config.caseSensitive,
-                "V|version",   "                 Print version information and exit.", &versionWanted,
+                "V|version",   "              Print version information and exit.", &versionWanted,
                 std.getopt.config.caseInsensitive,
                 );
 
             if (r.helpWanted)
             {
                 defaultGetoptPrinter(helpText, r.options);
+                return tuple(false, 0);
+            }
+            else if (helpVerbose)
+            {
+                defaultGetoptPrinter(helpTextVerbose, r.options);
                 return tuple(false, 0);
             }
             else if (versionWanted)
