@@ -10,6 +10,7 @@ License: Boost License 1.0 (http://boost.org/LICENSE_1_0.txt)
 module tsv_utils.tsv_append;
 
 import std.conv : to;
+import std.exception : enforce;
 import std.range;
 import std.stdio;
 import std.typecons : tuple;
@@ -116,8 +117,8 @@ struct TsvAppendOptions
         import std.format : format;
 
         auto valSplit = findSplit(optionVal, "=");
-        if (valSplit[0].empty || valSplit[2].empty)
-            throw new Exception(
+
+        enforce(!valSplit[0].empty && !valSplit[2].empty,
                 format("Invalid option value: '--%s %s'. Expected: '--%s <source>=<file>'.",
                        option, optionVal, option));
 
