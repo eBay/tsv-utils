@@ -49,6 +49,12 @@ f1	f2	f3	f4	f5
 ====[tsv-join --header -f input1.tsv -k 2,3 -d 2,0 input2.tsv]====
 [tsv-join] Error processing command line arguments: Field 0 (whole line) cannot be combined with individual fields (non-zero).
 
+====[tsv-join --header -f input1.tsv -k 1 -a 2,0 input2.tsv]====
+[tsv-join] Error processing command line arguments: Field 0 (whole line) cannot be combined with individual fields (non-zero).
+
+====[tsv-join --header -f input1.tsv -k 1 -a 0,2 input2.tsv]====
+[tsv-join] Error processing command line arguments: Field 0 (whole line) cannot be combined with individual fields (non-zero).
+
 ====[tsv-join --header -f input1.tsv -k 2 -d 0 input2.tsv]====
 [tsv-join] Error processing command line arguments: If either --k|key-field or --d|data-field is zero both must be zero.
 
