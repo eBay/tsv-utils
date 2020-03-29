@@ -375,9 +375,9 @@ struct TsvSampleOptions
                 enforce(!hasWeightField, "--w|weight-field and --p|prob cannot be used together.");
 
                 enforce(!genRandomInorder || useDistinctSampling,
-                        "--gen-random-inorder and --p|prob can only be used together if --k|key-fields is also used."
-                        ~ "\nUse --gen-random-inorder alone to print probabilities for all lines."
-                        ~ "\nUse --p|prob and --print-random to print probabilities for lines satisfying the probability threshold.");
+                        "--gen-random-inorder and --p|prob can only be used together if --k|key-fields is also used." ~
+                        "\nUse --gen-random-inorder alone to print probabilities for all lines." ~
+                        "\nUse --p|prob and --print-random to print probabilities for lines satisfying the probability threshold.");
             }
             else if (genRandomInorder && !hasWeightField)
             {

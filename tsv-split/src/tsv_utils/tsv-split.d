@@ -11,6 +11,8 @@ License: Boost License 1.0 (http://boost.org/LICENSE_1_0.txt)
 */
 module tsv_utils.tsv_split;
 
+import std.exception : enforce;
+import std.format : format;
 import std.range;
 import std.stdio;
 import std.typecons : tuple, Flag;
@@ -260,9 +262,8 @@ struct TsvSplitOptions
      */
     auto processArgs(ref string[] cmdArgs)
     {
-        import std.algorithm : any, canFind, each, min;
+        import std.algorithm : all, canFind, each, min;
         import std.file : exists, isDir;
-        import std.format : format;
         import std.getopt;
         import std.math : isNaN;
         import std.path : baseName, expandTilde, extension, stripExtension;
@@ -329,25 +330,16 @@ struct TsvSplitOptions
              * Validation and derivations.
              */
 
-            if (linesPerFile == 0 && numFiles == 0)
-            {
-                throw new Exception ("Either '--l|lines-per-file' or '--n|num-files' is required.");
-            }
+            enforce(linesPerFile != 0 || numFiles != 0,
+                    "Either '--l|lines-per-file' or '--n|num-files' is required.");
 
-            if (linesPerFile != 0 && numFiles != 0)
-            {
-                throw new Exception ("'--l|lines-per-file' and '--n|num-files' cannot be used together.");
-            }
+            enforce(linesPerFile == 0 || numFiles == 0,
+                    "'--l|lines-per-file' and '--n|num-files' cannot be used together.");
 
-            if (linesPerFile != 0 && keyFields.length != 0)
-            {
-                throw new Exception ("'--l|lines-per-file' and '--k|key-fields' cannot be used together.");
-            }
+            enforce(linesPerFile == 0 || keyFields.length == 0,
+                    "'--l|lines-per-file' and '--k|key-fields' cannot be used together.");
 
-            if (numFiles == 1)
-            {
-                throw new Exception("'--n|num-files must be two or more.");
-            }
+            enforce(numFiles != 1, "'--n|num-files must be two or more.");
 
             if (keyFields.length > 0)
             {
@@ -357,28 +349,23 @@ struct TsvSplitOptions
                 }
                 else
                 {
-                    if (keyFields.length > 1 && keyFields.any!(x => x == 0))
-                    {
-                        throw new Exception(
+                    enforce(keyFields.all!(x => x != 0),
                             "Whole line as key (--k|key-fields 0) cannot be combined with multiple fields.");
-                    }
 
                     keyFields.each!((ref x) => --x);  // Convert to zero-based indexing.
                 }
             }
 
-            if (headerInOut && headerIn)
-            {
-                throw new Exception("Use only one of '--H|header' and '--I|header-in-only'.");
-            }
+            enforce(!(headerInOut && headerIn),
+                    "Use only one of '--H|header' and '--I|header-in-only'.");
 
             hasHeader = headerInOut || headerIn;
 
             if (!dir.empty)
             {
                 dir = dir.expandTilde;
-                if (!dir.exists) throw new Exception(format("Directory does not exist: --dir '%s'", dir));
-                else if (!dir.isDir) throw new Exception(format("Path is not a directory: --dir '%s'", dir));
+                enforce(dir.exists, format("Directory does not exist: --dir '%s'", dir));
+                enforce(dir.isDir, format("Path is not a directory: --dir '%s'", dir));
             }
 
             /* Seed. */
@@ -406,32 +393,24 @@ struct TsvSplitOptions
             immutable uint numReservedOpenFiles = 4;
             immutable uint rlimitOpenFilesLimit = rlimitCurrOpenFilesLimit();
 
-            if (maxOpenFilesArg != 0 && maxOpenFilesArg <= numReservedOpenFiles)
-            {
-                throw new Exception(
+
+            enforce(maxOpenFilesArg == 0 || maxOpenFilesArg > numReservedOpenFiles,
                     format("'--max-open-files' must be at least %d.",
                            numReservedOpenFiles + 1));
-            }
 
-            if (maxOpenFilesArg > rlimitOpenFilesLimit)
-            {
-                throw new Exception(
+            enforce(maxOpenFilesArg <= rlimitOpenFilesLimit,
                     format("'--max-open-files' value (%d) greater current system limit (%d)." ~
                            "\nRun 'ulimit -n' to see the soft limit." ~
                            "\nRun 'ulimit -Hn' to see the hard limit." ~
                            "\nRun 'ulimit -Sn NUM' to change the soft limit.",
                            maxOpenFilesArg, rlimitOpenFilesLimit));
-            }
 
-            if (rlimitOpenFilesLimit <= numReservedOpenFiles)
-            {
-                throw new Exception(
+            enforce(rlimitOpenFilesLimit > numReservedOpenFiles,
                     format("System open file limit too small. Current value: %d. Must be %d or more." ~
                            "\nRun 'ulimit -n' to see the soft limit." ~
                            "\nRun 'ulimit -Hn' to see the hard limit." ~
                            "\nRun 'ulimit -Sn NUM' to change the soft limit.",
                            rlimitOpenFilesLimit, numReservedOpenFiles + 1));
-            }
 
             immutable uint openFilesLimit =
                 (maxOpenFilesArg != 0)
@@ -465,14 +444,11 @@ struct TsvSplitOptions
              * However, the NULL character cannot be entered via Unix command lines,
              * so there is no need to test for it explicitly.
              */
-            if (prefix.canFind('/'))
-            {
-                throw new Exception("'--prefix' cannot contain forward slash characters. Use '--dir' to specify an output directory.");
-            }
-            if (suffix.canFind('/'))
-            {
-                throw new Exception("'--suffix' cannot contain forward slash characters. Use '--dir' to specify an output directory.");
-            }
+            enforce(!prefix.canFind('/'),
+                    "'--prefix' cannot contain forward slash characters. Use '--dir' to specify an output directory.");
+
+            enforce(!suffix.canFind('/'),
+                    "'--suffix' cannot contain forward slash characters. Use '--dir' to specify an output directory.");
 
             /* Digit width - If not specified, or specified as zero, the width is
              * determined by the number of files for --num-files, or defaulted to 3
@@ -514,7 +490,6 @@ struct TsvSplitOptions
 unittest
 {
     import std.conv : to;
-    import std.format : format;
 
     {
         auto args = ["unittest", "--lines-per-file", "10"];
@@ -655,10 +630,8 @@ uint rlimitCurrOpenFilesLimit()
 
     rlimit rlimitMaxOpenFiles;
 
-    if (getrlimit(RLIMIT_NOFILE, &rlimitMaxOpenFiles) != 0)
-    {
-        throw new Exception("Internal error: getrlimit call failed");
-    }
+    enforce(getrlimit(RLIMIT_NOFILE, &rlimitMaxOpenFiles) == 0,
+            "Internal error: getrlimit call failed");
 
     if (rlimitMaxOpenFiles.rlim_cur != RLIM_INFINITY &&
         rlimitMaxOpenFiles.rlim_cur != RLIM_SAVED_CUR &&
@@ -679,8 +652,6 @@ uint rlimitCurrOpenFilesLimit()
  */
 void tsvSplit(TsvSplitOptions cmdopt)
 {
-    import std.format : format;
-
     if (cmdopt.linesPerFile != 0)
     {
         splitByLineCount(cmdopt);
@@ -696,13 +667,9 @@ void tsvSplit(TsvSplitOptions cmdopt)
         if (!cmdopt.appendToExistingFiles)
         {
             string existingFile = outputFiles.checkIfFilesExist;
-
-            if (existingFile.length != 0)
-            {
-                throw new Exception(
+            enforce(existingFile.length == 0,
                     format("One or more output files already exist. Use '--a|append' to append to existing files. File: '%s'.",
                            existingFile));
-            }
         }
 
         if (cmdopt.keyFields.length == 0)
@@ -737,7 +704,6 @@ struct SplitOutputFiles
 {
     import std.conv : to;
     import std.file : exists;
-    import std.format : format;
     import std.path : buildPath;
     import std.stdio : File;
 
@@ -977,13 +943,9 @@ void splitLinesByKey(TsvSplitOptions cmdopt, ref SplitOutputFiles outputFiles)
                         if (keyFieldsReordering.allFieldsFilled) break;
                     }
 
-                    if (!keyFieldsReordering.allFieldsFilled)
-                    {
-                        import std.format : format;
-                        throw new Exception(
+                    enforce(keyFieldsReordering.allFieldsFilled,
                             format("Not enough fields in line. File: %s, Line: %s",
                                    (filename == "-") ? "Standard Input" : filename, fileLineNum));
-                    }
 
                     foreach (count, key; keyFieldsReordering.outputFields.enumerate)
                     {
@@ -1016,7 +978,6 @@ void splitByLineCount(TsvSplitOptions cmdopt, const size_t readBufferSize = 1024
 {
     import std.array : appender;
     import std.file : exists;
-    import std.format : format;
     import std.path : buildPath;
     import std.stdio : File;
 
@@ -1093,12 +1054,9 @@ void splitByLineCount(TsvSplitOptions cmdopt, const size_t readBufferSize = 1024
                                   format("%s%.*d%s", cmdopt.prefix,
                                          cmdopt.digitWidth, nextOutputFileNum, cmdopt.suffix));
 
-                    if (!cmdopt.appendToExistingFiles && outputFileName.exists)
-                    {
-                        throw new Exception(
+                    enforce(cmdopt.appendToExistingFiles || !outputFileName.exists,
                             format("Output file already exists. Use '--a|append' to append to existing files. File: '%s'.",
                                    outputFileName));
-                    }
 
                     outputFile = outputFileName.File("ab");
                     isOutputFileOpen = true;
@@ -1173,7 +1131,6 @@ unittest
     import std.array : appender;
     import std.conv : to;
     import std.file : exists, mkdir, rmdirRecurse;
-    import std.format : format;
     import std.path : buildPath;
     import std.process : escapeShellCommand, executeShell;
 
@@ -1217,7 +1174,6 @@ unittest
                                  size_t readBufferSize = 1024L * 512L)
     {
         import std.array : appender;
-        import std.format : format;
 
         assert(cmdArgs.length > 0, "[testSplitByLineCount] cmdArgs must not be empty.");
 
