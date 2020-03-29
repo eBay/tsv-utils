@@ -8,6 +8,36 @@ Error [csv2tsv]: Cannot open file `nosuchfile.txt' in mode `rb' (No such file or
 ====[csv2tsv --nosuchparam input1.txt]====
 [csv2tsv] Error processing command line arguments: Unrecognized option --nosuchparam
 
+====[csv2tsv --quote $'\n' input2.csv]====
+[csv2tsv] Error processing command line arguments: CSV quote character cannot be newline (--q|quote).
+
+====[csv2tsv --quote $'\r' input2.csv]====
+[csv2tsv] Error processing command line arguments: CSV quote character cannot be newline (--q|quote).
+
+====[csv2tsv --csv-delim $'\n' input2.csv]====
+[csv2tsv] Error processing command line arguments: CSV field delimiter cannot be newline (--c|csv-delim).
+
+====[csv2tsv --csv-delim $'\r' input2.csv]====
+[csv2tsv] Error processing command line arguments: CSV field delimiter cannot be newline (--c|csv-delim).
+
+====[csv2tsv --tsv-delim $'\n' input2.csv]====
+[csv2tsv] Error processing command line arguments: TSV field delimiter cannot be newline (--t|tsv-delim).
+
+====[csv2tsv --tsv-delim $'\r' input2.csv]====
+[csv2tsv] Error processing command line arguments: TSV field delimiter cannot be newline (--t|tsv-delim).
+
+====[csv2tsv --replacement $'\n' input2.csv]====
+[csv2tsv] Error processing command line arguments: Replacement character cannot contain newlines or TSV field delimiters (--r|replacement).
+
+====[csv2tsv --replacement $'\r' input2.csv]====
+[csv2tsv] Error processing command line arguments: Replacement character cannot contain newlines or TSV field delimiters (--r|replacement).
+
+====[csv2tsv -r $'__\n__' input2.csv]====
+[csv2tsv] Error processing command line arguments: Replacement character cannot contain newlines or TSV field delimiters (--r|replacement).
+
+====[csv2tsv -r $'__\r__' input2.csv]====
+[csv2tsv] Error processing command line arguments: Replacement character cannot contain newlines or TSV field delimiters (--r|replacement).
+
 ====[csv2tsv -q x -c x input2.csv]====
 [csv2tsv] Error processing command line arguments: CSV quote and CSV field delimiter characters must be different (--q|quote, --c|csv-delim).
 

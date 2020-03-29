@@ -11,6 +11,8 @@ License: Boost License 1.0 (http://boost.org/LICENSE_1_0.txt)
 module tsv_utils.tsv_sample;
 
 import std.array : appender, Appender, RefAppender;
+import std.exception : enforce;
+import std.format : format;
 import std.range;
 import std.stdio;
 import std.typecons : tuple, Flag;
@@ -247,7 +249,7 @@ struct TsvSampleOptions
      */
     auto processArgs(ref string[] cmdArgs)
     {
-        import std.algorithm : any, canFind, each;
+        import std.algorithm : all, canFind, each;
         import std.getopt;
         import std.math : isNaN;
         import std.path : baseName, stripExtension;
@@ -326,33 +328,27 @@ struct TsvSampleOptions
 
             if (srsWithReplacement)
             {
-                if (hasWeightField)
-                {
-                    throw new Exception("Sampling with replacement (--r|replace) does not support weights (--w|weight-field).");
-                }
-                else if (!inclusionProbability.isNaN)
-                {
-                    throw new Exception("Sampling with replacement (--r|replace) cannot be used with probabilities (--p|prob).");
-                }
-                else if (keyFields.length > 0)
-                {
-                    throw new Exception("Sampling with replacement (--r|replace) cannot be used with distinct sampling (--k|key-fields).");
-                }
-                else if (printRandom || genRandomInorder)
-                {
-                    throw new Exception("Sampling with replacement (--r|replace) does not support random value printing (--print-random, --gen-random-inorder).");
-                }
-                else if (preserveInputOrder)
-                {
-                    throw new Exception("Sampling with replacement (--r|replace) does not support input order preservation (--i|inorder option).");
-                }
+                enforce(!hasWeightField,
+                        "Sampling with replacement (--r|replace) does not support weights (--w|weight-field).");
+
+                enforce(inclusionProbability.isNaN,
+                        "Sampling with replacement (--r|replace) cannot be used with probabilities (--p|prob).");
+
+                enforce(keyFields.length == 0,
+                        "Sampling with replacement (--r|replace) cannot be used with distinct sampling (--k|key-fields).");
+
+                enforce(!printRandom && !genRandomInorder,
+                        "Sampling with replacement (--r|replace) does not support random value printing (--print-random, --gen-random-inorder).");
+
+                enforce(!preserveInputOrder,
+                        "Sampling with replacement (--r|replace) does not support input order preservation (--i|inorder option).");
             }
 
             if (keyFields.length > 0)
             {
                 /* Note: useDistinctSampling is set as part of the inclusion probability checks below. */
 
-                if (inclusionProbability.isNaN) throw new Exception("--p|prob is required when using --k|key-fields.");
+                enforce(!inclusionProbability.isNaN, "--p|prob is required when using --k|key-fields.");
 
                 if (keyFields.length == 1 && keyFields[0] == 0)
                 {
@@ -360,10 +356,8 @@ struct TsvSampleOptions
                 }
                 else
                 {
-                    if (keyFields.length > 1 && keyFields.any!(x => x == 0))
-                    {
-                        throw new Exception("Whole line as key (--k|key-fields 0) cannot be combined with multiple fields.");
-                    }
+                    enforce(keyFields.length <= 1 || keyFields.all!(x => x != 0),
+                            "Whole line as key (--k|key-fields 0) cannot be combined with multiple fields.");
 
                     keyFields.each!((ref x) => --x);  // Convert to zero-based indexing.
                 }
@@ -372,47 +366,38 @@ struct TsvSampleOptions
             /* Inclusion probability (--p|prob) is used for both Bernoulli sampling and distinct sampling. */
             if (!inclusionProbability.isNaN)
             {
-                if (inclusionProbability <= 0.0 || inclusionProbability > 1.0)
-                {
-                    import std.format : format;
-                    throw new Exception(
+                enforce(inclusionProbability > 0.0 && inclusionProbability <= 1.0,
                         format("Invalid --p|prob option: %g. Must satisfy 0.0 < prob <= 1.0.", inclusionProbability));
-                }
 
                 if (keyFields.length > 0) useDistinctSampling = true;
                 else useBernoulliSampling = true;
 
-                if (hasWeightField) throw new Exception("--w|weight-field and --p|prob cannot be used together.");
+                enforce(!hasWeightField, "--w|weight-field and --p|prob cannot be used together.");
 
-                if (genRandomInorder && !useDistinctSampling)
-                {
-                    throw new Exception("--gen-random-inorder and --p|prob can only be used together if --k|key-fields is also used.");
-                }
+                enforce(!genRandomInorder || useDistinctSampling,
+                        "--gen-random-inorder and --p|prob can only be used together if --k|key-fields is also used." ~
+                        "\nUse --gen-random-inorder alone to print probabilities for all lines." ~
+                        "\nUse --p|prob and --print-random to print probabilities for lines satisfying the probability threshold.");
             }
             else if (genRandomInorder && !hasWeightField)
             {
                 useBernoulliSampling = true;
             }
 
-            if (randomValueHeader.length == 0 || randomValueHeader.canFind('\n') ||
-                randomValueHeader.canFind(delim))
-            {
-                throw new Exception("--randomValueHeader must be at least one character and not contain field delimiters or newlines.");
-            }
+            enforce(randomValueHeader.length != 0 && !randomValueHeader.canFind('\n') &&
+                    !randomValueHeader.canFind(delim),
+                    "--randomValueHeader must be at least one character and not contain field delimiters or newlines.");
 
             /* Check for incompatible use of (--i|inorder) and shuffling of the full
              * data set. Sampling with replacement is also incompatible, this is
              * detected earlier. Shuffling is the default operation, so it identified
              * by eliminating the other modes of operation.
              */
-            if (preserveInputOrder &&
-                sampleSize == 0 &&
-                !useBernoulliSampling &&
-                !useDistinctSampling
-               )
-            {
-                throw new Exception("Preserving input order (--i|inorder) is not compatible with full data set shuffling. Switch to random sampling with a sample size (--n|num) to use --i|inorder.");
-            }
+            enforce(!preserveInputOrder ||
+                    sampleSize != 0 ||
+                    useBernoulliSampling ||
+                    useDistinctSampling,
+                    "Preserving input order (--i|inorder) is not compatible with full data set shuffling. Switch to random sampling with a sample size (--n|num) to use --i|inorder.");
 
             /* Compatibility mode checks:
              * - Random value printing implies compatibility-mode, otherwise user's
@@ -422,10 +407,8 @@ struct TsvSampleOptions
              *   superset of smaller probabilities. This would be confusing, so
              *   flag it as an error.
              */
-            if (compatibilityMode && useDistinctSampling)
-            {
-                throw new Exception("Distinct sampling (--k|key-fields --p|prob) does not support --compatibility-mode.");
-            }
+            enforce(!(compatibilityMode && useDistinctSampling),
+                    "Distinct sampling (--k|key-fields --p|prob) does not support --compatibility-mode.");
 
             if (printRandom || genRandomInorder) compatibilityMode = true;
 
@@ -809,13 +792,9 @@ if (isOutputRange!(OutputRange, char))
                         if (keyFieldsReordering.allFieldsFilled) break;
                     }
 
-                    if (!keyFieldsReordering.allFieldsFilled)
-                    {
-                        import std.format : format;
-                        throw new Exception(
+                    enforce(keyFieldsReordering.allFieldsFilled,
                             format("Not enough fields in line. File: %s, Line: %s",
                                    (filename == "-") ? "Standard Input" : filename, fileLineNum));
-                    }
 
                     foreach (count, key; keyFieldsReordering.outputFields.enumerate)
                     {
@@ -1779,7 +1758,6 @@ unittest
     import std.algorithm : equal, find, joiner, splitter;
     import std.array : appender;
     import std.file : rmdirRecurse;
-    import std.format : format;
     import std.path : buildPath;
     import std.range : repeat;
 
@@ -2001,7 +1979,6 @@ if (isOutputRange!(OutputRange, char))
     void testFormatValue(double value, string expected)
     {
         import std.array : appender;
-        import std.format : format;
 
         auto s = appender!string();
         s.formatRandomValue(value);
@@ -2051,7 +2028,6 @@ T getFieldValue(T, C)(const C[] line, size_t fieldIndex, C delim, string filenam
 if (isSomeChar!C)
 {
     import std.conv : ConvException, to;
-    import std.format : format;
     import tsv_utils.common.utils : getTsvFieldValue;
 
     T val;
@@ -2114,7 +2090,6 @@ version(unittest)
     void testTsvSample(string[] cmdArgs, string[][] expected)
     {
         import std.array : appender;
-        import std.format : format;
 
         assert(cmdArgs.length > 0, "[testTsvSample] cmdArgs must not be empty.");
 
@@ -2145,7 +2120,6 @@ unittest
 {
     import std.path : buildPath;
     import std.file : rmdirRecurse;
-    import std.format : format;
 
     auto testDir = makeUnittestTempDir("tsv_sample");
     scope(exit) testDir.rmdirRecurse;

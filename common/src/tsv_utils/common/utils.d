@@ -1665,6 +1665,7 @@ if (isIntegral!T && (!allowZero || !convertToZero || !isUnsigned!T))
 {
     import std.algorithm : findSplit;
     import std.conv : to;
+    import std.exception : enforce;
     import std.format : format;
     import std.range : iota;
     import std.traits : Signed;
@@ -1675,15 +1676,13 @@ if (isIntegral!T && (!allowZero || !convertToZero || !isUnsigned!T))
     static if (convertToZero) alias S = Signed!T;
     else alias S = T;
 
-    if (fieldRange.length == 0) throw new Exception("Empty field number.");
+    enforce(fieldRange.length != 0, "Empty field number.");
 
     auto rangeSplit = findSplit(fieldRange, "-");
 
-    if (!rangeSplit[1].empty && (rangeSplit[0].empty || rangeSplit[2].empty))
-    {
-        // Range starts or ends with a dash.
-        throw new Exception(format("Incomplete ranges are not supported: '%s'", fieldRange));
-    }
+    /* Make sure the range does not start or end with a dash. */
+    enforce(rangeSplit[1].empty || (!rangeSplit[0].empty && !rangeSplit[2].empty),
+            format("Incomplete ranges are not supported: '%s'", fieldRange));
 
     S start = rangeSplit[0].to!S;
     S last = rangeSplit[1].empty ? start : rangeSplit[2].to!S;
@@ -1691,27 +1690,21 @@ if (isIntegral!T && (!allowZero || !convertToZero || !isUnsigned!T))
 
     static if (allowZero)
     {
-        if (start == 0 && !rangeSplit[1].empty)
-        {
-            throw new Exception(format("Zero cannot be used as part of a range: '%s'", fieldRange));
-        }
+        enforce(rangeSplit[1].empty || (start != 0 && last != 0),
+                format("Zero cannot be used as part of a range: '%s'", fieldRange));
     }
 
     static if (allowZero)
     {
-        if (start < 0 || last < 0)
-        {
-            throw new Exception(format("Field numbers must be non-negative integers: '%d'",
-                                       (start < 0) ? start : last));
-        }
+        enforce(start >= 0 && last >= 0,
+                format("Field numbers must be non-negative integers: '%d'",
+                       (start < 0) ? start : last));
     }
     else
     {
-        if (start < 1 || last < 1)
-        {
-            throw new Exception(format("Field numbers must be greater than zero: '%d'",
-                                       (start < 1) ? start : last));
-        }
+        enforce(start >= 1 && last >= 1,
+                format("Field numbers must be greater than zero: '%d'",
+                       (start < 1) ? start : last));
     }
 
     static if (convertToZero)
@@ -1797,6 +1790,7 @@ if (isIntegral!T && (!allowZero || !convertToZero || !isUnsigned!T))
     assertThrown("1.0".parseFieldRange);
     assertThrown("0".parseFieldRange);
     assertThrown("0-3".parseFieldRange);
+    assertThrown("3-0".parseFieldRange);
     assertThrown("-2-4".parseFieldRange);
     assertThrown("2--4".parseFieldRange);
     assertThrown("2-".parseFieldRange);
@@ -1814,6 +1808,7 @@ if (isIntegral!T && (!allowZero || !convertToZero || !isUnsigned!T))
     assertThrown("-1".parseFieldRange!(size_t, Yes.convertToZeroBasedIndex));
     assertThrown("0".parseFieldRange!(size_t, Yes.convertToZeroBasedIndex));
     assertThrown("0-3".parseFieldRange!(size_t, Yes.convertToZeroBasedIndex));
+    assertThrown("3-0".parseFieldRange!(size_t, Yes.convertToZeroBasedIndex));
     assertThrown("-2-4".parseFieldRange!(size_t, Yes.convertToZeroBasedIndex));
     assertThrown("2--4".parseFieldRange!(size_t, Yes.convertToZeroBasedIndex));
 
@@ -1824,7 +1819,9 @@ if (isIntegral!T && (!allowZero || !convertToZero || !isUnsigned!T))
     assertThrown("-2".parseFieldRange!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero));
     assertThrown("-1".parseFieldRange!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero));
     assertThrown("0-3".parseFieldRange!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero));
+    assertThrown("3-0".parseFieldRange!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero));
     assertThrown("-2-4".parseFieldRange!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero));
+    assertThrown("2--4".parseFieldRange!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero));
 
     assertThrown("".parseFieldRange!(long, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero));
     assertThrown(" ".parseFieldRange!(long, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero));
@@ -1833,7 +1830,9 @@ if (isIntegral!T && (!allowZero || !convertToZero || !isUnsigned!T))
     assertThrown("-2".parseFieldRange!(long, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero));
     assertThrown("-1".parseFieldRange!(long, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero));
     assertThrown("0-3".parseFieldRange!(long, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero));
+    assertThrown("3-0".parseFieldRange!(long, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero));
     assertThrown("-2-4".parseFieldRange!(long, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero));
+    assertThrown("2--4".parseFieldRange!(long, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero));
 
     /* Value out of range cases. */
     assertThrown("65536".parseFieldRange!ushort);   // One more than ushort max.

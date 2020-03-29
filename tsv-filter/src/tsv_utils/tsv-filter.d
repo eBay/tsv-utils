@@ -13,6 +13,7 @@ module tsv_utils.tsv_filter;
 
 import std.algorithm : canFind, equal, findSplit, max, min;
 import std.conv : to;
+import std.exception : enforce;
 import std.format : format;
 import std.math : abs, isFinite, isInfinity, isNaN;
 import std.range : walkLength;
@@ -400,10 +401,8 @@ void fieldVsNumberOptionHandler(
 
     immutable valSplit = findSplit(optionVal, ":");
 
-    if (valSplit[1].length == 0 || valSplit[2].length == 0)
-    {
-        throw new Exception(formatErrorMsg(option, optionVal));
-    }
+    enforce(valSplit[1].length != 0 && valSplit[2].length != 0,
+            formatErrorMsg(option, optionVal));
 
     double value;
     try value = valSplit[2].to!double;
@@ -436,12 +435,10 @@ void fieldVsStringOptionHandler(
     import tsv_utils.common.utils :  parseFieldList;
 
     immutable valSplit = findSplit(optionVal, ":");
-    if (valSplit[1].length == 0 || valSplit[2].length == 0)
-    {
-        throw new Exception(
+
+    enforce(valSplit[1].length != 0 && valSplit[2].length != 0,
             format("Invalid option: '--%s %s'.\n   Expected: '--%s <field>:<val>' or '--%s <field-list>:<val>' where <val> is a string.",
                    option, optionVal, option, option));
-    }
 
     string value = valSplit[2].to!string;
 
@@ -472,12 +469,10 @@ void fieldVsIStringOptionHandler(
     import tsv_utils.common.utils :  parseFieldList;
 
     immutable valSplit = findSplit(optionVal, ":");
-    if (valSplit[1].length == 0 || valSplit[2].length == 0)
-    {
-        throw new Exception(
+
+    enforce(valSplit[1].length != 0 && valSplit[2].length != 0,
             format("Invalid option: '--%s %s'.\n   Expected: '--%s <field>:<val>' or '--%s <field-list>:<val>' where <val> is a string.",
                    option, optionVal, option, option));
-    }
 
     string value = valSplit[2].to!string;
 
@@ -506,12 +501,10 @@ void fieldVsRegexOptionHandler(
     import tsv_utils.common.utils :  parseFieldList;
 
     immutable valSplit = findSplit(optionVal, ":");
-    if (valSplit[1].length == 0 || valSplit[2].length == 0)
-    {
-        throw new Exception(
+
+    enforce(valSplit[1].length != 0 && valSplit[2].length != 0,
             format("Invalid option: '--%s %s'.\n   Expected: '--%s <field>:<val>' or '--%s <field-list>:<val>' where <val> is a regular expression.",
                    option, optionVal, option, option));
-    }
 
     Regex!char value;
     try
@@ -546,12 +539,11 @@ void fieldVsFieldOptionHandler(
     ref FieldsPredicate[] tests, ref size_t maxFieldIndex, FieldVsFieldPredicate fn, string option, string optionVal)
 {
     immutable valSplit = findSplit(optionVal, ":");
-    if (valSplit[1].length == 0 || valSplit[2].length == 0)
-    {
-        throw new Exception(
+
+    enforce(valSplit[1].length != 0 && valSplit[2].length != 0,
             format("Invalid option: '--%s %s'. Expected: '--%s <field1>:<field2>' where fields are 1-upped integers.",
                    option, optionVal, option));
-    }
+
     size_t field1;
     size_t field2;
     try
@@ -566,17 +558,11 @@ void fieldVsFieldOptionHandler(
                    option, optionVal, option));
     }
 
-    if (field1 == 0 || field2 == 0)
-    {
-        throw new Exception(
+    enforce(field1 != 0 && field2 != 0,
             format("Invalid option: '--%s %s'. Zero is not a valid field index.", option, optionVal));
-    }
 
-    if (field1 == field2)
-    {
-        throw new Exception(
+    enforce(field1 != field2,
             format("Invalid option: '--%s %s'. Field1 and field2 must be different fields", option, optionVal));
-    }
 
     immutable size_t zeroBasedIndex1 = field1 - 1;
     immutable size_t zeroBasedIndex2 = field2 - 1;
@@ -592,14 +578,14 @@ void fieldFieldNumOptionHandler(
     size_t field2;
     double value;
     immutable valSplit = findSplit(optionVal, ":");
-    auto invalidOption = (valSplit[1].length == 0 || valSplit[2].length == 0);
+    auto isValidOption = (valSplit[1].length != 0 && valSplit[2].length != 0);
 
-    if (!invalidOption)
+    if (isValidOption)
     {
         immutable valSplit2 = findSplit(valSplit[2], ":");
-        invalidOption = (valSplit2[1].length == 0 || valSplit2[2].length == 0);
+        isValidOption = (valSplit2[1].length != 0 && valSplit2[2].length != 0);
 
-        if (!invalidOption)
+        if (isValidOption)
         {
             try
             {
@@ -609,27 +595,20 @@ void fieldFieldNumOptionHandler(
             }
             catch (Exception e)
             {
-                invalidOption = true;
+                isValidOption = false;
             }
         }
     }
 
-    if (invalidOption)
-    {
-        throw new Exception(
+    enforce(isValidOption,
             format("Invalid values in option: '--%s %s'. Expected: '--%s <field1>:<field2>:<num>' where fields are 1-upped integers.",
                    option, optionVal, option));
-    }
-    if (field1 == 0 || field2 == 0)
-    {
-        throw new Exception(
+
+    enforce(field1 != 0 && field2 != 0,
             format("Invalid option: '--%s %s'. Zero is not a valid field index.", option, optionVal));
-    }
-    if (field1 == field2)
-    {
-        throw new Exception(
+
+    enforce(field1 != field2,
             format("Invalid option: '--%s %s'. Field1 and field2 must be different fields", option, optionVal));
-    }
 
     immutable size_t zeroBasedIndex1 = field1 - 1;
     immutable size_t zeroBasedIndex2 = field2 - 1;
@@ -916,12 +895,9 @@ void tsvFilter(const TsvFilterOptions cmdopt, const string[] inputFiles)
                     lineFields[fieldIndex] = line;
                 }
 
-                if (fieldIndex < cast(long) cmdopt.maxFieldIndex)
-                {
-                    throw new Exception(
-                        format("Not enough fields in line. File: %s, Line: %s",
-                               (filename == "-") ? "Standard Input" : filename, lineNum));
-                }
+                enforce(fieldIndex >= cast(long) cmdopt.maxFieldIndex,
+                         format("Not enough fields in line. File: %s, Line: %s",
+                                (filename == "-") ? "Standard Input" : filename, lineNum));
 
                 /* Run the tests. Tests will fail (throw) if a field cannot be converted
                  * to the expected type.

@@ -12,6 +12,7 @@ module tsv_utils.tsv_summarize;
 import std.algorithm : all, any, canFind, each, find, findSplit, map, joiner, splitter;
 import std.array : join;
 import std.conv : to;
+import std.exception : enforce;
 import std.format : format;
 import std.range;
 import std.stdio;
@@ -268,12 +269,9 @@ struct TsvSummarizeOptions {
 
         auto valSplit = findSplit(optionVal, ":");
 
-        if (valSplit[0].empty || (!valSplit[1].empty && valSplit[2].empty))
-        {
-            throw new Exception(
+        enforce(!valSplit[0].empty && (valSplit[1].empty || !valSplit[2].empty),
                 format("Invalid option value: '--%s %s'. Expected: '--%s <field-list>' or '--%s <field>:<header>'.",
                        option, optionVal, option, option));
-        }
 
         try foreach (fieldNum, fieldIndex;
                      valSplit[0].to!string
@@ -283,18 +281,13 @@ struct TsvSummarizeOptions {
 
                 if (!valSplit[2].empty) // Header specified
                 {
-                    if (fieldNum > 1)
-                    {
-                        throw new Exception(
+                    enforce(fieldNum <= 1,
                             format("Invalid option: '--%s %s'. Cannot specify a custom header when using multiple fields.",
                                    option, optionVal));
-                    }
-                    else if (!op.allowCustomHeader)
-                    {
-                        throw new Exception(
+
+                    enforce(op.allowCustomHeader,
                             format("Invalid option: '--%s %s'. Operator does not support custom headers.",
                                    option, optionVal));
-                    }
 
                     op.setCustomHeader(valSplit[2].to!string);
                 }
@@ -325,13 +318,13 @@ struct TsvSummarizeOptions {
 
         auto split1 = findSplit(optionVal, ":");
 
-        if (split1[0].empty || (!split1[1].empty && split1[2].empty))
-            throw new Exception(formatErrorMsg(option, optionVal));
+        enforce(!split1[0].empty && (split1[1].empty || !split1[2].empty),
+                formatErrorMsg(option, optionVal));
 
         auto split2 = findSplit(split1[2], ":");
 
-        if (split2[0].empty || (!split2[1].empty && split2[2].empty))
-            throw new Exception(formatErrorMsg(option, optionVal));
+        enforce(!split2[0].empty && (split2[1].empty || !split2[2].empty),
+                formatErrorMsg(option, optionVal));
 
         auto fieldStr = split1[0];
         auto probStr = split2[0];
@@ -360,20 +353,16 @@ struct TsvSummarizeOptions {
             catch (Exception exc)
                 throw new Exception(formatErrorMsg(option, optionVal));
 
-            if (!(p >= 0.0 && p <= 1.0))
-                throw new Exception(
+            enforce(p >= 0.0 && p <= 1.0,
                     format("Invalid option: '--%s %s'. Probability '%g' is not in the interval [0.0,1.0].",
                            option, optionVal, p));
 
             probs ~= p;
         }
 
-        if (!header.empty && (fieldIndices.length > 1 || probs.length > 1))
-        {
-            throw new Exception(
+        enforce(header.empty || (fieldIndices.length <= 1 && probs.length <= 1),
                 format("Invalid option: '--%s %s'. Cannot specify a custom header when using multiple fields or multiple probabilities.",
                        option, optionVal));
-        }
 
         assert (fieldIndices.length > 0);
         assert (probs.length > 0);
@@ -406,20 +395,13 @@ struct TsvSummarizeOptions {
     /* This routine does validations not handled by processArgs. */
     private void consistencyValidations()
     {
-        if (operators.empty)
-        {
-            throw new Exception("At least one summary operator is required.");
-        }
+        enforce(!operators.empty, "At least one summary operator is required.");
 
-        if (inputFieldDelimiter == valuesDelimiter)
-        {
-            throw new Exception("Cannot use the same character for both --d|field-delimiter and --v|values-delimiter.");
-        }
+        enforce(inputFieldDelimiter != valuesDelimiter,
+                "Cannot use the same character for both --d|field-delimiter and --v|values-delimiter.");
 
-        if (excludeMissing && missingValueReplacement.length != 0)
-        {
-            throw new Exception("Cannot use both '--x|exclude-missing' and '--r|replace-missing'.");
-        }
+        enforce(!(excludeMissing && missingValueReplacement.length != 0),
+                "Cannot use both '--x|exclude-missing' and '--r|replace-missing'.");
     }
 
     /* Post-processing derivations. */
@@ -496,12 +478,9 @@ void tsvSummarize(TsvSummarizeOptions cmdopt, const string[] inputFiles)
                     fieldIndex++;
                 }
 
-                if (fieldIndex < cmdopt.endFieldIndex)
-                {
-                    throw new Exception(
+                enforce(fieldIndex >= cmdopt.endFieldIndex,
                         format("Not enough fields in line. File: %s, Line: %s",
                                (filename == "-") ? "Standard Input" : filename, lineNum));
-                }
             }
 
             if (cmdopt.hasHeader && lineNum == 1)

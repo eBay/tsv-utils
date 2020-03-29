@@ -21,6 +21,7 @@ License: Boost Licence 1.0 (http://boost.org/LICENSE_1_0.txt)
 module tsv_utils.tsv_select;   // Module name defaults to file name, but hyphens not allowed, so set it here.
 
 // Imports used by multiple routines. Others imports made in local context.
+import std.exception : enforce;
 import std.stdio;
 import std.typecons : tuple, Tuple;
 
@@ -200,10 +201,8 @@ struct TsvSelectOptions
              * Consistency checks and derivations.
              */
 
-            if (fields.length == 0 && excludedFieldsArg.length == 0)
-            {
-                throw new Exception("One of '--f|fields' or '--e|exclude' is required.");
-            }
+            enforce(fields.length != 0 || excludedFieldsArg.length != 0,
+                    "One of '--f|fields' or '--e|exclude' is required.");
 
             if (excludedFieldsArg.length > 0)
             {
@@ -212,10 +211,7 @@ struct TsvSelectOptions
                 {
                     foreach (f; fields)
                     {
-                        if (e == f)
-                        {
-                            throw new Exception("'--f|fields' and '--e|exclude' have overlapping fields.");
-                        }
+                        enforce(e != f, "'--f|fields' and '--e|exclude' have overlapping fields.");
                     }
                 }
 
@@ -233,11 +229,9 @@ struct TsvSelectOptions
                 size_t maxExcludedField = excludedFieldsArg.maxElement;
                 size_t maxAllowedExcludedField = 1024 * 1024;
 
-                if (maxExcludedField >= maxAllowedExcludedField)
-                {
-                    throw new Exception(format("Maximum allowed '--e|exclude' field number is %d.",
-                                               maxAllowedExcludedField));
-                }
+                enforce(maxExcludedField < maxAllowedExcludedField,
+                        format("Maximum allowed '--e|exclude' field number is %d.",
+                               maxAllowedExcludedField));
 
                 excludedFieldsTable.length = maxExcludedField + 1;          // Initialized to false
                 foreach (e; excludedFieldsArg) excludedFieldsTable[e] = true;
@@ -438,12 +432,9 @@ void tsvSelect(RestLocation rest)(const TsvSelectOptions cmdopt, const string[] 
             }
 
             // Finished with all fields in the line.
-            if (!fieldReordering.allFieldsFilled)
-            {
-                throw new Exception(
+            enforce(fieldReordering.allFieldsFilled,
                     format("Not enough fields in line. File: %s,  Line: %s",
                            (filename == "-") ? "Standard Input" : filename, lineNum));
-            }
 
             // Write the re-ordered line.
 

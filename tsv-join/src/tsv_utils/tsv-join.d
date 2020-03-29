@@ -13,6 +13,7 @@ License: Boost Licence 1.0 (http://boost.org/LICENSE_1_0.txt)
 */
 module tsv_utils.tsv_join;
 
+import std.exception : enforce;
 import std.stdio;
 import std.format : format;
 import std.typecons : tuple;
@@ -91,7 +92,6 @@ struct TsvJoinOptions
      */
     auto processArgs (ref string[] cmdArgs)
     {
-        import std.algorithm : any, each;
         import std.getopt;
         import std.path : baseName, stripExtension;
         import std.typecons : Yes, No;
@@ -171,55 +171,42 @@ struct TsvJoinOptions
      */
     private void consistencyValidations(ref string[] processedCmdArgs)
     {
-        import std.algorithm : any;
+        import std.algorithm : all;
 
-        if (filterFile.length == 0)
-        {
-            throw new Exception("Required option --filter-file was not supplied.");
-        }
-        else if (filterFile == "-" && processedCmdArgs.length == 1)
-        {
-            throw new Exception("A data file is required when standard input is used for the filter file (--f|filter-file -).");
-        }
+        enforce(filterFile.length != 0,
+                "Required option --filter-file was not supplied.");
 
-        if (writeAll && appendFields.length == 0)
-        {
-            throw new Exception("Use --a|append-fields when using --w|write-all.");
-        }
+        enforce(!(filterFile == "-" && processedCmdArgs.length == 1),
+                "A data file is required when standard input is used for the filter file (--f|filter-file -).");
 
-        if (writeAll && appendFields.length == 1 && appendFields[0] == 0)
+        if (writeAll)
         {
-            throw new Exception("Cannot use '--a|append-fields 0' (whole line) when using --w|write-all.");
+            enforce(appendFields.length != 0,
+                    "Use --a|append-fields when using --w|write-all.");
+
+            enforce(!(appendFields.length == 1 && appendFields[0] == 0),
+                    "Cannot use '--a|append-fields 0' (whole line) when using --w|write-all.");
         }
 
-        if (appendFields.length > 0 && exclude)
-        {
-            throw new Exception("--e|exclude cannot be used with --a|append-fields.");
-        }
+        enforce(!(appendFields.length > 0 && exclude),
+                "--e|exclude cannot be used with --a|append-fields.");
 
-        if (appendHeaderPrefix.length > 0 && !hasHeader)
-        {
-            throw new Exception("Use --header when using --p|prefix.");
-        }
+        enforce(appendHeaderPrefix.length == 0 || hasHeader,
+                "Use --header when using --p|prefix.");
 
-        if (dataFields.length > 0 && keyFields.length != dataFields.length)
-        {
-            throw new Exception("Different number of --k|key-fields and --d|data-fields.");
-        }
+        enforce(dataFields.length == 0 || keyFields.length == dataFields.length,
+                "Different number of --k|key-fields and --d|data-fields.");
 
-        if (keyFields.length == 1 && dataFields.length == 1 &&
-            ((keyFields[0] == 0 && dataFields[0] != 0) || (keyFields[0] != 0 && dataFields[0] == 0)))
-        {
-            throw new Exception("If either --k|key-field or --d|data-field is zero both must be zero.");
-        }
+        enforce(keyFields.length != 1 ||
+                dataFields.length != 1 ||
+                (keyFields[0] == 0 && dataFields[0] == 0) ||
+                (keyFields[0] != 0 && dataFields[0] != 0),
+                "If either --k|key-field or --d|data-field is zero both must be zero.");
 
-        if ((keyFields.length > 1    && any!(a => a == 0)(keyFields)) ||
-            (dataFields.length > 1   && any!(a => a == 0)(dataFields)) ||
-            (appendFields.length > 1 && any!(a => a == 0)(appendFields)))
-        {
-            throw new Exception("Field 0 (whole line) cannot be combined with individual fields (non-zero).");
-        }
-
+        enforce((keyFields.length <= 1 || all!(a => a != 0)(keyFields)) &&
+                (dataFields.length <= 1 || all!(a => a != 0)(dataFields)) &&
+                (appendFields.length <= 1 || all!(a => a != 0)(appendFields)),
+                "Field 0 (whole line) cannot be combined with individual fields (non-zero).");
     }
 
     /* Post-processing derivations. */
@@ -375,13 +362,11 @@ void tsvJoin(const TsvJoinOptions cmdopt, const string[] inputFiles)
                         break;
                     }
                 }
+
                 // Processed all fields in the line.
-                if (!filterKeysReordering.allFieldsFilled || !appendFieldsReordering.allFieldsFilled)
-                {
-                    throw new Exception(
+                enforce(filterKeysReordering.allFieldsFilled && appendFieldsReordering.allFieldsFilled,
                         format("Not enough fields in line. File: %s, Line: %s",
                                (cmdopt.filterFile == "-") ? "Standard Input" : cmdopt.filterFile, lineNum));
-                }
             }
 
             string key = cmdopt.keyIsFullLine ?
@@ -414,12 +399,10 @@ void tsvJoin(const TsvJoinOptions cmdopt, const string[] inputFiles)
                 if (isAppending && !cmdopt.allowDupliateKeys)
                 {
                     string* currAppendValues = (key in filterHash);
-                    if (currAppendValues !is null && *currAppendValues != appendValues)
-                    {
-                        throw new Exception(
+
+                    enforce(currAppendValues is null || *currAppendValues == appendValues,
                             format("Duplicate keys with different append values (use --z|allow-duplicate-keys to ignore)\n   [key 1][values]: [%s][%s]\n   [key 2][values]: [%s][%s]",
                                    key, *currAppendValues, key, appendValues));
-                    }
                 }
                 filterHash[key] = appendValues;
             }
@@ -481,12 +464,10 @@ void tsvJoin(const TsvJoinOptions cmdopt, const string[] inputFiles)
                         if (dataKeysReordering.allFieldsFilled) break;
                     }
                     // Processed all fields in the line.
-                    if (!dataKeysReordering.allFieldsFilled)
-                    {
-                        throw new Exception(
+                    enforce(dataKeysReordering.allFieldsFilled,
                             format("Not enough fields in line. File: %s, Line: %s",
                                    (filename == "-") ? "Standard Input" : filename, lineNum));
-                    }
+
                     appendFields = (dataKeysReordering.outputFields.join(cmdopt.delim) in filterHash);
                 }
 
