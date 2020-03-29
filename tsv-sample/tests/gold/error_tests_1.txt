@@ -65,6 +65,8 @@ c-1	c-2	c-3	c-4
 
 ====[tsv-sample -H -p 0.5 --gen-random-inorder input4x50.tsv input4x15.tsv]====
 [tsv-sample] Error processing command line arguments: --gen-random-inorder and --p|prob can only be used together if --k|key-fields is also used.
+Use --gen-random-inorder alone to print probabilities for all lines.
+Use --p|prob and --print-random to print probabilities for lines satisfying the probability threshold.
 
 ====[tsv-sample -H --gen-random-inorder -d , --random-value-header abc,def input3x25.tsv]====
 [tsv-sample] Error processing command line arguments: --randomValueHeader must be at least one character and not contain field delimiters or newlines.
