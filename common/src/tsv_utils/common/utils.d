@@ -1821,6 +1821,7 @@ if (isIntegral!T && (!allowZero || !convertToZero || !isUnsigned!T))
     assertThrown("0-3".parseFieldRange!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero));
     assertThrown("3-0".parseFieldRange!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero));
     assertThrown("-2-4".parseFieldRange!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero));
+    assertThrown("2--4".parseFieldRange!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero));
 
     assertThrown("".parseFieldRange!(long, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero));
     assertThrown(" ".parseFieldRange!(long, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero));
@@ -1831,6 +1832,7 @@ if (isIntegral!T && (!allowZero || !convertToZero || !isUnsigned!T))
     assertThrown("0-3".parseFieldRange!(long, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero));
     assertThrown("3-0".parseFieldRange!(long, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero));
     assertThrown("-2-4".parseFieldRange!(long, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero));
+    assertThrown("2--4".parseFieldRange!(long, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero));
 
     /* Value out of range cases. */
     assertThrown("65536".parseFieldRange!ushort);   // One more than ushort max.
