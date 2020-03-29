@@ -9,6 +9,7 @@ License: Boost License 1.0 (http://boost.org/LICENSE_1_0.txt)
 */
 module tsv_utils.tsv_pretty;
 
+import std.exception : enforce;
 import std.range;
 import std.stdio;
 import std.typecons : Flag, Yes, No, tuple;
@@ -189,7 +190,8 @@ struct TsvPrettyOptions
             }
 
             /* Validation and derivations. */
-            if (noHeader && hasHeader) throw new Exception("Cannot specify both --H|header and --x|no-header.");
+            enforce(!(noHeader && hasHeader),
+                    "Cannot specify both --H|header and --x|no-header.");
 
             if (noHeader || hasHeader) autoDetectHeader = false;
 
@@ -198,14 +200,12 @@ struct TsvPrettyOptions
              */
             if (lookahead == 0 && autoDetectHeader)
             {
-                assert (!noHeader && !hasHeader);
-                throw new Exception("Cannot auto-detect header with zero look-ahead. Specify either '--H|header' or '--x|no-header' when using '--l|lookahead 0'.");
+                enforce(noHeader || hasHeader,
+                        "Cannot auto-detect header with zero look-ahead. Specify either '--H|header' or '--x|no-header' when using '--l|lookahead 0'.");
             }
 
-            if (autoDetectPreamble && preambleLines != 0)
-            {
-                throw new Exception("Do not use '--b|preamble NUM' and '--a|auto-preamble' together. ('--b|preamble 0' is okay.)");
-            }
+            enforce(!(autoDetectPreamble && preambleLines != 0),
+                    "Do not use '--b|preamble NUM' and '--a|auto-preamble' together. ('--b|preamble 0' is okay.)");
 
             if (emptyReplacement.length != 0) replaceEmpty = true;
             else if (replaceEmpty) emptyReplacement = "--";
