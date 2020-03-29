@@ -21,6 +21,7 @@ License: Boost Licence 1.0 (http://boost.org/LICENSE_1_0.txt)
 */
 module tsv_utils.tsv_uniq;
 
+import std.exception : enforce;
 import std.stdio;
 import std.format : format;
 import std.typecons : tuple;
@@ -128,7 +129,7 @@ struct TsvUniqOptions
      */
     auto processArgs (ref string[] cmdArgs)
     {
-        import std.algorithm : any, each;
+        import std.algorithm : all, each;
         import std.getopt;
         import std.path : baseName, stripExtension;
         import std.typecons : Yes, No;
@@ -182,25 +183,15 @@ struct TsvUniqOptions
             /* Consistency checks */
             if (!equivMode)
             {
-                if (equivHeader != defaultEquivHeader)
-                {
-                    throw new Exception("--equiv-header requires --e|equiv");
-                }
-                else if (equivStartID != defaultEquivStartID)
-                {
-                    throw new Exception("--equiv-start requires --e|equiv");
-                }
+                enforce(equivHeader == defaultEquivHeader, "--equiv-header requires --e|equiv");
+                enforce(equivStartID == defaultEquivStartID, "--equiv-start requires --e|equiv");
             }
 
-            if (!numberMode && numberHeader != defaultNumberHeader)
-            {
-                 throw new Exception("--number-header requires --z|number");
-            }
+            enforce(numberMode || numberHeader == defaultNumberHeader,
+                    "--number-header requires --z|number");
 
-            if (fields.length > 1 && fields.any!(x => x == 0))
-            {
-                throw new Exception("Whole line as key (--f|field 0) cannot be combined with multiple fields.");
-            }
+            enforce(fields.length <= 1 || fields.all!(x => x != 0),
+                    "Whole line as key (--f|field 0) cannot be combined with multiple fields.");
 
             /* Derivations */
             if (fields.length == 0)
@@ -348,12 +339,9 @@ void tsvUniq(const TsvUniqOptions cmdopt, const string[] inputFiles)
                         if (keyFieldsReordering.allFieldsFilled) break;
                     }
 
-                    if (!keyFieldsReordering.allFieldsFilled)
-                    {
-                        throw new Exception(
+                    enforce(keyFieldsReordering.allFieldsFilled,
                             format("Not enough fields in line. File: %s, Line: %s",
                                    (filename == "-") ? "Standard Input" : filename, lineNum));
-                    }
 
                     if (numKeyFields == 1)
                     {
