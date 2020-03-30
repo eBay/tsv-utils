@@ -974,7 +974,7 @@ void splitLinesByKey(TsvSplitOptions cmdopt, ref SplitOutputFiles outputFiles)
  * Note: readBufferSize is an argument primarily for unit test purposes. Normal uses
  * should use the default value.
  */
-void splitByLineCount(TsvSplitOptions cmdopt, const size_t readBufferSize = 1024L * 512L)
+void splitByLineCount(TsvSplitOptions cmdopt, const size_t readBufferSize = 1024L * 128L)
 {
     import std.array : appender;
     import std.file : exists;
@@ -1059,6 +1059,7 @@ void splitByLineCount(TsvSplitOptions cmdopt, const size_t readBufferSize = 1024
                                    outputFileName));
 
                     outputFile = outputFileName.File("ab");
+                    outputFile.setvbuf(1024L * 64L, _IOFBF);
                     isOutputFileOpen = true;
                     ++nextOutputFileNum;
                     outputFileRemainingLines = cmdopt.linesPerFile;
