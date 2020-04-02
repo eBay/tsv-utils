@@ -223,6 +223,7 @@ runtest ${prog} "input1.tsv --fields last" ${error_tests_1}
 runtest ${prog} "-f 0 input1.tsv" ${error_tests_1}
 runtest ${prog} "input1.tsv -f 2 --rest elsewhere" ${error_tests_1}
 runtest ${prog} "-f 1 nosuchfile.tsv" ${error_tests_1}
+runtest ${prog} "-f 1 input_3x1.tsv nosuchfile.tsv" ${error_tests_1}
 runtest ${prog} "-f 1,4 input_3plus_fields.tsv" ${error_tests_1}
 runtest ${prog} "-d ß -f 1 input1.tsv" ${error_tests_1}
 runtest ${prog} "-f 1 --nosuchparam input1.tsv" ${error_tests_1}

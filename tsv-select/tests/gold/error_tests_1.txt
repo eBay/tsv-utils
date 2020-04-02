@@ -17,7 +17,12 @@ Error test set 1
 [tsv-select] Error processing command line arguments: RestOption does not have a member named 'elsewhere'
 
 ====[tsv-select -f 1 nosuchfile.tsv]====
+[tsv-select] Error processing command line arguments: Cannot open file `nosuchfile.tsv' in mode `rb' (No such file or directory)
+
+====[tsv-select -f 1 input_3x1.tsv nosuchfile.tsv]====
 Error [tsv-select]: Cannot open file `nosuchfile.tsv' in mode `rb' (No such file or directory)
+f1
+3x1-r1
 
 ====[tsv-select -f 1,4 input_3plus_fields.tsv]====
 Error [tsv-select]: Not enough fields in line. File: input_3plus_fields.tsv,  Line: 3

@@ -2048,7 +2048,7 @@ $(LIST
 
     * `name()` - The name of the input source. The name returned is intended for
       user error messages. For files, this is the filepath that was passed to
-      InputSourceRange. For standard input, it is "stdin".
+      InputSourceRange. For standard input, it is "Standard Input".
 )
 
 An InputSource is a reference object, so the copies will retain the state of the
@@ -2089,6 +2089,13 @@ final class InputSource
         return _file;
     }
 
+    /** isReadHeaderEnabled returns true if the header line is being read.
+     */
+    bool isReadHeaderEnabled() const pure nothrow @safe
+    {
+        return _readHeader == Yes.readHeader;
+    }
+
     /** header returns the header line from the input file.
      *
      * An empty string is returned if InputSource range was created with
@@ -2106,11 +2113,12 @@ final class InputSource
     /** name returns a user friendly name representing the input source.
      *
      * For files, it is the filepath provided to InputSourceRange. For standard
-     * input, it is "stdin". (Use isStdin() to test for standard input, not name().
+     * input, it is "Standard Input". (Use isStdin() to test for standard input,
+     * not name().
      */
     string name() const pure nothrow @safe
     {
-        return _isStdin ? "stdin" : _filepath;
+        return _isStdin ? "Standard Input" : _filepath;
     }
 
     /** isStdin returns true if the input source is Standard Input, false otherwise.
@@ -2270,7 +2278,7 @@ unittest
         assert(source.header(Yes.keepTerminator).empty);
         assert(source.header(No.keepTerminator).empty);
 
-        assert(source.name == "stdin");
+        assert(source.name == "Standard Input");
         assert(source.isStdin);
     }
 
@@ -2288,4 +2296,332 @@ unittest
     /* Error cases. */
     assertThrown(InputSourceRange([file0, "no_such_file.txt"], No.readHeader).each);
     assertThrown(InputSourceRange(["no_such_file.txt", file1], Yes.readHeader).each);
+}
+
+/**
+ByLineSourceRange is an input range that iterates over a set of input files. It
+provides bufferedByLine access to each file.
+
+A ByLineSourceRange is used to iterate over a set of files passed on the command line.
+Files are automatically opened and closed during iteration. The front element of the
+range provides access to a bufferedByLine for iterating over the lines in the file.
+
+The range is created from a set of filepaths. These filepaths are mapped to
+ByLineSource objects during the iteration. This is what enables automatically opening
+and closing files and providing bufferedByLine access.
+
+The motivation behind ByLineSourceRange is to provide a standard way to look at the
+header line of the first input file during command line argument processing, and then
+pass the open input file along to the main processing functions. This enables
+features like named fields to be implemented in a standard way.
+
+Access to the first line of the first file is available after creating the
+ByLineSourceRange instance. The first file is opened and a bufferedByLine created.
+The first line of the first file is via byLine.front (after checking !byLine.empty).
+
+Currently, ByLineSourceRange supports files and standard input. It is possible other
+types of input sources will be added in the future.
+ */
+struct ByLineSourceRange(
+    KeepTerminator keepTerminator = No.keepTerminator, Char = char, ubyte terminator = '\n')
+if (is(Char == char) || is(Char == ubyte))
+{
+    import std.range;
+
+    alias ByLineSourceType = ByLineSource!(keepTerminator, char, terminator);
+
+    private string[] _filepaths;
+    private ByLineSourceType _front;
+
+    this(string[] filepaths)
+    {
+        _filepaths = filepaths.dup;
+        _front = null;
+
+        if (!_filepaths.empty)
+        {
+            _front = new ByLineSourceType(_filepaths.front);
+            _front.open;
+            _filepaths.popFront;
+        }
+    }
+
+    this(this)
+    {
+        _filepaths = _filepaths.dup;
+    }
+
+    bool empty() const pure nothrow @safe
+    {
+        return _front is null;
+    }
+
+    ByLineSourceType front() pure @safe
+    {
+        assert(!empty, "Attempt to take the front of an empty ByLineSourceRange");
+        return _front;
+    }
+
+    void popFront()
+    {
+        assert(!empty, "Attempt to popFront an empty ByLineSourceRange");
+
+        _front.close;
+
+        if (!_filepaths.empty)
+        {
+            _front = new ByLineSourceType(_filepaths.front);
+            _front.open;
+            _filepaths.popFront;
+        }
+        else
+        {
+            _front = null;
+        }
+    }
+}
+
+/**
+ByLineSource is a class of objects produced by iterating over an ByLineSourceRange.
+
+A ByLineSource instance provides a bufferedByLine range for the current the front
+element of a ByLineSourceRange. The main methods application code is likely to
+need are:
+
+$(LIST
+    * `byLine()` - Returns the bufferedByLine range accessing the open file. The file
+       will be open for reading (using the bufferedByLine range) as long as the
+       ByLineSource instance is the front element of the ByLineSourceRange
+       it came from.
+
+    * `name()` - The name of the input source. The name returned is intended for
+      user error messages. For files, this is the filepath that was passed to
+      ByLineSourceRange. For standard input, it is "Standard Input".
+)
+
+A ByLineSource is a reference object, so the copies have the same state as the
+ByLineSourceRange front element. In particular, all copies will have the open
+state of the front element of the ByLineSourceRange.
+
+This class is not intended for use outside the context of an ByLineSourceRange.
+*/
+final class ByLineSource(
+    KeepTerminator keepTerminator, Char = char, ubyte terminator = '\n')
+if (is(Char == char) || is(Char == ubyte))
+{
+    import std.range;
+    import std.stdio;
+    import std.traits : ReturnType;
+
+    alias newByLineFn = bufferedByLine!(keepTerminator, char, terminator);
+    alias ByLineType = ReturnType!newByLineFn;
+
+    private immutable string _filepath;
+    private immutable bool _isStdin;
+    private bool _isOpen;
+    private bool _hasBeenOpened;
+    private File _file;
+    private ByLineType _byLineRange;
+
+    private this(string filepath) pure nothrow @safe
+    {
+        _filepath = filepath;
+        _isStdin = filepath == "-";
+        _isOpen = false;
+        _hasBeenOpened = false;
+    }
+
+    /** byLine returns the bufferedByLine object held by the ByLineSource instance.
+     *
+     * The File underlying the BufferedByLine object is open for reading as long as
+     * the ByLineSource instance is the front element of the ByLineSourceRange it
+     * came from.
+     */
+    ByLineType byLine() nothrow @safe
+    {
+        return _byLineRange;
+    }
+
+    /** name returns a user friendly name representing the underlying input source.
+     *
+     * For files, it is the filepath provided to ByLineSourceRange. For standard
+     * input, it is "Standard Input". (Use isStdin() to test for standard input,
+     * compare against name().)
+     */
+    string name() const pure nothrow @safe
+    {
+        return _isStdin ? "Standard Input" : _filepath;
+    }
+
+    /** isStdin returns true if the underlying input source is Standard Input, false
+     * otherwise.
+     */
+    bool isStdin() const pure nothrow @safe
+    {
+        return _isStdin;
+    }
+
+    /** isOpen returns true if the ByLineSource instance is open for reading, false
+     * otherwise.
+     *
+     * "Open" in this context is whether the ByLineSource object is currently "open".
+     * The underlying input source backing it does not necessarily have the same
+     * state. The ByLineSource instance is "open" if is the front element of the
+     * ByLineSourceRange that created it.
+     *
+     * The underlying input source object follows the same open/close state as makes
+     * sense. In particular, real files are closed when the ByLineSource object is
+     * closed. The exception is standard input, which is never actually closed.
+     */
+    bool isOpen() const pure nothrow @safe
+    {
+        return _isOpen;
+    }
+
+    private void open()
+    {
+        assert(!_isOpen);
+        assert(!_hasBeenOpened);
+
+        _file = isStdin ? stdin : _filepath.File();
+        _byLineRange = newByLineFn(_file);
+        _isOpen = true;
+        _hasBeenOpened = true;
+    }
+
+    private void close()
+    {
+        if (!_isStdin) _file.close;
+        _isOpen = false;
+    }
+}
+
+// ByLineSourceRange and ByLineSource
+unittest
+{
+    import std.algorithm : all, each;
+    import std.array : appender;
+    import std.exception : assertThrown;
+    import std.file : rmdirRecurse;
+    import std.path : buildPath;
+    import std.range;
+    import std.stdio;
+    import tsv_utils.common.unittest_utils;
+
+    auto testDir = makeUnittestTempDir("tsv_utils_byline_input_source_range");
+    scope(exit) testDir.rmdirRecurse;
+
+    string file0 = buildPath(testDir, "file0.txt");
+    string file1 = buildPath(testDir, "file1.txt");
+    string file2 = buildPath(testDir, "file2.txt");
+    string file3 = buildPath(testDir, "file3.txt");
+
+    string file0Header = "";
+    string file1Header = "file 1 header\n";
+    string file2Header = "file 2 header\n";
+    string file3Header = "file 3 header\n";
+
+    string file0Body = "";
+    string file1Body = "";
+    string file2Body = "file 2 line 1\n";
+    string file3Body = "file 3 line 1\nfile 3 line 2\n";
+
+    string file0Data = file0Header ~ file0Body;
+    string file1Data = file1Header ~ file1Body;
+    string file2Data = file2Header ~ file2Body;
+    string file3Data = file3Header ~ file3Body;
+
+    {
+        file0.File("w").write(file0Data);
+        file1.File("w").write(file1Data);
+        file2.File("w").write(file2Data);
+        file3.File("w").write(file3Data);
+    }
+
+    auto inputFiles = [file0, file1, file2, file3];
+    auto fileHeaders = [file0Header, file1Header, file2Header, file3Header];
+    auto fileBodies = [file0Body, file1Body, file2Body, file3Body];
+    auto fileData = [file0Data, file1Data, file2Data, file3Data];
+
+    auto buffer = new char[1024];    // Must be large enough to hold the test files.
+
+    /* Tests without standard input. Don't want to count on state of standard
+     * input or modifying it when doing unit tests, so avoid reading from it.
+     */
+
+    auto readSourcesNoTerminator = appender!(ByLineSource!(No.keepTerminator)[]);
+    auto readSourcesYesTerminator = appender!(ByLineSource!(Yes.keepTerminator)[]);
+
+    foreach(numFiles; 1 .. inputFiles.length + 1)
+    {
+        /* Using No.keepTerminator. */
+        readSourcesNoTerminator.clear;
+        foreach(fileNum, source;
+                ByLineSourceRange!(No.keepTerminator)(inputFiles[0 .. numFiles]).enumerate)
+        {
+            readSourcesNoTerminator.put(source);
+            assert(source.isOpen);
+            assert(source._file.isOpen);
+            assert(readSourcesNoTerminator.data[0 .. fileNum].all!(s => !s.isOpen));
+            assert(readSourcesNoTerminator.data[fileNum].isOpen);
+
+            auto headerNoTerminatorLength = fileHeaders[fileNum].length;
+            if (headerNoTerminatorLength > 0) --headerNoTerminatorLength;
+
+            assert(source.byLine.empty ||
+                   source.byLine.front == fileHeaders[fileNum][0 .. headerNoTerminatorLength]);
+
+            assert(source.name == inputFiles[fileNum]);
+            assert(!source.isStdin);
+
+            auto readFileData = appender!(char[]);
+            foreach(line; source.byLine)
+            {
+                readFileData.put(line);
+                readFileData.put('\n');
+            }
+
+            assert(readFileData.data == fileData[fileNum]);
+        }
+
+        /* Using Yes.keepTerminator. */
+        readSourcesYesTerminator.clear;
+        foreach(fileNum, source;
+                ByLineSourceRange!(Yes.keepTerminator)(inputFiles[0 .. numFiles]).enumerate)
+        {
+            readSourcesYesTerminator.put(source);
+            assert(source.isOpen);
+            assert(source._file.isOpen);
+            assert(readSourcesYesTerminator.data[0 .. fileNum].all!(s => !s.isOpen));
+            assert(readSourcesYesTerminator.data[fileNum].isOpen);
+
+            assert(source.byLine.empty || source.byLine.front == fileHeaders[fileNum]);
+
+            assert(source.name == inputFiles[fileNum]);
+            assert(!source.isStdin);
+
+            auto readFileData = appender!(char[]);
+            foreach(line; source.byLine)
+            {
+                readFileData.put(line);
+            }
+
+            assert(readFileData.data == fileData[fileNum]);
+        }
+    }
+
+    /* Empty filelist. */
+    string[] nofiles;
+    {
+        auto sources = ByLineSourceRange!(No.keepTerminator)(nofiles);
+        assert(sources.empty);
+    }
+    {
+        auto sources = ByLineSourceRange!(Yes.keepTerminator)(nofiles);
+        assert(sources.empty);
+    }
+
+    /* Error cases. */
+    assertThrown(ByLineSourceRange!(No.keepTerminator)([file0, "no_such_file.txt"]).each);
+    assertThrown(ByLineSourceRange!(Yes.keepTerminator)(["no_such_file.txt", file1]).each);
 }
