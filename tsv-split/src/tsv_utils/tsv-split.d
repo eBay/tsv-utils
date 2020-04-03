@@ -953,8 +953,10 @@ void splitByLineCount(ref TsvSplitOptions cmdopt, const size_t readBufferSize = 
     assert (readBufferSize > 0);
     ubyte[] readBuffer = new ubyte[readBufferSize];
 
-    string header;
-    bool headerSaved = !cmdopt.headerInOut;  // True if 'header' has been saved, or does not need to be.
+    assert(!cmdopt.inputSources.empty);
+
+    string header = !cmdopt.headerInOut ? "" :
+        cmdopt.inputSources.front.header(Yes.keepTerminator);
     size_t nextOutputFileNum = 0;
     File outputFile;
     string outputFileName;
@@ -978,12 +980,6 @@ void splitByLineCount(ref TsvSplitOptions cmdopt, const size_t readBufferSize = 
 
     foreach (inputStream; cmdopt.inputSources)
     {
-        if (!headerSaved)
-        {
-            header = inputStream.header(Yes.keepTerminator);
-            headerSaved = true;
-        }
-
         foreach (ref ubyte[] inputChunk; inputStream.file.byChunk(readBuffer))
         {
             size_t nextOutputChunkStart = 0;
@@ -1008,8 +1004,6 @@ void splitByLineCount(ref TsvSplitOptions cmdopt, const size_t readBufferSize = 
                     isOutputFileOpen = true;
                     ++nextOutputFileNum;
                     outputFileRemainingLines = cmdopt.linesPerFile;
-
-                    assert(headerSaved);
 
                     if (cmdopt.headerInOut)
                     {
