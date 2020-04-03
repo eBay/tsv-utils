@@ -2236,6 +2236,7 @@ unittest
 
             assert(source.name == inputFiles[fileNum]);
             assert(!source.isStdin);
+            assert(source.isReadHeaderEnabled);
 
             assert(source.file.rawRead(buffer) == fileBodies[fileNum]);
         }
@@ -2257,6 +2258,7 @@ unittest
 
             assert(source.name == inputFiles[fileNum]);
             assert(!source.isStdin);
+            assert(!source.isReadHeaderEnabled);
 
             assert(source.file.rawRead(buffer) == fileData[fileNum]);
         }
