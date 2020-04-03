@@ -37,7 +37,7 @@ fi
 ## Three args: program, args, output file
 runtest () {
     echo "" >> $3
-    echo "====[tsv-sample $2]====" >> $3
+    echo "====[tsv-split $2]====" >> $3
     $1 $2 >> $3 2>&1
     return 0
 }
@@ -428,6 +428,9 @@ runtest ${prog} "input1x5.txt" ${error_tests_1}
 runtest ${prog} "-l 10 no-such-file.txt" ${error_tests_1}
 runtest ${prog} "-n 10 no-such-file.txt" ${error_tests_1}
 runtest ${prog} "-n 10 -k 3 no-such-file.txt" ${error_tests_1}
+runtest_wdir ${prog} "-l 10 ${testdir_relpath}/input1x3.txt no-such-file.txt" ${error_tests_1}
+runtest_wdir ${prog} "-s -n 10 ${testdir_relpath}/input1x3.txt no-such-file.txt" ${error_tests_1}
+runtest_wdir ${prog} "-s -n 10 -k 0 ${testdir_relpath}/input1x3.txt no-such-file.txt" ${error_tests_1}
 runtest ${prog} "-n 0 input4x58.tsv" ${error_tests_1}
 runtest ${prog} "-n 1 input4x58.tsv" ${error_tests_1}
 runtest ${prog} "-n 0 -k 1 input4x58.tsv" ${error_tests_1}

@@ -16,6 +16,7 @@ import std.format : format;
 import std.range;
 import std.stdio;
 import std.typecons : tuple, Flag;
+import tsv_utils.common.utils : InputSourceRange, ReadHeader;
 
 static if (__VERSION__ >= 2085) extern(C) __gshared string[] rt_options = [ "gcopt=cleanup:none" ];
 
@@ -220,7 +221,7 @@ struct TsvSplitOptions
     enum invalidFileSuffix = "///////";
 
     string programName;                        /// Program name
-    string[] files;                            /// Input files
+    InputSourceRange inputSources;             /// Input files
     bool helpVerbose = false;                  /// --help-verbose
     bool headerInOut = false;                  /// --H|header
     bool headerIn = false;                     /// --I|header-in-only
@@ -421,19 +422,17 @@ struct TsvSplitOptions
 
             maxOpenOutputFiles = openFilesLimit - numReservedOpenFiles;
 
-            /* Remaining command line args.
-             *
-             * Assume remaining args are files. Use standard input if files were not
-             * provided.
+            /* Remaining command line args are files.
              */
-
-            files ~= (cmdArgs.length > 1) ? cmdArgs[1 .. $] : ["-"];
+            string[] filepaths = (cmdArgs.length > 1) ? cmdArgs[1 .. $] : ["-"];
             cmdArgs.length = 1;
+            ReadHeader readHeader = hasHeader ? Yes.readHeader : No.readHeader;
+            inputSources = InputSourceRange(filepaths, readHeader);
 
             /* Suffix - If not provided, use the extension of the first input file.
              * No suffix if reading from standard input.
              */
-            if (suffix == invalidFileSuffix) suffix = files[0].extension;
+            if (suffix == invalidFileSuffix) suffix = filepaths[0].extension;
 
             /* Ensure forward slash is not included in the filename prefix and suffix.
              * Forward slash is an invalid Unix filename character. However, open file
@@ -489,32 +488,43 @@ struct TsvSplitOptions
  */
 unittest
 {
+    import tsv_utils.common.unittest_utils;   // tsv unit test helpers, from common/src/.
     import std.conv : to;
+    import std.file : mkdir, rmdirRecurse;
+    import std.path : buildPath;
+
+    /* A dummy file is used so we don't have to worry about the cases where command
+     * line processing might open a file. Don't want to use stanard input for this,
+     * at least in cases where it might try to read to get the header line.
+     */
+    auto testDir = makeUnittestTempDir("tsv_split_bylinecount");
+    scope(exit) testDir.rmdirRecurse;
+
+    string somefile_txt = buildPath(testDir, "somefile.txt");
+    somefile_txt.File("w").writeln("Hello World!");
 
     {
-        auto args = ["unittest", "--lines-per-file", "10"];
+        auto args = ["unittest", "--lines-per-file", "10", somefile_txt];
         TsvSplitOptions cmdopt;
         const r = cmdopt.processArgs(args);
 
-        assert(cmdopt.files == ["-"]);
         assert(cmdopt.linesPerFile == 10);
         assert(cmdopt.keyFields.empty);
         assert(cmdopt.numFiles == 0);
         assert(cmdopt.hasHeader == false);
     }
     {
-        auto args = ["unittest", "--num-files", "20"];
+        auto args = ["unittest", "--num-files", "20", somefile_txt];
         TsvSplitOptions cmdopt;
         const r = cmdopt.processArgs(args);
 
-        assert(cmdopt.files == ["-"]);
         assert(cmdopt.linesPerFile == 0);
         assert(cmdopt.keyFields.empty);
         assert(cmdopt.numFiles == 20);
         assert(cmdopt.hasHeader == false);
     }
     {
-        auto args = ["unittest", "-n", "5", "--key-fields", "1-3"];
+        auto args = ["unittest", "-n", "5", "--key-fields", "1-3", somefile_txt];
         TsvSplitOptions cmdopt;
         const r = cmdopt.processArgs(args);
 
@@ -525,7 +535,7 @@ unittest
         assert(cmdopt.keyIsFullLine == false);
     }
     {
-        auto args = ["unittest", "-n", "5", "-k", "0"];
+        auto args = ["unittest", "-n", "5", "-k", "0", somefile_txt];
         TsvSplitOptions cmdopt;
         const r = cmdopt.processArgs(args);
 
@@ -535,7 +545,7 @@ unittest
         assert(cmdopt.keyIsFullLine == true);
     }
     {
-        auto args = ["unittest", "-n", "2", "--header"];
+        auto args = ["unittest", "-n", "2", "--header", somefile_txt];
         TsvSplitOptions cmdopt;
         const r = cmdopt.processArgs(args);
 
@@ -544,7 +554,7 @@ unittest
         assert(cmdopt.headerIn == false);
     }
     {
-        auto args = ["unittest", "-n", "2", "--header-in-only"];
+        auto args = ["unittest", "-n", "2", "--header-in-only", somefile_txt];
         TsvSplitOptions cmdopt;
         const r = cmdopt.processArgs(args);
 
@@ -553,7 +563,7 @@ unittest
         assert(cmdopt.headerIn == true);
     }
 
-    static void testSuffix(string[] args, string expectedSuffix, string[] expectedFiles)
+    static void testSuffix(string[] args, string expectedSuffix)
     {
         TsvSplitOptions cmdopt;
         auto savedArgs = args.to!string;
@@ -563,25 +573,21 @@ unittest
         assert(cmdopt.suffix == expectedSuffix,
                format("[testSuffix] Incorrect cmdopt.suffix. Expected: '%s', Actual: '%s'\n   cmdopt.processArgs(%s)",
                       expectedSuffix, cmdopt.suffix, savedArgs));
-        assert(cmdopt.files == expectedFiles,
-               format("[testSuffix] Incorrect cmdopt.files. Expected: %s, Actual: %s\n   cmdopt.processArgs(%s)",
-                      expectedFiles, cmdopt.files, savedArgs));
     }
 
-    testSuffix(["unittest", "-n", "2"], "", ["-"]);
-    testSuffix(["unittest", "-n", "2", "--", "-"], "", ["-"]);
-    testSuffix(["unittest", "-n", "2", "--suffix", "_123"], "_123", ["-"]);
-    testSuffix(["unittest", "-n", "2", "somefile.txt"], ".txt", ["somefile.txt"]);
-    testSuffix(["unittest", "-n", "2", "somefile.txt", "anotherfile.pqr"],
-               ".txt", ["somefile.txt", "anotherfile.pqr"]);
-    testSuffix(["unittest", "-n", "2", "--suffix", ".X", "somefile.txt", "anotherfile.pqr"],
-               ".X", ["somefile.txt", "anotherfile.pqr"]);
-    testSuffix(["unittest", "-n", "2", "--suffix", "", "somefile.txt"],
-               "", ["somefile.txt"]);
-    testSuffix(["unittest", "-n", "2", "--", "-", "somefile.txt"],
-               "", ["-", "somefile.txt"]);
-    testSuffix(["unittest", "-n", "2", "--", "somefile.txt", "-"],
-               ".txt", ["somefile.txt", "-"]);
+    /* In these tests, don't use headers and when files are listed, use 'somefile_txt' first.
+     * This make sure there is no attempt to read standard input and that there won't be an
+     * open failure trying to find a file.
+     */
+    testSuffix(["unittest", "-n", "2"], "");
+    testSuffix(["unittest", "-n", "2", "--", "-"], "");
+    testSuffix(["unittest", "-n", "2", "--suffix", "_123"], "_123");
+    testSuffix(["unittest", "-n", "2", somefile_txt], ".txt");
+    testSuffix(["unittest", "-n", "2", somefile_txt, "anotherfile.pqr"], ".txt");
+    testSuffix(["unittest", "-n", "2", "--suffix", ".X", somefile_txt, "anotherfile.pqr"], ".X");
+    testSuffix(["unittest", "-n", "2", "--suffix", "", somefile_txt], "");
+    testSuffix(["unittest", "-n", "2", "--", "-", somefile_txt], "");
+    testSuffix(["unittest", "-n", "2", "--", somefile_txt, "-"], ".txt");
 
     static void testDigitWidth(string[] args, uint expected)
     {
@@ -595,18 +601,18 @@ unittest
                       expected, cmdopt.digitWidth, savedArgs));
     }
 
-    testDigitWidth(["unittest", "-n", "2"], 1);
-    testDigitWidth(["unittest", "-n", "2", "--digit-width" , "0"], 1);
-    testDigitWidth(["unittest", "-n", "10"], 1);
-    testDigitWidth(["unittest", "-n", "11"], 2);
-    testDigitWidth(["unittest", "-n", "555"], 3);
-    testDigitWidth(["unittest", "-n", "555", "--digit-width" , "2"], 2);
-    testDigitWidth(["unittest", "-n", "555", "--digit-width" , "4"], 4);
-    testDigitWidth(["unittest", "-l", "10"], 3);
-    testDigitWidth(["unittest", "-l", "10000"], 3);
-    testDigitWidth(["unittest", "-l", "10000", "--digit-width", "0"], 3);
-    testDigitWidth(["unittest", "-l", "10000", "--digit-width", "1"], 1);
-    testDigitWidth(["unittest", "-l", "10000", "--digit-width", "5"], 5);
+    testDigitWidth(["unittest", "-n", "2", somefile_txt], 1);
+    testDigitWidth(["unittest", "-n", "2", "--digit-width" , "0", somefile_txt], 1);
+    testDigitWidth(["unittest", "-n", "10", somefile_txt], 1);
+    testDigitWidth(["unittest", "-n", "11", somefile_txt], 2);
+    testDigitWidth(["unittest", "-n", "555", somefile_txt], 3);
+    testDigitWidth(["unittest", "-n", "555", "--digit-width" , "2", somefile_txt], 2);
+    testDigitWidth(["unittest", "-n", "555", "--digit-width" , "4", somefile_txt], 4);
+    testDigitWidth(["unittest", "-l", "10", somefile_txt], 3);
+    testDigitWidth(["unittest", "-l", "10000", somefile_txt], 3);
+    testDigitWidth(["unittest", "-l", "10000", "--digit-width", "0", somefile_txt], 3);
+    testDigitWidth(["unittest", "-l", "10000", "--digit-width", "1", somefile_txt], 1);
+    testDigitWidth(["unittest", "-l", "10000", "--digit-width", "5", somefile_txt], 5);
 }
 
 /** Get the rlimit current number of open files the process is allowed.
@@ -650,8 +656,12 @@ uint rlimitCurrOpenFilesLimit()
  * done. It's primary job is to set up data structures and invoke the correct
  * processing routine based on the command line arguments.
  */
-void tsvSplit(TsvSplitOptions cmdopt)
+void tsvSplit(ref TsvSplitOptions cmdopt)
 {
+    /* Check that the input files were setup as expected. Should at least have one
+     * input, stdin if nothing else. */
+    assert(!cmdopt.inputSources.empty);
+
     if (cmdopt.linesPerFile != 0)
     {
         splitByLineCount(cmdopt);
@@ -662,7 +672,8 @@ void tsvSplit(TsvSplitOptions cmdopt)
 
         auto outputFiles =
             SplitOutputFiles(cmdopt.numFiles, cmdopt.dir, cmdopt.prefix, cmdopt.suffix,
-                             cmdopt.digitWidth, cmdopt.headerInOut, cmdopt.maxOpenOutputFiles);
+                             cmdopt.digitWidth, cmdopt.headerInOut, cmdopt.maxOpenOutputFiles,
+                             cmdopt.inputSources.front.header);
 
         if (!cmdopt.appendToExistingFiles)
         {
@@ -724,7 +735,7 @@ struct SplitOutputFiles
     private string _header;
 
     this(uint numFiles, string dir, string filePrefix, string fileSuffix,
-         uint fileDigitWidth, bool writeHeaders, uint maxOpenFiles)
+         uint fileDigitWidth, bool writeHeaders, uint maxOpenFiles, string header)
     {
         assert(numFiles >= 2);
         assert(maxOpenFiles >= 1);
@@ -732,6 +743,7 @@ struct SplitOutputFiles
         _numFiles = numFiles;
         _writeHeaders = writeHeaders;
         _maxOpenFiles = maxOpenFiles;
+        _header = header;
 
         _outputFiles.length = numFiles;
 
@@ -774,21 +786,6 @@ struct SplitOutputFiles
     {
         foreach (f; _outputFiles) if (f.filename.exists) return f.filename;
         return "";
-    }
-
-    /* Sets the header line.
-     *
-     * Should be called prior to writeDataLine when headers are being written. This
-     * method is separate from the constructor because the header is not available
-     * until the first line of a file is read.
-     *
-     * Headers are only written if 'writeHeaders' is specified as true in the
-     * constructor. As a convenience, this routine can be called even if headers are
-     * not being written.
-     */
-    void setHeader(const char[] header)
-    {
-        _header = header.to!string;
     }
 
     /* Picks a random file to close. Used when the open file handle limit has been
@@ -854,37 +851,21 @@ struct SplitOutputFiles
 
 /** Write input lines to multiple files, randomly selecting an output file for each line.
  */
-void splitLinesRandomly(TsvSplitOptions cmdopt, ref SplitOutputFiles outputFiles)
+void splitLinesRandomly(ref TsvSplitOptions cmdopt, ref SplitOutputFiles outputFiles)
 {
     import std.random : Random = Mt19937, uniform;
-    import tsv_utils.common.utils : bufferedByLine, throwIfWindowsNewlineOnUnix;
+    import tsv_utils.common.utils : bufferedByLine;
 
     auto randomGenerator = Random(cmdopt.seed);
 
     /* Process each line. */
-    foreach (inputFileNum, filename; cmdopt.files)
+    foreach (inputStream; cmdopt.inputSources)
     {
-        auto inputStream = (filename == "-") ? stdin : filename.File();
-        foreach (ulong fileLineNum, line; inputStream.bufferedByLine!(KeepTerminator.no).enumerate(1))
+        foreach (line; inputStream.file.bufferedByLine)
         {
-            if (fileLineNum == 1) throwIfWindowsNewlineOnUnix(line, filename, fileLineNum);
-            if (fileLineNum == 1 && cmdopt.hasHeader)
-            {
-                if (inputFileNum == 0) outputFiles.setHeader(line);
-            }
-            else
-            {
-                immutable uint outputFileNum = uniform(0, cmdopt.numFiles, randomGenerator);
-                outputFiles.writeDataLine(outputFileNum, line);
-            }
+            immutable uint outputFileNum = uniform(0, cmdopt.numFiles, randomGenerator);
+            outputFiles.writeDataLine(outputFileNum, line);
         }
-
-        /* Close input files immediately after use to preserve open file handles.
-         * File close occurs when variable goes out scope, but not immediately in the
-         * case of loop termination. Avoids open file errors when the number of
-         * output files exceeds the open file limit.
-         */
-        if (filename != "-") inputStream.close;
     }
 }
 
@@ -894,7 +875,7 @@ void splitLinesRandomly(TsvSplitOptions cmdopt, ref SplitOutputFiles outputFiles
  * fields as a key. Each unique key is assigned to a file. All lines having the
  * same key are written to the same file.
  */
-void splitLinesByKey(TsvSplitOptions cmdopt, ref SplitOutputFiles outputFiles)
+void splitLinesByKey(ref TsvSplitOptions cmdopt, ref SplitOutputFiles outputFiles)
 {
     import std.algorithm : splitter;
     import std.conv : to;
@@ -909,63 +890,52 @@ void splitLinesByKey(TsvSplitOptions cmdopt, ref SplitOutputFiles outputFiles)
     auto keyFieldsReordering = cmdopt.keyIsFullLine ? null : new InputFieldReordering!char(cmdopt.keyFields);
 
     /* Process each line. */
-    foreach (inputFileNum, filename; cmdopt.files)
+    immutable size_t fileBodyStartLine = cmdopt.hasHeader ? 2 : 1;
+    foreach (inputStream; cmdopt.inputSources)
     {
-        auto inputStream = (filename == "-") ? stdin : filename.File();
-        foreach (ulong fileLineNum, line; inputStream.bufferedByLine!(KeepTerminator.no).enumerate(1))
+        if (cmdopt.hasHeader) throwIfWindowsNewlineOnUnix(inputStream.header, inputStream.name, 1);
+
+        foreach (fileLineNum, line; inputStream.file.bufferedByLine.enumerate(fileBodyStartLine))
         {
-            if (fileLineNum == 1) throwIfWindowsNewlineOnUnix(line, filename, fileLineNum);
-            if (fileLineNum == 1 && cmdopt.hasHeader)
+            if (fileLineNum == 1) throwIfWindowsNewlineOnUnix(line, inputStream.name, fileLineNum);
+
+            /* Murmurhash works by successively adding individual keys, then finalizing.
+             * Adding individual keys is simpler if the full-line-as-key and individual
+             * fields as keys cases are separated.
+             */
+            auto hasher = MurmurHash3!32(cmdopt.seed);
+
+            if (cmdopt.keyIsFullLine)
             {
-                if (inputFileNum == 0) outputFiles.setHeader(line);
+                hasher.put(cast(ubyte[]) line);
             }
             else
             {
-                /* Murmurhash works by successively adding individual keys, then finalizing.
-                 * Adding individual keys is simpler if the full-line-as-key and individual
-                 * fields as keys cases are separated.
-                 */
-                auto hasher = MurmurHash3!32(cmdopt.seed);
+                assert(keyFieldsReordering !is null);
 
-                if (cmdopt.keyIsFullLine)
+                /* Gather the key field values and assemble the key. */
+                keyFieldsReordering.initNewLine;
+                foreach (fieldIndex, fieldValue; line.splitter(cmdopt.delim).enumerate)
                 {
-                    hasher.put(cast(ubyte[]) line);
-                }
-                else
-                {
-                    assert(keyFieldsReordering !is null);
-
-                    /* Gather the key field values and assemble the key. */
-                    keyFieldsReordering.initNewLine;
-                    foreach (fieldIndex, fieldValue; line.splitter(cmdopt.delim).enumerate)
-                    {
-                        keyFieldsReordering.processNextField(fieldIndex, fieldValue);
-                        if (keyFieldsReordering.allFieldsFilled) break;
-                    }
-
-                    enforce(keyFieldsReordering.allFieldsFilled,
-                            format("Not enough fields in line. File: %s, Line: %s",
-                                   (filename == "-") ? "Standard Input" : filename, fileLineNum));
-
-                    foreach (count, key; keyFieldsReordering.outputFields.enumerate)
-                    {
-                        if (count > 0) hasher.put(delimArray);
-                        hasher.put(cast(ubyte[]) key);
-                    }
+                    keyFieldsReordering.processNextField(fieldIndex, fieldValue);
+                    if (keyFieldsReordering.allFieldsFilled) break;
                 }
 
-                hasher.finish;
-                immutable uint outputFileNum = hasher.get % cmdopt.numFiles;
-                outputFiles.writeDataLine(outputFileNum, line);
+                enforce(keyFieldsReordering.allFieldsFilled,
+                        format("Not enough fields in line. File: %s, Line: %s",
+                               inputStream.name, fileLineNum));
+
+                foreach (count, key; keyFieldsReordering.outputFields.enumerate)
+                {
+                    if (count > 0) hasher.put(delimArray);
+                    hasher.put(cast(ubyte[]) key);
+                }
             }
-        }
 
-        /* Close input files immediately after use to preserve open file handles.
-         * File close occurs when variable goes out scope, but not immediately in the
-         * case of loop termination. Avoids open file errors when the number of
-         * output files exceeds the open file limit.
-         */
-        if (filename != "-") inputStream.close;
+            hasher.finish;
+            immutable uint outputFileNum = hasher.get % cmdopt.numFiles;
+            outputFiles.writeDataLine(outputFileNum, line);
+        }
     }
 }
 
@@ -974,9 +944,8 @@ void splitLinesByKey(TsvSplitOptions cmdopt, ref SplitOutputFiles outputFiles)
  * Note: readBufferSize is an argument primarily for unit test purposes. Normal uses
  * should use the default value.
  */
-void splitByLineCount(TsvSplitOptions cmdopt, const size_t readBufferSize = 1024L * 128L)
+void splitByLineCount(ref TsvSplitOptions cmdopt, const size_t readBufferSize = 1024L * 128L)
 {
-    import std.array : appender;
     import std.file : exists;
     import std.path : buildPath;
     import std.stdio : File;
@@ -984,7 +953,7 @@ void splitByLineCount(TsvSplitOptions cmdopt, const size_t readBufferSize = 1024
     assert (readBufferSize > 0);
     ubyte[] readBuffer = new ubyte[readBufferSize];
 
-    auto header = appender!(ubyte[])();
+    string header;
     bool headerSaved = !cmdopt.headerInOut;  // True if 'header' has been saved, or does not need to be.
     size_t nextOutputFileNum = 0;
     File outputFile;
@@ -1007,41 +976,17 @@ void splitByLineCount(TsvSplitOptions cmdopt, const size_t readBufferSize = 1024
         return findlen > 0 ? buflen - findlen : -1;
     }
 
-    foreach (filename; cmdopt.files)
+    foreach (inputStream; cmdopt.inputSources)
     {
-        auto inputStream = (filename == "-") ? stdin : filename.File("rb");
-        bool isReadingHeader = cmdopt.hasHeader;
+        if (!headerSaved)
+        {
+            header = inputStream.header(Yes.keepTerminator);
+            headerSaved = true;
+        }
 
-        foreach (ref ubyte[] inputChunk; inputStream.byChunk(readBuffer))
+        foreach (ref ubyte[] inputChunk; inputStream.file.byChunk(readBuffer))
         {
             size_t nextOutputChunkStart = 0;
-
-            if (isReadingHeader)
-            {
-                immutable newlineIndex = nextNewlineIndex(inputChunk);
-
-                if (newlineIndex == -1)
-                {
-                    /* Rare case - Header line longer than read buffer. Keep reading
-                     * the header.
-                     */
-                    if (!headerSaved) put(header, inputChunk);
-                    continue;
-                }
-                else
-                {
-                    if (!headerSaved)
-                    {
-                        put(header, inputChunk[0 .. newlineIndex + 1]);
-                        headerSaved = true;
-                    }
-                    isReadingHeader = false;
-                    nextOutputChunkStart = newlineIndex + 1;
-                }
-            }
-
-            /* Done with the header. Process the rest of the inputChunk. */
-
             auto remainingInputChunk = inputChunk[nextOutputChunkStart .. $];
 
             while (!remainingInputChunk.empty)
@@ -1069,7 +1014,7 @@ void splitByLineCount(TsvSplitOptions cmdopt, const size_t readBufferSize = 1024
                     if (cmdopt.headerInOut)
                     {
                         ulong filesize = outputFile.size;
-                        if (filesize == 0 || filesize == ulong.max) outputFile.rawWrite(header.data);
+                        if (filesize == 0 || filesize == ulong.max) outputFile.rawWrite(header);
                     }
                 }
 
@@ -1201,7 +1146,7 @@ unittest
                       savedCmdArgs, readBufferSize, expectedDir, diffResult.output));
     }
 
-    auto testDir = makeUnittestTempDir("tsv_split");
+    auto testDir = makeUnittestTempDir("tsv_split_bylinecount");
     scope(exit) testDir.rmdirRecurse;
 
     auto inputDir = buildPath(testDir, "lc_input");

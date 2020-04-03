@@ -206,7 +206,11 @@ struct TsvSelectOptions
             enforce(fields.length != 0 || excludedFieldsArg.length != 0,
                     "One of '--f|fields' or '--e|exclude' is required.");
 
+            /* Remaining command line args are files. Use standard input if files
+             * were not provided. Truncate cmdArgs to consume the arguments.
+             */
             string[] filepaths = (cmdArgs.length > 1) ? cmdArgs[1 .. $] : ["-"];
+            cmdArgs.length = 1;
             inputSources = ByLineSourceRange!()(filepaths);
 
             if (excludedFieldsArg.length > 0)
@@ -265,7 +269,7 @@ int main(string[] cmdArgs)
     }
 
     TsvSelectOptions cmdopt;
-    auto r = cmdopt.processArgs(cmdArgs);
+    const r = cmdopt.processArgs(cmdArgs);
     if (!r[0]) return r[1];
     version(LDC_Profile)
     {

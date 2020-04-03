@@ -2146,7 +2146,7 @@ final class InputSource
         assert(!_isOpen);
         assert(!_hasBeenOpened);
 
-        _file = isStdin ? stdin : _filepath.File();
+        _file = isStdin ? stdin : _filepath.File("rb");
         if (_readHeader) _header = _file.readln;
         _isOpen = true;
         _hasBeenOpened = true;
@@ -2485,7 +2485,7 @@ if (is(Char == char) || is(Char == ubyte))
         assert(!_isOpen);
         assert(!_hasBeenOpened);
 
-        _file = isStdin ? stdin : _filepath.File();
+        _file = isStdin ? stdin : _filepath.File("rb");
         _byLineRange = newByLineFn(_file);
         _isOpen = true;
         _hasBeenOpened = true;
