@@ -911,7 +911,7 @@ if (is(Char == char) || is(Char == ubyte))
     assert(file.isOpen, "bufferedByLine passed a closed file.");
 
     auto r = new BufferedByLineImpl(file);
-    r.popFront;
+    if (!r.empty) r.popFront;
     return r;
 }
 

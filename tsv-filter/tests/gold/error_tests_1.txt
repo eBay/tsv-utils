@@ -2,7 +2,7 @@ Error test set 1
 ----------------
 
 ====[tsv-filter --header --le 2:10 nosuchfile.tsv]====
-Error [tsv-filter]: Cannot open file `nosuchfile.tsv' in mode `rb' (No such file or directory)
+[tsv-filter] Error processing command line arguments: Cannot open file `nosuchfile.tsv' in mode `rb' (No such file or directory)
 
 ====[tsv-filter --header --gt 0:10 input1.tsv]====
 [tsv-filter] Error processing command line arguments: [--gt 0:10]. Field numbers must be greater than zero: '0'
