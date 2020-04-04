@@ -24,7 +24,6 @@ module tsv_utils.tsv_select;   // Module name defaults to file name, but hyphens
 import std.exception : enforce;
 import std.stdio;
 import std.typecons : tuple, Tuple;
-import tsv_utils.common.utils : ByLineSourceRange;
 
 // 'Heredoc' style help text. When printed it is followed by a getopt formatted option list.
 immutable helpText = q"EOS
@@ -122,6 +121,8 @@ EOS";
  */
 struct TsvSelectOptions
 {
+    import tsv_utils.common.utils : ByLineSourceRange;
+
     // The allowed values for the --rest option.
     enum RestOption { none, first, last};
 
@@ -329,7 +330,8 @@ enum RestLocation { none, first, last };
 
 void tsvSelect(RestLocation rest)(ref TsvSelectOptions cmdopt)
 {
-    import tsv_utils.common.utils: BufferedOutputRange, InputFieldReordering, throwIfWindowsNewlineOnUnix;
+    import tsv_utils.common.utils: BufferedOutputRange, ByLineSourceRange,
+        InputFieldReordering, throwIfWindowsNewlineOnUnix;
     import std.algorithm: splitter;
     import std.array : appender, Appender;
     import std.format: format;

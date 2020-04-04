@@ -2,7 +2,7 @@ Error test set 1
 ----------------
 
 ====[tsv-summarize --count no_such_file.tsv]====
-Error [tsv-summarize]: Cannot open file `no_such_file.tsv' in mode `rb' (No such file or directory)
+[tsv-summarize] Error processing command line arguments: Cannot open file `no_such_file.tsv' in mode `rb' (No such file or directory)
 
 ====[tsv-summarize --unique-count 0 input_5field_a.tsv]====
 [tsv-summarize] Error processing command line arguments: [--unique-count] Field numbers must be greater than zero: '0'

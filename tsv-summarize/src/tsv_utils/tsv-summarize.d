@@ -44,7 +44,7 @@ else
             import ldc.profile : resetAll;
             resetAll();
         }
-        try tsvSummarize(cmdopt, cmdArgs[1..$]);
+        try tsvSummarize(cmdopt);
         catch (Exception exc)
         {
             stderr.writefln("Error [%s]: %s", cmdopt.programName, exc.msg);
@@ -146,9 +146,10 @@ EOS";
  * process the command line.
  */
 struct TsvSummarizeOptions {
-    string programName;
+    import tsv_utils.common.utils : ByLineSourceRange;
 
-    /* Options set directly by on the command line.. */
+    string programName;                // Program name
+    ByLineSourceRange!() inputSources; // Input Files
     size_t[] keyFields;                // -g, --group-by
     bool hasHeader = false;            // --header
     bool writeHeader = false;          // -w, --write-header
@@ -246,6 +247,14 @@ struct TsvSummarizeOptions {
             }
 
             consistencyValidations();
+
+            /* Remaining command line args are files. Use standard input if files
+             * were not provided. Truncate cmdArgs to consume the arguments.
+             */
+            string[] filepaths = (cmdArgs.length > 1) ? cmdArgs[1 .. $] : ["-"];
+            cmdArgs.length = 1;
+            inputSources = ByLineSourceRange!()(filepaths);
+
             derivations();
         }
         catch (Exception exc)
@@ -417,9 +426,16 @@ struct TsvSummarizeOptions {
 
 /** tsvSummarize does the primary work of the tsv-summarize program.
  */
-void tsvSummarize(TsvSummarizeOptions cmdopt, const string[] inputFiles)
+void tsvSummarize(ref TsvSummarizeOptions cmdopt)
 {
-    import tsv_utils.common.utils : bufferedByLine, throwIfWindowsNewlineOnUnix;
+    import tsv_utils.common.utils : ByLineSourceRange, bufferedByLine,
+        throwIfWindowsNewlineOnUnix;
+
+    /* Check that the input files were setup as expected. Should at least have one
+     * input, stdin if nothing else, and newlines removed from the byLine range.
+     */
+    assert(!cmdopt.inputSources.empty);
+    static assert(is(typeof(cmdopt.inputSources) == ByLineSourceRange!(No.keepTerminator)));
 
     /* Pick the Summarizer based on the number of key-fields entered. */
     auto summarizer =
@@ -440,12 +456,11 @@ void tsvSummarize(TsvSummarizeOptions cmdopt, const string[] inputFiles)
     /* Process each input file, one line at a time. */
     auto lineFields = new char[][](cmdopt.endFieldIndex);
     bool headerFound = false;
-    foreach (filename; (inputFiles.length > 0) ? inputFiles : ["-"])
+    foreach (inputStream; cmdopt.inputSources)
     {
-        auto inputStream = (filename == "-") ? stdin : filename.File();
-        foreach (lineNum, line; inputStream.bufferedByLine.enumerate(1))
+        foreach (lineNum, line; inputStream.byLine.enumerate(1))
         {
-            if (lineNum == 1) throwIfWindowsNewlineOnUnix(line, filename, lineNum);
+            if (lineNum == 1) throwIfWindowsNewlineOnUnix(line, inputStream.name, lineNum);
 
             /* Copy the needed number of fields to the fields array.
              * Note: The number is zero if no operator needs fields. Notably, the count
@@ -480,7 +495,7 @@ void tsvSummarize(TsvSummarizeOptions cmdopt, const string[] inputFiles)
 
                 enforce(fieldIndex >= cmdopt.endFieldIndex,
                         format("Not enough fields in line. File: %s, Line: %s",
-                               (filename == "-") ? "Standard Input" : filename, lineNum));
+                               inputStream.name, lineNum));
             }
 
             if (cmdopt.hasHeader && lineNum == 1)
@@ -501,7 +516,7 @@ void tsvSummarize(TsvSummarizeOptions cmdopt, const string[] inputFiles)
                 {
                     throw new Exception(
                         format("Could not process line or field: %s\n  File: %s Line: %s%s",
-                               exc.msg, (filename == "-") ? "Standard Input" : filename, lineNum,
+                               exc.msg, inputStream.name, lineNum,
                                (lineNum == 1) ? "\n  Is this a header line? Use --header to skip." : ""));
                 }
             }
@@ -912,6 +927,13 @@ version(unittest)
      *
      * Note: Much of this is a duplication tsvSummarize logic. Better abstraction of
      * file input/output would enable running unit tests directly on top of tsvSummarize.
+     *
+     * Update (April 2020): With the introduction of InputSourceRange and ByLineSource,
+     * there needs to be a physical file when call processArgs. Its hard to get around,
+     * as the intent is to read the header line of the first input file during command
+     * line argument processing. Eventually this unit test process will need to be
+     * rewritten. For now, a file with the equivalent data is being added to the command
+     * line.
      */
     void testSummarizer(string[] cmdArgs, string[][] file, string[][] expected)
     {
@@ -928,7 +950,7 @@ version(unittest)
         TsvSummarizeOptions cmdopt;
         auto savedCmdArgs = cmdArgs.to!string;
         auto r = cmdopt.processArgs(cmdArgs);
-        assert(r[0], formatAssertMessage("Invalid command lines arg: '%s'.", savedCmdArgs));
+        assert(r[0], formatAssertMessage("Invalid command line args: '%s'.", savedCmdArgs));
 
         assert(file.all!(line => line.length >= cmdopt.endFieldIndex),
                formatAssertMessage("group-by or operator field number greater than number of fields a line of the input file."));
@@ -993,15 +1015,35 @@ version(unittest)
                    "Result != expected:\n=====Expected=====\n%s=====Actual=======\n%s==================",
                    expectedOutput.to!string, summarizerOutput.data.to!string));
     }
+
+    void writeDataFile(string filepath, string[][] fileData)
+    {
+        import std.algorithm;
+        import std.stdio;
+
+        auto f = filepath.File("w");
+        foreach (record; fileData) f.writeln(record.joiner("\t"));
+        f.close;
+    }
 }
 
 unittest
 {
+    import tsv_utils.common.unittest_utils;   // tsv unit test helpers, from common/src/.
+    import std.file : mkdir, rmdirRecurse;
+    import std.path : buildPath;
+
+    auto testDir = makeUnittestTempDir("tsv_summarizer");
+    scope(exit) testDir.rmdirRecurse;
+
     /* Summarizer unit tests. Primarily single-key and multi-key summarizers. To a limited
      * extent, command line option handling (TsvSummarizeOptions). Individual operators
      * have separate tests, those tests test the no-key summarizer. The Values operator is
      * used in these tests. It engages a number of behaviors, and the results have limited
      * ambiguity. Using only one operator limits dependence on individual operators.
+     *
+     * Update (April 2020): There now needs to be a real file passed to testSummarizer.
+     * See the comments with testSummarizer for details.
      */
 
     auto file1 = [["fld1", "fld2", "fld3"],
@@ -1012,107 +1054,112 @@ unittest
                   ["",  "bc", ""],
                   ["c", "bc", "3"]];
 
+    auto file1Path = buildPath(testDir, "file1.tsv");
+    auto file1NoHeaderPath = buildPath(testDir, "file1_noheader.tsv");
+    writeDataFile(file1Path, file1);
+    writeDataFile(file1NoHeaderPath, file1[1 .. $]);
+
     /* Single-key summarizer tests.
      */
-    testSummarizer(["unittest-sk-1", "--header", "--group-by", "1", "--values", "1"],
+    testSummarizer(["unittest-sk-1", "--header", "--group-by", "1", "--values", "1", file1Path],
                    file1,
                    [["fld1", "fld1_values"],
                     ["a", "a|a"],
                     ["c", "c|c|c"],
                     ["",  ""]]
         );
-    testSummarizer(["unittest-sk-2", "-H", "--group-by", "1", "--values", "2"],
+    testSummarizer(["unittest-sk-2", "-H", "--group-by", "1", "--values", "2", file1Path],
                    file1,
                    [["fld1", "fld2_values"],
                     ["a", "a|c"],
                     ["c", "a|bc|bc"],
                     ["",  "bc"]]
         );
-    testSummarizer(["unittest-sk-3", "-H", "-g", "1", "--values", "3"],
+    testSummarizer(["unittest-sk-3", "-H", "-g", "1", "--values", "3", file1Path],
                    file1,
                    [["fld1", "fld3_values"],
                     ["a", "3|2b"],
                     ["c", "2b||3"],
                     ["",  ""]]
         );
-    testSummarizer(["unittest-sk-4", "-H", "--group-by", "1", "--values", "1,2,3"],
+    testSummarizer(["unittest-sk-4", "-H", "--group-by", "1", "--values", "1,2,3", file1Path],
                    file1,
                    [["fld1", "fld1_values", "fld2_values", "fld3_values"],
                     ["a", "a|a",   "a|c",     "3|2b"],
                     ["c", "c|c|c", "a|bc|bc", "2b||3"],
                     ["",  "",      "bc",      ""]]
         );
-    testSummarizer(["unittest-sk-5", "-H", "--group-by", "1", "--values", "1-3"],
+    testSummarizer(["unittest-sk-5", "-H", "--group-by", "1", "--values", "1-3", file1Path],
                    file1,
                    [["fld1", "fld1_values", "fld2_values", "fld3_values"],
                     ["a", "a|a",   "a|c",     "3|2b"],
                     ["c", "c|c|c", "a|bc|bc", "2b||3"],
                     ["",  "",      "bc",      ""]]
         );
-    testSummarizer(["unittest-sk-6", "-H", "--group-by", "1", "--values", "3,2,1"],
+    testSummarizer(["unittest-sk-6", "-H", "--group-by", "1", "--values", "3,2,1", file1Path],
                    file1,
                    [["fld1", "fld3_values", "fld2_values", "fld1_values"],
                     ["a", "3|2b",  "a|c",     "a|a"],
                     ["c", "2b||3", "a|bc|bc", "c|c|c"],
                     ["",  "",      "bc",      ""]]
         );
-    testSummarizer(["unittest-sk-7", "-H", "--group-by", "1", "--values", "3-1"],
+    testSummarizer(["unittest-sk-7", "-H", "--group-by", "1", "--values", "3-1", file1Path],
                    file1,
                    [["fld1", "fld3_values", "fld2_values", "fld1_values"],
                     ["a", "3|2b",  "a|c",     "a|a"],
                     ["c", "2b||3", "a|bc|bc", "c|c|c"],
                     ["",  "",      "bc",      ""]]
         );
-    testSummarizer(["unittest-sk-8", "-H", "--group-by", "2", "--values", "1"],
+    testSummarizer(["unittest-sk-8", "-H", "--group-by", "2", "--values", "1", file1Path],
                    file1,
                    [["fld2", "fld1_values"],
                     ["a",  "a|c"],
                     ["bc", "c||c"],
                     ["c",  "a"]]
         );
-    testSummarizer(["unittest-sk-9", "-H", "--group-by", "2", "--values", "2"],
+    testSummarizer(["unittest-sk-9", "-H", "--group-by", "2", "--values", "2", file1Path],
                    file1,
                    [["fld2", "fld2_values"],
                     ["a",  "a|a"],
                     ["bc", "bc|bc|bc"],
                     ["c",  "c"]]
         );
-    testSummarizer(["unittest-sk-10", "-H", "--group-by", "2", "--values", "3"],
+    testSummarizer(["unittest-sk-10", "-H", "--group-by", "2", "--values", "3", file1Path],
                    file1,
                    [["fld2", "fld3_values"],
                     ["a",  "3|2b"],
                     ["bc", "||3"],
                     ["c",  "2b"]]
         );
-    testSummarizer(["unittest-sk-11", "-H", "--group-by", "2", "--values", "1,3"],
+    testSummarizer(["unittest-sk-11", "-H", "--group-by", "2", "--values", "1,3", file1Path],
                    file1,
                    [["fld2", "fld1_values", "fld3_values"],
                     ["a",  "a|c",  "3|2b"],
                     ["bc", "c||c", "||3"],
                     ["c",  "a",    "2b"]]
         );
-    testSummarizer(["unittest-sk-12", "-H", "--group-by", "2", "--values", "3,1"],
+    testSummarizer(["unittest-sk-12", "-H", "--group-by", "2", "--values", "3,1", file1Path],
                    file1,
                    [["fld2", "fld3_values", "fld1_values"],
                     ["a",  "3|2b", "a|c"],
                     ["bc", "||3",  "c||c"],
                     ["c",  "2b",   "a"]]
         );
-    testSummarizer(["unittest-sk-13", "-H", "--group-by", "3", "--values", "1"],
+    testSummarizer(["unittest-sk-13", "-H", "--group-by", "3", "--values", "1", file1Path],
                    file1,
                    [["fld3", "fld1_values"],
                     ["3",  "a|c"],
                     ["2b", "c|a"],
                     ["",   "c|"]]
         );
-    testSummarizer(["unittest-sk-14", "-H", "--group-by", "3", "--values", "2"],
+    testSummarizer(["unittest-sk-14", "-H", "--group-by", "3", "--values", "2", file1Path],
                    file1,
                    [["fld3", "fld2_values"],
                     ["3",  "a|bc"],
                     ["2b", "a|c"],
                     ["",   "bc|bc"]]
         );
-    testSummarizer(["unittest-sk-15", "-H", "--group-by", "3", "--values", "1,2"],
+    testSummarizer(["unittest-sk-15", "-H", "--group-by", "3", "--values", "1,2", file1Path],
                    file1,
                    [["fld3", "fld1_values", "fld2_values"],
                     ["3",  "a|c", "a|bc"],
@@ -1122,7 +1169,7 @@ unittest
 
     /* Multi-key summarizer tests.
      */
-    testSummarizer(["unittest-mk-1", "--header", "--group-by", "1,2", "--values", "1"],
+    testSummarizer(["unittest-mk-1", "--header", "--group-by", "1,2", "--values", "1", file1Path],
                    file1,
                    [["fld1", "fld2", "fld1_values"],
                     ["a", "a",  "a"],
@@ -1131,7 +1178,7 @@ unittest
                     ["a", "c",  "a"],
                     ["", "bc",  ""]]
         );
-    testSummarizer(["unittest-mk-2", "-H", "--group-by", "1,2", "--values", "2"],
+    testSummarizer(["unittest-mk-2", "-H", "--group-by", "1,2", "--values", "2", file1Path],
                    file1,
                    [["fld1", "fld2", "fld2_values"],
                     ["a", "a",  "a"],
@@ -1140,7 +1187,7 @@ unittest
                     ["a", "c",  "c"],
                     ["", "bc",  "bc"]]
         );
-    testSummarizer(["unittest-mk-3", "-H", "--group-by", "1,2", "--values", "3"],
+    testSummarizer(["unittest-mk-3", "-H", "--group-by", "1,2", "--values", "3", file1Path],
                    file1,
                    [["fld1", "fld2", "fld3_values"],
                     ["a", "a",  "3"],
@@ -1149,7 +1196,7 @@ unittest
                     ["a", "c",  "2b"],
                     ["", "bc",  ""]]
         );
-    testSummarizer(["unittest-mk-4", "-H", "--group-by", "1,2", "--values", "3,1"],
+    testSummarizer(["unittest-mk-4", "-H", "--group-by", "1,2", "--values", "3,1", file1Path],
                    file1,
                    [["fld1", "fld2", "fld3_values", "fld1_values"],
                     ["a", "a",  "3", "a"],
@@ -1158,7 +1205,7 @@ unittest
                     ["a", "c",  "2b", "a"],
                     ["",  "bc", "",   ""]]
         );
-    testSummarizer(["unittest-mk-5", "-H", "--group-by", "3,2", "--values", "1"],
+    testSummarizer(["unittest-mk-5", "-H", "--group-by", "3,2", "--values", "1", file1Path],
                    file1,
                    [["fld3", "fld2", "fld1_values"],
                     ["3",  "a",  "a"],
@@ -1167,7 +1214,7 @@ unittest
                     ["2b", "c",  "a"],
                     ["3",  "bc", "c"]]
         );
-    testSummarizer(["unittest-mk-6", "-H", "--group-by", "3-2", "--values", "1"],
+    testSummarizer(["unittest-mk-6", "-H", "--group-by", "3-2", "--values", "1", file1Path],
                    file1,
                    [["fld3", "fld2", "fld1_values"],
                     ["3",  "a",  "a"],
@@ -1176,7 +1223,7 @@ unittest
                     ["2b", "c",  "a"],
                     ["3",  "bc", "c"]]
         );
-    testSummarizer(["unittest-mk-7", "-H", "--group-by", "2,1,3", "--values", "2"],
+    testSummarizer(["unittest-mk-7", "-H", "--group-by", "2,1,3", "--values", "2", file1Path],
                    file1,
                    [["fld2", "fld1", "fld3", "fld2_values"],
                     ["a",  "a", "3",  "a"],
@@ -1188,63 +1235,63 @@ unittest
         );
 
     /* Missing policies. */
-    testSummarizer(["unittest-mis-1", "--header", "--group-by", "1", "--values", "1", "--exclude-missing"],
+    testSummarizer(["unittest-mis-1", "--header", "--group-by", "1", "--values", "1", "--exclude-missing", file1Path],
                    file1,
                    [["fld1", "fld1_values"],
                     ["a", "a|a"],
                     ["c", "c|c|c"],
                     ["",  ""]]
         );
-    testSummarizer(["unittest-mis-2", "-H", "--group-by", "1", "--values", "2", "-x"],
+    testSummarizer(["unittest-mis-2", "-H", "--group-by", "1", "--values", "2", "-x", file1Path],
                    file1,
                    [["fld1", "fld2_values"],
                     ["a", "a|c"],
                     ["c", "a|bc|bc"],
                     ["",  "bc"]]
         );
-    testSummarizer(["unittest-mis-3", "-H", "-g", "1", "--values", "3", "-x"],
+    testSummarizer(["unittest-mis-3", "-H", "-g", "1", "--values", "3", "-x", file1Path],
                    file1,
                    [["fld1", "fld3_values"],
                     ["a", "3|2b"],
                     ["c", "2b|3"],
                     ["",  ""]]
         );
-    testSummarizer(["unittest-mis-4", "-H", "--group-by", "1", "--values", "1,2,3", "-x"],
+    testSummarizer(["unittest-mis-4", "-H", "--group-by", "1", "--values", "1,2,3", "-x", file1Path],
                    file1,
                    [["fld1", "fld1_values", "fld2_values", "fld3_values"],
                     ["a", "a|a",   "a|c",     "3|2b"],
                     ["c", "c|c|c", "a|bc|bc", "2b|3"],
                     ["",  "",      "bc",      ""]]
         );
-    testSummarizer(["unittest-mis-5", "--header", "--group-by", "1", "--values", "1", "--replace-missing", "NA"],
+    testSummarizer(["unittest-mis-5", "--header", "--group-by", "1", "--values", "1", "--replace-missing", "NA", file1Path],
                    file1,
                    [["fld1", "fld1_values"],
                     ["a", "a|a"],
                     ["c", "c|c|c"],
                     ["",  "NA"]]
         );
-    testSummarizer(["unittest-mis-6", "-H", "--group-by", "1", "--values", "2", "-r", "NA"],
+    testSummarizer(["unittest-mis-6", "-H", "--group-by", "1", "--values", "2", "-r", "NA", file1Path],
                    file1,
                    [["fld1", "fld2_values"],
                     ["a", "a|c"],
                     ["c", "a|bc|bc"],
                     ["",  "bc"]]
         );
-    testSummarizer(["unittest-mis-7", "-H", "-g", "1", "--values", "3", "-r", "NA"],
+    testSummarizer(["unittest-mis-7", "-H", "-g", "1", "--values", "3", "-r", "NA", file1Path],
                    file1,
                    [["fld1", "fld3_values"],
                     ["a", "3|2b"],
                     ["c", "2b|NA|3"],
                     ["",  "NA"]]
         );
-    testSummarizer(["unittest-mis-8", "-H", "--group-by", "1", "--values", "1,2,3", "-r", "NA"],
+    testSummarizer(["unittest-mis-8", "-H", "--group-by", "1", "--values", "1,2,3", "-r", "NA", file1Path],
                    file1,
                    [["fld1", "fld1_values", "fld2_values", "fld3_values"],
                     ["a", "a|a",   "a|c",     "3|2b"],
                     ["c", "c|c|c", "a|bc|bc", "2b|NA|3"],
                     ["",  "NA",      "bc",      "NA"]]
         );
-    testSummarizer(["unittest-mis-9", "-H", "--group-by", "1,2", "--values", "3,1", "-x"],
+    testSummarizer(["unittest-mis-9", "-H", "--group-by", "1,2", "--values", "3,1", "-x", file1Path],
                    file1,
                    [["fld1", "fld2", "fld3_values", "fld1_values"],
                     ["a", "a",  "3", "a"],
@@ -1253,7 +1300,7 @@ unittest
                     ["a", "c",  "2b", "a"],
                     ["",  "bc", "",   ""]]
         );
-    testSummarizer(["unittest-mis-10", "-H", "--group-by", "3,2", "--values", "1", "-x"],
+    testSummarizer(["unittest-mis-10", "-H", "--group-by", "3,2", "--values", "1", "-x", file1Path],
                    file1,
                    [["fld3", "fld2", "fld1_values"],
                     ["3",  "a",  "a"],
@@ -1262,7 +1309,7 @@ unittest
                     ["2b", "c",  "a"],
                     ["3",  "bc", "c"]]
         );
-    testSummarizer(["unittest-mis-11", "-H", "--group-by", "2,1,3", "--values", "2", "-x"],
+    testSummarizer(["unittest-mis-11", "-H", "--group-by", "2,1,3", "--values", "2", "-x", file1Path],
                    file1,
                    [["fld2", "fld1", "fld3", "fld2_values"],
                     ["a",  "a", "3",  "a"],
@@ -1272,7 +1319,7 @@ unittest
                     ["bc", "",  "",   "bc"],
                     ["bc", "c", "3",  "bc"]]
         );
-    testSummarizer(["unittest-mis-12", "-H", "--group-by", "1,2", "--values", "3,1", "-r", "NA"],
+    testSummarizer(["unittest-mis-12", "-H", "--group-by", "1,2", "--values", "3,1", "-r", "NA", file1Path],
                    file1,
                    [["fld1", "fld2", "fld3_values", "fld1_values"],
                     ["a", "a",  "3", "a"],
@@ -1281,7 +1328,7 @@ unittest
                     ["a", "c",  "2b", "a"],
                     ["",  "bc", "NA",   "NA"]]
         );
-    testSummarizer(["unittest-mis-13", "-H", "--group-by", "3,2", "--values", "1", "-r", "NA"],
+    testSummarizer(["unittest-mis-13", "-H", "--group-by", "3,2", "--values", "1", "-r", "NA", file1Path],
                    file1,
                    [["fld3", "fld2", "fld1_values"],
                     ["3",  "a",  "a"],
@@ -1290,7 +1337,7 @@ unittest
                     ["2b", "c",  "a"],
                     ["3",  "bc", "c"]]
         );
-    testSummarizer(["unittest-mis-14", "-H", "--group-by", "2,1,3", "--values", "2", "-r", "NA"],
+    testSummarizer(["unittest-mis-14", "-H", "--group-by", "2,1,3", "--values", "2", "-r", "NA", file1Path],
                    file1,
                    [["fld2", "fld1", "fld3", "fld2_values"],
                     ["a",  "a", "3",  "a"],
@@ -1303,7 +1350,7 @@ unittest
 
     /* Validate that the no-key summarizer works with testSummarizer helper function.
      */
-    testSummarizer(["unittest-nk-1", "-H", "--values", "1,2"],
+    testSummarizer(["unittest-nk-1", "-H", "--values", "1,2", file1Path],
                    file1,
                    [["fld1_values", "fld2_values"],
                     ["a|c|c|a||c", "a|a|bc|c|bc|bc"]]
@@ -1311,13 +1358,13 @@ unittest
 
     /* Header variations: no header line; auto-generated header line; custom headers.
      */
-    testSummarizer(["unittest-hdr-1", "--group-by", "1", "--values", "1"],
+    testSummarizer(["unittest-hdr-1", "--group-by", "1", "--values", "1", file1NoHeaderPath],
                    file1[1..$],
                    [["a", "a|a"],
                     ["c", "c|c|c"],
                     ["",  ""]]
         );
-    testSummarizer(["unittest-hdr-2", "--group-by", "1,2", "--values", "2"],
+    testSummarizer(["unittest-hdr-2", "--group-by", "1,2", "--values", "2", file1NoHeaderPath],
                    file1[1..$],
                    [["a", "a",  "a"],
                     ["c", "a",  "a"],
@@ -1325,14 +1372,14 @@ unittest
                     ["a", "c",  "c"],
                     ["", "bc",  "bc"]]
         );
-    testSummarizer(["unittest-hdr-3", "--write-header", "--group-by", "2", "--values", "1"],
+    testSummarizer(["unittest-hdr-3", "--write-header", "--group-by", "2", "--values", "1", file1NoHeaderPath],
                    file1[1..$],
                    [["field2", "field1_values"],
                     ["a",  "a|c"],
                     ["bc", "c||c"],
                     ["c",  "a"]]
         );
-    testSummarizer(["unittest-hdr-4", "-w", "--group-by", "3,2", "--values", "1"],
+    testSummarizer(["unittest-hdr-4", "-w", "--group-by", "3,2", "--values", "1", file1NoHeaderPath],
                    file1[1..$],
                    [["field3", "field2", "field1_values"],
                     ["3",  "a",  "a"],
@@ -1341,14 +1388,14 @@ unittest
                     ["2b", "c",  "a"],
                     ["3",  "bc", "c"]]
         );
-    testSummarizer(["unittest-hdr-5", "-H", "--group-by", "2", "--values", "3:Field3Values"],
+    testSummarizer(["unittest-hdr-5", "-H", "--group-by", "2", "--values", "3:Field3Values", file1Path],
                    file1,
                    [["fld2", "Field3Values"],
                     ["a",  "3|2b"],
                     ["bc", "||3"],
                     ["c",  "2b"]]
         );
-    testSummarizer(["unittest-hdr-6", "-H", "--group-by", "1,2", "--values", "3:FieldThreeValues", "--values", "1:FieldOneValues"],
+    testSummarizer(["unittest-hdr-6", "-H", "--group-by", "1,2", "--values", "3:FieldThreeValues", "--values", "1:FieldOneValues", file1Path],
                    file1,
                    [["fld1", "fld2", "FieldThreeValues", "FieldOneValues"],
                     ["a", "a",  "3", "a"],
@@ -1357,14 +1404,14 @@ unittest
                     ["a", "c",  "2b", "a"],
                     ["",  "bc", "",   ""]]
         );
-    testSummarizer(["unittest-hdr-7", "--write-header", "--group-by", "1", "--values", "3:f3_vals","--values", "2:f2_vals", "--values", "1:f1_vals"],
+    testSummarizer(["unittest-hdr-7", "--write-header", "--group-by", "1", "--values", "3:f3_vals","--values", "2:f2_vals", "--values", "1:f1_vals", file1NoHeaderPath],
                    file1[1..$],
                    [["field1", "f3_vals", "f2_vals", "f1_vals"],
                     ["a", "3|2b",  "a|c",     "a|a"],
                     ["c", "2b||3", "a|bc|bc", "c|c|c"],
                     ["",  "",      "bc",      ""]]
         );
-    testSummarizer(["unittest-hdr-8", "--write-header", "--group-by", "1,3,2", "--values", "3", "--values", "1:ValsField1", "--values", "2:ValsField2"],
+    testSummarizer(["unittest-hdr-8", "--write-header", "--group-by", "1,3,2", "--values", "3", "--values", "1:ValsField1", "--values", "2:ValsField2", file1NoHeaderPath],
                    file1[1..$],
                    [["field1", "field3", "field2", "field3_values", "ValsField1", "ValsField2"],
                     ["a", "3",  "a",  "3",  "a", "a"],
@@ -1374,7 +1421,7 @@ unittest
                     ["",  "",   "bc", "",   "",  "bc"],
                     ["c", "3",  "bc", "3",  "c", "bc"]]
         );
-    testSummarizer(["unittest-hdr-9", "--write-header", "--group-by", "1,3-2", "--values", "3", "--values", "1:ValsField1", "--values", "2:ValsField2"],
+    testSummarizer(["unittest-hdr-9", "--write-header", "--group-by", "1,3-2", "--values", "3", "--values", "1:ValsField1", "--values", "2:ValsField2", file1NoHeaderPath],
                    file1[1..$],
                    [["field1", "field3", "field2", "field3_values", "ValsField1", "ValsField2"],
                     ["a", "3",  "a",  "3",  "a", "a"],
@@ -1392,18 +1439,23 @@ unittest
                     ["a", "b", "c"],
                     ["c", "b", "a"]];
 
-    testSummarizer(["unittest-3x2-1", "-H", "--group-by", "1", "--values", "3"],
+    auto file3x2Path = buildPath(testDir, "file3x2.tsv");
+    auto file3x2NoHeaderPath = buildPath(testDir, "file3x2_noheader.tsv");
+    writeDataFile(file3x2Path, file3x2);
+    writeDataFile(file3x2NoHeaderPath, file3x2[1 .. $]);
+
+    testSummarizer(["unittest-3x2-1", "-H", "--group-by", "1", "--values", "3", file3x2Path],
                    file3x2,
                    [["fld1", "fld3_values"],
                     ["a", "c"],
                     ["c", "a"]]
         );
-    testSummarizer(["unittest-3x2-2", "-H", "--group-by", "2", "--values", "3"],
+    testSummarizer(["unittest-3x2-2", "-H", "--group-by", "2", "--values", "3", file3x2Path],
                    file3x2,
                    [["fld2", "fld3_values"],
                     ["b", "c|a"]]
         );
-    testSummarizer(["unittest-3x2-3", "-H", "--group-by", "2,1", "--values", "3"],
+    testSummarizer(["unittest-3x2-3", "-H", "--group-by", "2,1", "--values", "3", file3x2Path],
                    file3x2,
                    [["fld2", "fld1", "fld3_values"],
                     ["b", "a", "c"],
@@ -1413,52 +1465,63 @@ unittest
     auto file3x1 = [["fld1", "fld2", "fld3"],
                     ["a", "b", "c"]];
 
-    testSummarizer(["unittest-3x1-1", "-H", "--group-by", "1", "--values", "3"],
+    auto file3x1Path = buildPath(testDir, "file3x1.tsv");
+    auto file3x1NoHeaderPath = buildPath(testDir, "file3x1_noheader.tsv");
+    writeDataFile(file3x1Path, file3x1);
+    writeDataFile(file3x1NoHeaderPath, file3x1[1 .. $]);
+
+    testSummarizer(["unittest-3x1-1", "-H", "--group-by", "1", "--values", "3", file3x1Path],
                    file3x1,
                    [["fld1", "fld3_values"],
                     ["a", "c"]]
         );
-    testSummarizer(["unittest-3x1-2", "--group-by", "1", "--values", "3"],
+    testSummarizer(["unittest-3x1-2", "--group-by", "1", "--values", "3", file3x1NoHeaderPath],
                    file3x1[1..$],
                    [["a", "c"]]
         );
-    testSummarizer(["unittest-3x1-3", "-H", "--group-by", "2,1", "--values", "3"],
+    testSummarizer(["unittest-3x1-3", "-H", "--group-by", "2,1", "--values", "3", file3x1Path],
                    file3x1,
                    [["fld2", "fld1", "fld3_values"],
                     ["b", "a", "c"]]
         );
-    testSummarizer(["unittest-3x1-4", "--group-by", "2,1", "--values", "3"],
+    testSummarizer(["unittest-3x1-4", "--group-by", "2,1", "--values", "3", file3x1NoHeaderPath],
                    file3x1[1..$],
                    [["b", "a", "c"]]
         );
 
     auto file3x0 = [["fld1", "fld2", "fld3"]];
 
-    testSummarizer(["unittest-3x0-1", "-H", "--group-by", "1", "--values", "3"],
+    auto file3x0Path = buildPath(testDir, "file3x0.tsv");
+    auto file3x0NoHeaderPath = buildPath(testDir, "file3x0_noheader.tsv");
+    writeDataFile(file3x0Path, file3x0);
+    writeDataFile(file3x0NoHeaderPath, file3x0[1 .. $]);
+
+
+    testSummarizer(["unittest-3x0-1", "-H", "--group-by", "1", "--values", "3", file3x0Path],
                    file3x0,
                    [["fld1", "fld3_values"]]
         );
-    testSummarizer(["unittest-3x0-2", "--group-by", "1", "--values", "3"],
+    testSummarizer(["unittest-3x0-2", "--group-by", "1", "--values", "3", file3x0NoHeaderPath],
                    file3x0[1..$],
                    []
         );
-    testSummarizer(["unittest-3x0-3", "--write-header", "--group-by", "1", "--values", "3"],
+    testSummarizer(["unittest-3x0-3", "--write-header", "--group-by", "1", "--values", "3", file3x0NoHeaderPath],
                    file3x0[1..$],
                    [["field1", "field3_values"]]
         );
 
 
-    testSummarizer(["unittest-3x0-4", "-H", "--group-by", "2,1", "--values", "3"],
+    testSummarizer(["unittest-3x0-4", "-H", "--group-by", "2,1", "--values", "3", file3x0Path],
                    file3x0,
                    [["fld2", "fld1", "fld3_values"]]
         );
 
-    testSummarizer(["unittest-3x0-5", "--group-by", "2,1", "--values", "3"],
+    testSummarizer(["unittest-3x0-5", "--group-by", "2,1", "--values", "3", file3x0NoHeaderPath],
                    file3x0[1..$],
                    []
         );
 
-    testSummarizer(["unittest-3x0-6", "--write-header", "--group-by", "2,1", "--values", "3"],
+    testSummarizer(["unittest-3x0-6", "--write-header", "--group-by", "2,1", "--values", "3", file3x0NoHeaderPath],
                    file3x0[1..$],
                    [["field2", "field1", "field3_values"]]
         );
@@ -1466,12 +1529,17 @@ unittest
     auto file2x1 = [["fld1", "fld2"],
                     ["a", "b"]];
 
-    testSummarizer(["unittest-2x1-1", "-H", "--group-by", "1", "--values", "2"],
+    auto file2x1Path = buildPath(testDir, "file2x1.tsv");
+    auto file2x1NoHeaderPath = buildPath(testDir, "file2x1_noheader.tsv");
+    writeDataFile(file2x1Path, file2x1);
+    writeDataFile(file2x1NoHeaderPath, file2x1[1 .. $]);
+
+    testSummarizer(["unittest-2x1-1", "-H", "--group-by", "1", "--values", "2", file2x1Path],
                    file2x1,
                    [["fld1", "fld2_values"],
                     ["a", "b"]]
         );
-    testSummarizer(["unittest-2x1-2", "-H", "--group-by", "2,1", "--values", "1"],
+    testSummarizer(["unittest-2x1-2", "-H", "--group-by", "2,1", "--values", "1", file2x1Path],
                    file2x1,
                    [["fld2", "fld1", "fld1_values"],
                     ["b", "a", "a"]]
@@ -1479,11 +1547,16 @@ unittest
 
     auto file2x0 = [["fld1", "fld2"]];
 
-    testSummarizer(["unittest-2x0-1", "-H", "--group-by", "1", "--values", "2"],
+    auto file2x0Path = buildPath(testDir, "file2x0.tsv");
+    auto file2x0NoHeaderPath = buildPath(testDir, "file2x0_noheader.tsv");
+    writeDataFile(file2x0Path, file2x0);
+    writeDataFile(file2x0NoHeaderPath, file2x0[1 .. $]);
+
+    testSummarizer(["unittest-2x0-1", "-H", "--group-by", "1", "--values", "2", file2x0Path],
                    file2x0,
                    [["fld1", "fld2_values"]]
         );
-    testSummarizer(["unittest-2x0-2", "-H", "--group-by", "2,1", "--values", "1"],
+    testSummarizer(["unittest-2x0-2", "-H", "--group-by", "2,1", "--values", "1", file2x0Path],
                    file2x0,
                    [["fld2", "fld1", "fld1_values"]]
         );
@@ -1492,7 +1565,12 @@ unittest
                     ["a"],
                     [""]];
 
-    testSummarizer(["unittest-1x2-1", "-H", "--group-by", "1", "--values", "1"],
+    auto file1x2Path = buildPath(testDir, "file1x2.tsv");
+    auto file1x2NoHeaderPath = buildPath(testDir, "file1x2_noheader.tsv");
+    writeDataFile(file1x2Path, file1x2);
+    writeDataFile(file1x2NoHeaderPath, file1x2[1 .. $]);
+
+    testSummarizer(["unittest-1x2-1", "-H", "--group-by", "1", "--values", "1", file1x2Path],
                    file1x2,
                    [["fld1", "fld1_values"],
                     ["a", "a"],
@@ -1503,7 +1581,12 @@ unittest
                      [""],
                      [""]];
 
-    testSummarizer(["unittest-1x2b-2", "-H", "--group-by", "1", "--values", "1"],
+    auto file1x2bPath = buildPath(testDir, "file1x2b.tsv");
+    auto file1x2bNoHeaderPath = buildPath(testDir, "file1x2b_noheader.tsv");
+    writeDataFile(file1x2bPath, file1x2b);
+    writeDataFile(file1x2bNoHeaderPath, file1x2b[1 .. $]);
+
+    testSummarizer(["unittest-1x2b-2", "-H", "--group-by", "1", "--values", "1", file1x2bPath],
                    file1x2b,
                    [["fld1", "fld1_values"],
                     ["", "|"]]
@@ -1512,18 +1595,23 @@ unittest
     auto file1x1 = [["fld1"],
                     ["x"]];
 
-    testSummarizer(["unittest-1x1-1", "-H", "--group-by", "1", "--values", "1"],
+    auto file1x1Path = buildPath(testDir, "file1x1.tsv");
+    auto file1x1NoHeaderPath = buildPath(testDir, "file1x1_noheader.tsv");
+    writeDataFile(file1x1Path, file1x1);
+    writeDataFile(file1x1NoHeaderPath, file1x1[1 .. $]);
+
+    testSummarizer(["unittest-1x1-1", "-H", "--group-by", "1", "--values", "1", file1x1Path],
                    file1x1,
                    [["fld1", "fld1_values"],
                     ["x", "x"]]
         );
 
-    testSummarizer(["unittest-1x1-2", "--group-by", "1", "--values", "1"],
+    testSummarizer(["unittest-1x1-2", "--group-by", "1", "--values", "1", file1x1NoHeaderPath],
                    file1x1[1..$],
                    [["x", "x"]]
         );
 
-    testSummarizer(["unittest-1x1-3", "--write-header", "--group-by", "1", "--values", "1"],
+    testSummarizer(["unittest-1x1-3", "--write-header", "--group-by", "1", "--values", "1", file1x1NoHeaderPath],
                    file1x1[1..$],
                    [["field1", "field1_values"],
                     ["x", "x"]]
@@ -1532,7 +1620,12 @@ unittest
     auto file1x1b = [["fld1"],
                     [""]];
 
-    testSummarizer(["unittest-1x1b-1", "-H", "--group-by", "1", "--values", "1"],
+    auto file1x1bPath = buildPath(testDir, "file1x1b.tsv");
+    auto file1x1bNoHeaderPath = buildPath(testDir, "file1x1b_noheader.tsv");
+    writeDataFile(file1x1bPath, file1x1b);
+    writeDataFile(file1x1bNoHeaderPath, file1x1b[1 .. $]);
+
+    testSummarizer(["unittest-1x1b-1", "-H", "--group-by", "1", "--values", "1", file1x1bPath],
                    file1x1b,
                    [["fld1", "fld1_values"],
                     ["", ""]]
@@ -1540,39 +1633,44 @@ unittest
 
     auto file1x0 = [["fld1"]];
 
-    testSummarizer(["unittest-1x0-1", "-H", "--group-by", "1", "--values", "1"],
+    auto file1x0Path = buildPath(testDir, "file1x0.tsv");
+    auto file1x0NoHeaderPath = buildPath(testDir, "file1x0_noheader.tsv");
+    writeDataFile(file1x0Path, file1x0);
+    writeDataFile(file1x0NoHeaderPath, file1x0[1 .. $]);
+
+    testSummarizer(["unittest-1x0-1", "-H", "--group-by", "1", "--values", "1", file1x0Path],
                    file1x0,
                    [["fld1", "fld1_values"]]
         );
 
-    testSummarizer(["unittest-1x0-2", "--group-by", "1", "--values", "1"],
+    testSummarizer(["unittest-1x0-2", "--group-by", "1", "--values", "1", file1x0NoHeaderPath],
                    file1x0[1..$],
                    []
         );
 
-    testSummarizer(["unittest-1x0-3", "--write-header", "--group-by", "1", "--values", "1"],
+    testSummarizer(["unittest-1x0-3", "--write-header", "--group-by", "1", "--values", "1", file1x0NoHeaderPath],
                    file1x0[1..$],
                    [["field1", "field1_values"]]
         );
 
     /* Alternate delimiters. */
-    testSummarizer(["unittest-delim-1", "-H", "--values", "1,2", "--delimiter", "%"],
+    testSummarizer(["unittest-delim-1", "-H", "--values", "1,2", "--delimiter", "%", file1Path],
                    file1,
                    [["fld1_values", "fld2_values"],
                     ["a|c|c|a||c", "a|a|bc|c|bc|bc"]]
         );
-    testSummarizer(["unittest-delim-2", "-H", "--values", "1-2", "--values-delimiter", "$"],
+    testSummarizer(["unittest-delim-2", "-H", "--values", "1-2", "--values-delimiter", "$", file1Path],
                    file1,
                    [["fld1_values", "fld2_values"],
                     ["a$c$c$a$$c", "a$a$bc$c$bc$bc"]]
         );
-    testSummarizer(["unittest-delim-3", "-H", "--values", "1,2", "--delimiter", "#", "--values-delimiter", ","],
+    testSummarizer(["unittest-delim-3", "-H", "--values", "1,2", "--delimiter", "#", "--values-delimiter", ",", file1Path],
                    file1,
                    [["fld1_values", "fld2_values"],
                     ["a,c,c,a,,c", "a,a,bc,c,bc,bc"]]
         );
     testSummarizer(["unittest-delim-4", "--write-header", "--group-by", "2", "--values", "1",
-                    "--delimiter", "^", "--values-delimiter", ":"],
+                    "--delimiter", "^", "--values-delimiter", ":", file1NoHeaderPath],
                    file1[1..$],
                    [["field2", "field1_values"],
                     ["a",  "a:c"],
@@ -1580,7 +1678,7 @@ unittest
                     ["c",  "a"]]
         );
     testSummarizer(["unittest-delim-5", "--group-by", "1,2", "--values", "2", "--delimiter", "/",
-                    "--values-delimiter", "\\"],
+                    "--values-delimiter", "\\", file1NoHeaderPath],
                    file1[1..$],
                    [["a", "a",  "a"],
                     ["c", "a",  "a"],
