@@ -16,7 +16,6 @@ import std.format : format;
 import std.range;
 import std.stdio;
 import std.typecons : tuple, Flag;
-import tsv_utils.common.utils : InputSourceRange, ReadHeader;
 
 static if (__VERSION__ >= 2085) extern(C) __gshared string[] rt_options = [ "gcopt=cleanup:none" ];
 
@@ -218,6 +217,8 @@ EOS";
  */
 struct TsvSplitOptions
 {
+    import tsv_utils.common.utils : InputSourceRange, ReadHeader;
+
     enum invalidFileSuffix = "///////";
 
     string programName;                        /// Program name
@@ -854,7 +855,11 @@ struct SplitOutputFiles
 void splitLinesRandomly(ref TsvSplitOptions cmdopt, ref SplitOutputFiles outputFiles)
 {
     import std.random : Random = Mt19937, uniform;
-    import tsv_utils.common.utils : bufferedByLine;
+    import tsv_utils.common.utils : bufferedByLine, InputSourceRange;
+
+    /* inputSources must be an InputSourceRange and include at least stdin. */
+    assert(!cmdopt.inputSources.empty);
+    static assert(is(typeof(cmdopt.inputSources) == InputSourceRange));
 
     auto randomGenerator = Random(cmdopt.seed);
 
@@ -880,9 +885,14 @@ void splitLinesByKey(ref TsvSplitOptions cmdopt, ref SplitOutputFiles outputFile
     import std.algorithm : splitter;
     import std.conv : to;
     import std.digest.murmurhash;
-    import tsv_utils.common.utils : bufferedByLine, InputFieldReordering, throwIfWindowsNewlineOnUnix;
+    import tsv_utils.common.utils : bufferedByLine, InputFieldReordering,
+        InputSourceRange, throwIfWindowsNewlineOnUnix;
 
     assert(cmdopt.keyFields.length > 0);
+
+    /* inputSources must be an InputSourceRange and include at least stdin. */
+    assert(!cmdopt.inputSources.empty);
+    static assert(is(typeof(cmdopt.inputSources) == InputSourceRange));
 
     immutable ubyte[1] delimArray = [cmdopt.delim]; // For assembling multi-field hash keys.
 
@@ -949,11 +959,14 @@ void splitByLineCount(ref TsvSplitOptions cmdopt, const size_t readBufferSize = 
     import std.file : exists;
     import std.path : buildPath;
     import std.stdio : File;
+    import tsv_utils.common.utils : InputSourceRange;
 
     assert (readBufferSize > 0);
     ubyte[] readBuffer = new ubyte[readBufferSize];
 
+    /* inputSources must be an InputSourceRange and include at least stdin. */
     assert(!cmdopt.inputSources.empty);
+    static assert(is(typeof(cmdopt.inputSources) == InputSourceRange));
 
     string header = !cmdopt.headerInOut ? "" :
         cmdopt.inputSources.front.header(Yes.keepTerminator);

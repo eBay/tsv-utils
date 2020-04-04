@@ -282,7 +282,9 @@ void tsvUniq(ref TsvUniqOptions cmdopt)
     import std.uni : asLowerCase;
     import std.utf : byChar;
 
+    /* inputSources must be an InputSourceRange and include at least stdin. */
     assert(!cmdopt.inputSources.empty);
+    static assert(is(typeof(cmdopt.inputSources) == InputSourceRange));
 
     /* InputFieldReordering maps the key fields from an input line to a separate buffer. */
     auto keyFieldsReordering = cmdopt.keyIsFullLine ? null : new InputFieldReordering!char(cmdopt.fields);

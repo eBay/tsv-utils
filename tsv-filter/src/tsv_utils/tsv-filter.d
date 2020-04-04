@@ -854,7 +854,9 @@ void tsvFilter(ref TsvFilterOptions cmdopt)
     import tsv_utils.common.utils : BufferedOutputRange, bufferedByLine, InputSourceRange,
         throwIfWindowsNewlineOnUnix;
 
-    assert(!cmdopt.inputSources.empty);   // Must include at least standard input
+    /* inputSources must be an InputSourceRange and include at least stdin. */
+    assert(!cmdopt.inputSources.empty);
+    static assert(is(typeof(cmdopt.inputSources) == InputSourceRange));
 
     /* BufferedOutputRange improves performance on narrow files with high percentages of
      * writes. Want responsive output if output is rare, so ensure the first matched
