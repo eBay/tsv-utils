@@ -16,6 +16,15 @@ $(LIST
       It is similar to the standard library method std.stdio.File.byLine, but quite a
       bit faster. This is achieved by reading in larger blocks and buffering.
 
+    * [InputSourceRange] - An input range that provides open file access to a set of
+      files. It is used to iterate over files passed as command line arguments. This
+      enable reading header line of a file during command line argument process, then
+      passing the open file to the main processing functions.
+
+    * [ByLineSourceRange] - Similar to an InputSourceRange, except that it provides
+      access to a byLine iterator (bufferedByLine) rather than an open file. This is
+      used by tools that run the same processing logic both header non-header lines.
+
     * [joinAppend] - A function that performs a join, but appending the join output to
       an output stream. It is a performance improvement over using join or joiner with
       writeln.
@@ -1957,6 +1966,14 @@ opening a file.
 alias ReadHeader = Flag!"readHeader";
 
 /**
+inputSourceRange is a helper function for creating new InputSourceRange objects.
+*/
+InputSourceRange inputSourceRange(string[] filepaths, ReadHeader readHeader)
+{
+    return new InputSourceRange(filepaths, readHeader);
+}
+
+/**
 InputSourceRange is an input range that iterates over a set of input files.
 
 InputSourceRange is used to iterate over a set of files passed on the command line.
@@ -1972,10 +1989,14 @@ header line of the first input file during command line argument processing, and
 pass the open input file and the header line along to the main processing functions.
 This enables a features like named fields to be implemented in a standard way.
 
+Both InputSourceRange and InputSource are reference objects. This keeps their use
+limited to a single iteration over the set of files. The files can be iterated again
+by creating a new InputSourceRange against the same filepaths.
+
 Currently, InputSourceRange supports files and standard input. It is possible other
 types of input sources will be added in the future.
  */
-struct InputSourceRange
+final class InputSourceRange
 {
     import std.range;
 
@@ -1995,11 +2016,6 @@ struct InputSourceRange
             _front.open;
             _filepaths.popFront;
         }
-    }
-
-    this(this)
-    {
-        _filepaths = _filepaths.dup;
     }
 
     size_t length() const pure nothrow @safe
@@ -2223,7 +2239,7 @@ unittest
         /* Reading headers. */
 
         readSources.clear;
-        auto inputSourcesYesHeader = InputSourceRange(inputFiles[0 .. numFiles], Yes.readHeader);
+        auto inputSourcesYesHeader = inputSourceRange(inputFiles[0 .. numFiles], Yes.readHeader);
         assert(inputSourcesYesHeader.length == numFiles);
 
         foreach(fileNum, source; inputSourcesYesHeader.enumerate)
@@ -2248,10 +2264,13 @@ unittest
             assert(source.file.rawRead(buffer) == fileBodies[fileNum]);
         }
 
+        /* The InputSourceRange is a reference range, consumed by the foreach. */
+        assert(inputSourcesYesHeader.empty);
+
         /* Without reading headers. */
 
         readSources.clear;
-        auto inputSourcesNoHeader = InputSourceRange(inputFiles[0 .. numFiles], No.readHeader);
+        auto inputSourcesNoHeader = inputSourceRange(inputFiles[0 .. numFiles], No.readHeader);
         assert(inputSourcesNoHeader.length == numFiles);
 
         foreach(fileNum, source; inputSourcesNoHeader.enumerate)
@@ -2271,13 +2290,16 @@ unittest
 
             assert(source.file.rawRead(buffer) == fileData[fileNum]);
         }
+
+        /* The InputSourceRange is a reference range, consumed by the foreach. */
+        assert(inputSourcesNoHeader.empty);
     }
 
     /* Tests with standard input. No actual reading in these tests.
      */
 
     readSources.clear;
-    foreach(fileNum, source; InputSourceRange(["-", "-"], No.readHeader).enumerate)
+    foreach(fileNum, source; inputSourceRange(["-", "-"], No.readHeader).enumerate)
     {
         readSources.put(source);
         assert(source.isOpen);
@@ -2296,17 +2318,28 @@ unittest
     /* Empty filelist. */
     string[] nofiles;
     {
-        auto sources = InputSourceRange(nofiles, No.readHeader);
+        auto sources = inputSourceRange(nofiles, No.readHeader);
         assert(sources.empty);
     }
     {
-        auto sources = InputSourceRange(nofiles, Yes.readHeader);
+        auto sources = inputSourceRange(nofiles, Yes.readHeader);
         assert(sources.empty);
     }
 
     /* Error cases. */
-    assertThrown(InputSourceRange([file0, "no_such_file.txt"], No.readHeader).each);
-    assertThrown(InputSourceRange(["no_such_file.txt", file1], Yes.readHeader).each);
+    assertThrown(inputSourceRange([file0, "no_such_file.txt"], No.readHeader).each);
+    assertThrown(inputSourceRange(["no_such_file.txt", file1], Yes.readHeader).each);
+}
+
+/**
+byLineSourceRange is a helper function for creating new byLineSourceRange objects.
+*/
+auto byLineSourceRange(
+    KeepTerminator keepTerminator = No.keepTerminator, Char = char, ubyte terminator = '\n')
+(string[] filepaths)
+if (is(Char == char) || is(Char == ubyte))
+{
+    return new ByLineSourceRange!(keepTerminator, Char, terminator)(filepaths);
 }
 
 /**
@@ -2330,10 +2363,14 @@ Access to the first line of the first file is available after creating the
 ByLineSourceRange instance. The first file is opened and a bufferedByLine created.
 The first line of the first file is via byLine.front (after checking !byLine.empty).
 
+Both ByLineSourceRange and ByLineSource are reference objects. This keeps their use
+limited to a single iteration over the set of files. The files can be iterated again
+by creating a new InputSourceRange against the same filepaths.
+
 Currently, ByLineSourceRange supports files and standard input. It is possible other
 types of input sources will be added in the future.
  */
-struct ByLineSourceRange(
+final class ByLineSourceRange(
     KeepTerminator keepTerminator = No.keepTerminator, Char = char, ubyte terminator = '\n')
 if (is(Char == char) || is(Char == ubyte))
 {
@@ -2355,11 +2392,6 @@ if (is(Char == char) || is(Char == ubyte))
             _front.open;
             _filepaths.popFront;
         }
-    }
-
-    this(this)
-    {
-        _filepaths = _filepaths.dup;
     }
 
     size_t length() const pure nothrow @safe
@@ -2572,7 +2604,7 @@ unittest
     {
         /* Using No.keepTerminator. */
         readSourcesNoTerminator.clear;
-        auto inputSourcesNoTerminator = ByLineSourceRange!(No.keepTerminator)(inputFiles[0 .. numFiles]);
+        auto inputSourcesNoTerminator = byLineSourceRange!(No.keepTerminator)(inputFiles[0 .. numFiles]);
         assert(inputSourcesNoTerminator.length == numFiles);
 
         foreach(fileNum, source; inputSourcesNoTerminator.enumerate)
@@ -2602,9 +2634,12 @@ unittest
             assert(readFileData.data == fileData[fileNum]);
         }
 
+        /* The ByLineSourceRange is a reference range, consumed by the foreach. */
+        assert(inputSourcesNoTerminator.empty);
+
         /* Using Yes.keepTerminator. */
         readSourcesYesTerminator.clear;
-        auto inputSourcesYesTerminator = ByLineSourceRange!(Yes.keepTerminator)(inputFiles[0 .. numFiles]);
+        auto inputSourcesYesTerminator = byLineSourceRange!(Yes.keepTerminator)(inputFiles[0 .. numFiles]);
         assert(inputSourcesYesTerminator.length == numFiles);
 
         foreach(fileNum, source; inputSourcesYesTerminator.enumerate)
@@ -2628,20 +2663,23 @@ unittest
 
             assert(readFileData.data == fileData[fileNum]);
         }
+
+        /* The ByLineSourceRange is a reference range, consumed by the foreach. */
+        assert(inputSourcesYesTerminator.empty);
     }
 
     /* Empty filelist. */
     string[] nofiles;
     {
-        auto sources = ByLineSourceRange!(No.keepTerminator)(nofiles);
+        auto sources = byLineSourceRange!(No.keepTerminator)(nofiles);
         assert(sources.empty);
     }
     {
-        auto sources = ByLineSourceRange!(Yes.keepTerminator)(nofiles);
+        auto sources = byLineSourceRange!(Yes.keepTerminator)(nofiles);
         assert(sources.empty);
     }
 
     /* Error cases. */
-    assertThrown(ByLineSourceRange!(No.keepTerminator)([file0, "no_such_file.txt"]).each);
-    assertThrown(ByLineSourceRange!(Yes.keepTerminator)(["no_such_file.txt", file1]).each);
+    assertThrown(byLineSourceRange!(No.keepTerminator)([file0, "no_such_file.txt"]).each);
+    assertThrown(byLineSourceRange!(Yes.keepTerminator)(["no_such_file.txt", file1]).each);
 }

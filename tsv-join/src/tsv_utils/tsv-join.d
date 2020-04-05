@@ -64,7 +64,8 @@ EOS";
  */
 struct TsvJoinOptions
 {
-    import tsv_utils.common.utils : ByLineSourceRange, InputSourceRange, ReadHeader;
+    import tsv_utils.common.utils : byLineSourceRange, ByLineSourceRange,
+        inputSourceRange, InputSourceRange, ReadHeader;
 
     /* Data available the main program. Variables used only command line argument
      * processing are local to processArgs.
@@ -173,12 +174,12 @@ struct TsvJoinOptions
             enforce(!(filterFile == "-" && cmdArgs.length == 1),
                     "A data file is required when standard input is used for the filter file (--f|filter-file -).");
 
-            filterSource = ByLineSourceRange!()([filterFile]);
+            filterSource = byLineSourceRange([filterFile]);
 
             string[] filepaths = (cmdArgs.length > 1) ? cmdArgs[1 .. $] : ["-"];
             cmdArgs.length = 1;
             ReadHeader readHeader = hasHeader ? Yes.readHeader : No.readHeader;
-            inputSources = InputSourceRange(filepaths, readHeader);
+            inputSources = inputSourceRange(filepaths, readHeader);
 
             consistencyValidations(cmdArgs);
             derivations();

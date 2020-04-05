@@ -217,7 +217,7 @@ EOS";
  */
 struct TsvSplitOptions
 {
-    import tsv_utils.common.utils : InputSourceRange, ReadHeader;
+    import tsv_utils.common.utils : inputSourceRange, InputSourceRange, ReadHeader;
 
     enum invalidFileSuffix = "///////";
 
@@ -428,7 +428,7 @@ struct TsvSplitOptions
             string[] filepaths = (cmdArgs.length > 1) ? cmdArgs[1 .. $] : ["-"];
             cmdArgs.length = 1;
             ReadHeader readHeader = hasHeader ? Yes.readHeader : No.readHeader;
-            inputSources = InputSourceRange(filepaths, readHeader);
+            inputSources = inputSourceRange(filepaths, readHeader);
 
             /* Suffix - If not provided, use the extension of the first input file.
              * No suffix if reading from standard input.

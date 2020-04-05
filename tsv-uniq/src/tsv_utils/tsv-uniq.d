@@ -87,7 +87,7 @@ EOS";
  */
 struct TsvUniqOptions
 {
-    import tsv_utils.common.utils : InputSourceRange, ReadHeader;
+    import tsv_utils.common.utils : inputSourceRange, InputSourceRange, ReadHeader;
 
     enum defaultEquivHeader = "equiv_id";
     enum defaultEquivStartID = 1;
@@ -188,7 +188,7 @@ struct TsvUniqOptions
             string[] filepaths = (cmdArgs.length > 1) ? cmdArgs[1 .. $] : ["-"];
             cmdArgs.length = 1;
             ReadHeader readHeader = hasHeader ? Yes.readHeader : No.readHeader;
-            inputSources = InputSourceRange(filepaths, readHeader);
+            inputSources = inputSourceRange(filepaths, readHeader);
 
             /* Consistency checks */
             if (!equivMode)

@@ -621,7 +621,7 @@ void fieldFieldNumOptionHandler(
  */
 struct TsvFilterOptions
 {
-    import tsv_utils.common.utils : InputSourceRange, ReadHeader;
+    import tsv_utils.common.utils : inputSourceRange, InputSourceRange, ReadHeader;
 
     string programName;
     InputSourceRange inputSources;   // Input files
@@ -834,7 +834,7 @@ struct TsvFilterOptions
             string[] filepaths = (cmdArgs.length > 1) ? cmdArgs[1 .. $] : ["-"];
             cmdArgs.length = 1;
             ReadHeader readHeader = hasHeader ? Yes.readHeader : No.readHeader;
-            inputSources = InputSourceRange(filepaths, readHeader);
+            inputSources = inputSourceRange(filepaths, readHeader);
         }
         catch (Exception e)
         {

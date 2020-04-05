@@ -146,7 +146,7 @@ EOS";
  * process the command line.
  */
 struct TsvSummarizeOptions {
-    import tsv_utils.common.utils : ByLineSourceRange;
+    import tsv_utils.common.utils : byLineSourceRange, ByLineSourceRange;
 
     string programName;                // Program name
     ByLineSourceRange!() inputSources; // Input Files
@@ -253,7 +253,7 @@ struct TsvSummarizeOptions {
              */
             string[] filepaths = (cmdArgs.length > 1) ? cmdArgs[1 .. $] : ["-"];
             cmdArgs.length = 1;
-            inputSources = ByLineSourceRange!()(filepaths);
+            inputSources = byLineSourceRange(filepaths);
 
             derivations();
         }

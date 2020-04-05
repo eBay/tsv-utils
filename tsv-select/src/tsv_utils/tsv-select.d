@@ -121,7 +121,7 @@ EOS";
  */
 struct TsvSelectOptions
 {
-    import tsv_utils.common.utils : ByLineSourceRange;
+    import tsv_utils.common.utils : byLineSourceRange, ByLineSourceRange;
 
     // The allowed values for the --rest option.
     enum RestOption { none, first, last};
@@ -212,7 +212,7 @@ struct TsvSelectOptions
              */
             string[] filepaths = (cmdArgs.length > 1) ? cmdArgs[1 .. $] : ["-"];
             cmdArgs.length = 1;
-            inputSources = ByLineSourceRange!()(filepaths);
+            inputSources = byLineSourceRange(filepaths);
 
             if (excludedFieldsArg.length > 0)
             {
