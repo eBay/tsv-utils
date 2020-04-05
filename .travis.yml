@@ -62,9 +62,18 @@ matrix:
       dist: xenial
       group: travis_latest
       language: d
-      d: ldc-1.6.0
+      d: ldc-1.17.0
       env: DUBTEST=0 MAKETEST=1
       if: type IN (pull_request, cron)
+#    - os: linux
+#        W/PR #281 (InputSourceRange), require ldc-1.17.0/dmd-2.087.0
+#        (Phobos PR #7117)
+#      dist: xenial
+#      group: travis_latest
+#      language: d
+#      d: ldc-1.6.0
+#      env: DUBTEST=0 MAKETEST=1
+#      if: type IN (pull_request, cron)
     - os: linux
       dist: xenial
       group: travis_latest
@@ -93,24 +102,24 @@ matrix:
       d: ldc
       env: LTOPGO=default
       if: type IN (cron)
-    - os: linux
-      dist: xenial
-      sudo: required
-      group: travis_latest
-      language: d
-      d: ldc-1.7.0
-      services: docker
-      env: DOCKERSPECIAL=1
-      if: type IN (cron)
-    - os: linux
-      dist: xenial
-      sudo: required
-      group: travis_latest
-      language: d
-      d: ldc-1.12.0
-      services: docker
-      env: DOCKERSPECIAL=2
-      if: type IN (cron)
+#    - os: linux
+#      dist: xenial
+#      sudo: required
+#      group: travis_latest
+#      language: d
+#      d: ldc-1.7.0
+#      services: docker
+#      env: DOCKERSPECIAL=1
+#      if: type IN (cron)
+#    - os: linux
+#      dist: xenial
+#      sudo: required
+#      group: travis_latest
+#      language: d
+#      d: ldc-1.12.0
+#      services: docker
+#      env: DOCKERSPECIAL=2
+#      if: type IN (cron)
     - os: linux
       dist: xenial
       group: travis_latest
