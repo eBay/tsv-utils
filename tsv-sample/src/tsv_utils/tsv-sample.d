@@ -203,8 +203,10 @@ EOS";
  */
 struct TsvSampleOptions
 {
+    import tsv_utils.common.utils : InputSourceRange;
+
     string programName;                        /// Program name
-    string[] files;                            /// Input files
+    InputSourceRange inputSources;             /// Input files
     bool helpVerbose = false;                  /// --help-verbose
     bool hasHeader = false;                    /// --H|header
     ulong sampleSize = 0;                      /// --n|num - Size of the desired sample
@@ -254,7 +256,7 @@ struct TsvSampleOptions
         import std.math : isNaN;
         import std.path : baseName, stripExtension;
         import std.typecons : Yes, No;
-        import tsv_utils.common.utils : makeFieldListOptionHandler;
+        import tsv_utils.common.utils : inputSourceRange, makeFieldListOptionHandler, ReadHeader;
 
         programName = (cmdArgs.length > 0) ? cmdArgs[0].stripExtension.baseName : "Unknown_program_name";
 
@@ -318,6 +320,12 @@ struct TsvSampleOptions
                 writeln(tsvutilsVersionNotice("tsv-sample"));
                 return tuple(false, 0);
             }
+
+            /* Input files. Remaining command line args are files. */
+            string[] filepaths = (cmdArgs.length > 1) ? cmdArgs[1 .. $] : ["-"];
+            cmdArgs.length = 1;
+            ReadHeader readHeader = hasHeader ? Yes.readHeader : No.readHeader;
+            inputSources = inputSourceRange(filepaths, readHeader);
 
             /* Derivations and validations. */
             if (weightField > 0)
@@ -421,10 +429,6 @@ struct TsvSampleOptions
             else if (seedValueOptionArg != 0) seed = seedValueOptionArg;
             else if (staticSeed) seed = 2438424139;
             else assert(0, "Internal error, invalid seed option states.");
-
-            /* Assume remaining args are files. Use standard input if files were not provided. */
-            files ~= (cmdArgs.length > 1) ? cmdArgs[1 .. $] : ["-"];
-            cmdArgs.length = 1;
         }
         catch (Exception exc)
         {
@@ -439,7 +443,7 @@ struct TsvSampleOptions
  * tsvSample is the top-level routine handling the different tsv-sample use cases.
  * Its primary role is to invoke the correct routine for type of sampling requested.
  */
-void tsvSample(OutputRange)(TsvSampleOptions cmdopt, auto ref OutputRange outputStream)
+void tsvSample(OutputRange)(ref TsvSampleOptions cmdopt, auto ref OutputRange outputStream)
 if (isOutputRange!(OutputRange, char))
 {
     if (cmdopt.srsWithReplacement)
@@ -484,7 +488,7 @@ if (isOutputRange!(OutputRange, char))
  * doesn't support compatibility mode. See the bernoulliSkipSampling documentation
  * for a discussion of the skipSamplingProbabilityThreshold used here.
  */
-void bernoulliSamplingCommand(OutputRange)(TsvSampleOptions cmdopt, auto ref OutputRange outputStream)
+void bernoulliSamplingCommand(OutputRange)(ref TsvSampleOptions cmdopt, auto ref OutputRange outputStream)
 if (isOutputRange!(OutputRange, char))
 {
     assert(!cmdopt.hasWeightField);
@@ -517,78 +521,83 @@ if (isOutputRange!(OutputRange, char))
  * This routine supports random value printing and gen-random-inorder value printing.
  */
 void bernoulliSampling(Flag!"generateRandomAll" generateRandomAll, OutputRange)
-    (TsvSampleOptions cmdopt, auto ref OutputRange outputStream)
+    (ref TsvSampleOptions cmdopt, auto ref OutputRange outputStream)
 if (isOutputRange!(OutputRange, char))
 {
     import std.random : Random = Mt19937, uniform01;
-    import tsv_utils.common.utils : bufferedByLine, throwIfWindowsNewlineOnUnix;
+    import tsv_utils.common.utils : bufferedByLine, InputSourceRange, throwIfWindowsNewlineOnUnix;
 
     static if (generateRandomAll) assert(cmdopt.genRandomInorder);
     else assert(!cmdopt.genRandomInorder);
 
+    assert(!cmdopt.inputSources.empty);
+    static assert(is(typeof(cmdopt.inputSources) == InputSourceRange));
+
     auto randomGenerator = Random(cmdopt.seed);
 
-    /* Process each line. */
-    bool headerWritten = false;
-    ulong numLinesWritten = 0;
-    foreach (filename; cmdopt.files)
+    /* First header is read during command line argument processing. */
+    if (cmdopt.hasHeader && !cmdopt.inputSources.front.isHeaderEmpty)
     {
-        auto inputStream = (filename == "-") ? stdin : filename.File();
-        foreach (ulong fileLineNum, line; inputStream.bufferedByLine!(KeepTerminator.no).enumerate(1))
-        {
-            if (fileLineNum == 1) throwIfWindowsNewlineOnUnix(line, filename, fileLineNum);
-            if (fileLineNum == 1 && cmdopt.hasHeader)
-            {
-                if (!headerWritten)
-                {
-                    static if (generateRandomAll)
-                    {
-                        outputStream.put(cmdopt.randomValueHeader);
-                        outputStream.put(cmdopt.delim);
-                    }
-                    else if (cmdopt.printRandom)
-                    {
-                        outputStream.put(cmdopt.randomValueHeader);
-                        outputStream.put(cmdopt.delim);
-                    }
+        auto inputStream = cmdopt.inputSources.front;
+        throwIfWindowsNewlineOnUnix(inputStream.header, inputStream.name, 1);
 
-                    outputStream.put(line);
-                    outputStream.put("\n");
-                    headerWritten = true;
+        static if (generateRandomAll)
+        {
+            outputStream.put(cmdopt.randomValueHeader);
+            outputStream.put(cmdopt.delim);
+        }
+        else if (cmdopt.printRandom)
+        {
+            outputStream.put(cmdopt.randomValueHeader);
+            outputStream.put(cmdopt.delim);
+        }
+
+        outputStream.put(inputStream.header);
+        outputStream.put("\n");
+    }
+
+    /* Process each line. */
+    immutable size_t fileBodyStartLine = cmdopt.hasHeader ? 2 : 1;
+    ulong numLinesWritten = 0;
+
+    foreach (inputStream; cmdopt.inputSources)
+    {
+        if (cmdopt.hasHeader) throwIfWindowsNewlineOnUnix(inputStream.header, inputStream.name, 1);
+
+        foreach (ulong fileLineNum, line;
+                 inputStream.file.bufferedByLine!(KeepTerminator.no).enumerate(fileBodyStartLine))
+        {
+            if (fileLineNum == 1) throwIfWindowsNewlineOnUnix(line, inputStream.name, fileLineNum);
+
+            immutable double lineScore = uniform01(randomGenerator);
+
+            static if (generateRandomAll)
+            {
+                outputStream.formatRandomValue(lineScore);
+                outputStream.put(cmdopt.delim);
+                outputStream.put(line);
+                outputStream.put("\n");
+
+                if (cmdopt.sampleSize != 0)
+                {
+                    ++numLinesWritten;
+                    if (numLinesWritten == cmdopt.sampleSize) return;
                 }
             }
-            else
+            else if (lineScore < cmdopt.inclusionProbability)
             {
-                immutable double lineScore = uniform01(randomGenerator);
-
-                static if (generateRandomAll)
+                if (cmdopt.printRandom)
                 {
                     outputStream.formatRandomValue(lineScore);
                     outputStream.put(cmdopt.delim);
-                    outputStream.put(line);
-                    outputStream.put("\n");
-
-                    if (cmdopt.sampleSize != 0)
-                    {
-                        ++numLinesWritten;
-                        if (numLinesWritten == cmdopt.sampleSize) return;
-                    }
                 }
-                else if (lineScore < cmdopt.inclusionProbability)
-                {
-                    if (cmdopt.printRandom)
-                    {
-                        outputStream.formatRandomValue(lineScore);
-                        outputStream.put(cmdopt.delim);
-                    }
-                    outputStream.put(line);
-                    outputStream.put("\n");
+                outputStream.put(line);
+                outputStream.put("\n");
 
-                    if (cmdopt.sampleSize != 0)
-                    {
-                        ++numLinesWritten;
-                        if (numLinesWritten == cmdopt.sampleSize) return;
-                    }
+                if (cmdopt.sampleSize != 0)
+                {
+                    ++numLinesWritten;
+                    if (numLinesWritten == cmdopt.sampleSize) return;
                 }
             }
         }
@@ -630,17 +639,20 @@ if (isOutputRange!(OutputRange, char))
  *       http://erikerlandson.github.io/blog/2014/09/11/faster-random-samples-with-gap-sampling/
  * )
  */
-void bernoulliSkipSampling(OutputRange)(TsvSampleOptions cmdopt, OutputRange outputStream)
+void bernoulliSkipSampling(OutputRange)(ref TsvSampleOptions cmdopt, OutputRange outputStream)
     if (isOutputRange!(OutputRange, char))
 {
     import std.conv : to;
     import std.math : log, trunc;
     import std.random : Random = Mt19937, uniform01;
-    import tsv_utils.common.utils : bufferedByLine, throwIfWindowsNewlineOnUnix;
+    import tsv_utils.common.utils : bufferedByLine, InputSourceRange, throwIfWindowsNewlineOnUnix;
 
     assert(cmdopt.inclusionProbability > 0.0 && cmdopt.inclusionProbability < 1.0);
     assert(!cmdopt.printRandom);
     assert(!cmdopt.compatibilityMode);
+
+    assert(!cmdopt.inputSources.empty);
+    static assert(is(typeof(cmdopt.inputSources) == InputSourceRange));
 
     auto randomGenerator = Random(cmdopt.seed);
 
@@ -652,25 +664,29 @@ void bernoulliSkipSampling(OutputRange)(TsvSampleOptions cmdopt, OutputRange out
      */
     size_t remainingSkips = (log(1.0 - uniform01(randomGenerator)) / logDiscardRate).trunc.to!size_t;
 
-    /* Process each line. */
-    bool headerWritten = false;
-    ulong numLinesWritten = 0;
-    foreach (filename; cmdopt.files)
+    /* First header is read during command line argument processing. */
+    if (cmdopt.hasHeader && !cmdopt.inputSources.front.isHeaderEmpty)
     {
-        auto inputStream = (filename == "-") ? stdin : filename.File();
-        foreach (ulong fileLineNum, line; inputStream.bufferedByLine!(KeepTerminator.no).enumerate(1))
+        auto inputStream = cmdopt.inputSources.front;
+        throwIfWindowsNewlineOnUnix(inputStream.header, inputStream.name, 1);
+
+        outputStream.put(inputStream.header);
+        outputStream.put("\n");
+    }
+
+    /* Process each line. */
+    immutable size_t fileBodyStartLine = cmdopt.hasHeader ? 2 : 1;
+    ulong numLinesWritten = 0;
+    foreach (inputStream; cmdopt.inputSources)
+    {
+        if (cmdopt.hasHeader) throwIfWindowsNewlineOnUnix(inputStream.header, inputStream.name, 1);
+
+        foreach (ulong fileLineNum, line;
+                 inputStream.file.bufferedByLine!(KeepTerminator.no).enumerate(fileBodyStartLine))
         {
-            if (fileLineNum == 1) throwIfWindowsNewlineOnUnix(line, filename, fileLineNum);
-            if (fileLineNum == 1 && cmdopt.hasHeader)
-            {
-                if (!headerWritten)
-                {
-                    outputStream.put(line);
-                    outputStream.put("\n");
-                    headerWritten = true;
-                }
-            }
-            else if (remainingSkips > 0)
+            if (fileLineNum == 1) throwIfWindowsNewlineOnUnix(line, inputStream.name, fileLineNum);
+
+            if (remainingSkips > 0)
             {
                 --remainingSkips;
             }
@@ -711,20 +727,24 @@ void bernoulliSkipSampling(OutputRange)(TsvSampleOptions cmdopt, OutputRange out
  * the number of buckets. More correct, but less convenient.)
  */
 void distinctSampling(Flag!"generateRandomAll" generateRandomAll, OutputRange)
-    (TsvSampleOptions cmdopt, auto ref OutputRange outputStream)
+    (ref TsvSampleOptions cmdopt, auto ref OutputRange outputStream)
 if (isOutputRange!(OutputRange, char))
 {
     import std.algorithm : splitter;
     import std.conv : to;
     import std.digest.murmurhash;
     import std.math : lrint;
-    import tsv_utils.common.utils : bufferedByLine, InputFieldReordering, throwIfWindowsNewlineOnUnix;
+    import tsv_utils.common.utils : bufferedByLine, InputFieldReordering,
+        InputSourceRange, throwIfWindowsNewlineOnUnix;
 
     static if (generateRandomAll) assert(cmdopt.genRandomInorder);
     else assert(!cmdopt.genRandomInorder);
 
     assert(cmdopt.keyFields.length > 0);
     assert(0.0 < cmdopt.inclusionProbability && cmdopt.inclusionProbability <= 1.0);
+
+    assert(!cmdopt.inputSources.empty);
+    static assert(is(typeof(cmdopt.inputSources) == InputSourceRange));
 
     static if (generateRandomAll)
     {
@@ -739,101 +759,103 @@ if (isOutputRange!(OutputRange, char))
     /* Create a mapping for the key fields. */
     auto keyFieldsReordering = cmdopt.distinctKeyIsFullLine ? null : new InputFieldReordering!char(cmdopt.keyFields);
 
-    /* Process each line. */
-    bool headerWritten = false;
-    ulong numLinesWritten = 0;
-    foreach (filename; cmdopt.files)
+    /* First header is read during command line argument processing. */
+    if (cmdopt.hasHeader && !cmdopt.inputSources.front.isHeaderEmpty)
     {
-        auto inputStream = (filename == "-") ? stdin : filename.File();
-        foreach (ulong fileLineNum, line; inputStream.bufferedByLine!(KeepTerminator.no).enumerate(1))
-        {
-            if (fileLineNum == 1) throwIfWindowsNewlineOnUnix(line, filename, fileLineNum);
-            if (fileLineNum == 1 && cmdopt.hasHeader)
-            {
-                if (!headerWritten)
-                {
-                    static if (generateRandomAll)
-                    {
-                        outputStream.put(cmdopt.randomValueHeader);
-                        outputStream.put(cmdopt.delim);
-                    }
-                    else if (cmdopt.printRandom)
-                    {
-                        outputStream.put(cmdopt.randomValueHeader);
-                        outputStream.put(cmdopt.delim);
-                    }
+        auto inputStream = cmdopt.inputSources.front;
+        throwIfWindowsNewlineOnUnix(inputStream.header, inputStream.name, 1);
 
-                    outputStream.put(line);
-                    outputStream.put("\n");
-                    headerWritten = true;
-                }
+        static if (generateRandomAll)
+        {
+            outputStream.put(cmdopt.randomValueHeader);
+            outputStream.put(cmdopt.delim);
+        }
+        else if (cmdopt.printRandom)
+        {
+            outputStream.put(cmdopt.randomValueHeader);
+            outputStream.put(cmdopt.delim);
+        }
+
+        outputStream.put(inputStream.header);
+        outputStream.put("\n");
+    }
+
+    /* Process each line. */
+    immutable size_t fileBodyStartLine = cmdopt.hasHeader ? 2 : 1;
+    ulong numLinesWritten = 0;
+
+    foreach (inputStream; cmdopt.inputSources)
+    {
+        if (cmdopt.hasHeader) throwIfWindowsNewlineOnUnix(inputStream.header, inputStream.name, 1);
+
+        foreach (ulong fileLineNum, line;
+                 inputStream.file.bufferedByLine!(KeepTerminator.no).enumerate(fileBodyStartLine))
+        {
+            if (fileLineNum == 1) throwIfWindowsNewlineOnUnix(line, inputStream.name, fileLineNum);
+
+            /* Murmurhash works by successively adding individual keys, then finalizing.
+             * Adding individual keys is simpler if the full-line-as-key and individual
+             * fields as keys cases are separated.
+             */
+            auto hasher = MurmurHash3!32(cmdopt.seed);
+
+            if (cmdopt.distinctKeyIsFullLine)
+            {
+                hasher.put(cast(ubyte[]) line);
             }
             else
             {
-                /* Murmurhash works by successively adding individual keys, then finalizing.
-                 * Adding individual keys is simpler if the full-line-as-key and individual
-                 * fields as keys cases are separated.
-                 */
-                auto hasher = MurmurHash3!32(cmdopt.seed);
+                assert(keyFieldsReordering !is null);
 
-                if (cmdopt.distinctKeyIsFullLine)
+                /* Gather the key field values and assemble the key. */
+                keyFieldsReordering.initNewLine;
+                foreach (fieldIndex, fieldValue; line.splitter(cmdopt.delim).enumerate)
                 {
-                    hasher.put(cast(ubyte[]) line);
-                }
-                else
-                {
-                    assert(keyFieldsReordering !is null);
-
-                    /* Gather the key field values and assemble the key. */
-                    keyFieldsReordering.initNewLine;
-                    foreach (fieldIndex, fieldValue; line.splitter(cmdopt.delim).enumerate)
-                    {
-                        keyFieldsReordering.processNextField(fieldIndex, fieldValue);
-                        if (keyFieldsReordering.allFieldsFilled) break;
-                    }
-
-                    enforce(keyFieldsReordering.allFieldsFilled,
-                            format("Not enough fields in line. File: %s, Line: %s",
-                                   (filename == "-") ? "Standard Input" : filename, fileLineNum));
-
-                    foreach (count, key; keyFieldsReordering.outputFields.enumerate)
-                    {
-                        if (count > 0) hasher.put(delimArray);
-                        hasher.put(cast(ubyte[]) key);
-                    }
+                    keyFieldsReordering.processNextField(fieldIndex, fieldValue);
+                    if (keyFieldsReordering.allFieldsFilled) break;
                 }
 
-                hasher.finish;
+                enforce(keyFieldsReordering.allFieldsFilled,
+                        format("Not enough fields in line. File: %s, Line: %s",
+                               inputStream.name, fileLineNum));
 
-                static if (generateRandomAll)
+                foreach (count, key; keyFieldsReordering.outputFields.enumerate)
                 {
-                    import std.conv : to;
-                    outputStream.formatValue(hasher.get % numBuckets, randomValueFormatSpec);
+                    if (count > 0) hasher.put(delimArray);
+                    hasher.put(cast(ubyte[]) key);
+                }
+            }
+
+            hasher.finish;
+
+            static if (generateRandomAll)
+            {
+                import std.conv : to;
+                outputStream.formatValue(hasher.get % numBuckets, randomValueFormatSpec);
+                outputStream.put(cmdopt.delim);
+                outputStream.put(line);
+                outputStream.put("\n");
+
+                if (cmdopt.sampleSize != 0)
+                {
+                    ++numLinesWritten;
+                    if (numLinesWritten == cmdopt.sampleSize) return;
+                }
+            }
+            else if (hasher.get % numBuckets == 0)
+            {
+                if (cmdopt.printRandom)
+                {
+                    outputStream.put('0');
                     outputStream.put(cmdopt.delim);
-                    outputStream.put(line);
-                    outputStream.put("\n");
-
-                    if (cmdopt.sampleSize != 0)
-                    {
-                        ++numLinesWritten;
-                        if (numLinesWritten == cmdopt.sampleSize) return;
-                    }
                 }
-                else if (hasher.get % numBuckets == 0)
-                {
-                    if (cmdopt.printRandom)
-                    {
-                        outputStream.put('0');
-                        outputStream.put(cmdopt.delim);
-                    }
-                    outputStream.put(line);
-                    outputStream.put("\n");
+                outputStream.put(line);
+                outputStream.put("\n");
 
-                    if (cmdopt.sampleSize != 0)
-                    {
-                        ++numLinesWritten;
-                        if (numLinesWritten == cmdopt.sampleSize) return;
-                    }
+                if (cmdopt.sampleSize != 0)
+                {
+                    ++numLinesWritten;
+                    if (numLinesWritten == cmdopt.sampleSize) return;
                 }
             }
         }
@@ -863,7 +885,7 @@ if (isOutputRange!(OutputRange, char))
  * the reservoirSamplingAlgorithmR documentation for more information.
  */
 
-void randomSamplingCommand(OutputRange)(TsvSampleOptions cmdopt, auto ref OutputRange outputStream)
+void randomSamplingCommand(OutputRange)(ref TsvSampleOptions cmdopt, auto ref OutputRange outputStream)
 if (isOutputRange!(OutputRange, char))
 {
     assert(cmdopt.sampleSize != 0);
@@ -949,7 +971,7 @@ if (isOutputRange!(OutputRange, char))
  * )
  */
 void reservoirSamplingViaHeap(Flag!"isWeighted" isWeighted, Flag!"preserveInputOrder" preserveInputOrder, OutputRange)
-    (TsvSampleOptions cmdopt, auto ref OutputRange outputStream)
+    (ref TsvSampleOptions cmdopt, auto ref OutputRange outputStream)
 if (isOutputRange!(OutputRange, char))
 {
     import std.algorithm : sort;
@@ -957,12 +979,15 @@ if (isOutputRange!(OutputRange, char))
     import std.container.binaryheap;
     import std.meta : AliasSeq;
     import std.random : Random = Mt19937, uniform01;
-    import tsv_utils.common.utils : bufferedByLine, throwIfWindowsNewlineOnUnix;
+    import tsv_utils.common.utils : bufferedByLine, InputSourceRange, throwIfWindowsNewlineOnUnix;
 
     static if (isWeighted) assert(cmdopt.hasWeightField);
     else assert(!cmdopt.hasWeightField);
 
     assert(cmdopt.sampleSize > 0);
+
+    assert(!cmdopt.inputSources.empty);
+    static assert(is(typeof(cmdopt.inputSources) == InputSourceRange));
 
     auto randomGenerator = Random(cmdopt.seed);
 
@@ -987,59 +1012,61 @@ if (isOutputRange!(OutputRange, char))
     dataStore.reserve(cmdopt.sampleSize);
     auto reservoir = dataStore.heapify!("a.score > b.score")(0);  // Min binaryheap
 
-    /* Process each line. */
-    bool headerWritten = false;
-    static if (preserveInputOrder) ulong totalLineNum = 0;
-    foreach (filename; cmdopt.files)
+    /* First header is read during command line argument processing. */
+    if (cmdopt.hasHeader && !cmdopt.inputSources.front.isHeaderEmpty)
     {
-        auto inputStream = (filename == "-") ? stdin : filename.File();
-        foreach (ulong fileLineNum, line; inputStream.bufferedByLine!(KeepTerminator.no).enumerate(1))
+        auto inputStream = cmdopt.inputSources.front;
+        throwIfWindowsNewlineOnUnix(inputStream.header, inputStream.name, 1);
+
+        if (cmdopt.printRandom)
         {
-            if (fileLineNum == 1) throwIfWindowsNewlineOnUnix(line, filename, fileLineNum);
-            if (fileLineNum == 1 && cmdopt.hasHeader)
+            outputStream.put(cmdopt.randomValueHeader);
+            outputStream.put(cmdopt.delim);
+        }
+        outputStream.put(inputStream.header);
+        outputStream.put("\n");
+    }
+
+    /* Process each line. */
+    immutable size_t fileBodyStartLine = cmdopt.hasHeader ? 2 : 1;
+    static if (preserveInputOrder) ulong totalLineNum = 0;
+
+    foreach (inputStream; cmdopt.inputSources)
+    {
+        if (cmdopt.hasHeader) throwIfWindowsNewlineOnUnix(inputStream.header, inputStream.name, 1);
+
+        foreach (ulong fileLineNum, line;
+                 inputStream.file.bufferedByLine!(KeepTerminator.no).enumerate(fileBodyStartLine))
+        {
+            if (fileLineNum == 1) throwIfWindowsNewlineOnUnix(line, inputStream.name, fileLineNum);
+
+            static if (!isWeighted)
             {
-                if (!headerWritten)
-                {
-                    if (cmdopt.printRandom)
-                    {
-                        outputStream.put(cmdopt.randomValueHeader);
-                        outputStream.put(cmdopt.delim);
-                    }
-                    outputStream.put(line);
-                    outputStream.put("\n");
-                    headerWritten = true;
-                }
+                immutable double lineScore = uniform01(randomGenerator);
             }
             else
             {
-                static if (!isWeighted)
-                {
-                    immutable double lineScore = uniform01(randomGenerator);
-                }
-                else
-                {
-                    immutable double lineWeight =
-                        getFieldValue!double(line, cmdopt.weightField, cmdopt.delim, filename, fileLineNum);
-                    immutable double lineScore =
-                        (lineWeight > 0.0)
-                        ? uniform01(randomGenerator) ^^ (1.0 / lineWeight)
-                        : 0.0;
-                }
-
-                static if (preserveInputOrder) alias entryCTArgs = AliasSeq!(totalLineNum);
-                else alias entryCTArgs = AliasSeq!();
-
-                if (reservoir.length < cmdopt.sampleSize)
-                {
-                    reservoir.insert(Entry!preserveInputOrder(lineScore, line.dup, entryCTArgs));
-                }
-                else if (reservoir.front.score < lineScore)
-                {
-                    reservoir.replaceFront(Entry!preserveInputOrder(lineScore, line.dup, entryCTArgs));
-                }
-
-                static if (preserveInputOrder) ++totalLineNum;
+                immutable double lineWeight =
+                    getFieldValue!double(line, cmdopt.weightField, cmdopt.delim, inputStream.name, fileLineNum);
+                immutable double lineScore =
+                    (lineWeight > 0.0)
+                    ? uniform01(randomGenerator) ^^ (1.0 / lineWeight)
+                    : 0.0;
             }
+
+            static if (preserveInputOrder) alias entryCTArgs = AliasSeq!(totalLineNum);
+            else alias entryCTArgs = AliasSeq!();
+
+            if (reservoir.length < cmdopt.sampleSize)
+            {
+                reservoir.insert(Entry!preserveInputOrder(lineScore, line.dup, entryCTArgs));
+            }
+            else if (reservoir.front.score < lineScore)
+            {
+                reservoir.replaceFront(Entry!preserveInputOrder(lineScore, line.dup, entryCTArgs));
+            }
+
+            static if (preserveInputOrder) ++totalLineNum;
         }
     }
 
@@ -1087,56 +1114,61 @@ if (isOutputRange!(OutputRange, char))
  * values are generated with the same formula used by reservoirSampling.
  */
 void generateWeightedRandomValuesInorder(OutputRange)
-    (TsvSampleOptions cmdopt, auto ref OutputRange outputStream)
+    (ref TsvSampleOptions cmdopt, auto ref OutputRange outputStream)
 if (isOutputRange!(OutputRange, char))
 {
     import std.random : Random = Mt19937, uniform01;
-    import tsv_utils.common.utils : bufferedByLine, throwIfWindowsNewlineOnUnix;
+    import tsv_utils.common.utils : bufferedByLine, InputSourceRange, throwIfWindowsNewlineOnUnix;
 
     assert(cmdopt.hasWeightField);
 
+    assert(!cmdopt.inputSources.empty);
+    static assert(is(typeof(cmdopt.inputSources) == InputSourceRange));
+
     auto randomGenerator = Random(cmdopt.seed);
 
-    /* Process each line. */
-    bool headerWritten = false;
-    ulong numLinesWritten = 0;
-    foreach (filename; cmdopt.files)
+    /* First header is read during command line argument processing. */
+    if (cmdopt.hasHeader && !cmdopt.inputSources.front.isHeaderEmpty)
     {
-        auto inputStream = (filename == "-") ? stdin : filename.File();
-        foreach (ulong fileLineNum, line; inputStream.bufferedByLine!(KeepTerminator.no).enumerate(1))
+        auto inputStream = cmdopt.inputSources.front;
+        throwIfWindowsNewlineOnUnix(inputStream.header, inputStream.name, 1);
+
+        outputStream.put(cmdopt.randomValueHeader);
+        outputStream.put(cmdopt.delim);
+        outputStream.put(inputStream.header);
+        outputStream.put("\n");
+    }
+
+    /* Process each line. */
+    immutable size_t fileBodyStartLine = cmdopt.hasHeader ? 2 : 1;
+    ulong numLinesWritten = 0;
+
+    foreach (inputStream; cmdopt.inputSources)
+    {
+        if (cmdopt.hasHeader) throwIfWindowsNewlineOnUnix(inputStream.header, inputStream.name, 1);
+
+        foreach (ulong fileLineNum, line;
+                 inputStream.file.bufferedByLine!(KeepTerminator.no).enumerate(fileBodyStartLine))
         {
-            if (fileLineNum == 1) throwIfWindowsNewlineOnUnix(line, filename, fileLineNum);
-            if (fileLineNum == 1 && cmdopt.hasHeader)
+            if (fileLineNum == 1) throwIfWindowsNewlineOnUnix(line, inputStream.name, fileLineNum);
+
+            immutable double lineWeight =
+                getFieldValue!double(line, cmdopt.weightField, cmdopt.delim, inputStream.name, fileLineNum);
+
+            immutable double lineScore =
+                (lineWeight > 0.0)
+                ? uniform01(randomGenerator) ^^ (1.0 / lineWeight)
+                : 0.0;
+
+            outputStream.formatRandomValue(lineScore);
+            outputStream.put(cmdopt.delim);
+            outputStream.put(line);
+            outputStream.put("\n");
+
+            if (cmdopt.sampleSize != 0)
             {
-                if (!headerWritten)
-                {
-                    outputStream.put(cmdopt.randomValueHeader);
-                    outputStream.put(cmdopt.delim);
-                    outputStream.put(line);
-                    outputStream.put("\n");
-                    headerWritten = true;
-                }
-            }
-            else
-               {
-                immutable double lineWeight =
-                    getFieldValue!double(line, cmdopt.weightField, cmdopt.delim, filename, fileLineNum);
-
-                immutable double lineScore =
-                    (lineWeight > 0.0)
-                    ? uniform01(randomGenerator) ^^ (1.0 / lineWeight)
-                    : 0.0;
-
-                outputStream.formatRandomValue(lineScore);
-                outputStream.put(cmdopt.delim);
-                outputStream.put(line);
-                outputStream.put("\n");
-
-                if (cmdopt.sampleSize != 0)
-                {
-                    ++numLinesWritten;
-                    if (numLinesWritten == cmdopt.sampleSize) return;
-                }
+                ++numLinesWritten;
+                if (numLinesWritten == cmdopt.sampleSize) return;
             }
         }
     }
@@ -1172,19 +1204,22 @@ if (isOutputRange!(OutputRange, char))
  * small-to-medium size reservoirs and large input streams.
  */
 void reservoirSamplingAlgorithmR(Flag!"preserveInputOrder" preserveInputOrder, OutputRange)
-    (TsvSampleOptions cmdopt, auto ref OutputRange outputStream)
+    (ref TsvSampleOptions cmdopt, auto ref OutputRange outputStream)
 if (isOutputRange!(OutputRange, char))
 {
     import std.meta : AliasSeq;
     import std.random : Random = Mt19937, randomShuffle, uniform;
     import std.algorithm : sort;
-    import tsv_utils.common.utils : bufferedByLine, throwIfWindowsNewlineOnUnix;
+    import tsv_utils.common.utils : bufferedByLine, InputSourceRange, throwIfWindowsNewlineOnUnix;
 
     assert(cmdopt.sampleSize > 0);
     assert(!cmdopt.hasWeightField);
     assert(!cmdopt.compatibilityMode);
     assert(!cmdopt.printRandom);
     assert(!cmdopt.genRandomInorder);
+
+    assert(!cmdopt.inputSources.empty);
+    static assert(is(typeof(cmdopt.inputSources) == InputSourceRange));
 
     static struct Entry(Flag!"preserveInputOrder" preserveInputOrder)
     {
@@ -1198,50 +1233,51 @@ if (isOutputRange!(OutputRange, char))
 
     auto randomGenerator = Random(cmdopt.seed);
 
-    /* Process each line. */
-
-    bool headerWritten = false;
-    ulong totalLineNum = 0;
-    foreach (filename; cmdopt.files)
+    /* First header is read during command line argument processing. */
+    if (cmdopt.hasHeader && !cmdopt.inputSources.front.isHeaderEmpty)
     {
-        auto inputStream = (filename == "-") ? stdin : filename.File();
-        foreach (ulong fileLineNum, line; inputStream.bufferedByLine!(KeepTerminator.no).enumerate(1))
+        auto inputStream = cmdopt.inputSources.front;
+        throwIfWindowsNewlineOnUnix(inputStream.header, inputStream.name, 1);
+
+        outputStream.put(inputStream.header);
+        outputStream.put("\n");
+    }
+
+    /* Process each line. */
+    immutable size_t fileBodyStartLine = cmdopt.hasHeader ? 2 : 1;
+    ulong totalLineNum = 0;
+
+    foreach (inputStream; cmdopt.inputSources)
+    {
+        if (cmdopt.hasHeader) throwIfWindowsNewlineOnUnix(inputStream.header, inputStream.name, 1);
+
+        foreach (ulong fileLineNum, line;
+                 inputStream.file.bufferedByLine!(KeepTerminator.no).enumerate(fileBodyStartLine))
         {
-            if (fileLineNum == 1) throwIfWindowsNewlineOnUnix(line, filename, fileLineNum);
-            if (fileLineNum == 1 && cmdopt.hasHeader)
+            if (fileLineNum == 1) throwIfWindowsNewlineOnUnix(line, inputStream.name, fileLineNum);
+
+            /* Add lines to the reservoir until the reservoir is filled.
+             * After that lines are added with decreasing likelihood, based on
+             * the total number of lines seen. If added to the reservoir, the
+             * line replaces a randomly chosen existing line.
+             */
+            static if (preserveInputOrder) alias entryCTArgs = AliasSeq!(totalLineNum);
+            else alias entryCTArgs = AliasSeq!();
+
+            if (totalLineNum < cmdopt.sampleSize)
             {
-                if (!headerWritten)
-                {
-                    outputStream.put(line);
-                    outputStream.put("\n");
-                    headerWritten = true;
-                }
+                reservoirAppender ~= Entry!preserveInputOrder(line.idup, entryCTArgs);
             }
             else
             {
-                /* Add lines to the reservoir until the reservoir is filled.
-                 * After that lines are added with decreasing likelihood, based on
-                 * the total number of lines seen. If added to the reservoir, the
-                 * line replaces a randomly chosen existing line.
-                 */
-                static if (preserveInputOrder) alias entryCTArgs = AliasSeq!(totalLineNum);
-                else alias entryCTArgs = AliasSeq!();
-
-                if (totalLineNum < cmdopt.sampleSize)
+                immutable size_t i = uniform(0, totalLineNum, randomGenerator);
+                if (i < reservoir.length)
                 {
-                    reservoirAppender ~= Entry!preserveInputOrder(line.idup, entryCTArgs);
+                    reservoir[i] = Entry!preserveInputOrder(line.idup, entryCTArgs);
                 }
-                else
-                {
-                    immutable size_t i = uniform(0, totalLineNum, randomGenerator);
-                    if (i < reservoir.length)
-                    {
-                        reservoir[i] = Entry!preserveInputOrder(line.idup, entryCTArgs);
-                    }
-                }
-
-                ++totalLineNum;
             }
+
+            ++totalLineNum;
         }
     }
 
@@ -1278,7 +1314,7 @@ if (isOutputRange!(OutputRange, char))
  *
  * The algorithms used here are all limited by available memory.
  */
-void shuffleCommand(OutputRange)(TsvSampleOptions cmdopt, auto ref OutputRange outputStream)
+void shuffleCommand(OutputRange)(ref TsvSampleOptions cmdopt, auto ref OutputRange outputStream)
 if (isOutputRange!(OutputRange, char))
 {
     if (cmdopt.hasWeightField)
@@ -1314,7 +1350,7 @@ if (isOutputRange!(OutputRange, char))
  * )
  */
 void randomizeLinesViaSort(Flag!"isWeighted" isWeighted, OutputRange)
-    (TsvSampleOptions cmdopt, auto ref OutputRange outputStream)
+    (ref TsvSampleOptions cmdopt, auto ref OutputRange outputStream)
 if (isOutputRange!(OutputRange, char))
 {
     import std.algorithm : map, sort;
@@ -1326,10 +1362,10 @@ if (isOutputRange!(OutputRange, char))
 
     /*
      * Read all file data into memory. Then split the data into lines and assign a
-     * random value to each line. identifyInputLines also writes the first header line.
+     * random value to each line. readFileData also writes the first header line.
      */
-    const fileData = cmdopt.files.readFileData;
-    auto inputLines = fileData.identifyInputLines!(Yes.hasRandomValue, isWeighted)(cmdopt, outputStream);
+    const fileData = readFileData!(Yes.hasRandomValue)(cmdopt, outputStream);
+    auto inputLines = fileData.identifyInputLines!(Yes.hasRandomValue, isWeighted)(cmdopt);
 
     /*
      * Sort by the weight and output the lines.
@@ -1361,7 +1397,7 @@ if (isOutputRange!(OutputRange, char))
  *
  * This routine does not support random value printing or compatibility-mode.
  */
-void randomizeLinesViaShuffle(OutputRange)(TsvSampleOptions cmdopt, auto ref OutputRange outputStream)
+void randomizeLinesViaShuffle(OutputRange)(ref TsvSampleOptions cmdopt, auto ref OutputRange outputStream)
 if (isOutputRange!(OutputRange, char))
 {
     import std.algorithm : map;
@@ -1375,8 +1411,8 @@ if (isOutputRange!(OutputRange, char))
     /*
      * Read all file data into memory and split into lines.
      */
-    const fileData = cmdopt.files.readFileData;
-    auto inputLines = fileData.identifyInputLines!(No.hasRandomValue, No.isWeighted)(cmdopt, outputStream);
+    const fileData = readFileData!(No.hasRandomValue)(cmdopt, outputStream);
+    auto inputLines = fileData.identifyInputLines!(No.hasRandomValue, No.isWeighted)(cmdopt);
 
     /*
      * Randomly shuffle and print each line.
@@ -1403,7 +1439,7 @@ if (isOutputRange!(OutputRange, char))
  * indefinitely if a sample size was not provided.
  */
 void simpleRandomSamplingWithReplacement(OutputRange)
-    (TsvSampleOptions cmdopt, auto ref OutputRange outputStream)
+    (ref TsvSampleOptions cmdopt, auto ref OutputRange outputStream)
 if (isOutputRange!(OutputRange, char))
 {
     import std.algorithm : map;
@@ -1412,8 +1448,8 @@ if (isOutputRange!(OutputRange, char))
     /*
      * Read all file data into memory and split the data into lines.
      */
-    const fileData = cmdopt.files.readFileData;
-    const inputLines = fileData.identifyInputLines!(No.hasRandomValue, No.isWeighted)(cmdopt, outputStream);
+    const fileData = readFileData!(No.hasRandomValue)(cmdopt, outputStream);
+    const inputLines = fileData.identifyInputLines!(No.hasRandomValue, No.isWeighted)(cmdopt);
 
     if (inputLines.length > 0)
     {
@@ -1460,13 +1496,39 @@ static struct InputBlock
  *
  * Individual lines never span multiple blocks, and newlines are preserved. This
  * means that each block starts at the beginning of a line and ends with a newline
- * unless the end of a file has been reached. Each file gets its own block so that
- * header processing can be done.
+ * unless the end of a file has been reached.
+ *
+ * Each file gets its own block. Prior to using InputSourceRange this was so header
+ * processing can be done. With InputSourceRange the header is read separately, so
+ * this could be changed.
  */
-InputBlock[] readFileData(const string[] files)
+InputBlock[] readFileData(HasRandomValue hasRandomValue, OutputRange)
+(ref TsvSampleOptions cmdopt, auto ref OutputRange outputStream)
+if (isOutputRange!(OutputRange, char))
 {
     import std.algorithm : find, min;
     import std.range : retro;
+    import tsv_utils.common.utils : InputSourceRange, throwIfWindowsNewlineOnUnix;
+
+    static if(!hasRandomValue) assert(!cmdopt.printRandom);
+
+    assert(!cmdopt.inputSources.empty);
+    static assert(is(typeof(cmdopt.inputSources) == InputSourceRange));
+
+    /* First header is read during command line argument processing. */
+    if (cmdopt.hasHeader && !cmdopt.inputSources.front.isHeaderEmpty)
+    {
+        auto inputStream = cmdopt.inputSources.front;
+        throwIfWindowsNewlineOnUnix(inputStream.header, inputStream.name, 1);
+
+        if (cmdopt.printRandom)
+        {
+            outputStream.put(cmdopt.randomValueHeader);
+            outputStream.put(cmdopt.delim);
+        }
+        outputStream.put(inputStream.header);
+        outputStream.put("\n");
+    }
 
     enum BlockSize = 1024L * 1024L * 1024L;  // 1 GB. ('L' notation avoids overflow w/ 2GB+ sizes.)
     enum ReadSize = 1024L * 128L;
@@ -1474,29 +1536,33 @@ InputBlock[] readFileData(const string[] files)
 
     InputBlock[] blocks;
     auto blocksAppender = appender(&blocks);
-    blocksAppender.reserve(files.length);  // At least one block per file.
+    blocksAppender.reserve(cmdopt.inputSources.length);  // At least one block per file.
 
     ubyte[] rawReadBuffer = new ubyte[ReadSize];
 
-    foreach (filename; files)
+    foreach (inputStream; cmdopt.inputSources)
     {
+        if (cmdopt.hasHeader) throwIfWindowsNewlineOnUnix(inputStream.header, inputStream.name, 1);
+
         /* If the file size can be determined then read it as a single block.
          * Otherwise read as multiple blocks. File.size() returns ulong.max
          * if file size cannot be determined, so we'll combine that check
          * with the standard input case.
          */
 
-        auto ifile = (filename == "-") ? stdin : filename.File;
-        immutable ulong filesize = (filename == "-") ? ulong.max : ifile.size;
+        immutable ulong filesize = inputStream.isStdin ? ulong.max : inputStream.file.size;
+        auto ifile = inputStream.file;
 
         if (filesize != ulong.max)
         {
-            readFileDataAsOneBlock(filename, ifile, filesize, blocksAppender, rawReadBuffer);
+            readFileDataAsOneBlock(inputStream.name, ifile, filesize,
+                                   blocksAppender, rawReadBuffer);
         }
         else
         {
-            readFileDataAsMultipleBlocks(filename, ifile, blocksAppender, rawReadBuffer,
-                                         BlockSize, NewlineSearchSize);
+            readFileDataAsMultipleBlocks(
+                inputStream.name, ifile, blocksAppender, rawReadBuffer,
+                BlockSize, NewlineSearchSize);
         }
     }
     return blocks;
@@ -1660,10 +1726,8 @@ static struct InputLine(HasRandomValue hasRandomValue)
 /** identifyInputLines is used by algorithms that read all files into memory prior to
  * processing. It does the initial processing of the file data.
  *
- * Three primary tasks are performed. One is splitting all input data into lines. The
- * second is writing the header line from the first file to the output stream. Header
- * lines from subsequent files are ignored. Third is assigning a random value to the
- * line, if random values are being generated.
+ * Two main tasks are performed. One is splitting all input data into lines. The second
+ * is assigning a random value to the line, if random values are being generated.
  *
  * The key input is an InputBlock array. Normally one block for each file, but standard
  * input may have multiple blocks.
@@ -1671,9 +1735,8 @@ static struct InputLine(HasRandomValue hasRandomValue)
  * The return value is an array of InputLine structs. The struct will have a 'randomValue'
  * member if random values are being assigned.
  */
-InputLine!hasRandomValue[] identifyInputLines(HasRandomValue hasRandomValue, Flag!"isWeighted" isWeighted, OutputRange)
-(const ref InputBlock[] inputBlocks, TsvSampleOptions cmdopt, auto ref OutputRange outputStream)
-if (isOutputRange!(OutputRange, char))
+InputLine!hasRandomValue[] identifyInputLines(HasRandomValue hasRandomValue, Flag!"isWeighted" isWeighted)
+(const ref InputBlock[] inputBlocks, ref TsvSampleOptions cmdopt)
 {
     import std.algorithm : splitter;
     import std.array : appender;
@@ -1687,8 +1750,10 @@ if (isOutputRange!(OutputRange, char))
 
     auto linesAppender = appender(&inputLines);
     static if (hasRandomValue) auto randomGenerator = Random(cmdopt.seed);
-    bool headerWritten = false;
-    size_t fileLineNum;
+
+    /* Note: fileLineNum is zero-based here. One-based in most other code in this file. */
+    immutable size_t fileBodyStartLine = cmdopt.hasHeader ? 1 : 0;
+    size_t fileLineNum = fileBodyStartLine;
 
     foreach (block; inputBlocks)
     {
@@ -1696,58 +1761,43 @@ if (isOutputRange!(OutputRange, char))
         const data = (block.data.length > 0 && block.data[$-1] == '\n') ?
             block.data[0 .. $-1] : block.data;
 
-        if (block.fileBlockNumber == 0) fileLineNum = 0;
+        if (block.fileBlockNumber == 0) fileLineNum = fileBodyStartLine;
 
         foreach (ref line; data.splitter('\n'))
         {
             fileLineNum++;
 
             if (fileLineNum == 1) throwIfWindowsNewlineOnUnix(line, block.filename, fileLineNum);
-            if (fileLineNum == 1 && cmdopt.hasHeader)
+
+            static if (!hasRandomValue)
             {
-                if (!headerWritten)
-                {
-                    if (cmdopt.printRandom)
-                    {
-                        outputStream.put(cmdopt.randomValueHeader);
-                        outputStream.put(cmdopt.delim);
-                    }
-                    outputStream.put(line);
-                    outputStream.put("\n");
-                    headerWritten = true;
-                }
+                linesAppender.put(InputLine!hasRandomValue(line));
             }
             else
             {
-                static if (!hasRandomValue)
+                static if (!isWeighted)
                 {
-                    linesAppender.put(InputLine!hasRandomValue(line));
+                    immutable double randomValue = uniform01(randomGenerator);
                 }
                 else
                 {
-                    static if (!isWeighted)
-                    {
-                        immutable double randomValue = uniform01(randomGenerator);
-                    }
-                    else
-                    {
-                        immutable double lineWeight =
-                            getFieldValue!double(line, cmdopt.weightField, cmdopt.delim,
-                                                 block.filename, fileLineNum);
-                        immutable double randomValue =
-                            (lineWeight > 0.0)
-                            ? uniform01(randomGenerator) ^^ (1.0 / lineWeight)
-                            : 0.0;
-                    }
-
-                    linesAppender.put(InputLine!hasRandomValue(line, randomValue));
+                    immutable double lineWeight =
+                        getFieldValue!double(line, cmdopt.weightField, cmdopt.delim,
+                                             block.filename, fileLineNum);
+                    immutable double randomValue =
+                        (lineWeight > 0.0)
+                        ? uniform01(randomGenerator) ^^ (1.0 / lineWeight)
+                        : 0.0;
                 }
+
+                linesAppender.put(InputLine!hasRandomValue(line, randomValue));
             }
         }
     }
 
     return inputLines;
 }
+
 
 /* Unit tests for ReadFileData. These tests focus on multiple InputBlock scenarios.
  * Other use paths are well tested by the tests at the end cases.
@@ -1835,12 +1885,12 @@ unittest
     assert(expectedLines.length == expectedLinesUsingHeader.length + 2);
 
     TsvSampleOptions cmdoptNoHeader;
-    auto noHeaderCmdArgs = ["unittest"];
+    auto noHeaderCmdArgs = ["unittest", file1Path];
     auto r1 = cmdoptNoHeader.processArgs(noHeaderCmdArgs);
     assert(r1[0], format("Invalid command lines arg: '%s'.", noHeaderCmdArgs));
 
     TsvSampleOptions cmdoptYesHeader;
-    auto yesHeaderCmdArgs = ["unittest", "--header"];
+    auto yesHeaderCmdArgs = ["unittest", "--header", file1Path];
     auto r2 = cmdoptYesHeader.processArgs(yesHeaderCmdArgs);
     assert(r2[0], format("Invalid command lines arg: '%s'.", yesHeaderCmdArgs));
 
@@ -1861,7 +1911,7 @@ unittest
         }
         auto inputLines =
             identifyInputLines!(No.hasRandomValue, No.isWeighted)(
-                blocks, cmdoptNoHeader, outputStream);
+                blocks, cmdoptNoHeader);
 
         assert(equal!((a, b) => a.data == b)(inputLines, expectedLines));
     }
@@ -1886,13 +1936,14 @@ unittest
                     }
                     auto inputLines =
                         identifyInputLines!(No.hasRandomValue, No.isWeighted)(
-                            blocks, cmdoptNoHeader, outputStream);
+                            blocks, cmdoptNoHeader);
 
                     assert(equal!((a, b) => a.data == b)(inputLines, expectedLines));
                 }
             }
         }
     }
+    version(none) {
     {
         /* Reading as multiple blocks, with header processing. */
         const size_t readSize = 32;
@@ -1911,10 +1962,11 @@ unittest
         }
         auto inputLines =
             identifyInputLines!(No.hasRandomValue, No.isWeighted)(
-                blocks, cmdoptYesHeader, outputStream);
+                blocks, cmdoptYesHeader);
 
         assert(outputStream.data == expectedLinesUsingHeader[0] ~ '\n');
         assert(equal!((a, b) => a.data == b)(inputLines, expectedLinesUsingHeader[1 .. $]));
+    }
     }
 }
 

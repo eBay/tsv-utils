@@ -2131,6 +2131,17 @@ final class InputSource
             _header : _header[0 .. $-1];
     }
 
+    /** isHeaderEmpty returns true if there is no data for a header, including the
+     * terminator.
+     *
+     * When headers are being read, this true only if the file is empty.
+     */
+    bool isHeaderEmpty() const pure nothrow @safe
+    {
+        assert(_hasBeenOpened);
+        return _header.empty;
+    }
+
     /** name returns a user friendly name representing the input source.
      *
      * For files, it is the filepath provided to InputSourceRange. For standard
