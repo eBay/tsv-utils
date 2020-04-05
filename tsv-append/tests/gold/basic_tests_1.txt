@@ -232,6 +232,10 @@ Input-B	last-line
 άσπρο	
 άσπρο	last-line
 
+====[tsv-append empty-file.txt]====
+
+====[tsv-append -H empty-file.txt]====
+
 ====[cat input3x2.tsv | tsv-append]====
 field1	field2	field3
 abc	def	ghi

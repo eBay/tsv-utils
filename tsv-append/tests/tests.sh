@@ -60,6 +60,9 @@ runtest ${prog} "-t --file Input-A=input1x3.tsv --file Input-B=input1x4.tsv" ${b
 runtest ${prog} "-H -t -f Input-A=input1x3.tsv -f Input-B=input1x4.tsv" ${basic_tests_1}
 runtest ${prog} "-H -t -s πηγή -f κόκκινος=input1x3.tsv -f άσπρο=input1x4.tsv" ${basic_tests_1}
 
+runtest ${prog} "empty-file.txt" ${basic_tests_1}
+runtest ${prog} "-H empty-file.txt" ${basic_tests_1}
+
 ## runtest can't create a command lines with standard input. Write them out.
 echo "" >> ${basic_tests_1}; echo "====[cat input3x2.tsv | tsv-append]====" >> ${basic_tests_1}
 cat input3x2.tsv | ${prog} >> ${basic_tests_1} 2>&1

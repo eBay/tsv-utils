@@ -1447,6 +1447,16 @@ f1_f2_f3_f4_f5_id
 9_ÀBC__1367_1331_18
 17_0_Z_5734_602_23
 
+====Empty file tests===
+
+====[tsv-uniq empty-file.txt]====
+
+====[tsv-uniq -H empty-file.txt]====
+
+====[tsv-uniq -f 1 empty-file.txt]====
+
+====[tsv-uniq -H -f 1 empty-file.txt]====
+
 ====Multi-file and standard input tests===
 
 ====[tsv-uniq input1.tsv input2.tsv]====

@@ -917,3 +917,9 @@ input1x5.txt: line 2
 
 ==> ./tsvsplit_workdir/part_100.txt <==
 input1x5.txt: line 3
+
+====[tsv-split -n 3 ../empty-file.txt]====
+
+====[tsv-split -H -n 3 ../empty-file.txt]====
+
+====[tsv-split -I -n 3 ../empty-file.txt]====

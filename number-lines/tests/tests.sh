@@ -34,6 +34,8 @@ runtest ${prog} "--header -s line_num input1.txt" ${basic_tests_1}
 runtest ${prog} "--delimiter : input1.txt" ${basic_tests_1}
 runtest ${prog} "-d _ input1.txt" ${basic_tests_1}
 runtest ${prog} "--header -d ^ input1.txt" ${basic_tests_1}
+runtest ${prog} "empty-file.txt" ${basic_tests_1}
+runtest ${prog} "-H empty-file.txt" ${basic_tests_1}
 
 echo "" >> ${basic_tests_1}; echo "====Multi-file Tests===" >> ${basic_tests_1}
 runtest ${prog} "input1.txt input2.txt empty-file.txt one-line-file.txt" ${basic_tests_1}

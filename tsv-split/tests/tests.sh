@@ -263,6 +263,10 @@ runtest_wdir_stdin ${prog} "-l 3 -- - ${testdir_relpath}/input1x3.txt" ${lines_p
 runtest_wdir_stdin ${prog} "-H -l 3 -- - ${testdir_relpath}/input1x3.txt" ${lines_per_file_tests} ${testdir_relpath}/input1x5.txt
 runtest_wdir_stdin ${prog} "-I -l 3 -- - ${testdir_relpath}/input1x3.txt" ${lines_per_file_tests} ${testdir_relpath}/input1x5.txt
 
+runtest_wdir ${prog} "-l 1 ${testdir_relpath}/empty-file.txt" ${lines_per_file_tests}
+runtest_wdir ${prog} "-H -l 1 ${testdir_relpath}/empty-file.txt" ${lines_per_file_tests}
+runtest_wdir ${prog} "-I -l 1 ${testdir_relpath}/empty-file.txt" ${lines_per_file_tests}
+
 echo "Random assignment tests" > ${random_assignment_tests}
 echo "-----------------------" >> ${random_assignment_tests}
 
@@ -332,6 +336,9 @@ runtest_wdir_stdin ${prog} "-v 15017 -n 101 -- ${testdir_relpath}/input1x3.txt -
 runtest_wdir_stdin ${prog} "-v 15017 -n 101 -H -- ${testdir_relpath}/input1x3.txt -" ${random_assignment_tests} ${testdir_relpath}/input1x5.txt
 runtest_wdir_stdin ${prog} "-v 15017 -n 101 -I -- ${testdir_relpath}/input1x3.txt -" ${random_assignment_tests} ${testdir_relpath}/input1x5.txt
 
+runtest_wdir ${prog} "-n 3 ${testdir_relpath}/empty-file.txt" ${random_assignment_tests}
+runtest_wdir ${prog} "-H -n 3 ${testdir_relpath}/empty-file.txt" ${random_assignment_tests}
+runtest_wdir ${prog} "-I -n 3 ${testdir_relpath}/empty-file.txt" ${random_assignment_tests}
 
 echo "Key assignment tests" > ${key_assignment_tests}
 echo "--------------------" >> ${key_assignment_tests}
@@ -397,6 +404,9 @@ runtest_wdir ${prog} "--delimiter : -s -n 101 -k 3 ${testdir_relpath}/input4x58_
 runtest_wdir ${prog} "-d : -H -s -n 101 -k 3 ${testdir_relpath}/input4x58_colon-delim.tsv" ${key_assignment_tests}
 runtest_wdir ${prog} "-d : -I -s -n 101 -k 3 ${testdir_relpath}/input4x58_colon-delim.tsv" ${key_assignment_tests}
 
+runtest_wdir ${prog} "-n 3 -k 0 ${testdir_relpath}/empty-file.txt" ${key_assignment_tests}
+runtest_wdir ${prog} "-H -n 3 -k 0 ${testdir_relpath}/empty-file.txt" ${key_assignment_tests}
+runtest_wdir ${prog} "-I -n 3 -k 0 ${testdir_relpath}/empty-file.txt" ${key_assignment_tests}
 
 ## Help and Version printing
 
