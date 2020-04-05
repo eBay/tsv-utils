@@ -435,7 +435,7 @@ For some distributions a package can directly be installed:
 
 ### Build from source files
 
-[Download a D compiler](https://dlang.org/download.html). These tools have been tested with the DMD and LDC compilers, on Mac OSX and Linux. Use DMD version 2.076.1 or later, LDC version 1.6.0 or later.
+[Download a D compiler](https://dlang.org/download.html). These tools have been tested with the DMD and LDC compilers, on Mac OSX and Linux. Use DMD version 2.087.0 or later, LDC version 1.17.0 or later.
 
 Clone this repository, select a compiler, and run `make` from the top level directory:
 ```
@@ -461,10 +461,10 @@ The above requires LDC 1.9.0 or later. See [Building with Link Time Optimization
 
 ### Install using DUB
 
-If you are a D user you likely use DUB, the D package manager. DUB comes packaged with DMD starting with DMD 2.072. You can install and build using DUB as follows (replace `1.3.2` with the current version):
+If you are a D user you likely use DUB, the D package manager. DUB comes packaged with DMD starting with DMD 2.072. You can install and build using DUB as follows (replace `1.6.0` with the current version):
 ```
 $ dub fetch tsv-utils --cache=local
-$ cd tsv-utils-1.3.2/tsv-utils
+$ cd tsv-utils-1.6.0/tsv-utils
 $ dub run    # For LDC: dub run -- --compiler=ldc2
 ```
 
