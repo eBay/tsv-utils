@@ -153,6 +153,12 @@ runtest ${prog} "--delimiter : --header -k 1 -d 5 -f input_2x3_colon.tsv input_5
 runtest ${prog} "--delimiter : --header -k 1,2 -d 5,3 -a 1 -f input_2x3_colon.tsv input_5x4_colon.tsv" ${basic_tests_1}
 runtest ${prog} "--delimiter : --header -d 1,2 -k 5,3 -a 2 -f input_5x4_colon.tsv input_2x3_colon.tsv" ${basic_tests_1}
 
+echo "" >> ${basic_tests_1}; echo "====Empty file tests===" >> ${basic_tests_1}
+runtest ${prog} "-f input_emptyfile.tsv input2.tsv"  ${basic_tests_1}
+runtest ${prog} "-H -f input_emptyfile.tsv input2.tsv"  ${basic_tests_1}
+runtest ${prog} "-f input1.tsv input_emptyfile.tsv"  ${basic_tests_1}
+runtest ${prog} "-H -f input1.tsv input_emptyfile.tsv"  ${basic_tests_1}
+
 ## Help and Version printing
 
 echo "" >> ${basic_tests_1}
@@ -231,5 +237,9 @@ runtest ${prog} "--header -f input1_dos.tsv -k 2,3 input2.tsv" ${error_tests_1}
 runtest ${prog} "--header -f input1.tsv -k 2,3 input2_dos.tsv" ${error_tests_1}
 runtest ${prog} "-f input1_dos.tsv -k 2,3 input2.tsv" ${error_tests_1}
 runtest ${prog} "-f input1.tsv -k 2,3 input2_dos.tsv" ${error_tests_1}
+
+echo "" >> ${error_tests_1}; echo "===No such file===" >> ${error_tests_1}
+runtest ${prog} "--header -f input1.tsv -k 2 -d 2,3 no_such-file.tsv" ${error_tests_1}
+runtest ${prog} "--header -f no_such_file -k 2,3 -d 2 input2.tsv" ${error_tests_1}
 
 exit $?

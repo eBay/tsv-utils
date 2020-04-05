@@ -2,7 +2,7 @@ Error test set 1
 ----------------
 
 ====[tsv-sample no_such_file.tsv]====
-Error [tsv-sample]: Cannot open file `no_such_file.tsv' in mode `rb' (No such file or directory)
+[tsv-sample] Error processing command line arguments: Cannot open file `no_such_file.tsv' in mode `rb' (No such file or directory)
 
 ====[tsv-sample --no-such-param input3x25.tsv]====
 [tsv-sample] Error processing command line arguments: Unrecognized option --no-such-param

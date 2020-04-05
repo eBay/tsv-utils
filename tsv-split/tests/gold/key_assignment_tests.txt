@@ -4539,3 +4539,9 @@ Orange-red:2089:Purpurreiher:1
 café:2062:Purpurreiher:4
 café:2100:Purpurreiher:2
 café:2041:Purpurreiher:4
+
+====[tsv-split -n 3 -k 0 ../empty-file.txt]====
+
+====[tsv-split -H -n 3 -k 0 ../empty-file.txt]====
+
+====[tsv-split -I -n 3 -k 0 ../empty-file.txt]====

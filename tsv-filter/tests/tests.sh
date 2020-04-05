@@ -313,6 +313,11 @@ echo "" >> ${basic_tests_1};
 echo "====[seq 100000 | tsv-filter --or --le 1:20 --eq 1:50000 --eq 1:50001 | wc -l | tr -d ' ']====" >> ${basic_tests_1}
 seq 100000 | ${prog} --or --le 1:20 --eq 1:50000 --eq 1:50001 | wc -l | tr -d ' ' >> ${basic_tests_1} 2>&1
 
+## Empty file tests
+echo "" >> ${basic_tests_1}; echo "====Empty File Tests===" >> ${basic_tests_1}
+runtest ${prog} "--ge 3:100 input_emptyfile.tsv" ${basic_tests_1}
+runtest ${prog} "-H --ge 3:100 input_emptyfile.tsv" ${basic_tests_1}
+
 ## Help and Version printing
 
 echo "" >> ${basic_tests_1}

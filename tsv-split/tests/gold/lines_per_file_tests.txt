@@ -559,3 +559,9 @@ input1x5.txt: line 4
 input1x5.txt: line 5
 input1x3.txt: line 2
 input1x3.txt: line 3
+
+====[tsv-split -l 1 ../empty-file.txt]====
+
+====[tsv-split -H -l 1 ../empty-file.txt]====
+
+====[tsv-split -I -l 1 ../empty-file.txt]====

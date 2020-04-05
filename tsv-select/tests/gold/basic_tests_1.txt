@@ -1179,6 +1179,10 @@ ghi^abc
 789^^123
 ^
 
+====[tsv-select -f 1 input_emptyfile.tsv]====
+
+====[tsv-select -H -f 1 input_emptyfile.tsv]====
+
 ====Multi-file & stdin Tests===
 
 ====[tsv-select -f 2,1 input_3x2.tsv input_emptyfile.tsv input_3x1.tsv input_3x0.tsv input_3x3.tsv]====

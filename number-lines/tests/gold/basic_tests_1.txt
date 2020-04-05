@@ -111,6 +111,10 @@ line^The first line - Is it a header?
 6^	
 7^Previous line a single tab
 
+====[number-lines empty-file.txt]====
+
+====[number-lines -H empty-file.txt]====
+
 ====Multi-file Tests===
 
 ====[number-lines input1.txt input2.txt empty-file.txt one-line-file.txt]====

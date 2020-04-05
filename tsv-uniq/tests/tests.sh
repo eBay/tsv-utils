@@ -139,6 +139,12 @@ runtest ${prog} "input_delim_underscore.tsv -d _ --header -f 3,4" ${basic_tests_
 runtest ${prog} "input_delim_underscore.tsv -d _ --header -f 3,4 --equiv --ignore-case" ${basic_tests_1}
 runtest ${prog} "input_delim_underscore.tsv -d _ --header -f 3,4 --equiv --equiv-start 10 --equiv-header id --ignore-case" ${basic_tests_1}
 
+echo "" >> ${basic_tests_1}; echo "====Empty file tests===" >> ${basic_tests_1}
+runtest ${prog} "empty-file.txt" ${basic_tests_1}
+runtest ${prog} "-H empty-file.txt" ${basic_tests_1}
+runtest ${prog} "-f 1 empty-file.txt" ${basic_tests_1}
+runtest ${prog} "-H -f 1 empty-file.txt" ${basic_tests_1}
+
 # Multi-file and standard input tests
 echo "" >> ${basic_tests_1}; echo "====Multi-file and standard input tests===" >> ${basic_tests_1}
 runtest ${prog} "input1.tsv input2.tsv" ${basic_tests_1}

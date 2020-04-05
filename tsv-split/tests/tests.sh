@@ -37,7 +37,7 @@ fi
 ## Three args: program, args, output file
 runtest () {
     echo "" >> $3
-    echo "====[tsv-sample $2]====" >> $3
+    echo "====[tsv-split $2]====" >> $3
     $1 $2 >> $3 2>&1
     return 0
 }
@@ -263,6 +263,10 @@ runtest_wdir_stdin ${prog} "-l 3 -- - ${testdir_relpath}/input1x3.txt" ${lines_p
 runtest_wdir_stdin ${prog} "-H -l 3 -- - ${testdir_relpath}/input1x3.txt" ${lines_per_file_tests} ${testdir_relpath}/input1x5.txt
 runtest_wdir_stdin ${prog} "-I -l 3 -- - ${testdir_relpath}/input1x3.txt" ${lines_per_file_tests} ${testdir_relpath}/input1x5.txt
 
+runtest_wdir ${prog} "-l 1 ${testdir_relpath}/empty-file.txt" ${lines_per_file_tests}
+runtest_wdir ${prog} "-H -l 1 ${testdir_relpath}/empty-file.txt" ${lines_per_file_tests}
+runtest_wdir ${prog} "-I -l 1 ${testdir_relpath}/empty-file.txt" ${lines_per_file_tests}
+
 echo "Random assignment tests" > ${random_assignment_tests}
 echo "-----------------------" >> ${random_assignment_tests}
 
@@ -332,6 +336,9 @@ runtest_wdir_stdin ${prog} "-v 15017 -n 101 -- ${testdir_relpath}/input1x3.txt -
 runtest_wdir_stdin ${prog} "-v 15017 -n 101 -H -- ${testdir_relpath}/input1x3.txt -" ${random_assignment_tests} ${testdir_relpath}/input1x5.txt
 runtest_wdir_stdin ${prog} "-v 15017 -n 101 -I -- ${testdir_relpath}/input1x3.txt -" ${random_assignment_tests} ${testdir_relpath}/input1x5.txt
 
+runtest_wdir ${prog} "-n 3 ${testdir_relpath}/empty-file.txt" ${random_assignment_tests}
+runtest_wdir ${prog} "-H -n 3 ${testdir_relpath}/empty-file.txt" ${random_assignment_tests}
+runtest_wdir ${prog} "-I -n 3 ${testdir_relpath}/empty-file.txt" ${random_assignment_tests}
 
 echo "Key assignment tests" > ${key_assignment_tests}
 echo "--------------------" >> ${key_assignment_tests}
@@ -397,6 +404,9 @@ runtest_wdir ${prog} "--delimiter : -s -n 101 -k 3 ${testdir_relpath}/input4x58_
 runtest_wdir ${prog} "-d : -H -s -n 101 -k 3 ${testdir_relpath}/input4x58_colon-delim.tsv" ${key_assignment_tests}
 runtest_wdir ${prog} "-d : -I -s -n 101 -k 3 ${testdir_relpath}/input4x58_colon-delim.tsv" ${key_assignment_tests}
 
+runtest_wdir ${prog} "-n 3 -k 0 ${testdir_relpath}/empty-file.txt" ${key_assignment_tests}
+runtest_wdir ${prog} "-H -n 3 -k 0 ${testdir_relpath}/empty-file.txt" ${key_assignment_tests}
+runtest_wdir ${prog} "-I -n 3 -k 0 ${testdir_relpath}/empty-file.txt" ${key_assignment_tests}
 
 ## Help and Version printing
 
@@ -428,6 +438,9 @@ runtest ${prog} "input1x5.txt" ${error_tests_1}
 runtest ${prog} "-l 10 no-such-file.txt" ${error_tests_1}
 runtest ${prog} "-n 10 no-such-file.txt" ${error_tests_1}
 runtest ${prog} "-n 10 -k 3 no-such-file.txt" ${error_tests_1}
+runtest_wdir ${prog} "-l 10 ${testdir_relpath}/input1x3.txt no-such-file.txt" ${error_tests_1}
+runtest_wdir ${prog} "-s -n 10 ${testdir_relpath}/input1x3.txt no-such-file.txt" ${error_tests_1}
+runtest_wdir ${prog} "-s -n 10 -k 0 ${testdir_relpath}/input1x3.txt no-such-file.txt" ${error_tests_1}
 runtest ${prog} "-n 0 input4x58.tsv" ${error_tests_1}
 runtest ${prog} "-n 1 input4x58.tsv" ${error_tests_1}
 runtest ${prog} "-n 0 -k 1 input4x58.tsv" ${error_tests_1}

@@ -1,70 +1,99 @@
 Error test set 1
 ----------------
 
-====[tsv-sample input1x5.txt]====
+====[tsv-split input1x5.txt]====
 [tsv-split] Error processing command line arguments: Either '--l|lines-per-file' or '--n|num-files' is required.
 
-====[tsv-sample -l 10 no-such-file.txt]====
-Error [tsv-split]: Cannot open file `no-such-file.txt' in mode `rb' (No such file or directory)
+====[tsv-split -l 10 no-such-file.txt]====
+[tsv-split] Error processing command line arguments: Cannot open file `no-such-file.txt' in mode `rb' (No such file or directory)
 
-====[tsv-sample -n 10 no-such-file.txt]====
-Error [tsv-split]: Cannot open file `no-such-file.txt' in mode `rb' (No such file or directory)
+====[tsv-split -n 10 no-such-file.txt]====
+[tsv-split] Error processing command line arguments: Cannot open file `no-such-file.txt' in mode `rb' (No such file or directory)
 
-====[tsv-sample -n 10 -k 3 no-such-file.txt]====
-Error [tsv-split]: Cannot open file `no-such-file.txt' in mode `rb' (No such file or directory)
+====[tsv-split -n 10 -k 3 no-such-file.txt]====
+[tsv-split] Error processing command line arguments: Cannot open file `no-such-file.txt' in mode `rb' (No such file or directory)
 
-====[tsv-sample -n 0 input4x58.tsv]====
+====[tsv-split -l 10 ../input1x3.txt no-such-file.txt]====
+Error [tsv-split]: Cannot open file `no-such-file.txt' in mode `rb' (No such file or directory)
+==> ./tsvsplit_workdir/part_000.txt <==
+input1x3.txt: line 1
+input1x3.txt: line 2
+input1x3.txt: line 3
+
+====[tsv-split -s -n 10 ../input1x3.txt no-such-file.txt]====
+Error [tsv-split]: Cannot open file `no-such-file.txt' in mode `rb' (No such file or directory)
+==> ./tsvsplit_workdir/part_0.txt <==
+input1x3.txt: line 1
+
+==> ./tsvsplit_workdir/part_1.txt <==
+input1x3.txt: line 3
+
+==> ./tsvsplit_workdir/part_9.txt <==
+input1x3.txt: line 2
+
+====[tsv-split -s -n 10 -k 0 ../input1x3.txt no-such-file.txt]====
+Error [tsv-split]: Cannot open file `no-such-file.txt' in mode `rb' (No such file or directory)
+==> ./tsvsplit_workdir/part_1.txt <==
+input1x3.txt: line 2
+
+==> ./tsvsplit_workdir/part_2.txt <==
+input1x3.txt: line 1
+
+==> ./tsvsplit_workdir/part_3.txt <==
+input1x3.txt: line 3
+
+====[tsv-split -n 0 input4x58.tsv]====
 [tsv-split] Error processing command line arguments: Either '--l|lines-per-file' or '--n|num-files' is required.
 
-====[tsv-sample -n 1 input4x58.tsv]====
+====[tsv-split -n 1 input4x58.tsv]====
 [tsv-split] Error processing command line arguments: '--n|num-files must be two or more.
 
-====[tsv-sample -n 0 -k 1 input4x58.tsv]====
+====[tsv-split -n 0 -k 1 input4x58.tsv]====
 [tsv-split] Error processing command line arguments: Either '--l|lines-per-file' or '--n|num-files' is required.
 
-====[tsv-sample -n 1 -k 1 input4x58.tsv]====
+====[tsv-split -n 1 -k 1 input4x58.tsv]====
 [tsv-split] Error processing command line arguments: '--n|num-files must be two or more.
 
-====[tsv-sample -n 2 -k 1.5 input4x58.tsv]====
+====[tsv-split -n 2 -k 1.5 input4x58.tsv]====
 [tsv-split] Error processing command line arguments: [--k|key-fields] Unexpected '.' when converting from type string to type ulong
 
-====[tsv-sample -n 2 -k 0,1 input4x58.tsv]====
+====[tsv-split -n 2 -k 0,1 input4x58.tsv]====
 [tsv-split] Error processing command line arguments: Whole line as key (--k|key-fields 0) cannot be combined with multiple fields.
 
-====[tsv-sample -n 2 -k -1 input4x58.tsv]====
+====[tsv-split -n 2 -k -1 input4x58.tsv]====
 [tsv-split] Error processing command line arguments: [--k|key-fields] Incomplete ranges are not supported: '-1'
 
-====[tsv-sample -n 10 -k 99 input4x58.tsv]====
+====[tsv-split -n 10 -k 99 input4x58.tsv]====
 Error [tsv-split]: Not enough fields in line. File: input4x58.tsv, Line: 1
 
-====[tsv-sample -n 10 --max-open-files 4 input1x5.txt]====
+====[tsv-split -n 10 --max-open-files 4 input1x5.txt]====
 [tsv-split] Error processing command line arguments: '--max-open-files' must be at least 5.
 
-====[tsv-sample -l 10 --dir no-such-directory input1x5.txt]====
+====[tsv-split -l 10 --dir no-such-directory input1x5.txt]====
 [tsv-split] Error processing command line arguments: Directory does not exist: --dir 'no-such-directory'
 
-====[tsv-sample -n 10 --dir no-such-directory input1x5.txt]====
+====[tsv-split -n 10 --dir no-such-directory input1x5.txt]====
 [tsv-split] Error processing command line arguments: Directory does not exist: --dir 'no-such-directory'
 
-====[tsv-sample -n 10 -k 1 --dir no-such-directory input4x58.tsv]====
+====[tsv-split -n 10 -k 1 --dir no-such-directory input4x58.tsv]====
 [tsv-split] Error processing command line arguments: Directory does not exist: --dir 'no-such-directory'
 
-====[tsv-sample -l 10 -k 1 input4x58.tsv]====
+====[tsv-split -l 10 -k 1 input4x58.tsv]====
 [tsv-split] Error processing command line arguments: '--l|lines-per-file' and '--k|key-fields' cannot be used together.
 
-====[tsv-sample -l 10 -n 3 input4x58.tsv]====
+====[tsv-split -l 10 -n 3 input4x58.tsv]====
 [tsv-split] Error processing command line arguments: '--l|lines-per-file' and '--n|num-files' cannot be used together.
 
-====[tsv-sample -l 10 -n 3 -k 1 input4x58.tsv]====
+====[tsv-split -l 10 -n 3 -k 1 input4x58.tsv]====
 [tsv-split] Error processing command line arguments: '--l|lines-per-file' and '--n|num-files' cannot be used together.
 
-====[tsv-sample -l 10 --header --header-in-only input4x58.tsv]====
+====[tsv-split -l 10 --header --header-in-only input4x58.tsv]====
 [tsv-split] Error processing command line arguments: Use only one of '--H|header' and '--I|header-in-only'.
 
-====[tsv-sample -n 2 --prefix dir/file input4x58.tsv]====
+====[tsv-split -n 2 --prefix dir/file input4x58.tsv]====
 [tsv-split] Error processing command line arguments: '--prefix' cannot contain forward slash characters. Use '--dir' to specify an output directory.
 
-====[tsv-sample -n 2 --suffix ab/cd input4x58.tsv]====
+====[tsv-split -n 2 --suffix ab/cd input4x58.tsv]====
 [tsv-split] Error processing command line arguments: '--suffix' cannot contain forward slash characters. Use '--dir' to specify an output directory.
 
 ====[ulimit -Sn 5 && tsv-split -s -n 101 -k 3 --max-open-files 6 ../input4x58.tsv]====

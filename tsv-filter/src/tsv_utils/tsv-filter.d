@@ -16,11 +16,11 @@ import std.conv : to;
 import std.exception : enforce;
 import std.format : format;
 import std.math : abs, isFinite, isInfinity, isNaN;
-import std.range : walkLength;
+import std.range;
 import std.regex;
 import std.stdio;
 import std.string : isNumeric;
-import std.typecons : tuple;
+import std.typecons;
 import std.uni: asLowerCase, toLower, byGrapheme;
 
 /* The program has two main parts, command line arg processing and processing the input
@@ -52,7 +52,7 @@ int main(string[] cmdArgs)
         import ldc.profile : resetAll;
         resetAll();
     }
-    try tsvFilter(cmdopt, cmdArgs[1..$]);
+    try tsvFilter(cmdopt);
     catch (Exception e)
     {
         stderr.writefln("Error [%s]: %s", cmdopt.programName, e.msg);
@@ -621,7 +621,10 @@ void fieldFieldNumOptionHandler(
  */
 struct TsvFilterOptions
 {
+    import tsv_utils.common.utils : inputSourceRange, InputSourceRange, ReadHeader;
+
     string programName;
+    InputSourceRange inputSources;   // Input files
     FieldsPredicate[] tests;         // Derived from tests
     size_t maxFieldIndex;            // Derived from tests
     bool hasHeader = false;          // --H|header
@@ -826,6 +829,12 @@ struct TsvFilterOptions
                 writeln(tsvutilsVersionNotice("tsv-filter"));
                 return tuple(false, 0);
             }
+
+            /* Input files. Remaining command line args are files. */
+            string[] filepaths = (cmdArgs.length > 1) ? cmdArgs[1 .. $] : ["-"];
+            cmdArgs.length = 1;
+            ReadHeader readHeader = hasHeader ? Yes.readHeader : No.readHeader;
+            inputSources = inputSourceRange(filepaths, readHeader);
         }
         catch (Exception e)
         {
@@ -838,11 +847,16 @@ struct TsvFilterOptions
 
 /** tsvFilter processes the input files and runs the tests.
  */
-void tsvFilter(const TsvFilterOptions cmdopt, const string[] inputFiles)
+void tsvFilter(ref TsvFilterOptions cmdopt)
 {
     import std.algorithm : all, any, splitter;
     import std.range;
-    import tsv_utils.common.utils : BufferedOutputRange, bufferedByLine, throwIfWindowsNewlineOnUnix;
+    import tsv_utils.common.utils : BufferedOutputRange, bufferedByLine, InputSourceRange,
+        throwIfWindowsNewlineOnUnix;
+
+    /* inputSources must be an InputSourceRange and include at least stdin. */
+    assert(!cmdopt.inputSources.empty);
+    static assert(is(typeof(cmdopt.inputSources) == InputSourceRange));
 
     /* BufferedOutputRange improves performance on narrow files with high percentages of
      * writes. Want responsive output if output is rare, so ensure the first matched
@@ -854,79 +868,78 @@ void tsvFilter(const TsvFilterOptions cmdopt, const string[] inputFiles)
 
     auto bufferedOutput = BufferedOutputRange!(typeof(stdout))(stdout);
 
-    /* Process each input file, one line at a time. */
-    auto lineFields = new char[][](cmdopt.maxFieldIndex + 1);
-    bool headerWritten = false;
-    foreach (filename; (inputFiles.length > 0) ? inputFiles : ["-"])
+     /* First header is read during command line argument processing. */
+    if (cmdopt.hasHeader && !cmdopt.inputSources.front.isHeaderEmpty)
     {
-        auto inputStream = (filename == "-") ? stdin : filename.File();
-        foreach (lineNum, line; inputStream.bufferedByLine.enumerate(1))
+        auto inputStream = cmdopt.inputSources.front;
+        throwIfWindowsNewlineOnUnix(inputStream.header, inputStream.name, 1);
+        bufferedOutput.appendln(inputStream.header);
+    }
+
+    /* Process each input file, one line at a time. */
+    immutable size_t fileBodyStartLine = cmdopt.hasHeader ? 2 : 1;
+    auto lineFields = new char[][](cmdopt.maxFieldIndex + 1);
+
+    foreach (inputStream; cmdopt.inputSources)
+    {
+        if (cmdopt.hasHeader) throwIfWindowsNewlineOnUnix(inputStream.header, inputStream.name, 1);
+
+        foreach (lineNum, line; inputStream.file.bufferedByLine.enumerate(fileBodyStartLine))
         {
-            if (lineNum == 1) throwIfWindowsNewlineOnUnix(line, filename, lineNum);
-            if (lineNum == 1 && cmdopt.hasHeader)
+            if (lineNum == 1) throwIfWindowsNewlineOnUnix(line, inputStream.name, lineNum);
+
+            /* Copy the needed number of fields to the fields array. */
+            int fieldIndex = -1;
+            foreach (fieldValue; line.splitter(cmdopt.delim))
             {
-                /* Header. Output on the first file, skip subsequent files. */
-                if (!headerWritten)
-                {
-                    bufferedOutput.appendln(line);
-                    headerWritten = true;
-                }
+                if (fieldIndex == cast(long) cmdopt.maxFieldIndex) break;
+                fieldIndex++;
+                lineFields[fieldIndex] = fieldValue;
             }
-            else
+
+            if (fieldIndex == -1)
             {
-                /* Copy the needed number of fields to the fields array. */
-                int fieldIndex = -1;
-                foreach (fieldValue; line.splitter(cmdopt.delim))
-                {
-                    if (fieldIndex == cast(long) cmdopt.maxFieldIndex) break;
-                    fieldIndex++;
-                    lineFields[fieldIndex] = fieldValue;
-                }
-
-                if (fieldIndex == -1)
-                {
-                    assert(line.length == 0);
-                    /* Bug work-around. Currently empty lines are not handled properly by splitter.
-                     *   Bug: https://issues.dlang.org/show_bug.cgi?id=15735
-                     *   Pull Request: https://github.com/D-Programming-Language/phobos/pull/4030
-                     * Work-around: Point to the line. It's an empty string.
-                     */
-                    fieldIndex++;
-                    lineFields[fieldIndex] = line;
-                }
-
-                enforce(fieldIndex >= cast(long) cmdopt.maxFieldIndex,
-                         format("Not enough fields in line. File: %s, Line: %s",
-                                (filename == "-") ? "Standard Input" : filename, lineNum));
-
-                /* Run the tests. Tests will fail (throw) if a field cannot be converted
-                 * to the expected type.
+                assert(line.length == 0);
+                /* Bug work-around. Currently empty lines are not handled properly by splitter.
+                 *   Bug: https://issues.dlang.org/show_bug.cgi?id=15735
+                 *   Pull Request: https://github.com/D-Programming-Language/phobos/pull/4030
+                 * Work-around: Point to the line. It's an empty string.
                  */
-                try
+                fieldIndex++;
+                lineFields[fieldIndex] = line;
+            }
+
+            enforce(fieldIndex >= cast(long) cmdopt.maxFieldIndex,
+                    format("Not enough fields in line. File: %s, Line: %s",
+                           inputStream.name, lineNum));
+
+            /* Run the tests. Tests will fail (throw) if a field cannot be converted
+             * to the expected type.
+             */
+            try
+            {
+                inputLinesWithoutBufferFlush++;
+                bool passed = cmdopt.disjunct ?
+                    cmdopt.tests.any!(x => x(lineFields)) :
+                    cmdopt.tests.all!(x => x(lineFields));
+                if (cmdopt.invert) passed = !passed;
+                if (passed)
                 {
-                    inputLinesWithoutBufferFlush++;
-                    bool passed = cmdopt.disjunct ?
-                        cmdopt.tests.any!(x => x(lineFields)) :
-                        cmdopt.tests.all!(x => x(lineFields));
-                    if (cmdopt.invert) passed = !passed;
-                    if (passed)
+                    const bool wasFlushed = bufferedOutput.appendln(line);
+                    if (wasFlushed) inputLinesWithoutBufferFlush = 0;
+                    else if (inputLinesWithoutBufferFlush > maxInputLinesWithoutBufferFlush)
                     {
-                        const bool wasFlushed = bufferedOutput.appendln(line);
-                        if (wasFlushed) inputLinesWithoutBufferFlush = 0;
-                        else if (inputLinesWithoutBufferFlush > maxInputLinesWithoutBufferFlush)
-                        {
-                            bufferedOutput.flush;
-                            inputLinesWithoutBufferFlush = 0;
-                        }
+                        bufferedOutput.flush;
+                        inputLinesWithoutBufferFlush = 0;
                     }
                 }
-                catch (Exception e)
-                {
-                    throw new Exception(
-                        format("Could not process line or field: %s\n  File: %s Line: %s%s",
-                               e.msg, (filename == "-") ? "Standard Input" : filename, lineNum,
-                               (lineNum == 1) ? "\n  Is this a header line? Use --header to skip." : ""));
-                }
+            }
+            catch (Exception e)
+            {
+                throw new Exception(
+                    format("Could not process line or field: %s\n  File: %s Line: %s%s",
+                           e.msg, inputStream.name, lineNum,
+                           (lineNum == 1) ? "\n  Is this a header line? Use --header to skip." : ""));
             }
         }
     }

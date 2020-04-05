@@ -22,8 +22,9 @@ License: Boost Licence 1.0 (http://boost.org/LICENSE_1_0.txt)
 module tsv_utils.tsv_uniq;
 
 import std.exception : enforce;
-import std.stdio;
 import std.format : format;
+import std.range;
+import std.stdio;
 import std.typecons : tuple;
 
 auto helpText = q"EOS
@@ -86,11 +87,14 @@ EOS";
  */
 struct TsvUniqOptions
 {
+    import tsv_utils.common.utils : inputSourceRange, InputSourceRange, ReadHeader;
+
     enum defaultEquivHeader = "equiv_id";
     enum defaultEquivStartID = 1;
     enum defaultNumberHeader = "equiv_line";
 
     string programName;
+    InputSourceRange inputSources;            // Input files
     bool helpVerbose = false;                 // --h|help-verbose
     bool versionWanted = false;               // --V|version
     size_t[] fields;                          // --f|fields
@@ -180,6 +184,12 @@ struct TsvUniqOptions
                 return tuple(false, 0);
             }
 
+            /* Input files. Remaining command line args are files. */
+            string[] filepaths = (cmdArgs.length > 1) ? cmdArgs[1 .. $] : ["-"];
+            cmdArgs.length = 1;
+            ReadHeader readHeader = hasHeader ? Yes.readHeader : No.readHeader;
+            inputSources = inputSourceRange(filepaths, readHeader);
+
             /* Consistency checks */
             if (!equivMode)
             {
@@ -247,7 +257,7 @@ int main(string[] cmdArgs)
         resetAll();
     }
 
-    try tsvUniq(cmdopt, cmdArgs[1..$]);
+    try tsvUniq(cmdopt);
     catch (Exception exc)
     {
         stderr.writefln("Error [%s]: %s", cmdopt.programName, exc.msg);
@@ -262,15 +272,19 @@ int main(string[] cmdArgs)
  * The first time a line is seen it is output. If key fields are being used these are
  * used as the basis for the associative array entries rather than the full line.
  */
-void tsvUniq(const TsvUniqOptions cmdopt, const string[] inputFiles)
+void tsvUniq(ref TsvUniqOptions cmdopt)
 {
-    import tsv_utils.common.utils : InputFieldReordering, bufferedByLine, BufferedOutputRange, joinAppend;
+    import tsv_utils.common.utils : bufferedByLine, BufferedOutputRange,
+        InputFieldReordering, InputSourceRange, joinAppend, throwIfWindowsNewlineOnUnix;
     import std.algorithm : splitter;
     import std.array : appender;
     import std.conv : to;
-    import std.range;
     import std.uni : asLowerCase;
     import std.utf : byChar;
+
+    /* inputSources must be an InputSourceRange and include at least stdin. */
+    assert(!cmdopt.inputSources.empty);
+    static assert(is(typeof(cmdopt.inputSources) == InputSourceRange));
 
     /* InputFieldReordering maps the key fields from an input line to a separate buffer. */
     auto keyFieldsReordering = cmdopt.keyIsFullLine ? null : new InputFieldReordering!char(cmdopt.fields);
@@ -290,121 +304,123 @@ void tsvUniq(const TsvUniqOptions cmdopt, const string[] inputFiles)
 
     const size_t numKeyFields = cmdopt.fields.length;
     long nextEquivID = cmdopt.equivStartID;
-    bool headerWritten = false;
-    foreach (filename; (inputFiles.length > 0) ? inputFiles : ["-"])
+
+    /* First header is read during command line arg processing. */
+    if (cmdopt.hasHeader && !cmdopt.inputSources.front.isHeaderEmpty)
     {
-        auto inputStream = (filename == "-") ? stdin : filename.File();
-        foreach (lineNum, line; inputStream.bufferedByLine.enumerate(1))
+        auto inputStream = cmdopt.inputSources.front;
+        throwIfWindowsNewlineOnUnix(inputStream.header, inputStream.name, 1);
+
+        bufferedOutput.append(inputStream.header);
+
+        if (cmdopt.equivMode)
         {
-            if (cmdopt.hasHeader && lineNum == 1)
+            bufferedOutput.append(cmdopt.delim);
+            bufferedOutput.append(cmdopt.equivHeader);
+        }
+
+        if (cmdopt.numberMode)
+        {
+            bufferedOutput.append(cmdopt.delim);
+            bufferedOutput.append(cmdopt.numberHeader);
+        }
+
+        bufferedOutput.appendln();
+    }
+
+    immutable size_t fileBodyStartLine = cmdopt.hasHeader ? 2 : 1;
+
+    foreach (inputStream; cmdopt.inputSources)
+    {
+        if (cmdopt.hasHeader) throwIfWindowsNewlineOnUnix(inputStream.header, inputStream.name, 1);
+
+        foreach (lineNum, line; inputStream.file.bufferedByLine.enumerate(fileBodyStartLine))
+        {
+            if (lineNum == 1) throwIfWindowsNewlineOnUnix(line, inputStream.name, lineNum);
+
+            /* Start by finding the key. */
+            typeof(line) key;
+            if (cmdopt.keyIsFullLine)
             {
-                /* Header line. */
-                if (!headerWritten)
-                {
-                    bufferedOutput.append(line);
-
-                    if (cmdopt.equivMode)
-                    {
-                        bufferedOutput.append(cmdopt.delim);
-                        bufferedOutput.append(cmdopt.equivHeader);
-                    }
-
-                    if (cmdopt.numberMode)
-                    {
-                        bufferedOutput.append(cmdopt.delim);
-                        bufferedOutput.append(cmdopt.numberHeader);
-                    }
-
-                    bufferedOutput.appendln();
-                    headerWritten = true;
-                }
+                key = line;
             }
             else
             {
-                /* Regular line (not header). Start by finding the key. */
-                typeof(line) key;
-                if (cmdopt.keyIsFullLine)
+                assert(keyFieldsReordering !is null);
+
+                /* Copy the key fields to a new buffer. */
+                keyFieldsReordering.initNewLine;
+                foreach (fieldIndex, fieldValue; line.splitter(cmdopt.delim).enumerate)
                 {
-                    key = line;
+                    keyFieldsReordering.processNextField(fieldIndex, fieldValue);
+                    if (keyFieldsReordering.allFieldsFilled) break;
+                }
+
+                enforce(keyFieldsReordering.allFieldsFilled,
+                        format("Not enough fields in line. File: %s, Line: %s",
+                               inputStream.name, lineNum));
+
+                if (numKeyFields == 1)
+                {
+                    key = keyFieldsReordering.outputFields[0];
                 }
                 else
                 {
-                    assert(keyFieldsReordering !is null);
-
-                    /* Copy the key fields to a new buffer. */
-                    keyFieldsReordering.initNewLine;
-                    foreach (fieldIndex, fieldValue; line.splitter(cmdopt.delim).enumerate)
-                    {
-                        keyFieldsReordering.processNextField(fieldIndex, fieldValue);
-                        if (keyFieldsReordering.allFieldsFilled) break;
-                    }
-
-                    enforce(keyFieldsReordering.allFieldsFilled,
-                            format("Not enough fields in line. File: %s, Line: %s",
-                                   (filename == "-") ? "Standard Input" : filename, lineNum));
-
-                    if (numKeyFields == 1)
-                    {
-                        key = keyFieldsReordering.outputFields[0];
-                    }
-                    else
-                    {
-                        multiFieldKeyBuffer.clear();
-                        keyFieldsReordering.outputFields.joinAppend(multiFieldKeyBuffer, cmdopt.delim);
-                        key = multiFieldKeyBuffer.data;
-                    }
+                    multiFieldKeyBuffer.clear();
+                    keyFieldsReordering.outputFields.joinAppend(multiFieldKeyBuffer, cmdopt.delim);
+                    key = multiFieldKeyBuffer.data;
                 }
+            }
 
-                if (cmdopt.ignoreCase)
+            if (cmdopt.ignoreCase)
+            {
+                /* Equivalent to key = key.toLower, but without memory allocation. */
+                lowerKeyBuffer.clear();
+                lowerKeyBuffer.put(key.asLowerCase.byChar);
+                key = lowerKeyBuffer.data;
+            }
+
+            bool isOutput = false;
+            EquivEntry currEntry;
+            EquivEntry* priorEntry = (key in equivHash);
+            if (priorEntry is null)
+            {
+                isOutput = (cmdopt.atLeast <= 1);
+                currEntry.equivID = nextEquivID;
+                currEntry.count = 1;
+                equivHash[key.to!string] = currEntry;
+                nextEquivID++;
+            }
+            else
+            {
+                (*priorEntry).count++;
+                currEntry = *priorEntry;
+
+                if ((currEntry.count <= cmdopt.max && currEntry.count >= cmdopt.atLeast) ||
+                    (cmdopt.equivMode && cmdopt.max == 0) ||
+                    (cmdopt.numberMode && cmdopt.max == 0))
                 {
-                    /* Equivalent to key = key.toLower, but without memory allocation. */
-                    lowerKeyBuffer.clear();
-                    lowerKeyBuffer.put(key.asLowerCase.byChar);
-                    key = lowerKeyBuffer.data;
+                    isOutput = true;
                 }
+            }
 
-                bool isOutput = false;
-                EquivEntry currEntry;
-                EquivEntry* priorEntry = (key in equivHash);
-                if (priorEntry is null)
+            if (isOutput)
+            {
+                bufferedOutput.append(line);
+
+                if (cmdopt.equivMode)
                 {
-                    isOutput = (cmdopt.atLeast <= 1);
-                    currEntry.equivID = nextEquivID;
-                    currEntry.count = 1;
-                    equivHash[key.to!string] = currEntry;
-                    nextEquivID++;
+                    bufferedOutput.append(cmdopt.delim);
+                    bufferedOutput.append(currEntry.equivID.to!string);
                 }
-                else
+
+                if (cmdopt.numberMode)
                 {
-                    (*priorEntry).count++;
-                    currEntry = *priorEntry;
-
-                    if ((currEntry.count <= cmdopt.max && currEntry.count >= cmdopt.atLeast) ||
-                        (cmdopt.equivMode && cmdopt.max == 0) ||
-                        (cmdopt.numberMode && cmdopt.max == 0))
-                    {
-                        isOutput = true;
-                    }
+                    bufferedOutput.append(cmdopt.delim);
+                    bufferedOutput.append(currEntry.count.to!string);
                 }
 
-                if (isOutput)
-                {
-                    bufferedOutput.append(line);
-
-                    if (cmdopt.equivMode)
-                    {
-                        bufferedOutput.append(cmdopt.delim);
-                        bufferedOutput.append(currEntry.equivID.to!string);
-                    }
-
-                    if (cmdopt.numberMode)
-                    {
-                        bufferedOutput.append(cmdopt.delim);
-                        bufferedOutput.append(currEntry.count.to!string);
-                    }
-
-                    bufferedOutput.appendln();
-                }
+                bufferedOutput.appendln();
             }
         }
     }

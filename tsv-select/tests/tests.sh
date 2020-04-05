@@ -154,6 +154,10 @@ runtest ${prog} "--exclude 1-2 --delimiter ^  input_2plus_hat_delim.tsv" ${basic
 runtest ${prog} "--exclude 3-10 --delimiter ^  input_2plus_hat_delim.tsv" ${basic_tests_1}
 runtest ${prog} "--exclude 2 --fields 1 --rest first --delimiter ^  input_2plus_hat_delim.tsv" ${basic_tests_1}
 
+# Empty file tests
+runtest ${prog} "-f 1 input_emptyfile.tsv" ${basic_tests_1}
+runtest ${prog} "-H -f 1 input_emptyfile.tsv" ${basic_tests_1}
+
 echo "" >> ${basic_tests_1}; echo "====Multi-file & stdin Tests===" >> ${basic_tests_1}
 runtest ${prog} "-f 2,1 input_3x2.tsv input_emptyfile.tsv input_3x1.tsv input_3x0.tsv input_3x3.tsv" ${basic_tests_1}
 
@@ -223,6 +227,7 @@ runtest ${prog} "input1.tsv --fields last" ${error_tests_1}
 runtest ${prog} "-f 0 input1.tsv" ${error_tests_1}
 runtest ${prog} "input1.tsv -f 2 --rest elsewhere" ${error_tests_1}
 runtest ${prog} "-f 1 nosuchfile.tsv" ${error_tests_1}
+runtest ${prog} "-f 1 input_3x1.tsv nosuchfile.tsv" ${error_tests_1}
 runtest ${prog} "-f 1,4 input_3plus_fields.tsv" ${error_tests_1}
 runtest ${prog} "-d ß -f 1 input1.tsv" ${error_tests_1}
 runtest ${prog} "-f 1 --nosuchparam input1.tsv" ${error_tests_1}

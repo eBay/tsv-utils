@@ -121,18 +121,21 @@ EOS";
  */
 struct TsvSelectOptions
 {
+    import tsv_utils.common.utils : byLineSourceRange, ByLineSourceRange;
+
     // The allowed values for the --rest option.
     enum RestOption { none, first, last};
 
-    string programName;           /// Program name
-    bool helpVerbose = false;     /// --help-verbose
-    bool hasHeader = false;       /// --H|header
-    char delim = '\t';            /// --d|delimiter
-    size_t[] fields;              /// --f|fields
-    size_t[] excludedFieldsArg;   /// --e|exclude
-    RestOption restArg;           /// --rest first|last (none is hidden default)
-    bool versionWanted = false;   /// --V|version
-    bool[] excludedFieldsTable;   /// Derived. Lookup table for excluded fields.
+    string programName;                 /// Program name
+    ByLineSourceRange!() inputSources;  /// Input Files
+    bool helpVerbose = false;           /// --help-verbose
+    bool hasHeader = false;             /// --H|header
+    char delim = '\t';                  /// --d|delimiter
+    size_t[] fields;                    /// --f|fields
+    size_t[] excludedFieldsArg;         /// --e|exclude
+    RestOption restArg;                 /// --rest first|last (none is hidden default)
+    bool versionWanted = false;         /// --V|version
+    bool[] excludedFieldsTable;         /// Derived. Lookup table for excluded fields.
 
     /** Process command line arguments (getopt cover).
      *
@@ -203,6 +206,13 @@ struct TsvSelectOptions
 
             enforce(fields.length != 0 || excludedFieldsArg.length != 0,
                     "One of '--f|fields' or '--e|exclude' is required.");
+
+            /* Remaining command line args are files. Use standard input if files
+             * were not provided. Truncate cmdArgs to consume the arguments.
+             */
+            string[] filepaths = (cmdArgs.length > 1) ? cmdArgs[1 .. $] : ["-"];
+            cmdArgs.length = 1;
+            inputSources = byLineSourceRange(filepaths);
 
             if (excludedFieldsArg.length > 0)
             {
@@ -276,13 +286,13 @@ int main(string[] cmdArgs)
         final switch (cmdopt.restArg)
         {
         case TsvSelectOptions.RestOption.none:
-            tsvSelect!(RestLocation.none)(cmdopt, cmdArgs[1..$]);
+            tsvSelect!(RestLocation.none)(cmdopt);
             break;
         case TsvSelectOptions.RestOption.first:
-            tsvSelect!(RestLocation.first)(cmdopt, cmdArgs[1..$]);
+            tsvSelect!(RestLocation.first)(cmdopt);
             break;
         case TsvSelectOptions.RestOption.last:
-            tsvSelect!(RestLocation.last)(cmdopt, cmdArgs[1..$]);
+            tsvSelect!(RestLocation.last)(cmdopt);
             break;
         }
     }
@@ -317,10 +327,13 @@ enum RestLocation { none, first, last };
  * in a larger program, but is faster. Run-time improvements of 25% were measured compared
  * to the non-templatized version. (Note: 'cte' stands for 'compile time evaluation'.)
  */
-void tsvSelect(RestLocation rest)(const TsvSelectOptions cmdopt, const string[] inputFiles)
+
+void tsvSelect(RestLocation rest)(ref TsvSelectOptions cmdopt)
 {
-    import tsv_utils.common.utils: BufferedOutputRange, bufferedByLine, InputFieldReordering, throwIfWindowsNewlineOnUnix;
+    import tsv_utils.common.utils: BufferedOutputRange, ByLineSourceRange,
+        InputFieldReordering, throwIfWindowsNewlineOnUnix;
     import std.algorithm: splitter;
+    import std.array : appender, Appender;
     import std.format: format;
     import std.range;
 
@@ -333,6 +346,12 @@ void tsvSelect(RestLocation rest)(const TsvSelectOptions cmdopt, const string[] 
         assert(cmdopt.restArg == TsvSelectOptions.RestOption.last);
     else
         static assert(false, "rest template argument does not match cmdopt.restArg.");
+
+    /* Check that the input files were setup as expected. Should at least have one
+     * input, stdin if nothing else, and newlines removed from the byLine range.
+     */
+    assert(!cmdopt.inputSources.empty);
+    static assert(is(typeof(cmdopt.inputSources) == ByLineSourceRange!(No.keepTerminator)));
 
     /* The algorithm here assumes RestOption.none is not used with --exclude-fields. */
     assert(cmdopt.excludedFieldsTable.length == 0 || rest != RestLocation.none);
@@ -358,15 +377,13 @@ void tsvSelect(RestLocation rest)(const TsvSelectOptions cmdopt, const string[] 
      */
     auto bufferedOutput = BufferedOutputRange!(typeof(stdout))(stdout);
 
-    /* Read each input file (or stdin) and iterate over each line. A filename of "-" is
-     * interpreted as stdin, common behavior for unix command line tools.
+    /* Read each input file (or stdin) and iterate over each line.
      */
-    foreach (fileNum, filename; (inputFiles.length > 0) ? inputFiles : ["-"])
+    foreach (fileNum, inputStream; cmdopt.inputSources.enumerate)
     {
-        auto inputStream = (filename == "-") ? stdin : filename.File();
-        foreach (lineNum, line; inputStream.bufferedByLine.enumerate(1))
+        foreach (lineNum, line; inputStream.byLine.enumerate(1))
         {
-            if (lineNum == 1) throwIfWindowsNewlineOnUnix(line, filename, lineNum);
+            if (lineNum == 1) throwIfWindowsNewlineOnUnix(line, inputStream.name, lineNum);
 
             if (lineNum == 1 && fileNum > 0 && cmdopt.hasHeader)
             {
@@ -434,7 +451,7 @@ void tsvSelect(RestLocation rest)(const TsvSelectOptions cmdopt, const string[] 
             // Finished with all fields in the line.
             enforce(fieldReordering.allFieldsFilled,
                     format("Not enough fields in line. File: %s,  Line: %s",
-                           (filename == "-") ? "Standard Input" : filename, lineNum));
+                           inputStream.name, lineNum));
 
             // Write the re-ordered line.
 
