@@ -868,7 +868,7 @@ void tsvFilter(ref TsvFilterOptions cmdopt)
 
     auto bufferedOutput = BufferedOutputRange!(typeof(stdout))(stdout);
 
-     /* First header is read during command line arg processing. */
+     /* First header is read during command line argument processing. */
     if (cmdopt.hasHeader)
     {
         auto inputStream = cmdopt.inputSources.front;

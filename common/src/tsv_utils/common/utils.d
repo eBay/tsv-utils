@@ -2002,6 +2002,11 @@ struct InputSourceRange
         _filepaths = _filepaths.dup;
     }
 
+    size_t length() const pure nothrow @safe
+    {
+        return empty ? 0 : _filepaths.length + 1;
+    }
+
     bool empty() const pure nothrow @safe
     {
         return _front is null;
@@ -2218,8 +2223,10 @@ unittest
         /* Reading headers. */
 
         readSources.clear;
-        foreach(fileNum, source;
-                InputSourceRange(inputFiles[0 .. numFiles], Yes.readHeader).enumerate)
+        auto inputSourcesYesHeader = InputSourceRange(inputFiles[0 .. numFiles], Yes.readHeader);
+        assert(inputSourcesYesHeader.length == numFiles);
+
+        foreach(fileNum, source; inputSourcesYesHeader.enumerate)
         {
             readSources.put(source);
             assert(source.isOpen);
@@ -2244,8 +2251,10 @@ unittest
         /* Without reading headers. */
 
         readSources.clear;
-        foreach(fileNum, source;
-                InputSourceRange(inputFiles[0 .. numFiles], No.readHeader).enumerate)
+        auto inputSourcesNoHeader = InputSourceRange(inputFiles[0 .. numFiles], No.readHeader);
+        assert(inputSourcesNoHeader.length == numFiles);
+
+        foreach(fileNum, source; inputSourcesNoHeader.enumerate)
         {
             readSources.put(source);
             assert(source.isOpen);
@@ -2351,6 +2360,11 @@ if (is(Char == char) || is(Char == ubyte))
     this(this)
     {
         _filepaths = _filepaths.dup;
+    }
+
+    size_t length() const pure nothrow @safe
+    {
+        return empty ? 0 : _filepaths.length + 1;
     }
 
     bool empty() const pure nothrow @safe
@@ -2558,8 +2572,10 @@ unittest
     {
         /* Using No.keepTerminator. */
         readSourcesNoTerminator.clear;
-        foreach(fileNum, source;
-                ByLineSourceRange!(No.keepTerminator)(inputFiles[0 .. numFiles]).enumerate)
+        auto inputSourcesNoTerminator = ByLineSourceRange!(No.keepTerminator)(inputFiles[0 .. numFiles]);
+        assert(inputSourcesNoTerminator.length == numFiles);
+
+        foreach(fileNum, source; inputSourcesNoTerminator.enumerate)
         {
             readSourcesNoTerminator.put(source);
             assert(source.isOpen);
@@ -2588,8 +2604,10 @@ unittest
 
         /* Using Yes.keepTerminator. */
         readSourcesYesTerminator.clear;
-        foreach(fileNum, source;
-                ByLineSourceRange!(Yes.keepTerminator)(inputFiles[0 .. numFiles]).enumerate)
+        auto inputSourcesYesTerminator = ByLineSourceRange!(Yes.keepTerminator)(inputFiles[0 .. numFiles]);
+        assert(inputSourcesYesTerminator.length == numFiles);
+
+        foreach(fileNum, source; inputSourcesYesTerminator.enumerate)
         {
             readSourcesYesTerminator.put(source);
             assert(source.isOpen);

@@ -232,4 +232,8 @@ runtest ${prog} "--header -f input1.tsv -k 2,3 input2_dos.tsv" ${error_tests_1}
 runtest ${prog} "-f input1_dos.tsv -k 2,3 input2.tsv" ${error_tests_1}
 runtest ${prog} "-f input1.tsv -k 2,3 input2_dos.tsv" ${error_tests_1}
 
+echo "" >> ${error_tests_1}; echo "===No such file===" >> ${error_tests_1}
+runtest ${prog} "--header -f input1.tsv -k 2 -d 2,3 no_such-file.tsv" ${error_tests_1}
+runtest ${prog} "--header -f no_such_file -k 2,3 -d 2 input2.tsv" ${error_tests_1}
+
 exit $?

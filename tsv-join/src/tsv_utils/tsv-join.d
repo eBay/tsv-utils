@@ -64,23 +64,27 @@ EOS";
  */
 struct TsvJoinOptions
 {
+    import tsv_utils.common.utils : ByLineSourceRange, InputSourceRange, ReadHeader;
+
+    /* Data available the main program. Variables used only command line argument
+     * processing are local to processArgs.
+     */
     string programName;
-    string filterFile;               // --filter
-    size_t[] keyFields;              // --key-fields
-    size_t[] dataFields;             // --data-fields
-    size_t[] appendFields;           // --append-fields
-    bool hasHeader = false;          // --H|header
-    string appendHeaderPrefix = "";  // --append-header-prefix
-    bool writeAll = false;           // --write-all
-    string writeAllValue;            // --write-all
-    bool exclude = false;            // --exclude
-    char delim = '\t';               // --delimiter
-    bool helpVerbose = false;        // --help-verbose
-    bool versionWanted = false;      // --V|version
-    bool allowDupliateKeys = false;  // --allow-duplicate-keys
-    bool keyIsFullLine = false;      // Derived: --key-fields 0
-    bool dataIsFullLine = false;     // Derived: --data-fields 0
-    bool appendFullLine = false;     // Derived: --append-fields 0
+    InputSourceRange inputSources;     // Input Files
+    ByLineSourceRange!() filterSource; // Derived: --filter
+    size_t[] keyFields;                // --key-fields
+    size_t[] dataFields;               // --data-fields
+    size_t[] appendFields;             // --append-fields
+    bool hasHeader = false;            // --H|header
+    string appendHeaderPrefix = "";    // --append-header-prefix
+    bool writeAll = false;             // --write-all
+    string writeAllValue;              // --write-all
+    bool exclude = false;              // --exclude
+    char delim = '\t';                 // --delimiter
+    bool allowDupliateKeys = false;    // --allow-duplicate-keys
+    bool keyIsFullLine = false;        // Derived: --key-fields 0
+    bool dataIsFullLine = false;       // Derived: --data-fields 0
+    bool appendFullLine = false;       // Derived: --append-fields 0
 
     /* Returns a tuple. First value is true if command line arguments were successfully
      * processed and execution should continue, or false if an error occurred or the user
@@ -96,6 +100,10 @@ struct TsvJoinOptions
         import std.path : baseName, stripExtension;
         import std.typecons : Yes, No;
         import tsv_utils.common.utils :  makeFieldListOptionHandler;
+
+        string filterFile;               // --filter
+        bool helpVerbose = false;        // --help-verbose
+        bool versionWanted = false;      // --V|version
 
         programName = (cmdArgs.length > 0) ? cmdArgs[0].stripExtension.baseName : "Unknown_program_name";
 
@@ -155,6 +163,23 @@ struct TsvJoinOptions
                 return tuple(false, 0);
             }
 
+            /* File arguments.
+             *   *  --filter-file required, converted to a one-element ByLineSourceRange
+             *   *  Remaining command line args are input files.
+             */
+            enforce(filterFile.length != 0,
+                    "Required option --filter-file was not supplied.");
+
+            enforce(!(filterFile == "-" && cmdArgs.length == 1),
+                    "A data file is required when standard input is used for the filter file (--f|filter-file -).");
+
+            filterSource = ByLineSourceRange!()([filterFile]);
+
+            string[] filepaths = (cmdArgs.length > 1) ? cmdArgs[1 .. $] : ["-"];
+            cmdArgs.length = 1;
+            ReadHeader readHeader = hasHeader ? Yes.readHeader : No.readHeader;
+            inputSources = InputSourceRange(filepaths, readHeader);
+
             consistencyValidations(cmdArgs);
             derivations();
         }
@@ -172,12 +197,6 @@ struct TsvJoinOptions
     private void consistencyValidations(ref string[] processedCmdArgs)
     {
         import std.algorithm : all;
-
-        enforce(filterFile.length != 0,
-                "Required option --filter-file was not supplied.");
-
-        enforce(!(filterFile == "-" && processedCmdArgs.length == 1),
-                "A data file is required when standard input is used for the filter file (--f|filter-file -).");
 
         if (writeAll)
         {
@@ -268,7 +287,7 @@ int main(string[] cmdArgs)
     TsvJoinOptions cmdopt;
     auto r = cmdopt.processArgs(cmdArgs);
     if (!r[0]) return r[1];
-    try tsvJoin(cmdopt, cmdArgs[1..$]);
+    try tsvJoin(cmdopt);
     catch (Exception exc)
     {
         stderr.writefln("Error [%s]: %s", cmdopt.programName, exc.msg);
@@ -279,13 +298,23 @@ int main(string[] cmdArgs)
 
 /** tsvJoin does the primary work of the tsv-join program.
  */
-void tsvJoin(const TsvJoinOptions cmdopt, const string[] inputFiles)
+void tsvJoin(ref TsvJoinOptions cmdopt)
 {
-    import tsv_utils.common.utils : InputFieldReordering, bufferedByLine, BufferedOutputRange, throwIfWindowsNewlineOnUnix;
+    import tsv_utils.common.utils : ByLineSourceRange, bufferedByLine, BufferedOutputRange,
+        InputFieldReordering, InputSourceRange, throwIfWindowsNewlineOnUnix;
     import std.algorithm : splitter;
     import std.array : join;
     import std.range;
     import std.conv : to;
+
+    /* Check that the input files were setup correctly. Should have one filter file as a
+     * ByLineSourceRange. There should be at least one input file as an InputSourceRange.
+     */
+    assert(cmdopt.filterSource.length == 1);
+    static assert(is(typeof(cmdopt.filterSource) == ByLineSourceRange!(No.keepTerminator)));
+
+    assert(!cmdopt.inputSources.empty);
+    static assert(is(typeof(cmdopt.inputSources) == InputSourceRange));
 
     /* State, variables, and convenience derivations.
      *
@@ -343,8 +372,8 @@ void tsvJoin(const TsvJoinOptions cmdopt, const string[] inputFiles)
     /* Read the filter file. */
     {
         bool needPerFieldProcessing = (numKeyFields > 0) || (numAppendFields > 0);
-        auto filterStream = (cmdopt.filterFile == "-") ? stdin : cmdopt.filterFile.File;
-        foreach (lineNum, line; filterStream.bufferedByLine.enumerate(1))
+        auto filterStream = cmdopt.filterSource.front;
+        foreach (lineNum, line; filterStream.byLine.enumerate(1))
         {
             debug writeln("[filter line] |", line, "|");
             if (needPerFieldProcessing)
@@ -366,7 +395,7 @@ void tsvJoin(const TsvJoinOptions cmdopt, const string[] inputFiles)
                 // Processed all fields in the line.
                 enforce(filterKeysReordering.allFieldsFilled && appendFieldsReordering.allFieldsFilled,
                         format("Not enough fields in line. File: %s, Line: %s",
-                               (cmdopt.filterFile == "-") ? "Standard Input" : cmdopt.filterFile, lineNum));
+                               filterStream.name, lineNum));
             }
 
             string key = cmdopt.keyIsFullLine ?
@@ -376,7 +405,7 @@ void tsvJoin(const TsvJoinOptions cmdopt, const string[] inputFiles)
 
             debug writeln("  --> [key]:[append] => [", key, "]:[", appendValues, "]");
 
-            if (lineNum == 1) throwIfWindowsNewlineOnUnix(line, cmdopt.filterFile, lineNum);
+            if (lineNum == 1) throwIfWindowsNewlineOnUnix(line, filterStream.name, lineNum);
 
             if (lineNum == 1 && cmdopt.hasHeader)
             {
@@ -407,82 +436,81 @@ void tsvJoin(const TsvJoinOptions cmdopt, const string[] inputFiles)
                 filterHash[key] = appendValues;
             }
         }
-    }
 
-    filterHash.rehash;    // For faster lookups. (Per docs. In my tests no performance delta.)
+        /* popFront here closes the filter file. */
+        cmdopt.filterSource.popFront;
+    }
 
     /* Now process each input file, one line at a time. */
 
     auto bufferedOutput = BufferedOutputRange!(typeof(stdout))(stdout);
-    bool headerWritten = false;
 
-    foreach (filename; (inputFiles.length > 0) ? inputFiles : ["-"])
+    /* First header is read during command line argument processing. */
+    if (cmdopt.hasHeader)
     {
-        auto inputStream = (filename == "-") ? stdin : filename.File();
-        foreach (lineNum, line; inputStream.bufferedByLine.enumerate(1))
+        auto inputStream = cmdopt.inputSources.front;
+        throwIfWindowsNewlineOnUnix(inputStream.header, inputStream.name, 1);
+
+        bufferedOutput.append(inputStream.header);
+        if (isAppending)
+        {
+            bufferedOutput.append(cmdopt.delim);
+            bufferedOutput.append(appendFieldsHeader);
+        }
+        bufferedOutput.appendln;
+    }
+
+    immutable size_t fileBodyStartLine = cmdopt.hasHeader ? 2 : 1;
+
+    foreach (inputStream; cmdopt.inputSources)
+    {
+        if (cmdopt.hasHeader) throwIfWindowsNewlineOnUnix(inputStream.header, inputStream.name, 1);
+
+        foreach (lineNum, line; inputStream.file.bufferedByLine.enumerate(fileBodyStartLine))
         {
             debug writeln("[input line] |", line, "|");
 
-            if (lineNum == 1) throwIfWindowsNewlineOnUnix(line, filename, lineNum);
+            if (lineNum == 1) throwIfWindowsNewlineOnUnix(line, inputStream.name, lineNum);
 
-            if (lineNum == 1 && cmdopt.hasHeader)
+            /*
+             * Next block checks if the input line matches a hash entry. Two cases:
+             *   a) The whole line is the key. Simply look it up in the hash.
+             *   b) Individual fields are used as the key - Assemble key and look it up.
+             *
+             * At the end of the appendFields will contain the result of hash lookup.
+             */
+            string* appendFields;
+            if (cmdopt.keyIsFullLine)
             {
-                /* Header line processing. */
-                if (!headerWritten)
-                {
-                    bufferedOutput.append(line);
-                    if (isAppending)
-                    {
-                        bufferedOutput.append(cmdopt.delim);
-                        bufferedOutput.append(appendFieldsHeader);
-                    }
-                    bufferedOutput.appendln;
-                    headerWritten = true;
-                }
+                appendFields = (line in filterHash);
             }
             else
             {
-                /* Regular line (not a header line).
-                 *
-                 * Next block checks if the input line matches a hash entry. Two cases:
-                 *   a) The whole line is the key. Simply look it up in the hash.
-                 *   b) Individual fields are used as the key - Assemble key and look it up.
-                 *
-                 * At the end of the appendFields will contain the result of hash lookup.
-                 */
-                string* appendFields;
-                if (cmdopt.keyIsFullLine)
+                dataKeysReordering.initNewLine;
+                foreach (fieldIndex, fieldValue; line.splitter(cmdopt.delim).enumerate)
                 {
-                    appendFields = (line in filterHash);
+                    dataKeysReordering.processNextField(fieldIndex, fieldValue);
+                    if (dataKeysReordering.allFieldsFilled) break;
                 }
-                else
-                {
-                    dataKeysReordering.initNewLine;
-                    foreach (fieldIndex, fieldValue; line.splitter(cmdopt.delim).enumerate)
-                    {
-                        dataKeysReordering.processNextField(fieldIndex, fieldValue);
-                        if (dataKeysReordering.allFieldsFilled) break;
-                    }
-                    // Processed all fields in the line.
-                    enforce(dataKeysReordering.allFieldsFilled,
-                            format("Not enough fields in line. File: %s, Line: %s",
-                                   (filename == "-") ? "Standard Input" : filename, lineNum));
+                // Processed all fields in the line.
+                enforce(dataKeysReordering.allFieldsFilled,
+                        format("Not enough fields in line. File: %s, Line: %s",
+                               inputStream.name, lineNum));
 
-                    appendFields = (dataKeysReordering.outputFields.join(cmdopt.delim) in filterHash);
-                }
+                appendFields = (dataKeysReordering.outputFields.join(cmdopt.delim) in filterHash);
+            }
 
-                bool matched = (appendFields !is null);
-                debug writeln("   --> matched? ", matched);
-                if (cmdopt.writeAll || (matched && !cmdopt.exclude) || (!matched && cmdopt.exclude))
+            bool matched = (appendFields !is null);
+            debug writeln("   --> matched? ", matched);
+            if (cmdopt.writeAll || (matched && !cmdopt.exclude) || (!matched && cmdopt.exclude))
+            {
+                bufferedOutput.append(line);
+                if (isAppending)
                 {
-                    bufferedOutput.append(line);
-                    if (isAppending)
-                    {
-                        bufferedOutput.append(cmdopt.delim);
-                        bufferedOutput.append(matched ? *appendFields : appendFieldsUnmatchedValue);
-                    }
-                    bufferedOutput.appendln();
+                    bufferedOutput.append(cmdopt.delim);
+                    bufferedOutput.append(matched ? *appendFields : appendFieldsUnmatchedValue);
                 }
+                bufferedOutput.appendln();
             }
         }
     }
