@@ -447,7 +447,7 @@ void tsvJoin(ref TsvJoinOptions cmdopt)
     auto bufferedOutput = BufferedOutputRange!(typeof(stdout))(stdout);
 
     /* First header is read during command line argument processing. */
-    if (cmdopt.hasHeader)
+    if (cmdopt.hasHeader && !cmdopt.inputSources.front.isHeaderEmpty)
     {
         auto inputStream = cmdopt.inputSources.front;
         throwIfWindowsNewlineOnUnix(inputStream.header, inputStream.name, 1);

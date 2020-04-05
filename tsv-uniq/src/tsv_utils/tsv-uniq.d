@@ -306,7 +306,7 @@ void tsvUniq(ref TsvUniqOptions cmdopt)
     long nextEquivID = cmdopt.equivStartID;
 
     /* First header is read during command line arg processing. */
-    if (cmdopt.hasHeader)
+    if (cmdopt.hasHeader && !cmdopt.inputSources.front.isHeaderEmpty)
     {
         auto inputStream = cmdopt.inputSources.front;
         throwIfWindowsNewlineOnUnix(inputStream.header, inputStream.name, 1);
