@@ -468,7 +468,6 @@ if (isFileHandle!(Unqual!OutputTarget) || isOutputRange!(Unqual!OutputTarget, ch
          size_t flushSize = defaultFlushSize,
          size_t reserveSize = defaultReserveSize,
          size_t maxSize = defaultMaxSize)
-    @safe
     {
         assert(flushSize <= maxSize);
 
@@ -478,12 +477,12 @@ if (isFileHandle!(Unqual!OutputTarget) || isOutputRange!(Unqual!OutputTarget, ch
         _outputBuffer.reserve(reserveSize);
     }
 
-    ~this() @safe
+    ~this()
     {
         flush();
     }
 
-    void flush() @safe
+    void flush()
     {
         static if (isFileHandle!OutputTarget) _outputTarget.write(_outputBuffer.data);
         else _outputTarget.put(_outputBuffer.data);
@@ -491,7 +490,7 @@ if (isFileHandle!(Unqual!OutputTarget) || isOutputRange!(Unqual!OutputTarget, ch
         _outputBuffer.clear;
     }
 
-    bool flushIfFull() @safe
+    bool flushIfFull()
     {
         bool isFull = _outputBuffer.data.length >= _flushSize;
         if (isFull) flush();
@@ -499,7 +498,7 @@ if (isFileHandle!(Unqual!OutputTarget) || isOutputRange!(Unqual!OutputTarget, ch
     }
 
     /* flushIfMaxSize is a safety check to avoid runaway buffer growth. */
-    void flushIfMaxSize() @safe
+    void flushIfMaxSize()
     {
         if (_outputBuffer.data.length >= _maxSize) flush();
     }
@@ -509,7 +508,7 @@ if (isFileHandle!(Unqual!OutputTarget) || isOutputRange!(Unqual!OutputTarget, ch
      * Flushing occurs if the buffer has a trailing newline and has reached flush size.
      * Flushing also occurs if the buffer has reached max size.
      */
-    private bool maybeFlush() @safe
+    private bool maybeFlush()
     {
         immutable bool doFlush =
             _outputBuffer.data.length >= _flushSize &&
@@ -520,19 +519,19 @@ if (isFileHandle!(Unqual!OutputTarget) || isOutputRange!(Unqual!OutputTarget, ch
     }
 
 
-    private void appendRaw(T)(T stuff) pure @safe
+    private void appendRaw(T)(T stuff) pure
     {
         import std.range : rangePut = put;
         rangePut(_outputBuffer, stuff);
     }
 
-    void append(T)(T stuff) @safe
+    void append(T)(T stuff)
     {
         appendRaw(stuff);
         maybeFlush();
     }
 
-    bool appendln() @safe
+    bool appendln()
     {
         appendRaw('\n');
         return flushIfFull();
@@ -829,18 +828,18 @@ if (is(Char == char) || is(Char == ubyte))
         private size_t _lineEnd = 0;
         private size_t _dataEnd = 0;
 
-        this (File f) @safe
+        this (File f)
         {
             _file = f;
             _buffer = new ubyte[readSize + growSize];
         }
 
-        bool empty() const pure @safe
+        bool empty() const pure
         {
             return _file.eof && _lineStart == _dataEnd;
         }
 
-        Char[] front()  pure @safe
+        Char[] front() pure
         {
             assert(!empty, "Attempt to take the front of an empty bufferedByLine.");
 
@@ -857,7 +856,7 @@ if (is(Char == char) || is(Char == ubyte))
         }
 
         /* Note: Call popFront at initialization to do the initial read. */
-        void popFront() @safe
+        void popFront()
         {
             import std.algorithm: copy, find;
             assert(!empty, "Attempt to popFront an empty bufferedByLine.");
