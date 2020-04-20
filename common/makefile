@@ -27,6 +27,7 @@ unittest:
 	$(DCOMPILER) $(imports) $(unittest_utils_srcs) $(unittest_flags) $(srcdir)/utils.d
 	$(DCOMPILER) $(imports) $(unittest_utils_srcs) $(unittest_flags) $(srcdir)/getopt_inorder.d
 	$(DCOMPILER) $(imports) $(unittest_utils_srcs) $(unittest_flags) $(srcdir)/numerics.d
+	$(DCOMPILER) $(imports) $(unittest_utils_srcs) $(unittest_flags) $(srcdir)/fieldlist.d
 	$(DCOMPILER) $(imports) $(unittest_utils_srcs) $(unittest_flags) $(srcdir)/tsvutils_version.d
 	@echo '---> Unit tests completed successfully.'
 
@@ -44,6 +45,7 @@ unittest-codecov:
 	$(DCOMPILER) $(imports) $(unittest_utils_srcs) $(unittest_codecov_flags) $(srcdir)/utils.d
 	$(DCOMPILER) $(imports) $(unittest_utils_srcs) $(unittest_codecov_flags) $(srcdir)/getopt_inorder.d
 	$(DCOMPILER) $(imports) $(unittest_utils_srcs) $(unittest_codecov_flags) $(srcdir)/numerics.d
+	$(DCOMPILER) $(imports) $(unittest_utils_srcs) $(unittest_codecov_flags) $(srcdir)/fieldlist.d
 	$(DCOMPILER) $(imports) $(unittest_utils_srcs) $(unittest_codecov_flags) $(srcdir)/tsvutils_version.d
 	-rm ./__main.lst
 	@echo '---> Unit tests completed successfully (code coverage on).'
