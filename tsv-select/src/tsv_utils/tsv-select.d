@@ -155,7 +155,7 @@ struct TsvSelectOptions
         import std.getopt;
         import std.path : baseName, stripExtension;
         import std.typecons : Yes, No;
-        import tsv_utils.common.utils :  makeFieldListOptionHandler;
+        import tsv_utils.common.fieldlist :  makeFieldListOptionHandler;
 
         programName = (cmdArgs.length > 0) ? cmdArgs[0].stripExtension.baseName : "Unknown_program_name";
 

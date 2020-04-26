@@ -365,7 +365,7 @@ void fieldUnaryOptionHandler(
 {
     import std.range : enumerate;
     import std.typecons : Yes, No;
-    import tsv_utils.common.utils :  parseNumericFieldList;
+    import tsv_utils.common.fieldlist : parseNumericFieldList;
 
     try foreach (fieldNum, fieldIndex;
                  optionVal.parseNumericFieldList!(size_t, Yes.convertToZeroBasedIndex).enumerate(1))
@@ -387,7 +387,7 @@ void fieldVsNumberOptionHandler(
 {
     import std.range : enumerate;
     import std.typecons : Yes, No;
-    import tsv_utils.common.utils :  parseNumericFieldList;
+    import tsv_utils.common.fieldlist : parseNumericFieldList;
 
     auto formatErrorMsg(string option, string optionVal, string errorMessage="")
     {
@@ -432,7 +432,7 @@ void fieldVsStringOptionHandler(
 {
     import std.range : enumerate;
     import std.typecons : Yes, No;
-    import tsv_utils.common.utils :  parseNumericFieldList;
+    import tsv_utils.common.fieldlist : parseNumericFieldList;
 
     immutable valSplit = findSplit(optionVal, ":");
 
@@ -466,7 +466,7 @@ void fieldVsIStringOptionHandler(
 {
     import std.range : enumerate;
     import std.typecons : Yes, No;
-    import tsv_utils.common.utils :  parseNumericFieldList;
+    import tsv_utils.common.fieldlist : parseNumericFieldList;
 
     immutable valSplit = findSplit(optionVal, ":");
 
@@ -498,7 +498,7 @@ void fieldVsRegexOptionHandler(
 {
     import std.range : enumerate;
     import std.typecons : Yes, No;
-    import tsv_utils.common.utils :  parseNumericFieldList;
+    import tsv_utils.common.fieldlist : parseNumericFieldList;
 
     immutable valSplit = findSplit(optionVal, ":");
 

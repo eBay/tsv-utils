@@ -177,7 +177,7 @@ struct TsvSummarizeOptions {
         import std.path : baseName, stripExtension;
         import std.typecons : Yes, No;
         import tsv_utils.common.getopt_inorder;
-        import tsv_utils.common.utils :  makeFieldListOptionHandler;
+        import tsv_utils.common.fieldlist :  makeFieldListOptionHandler;
 
         programName = (cmdArgs.length > 0) ? cmdArgs[0].stripExtension.baseName : "Unknown_program_name";
 
@@ -274,7 +274,7 @@ struct TsvSummarizeOptions {
     {
         import std.range : enumerate;
         import std.typecons : Yes, No;
-        import tsv_utils.common.utils :  parseNumericFieldList;
+        import tsv_utils.common.fieldlist :  parseNumericFieldList;
 
         auto valSplit = findSplit(optionVal, ":");
 
@@ -316,7 +316,7 @@ struct TsvSummarizeOptions {
     private void quantileOperatorOptionHandler(string option, string optionVal)
     {
         import std.typecons : Yes, No;
-        import tsv_utils.common.utils :  parseNumericFieldList;
+        import tsv_utils.common.fieldlist :  parseNumericFieldList;
 
         auto formatErrorMsg(string option, string optionVal)
         {
