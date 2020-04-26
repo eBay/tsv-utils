@@ -274,7 +274,7 @@ struct TsvSummarizeOptions {
     {
         import std.range : enumerate;
         import std.typecons : Yes, No;
-        import tsv_utils.common.utils :  parseFieldList;
+        import tsv_utils.common.utils :  parseNumericFieldList;
 
         auto valSplit = findSplit(optionVal, ":");
 
@@ -284,7 +284,7 @@ struct TsvSummarizeOptions {
 
         try foreach (fieldNum, fieldIndex;
                      valSplit[0].to!string
-                     .parseFieldList!(size_t, Yes.convertToZeroBasedIndex).enumerate(1))
+                     .parseNumericFieldList!(size_t, Yes.convertToZeroBasedIndex).enumerate(1))
             {
                 auto op = new OperatorClass(fieldIndex, globalMissingPolicy);
 
@@ -316,7 +316,7 @@ struct TsvSummarizeOptions {
     private void quantileOperatorOptionHandler(string option, string optionVal)
     {
         import std.typecons : Yes, No;
-        import tsv_utils.common.utils :  parseFieldList;
+        import tsv_utils.common.utils :  parseNumericFieldList;
 
         auto formatErrorMsg(string option, string optionVal)
         {
@@ -343,7 +343,7 @@ struct TsvSummarizeOptions {
         double[] probs;
 
         try foreach (fieldIndex;
-                     fieldStr.to!string.parseFieldList!(size_t, Yes.convertToZeroBasedIndex))
+                     fieldStr.to!string.parseNumericFieldList!(size_t, Yes.convertToZeroBasedIndex))
             {
                 fieldIndices ~= fieldIndex;
             }

@@ -29,11 +29,11 @@ $(LIST
       an output stream. It is a performance improvement over using join or joiner with
       writeln.
 
-    * [getTsvFieldValue] - A convenience function when only a single value is needed from
-      an input line.
+    * [getTsvFieldValue] - A convenience function when only a single value is needed
+      from an input line.
 
-    * Field-lists: [parseFieldList], [makeFieldListOptionHandler] - Helper functions for
-      parsing field-lists entered on the command line.
+    * Field-lists: [parseNumericFieldList], [makeFieldListOptionHandler] - Helper
+      functions for parsing field-lists entered on the command line.
 
     * [throwIfWindowsNewlineOnUnix] - A utility for Unix platform builds to detecting
       Windows newlines in input.
@@ -1301,20 +1301,22 @@ if (isSomeChar!C)
 }
 
 /**
-Field-lists - A field-list is a string entered on the command line identifying one or more
-field numbers. They are used by the majority of the tsv utility applications. There are
-two helper functions, makeFieldListOptionHandler and parseFieldList. Most applications
-will use makeFieldListOptionHandler, it creates a delegate that can be passed to
-std.getopt to process the command option. Actual processing of the option text is done by
-parseFieldList. It can be called directly when the text of the option value contains more
-than just the field number.
+Numeric Field-lists - A numeric field-list is a string entered on the command line
+identifying one or more field numbers. They are used by the majority of the tsv-utils
+applications. There are two helper functions, makeFieldListOptionHandler and
+parseNumericFieldList. Most applications will use makeFieldListOptionHandler, it
+creates a delegate that can be passed to std.getopt to process the command option.
+Actual processing of the option text is done by parseNumericFieldList. It can be
+called directly when the text of the option value contains more than just the field
+number.
 
 Syntax and behavior:
 
-A 'field-list' is a list of numeric field numbers entered on the command line. Fields are
-1-upped integers representing locations in an input line, in the traditional meaning of
-Unix command line tools. Fields can be entered as single numbers or a range. Multiple
-entries are separated by commas. Some examples (with 'fields' as the command line option):
+A 'numeric field-list' is a list of numeric field numbers entered on the command line.
+Fields are 1-upped integers representing locations in an input line, in the traditional
+meaning of Unix command line tools. Fields can be entered as single numbers or a range.
+Multiple entries are separated by commas. Some examples (with 'fields' as the command
+line option):
 
    --fields 3                 // Single field
    --fields 4,1               // Two fields
@@ -1325,8 +1327,9 @@ entries are separated by commas. Some examples (with 'fields' as the command lin
 Incomplete ranges are not supported, for example, '6-'. Zero is disallowed as a field
 value by default, but can be enabled to support the notion of zero as representing the
 entire line. However, zero cannot be part of a range. Field numbers are one-based by
-default, but can be converted to zero-based. If conversion to zero-based is enabled, field
-number zero must be disallowed or a signed integer type specified for the returned range.
+default, but can be converted to zero-based. If conversion to zero-based is enabled,
+field number zero must be disallowed or a signed integer type specified for the
+returned range.
 
 An error is thrown if an invalid field specification is encountered. Error text is
 intended for display. Error conditions include:
@@ -1337,24 +1340,25 @@ intended for display. Error conditions include:
   - An incomplete range
   - Zero used as part of a range.
 
-No other behaviors are enforced. Repeated values are accepted. If zero is allowed, other
-field numbers can be entered as well. Additional restrictions need to be applied by the
-caller.
+No other behaviors are enforced. Repeated values are accepted. If zero is allowed,
+other field numbers can be entered as well. Additional restrictions need to be
+applied by the caller.
 
 Notes:
-  - The data type determines the max field number that can be entered. Enabling conversion
-    to zero restricts to the signed version of the data type.
+  - The data type determines the max field number that can be entered. Enabling
+    conversion to zero restricts to the signed version of the data type.
   - Use 'import std.typecons : Yes, No' to use the convertToZeroBasedIndex and
     allowFieldNumZero template parameters.
 */
 
 /** [Yes|No].convertToZeroBasedIndex parameter controls whether field numbers are
- *  converted to zero-based indices by makeFieldListOptionHander and parseFieldList.
+ *  converted to zero-based indices by makeFieldListOptionHander and
+ *  parseNumericFieldList.
  */
 alias ConvertToZeroBasedIndex = Flag!"convertToZeroBasedIndex";
 
 /** [Yes|No].allowFieldNumZero parameter controls whether zero is a valid field. This is
- *  used by makeFieldListOptionHander and parseFieldList.
+ *  used by makeFieldListOptionHander and parseNumericFieldList.
  */
 alias AllowFieldNumZero = Flag!"allowFieldNumZero";
 
@@ -1362,7 +1366,7 @@ alias OptionHandlerDelegate = void delegate(string option, string value);
 
 /**
 makeFieldListOptionHandler creates a std.getopt option hander for processing field lists
-entered on the command line. A field list is as defined by parseFieldList.
+entered on the command line. A field list is as defined by parseNumericFieldList.
 */
 OptionHandlerDelegate makeFieldListOptionHandler(
     T,
@@ -1374,7 +1378,7 @@ if (isIntegral!T && (!allowZero || !convertToZero || !isUnsigned!T))
     void fieldListOptionHandler(ref T[] fieldArray, string option, string value) pure @safe
     {
         import std.algorithm : each;
-        try value.parseFieldList!(T, convertToZero, allowZero).each!(x => fieldArray ~= x);
+        try value.parseNumericFieldList!(T, convertToZero, allowZero).each!(x => fieldArray ~= x);
         catch (Exception exc)
         {
             import std.format : format;
@@ -1544,12 +1548,14 @@ unittest
 }
 
 /**
-parseFieldList lazily generates a range of fields numbers from a 'field-list' string.
+parseNumericFieldList lazily generates a range of fields numbers from a
+'numeric field-list' string.
 */
-auto parseFieldList(T = size_t,
-                    ConvertToZeroBasedIndex convertToZero = No.convertToZeroBasedIndex,
-                    AllowFieldNumZero allowZero = No.allowFieldNumZero)
-    (string fieldList, char delim = ',')
+auto parseNumericFieldList(
+    T = size_t,
+    ConvertToZeroBasedIndex convertToZero = No.convertToZeroBasedIndex,
+    AllowFieldNumZero allowZero = No.allowFieldNumZero)
+(string fieldList, char delim = ',')
 if (isIntegral!T && (!allowZero || !convertToZero || !isUnsigned!T))
 {
     import std.algorithm : splitter;
@@ -1572,7 +1578,7 @@ if (isIntegral!T && (!allowZero || !convertToZero || !isUnsigned!T))
         {
             import std.conv : to;
 
-            assert(!empty, "Attempting to fetch the front of an empty field-list.");
+            assert(!empty, "Attempting to fetch the front of an empty numeric field-list.");
             assert(!_currFieldParse.empty, "Internal error. Call to front with an empty _currFieldParse.");
 
             return _currFieldParse.front.to!T;
@@ -1594,77 +1600,77 @@ if (isIntegral!T && (!allowZero || !convertToZero || !isUnsigned!T))
     return Result();
 }
 
-// parseFieldList.
+// parseNumericFieldList.
 @safe unittest
 {
     import std.algorithm : each, equal;
     import std.exception : assertThrown, assertNotThrown;
 
     /* Basic tests. */
-    assert("1".parseFieldList.equal([1]));
-    assert("1,2".parseFieldList.equal([1, 2]));
-    assert("1,2,3".parseFieldList.equal([1, 2, 3]));
-    assert("1-2".parseFieldList.equal([1, 2]));
-    assert("1-2,6-4".parseFieldList.equal([1, 2, 6, 5, 4]));
-    assert("1-2,1,1-2,2,2-1".parseFieldList.equal([1, 2, 1, 1, 2, 2, 2, 1]));
-    assert("1-2,5".parseFieldList!size_t.equal([1, 2, 5]));
+    assert("1".parseNumericFieldList.equal([1]));
+    assert("1,2".parseNumericFieldList.equal([1, 2]));
+    assert("1,2,3".parseNumericFieldList.equal([1, 2, 3]));
+    assert("1-2".parseNumericFieldList.equal([1, 2]));
+    assert("1-2,6-4".parseNumericFieldList.equal([1, 2, 6, 5, 4]));
+    assert("1-2,1,1-2,2,2-1".parseNumericFieldList.equal([1, 2, 1, 1, 2, 2, 2, 1]));
+    assert("1-2,5".parseNumericFieldList!size_t.equal([1, 2, 5]));
 
     /* Signed Int tests */
-    assert("1".parseFieldList!int.equal([1]));
-    assert("1,2,3".parseFieldList!int.equal([1, 2, 3]));
-    assert("1-2".parseFieldList!int.equal([1, 2]));
-    assert("1-2,6-4".parseFieldList!int.equal([1, 2, 6, 5, 4]));
-    assert("1-2,5".parseFieldList!int.equal([1, 2, 5]));
+    assert("1".parseNumericFieldList!int.equal([1]));
+    assert("1,2,3".parseNumericFieldList!int.equal([1, 2, 3]));
+    assert("1-2".parseNumericFieldList!int.equal([1, 2]));
+    assert("1-2,6-4".parseNumericFieldList!int.equal([1, 2, 6, 5, 4]));
+    assert("1-2,5".parseNumericFieldList!int.equal([1, 2, 5]));
 
     /* Convert to zero tests */
-    assert("1".parseFieldList!(size_t, Yes.convertToZeroBasedIndex).equal([0]));
-    assert("1,2,3".parseFieldList!(size_t, Yes.convertToZeroBasedIndex).equal([0, 1, 2]));
-    assert("1-2".parseFieldList!(size_t, Yes.convertToZeroBasedIndex).equal([0, 1]));
-    assert("1-2,6-4".parseFieldList!(size_t, Yes.convertToZeroBasedIndex).equal([0, 1, 5, 4, 3]));
-    assert("1-2,5".parseFieldList!(size_t, Yes.convertToZeroBasedIndex).equal([0, 1, 4]));
+    assert("1".parseNumericFieldList!(size_t, Yes.convertToZeroBasedIndex).equal([0]));
+    assert("1,2,3".parseNumericFieldList!(size_t, Yes.convertToZeroBasedIndex).equal([0, 1, 2]));
+    assert("1-2".parseNumericFieldList!(size_t, Yes.convertToZeroBasedIndex).equal([0, 1]));
+    assert("1-2,6-4".parseNumericFieldList!(size_t, Yes.convertToZeroBasedIndex).equal([0, 1, 5, 4, 3]));
+    assert("1-2,5".parseNumericFieldList!(size_t, Yes.convertToZeroBasedIndex).equal([0, 1, 4]));
 
-    assert("1".parseFieldList!(long, Yes.convertToZeroBasedIndex).equal([0]));
-    assert("1,2,3".parseFieldList!(long, Yes.convertToZeroBasedIndex).equal([0, 1, 2]));
-    assert("1-2".parseFieldList!(long, Yes.convertToZeroBasedIndex).equal([0, 1]));
-    assert("1-2,6-4".parseFieldList!(long, Yes.convertToZeroBasedIndex).equal([0, 1, 5, 4, 3]));
-    assert("1-2,5".parseFieldList!(long, Yes.convertToZeroBasedIndex).equal([0, 1, 4]));
+    assert("1".parseNumericFieldList!(long, Yes.convertToZeroBasedIndex).equal([0]));
+    assert("1,2,3".parseNumericFieldList!(long, Yes.convertToZeroBasedIndex).equal([0, 1, 2]));
+    assert("1-2".parseNumericFieldList!(long, Yes.convertToZeroBasedIndex).equal([0, 1]));
+    assert("1-2,6-4".parseNumericFieldList!(long, Yes.convertToZeroBasedIndex).equal([0, 1, 5, 4, 3]));
+    assert("1-2,5".parseNumericFieldList!(long, Yes.convertToZeroBasedIndex).equal([0, 1, 4]));
 
     /* Allow zero tests. */
-    assert("0".parseFieldList!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero).equal([0]));
-    assert("1,0,3".parseFieldList!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero).equal([1, 0, 3]));
-    assert("1-2,5".parseFieldList!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero).equal([1, 2, 5]));
-    assert("0".parseFieldList!(int, No.convertToZeroBasedIndex, Yes.allowFieldNumZero).equal([0]));
-    assert("1,0,3".parseFieldList!(int, No.convertToZeroBasedIndex, Yes.allowFieldNumZero).equal([1, 0, 3]));
-    assert("1-2,5".parseFieldList!(int, No.convertToZeroBasedIndex, Yes.allowFieldNumZero).equal([1, 2, 5]));
-    assert("0".parseFieldList!(int, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero).equal([-1]));
-    assert("1,0,3".parseFieldList!(int, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero).equal([0, -1, 2]));
-    assert("1-2,5".parseFieldList!(int, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero).equal([0, 1, 4]));
+    assert("0".parseNumericFieldList!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero).equal([0]));
+    assert("1,0,3".parseNumericFieldList!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero).equal([1, 0, 3]));
+    assert("1-2,5".parseNumericFieldList!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero).equal([1, 2, 5]));
+    assert("0".parseNumericFieldList!(int, No.convertToZeroBasedIndex, Yes.allowFieldNumZero).equal([0]));
+    assert("1,0,3".parseNumericFieldList!(int, No.convertToZeroBasedIndex, Yes.allowFieldNumZero).equal([1, 0, 3]));
+    assert("1-2,5".parseNumericFieldList!(int, No.convertToZeroBasedIndex, Yes.allowFieldNumZero).equal([1, 2, 5]));
+    assert("0".parseNumericFieldList!(int, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero).equal([-1]));
+    assert("1,0,3".parseNumericFieldList!(int, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero).equal([0, -1, 2]));
+    assert("1-2,5".parseNumericFieldList!(int, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero).equal([0, 1, 4]));
 
     /* Error cases. */
-    assertThrown("".parseFieldList.each);
-    assertThrown(" ".parseFieldList.each);
-    assertThrown(",".parseFieldList.each);
-    assertThrown("5 6".parseFieldList.each);
-    assertThrown(",7".parseFieldList.each);
-    assertThrown("8,".parseFieldList.each);
-    assertThrown("8,9,".parseFieldList.each);
-    assertThrown("10,,11".parseFieldList.each);
-    assertThrown("".parseFieldList!(long, Yes.convertToZeroBasedIndex).each);
-    assertThrown("1,2-3,".parseFieldList!(long, Yes.convertToZeroBasedIndex).each);
-    assertThrown("2-,4".parseFieldList!(long, Yes.convertToZeroBasedIndex).each);
-    assertThrown("1,2,3,,4".parseFieldList!(long, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero).each);
-    assertThrown(",7".parseFieldList!(long, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero).each);
-    assertThrown("8,".parseFieldList!(long, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero).each);
-    assertThrown("10,0,,11".parseFieldList!(long, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero).each);
-    assertThrown("8,9,".parseFieldList!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero).each);
+    assertThrown("".parseNumericFieldList.each);
+    assertThrown(" ".parseNumericFieldList.each);
+    assertThrown(",".parseNumericFieldList.each);
+    assertThrown("5 6".parseNumericFieldList.each);
+    assertThrown(",7".parseNumericFieldList.each);
+    assertThrown("8,".parseNumericFieldList.each);
+    assertThrown("8,9,".parseNumericFieldList.each);
+    assertThrown("10,,11".parseNumericFieldList.each);
+    assertThrown("".parseNumericFieldList!(long, Yes.convertToZeroBasedIndex).each);
+    assertThrown("1,2-3,".parseNumericFieldList!(long, Yes.convertToZeroBasedIndex).each);
+    assertThrown("2-,4".parseNumericFieldList!(long, Yes.convertToZeroBasedIndex).each);
+    assertThrown("1,2,3,,4".parseNumericFieldList!(long, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero).each);
+    assertThrown(",7".parseNumericFieldList!(long, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero).each);
+    assertThrown("8,".parseNumericFieldList!(long, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero).each);
+    assertThrown("10,0,,11".parseNumericFieldList!(long, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero).each);
+    assertThrown("8,9,".parseNumericFieldList!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero).each);
 
-    assertThrown("0".parseFieldList.each);
-    assertThrown("1,0,3".parseFieldList.each);
-    assertThrown("0".parseFieldList!(int, Yes.convertToZeroBasedIndex, No.allowFieldNumZero).each);
-    assertThrown("1,0,3".parseFieldList!(int, Yes.convertToZeroBasedIndex, No.allowFieldNumZero).each);
-    assertThrown("0-2,6-0".parseFieldList!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero).each);
-    assertThrown("0-2,6-0".parseFieldList!(int, No.convertToZeroBasedIndex, Yes.allowFieldNumZero).each);
-    assertThrown("0-2,6-0".parseFieldList!(int, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero).each);
+    assertThrown("0".parseNumericFieldList.each);
+    assertThrown("1,0,3".parseNumericFieldList.each);
+    assertThrown("0".parseNumericFieldList!(int, Yes.convertToZeroBasedIndex, No.allowFieldNumZero).each);
+    assertThrown("1,0,3".parseNumericFieldList!(int, Yes.convertToZeroBasedIndex, No.allowFieldNumZero).each);
+    assertThrown("0-2,6-0".parseNumericFieldList!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero).each);
+    assertThrown("0-2,6-0".parseNumericFieldList!(int, No.convertToZeroBasedIndex, Yes.allowFieldNumZero).each);
+    assertThrown("0-2,6-0".parseNumericFieldList!(int, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero).each);
 }
 
 /* parseFieldRange parses a single number or number range. E.g. '5' or '5-8'. These are

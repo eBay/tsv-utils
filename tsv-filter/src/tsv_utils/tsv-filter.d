@@ -365,10 +365,10 @@ void fieldUnaryOptionHandler(
 {
     import std.range : enumerate;
     import std.typecons : Yes, No;
-    import tsv_utils.common.utils :  parseFieldList;
+    import tsv_utils.common.utils :  parseNumericFieldList;
 
     try foreach (fieldNum, fieldIndex;
-                 optionVal.parseFieldList!(size_t, Yes.convertToZeroBasedIndex).enumerate(1))
+                 optionVal.parseNumericFieldList!(size_t, Yes.convertToZeroBasedIndex).enumerate(1))
         {
             tests ~= makeFieldUnaryDelegate(fn, fieldIndex);
             maxFieldIndex = (fieldIndex > maxFieldIndex) ? fieldIndex : maxFieldIndex;
@@ -387,7 +387,7 @@ void fieldVsNumberOptionHandler(
 {
     import std.range : enumerate;
     import std.typecons : Yes, No;
-    import tsv_utils.common.utils :  parseFieldList;
+    import tsv_utils.common.utils :  parseNumericFieldList;
 
     auto formatErrorMsg(string option, string optionVal, string errorMessage="")
     {
@@ -412,7 +412,7 @@ void fieldVsNumberOptionHandler(
     }
 
     try foreach (fieldNum, fieldIndex;
-                 valSplit[0].parseFieldList!(size_t, Yes.convertToZeroBasedIndex).enumerate(1))
+                 valSplit[0].parseNumericFieldList!(size_t, Yes.convertToZeroBasedIndex).enumerate(1))
         {
             tests ~= makeFieldVsNumberDelegate(fn, fieldIndex, value);
             maxFieldIndex = (fieldIndex > maxFieldIndex) ? fieldIndex : maxFieldIndex;
@@ -432,7 +432,7 @@ void fieldVsStringOptionHandler(
 {
     import std.range : enumerate;
     import std.typecons : Yes, No;
-    import tsv_utils.common.utils :  parseFieldList;
+    import tsv_utils.common.utils :  parseNumericFieldList;
 
     immutable valSplit = findSplit(optionVal, ":");
 
@@ -443,7 +443,7 @@ void fieldVsStringOptionHandler(
     string value = valSplit[2].to!string;
 
     try foreach (fieldNum, fieldIndex;
-                 valSplit[0].parseFieldList!(size_t, Yes.convertToZeroBasedIndex).enumerate(1))
+                 valSplit[0].parseNumericFieldList!(size_t, Yes.convertToZeroBasedIndex).enumerate(1))
         {
             tests ~= makeFieldVsStringDelegate(fn, fieldIndex, value);
             maxFieldIndex = (fieldIndex > maxFieldIndex) ? fieldIndex : maxFieldIndex;
@@ -466,7 +466,7 @@ void fieldVsIStringOptionHandler(
 {
     import std.range : enumerate;
     import std.typecons : Yes, No;
-    import tsv_utils.common.utils :  parseFieldList;
+    import tsv_utils.common.utils :  parseNumericFieldList;
 
     immutable valSplit = findSplit(optionVal, ":");
 
@@ -477,7 +477,7 @@ void fieldVsIStringOptionHandler(
     string value = valSplit[2].to!string;
 
     try foreach (fieldNum, fieldIndex;
-                 valSplit[0].parseFieldList!(size_t, Yes.convertToZeroBasedIndex).enumerate(1))
+                 valSplit[0].parseNumericFieldList!(size_t, Yes.convertToZeroBasedIndex).enumerate(1))
         {
             tests ~= makeFieldVsIStringDelegate(fn, fieldIndex, value.to!dstring.toLower);
             maxFieldIndex = (fieldIndex > maxFieldIndex) ? fieldIndex : maxFieldIndex;
@@ -498,7 +498,7 @@ void fieldVsRegexOptionHandler(
 {
     import std.range : enumerate;
     import std.typecons : Yes, No;
-    import tsv_utils.common.utils :  parseFieldList;
+    import tsv_utils.common.utils :  parseNumericFieldList;
 
     immutable valSplit = findSplit(optionVal, ":");
 
@@ -520,7 +520,7 @@ void fieldVsRegexOptionHandler(
     }
 
     try foreach (fieldNum, fieldIndex;
-                 valSplit[0].parseFieldList!(size_t, Yes.convertToZeroBasedIndex).enumerate(1))
+                 valSplit[0].parseNumericFieldList!(size_t, Yes.convertToZeroBasedIndex).enumerate(1))
         {
             tests ~= makeFieldVsRegexDelegate(fn, fieldIndex, value);
             maxFieldIndex = (fieldIndex > maxFieldIndex) ? fieldIndex : maxFieldIndex;
