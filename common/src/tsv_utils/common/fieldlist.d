@@ -56,22 +56,22 @@ $(CONSOLE
     $ tsv-select data.tsv -f '*_time'            # Fields 3,4,5
     $ tsv-select data.tsv -f '*_time,*_memory'   # Fields 3,4,5,6
     $ tsv-select data.tsv -f '*_memory,*_time'   # Fields 6,3,4,5
-    $ tsv-select data.tsv -f 'run-*_time'        # Invalid. '*_time' matches 3 fields
+    $ tsv-select data.tsv -f 'run-*_time'        # Invalid range. '*_time' matches 3 fields
 )
 
-Both field numbers and fields names can both be used in the same field list, except
+Both field numbers and fields names can both be used in the same field-list, except
 when specifying a field range:
 
 $(CONSOLE
     $ tsv-select data.tsv -f 1,user_time         # Fields 1,3
-    $ tsv-select data.tsv -f 1-user_time         # Invalid
+    $ tsv-select data.tsv -f 1-user_time         # Invalid range
 )
 
 A backslash is used to escape special characters occurring in field names. Characters
 that must be escaped when specifying them field names are: asterisk (`*`), comma(`,`),
-colon (`:`), space (` `), and backslash (`\`). A backslash is also used to escape
-numbers that should be treated as field names rather than field numbers. Consider a
-file with the following header fields:
+colon (`:`), space (` `), hyphen (`-`), and backslash (`\`). A backslash is also used
+to escape numbers that should be treated as field names rather than field numbers.
+Consider a file with the following header fields:
 ```
     1    test id
     2    run:id
@@ -88,7 +88,7 @@ $(CONSOLE
 )
 
 Fields lists are combined with other content in some command line options. The colon
-and space characters are both terminator characters for field lists. Some examples:
+and space characters are both terminator characters for field-lists. Some examples:
 
 $(CONSOLE
     $ tsv-filter --le 3:100                        # Field 3 < 100
@@ -96,7 +96,7 @@ $(CONSOLE
     $ tsv-summarize --quantile '*_time:0.25,0.75'  # 1st and 3rd quantiles for time fields
 )
 
-Field-list support routines identify the termination of the field list. They do not
+Field-list support routines identify the termination of the field-list. They do not
 do any processing of content occurring after the field-list.
 
 # Numeric field-lists
@@ -104,11 +104,11 @@ do any processing of content occurring after the field-list.
 The original field-lists used in tsv-utils were numeric only. This is still the format
 used when a header line is not available. They are a strict subset of the field-list
 syntax described so above. There are however, several routines that only support
-numeric field lists.
+numeric field-lists.
 
 # Field-list utilities
 
-The following facilities are used for field list processing:
+The following facilities are used for field-list processing:
 
 $(LIST
     * [findFieldGroups] - Range that iterates over the "field-groups" in a "field-list".
@@ -135,59 +135,61 @@ module tsv_utils.common.fieldlist;
 
 import std.exception : enforce;
 import std.range;
+import std.regex;
 import std.stdio;
 import std.traits : isIntegral, isNarrowString, isUnsigned, Unqual;
 
-/** Creates range that iterates over the 'field groups' in a 'field list'.
- *
- * Input is typically a string or character array. The range becomes empty when the
- * end of input is reached or an unescaped field list terminator character is found.
- *
- * A 'field list' is a comma separated list 'field groups'. A 'field group' is a
- * single numeric or named field, or a hyphen-separated pair of numeric or named
- * fields. For example:
- *
- *    1,3,4-7               # 3 numeric field groups
- *    field_a,field_b       # 2 named fields
- *
- * Each element in the range is represented by a tuple of two values:
- *    * consumed - The total index positions consumed by the range so far
- *    * value - A slice containing the text of the field group.
- *
- * The field group slice does not contain the separator character, but this is
- * included in the total consumed. The field group tuples from the previous examples:
- *
- *   Input: 1,2,4-7
- *      tuple(1, "1")
- *      tuple(3, "2")
- *      tuple(7, "4-7")
- *
- *   Input: field_a,field_b
- *      tuple(7, "field_a")
- *      tuple(8, "field_b")
- *
- * The details of field groups are not material to this routine, it is only concerned
- * with finding the boundaries between field groups and the termination boundary for
- * the field list. This is relatively straightforward. The main parsing concern is
- * the use of escape character when delimiter characters are included in field names.
- *
- * Field groups are separated by a single comma (','). A field list is terminated by
- * a colon (':') or space (' ') character. Comma, colon, and space characters can be
- * included in a field group by preceding them with a backslash. A backslash not
- * intended as an escape character must also be backslash escaped.
- *
- * Additional characters need to be backslash escaped inside field groups, the
- * asterisk ('*') and hyphen ('-') characters in particular. However, this routine
- * needs only be aware of characters that affect field list and field group
- * boundaries, which are the set listed above.
- *
- * Backslash escape sequences are recognized but not removed from field groups.
- *
- * Field and record delimiter characters (usually TAB and newline) are not handled by
- * this routine. They cannot be used in field names as there is no way to represent
- * them in the header line. However, it is not necessary for this routine to check
- * for them, these checks occurs naturally when processing header lines.
- */
+/**
+findFieldGroups creates range that iterates over the 'field-groups' in a 'field-list'.
+
+Input is typically a string or character array. The range becomes empty when the end
+of input is reached or an unescaped field-list terminator character is found.
+
+A 'field-list' is a comma separated list 'field-groups'. A 'field-group' is a single
+numeric or named field, or a hyphen-separated pair of numeric or named fields. For
+example:
+
+   1,3,4-7               # 3 numeric field-groups
+   field_a,field_b       # 2 named fields
+
+Each element in the range is represented by a tuple of two values:
+   * consumed - The total index positions consumed by the range so far
+   * value - A slice containing the text of the field-group.
+
+The field-group slice does not contain the separator character, but this is included
+in the total consumed. The field-group tuples from the previous examples:
+
+  Input: 1,2,4-7
+     tuple(1, "1")
+     tuple(3, "2")
+     tuple(7, "4-7")
+
+  Input: field_a,field_b
+     tuple(7, "field_a")
+     tuple(8, "field_b")
+
+The details of field-groups are not material to this routine, it is only concerned
+with finding the boundaries between field-groups and the termination boundary for the
+field-list. This is relatively straightforward. The main parsing concern is the use
+of escape character when delimiter characters are included in field names.
+
+Field-groups are separated by a single comma (','). A field-list is terminated by a
+colon (':') or space (' ') character. Comma, colon, and space characters can be
+included in a field-group by preceding them with a backslash. A backslash not
+intended as an escape character must also be backslash escaped.
+
+Additional characters need to be backslash escaped inside field-groups, the asterisk
+('*') and hyphen ('-') characters in particular. However, this routine needs only be
+aware of characters that affect field-list and field-group boundaries, which are the
+set listed above.
+
+Backslash escape sequences are recognized but not removed from field-groups.
+
+Field and record delimiter characters (usually TAB and newline) are not handled by
+this routine. They cannot be used in field names as there is no way to represent them
+in the header line. However, it is not necessary for this routine to check for them,
+these checks occurs naturally when processing header lines.
+*/
 auto findFieldGroups(Range)(Range r)
 if (isInputRange!Range &&
     (is(Unqual!(ElementEncodingType!Range) == char) || is(Unqual!(ElementEncodingType!Range) == ubyte)) &&
@@ -245,7 +247,7 @@ if (isInputRange!Range &&
             _input = _input[fieldGroup.end .. $];
         }
 
-        /* Finds the start and end indexes of the next field group.
+        /* Finds the start and end indexes of the next field-group.
          *
          * The start and end indexes exclude delimiter characters (comma, space, colon).
          */
@@ -299,7 +301,7 @@ if (isInputRange!Range &&
     import std.algorithm : equal;
     import std.typecons : tuple, Tuple;
 
-    /* Note: backticks generate literal without escapes. */
+    /* Note: backticks generate string literals without escapes. */
 
     /* Immediate termination. */
     assert(``.findFieldGroups.empty);
@@ -389,7 +391,7 @@ if (isInputRange!Range &&
                   tuple(26, `fld\*1`)
                  ]));
 
-    /* Field list termination. */
+    /* field-list termination. */
     assert(equal(`X:`.findFieldGroups,
                  [tuple(1, `X`)
                  ]));
@@ -430,7 +432,7 @@ if (isInputRange!Range &&
 
     version(none)
     {
-        /* This example from when consumed was being returned for each field group rather
+        /* This example from when consumed was being returned for each field-group rather
          * cummuatively. Currently expect uses to want the cumulative value, so putting
          * in the range.
          */
@@ -446,9 +448,17 @@ if (isInputRange!Range &&
     }
 }
 
+/**
+isNumericFieldGroup determines if a field-group is a valid numeric field-group.
+
+A numeric field-group is single, non-negative integer or a pair of non-negative
+integers separated by a hyphen.
+
+Note that zero is valid by this definition, even though it is usually disallowed as a
+field number, except when representing the entire line.
+*/
 bool isNumericFieldGroup(const char[] fieldGroup) @safe
 {
-    import std.regex;
     return cast(bool) fieldGroup.matchFirst(ctRegex!`^[0-9]+(-[0-9]+)?$`);
 }
 
@@ -469,14 +479,28 @@ bool isNumericFieldGroup(const char[] fieldGroup) @safe
     assert(isNumericFieldGroup(`1`));
     assert(isNumericFieldGroup(`0123456789`));
     assert(isNumericFieldGroup(`0-0`));
+    assert(isNumericFieldGroup(`3-5`));
+    assert(isNumericFieldGroup(`30-5`));
     assert(isNumericFieldGroup(`0123456789-0123456789`));
 
     assert(`0123456789-0123456789`.to!(char[]).isNumericFieldGroup);
 }
 
+/**
+isNumericFieldGroupWithHyphenFirstOrLast determines if a field-group is a field
+number with a leading or trailing hyphen.
+
+This routine is used for better error handling. Currently, incomplete field ranges
+are not supported. That is, field ranges leaving off the first or last field,
+defaulting to the end of the line. This syntax is available in 'cut', e.g.
+
+   cut -f 2-
+
+In 'cut', this represents field 2 to the end of the line. This routine identifies
+these forms so an error message specific to this case can be generated.
+*/
 bool isNumericFieldGroupWithHyphenFirstOrLast(const char[] fieldGroup) @safe
 {
-    import std.regex;
     return cast(bool) fieldGroup.matchFirst(ctRegex!`^((\-[0-9]+)|([0-9]+\-))$`);
 }
 
@@ -493,12 +517,35 @@ bool isNumericFieldGroupWithHyphenFirstOrLast(const char[] fieldGroup) @safe
     assert(!isNumericFieldGroupWithHyphenFirstOrLast(`-1333-`));
 }
 
+/**
+namedFieldGroupToReg generates regular expressions for matching fields in named
+field-group to field names in a header line.
+
+One regex is generated for a single field, two are generated for a range. These are
+returned as a tuple with a pair of regex instances. The first regex is used for
+single field entries and the first entry of range. The second regex is filled with
+the second entry of a range and is empty otherwise. (Test with 'empty()'.)
+
+This routine converts all field-list escape and wildcard syntax into the necessary
+regular expression syntax. Backslash escaped characters are converted to their plain
+characters and asterisk wildcarding (glob style) is converted to regex syntax.
+
+Regular expressions include beginning and end of string markers. This is intended for
+matching field names after they have been extracted from the header line.
+
+Most field-group syntax errors requiring end-user error messages should be detected
+elsewhere in field-list processing. The exception is field-names with a non-escaped
+leading or trailing hyphen. A user-appropriate error message is thrown for this case.
+Other erroneous inputs result in both regex's set empty.
+
+There is no detection of numeric field-groups. If a numeric-field group is passed in
+it will be treated as a named field-group and regular expressions generated.
+*/
 auto namedFieldGroupToRegex(const char[] fieldGroup)
 {
     import std.array : appender;
     import std.conv : to;
     import std.format : format;
-    import std.regex;
     import std.typecons : tuple, Tuple;
     import std.uni : byCodePoint, byGrapheme;
 
@@ -577,7 +624,6 @@ auto namedFieldGroupToRegex(const char[] fieldGroup)
     import std.algorithm : all, equal;
     import std.exception : assertThrown;
     import std.format : format;
-    import std.regex;
     import std.typecons : tuple, Tuple;
 
     /* Use when both regexes should be empty. */
@@ -660,6 +706,152 @@ auto namedFieldGroupToRegex(const char[] fieldGroup)
 }
 
 /**
+namedFieldRegexMatches returns an input range iterating over all the fields matching
+a regular expression.
+
+This routine is used in conjunction with namedFieldGroupToRegex to find the set of
+header line fields that match a field in a field-group expression.
+
+The elements of the range are a tuple where the first element is the 1-based field
+number of the matching field and the second is the matched field name.
+
+The regular expression must not be empty.
+*/
+auto namedFieldRegexMatches(string[] headerFields, Regex!char fieldRegex)
+{
+    import std.algorithm : filter;
+
+    assert(!fieldRegex.empty);
+
+    return headerFields
+        .enumerate!size_t(1UL)
+        .filter!(x => x[1].matchFirst(fieldRegex));
+}
+
+/* namedFieldRegexMatches tests. Some additional testing of namedFieldGroupToRegex,
+ * though all the regex edge cases occur in the namedFieldGroupToRegex tests.
+ */
+@safe unittest
+{
+    import std.algorithm : equal;
+    import std.array : array;
+    import std.format : format;
+    import std.typecons : tuple, Tuple;
+
+    void testBothRegexMatches(string test, string[] headerFields,
+                              Tuple!(Regex!char, Regex!char) regexPair,
+                              Tuple!(size_t, string)[] regex0Matches,
+                              Tuple!(size_t, string)[] regex1Matches)
+    {
+        if (regexPair[0].empty)
+        {
+            assert(regex1Matches.empty,
+                   format("[namedFieldRegexMatches: %s] (empty regex[0], non-empty matches]", test));
+        }
+        else
+        {
+            assert(equal(headerFields.namedFieldRegexMatches(regexPair[0]),
+                         regex0Matches),
+                   format("[namedFieldRegexMatches: %s] (regex[0] mismatch\nExpected: %s\nActual  : %s",
+                          test, regex0Matches, headerFields.namedFieldRegexMatches(regexPair[0]).array));
+        }
+
+        if (regexPair[1].empty)
+        {
+            assert(regex1Matches.empty,
+                   format("[namedFieldRegexMatches: %s] (empty regex[1], non-empty matches]", test));
+        }
+        else
+        {
+            assert(equal(headerFields.namedFieldRegexMatches(regexPair[1]),
+                         regex1Matches),
+                   format("[namedFieldRegexMatches: %s] (regex[1] mismatch\nExpected: %s\nActual  : %s",
+                          test, regex1Matches, headerFields.namedFieldRegexMatches(regexPair[1]).array));
+        }
+    }
+
+    Tuple!(size_t, string)[] emptyRegexMatch;
+
+    testBothRegexMatches("test-1",
+                         [`a`, `b`, `c`],              // Header line
+                         `a`.namedFieldGroupToRegex,   // field-group
+                         [ tuple(1UL, `a`) ],          // regex-0 expected match
+                         emptyRegexMatch);             // regex-1 expected match
+
+    testBothRegexMatches("test-2",
+                         [`a`, `b`, `c`],
+                         `b`.namedFieldGroupToRegex,
+                         [ tuple(2UL, `b`) ],
+                         emptyRegexMatch);
+
+    testBothRegexMatches("test-3",
+                         [`a`, `b`, `c`],
+                         `c`.namedFieldGroupToRegex,
+                         [ tuple(3UL, `c`) ],
+                         emptyRegexMatch);
+
+    testBothRegexMatches("test-4",
+                         [`a`, `b`, `c`],
+                         `x`.namedFieldGroupToRegex,
+                         emptyRegexMatch,
+                         emptyRegexMatch);
+
+    testBothRegexMatches("test-5",
+                         [`a`],
+                         `a`.namedFieldGroupToRegex,
+                         [ tuple(1UL, `a`) ],
+                         emptyRegexMatch);
+
+    testBothRegexMatches("test-6",
+                         [`abc`, `def`, `ghi`],
+                         `abc`.namedFieldGroupToRegex,
+                         [ tuple(1UL, `abc`) ],
+                         emptyRegexMatch);
+
+    testBothRegexMatches("test-7",
+                         [`x_abc`, `y_def`, `x_ghi`],
+                         `x_*`.namedFieldGroupToRegex,
+                         [ tuple(1UL, `x_abc`),  tuple(3UL, `x_ghi`),],
+                         emptyRegexMatch);
+
+    testBothRegexMatches("test-8",
+                         [`x_abc`, `y_def`, `x_ghi`],
+                         `*`.namedFieldGroupToRegex,
+                         [ tuple(1UL, `x_abc`), tuple(2UL, `y_def`),  tuple(3UL, `x_ghi`),],
+                         emptyRegexMatch);
+
+    testBothRegexMatches("test-9",
+                         [`a`, `b`, `c`],
+                         `a-c`.namedFieldGroupToRegex,
+                         [ tuple(1UL, `a`),],
+                         [ tuple(3UL, `c`),]);
+
+    testBothRegexMatches("test-10",
+                         [`a`, `b`, `c`],
+                         `c-a`.namedFieldGroupToRegex,
+                         [ tuple(3UL, `c`),],
+                         [ tuple(1UL, `a`),]);
+
+    testBothRegexMatches("test-11",
+                         [`a`, `b`, `c`],
+                         `c*-a*`.namedFieldGroupToRegex,
+                         [ tuple(3UL, `c`),],
+                         [ tuple(1UL, `a`),]);
+
+    testBothRegexMatches("test-12",
+                         [`abc`, `abc-def`, `def`],
+                         `abc-def`.namedFieldGroupToRegex,
+                         [ tuple(1UL, `abc`) ],
+                         [ tuple(3UL, `def`) ]);
+
+    testBothRegexMatches("test-13",
+                         [`abc`, `abc-def`, `def`],
+                         `abc\-def`.namedFieldGroupToRegex,
+                         [ tuple(2UL, `abc-def`) ],
+                         emptyRegexMatch);
+}
+
+/**
 Numeric Field-lists - A numeric field-list is a string entered on the command line
 identifying one or more field numbers. They are used by the majority of the tsv-utils
 applications. There are two helper functions, makeFieldListOptionHandler and
@@ -724,8 +916,8 @@ alias AllowFieldNumZero = Flag!"allowFieldNumZero";
 alias OptionHandlerDelegate = void delegate(string option, string value);
 
 /**
-makeFieldListOptionHandler creates a std.getopt option hander for processing field lists
-entered on the command line. A field list is as defined by parseNumericFieldList.
+makeFieldListOptionHandler creates a std.getopt option hander for processing field-lists
+entered on the command line. A field-list is as defined by parseNumericFieldList.
 */
 OptionHandlerDelegate makeFieldListOptionHandler(
     T,
@@ -1223,4 +1415,42 @@ if (isIntegral!T && (!allowZero || !convertToZero || !isUnsigned!T))
     // Convert to zero limits signed range.
     assertThrown("32768".parseNumericFieldRange!(ushort, Yes.convertToZeroBasedIndex));
     assert("32767".parseNumericFieldRange!(ushort, Yes.convertToZeroBasedIndex).equal([32766]));
+}
+
+version(none)
+{
+auto parseFieldList(
+    T = size_t,
+    ConvertToZeroBasedIndex convertToZero = No.convertToZeroBasedIndex,
+    AllowFieldNumZero allowZero = No.allowFieldNumZero)
+(string fieldList, bool hasHeader, string headerLine, char delim)
+{
+    static struct Result
+    {
+        private bool _hasHeader;
+        private string[] _headerFields;
+        private string _fieldList;
+    }
+
+    bool empty() const nothrow pure @safe
+    {
+        return true;
+    }
+
+    @property T front() pure @safe
+    {
+        return 0;
+    }
+
+    void popFront() nothrow pure @safe
+    {
+    }
+
+    size_t consumed() const nothrow pure @safe
+    {
+        return 0;
+    }
+
+}
+
 }
