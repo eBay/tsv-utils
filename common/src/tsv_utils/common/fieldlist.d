@@ -7,9 +7,10 @@ A "field-list" is entered on the command line to specify a set of fields for a
 command option. A field-list is a comma separated list of individual fields and
 "field-ranges". Fields are identified either by field number or by field names found
 in the header line of the input data. A field-range is a pair of fields separated
-by a hyphen and includes both fields and all the fields in between.
+by a hyphen and includes both the listed fields and all the fields in between.
 
-$(NOTE Internally, the comma separated entries in a field-list are called a field-group.)
+$(NOTE Internally, the comma separated entries in a field-list are called a
+field-group.)
 
 Fields-lists are parsed into an ordered set of one-based field numbers. Repeating
 fields are allowed. Some examples of numeric fields with the `tsv-select` tool:
@@ -23,8 +24,8 @@ $(CONSOLE
 
 Fields specified by name must match a name in the header line of the input data.
 Glob-style wildcarding is supported using the asterisk (`*`) character. When
-wildcards are used with a single field, all matches in the header are used. When used
-in a field range, both field names must match a single header field.
+wildcards are used with a single field, all matching fields in the header are used.
+When used in a field range, both field names must match a single header field.
 
 Consider a file `data.tsv` containing timing information:
 
@@ -125,6 +126,11 @@ $(LIST
       field, two are generated for a range. Properly translates wildcards and escape
       characters into regex format.
 
+    * [namedFieldRegexMatches] - Returns an input range interating over all the fields
+      (strings) in a range matching a regular expression. It is used in conjuction
+      with namedFieldGroupToRegex to find the fields in a header line matching a
+      regular expression and map them to field numbers.
+
     * [parseNumericFieldList], [makeFieldListOptionHandler] - Helper functions for
       parsing numeric field-lists entered on the command line.
 )
@@ -134,10 +140,13 @@ $(LIST
 module tsv_utils.common.fieldlist;
 
 import std.exception : enforce;
+import std.format : format;
 import std.range;
 import std.regex;
 import std.stdio;
-import std.traits : isIntegral, isNarrowString, isUnsigned, Unqual;
+import std.traits : isIntegral, isNarrowString, isUnsigned, ReturnType, Unqual;
+import std.typecons : tuple, Tuple;
+
 
 /**
 findFieldGroups creates range that iterates over the 'field-groups' in a 'field-list'.
@@ -145,9 +154,9 @@ findFieldGroups creates range that iterates over the 'field-groups' in a 'field-
 Input is typically a string or character array. The range becomes empty when the end
 of input is reached or an unescaped field-list terminator character is found.
 
-A 'field-list' is a comma separated list 'field-groups'. A 'field-group' is a single
-numeric or named field, or a hyphen-separated pair of numeric or named fields. For
-example:
+A 'field-list' is a comma separated list of 'field-groups'. A 'field-group' is a
+single numeric or named field, or a hyphen-separated pair of numeric or named fields.
+For example:
 
    1,3,4-7               # 3 numeric field-groups
    field_a,field_b       # 2 named fields
@@ -178,6 +187,10 @@ colon (':') or space (' ') character. Comma, colon, and space characters can be
 included in a field-group by preceding them with a backslash. A backslash not
 intended as an escape character must also be backslash escaped.
 
+A field-list is also termininated if an unescaped backslash is encountered or a pair
+of consecutive commas. This is normally an error, but handling of these cases is left
+to the caller.
+
 Additional characters need to be backslash escaped inside field-groups, the asterisk
 ('*') and hyphen ('-') characters in particular. However, this routine needs only be
 aware of characters that affect field-list and field-group boundaries, which are the
@@ -200,8 +213,6 @@ if (isInputRange!Range &&
 {
     struct Result
     {
-        import std.typecons : tuple, Tuple;
-
         private alias R = Unqual!Range;
         private alias Char = ElementType!R;
         private alias ResultType = Tuple!(size_t, "consumed", R, "value");
@@ -255,7 +266,6 @@ if (isInputRange!Range &&
         {
             alias RetType = Tuple!(size_t, "start", size_t, "end");
 
-
             enum Char COMMA = ',';
             enum Char BACKSLASH = '\\';
             enum Char SPACE = ' ';
@@ -299,7 +309,6 @@ if (isInputRange!Range &&
 @safe unittest
 {
     import std.algorithm : equal;
-    import std.typecons : tuple, Tuple;
 
     /* Note: backticks generate string literals without escapes. */
 
@@ -411,6 +420,18 @@ if (isInputRange!Range &&
     assert(equal(`1-3,4:5-7`.findFieldGroups,
                  [tuple(3, `1-3`),
                   tuple(5, `4`)
+                 ]));
+
+    assert(equal(`abc,,def`.findFieldGroups,
+                 [tuple(3, `abc`),
+                 ]));
+
+    assert(equal(`abc,,`.findFieldGroups,
+                 [tuple(3, `abc`),
+                 ]));
+
+    assert(equal(`abc,`.findFieldGroups,
+                 [tuple(3, `abc`),
                  ]));
 
     /* Leading, trailing, or solo hyphen. Captured for error handling. */
@@ -545,8 +566,6 @@ auto namedFieldGroupToRegex(const char[] fieldGroup)
 {
     import std.array : appender;
     import std.conv : to;
-    import std.format : format;
-    import std.typecons : tuple, Tuple;
     import std.uni : byCodePoint, byGrapheme;
 
     import std.stdio;
@@ -623,8 +642,6 @@ auto namedFieldGroupToRegex(const char[] fieldGroup)
 {
     import std.algorithm : all, equal;
     import std.exception : assertThrown;
-    import std.format : format;
-    import std.typecons : tuple, Tuple;
 
     /* Use when both regexes should be empty. */
     void testBothRegexEmpty(string test, Tuple!(Regex!char, Regex!char) regexPair)
@@ -706,18 +723,20 @@ auto namedFieldGroupToRegex(const char[] fieldGroup)
 }
 
 /**
-namedFieldRegexMatches returns an input range iterating over all the fields matching
-a regular expression.
+namedFieldRegexMatches returns an input range iterating over all the fields (strings)
+in an input range that match a regular expression.
 
 This routine is used in conjunction with namedFieldGroupToRegex to find the set of
-header line fields that match a field in a field-group expression.
+header line fields that match a field in a field-group expression. The input is a
+range where the individual elements are strings, e.g. an array of strings.
 
-The elements of the range are a tuple where the first element is the 1-based field
-number of the matching field and the second is the matched field name.
+The elements of the returned range are a tuple where the first element is the 1-based
+field number of the matching field and the second is the matched field name.
 
 The regular expression must not be empty.
 */
-auto namedFieldRegexMatches(string[] headerFields, Regex!char fieldRegex)
+auto namedFieldRegexMatches(Range)(Range headerFields, Regex!char fieldRegex)
+if (isInputRange!Range && is(ElementEncodingType!Range == string))
 {
     import std.algorithm : filter;
 
@@ -735,8 +754,6 @@ auto namedFieldRegexMatches(string[] headerFields, Regex!char fieldRegex)
 {
     import std.algorithm : equal;
     import std.array : array;
-    import std.format : format;
-    import std.typecons : tuple, Tuple;
 
     void testBothRegexMatches(string test, string[] headerFields,
                               Tuple!(Regex!char, Regex!char) regexPair,
@@ -932,7 +949,6 @@ if (isIntegral!T && (!allowZero || !convertToZero || !isUnsigned!T))
         try value.parseNumericFieldList!(T, convertToZero, allowZero).each!(x => fieldArray ~= x);
         catch (Exception exc)
         {
-            import std.format : format;
             exc.msg = format("[--%s] %s", option, exc.msg);
             throw exc;
         }
@@ -1237,8 +1253,6 @@ if (isIntegral!T && (!allowZero || !convertToZero || !isUnsigned!T))
 {
     import std.algorithm : findSplit;
     import std.conv : to;
-    import std.exception : enforce;
-    import std.format : format;
     import std.range : iota;
     import std.traits : Signed;
 
@@ -1417,40 +1431,482 @@ if (isIntegral!T && (!allowZero || !convertToZero || !isUnsigned!T))
     assert("32767".parseNumericFieldRange!(ushort, Yes.convertToZeroBasedIndex).equal([32766]));
 }
 
-version(none)
+/** [Yes|No].consumeEntireFieldListString parameter controls whether the entire
+ * field-list string should be consumed.
+ */
+alias ConsumeEntireFieldListString = Flag!"consumeEntireFieldListString";
+
+/** parseFieldList
+ */
+auto parseFieldList(T = size_t,
+                    ConvertToZeroBasedIndex convertToZero = No.convertToZeroBasedIndex,
+                    AllowFieldNumZero allowZero = No.allowFieldNumZero,
+                    ConsumeEntireFieldListString consumeEntire = Yes.consumeEntireFieldListString)
+(string fieldList, bool hasHeader = false, string[] headerFields = [], string headerCmdArg = "-H|--header")
+if (isIntegral!T && (!allowZero || !convertToZero || !isUnsigned!T))
 {
-auto parseFieldList(
-    T = size_t,
-    ConvertToZeroBasedIndex convertToZero = No.convertToZeroBasedIndex,
-    AllowFieldNumZero allowZero = No.allowFieldNumZero)
-(string fieldList, bool hasHeader, string headerLine, char delim)
-{
-    static struct Result
+    final class Result
     {
+        private string _fieldList;
         private bool _hasHeader;
         private string[] _headerFields;
-        private string _fieldList;
+        private string _headerCmdArg;
+        private ReturnType!(findFieldGroups!string) _fieldGroupRange;
+        private bool _isFrontNumericRange;
+        private ReturnType!(parseNumericFieldRange!(T, convertToZero, allowZero)) _numericFieldRange;
+        private ReturnType!(namedFieldRegexMatches!(string[])) _namedFieldMatches;
+        private size_t _consumed;
+
+        this(string fieldList, bool hasHeader, string[] headerFields, string headerCmdArg)
+        {
+            _fieldList = fieldList;
+            _hasHeader = hasHeader;
+            _headerFields = headerFields.dup;
+            _headerCmdArg = headerCmdArg;
+            _fieldGroupRange = findFieldGroups(fieldList);
+
+            /* _namedFieldMatches must be initialized in the constructor because it
+             * is a nested struct.
+             */
+            _namedFieldMatches = _namedFieldMatches = namedFieldRegexMatches(["X"], ctRegex!`^No Match$`);
+
+            version(none) {
+            writeln("[parseFieldList.this] Before setFront()");
+            writeln("   _fieldList: ", _fieldList);
+            writeln("   _hasHeader: ", _hasHeader);
+            writeln("   _headerFields: ", _headerFields);
+            writeln("   _headerCmdArg: ", _headerCmdArg);
+            writeln("   _fieldGroupRange.empty: ", _fieldGroupRange.empty);
+            }
+
+            consumeNextFieldGroup();
+
+            enforce(!empty, format("Empty field list: '%s'.", _fieldList));
+
+            assert(_consumed <= _fieldList.length);
+
+            version(none) {
+            writeln("[parseFieldList.this] After setFront()");
+            writeln("   _fieldList: ", _fieldList);
+            writeln("   _hasHeader: ", _hasHeader);
+            writeln("   _headerFields: ", _headerFields);
+            writeln("   _headerCmdArg: ", _headerCmdArg);
+            writeln("   _isFrontNumericRange: ", _isFrontNumericRange);
+            writeln("   _fieldGroupRange.empty: ", _fieldGroupRange.empty);
+            writeln("   _numericFieldRange.empty: ", _numericFieldRange.empty);
+            writeln("   _namedFieldMatches.empty: ", _namedFieldMatches.empty);
+            }
+        }
+
+        private void consumeNextFieldGroup()
+        {
+            if (!_fieldGroupRange.empty)
+            {
+                auto fieldGroup = _fieldGroupRange.front.value;
+                _consumed = _fieldGroupRange.front.consumed;
+                _fieldGroupRange.popFront;
+
+                enforce(!fieldGroup.isNumericFieldGroupWithHyphenFirstOrLast,
+                        format("Incomplete ranges are not supported: '%s'.",
+                               fieldGroup));
+
+                if (fieldGroup.isNumericFieldGroup)
+                {
+                    _isFrontNumericRange = true;
+                    _numericFieldRange =
+                        parseNumericFieldRange!(T, convertToZero, allowZero)(fieldGroup);
+                }
+                else
+                {
+                    enforce(_hasHeader,
+                            format("Non-numeric field group: '%s'. Use '%s' when using named field groups.",
+                                   fieldGroup, _headerCmdArg));
+
+                    auto fieldGroupRegex = namedFieldGroupToRegex(fieldGroup);
+
+                    if (!fieldGroupRegex[1].empty)
+                    {
+                        /* A range formed by a pair of field names. */
+                        auto f0 = namedFieldRegexMatches(_headerFields, fieldGroupRegex[0]).array;
+                        auto f1 = namedFieldRegexMatches(_headerFields, fieldGroupRegex[1]).array;
+
+                        string hintMsg = "Not specifying a range? Backslash escape any hyphens in the field name.";
+
+                        enforce(f0.length > 0,
+                                format("First field in range not found in header. Range: '%s'.\n%s",
+                                       fieldGroup, hintMsg));
+                        enforce(f1.length > 0,
+                                format("Second field in range not found in header. Range: '%s'.\n%s",
+                                       fieldGroup, hintMsg));
+                        enforce(f0.length == 1,
+                                format("First field in range matches multiple header fields. Range: '%s'.\n%s",
+                                       fieldGroup, hintMsg));
+                        enforce(f1.length == 1,
+                                format("Second field in range matches multiple header fields. Range: '%s'.\n%s",
+                                       fieldGroup, hintMsg));
+
+                        _isFrontNumericRange = true;
+                        auto fieldGroupAsNumericRange = format("%d-%d", f0[0][0], f1[0][0]);
+                        _numericFieldRange =
+                            parseNumericFieldRange!(T, convertToZero, allowZero)(fieldGroupAsNumericRange);
+                    }
+                    else
+                    {
+                        enforce (!fieldGroupRegex[0].empty, "Empty field list entry: '%s'", fieldGroup);
+
+                        _isFrontNumericRange = false;
+                        _namedFieldMatches = namedFieldRegexMatches(_headerFields, fieldGroupRegex[0]);
+                    }
+                }
+            }
+        }
+
+        bool empty() @safe
+        {
+            version(none) {
+            writeln("[empty]");
+            writeln("   _fieldGroupRange.empty: " , _fieldGroupRange.empty);
+            writeln("   _isFrontNumericRange: " , _isFrontNumericRange);
+            writeln("   : _numericFieldRange.empty: " , _numericFieldRange.empty);
+            writeln("   : _namedFieldMatches.empty: " , _namedFieldMatches.empty);
+            }
+
+            return _fieldGroupRange.empty &&
+                (_isFrontNumericRange ? _numericFieldRange.empty : _namedFieldMatches.empty);
+        }
+
+        @property T front() @safe
+        {
+            assert(!empty, "Attempting to fetch the front of an empty field list.");
+
+            version(none) {
+            writeln("[front] ", _isFrontNumericRange ? _numericFieldRange.front : cast(T) _namedFieldMatches.front[0]);
+            }
+
+            return _isFrontNumericRange ? _numericFieldRange.front : cast(T) _namedFieldMatches.front[0];
+        }
+
+        void popFront() @safe
+        {
+            assert(!empty, "Attempting to popFront an empty field-list.");
+
+            if (_isFrontNumericRange) _numericFieldRange.popFront;
+            else _namedFieldMatches.popFront;
+
+            if (_isFrontNumericRange ? _numericFieldRange.empty : _namedFieldMatches.empty)
+            {
+                consumeNextFieldGroup();
+            }
+
+            assert(_consumed <= _fieldList.length);
+
+            static if (consumeEntire)
+            {
+                enforce(!empty || _consumed == _fieldList.length,
+                        format("Invalid field list: '%s'.", _fieldList));
+            }
+        }
+
+        size_t consumed() const nothrow pure @safe
+        {
+            return _consumed;
+        }
     }
 
-    bool empty() const nothrow pure @safe
-    {
-        return true;
-    }
-
-    @property T front() pure @safe
-    {
-        return 0;
-    }
-
-    void popFront() nothrow pure @safe
-    {
-    }
-
-    size_t consumed() const nothrow pure @safe
-    {
-        return 0;
-    }
-
+    return new Result(fieldList, hasHeader, headerFields, headerCmdArg);
 }
+
+
+// parseFieldList - A number of sample cases showing how it works
+@safe unittest
+{
+    import std.algorithm : each, equal;
+
+    string[] emptyHeader = [];
+
+    assert(`5`.parseFieldList
+           .equal([5]));
+
+    assert(`10`.parseFieldList(false, emptyHeader)
+           .equal([10]));
+
+    assert(`1-3,17`.parseFieldList(false, emptyHeader)
+           .equal([1, 2, 3, 17]));
+
+    assert(`5,1-3`.parseFieldList(true, [`f1`, `f2`, `f3`, `f4`, `f5`])
+           .equal([5, 1, 2, 3]));
+
+    assert(`f1`.parseFieldList(true, [`f1`, `f2`, `f3`])
+           .equal([1]));
+
+    assert(`f3`.parseFieldList(true, [`f1`, `f2`, `f3`])
+           .equal([3]));
+
+    assert(`f1-f3`.parseFieldList(true, [`f1`, `f2`, `f3`])
+           .equal([1, 2, 3]));
+
+    assert(`f3-f1`.parseFieldList(true, [`f1`, `f2`, `f3`])
+           .equal([3, 2, 1]));
+
+    assert(`f*`.parseFieldList(true, [`f1`, `f2`, `f3`])
+           .equal([1, 2, 3]));
+
+    assert(`B*`.parseFieldList(true, [`A1`, `A2`, `B1`, `B2`])
+           .equal([3, 4]));
+
+    assert(`*2`.parseFieldList(true, [`A1`, `A2`, `B1`, `B2`])
+           .equal([2, 4]));
+
+    assert(`1-2,f4`.parseFieldList(true, [`f1`, `f2`, `f3`, `f4`, `f5`])
+           .equal([1, 2, 4]));
+
+    {
+        /* Closer to how it really be programed in command line arg processing. */
+        bool hasHeader = true;
+        auto headerFields = [`A1`, `A2`, `B1`, `B2`];
+        auto fieldListCmdArg = `B*,A1`;
+        auto fieldNumbers = fieldListCmdArg.parseFieldList(hasHeader, headerFields);
+        assert(fieldNumbers.equal([3, 4, 1]));
+    }
+
+    {
+        /* How it would work when extensions are enabled. */
+        bool hasHeader = true;
+        auto headerFields = [`A1`, `A2`, `B1`, `B2`];
+        auto fieldListCmdArg = `B*:option`;
+        auto fieldNumbers =
+            fieldListCmdArg.parseFieldList!(size_t, No.convertToZeroBasedIndex,
+                                            No.allowFieldNumZero, No.consumeEntireFieldListString)
+            (hasHeader, headerFields);
+        assert(fieldNumbers.equal([3, 4]));
+        assert(fieldNumbers.consumed == 2);
+        assert(fieldListCmdArg[fieldNumbers.consumed .. $] == `:option`);
+    }
+}
+
+// parseFieldList - The same tests as used for parseNumericFieldRange
+@safe unittest
+{
+    import std.algorithm : each, equal;
+    import std.exception : assertThrown, assertNotThrown;
+
+    /* Basic tests. */
+    assert(`1`.parseFieldList.equal([1]));
+    assert(`1,2`.parseFieldList.equal([1, 2]));
+    assert(`1,2,3`.parseFieldList.equal([1, 2, 3]));
+    assert(`1-2`.parseFieldList.equal([1, 2]));
+    assert(`1-2,6-4`.parseFieldList.equal([1, 2, 6, 5, 4]));
+    assert(`1-2,1,1-2,2,2-1`.parseFieldList.equal([1, 2, 1, 1, 2, 2, 2, 1]));
+    assert(`1-2,5`.parseFieldList!size_t.equal([1, 2, 5]));
+
+    /* Signed Int tests */
+    assert(`1`.parseFieldList!int.equal([1]));
+    assert(`1,2,3`.parseFieldList!int.equal([1, 2, 3]));
+    assert(`1-2`.parseFieldList!int.equal([1, 2]));
+    assert(`1-2,6-4`.parseFieldList!int.equal([1, 2, 6, 5, 4]));
+    assert(`1-2,5`.parseFieldList!int.equal([1, 2, 5]));
+
+    /* Convert to zero tests */
+    assert(`1`.parseFieldList!(size_t, Yes.convertToZeroBasedIndex).equal([0]));
+    assert(`1,2,3`.parseFieldList!(size_t, Yes.convertToZeroBasedIndex).equal([0, 1, 2]));
+    assert(`1-2`.parseFieldList!(size_t, Yes.convertToZeroBasedIndex).equal([0, 1]));
+    assert(`1-2,6-4`.parseFieldList!(size_t, Yes.convertToZeroBasedIndex).equal([0, 1, 5, 4, 3]));
+    assert(`1-2,5`.parseFieldList!(size_t, Yes.convertToZeroBasedIndex).equal([0, 1, 4]));
+
+    assert(`1`.parseFieldList!(long, Yes.convertToZeroBasedIndex).equal([0]));
+    assert(`1,2,3`.parseFieldList!(long, Yes.convertToZeroBasedIndex).equal([0, 1, 2]));
+    assert(`1-2`.parseFieldList!(long, Yes.convertToZeroBasedIndex).equal([0, 1]));
+    assert(`1-2,6-4`.parseFieldList!(long, Yes.convertToZeroBasedIndex).equal([0, 1, 5, 4, 3]));
+    assert(`1-2,5`.parseFieldList!(long, Yes.convertToZeroBasedIndex).equal([0, 1, 4]));
+
+    /* Allow zero tests. */
+    assert(`0`.parseFieldList!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero).equal([0]));
+    assert(`1,0,3`.parseFieldList!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero).equal([1, 0, 3]));
+    assert(`1-2,5`.parseFieldList!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero).equal([1, 2, 5]));
+    assert(`0`.parseFieldList!(int, No.convertToZeroBasedIndex, Yes.allowFieldNumZero).equal([0]));
+    assert(`1,0,3`.parseFieldList!(int, No.convertToZeroBasedIndex, Yes.allowFieldNumZero).equal([1, 0, 3]));
+    assert(`1-2,5`.parseFieldList!(int, No.convertToZeroBasedIndex, Yes.allowFieldNumZero).equal([1, 2, 5]));
+    assert(`0`.parseFieldList!(int, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero).equal([-1]));
+    assert(`1,0,3`.parseFieldList!(int, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero).equal([0, -1, 2]));
+    assert(`1-2,5`.parseFieldList!(int, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero).equal([0, 1, 4]));
+
+    /* Error cases. */
+    assertThrown(``.parseFieldList.each);
+    assertThrown(` `.parseFieldList.each);
+    assertThrown(`,`.parseFieldList.each);
+    assertThrown(`5 6`.parseFieldList.each);
+    assertThrown(`,7`.parseFieldList.each);
+    assertThrown(`8,`.parseFieldList.each);
+    assertThrown(`8,9,`.parseFieldList.each);
+    assertThrown(`10,,11`.parseFieldList.each);
+    assertThrown(``.parseFieldList!(long, Yes.convertToZeroBasedIndex).each);
+    assertThrown(`1,2-3,`.parseFieldList!(long, Yes.convertToZeroBasedIndex).each);
+    assertThrown(`2-,4`.parseFieldList!(long, Yes.convertToZeroBasedIndex).each);
+    assertThrown(`1,2,3,,4`.parseFieldList!(long, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero).each);
+    assertThrown(`,7`.parseFieldList!(long, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero).each);
+    assertThrown(`8,`.parseFieldList!(long, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero).each);
+    assertThrown(`10,0,,11`.parseFieldList!(long, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero).each);
+    assertThrown(`8,9,`.parseFieldList!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero).each);
+    assertThrown(`0`.parseFieldList.each);
+    assertThrown(`1,0,3`.parseFieldList.each);
+    assertThrown(`0`.parseFieldList!(int, Yes.convertToZeroBasedIndex, No.allowFieldNumZero).each);
+    assertThrown(`1,0,3`.parseFieldList!(int, Yes.convertToZeroBasedIndex, No.allowFieldNumZero).each);
+    assertThrown(`0-2,6-0`.parseFieldList!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero).each);
+    assertThrown(`0-2,6-0`.parseFieldList!(int, No.convertToZeroBasedIndex, Yes.allowFieldNumZero).each);
+    assertThrown(`0-2,6-0`.parseFieldList!(int, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero).each);
+}
+
+// parseFieldList - Subset of tests used for parseNumericFieldRange, but allowing non-consumed characters.
+@safe unittest
+{
+    import std.algorithm : each, equal;
+    import std.exception : assertThrown, assertNotThrown;
+
+    /* Basic tests. */
+    assert(`1`.parseFieldList!(size_t, No.convertToZeroBasedIndex, No.allowFieldNumZero, No.consumeEntireFieldListString)
+           .equal([1]));
+    assert(`1,2`.parseFieldList!(size_t, No.convertToZeroBasedIndex, No.allowFieldNumZero, No.consumeEntireFieldListString)
+           .equal([1, 2]));
+    assert(`1,2,3`.parseFieldList!(size_t, No.convertToZeroBasedIndex, No.allowFieldNumZero, No.consumeEntireFieldListString)
+           .equal([1, 2, 3]));
+    assert(`1-2`.parseFieldList!(size_t, No.convertToZeroBasedIndex, No.allowFieldNumZero, No.consumeEntireFieldListString)
+           .equal([1, 2]));
+    assert(`1-2,6-4`.parseFieldList!(size_t, No.convertToZeroBasedIndex, No.allowFieldNumZero, No.consumeEntireFieldListString)
+           .equal([1, 2, 6, 5, 4]));
+    assert(`1-2,1,1-2,2,2-1`.parseFieldList!(size_t, No.convertToZeroBasedIndex, No.allowFieldNumZero, No.consumeEntireFieldListString)
+           .equal([1, 2, 1, 1, 2, 2, 2, 1]));
+    assert(`1-2,5`.parseFieldList!(size_t, No.convertToZeroBasedIndex, No.allowFieldNumZero, No.consumeEntireFieldListString)
+           .equal([1, 2, 5]));
+
+    /* Signed Int tests. */
+    assert(`1`.parseFieldList!(int, No.convertToZeroBasedIndex, No.allowFieldNumZero, No.consumeEntireFieldListString)
+           .equal([1]));
+    assert(`1,2,3`.parseFieldList!(int, No.convertToZeroBasedIndex, No.allowFieldNumZero, No.consumeEntireFieldListString)
+           .equal([1, 2, 3]));
+    assert(`1-2`.parseFieldList!(int, No.convertToZeroBasedIndex, No.allowFieldNumZero, No.consumeEntireFieldListString)
+           .equal([1, 2]));
+    assert(`1-2,6-4`.parseFieldList!(int, No.convertToZeroBasedIndex, No.allowFieldNumZero, No.consumeEntireFieldListString)
+           .equal([1, 2, 6, 5, 4]));
+    assert(`1-2,5`.parseFieldList!(int, No.convertToZeroBasedIndex, No.allowFieldNumZero, No.consumeEntireFieldListString)
+           .equal([1, 2, 5]));
+
+    /* Convert to zero tests */
+    assert(`1`.parseFieldList!(size_t, Yes.convertToZeroBasedIndex, No.allowFieldNumZero, No.consumeEntireFieldListString)
+           .equal([0]));
+    assert(`1,2,3`.parseFieldList!(size_t, Yes.convertToZeroBasedIndex, No.allowFieldNumZero, No.consumeEntireFieldListString)
+           .equal([0, 1, 2]));
+    assert(`1-2`.parseFieldList!(size_t, Yes.convertToZeroBasedIndex, No.allowFieldNumZero, No.consumeEntireFieldListString)
+           .equal([0, 1]));
+    assert(`1-2,6-4`.parseFieldList!(size_t, Yes.convertToZeroBasedIndex, No.allowFieldNumZero, No.consumeEntireFieldListString)
+           .equal([0, 1, 5, 4, 3]));
+    assert(`1-2,5`.parseFieldList!(size_t, Yes.convertToZeroBasedIndex, No.allowFieldNumZero, No.consumeEntireFieldListString)
+           .equal([0, 1, 4]));
+
+    /* Allow zero tests. */
+    assert(`0`.parseFieldList!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero, No.consumeEntireFieldListString)
+           .equal([0]));
+    assert(`1,0,3`.parseFieldList!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero, No.consumeEntireFieldListString)
+           .equal([1, 0, 3]));
+    assert(`1-2,5`.parseFieldList!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero, No.consumeEntireFieldListString)
+           .equal([1, 2, 5]));
+    assert(`0`.parseFieldList!(int, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero, No.consumeEntireFieldListString)
+           .equal([-1]));
+    assert(`1,0,3`.parseFieldList!(int, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero, No.consumeEntireFieldListString)
+           .equal([0, -1, 2]));
+    assert(`1-2,5`.parseFieldList!(int, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero, No.consumeEntireFieldListString)
+           .equal([0, 1, 4]));
+
+    /* Error cases. */
+    assertThrown(``.parseFieldList!(size_t, No.convertToZeroBasedIndex, No.allowFieldNumZero, No.consumeEntireFieldListString).each);
+    assertThrown(` `.parseFieldList!(size_t, No.convertToZeroBasedIndex, No.allowFieldNumZero, No.consumeEntireFieldListString).each);
+    assertThrown(`,`.parseFieldList!(size_t, No.convertToZeroBasedIndex, No.allowFieldNumZero, No.consumeEntireFieldListString).each);
+    assertThrown(`,7`.parseFieldList!(size_t, No.convertToZeroBasedIndex, No.allowFieldNumZero, No.consumeEntireFieldListString).each);
+
+    assertThrown(``.parseFieldList!(long, Yes.convertToZeroBasedIndex, No.allowFieldNumZero, No.consumeEntireFieldListString).each);
+    assertThrown(`2-,4`.parseFieldList!(long, Yes.convertToZeroBasedIndex, No.allowFieldNumZero, No.consumeEntireFieldListString).each);
+    assertThrown(`,7`.parseFieldList!(long, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero, No.consumeEntireFieldListString).each);
+
+    assertThrown(`0`.parseFieldList!(int, Yes.convertToZeroBasedIndex, No.allowFieldNumZero, No.consumeEntireFieldListString).each);
+    assertThrown(`1,0,3`.parseFieldList!(int, Yes.convertToZeroBasedIndex, No.allowFieldNumZero, No.consumeEntireFieldListString).each);
+
+    assertThrown(`0`.parseFieldList!(size_t, No.convertToZeroBasedIndex, No.allowFieldNumZero, No.consumeEntireFieldListString).each);
+    assertThrown(`1,0,3`.parseFieldList!(size_t, No.convertToZeroBasedIndex, No.allowFieldNumZero, No.consumeEntireFieldListString).each);
+
+    assertThrown(`0-2,6-0`.parseFieldList!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero, No.consumeEntireFieldListString).each);
+    assertThrown(`0-2,6-0`.parseFieldList!(int, No.convertToZeroBasedIndex, Yes.allowFieldNumZero, No.consumeEntireFieldListString).each);
+    assertThrown(`0-2,6-0`.parseFieldList!(int, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero, No.consumeEntireFieldListString).each);
+
+    /* Allowed termination without consuming entire string. */
+    {
+        auto x = `5:abc`.parseFieldList!(size_t, No.convertToZeroBasedIndex, No.allowFieldNumZero, No.consumeEntireFieldListString);
+        assert(x.equal([5]));
+        assert(x.consumed == 1);
+    }
+
+    {
+        auto x = `1-3,6-10:abc`.parseFieldList!(size_t, No.convertToZeroBasedIndex, No.allowFieldNumZero, No.consumeEntireFieldListString);
+        assert(x.equal([1, 2, 3, 6, 7, 8, 9, 10]));
+        assert(x.consumed == 8);
+    }
+
+    {
+        auto x = `1-3,6-10 xyz`.parseFieldList!(size_t, No.convertToZeroBasedIndex, No.allowFieldNumZero, No.consumeEntireFieldListString);
+        assert(x.equal([1, 2, 3, 6, 7, 8, 9, 10]));
+        assert(x.consumed == 8);
+    }
+
+    {
+        auto x = `5 6`.parseFieldList!(size_t, No.convertToZeroBasedIndex, No.allowFieldNumZero, No.consumeEntireFieldListString);
+        assert(x.equal([5]));
+        assert(x.consumed == 1);
+    }
+
+    {
+        auto x = `8,`.parseFieldList!(size_t, No.convertToZeroBasedIndex, No.allowFieldNumZero, No.consumeEntireFieldListString);
+        assert(x.equal([8]));
+        assert(x.consumed == 1);
+    }
+
+    {
+        auto x = `8,9,`.parseFieldList!(size_t, No.convertToZeroBasedIndex, No.allowFieldNumZero, No.consumeEntireFieldListString);
+        assert(x.equal([8, 9]));
+        assert(x.consumed == 3);
+    }
+
+    {
+        auto x = `10,,11`.parseFieldList!(size_t, No.convertToZeroBasedIndex, No.allowFieldNumZero, No.consumeEntireFieldListString);
+        assert(x.equal([10]));
+        assert(x.consumed == 2);
+    }
+
+    {
+        auto x = `1,2-3,`.parseFieldList!(long, Yes.convertToZeroBasedIndex, No.allowFieldNumZero, No.consumeEntireFieldListString);
+        assert(x.equal([0, 1, 2]));
+        assert(x.consumed == 5);
+    }
+
+    {
+        auto x = `1,2,3,,4`.parseFieldList!(long, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero, No.consumeEntireFieldListString);
+        assert(x.equal([0, 1, 2]));
+        assert(x.consumed == 5);
+    }
+
+    {
+        auto x = `8,`.parseFieldList!(long, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero, No.consumeEntireFieldListString);
+        assert(x.equal([7]));
+        assert(x.consumed == 1);
+    }
+
+    {
+        auto x = `10,0,,11`.parseFieldList!(long, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero, No.consumeEntireFieldListString);
+        assert(x.equal([9, -1]));
+        assert(x.consumed == 4);
+    }
+
+    {
+        auto x = `8,9,`.parseFieldList!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero, No.consumeEntireFieldListString);
+        assert(x.equal([8, 9]));
+        assert(x.consumed == 3);
+    }
 
 }
