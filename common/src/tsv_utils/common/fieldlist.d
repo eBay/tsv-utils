@@ -149,7 +149,7 @@ $(LIST
       conjuction with 'namedFieldGroupToRegex' to find the fields in a header line
       matching a regular expression and map them to field numbers.
 
-    * [parseNumericFieldRange] (private) - A helper function that parses a numeric
+    * [parseNumericFieldGroup] (private) - A helper function that parses a numeric
       field group (a string) and returns a range that iterates over all the field
       numbers in the field group. A numeric field-group is either a single number or
       a range. E.g. '5' or '5-8'. This routine was part of the original code
@@ -212,7 +212,7 @@ if (isIntegral!T && (!allowZero || !convertToZero || !isUnsigned!T))
         private string _headerCmdArg;
         private ReturnType!(findFieldGroups!string) _fieldGroupRange;
         private bool _isFrontNumericRange;
-        private ReturnType!(parseNumericFieldRange!(T, convertToZero, allowZero)) _numericFieldRange;
+        private ReturnType!(parseNumericFieldGroup!(T, convertToZero, allowZero)) _numericFieldRange;
         private ReturnType!(namedFieldRegexMatches!(string[])) _namedFieldMatches;
         private size_t _consumed;
 
@@ -273,7 +273,7 @@ if (isIntegral!T && (!allowZero || !convertToZero || !isUnsigned!T))
                 {
                     _isFrontNumericRange = true;
                     _numericFieldRange =
-                        parseNumericFieldRange!(T, convertToZero, allowZero)(fieldGroup);
+                        parseNumericFieldGroup!(T, convertToZero, allowZero)(fieldGroup);
                 }
                 else
                 {
@@ -307,7 +307,7 @@ if (isIntegral!T && (!allowZero || !convertToZero || !isUnsigned!T))
                         _isFrontNumericRange = true;
                         auto fieldGroupAsNumericRange = format("%d-%d", f0[0][0], f1[0][0]);
                         _numericFieldRange =
-                            parseNumericFieldRange!(T, convertToZero, allowZero)(fieldGroupAsNumericRange);
+                            parseNumericFieldGroup!(T, convertToZero, allowZero)(fieldGroupAsNumericRange);
                     }
                     else
                     {
@@ -443,7 +443,7 @@ if (isIntegral!T && (!allowZero || !convertToZero || !isUnsigned!T))
     }
 }
 
-// parseFieldList - The same tests as used for parseNumericFieldRange
+// parseFieldList - The same tests as used for parseNumericFieldGroup
 @safe unittest
 {
     import std.algorithm : each, equal;
@@ -515,7 +515,7 @@ if (isIntegral!T && (!allowZero || !convertToZero || !isUnsigned!T))
     assertThrown(`0-2,6-0`.parseFieldList!(int, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero).each);
 }
 
-// parseFieldList - Subset of tests used for parseNumericFieldRange, but allowing non-consumed characters.
+// parseFieldList - Subset of tests used for parseNumericFieldGroup, but allowing non-consumed characters.
 @safe unittest
 {
     import std.algorithm : each, equal;
@@ -1390,11 +1390,16 @@ if (isInputRange!Range && is(ElementEncodingType!Range == string))
                          emptyRegexMatch);
 }
 
-/* parseNumericFieldRange parses a single number or number range. E.g. '5' or '5-8'.
- * These are the values in a field-list separated by a comma or other delimiter. It
- * returns a range that iterates over all the values in the range.
+/** parseNumericFieldGroup parses a single number or number range. E.g. '5' or '5-8'.
+ *
+ * parseNumericFieldGroupreturns a range that iterates over all the values in the
+ * field-group. It has options supporting conversion of field numbers to zero-based
+ * indices and the use of '0' (zero) as a field number.
+ *
+ * This was part of the original code supporting numeric field list and is used by
+ * both numeric and named field-list routines.
  */
-private auto parseNumericFieldRange(T = size_t,
+private auto parseNumericFieldGroup(T = size_t,
                                     ConvertToZeroBasedIndex convertToZero = No.convertToZeroBasedIndex,
                                     AllowFieldNumZero allowZero = No.allowFieldNumZero)
     (string fieldRange)
@@ -1451,133 +1456,133 @@ if (isIntegral!T && (!allowZero || !convertToZero || !isUnsigned!T))
     return iota(start, last + increment, increment);
 }
 
-// parseNumericFieldRange.
+// parseNumericFieldGroup.
 @safe unittest
 {
     import std.algorithm : equal;
     import std.exception : assertThrown, assertNotThrown;
 
     /* Basic cases */
-    assert(parseNumericFieldRange("1").equal([1]));
-    assert("2".parseNumericFieldRange.equal([2]));
-    assert("3-4".parseNumericFieldRange.equal([3, 4]));
-    assert("3-5".parseNumericFieldRange.equal([3, 4, 5]));
-    assert("4-3".parseNumericFieldRange.equal([4, 3]));
-    assert("10-1".parseNumericFieldRange.equal([10,  9, 8, 7, 6, 5, 4, 3, 2, 1]));
+    assert(parseNumericFieldGroup("1").equal([1]));
+    assert("2".parseNumericFieldGroup.equal([2]));
+    assert("3-4".parseNumericFieldGroup.equal([3, 4]));
+    assert("3-5".parseNumericFieldGroup.equal([3, 4, 5]));
+    assert("4-3".parseNumericFieldGroup.equal([4, 3]));
+    assert("10-1".parseNumericFieldGroup.equal([10,  9, 8, 7, 6, 5, 4, 3, 2, 1]));
 
     /* Convert to zero-based indices */
-    assert(parseNumericFieldRange!(size_t, Yes.convertToZeroBasedIndex)("1").equal([0]));
-    assert("2".parseNumericFieldRange!(size_t, Yes.convertToZeroBasedIndex).equal([1]));
-    assert("3-4".parseNumericFieldRange!(size_t, Yes.convertToZeroBasedIndex).equal([2, 3]));
-    assert("3-5".parseNumericFieldRange!(size_t, Yes.convertToZeroBasedIndex).equal([2, 3, 4]));
-    assert("4-3".parseNumericFieldRange!(size_t, Yes.convertToZeroBasedIndex).equal([3, 2]));
-    assert("10-1".parseNumericFieldRange!(size_t, Yes.convertToZeroBasedIndex).equal([9, 8, 7, 6, 5, 4, 3, 2, 1, 0]));
+    assert(parseNumericFieldGroup!(size_t, Yes.convertToZeroBasedIndex)("1").equal([0]));
+    assert("2".parseNumericFieldGroup!(size_t, Yes.convertToZeroBasedIndex).equal([1]));
+    assert("3-4".parseNumericFieldGroup!(size_t, Yes.convertToZeroBasedIndex).equal([2, 3]));
+    assert("3-5".parseNumericFieldGroup!(size_t, Yes.convertToZeroBasedIndex).equal([2, 3, 4]));
+    assert("4-3".parseNumericFieldGroup!(size_t, Yes.convertToZeroBasedIndex).equal([3, 2]));
+    assert("10-1".parseNumericFieldGroup!(size_t, Yes.convertToZeroBasedIndex).equal([9, 8, 7, 6, 5, 4, 3, 2, 1, 0]));
 
     /* Allow zero. */
-    assert("0".parseNumericFieldRange!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero).equal([0]));
-    assert(parseNumericFieldRange!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero)("1").equal([1]));
-    assert("3-4".parseNumericFieldRange!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero).equal([3, 4]));
-    assert("10-1".parseNumericFieldRange!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero).equal([10,  9, 8, 7, 6, 5, 4, 3, 2, 1]));
+    assert("0".parseNumericFieldGroup!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero).equal([0]));
+    assert(parseNumericFieldGroup!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero)("1").equal([1]));
+    assert("3-4".parseNumericFieldGroup!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero).equal([3, 4]));
+    assert("10-1".parseNumericFieldGroup!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero).equal([10,  9, 8, 7, 6, 5, 4, 3, 2, 1]));
 
     /* Allow zero, convert to zero-based index. */
-    assert("0".parseNumericFieldRange!(long, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero).equal([-1]));
-    assert(parseNumericFieldRange!(long, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero)("1").equal([0]));
-    assert("3-4".parseNumericFieldRange!(long, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero).equal([2, 3]));
-    assert("10-1".parseNumericFieldRange!(long, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero).equal([9, 8, 7, 6, 5, 4, 3, 2, 1, 0]));
+    assert("0".parseNumericFieldGroup!(long, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero).equal([-1]));
+    assert(parseNumericFieldGroup!(long, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero)("1").equal([0]));
+    assert("3-4".parseNumericFieldGroup!(long, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero).equal([2, 3]));
+    assert("10-1".parseNumericFieldGroup!(long, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero).equal([9, 8, 7, 6, 5, 4, 3, 2, 1, 0]));
 
     /* Alternate integer types. */
-    assert("2".parseNumericFieldRange!uint.equal([2]));
-    assert("3-5".parseNumericFieldRange!uint.equal([3, 4, 5]));
-    assert("10-1".parseNumericFieldRange!uint.equal([10,  9, 8, 7, 6, 5, 4, 3, 2, 1]));
-    assert("2".parseNumericFieldRange!int.equal([2]));
-    assert("3-5".parseNumericFieldRange!int.equal([3, 4, 5]));
-    assert("10-1".parseNumericFieldRange!int.equal([10,  9, 8, 7, 6, 5, 4, 3, 2, 1]));
-    assert("2".parseNumericFieldRange!ushort.equal([2]));
-    assert("3-5".parseNumericFieldRange!ushort.equal([3, 4, 5]));
-    assert("10-1".parseNumericFieldRange!ushort.equal([10,  9, 8, 7, 6, 5, 4, 3, 2, 1]));
-    assert("2".parseNumericFieldRange!short.equal([2]));
-    assert("3-5".parseNumericFieldRange!short.equal([3, 4, 5]));
-    assert("10-1".parseNumericFieldRange!short.equal([10,  9, 8, 7, 6, 5, 4, 3, 2, 1]));
+    assert("2".parseNumericFieldGroup!uint.equal([2]));
+    assert("3-5".parseNumericFieldGroup!uint.equal([3, 4, 5]));
+    assert("10-1".parseNumericFieldGroup!uint.equal([10,  9, 8, 7, 6, 5, 4, 3, 2, 1]));
+    assert("2".parseNumericFieldGroup!int.equal([2]));
+    assert("3-5".parseNumericFieldGroup!int.equal([3, 4, 5]));
+    assert("10-1".parseNumericFieldGroup!int.equal([10,  9, 8, 7, 6, 5, 4, 3, 2, 1]));
+    assert("2".parseNumericFieldGroup!ushort.equal([2]));
+    assert("3-5".parseNumericFieldGroup!ushort.equal([3, 4, 5]));
+    assert("10-1".parseNumericFieldGroup!ushort.equal([10,  9, 8, 7, 6, 5, 4, 3, 2, 1]));
+    assert("2".parseNumericFieldGroup!short.equal([2]));
+    assert("3-5".parseNumericFieldGroup!short.equal([3, 4, 5]));
+    assert("10-1".parseNumericFieldGroup!short.equal([10,  9, 8, 7, 6, 5, 4, 3, 2, 1]));
 
-    assert("0".parseNumericFieldRange!(long, No.convertToZeroBasedIndex, Yes.allowFieldNumZero).equal([0]));
-    assert("0".parseNumericFieldRange!(uint, No.convertToZeroBasedIndex, Yes.allowFieldNumZero).equal([0]));
-    assert("0".parseNumericFieldRange!(int, No.convertToZeroBasedIndex, Yes.allowFieldNumZero).equal([0]));
-    assert("0".parseNumericFieldRange!(ushort, No.convertToZeroBasedIndex, Yes.allowFieldNumZero).equal([0]));
-    assert("0".parseNumericFieldRange!(short, No.convertToZeroBasedIndex, Yes.allowFieldNumZero).equal([0]));
-    assert("0".parseNumericFieldRange!(int, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero).equal([-1]));
-    assert("0".parseNumericFieldRange!(short, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero).equal([-1]));
+    assert("0".parseNumericFieldGroup!(long, No.convertToZeroBasedIndex, Yes.allowFieldNumZero).equal([0]));
+    assert("0".parseNumericFieldGroup!(uint, No.convertToZeroBasedIndex, Yes.allowFieldNumZero).equal([0]));
+    assert("0".parseNumericFieldGroup!(int, No.convertToZeroBasedIndex, Yes.allowFieldNumZero).equal([0]));
+    assert("0".parseNumericFieldGroup!(ushort, No.convertToZeroBasedIndex, Yes.allowFieldNumZero).equal([0]));
+    assert("0".parseNumericFieldGroup!(short, No.convertToZeroBasedIndex, Yes.allowFieldNumZero).equal([0]));
+    assert("0".parseNumericFieldGroup!(int, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero).equal([-1]));
+    assert("0".parseNumericFieldGroup!(short, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero).equal([-1]));
 
     /* Max field value cases. */
-    assert("65535".parseNumericFieldRange!ushort.equal([65535]));   // ushort max
-    assert("65533-65535".parseNumericFieldRange!ushort.equal([65533, 65534, 65535]));
-    assert("32767".parseNumericFieldRange!short.equal([32767]));    // short max
-    assert("32765-32767".parseNumericFieldRange!short.equal([32765, 32766, 32767]));
-    assert("32767".parseNumericFieldRange!(short, Yes.convertToZeroBasedIndex).equal([32766]));
+    assert("65535".parseNumericFieldGroup!ushort.equal([65535]));   // ushort max
+    assert("65533-65535".parseNumericFieldGroup!ushort.equal([65533, 65534, 65535]));
+    assert("32767".parseNumericFieldGroup!short.equal([32767]));    // short max
+    assert("32765-32767".parseNumericFieldGroup!short.equal([32765, 32766, 32767]));
+    assert("32767".parseNumericFieldGroup!(short, Yes.convertToZeroBasedIndex).equal([32766]));
 
     /* Error cases. */
-    assertThrown("".parseNumericFieldRange);
-    assertThrown(" ".parseNumericFieldRange);
-    assertThrown("-".parseNumericFieldRange);
-    assertThrown(" -".parseNumericFieldRange);
-    assertThrown("- ".parseNumericFieldRange);
-    assertThrown("1-".parseNumericFieldRange);
-    assertThrown("-2".parseNumericFieldRange);
-    assertThrown("-1".parseNumericFieldRange);
-    assertThrown("1.0".parseNumericFieldRange);
-    assertThrown("0".parseNumericFieldRange);
-    assertThrown("0-3".parseNumericFieldRange);
-    assertThrown("3-0".parseNumericFieldRange);
-    assertThrown("-2-4".parseNumericFieldRange);
-    assertThrown("2--4".parseNumericFieldRange);
-    assertThrown("2-".parseNumericFieldRange);
-    assertThrown("a".parseNumericFieldRange);
-    assertThrown("0x3".parseNumericFieldRange);
-    assertThrown("3U".parseNumericFieldRange);
-    assertThrown("1_000".parseNumericFieldRange);
-    assertThrown(".".parseNumericFieldRange);
+    assertThrown("".parseNumericFieldGroup);
+    assertThrown(" ".parseNumericFieldGroup);
+    assertThrown("-".parseNumericFieldGroup);
+    assertThrown(" -".parseNumericFieldGroup);
+    assertThrown("- ".parseNumericFieldGroup);
+    assertThrown("1-".parseNumericFieldGroup);
+    assertThrown("-2".parseNumericFieldGroup);
+    assertThrown("-1".parseNumericFieldGroup);
+    assertThrown("1.0".parseNumericFieldGroup);
+    assertThrown("0".parseNumericFieldGroup);
+    assertThrown("0-3".parseNumericFieldGroup);
+    assertThrown("3-0".parseNumericFieldGroup);
+    assertThrown("-2-4".parseNumericFieldGroup);
+    assertThrown("2--4".parseNumericFieldGroup);
+    assertThrown("2-".parseNumericFieldGroup);
+    assertThrown("a".parseNumericFieldGroup);
+    assertThrown("0x3".parseNumericFieldGroup);
+    assertThrown("3U".parseNumericFieldGroup);
+    assertThrown("1_000".parseNumericFieldGroup);
+    assertThrown(".".parseNumericFieldGroup);
 
-    assertThrown("".parseNumericFieldRange!(size_t, Yes.convertToZeroBasedIndex));
-    assertThrown(" ".parseNumericFieldRange!(size_t, Yes.convertToZeroBasedIndex));
-    assertThrown("-".parseNumericFieldRange!(size_t, Yes.convertToZeroBasedIndex));
-    assertThrown("1-".parseNumericFieldRange!(size_t, Yes.convertToZeroBasedIndex));
-    assertThrown("-2".parseNumericFieldRange!(size_t, Yes.convertToZeroBasedIndex));
-    assertThrown("-1".parseNumericFieldRange!(size_t, Yes.convertToZeroBasedIndex));
-    assertThrown("0".parseNumericFieldRange!(size_t, Yes.convertToZeroBasedIndex));
-    assertThrown("0-3".parseNumericFieldRange!(size_t, Yes.convertToZeroBasedIndex));
-    assertThrown("3-0".parseNumericFieldRange!(size_t, Yes.convertToZeroBasedIndex));
-    assertThrown("-2-4".parseNumericFieldRange!(size_t, Yes.convertToZeroBasedIndex));
-    assertThrown("2--4".parseNumericFieldRange!(size_t, Yes.convertToZeroBasedIndex));
+    assertThrown("".parseNumericFieldGroup!(size_t, Yes.convertToZeroBasedIndex));
+    assertThrown(" ".parseNumericFieldGroup!(size_t, Yes.convertToZeroBasedIndex));
+    assertThrown("-".parseNumericFieldGroup!(size_t, Yes.convertToZeroBasedIndex));
+    assertThrown("1-".parseNumericFieldGroup!(size_t, Yes.convertToZeroBasedIndex));
+    assertThrown("-2".parseNumericFieldGroup!(size_t, Yes.convertToZeroBasedIndex));
+    assertThrown("-1".parseNumericFieldGroup!(size_t, Yes.convertToZeroBasedIndex));
+    assertThrown("0".parseNumericFieldGroup!(size_t, Yes.convertToZeroBasedIndex));
+    assertThrown("0-3".parseNumericFieldGroup!(size_t, Yes.convertToZeroBasedIndex));
+    assertThrown("3-0".parseNumericFieldGroup!(size_t, Yes.convertToZeroBasedIndex));
+    assertThrown("-2-4".parseNumericFieldGroup!(size_t, Yes.convertToZeroBasedIndex));
+    assertThrown("2--4".parseNumericFieldGroup!(size_t, Yes.convertToZeroBasedIndex));
 
-    assertThrown("".parseNumericFieldRange!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero));
-    assertThrown(" ".parseNumericFieldRange!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero));
-    assertThrown("-".parseNumericFieldRange!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero));
-    assertThrown("1-".parseNumericFieldRange!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero));
-    assertThrown("-2".parseNumericFieldRange!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero));
-    assertThrown("-1".parseNumericFieldRange!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero));
-    assertThrown("0-3".parseNumericFieldRange!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero));
-    assertThrown("3-0".parseNumericFieldRange!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero));
-    assertThrown("-2-4".parseNumericFieldRange!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero));
-    assertThrown("2--4".parseNumericFieldRange!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero));
+    assertThrown("".parseNumericFieldGroup!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero));
+    assertThrown(" ".parseNumericFieldGroup!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero));
+    assertThrown("-".parseNumericFieldGroup!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero));
+    assertThrown("1-".parseNumericFieldGroup!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero));
+    assertThrown("-2".parseNumericFieldGroup!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero));
+    assertThrown("-1".parseNumericFieldGroup!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero));
+    assertThrown("0-3".parseNumericFieldGroup!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero));
+    assertThrown("3-0".parseNumericFieldGroup!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero));
+    assertThrown("-2-4".parseNumericFieldGroup!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero));
+    assertThrown("2--4".parseNumericFieldGroup!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero));
 
-    assertThrown("".parseNumericFieldRange!(long, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero));
-    assertThrown(" ".parseNumericFieldRange!(long, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero));
-    assertThrown("-".parseNumericFieldRange!(long, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero));
-    assertThrown("1-".parseNumericFieldRange!(long, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero));
-    assertThrown("-2".parseNumericFieldRange!(long, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero));
-    assertThrown("-1".parseNumericFieldRange!(long, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero));
-    assertThrown("0-3".parseNumericFieldRange!(long, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero));
-    assertThrown("3-0".parseNumericFieldRange!(long, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero));
-    assertThrown("-2-4".parseNumericFieldRange!(long, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero));
-    assertThrown("2--4".parseNumericFieldRange!(long, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero));
+    assertThrown("".parseNumericFieldGroup!(long, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero));
+    assertThrown(" ".parseNumericFieldGroup!(long, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero));
+    assertThrown("-".parseNumericFieldGroup!(long, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero));
+    assertThrown("1-".parseNumericFieldGroup!(long, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero));
+    assertThrown("-2".parseNumericFieldGroup!(long, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero));
+    assertThrown("-1".parseNumericFieldGroup!(long, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero));
+    assertThrown("0-3".parseNumericFieldGroup!(long, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero));
+    assertThrown("3-0".parseNumericFieldGroup!(long, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero));
+    assertThrown("-2-4".parseNumericFieldGroup!(long, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero));
+    assertThrown("2--4".parseNumericFieldGroup!(long, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero));
 
     /* Value out of range cases. */
-    assertThrown("65536".parseNumericFieldRange!ushort);   // One more than ushort max.
-    assertThrown("65535-65536".parseNumericFieldRange!ushort);
-    assertThrown("32768".parseNumericFieldRange!short);    // One more than short max.
-    assertThrown("32765-32768".parseNumericFieldRange!short);
+    assertThrown("65536".parseNumericFieldGroup!ushort);   // One more than ushort max.
+    assertThrown("65535-65536".parseNumericFieldGroup!ushort);
+    assertThrown("32768".parseNumericFieldGroup!short);    // One more than short max.
+    assertThrown("32765-32768".parseNumericFieldGroup!short);
     // Convert to zero limits signed range.
-    assertThrown("32768".parseNumericFieldRange!(ushort, Yes.convertToZeroBasedIndex));
-    assert("32767".parseNumericFieldRange!(ushort, Yes.convertToZeroBasedIndex).equal([32766]));
+    assertThrown("32768".parseNumericFieldGroup!(ushort, Yes.convertToZeroBasedIndex));
+    assert("32767".parseNumericFieldGroup!(ushort, Yes.convertToZeroBasedIndex).equal([32766]));
 }
 
 
@@ -1832,7 +1837,7 @@ if (isIntegral!T && (!allowZero || !convertToZero || !isUnsigned!T))
     auto _splitFieldList = fieldList.splitter(delim);
     auto _currFieldParse =
         (_splitFieldList.empty ? "" : _splitFieldList.front)
-        .parseNumericFieldRange!(T, convertToZero, allowZero);
+        .parseNumericFieldGroup!(T, convertToZero, allowZero);
 
     if (!_splitFieldList.empty) _splitFieldList.popFront;
 
@@ -1860,7 +1865,7 @@ if (isIntegral!T && (!allowZero || !convertToZero || !isUnsigned!T))
             _currFieldParse.popFront;
             if (_currFieldParse.empty && !_splitFieldList.empty)
             {
-                _currFieldParse = _splitFieldList.front.parseNumericFieldRange!(
+                _currFieldParse = _splitFieldList.front.parseNumericFieldGroup!(
                     T, convertToZero, allowZero);
                 _splitFieldList.popFront;
             }
