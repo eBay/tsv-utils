@@ -387,6 +387,11 @@ if (isIntegral!T && (!allowZero || !convertToZero || !isUnsigned!T))
 
         void popFront() @safe
         {
+
+            /* TODO: Move these definitions to a common location in the file. */
+            enum char SPACE = ' ';
+            enum char COLON = ':';
+
             assert(!empty, "Attempting to popFront an empty field-list.");
 
             if (_isFrontNumericRange) _numericFieldRange.popFront;
@@ -399,10 +404,20 @@ if (isIntegral!T && (!allowZero || !convertToZero || !isUnsigned!T))
 
             assert(_consumed <= _fieldList.length);
 
-            static if (consumeEntire)
+            if (empty)
             {
-                enforce(!empty || _consumed == _fieldList.length,
-                        format("Invalid field list: '%s'.", _fieldList));
+                static if (consumeEntire)
+                {
+                    enforce(_consumed == _fieldList.length,
+                            format("Invalid field list: '%s'.", _fieldList));
+                }
+                else
+                {
+                    enforce((_consumed == _fieldList.length ||
+                             _fieldList[_consumed] == SPACE ||
+                             _fieldList[_consumed] == COLON),
+                            format("Invalid field list: '%s'.", _fieldList));
+                }
             }
         }
 
@@ -677,54 +692,15 @@ if (isIntegral!T && (!allowZero || !convertToZero || !isUnsigned!T))
         assert(x.consumed == 1);
     }
 
-    {
-        auto x = `8,`.parseFieldList!(size_t, No.convertToZeroBasedIndex, No.allowFieldNumZero, No.consumeEntireFieldListString);
-        assert(x.equal([8]));
-        assert(x.consumed == 1);
-    }
-
-    {
-        auto x = `8,9,`.parseFieldList!(size_t, No.convertToZeroBasedIndex, No.allowFieldNumZero, No.consumeEntireFieldListString);
-        assert(x.equal([8, 9]));
-        assert(x.consumed == 3);
-    }
-
-    {
-        auto x = `10,,11`.parseFieldList!(size_t, No.convertToZeroBasedIndex, No.allowFieldNumZero, No.consumeEntireFieldListString);
-        assert(x.equal([10]));
-        assert(x.consumed == 2);
-    }
-
-    {
-        auto x = `1,2-3,`.parseFieldList!(long, Yes.convertToZeroBasedIndex, No.allowFieldNumZero, No.consumeEntireFieldListString);
-        assert(x.equal([0, 1, 2]));
-        assert(x.consumed == 5);
-    }
-
-    {
-        auto x = `1,2,3,,4`.parseFieldList!(long, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero, No.consumeEntireFieldListString);
-        assert(x.equal([0, 1, 2]));
-        assert(x.consumed == 5);
-    }
-
-    {
-        auto x = `8,`.parseFieldList!(long, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero, No.consumeEntireFieldListString);
-        assert(x.equal([7]));
-        assert(x.consumed == 1);
-    }
-
-    {
-        auto x = `10,0,,11`.parseFieldList!(long, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero, No.consumeEntireFieldListString);
-        assert(x.equal([9, -1]));
-        assert(x.consumed == 4);
-    }
-
-    {
-        auto x = `8,9,`.parseFieldList!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero, No.consumeEntireFieldListString);
-        assert(x.equal([8, 9]));
-        assert(x.consumed == 3);
-    }
-
+    /* Invalid termination when not consuming the entire string. */
+    assertThrown(`8,`.parseFieldList!(size_t, No.convertToZeroBasedIndex, No.allowFieldNumZero, No.consumeEntireFieldListString).each);
+    assertThrown(`8,9,`.parseFieldList!(size_t, No.convertToZeroBasedIndex, No.allowFieldNumZero, No.consumeEntireFieldListString).each);
+    assertThrown(`10,,11`.parseFieldList!(size_t, No.convertToZeroBasedIndex, No.allowFieldNumZero, No.consumeEntireFieldListString).each);
+    assertThrown(`1,2-3,`.parseFieldList!(long, Yes.convertToZeroBasedIndex, No.allowFieldNumZero, No.consumeEntireFieldListString).each);
+    assertThrown(`1,2,3,,4`.parseFieldList!(long, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero, No.consumeEntireFieldListString).each);
+    assertThrown(`8,`.parseFieldList!(long, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero, No.consumeEntireFieldListString).each);
+    assertThrown(`10,0,,11`.parseFieldList!(long, Yes.convertToZeroBasedIndex, Yes.allowFieldNumZero, No.consumeEntireFieldListString).each);
+    assertThrown(`8,9,`.parseFieldList!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero, No.consumeEntireFieldListString).each);
 }
 
 /**
