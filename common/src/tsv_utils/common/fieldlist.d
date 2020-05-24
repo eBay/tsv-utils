@@ -1,172 +1,171 @@
 /**
-Utilities for parsing "field-lists" entered on the command line.
+   Utilities for parsing "field-lists" entered on the command line.
 
-# Field-lists
+   # Field-lists
 
-A "field-list" is entered on the command line to specify a set of fields for a
-command option. A field-list is a comma separated list of individual fields and
-"field-ranges". Fields are identified either by field number or by field names found
-in the header line of the input data. A field-range is a pair of fields separated
-by a hyphen and includes both the listed fields and all the fields in between.
+   A "field-list" is entered on the command line to specify a set of fields for a
+   command option. A field-list is a comma separated list of individual fields and
+   "field-ranges". Fields are identified either by field number or by field names found
+   in the header line of the input data. A field-range is a pair of fields separated
+   by a hyphen and includes both the listed fields and all the fields in between.
 
-$(NOTE Internally, the comma separated entries in a field-list are called a
-field-group.)
+   $(NOTE Internally, the comma separated entries in a field-list are called a
+   field-group.)
 
-Fields-lists are parsed into an ordered set of one-based field numbers. Repeating
-fields are allowed. Some examples of numeric fields with the `tsv-select` tool:
+   Fields-lists are parsed into an ordered set of one-based field numbers. Repeating
+   fields are allowed. Some examples of numeric fields with the `tsv-select` tool:
 
-$(CONSOLE
-    $ tsv-select -f 3         # Field  3
-    $ tsv-select -f 3-5       # Fields 3,4,5
-    $ tsv-select -f 7,3-5     # Fields 7,3,4,5
-    $ tsv-select -f 3,5-3,5   # Fields 3,5,4,3,5
-)
+   $(CONSOLE
+       $ tsv-select -f 3         # Field  3
+       $ tsv-select -f 3-5       # Fields 3,4,5
+       $ tsv-select -f 7,3-5     # Fields 7,3,4,5
+       $ tsv-select -f 3,5-3,5   # Fields 3,5,4,3,5
+   )
 
-Fields specified by name must match a name in the header line of the input data.
-Glob-style wildcarding is supported using the asterisk (`*`) character. When
-wildcards are used with a single field, all matching fields in the header are used.
-When used in a field range, both field names must match a single header field.
+   Fields specified by name must match a name in the header line of the input data.
+   Glob-style wildcarding is supported using the asterisk (`*`) character. When
+   wildcards are used with a single field, all matching fields in the header are used.
+   When used in a field range, both field names must match a single header field.
 
-Consider a file `data.tsv` containing timing information:
+   Consider a file `data.tsv` containing timing information:
 
-$(CONSOLE
-    $ tsv-pretty data.tsv
-    run  elapsed_time  user_time  system_time  max_memory
-      1          57.5       52.0          5.5        1420
-      2          52.0       49.0          3.0        1270
-      3          55.5       51.0          4.5        1410
-)
+   $(CONSOLE
+       $ tsv-pretty data.tsv
+       run  elapsed_time  user_time  system_time  max_memory
+         1          57.5       52.0          5.5        1420
+         2          52.0       49.0          3.0        1270
+         3          55.5       51.0          4.5        1410
+   )
 
-The header fields are:
+   The header fields are:
 
-```
-    1    run
-    2    elapsed_time
-    3    user_time
-    4    system_time
-    5    max_memory
-```
+   ```
+       1    run
+       2    elapsed_time
+       3    user_time
+       4    system_time
+       5    max_memory
+   ```
 
-Some examples using named fields for this file:
+   Some examples using named fields for this file:
 
-$(CONSOLE
-    $ tsv-select data.tsv -f user_time           # Field  3
-    $ tsv-select data.tsv -f run,user_time       # Fields 1,3
-    $ tsv-select data.tsv -f run-user_time       # Fields 1,2,3
-    $ tsv-select data.tsv -f '*_memory'          # Field  6
-    $ tsv-select data.tsv -f '*_time'            # Fields 2,3,4
-    $ tsv-select data.tsv -f '*_time,*_memory'   # Fields 2,3,4,5
-    $ tsv-select data.tsv -f '*_memory,*_time'   # Fields 5,2,3,4
-    $ tsv-select data.tsv -f 'run-*_time'        # Invalid range. '*_time' matches 3 fields
-)
+   $(CONSOLE
+       $ tsv-select data.tsv -f user_time           # Field  3
+       $ tsv-select data.tsv -f run,user_time       # Fields 1,3
+       $ tsv-select data.tsv -f run-user_time       # Fields 1,2,3
+       $ tsv-select data.tsv -f '*_memory'          # Field  6
+       $ tsv-select data.tsv -f '*_time'            # Fields 2,3,4
+       $ tsv-select data.tsv -f '*_time,*_memory'   # Fields 2,3,4,5
+       $ tsv-select data.tsv -f '*_memory,*_time'   # Fields 5,2,3,4
+       $ tsv-select data.tsv -f 'run-*_time'        # Invalid range. '*_time' matches 3 fields
+   )
 
-Both field numbers and fields names can both be used in the same field-list, except
-when specifying a field range:
+   Both field numbers and fields names can both be used in the same field-list, except
+   when specifying a field range:
 
-$(CONSOLE
-    $ tsv-select data.tsv -f 1,user_time         # Fields 1,3
-    $ tsv-select data.tsv -f 1-user_time         # Invalid range
-)
+   $(CONSOLE
+       $ tsv-select data.tsv -f 1,user_time         # Fields 1,3
+       $ tsv-select data.tsv -f 1-user_time         # Invalid range
+   )
 
-A backslash is used to escape special characters occurring in field names. Characters
-that must be escaped when specifying them field names are: asterisk (`*`), comma(`,`),
-colon (`:`), space (` `), hyphen (`-`), and backslash (`\`). A backslash is also used
-to escape numbers that should be treated as field names rather than field numbers.
-Consider a file with the following header fields:
-```
-    1    test id
-    2    run:id
-    3    time-stamp
-    4    001
-    5    100
-```
+   A backslash is used to escape special characters occurring in field names. Characters
+   that must be escaped when specifying them field names are: asterisk (`*`), comma(`,`),
+   colon (`:`), space (` `), hyphen (`-`), and backslash (`\`). A backslash is also used
+   to escape numbers that should be treated as field names rather than field numbers.
+   Consider a file with the following header fields:
+   ```
+       1    test id
+       2    run:id
+       3    time-stamp
+       4    001
+       5    100
+   ```
 
-These fields can be used in named field commands as follows:
+   These fields can be used in named field commands as follows:
 
-$(CONSOLE
-    $ tsv-select file.tsv -f 'test\ id'          # Field 1
-    $ tsv-select file.tsv -f 'run\:1'            # Field 2
-    $ tsv-select file.tsv -f 'time\-stamp'       # Field 3
-    $ tsv-select file.tsv -f '\001'              # Field 4
-    $ tsv-select file.tsv -f '\100'              # Field 5
-    $ tsv-select file.tsv -f '\001,\100'         # Fields 4,5
-)
+   $(CONSOLE
+       $ tsv-select file.tsv -f 'test\ id'          # Field 1
+       $ tsv-select file.tsv -f 'run\:1'            # Field 2
+       $ tsv-select file.tsv -f 'time\-stamp'       # Field 3
+       $ tsv-select file.tsv -f '\001'              # Field 4
+       $ tsv-select file.tsv -f '\100'              # Field 5
+       $ tsv-select file.tsv -f '\001,\100'         # Fields 4,5
+   )
 
-$(NOTE The use of single quotes on the command line is necessary to avoid shell
-interpretation of the backslash character.)
+   $(NOTE The use of single quotes on the command line is necessary to avoid shell
+   interpretation of the backslash character.)
 
-Fields lists are combined with other content in some command line options. The colon
-and space characters are both terminator characters for field-lists. Some examples:
+   Fields lists are combined with other content in some command line options. The colon
+   and space characters are both terminator characters for field-lists. Some examples:
 
-$(CONSOLE
-    $ tsv-filter --le 3:100                        # Field 3 < 100
-    $ tsv-filter --le elapsed_time:100             # 'elapsed_time' field < 100
-    $ tsv-summarize --quantile '*_time:0.25,0.75'  # 1st and 3rd quantiles for time fields
-)
+   $(CONSOLE
+       $ tsv-filter --le 3:100                        # Field 3 < 100
+       $ tsv-filter --le elapsed_time:100             # 'elapsed_time' field < 100
+       $ tsv-summarize --quantile '*_time:0.25,0.75'  # 1st and 3rd quantiles for time fields
+   )
 
-Field-list support routines identify the termination of the field-list. They do not
-do any processing of content occurring after the field-list.
+   Field-list support routines identify the termination of the field-list. They do not
+   do any processing of content occurring after the field-list.
 
-# Numeric field-lists
+   # Numeric field-lists
 
-The original field-lists used in tsv-utils were numeric only. This is still the
-format used when a header line is not available. They are a strict subset of the
-field-list syntax described so above. Due to this history there are support routines
-that only support numeric field-lists. They are used by tools supporting only numeric
-field lists. They are also used by the more general field-list processing routines in
-this file when a named field or field range can be reduced to a numeric field-group.
+   The original field-lists used in tsv-utils were numeric only. This is still the
+   format used when a header line is not available. They are a strict subset of the
+   field-list syntax described so above. Due to this history there are support routines
+   that only support numeric field-lists. They are used by tools supporting only numeric
+   field lists. They are also used by the more general field-list processing routines in
+   this file when a named field or field range can be reduced to a numeric field-group.
 
-# Field-list utilities
+   # Field-list utilities
 
-The following facilities are used for field-list processing:
+   The following facilities are used for field-list processing:
 
-$(LIST
-    * [parseFieldList] - The main routine for parsing a field-list entered on the
-      command line. It returns a range iterating over the field numbers represented
-      by field-list. It handles both numeric and named field-lists and works with or
-      without header lines. The range has a special member function that tracks how
-      much of the original input range has been consumed.
+   $(LIST
+       * [parseFieldList] - The main routine for parsing a field-list entered on the
+         command line. It returns a range iterating over the field numbers represented
+         by field-list. It handles both numeric and named field-lists and works with or
+         without header lines. The range has a special member function that tracks how
+         much of the original input range has been consumed.
 
-    * [findFieldGroups] (private) - Range that iterates over the "field-groups" in a
-      "field-list".
+       * `findFieldGroups` (private) - Range that iterates over the "field-groups" in a
+         "field-list".
 
-    * [isNumericFieldGroup] (private) - Determines if a field-group is a valid
-      numeric field-group.
+       * `isNumericFieldGroup` (private) - Determines if a field-group is a valid
+         numeric field-group.
 
-    * [isNumericFieldGroupWithHyphenFirstOrLast] (private) - Determines if
-      field-group is a valid numeric group, except for having a leading or trailing
-      hypen. This test is used to provide better error messages. A field-group that
-      does not pass either 'isNumericFieldGroup' or
-      'isNumericFieldGroupWithHyphenFirstOrLast' is processed as named field-group.
+       * `isNumericFieldGroupWithHyphenFirstOrLast` (private) - Determines if
+         field-group is a valid numeric group, except for having a leading or trailing
+         hypen. This test is used to provide better error messages. A field-group that
+         does not pass either `isNumericFieldGroup` or
+         `isNumericFieldGroupWithHyphenFirstOrLast` is processed as named field-group.
 
-    * [namedFieldGroupToRegex] (private) - Generates regexes for matching field names
-      in a field group to field names in the header line. One regex is generated for
-      a single field, two are generated for a range. Wildcards and escape characters
-      are translated into the correct regex format.
+       * `namedFieldGroupToRegex` (private) - Generates regexes for matching field names
+         in a field group to field names in the header line. One regex is generated for
+         a single field, two are generated for a range. Wildcards and escape characters
+         are translated into the correct regex format.
 
-    * [namedFieldRegexMatches] (private) - Returns an input range interating over all
-      the fields (strings) in a range matching a regular expression. It is used in
-      conjuction with 'namedFieldGroupToRegex' to find the fields in a header line
-      matching a regular expression and map them to field numbers.
+       * `namedFieldRegexMatches` (private) - Returns an input range interating over all
+         the fields (strings) in a range matching a regular expression. It is used in
+         conjuction with `namedFieldGroupToRegex` to find the fields in a header line
+         matching a regular expression and map them to field numbers.
 
-    * [parseNumericFieldGroup] (private) - A helper function that parses a numeric
-      field group (a string) and returns a range that iterates over all the field
-      numbers in the field group. A numeric field-group is either a single number or
-      a range. E.g. '5' or '5-8'. This routine was part of the original code
-      supporting only numeric field-lists.
+       * `parseNumericFieldGroup` (private) - A helper function that parses a numeric
+         field group (a string) and returns a range that iterates over all the field
+         numbers in the field group. A numeric field-group is either a single number or
+         a range. E.g. `5` or `5-8`. This routine was part of the original code
+         supporting only numeric field-lists.
 
-    * [parseNumericFieldList] - This is a top-level routine for processing numeric
-      field-lists entered on the command line. It was the original routine used by
-      tsv-utils tools when only numeric field-lists where supported. It is still
-      used in cases where only numeric field-lists are supported.
+       * [parseNumericFieldList] - This is a top-level routine for processing numeric
+         field-lists entered on the command line. It was the original routine used by
+         tsv-utils tools when only numeric field-lists where supported. It is still
+         used in cases where only numeric field-lists are supported.
 
-    * [makeFieldListOptionHandler] - Returns a delegate that can be passed to
-      std.getopt for parsing numeric field-lists. It was part of the original code
-      supporting numeric field-lists. Note that delegate passed to std.getopt do
-      not have access to the header line of the input file, so the technique can
-      only be used for numeric field-lists.
-)
-
+       * [makeFieldListOptionHandler] - Returns a delegate that can be passed to
+         std.getopt for parsing numeric field-lists. It was part of the original code
+         supporting numeric field-lists. Note that delegate passed to std.getopt do
+         not have access to the header line of the input file, so the technique can
+         only be used for numeric field-lists.
+   )
 */
 
 module tsv_utils.common.fieldlist;
@@ -179,24 +178,65 @@ import std.stdio;
 import std.traits : isIntegral, isNarrowString, isUnsigned, ReturnType, Unqual;
 import std.typecons : tuple, Tuple;
 
-/** [Yes|No].convertToZeroBasedIndex parameter controls whether field numbers are
- *  converted to zero-based indices by parseFieldList, parseNumericFieldList, and
- *  makeFieldListOptionHander.
- */
+/**
+   [Yes|No].convertToZeroBasedIndex parameter controls whether field numbers are
+   converted to zero-based indices. Used by parseFieldList, parseNumericFieldList,
+   and makeFieldListOptionHander.
+*/
 alias ConvertToZeroBasedIndex = Flag!"convertToZeroBasedIndex";
 
-/** [Yes|No].allowFieldNumZero parameter controls whether zero is a valid field. This
- * is used by parseFieldList, parseNumericFieldList, and makeFieldListOptionHander.
- */
+/**
+   [Yes|No].allowFieldNumZero parameter controls whether zero is a valid field. Used
+   by parseFieldList, parseNumericFieldList, and makeFieldListOptionHander.
+*/
 alias AllowFieldNumZero = Flag!"allowFieldNumZero";
 
-/** [Yes|No].consumeEntireFieldListString parameter controls whether the entire
- * field-list string should be consumed. This is used by parseNumericFieldList.
- */
+/**
+   [Yes|No].consumeEntireFieldListString parameter indicates whether the entire
+   field-list string should be consumed. Used by parseNumericFieldList.
+*/
 alias ConsumeEntireFieldListString = Flag!"consumeEntireFieldListString";
 
-/** parseFieldList
- */
+/**
+   `parseFieldList` returns a range iterating over the field numbers in a field-list.
+
+   `parseFieldList` is the main routine for parsing field-lists entered on the command
+   line. It handles both numeric and named field-lists. The elements of the returned
+   range are sequence of 1-up field numbers corresponding to the fields specified in
+   the field-list string.
+
+   An error is thrown if the field-list string is malformed. The error text is
+   intended for display to the user invoking the tsv-utils tool from the command
+   line.
+
+   Named field-lists require an array of field names from the header line. Named
+   fields are allowed only if a header line is available. Using a named field-list
+   without a header line generates an error message referencing the headerCmdArg
+   string as a hint to the end user.
+
+   Several optional modes of operation are available:
+
+   $(LIST
+       * Conversion to zero-based indexes (`convertToZero` template parameter) - Returns
+         the field numbers as zero-based array indices rather than 1-based field numbers.
+
+       * Allow zero as a field number (`allowZero` template parameter) - This allows zero
+         to be used as a field number. This is typically used to allow the user to
+         specify the entire line rather than an individual field. Use a signed result
+         type if also using covertToZero, as this will be returned as (-1).
+
+       * Consuming the entire field list string (`consumeEntire` template parameter) - By
+         default, an error is thrown if the entire field-list string is not consumed.
+         This is the most common behavior. Turning this off (the `No` option) will
+         terminate processing without error when a valid field-list termination character
+         is found. The `parseFieldList.consumed` member function can be used to see where
+         in the input string processing terminated.
+   )
+
+   `parseFieldList` returns a reference range. This is so the `consumed` member function
+   remains valid when using the range with facilities that would copy a value-based
+   range.
+*/
 auto parseFieldList(T = size_t,
                     ConvertToZeroBasedIndex convertToZero = No.convertToZeroBasedIndex,
                     AllowFieldNumZero allowZero = No.allowFieldNumZero,
@@ -376,13 +416,14 @@ if (isIntegral!T && (!allowZero || !convertToZero || !isUnsigned!T))
 }
 
 
-// parseFieldList - A number of sample cases showing how it works
+/// Basic cases showing how `parseFieldList` works
 @safe unittest
 {
     import std.algorithm : each, equal;
 
     string[] emptyHeader = [];
 
+    // Numeric field-lists, with no header line.
     assert(`5`.parseFieldList
            .equal([5]));
 
@@ -392,6 +433,7 @@ if (isIntegral!T && (!allowZero || !convertToZero || !isUnsigned!T))
     assert(`1-3,17`.parseFieldList(false, emptyHeader)
            .equal([1, 2, 3, 17]));
 
+    // General field lists, when a header line is available
     assert(`5,1-3`.parseFieldList(true, [`f1`, `f2`, `f3`, `f4`, `f5`])
            .equal([5, 1, 2, 3]));
 
@@ -419,19 +461,34 @@ if (isIntegral!T && (!allowZero || !convertToZero || !isUnsigned!T))
     assert(`1-2,f4`.parseFieldList(true, [`f1`, `f2`, `f3`, `f4`, `f5`])
            .equal([1, 2, 4]));
 
+    /* The next few examples are closer to the code that would really be
+     * used during in command line arg processing.
+     */
     {
-        /* Closer to how it really be programed in command line arg processing. */
         bool hasHeader = true;
         auto headerFields = [`A1`, `A2`, `B1`, `B2`];
         auto fieldListCmdArg = `B*,A1`;
         auto fieldNumbers = fieldListCmdArg.parseFieldList(hasHeader, headerFields);
         assert(fieldNumbers.equal([3, 4, 1]));
+        assert(fieldNumbers.consumed == fieldListCmdArg.length);
     }
-
     {
-        /* How it would work when extensions are enabled. */
-        bool hasHeader = true;
+        /* Supplimentary options after the field-list. */
+        string[] headerFields;
+        bool hasHeader = false;
+        auto fieldListCmdArg = `3,4:option`;
+        auto fieldNumbers =
+            fieldListCmdArg.parseFieldList!(size_t, No.convertToZeroBasedIndex,
+                                            No.allowFieldNumZero, No.consumeEntireFieldListString)
+            (hasHeader, headerFields);
+        assert(fieldNumbers.equal([3, 4]));
+        assert(fieldNumbers.consumed == 3);
+        assert(fieldListCmdArg[fieldNumbers.consumed .. $] == `:option`);
+    }
+    {
+        /* Supplimentary options after the field-list. */
         auto headerFields = [`A1`, `A2`, `B1`, `B2`];
+        bool hasHeader = true;
         auto fieldListCmdArg = `B*:option`;
         auto fieldNumbers =
             fieldListCmdArg.parseFieldList!(size_t, No.convertToZeroBasedIndex,
@@ -671,59 +728,66 @@ if (isIntegral!T && (!allowZero || !convertToZero || !isUnsigned!T))
 }
 
 /**
-findFieldGroups creates range that iterates over the 'field-groups' in a 'field-list'.
+   `findFieldGroups` creates range that iterates over the 'field-groups' in a 'field-list'.
 
-Input is typically a string or character array. The range becomes empty when the end
-of input is reached or an unescaped field-list terminator character is found.
+   Input is typically a string or character array. The range becomes empty when the end
+   of input is reached or an unescaped field-list terminator character is found.
 
-A 'field-list' is a comma separated list of 'field-groups'. A 'field-group' is a
-single numeric or named field, or a hyphen-separated pair of numeric or named fields.
-For example:
+   A 'field-list' is a comma separated list of 'field-groups'. A 'field-group' is a
+   single numeric or named field, or a hyphen-separated pair of numeric or named fields.
+   For example:
 
+   ```
    1,3,4-7               # 3 numeric field-groups
    field_a,field_b       # 2 named fields
+   ```
 
-Each element in the range is represented by a tuple of two values:
-   * consumed - The total index positions consumed by the range so far
-   * value - A slice containing the text of the field-group.
+   Each element in the range is represented by a tuple of two values:
 
-The field-group slice does not contain the separator character, but this is included
-in the total consumed. The field-group tuples from the previous examples:
+   $(LIST
+       * consumed - The total index positions consumed by the range so far
+       * value - A slice containing the text of the field-group.
+   )
 
-  Input: 1,2,4-7
-     tuple(1, "1")
-     tuple(3, "2")
-     tuple(7, "4-7")
+   The field-group slice does not contain the separator character, but this is included
+   in the total consumed. The field-group tuples from the previous examples:
 
-  Input: field_a,field_b
-     tuple(7, "field_a")
-     tuple(8, "field_b")
+   ```
+   Input: 1,2,4-7
+      tuple(1, "1")
+      tuple(3, "2")
+      tuple(7, "4-7")
 
-The details of field-groups are not material to this routine, it is only concerned
-with finding the boundaries between field-groups and the termination boundary for the
-field-list. This is relatively straightforward. The main parsing concern is the use
-of escape character when delimiter characters are included in field names.
+   Input: field_a,field_b
+      tuple(7, "field_a")
+      tuple(8, "field_b")
+   ```
 
-Field-groups are separated by a single comma (','). A field-list is terminated by a
-colon (':') or space (' ') character. Comma, colon, and space characters can be
-included in a field-group by preceding them with a backslash. A backslash not
-intended as an escape character must also be backslash escaped.
+   The details of field-groups are not material to this routine, it is only concerned
+   with finding the boundaries between field-groups and the termination boundary for the
+   field-list. This is relatively straightforward. The main parsing concern is the use
+   of escape character when delimiter characters are included in field names.
 
-A field-list is also termininated if an unescaped backslash is encountered or a pair
-of consecutive commas. This is normally an error, but handling of these cases is left
-to the caller.
+   Field-groups are separated by a single comma (','). A field-list is terminated by a
+   colon (':') or space (' ') character. Comma, colon, and space characters can be
+   included in a field-group by preceding them with a backslash. A backslash not
+   intended as an escape character must also be backslash escaped.
 
-Additional characters need to be backslash escaped inside field-groups, the asterisk
-('*') and hyphen ('-') characters in particular. However, this routine needs only be
-aware of characters that affect field-list and field-group boundaries, which are the
-set listed above.
+   A field-list is also termininated if an unescaped backslash is encountered or a pair
+   of consecutive commas. This is normally an error, but handling of these cases is left
+   to the caller.
 
-Backslash escape sequences are recognized but not removed from field-groups.
+   Additional characters need to be backslash escaped inside field-groups, the asterisk
+   ('*') and hyphen ('-') characters in particular. However, this routine needs only be
+   aware of characters that affect field-list and field-group boundaries, which are the
+   set listed above.
 
-Field and record delimiter characters (usually TAB and newline) are not handled by
-this routine. They cannot be used in field names as there is no way to represent them
-in the header line. However, it is not necessary for this routine to check for them,
-these checks occurs naturally when processing header lines.
+   Backslash escape sequences are recognized but not removed from field-groups.
+
+   Field and record delimiter characters (usually TAB and newline) are not handled by
+   this routine. They cannot be used in field names as there is no way to represent them
+   in the header line. However, it is not necessary for this routine to check for them,
+   these checks occurs naturally when processing header lines.
 */
 private auto findFieldGroups(Range)(Range r)
 if (isInputRange!Range &&
@@ -992,13 +1056,13 @@ if (isInputRange!Range &&
 }
 
 /**
-isNumericFieldGroup determines if a field-group is a valid numeric field-group.
+   `isNumericFieldGroup` determines if a field-group is a valid numeric field-group.
 
-A numeric field-group is single, non-negative integer or a pair of non-negative
-integers separated by a hyphen.
+   A numeric field-group is single, non-negative integer or a pair of non-negative
+   integers separated by a hyphen.
 
-Note that zero is valid by this definition, even though it is usually disallowed as a
-field number, except when representing the entire line.
+   Note that zero is valid by this definition, even though it is usually disallowed as a
+   field number, except when representing the entire line.
 */
 private bool isNumericFieldGroup(const char[] fieldGroup) @safe
 {
@@ -1030,17 +1094,19 @@ private bool isNumericFieldGroup(const char[] fieldGroup) @safe
 }
 
 /**
-isNumericFieldGroupWithHyphenFirstOrLast determines if a field-group is a field
-number with a leading or trailing hyphen.
+   `isNumericFieldGroupWithHyphenFirstOrLast` determines if a field-group is a field
+   number with a leading or trailing hyphen.
 
-This routine is used for better error handling. Currently, incomplete field ranges
-are not supported. That is, field ranges leaving off the first or last field,
-defaulting to the end of the line. This syntax is available in 'cut', e.g.
+   This routine is used for better error handling. Currently, incomplete field ranges
+   are not supported. That is, field ranges leaving off the first or last field,
+   defaulting to the end of the line. This syntax is available in 'cut', e.g.
 
+   ```
    cut -f 2-
+   ```
 
-In 'cut', this represents field 2 to the end of the line. This routine identifies
-these forms so an error message specific to this case can be generated.
+   In `cut`, this represents field 2 to the end of the line. This routine identifies
+   these forms so an error message specific to this case can be generated.
 */
 private bool isNumericFieldGroupWithHyphenFirstOrLast(const char[] fieldGroup) @safe
 {
@@ -1061,28 +1127,28 @@ private bool isNumericFieldGroupWithHyphenFirstOrLast(const char[] fieldGroup) @
 }
 
 /**
-namedFieldGroupToReg generates regular expressions for matching fields in named
-field-group to field names in a header line.
+   `namedFieldGroupToRegex` generates regular expressions for matching fields in named
+   field-group to field names in a header line.
 
-One regex is generated for a single field, two are generated for a range. These are
-returned as a tuple with a pair of regex instances. The first regex is used for
-single field entries and the first entry of range. The second regex is filled with
-the second entry of a range and is empty otherwise. (Test with 'empty()'.)
+   One regex is generated for a single field, two are generated for a range. These are
+   returned as a tuple with a pair of regex instances. The first regex is used for
+   single field entries and the first entry of range. The second regex is filled with
+   the second entry of a range and is empty otherwise. (Test with 'empty()'.)
 
-This routine converts all field-list escape and wildcard syntax into the necessary
-regular expression syntax. Backslash escaped characters are converted to their plain
-characters and asterisk wildcarding (glob style) is converted to regex syntax.
+   This routine converts all field-list escape and wildcard syntax into the necessary
+   regular expression syntax. Backslash escaped characters are converted to their plain
+   characters and asterisk wildcarding (glob style) is converted to regex syntax.
 
-Regular expressions include beginning and end of string markers. This is intended for
-matching field names after they have been extracted from the header line.
+   Regular expressions include beginning and end of string markers. This is intended for
+   matching field names after they have been extracted from the header line.
 
-Most field-group syntax errors requiring end-user error messages should be detected
-elsewhere in field-list processing. The exception is field-names with a non-escaped
-leading or trailing hyphen. A user-appropriate error message is thrown for this case.
-Other erroneous inputs result in both regex's set empty.
+   Most field-group syntax errors requiring end-user error messages should be detected
+   elsewhere in field-list processing. The exception is field-names with a non-escaped
+   leading or trailing hyphen. A user-appropriate error message is thrown for this case.
+   Other erroneous inputs result in both regex's set empty.
 
-There is no detection of numeric field-groups. If a numeric-field group is passed in
-it will be treated as a named field-group and regular expressions generated.
+   There is no detection of numeric field-groups. If a numeric-field group is passed in
+   it will be treated as a named field-group and regular expressions generated.
 */
 private auto namedFieldGroupToRegex(const char[] fieldGroup)
 {
@@ -1245,17 +1311,17 @@ private auto namedFieldGroupToRegex(const char[] fieldGroup)
 }
 
 /**
-namedFieldRegexMatches returns an input range iterating over all the fields (strings)
-in an input range that match a regular expression.
+   `namedFieldRegexMatches` returns an input range iterating over all the fields (strings)
+   in an input range that match a regular expression.
 
-This routine is used in conjunction with namedFieldGroupToRegex to find the set of
-header line fields that match a field in a field-group expression. The input is a
-range where the individual elements are strings, e.g. an array of strings.
+   This routine is used in conjunction with `namedFieldGroupToRegex` to find the set of
+   header line fields that match a field in a field-group expression. The input is a
+   range where the individual elements are strings, e.g. an array of strings.
 
-The elements of the returned range are a tuple where the first element is the 1-based
-field number of the matching field and the second is the matched field name.
+   The elements of the returned range are a tuple where the first element is the 1-based
+   field number of the matching field and the second is the matched field name.
 
-The regular expression must not be empty.
+   The regular expression must not be empty.
 */
 private auto namedFieldRegexMatches(Range)(Range headerFields, Regex!char fieldRegex)
 if (isInputRange!Range && is(ElementEncodingType!Range == string))
@@ -1390,15 +1456,16 @@ if (isInputRange!Range && is(ElementEncodingType!Range == string))
                          emptyRegexMatch);
 }
 
-/** parseNumericFieldGroup parses a single number or number range. E.g. '5' or '5-8'.
- *
- * parseNumericFieldGroupreturns a range that iterates over all the values in the
- * field-group. It has options supporting conversion of field numbers to zero-based
- * indices and the use of '0' (zero) as a field number.
- *
- * This was part of the original code supporting numeric field list and is used by
- * both numeric and named field-list routines.
- */
+/**
+    `parseNumericFieldGroup` parses a single number or number range. E.g. '5' or '5-8'.
+
+    `parseNumericFieldGroup` returns a range that iterates over all the values in the
+    field-group. It has options supporting conversion of field numbers to zero-based
+    indices and the use of '0' (zero) as a field number.
+
+    This was part of the original code supporting numeric field list and is used by
+    both numeric and named field-list routines.
+*/
 private auto parseNumericFieldGroup(T = size_t,
                                     ConvertToZeroBasedIndex convertToZero = No.convertToZeroBasedIndex,
                                     AllowFieldNumZero allowZero = No.allowFieldNumZero)
@@ -1587,61 +1654,75 @@ if (isIntegral!T && (!allowZero || !convertToZero || !isUnsigned!T))
 
 
 /**
-Numeric Field-lists - A numeric field-list is a string entered on the command line
-identifying one or more field numbers. They are used by the majority of the tsv-utils
-applications. There are two helper functions, makeFieldListOptionHandler and
-parseNumericFieldList. Most applications will use makeFieldListOptionHandler, it
-creates a delegate that can be passed to std.getopt to process the command option.
-Actual processing of the option text is done by parseNumericFieldList. It can be
-called directly when the text of the option value contains more than just the field
-number.
+   Numeric field-lists
 
-Syntax and behavior:
+   Numeric field-lists are the original form of field-list supported by tsv-utils tools.
+   They have largely been superceded by the more general field-list support provided by
+   [parseFieldList], but the basic facilities for processing numeric field-lists are
+   still available.
 
-A 'numeric field-list' is a list of numeric field numbers entered on the command line.
-Fields are 1-upped integers representing locations in an input line, in the traditional
-meaning of Unix command line tools. Fields can be entered as single numbers or a range.
-Multiple entries are separated by commas. Some examples (with 'fields' as the command
-line option):
+   A numeric field-list is a string entered on the command line identifying one or more
+   field numbers. They are used by the majority of the tsv-utils applications. There are
+   two helper functions, [makeFieldListOptionHandler] and [parseNumericFieldList]. Most
+   applications will use [makeFieldListOptionHandler], it creates a delegate that can be
+   passed to `std.getopt` to process the command option. Actual processing of the option
+   text is done by [parseNumericFieldList]. It can be called directly when the text of the
+   option value contains more than just the field number.
 
-   --fields 3                 // Single field
-   --fields 4,1               // Two fields
-   --fields 3-9               // A range, fields 3 to 9 inclusive
-   --fields 1,2,7-34,11       // A mix of ranges and fields
-   --fields 15-5,3-1          // Two ranges in reverse order.
+   Syntax and behavior:
 
-Incomplete ranges are not supported, for example, '6-'. Zero is disallowed as a field
-value by default, but can be enabled to support the notion of zero as representing the
-entire line. However, zero cannot be part of a range. Field numbers are one-based by
-default, but can be converted to zero-based. If conversion to zero-based is enabled,
-field number zero must be disallowed or a signed integer type specified for the
-returned range.
+   A 'numeric field-list' is a list of numeric field numbers entered on the command line.
+   Fields are 1-upped integers representing locations in an input line, in the traditional
+   meaning of Unix command line tools. Fields can be entered as single numbers or a range.
+   Multiple entries are separated by commas. Some examples (with 'fields' as the command
+   line option):
 
-An error is thrown if an invalid field specification is encountered. Error text is
-intended for display. Error conditions include:
-  - Empty fields list
-  - Empty value, e.g. Two consequtive commas, a trailing comma, or a leading comma
-  - String that does not parse as a valid integer
-  - Negative integers, or zero if zero is disallowed.
-  - An incomplete range
-  - Zero used as part of a range.
+   ```
+      --fields 3              # Single field
+      --fields 4,1            # Two fields
+      --fields 3-9            # A range, fields 3 to 9 inclusive
+      --fields 1,2,7-34,11    # A mix of ranges and fields
+      --fields 15-5,3-1       # Two ranges in reverse order.
+   ```
 
-No other behaviors are enforced. Repeated values are accepted. If zero is allowed,
-other field numbers can be entered as well. Additional restrictions need to be
-applied by the caller.
+   Incomplete ranges are not supported, for example, '6-'. Zero is disallowed as a field
+   value by default, but can be enabled to support the notion of zero as representing the
+   entire line. However, zero cannot be part of a range. Field numbers are one-based by
+   default, but can be converted to zero-based. If conversion to zero-based is enabled,
+   field number zero must be disallowed or a signed integer type specified for the
+   returned range.
 
-Notes:
-  - The data type determines the max field number that can be entered. Enabling
-    conversion to zero restricts to the signed version of the data type.
-  - Use 'import std.typecons : Yes, No' to use the convertToZeroBasedIndex and
-    allowFieldNumZero template parameters.
+   An error is thrown if an invalid field specification is encountered. Error text is
+   intended for display. Error conditions include:
+
+   $(LIST
+       * Empty fields list
+       * Empty value, e.g. Two consequtive commas, a trailing comma, or a leading comma
+       * String that does not parse as a valid integer
+       * Negative integers, or zero if zero is disallowed.
+       * An incomplete range
+       * Zero used as part of a range.
+   )
+
+   No other behaviors are enforced. Repeated values are accepted. If zero is allowed,
+   other field numbers can be entered as well. Additional restrictions need to be
+   applied by the caller.
+
+   Notes:
+
+   $(LIST
+       * The data type determines the max field number that can be entered. Enabling
+         conversion to zero restricts to the signed version of the data type.
+       * Use 'import std.typecons : Yes, No' to use the convertToZeroBasedIndex and
+         allowFieldNumZero template parameters.
+   )
 */
 
 alias OptionHandlerDelegate = void delegate(string option, string value);
 
 /**
-makeFieldListOptionHandler creates a std.getopt option hander for processing field-lists
-entered on the command line. A field-list is as defined by parseNumericFieldList.
+`makeFieldListOptionHandler` creates a std.getopt option hander for processing field-lists
+entered on the command line. A field-list is as defined by [parseNumericFieldList].
 */
 OptionHandlerDelegate makeFieldListOptionHandler(
     T,
@@ -1822,8 +1903,8 @@ unittest
 }
 
 /**
-parseNumericFieldList lazily generates a range of fields numbers from a
-'numeric field-list' string.
+   `parseNumericFieldList` lazily generates a range of fields numbers from a
+   'numeric field-list' string.
 */
 auto parseNumericFieldList(
     T = size_t,

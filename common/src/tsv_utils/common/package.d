@@ -23,6 +23,8 @@ $(LIST
       especially useful when doubles are being used to represent integer and float values.
     * [tsv_utils.common.getopt_inorder.getoptInorder] - A cover for std.getopt that
       processes command line arguments in the order given on the command line.
+    * [tsv_utils.common.fieldlist] - Routines supporting entry of $(I field-lists) on the
+      command line.
 )
 
 Copyright (c) 2015-2020, eBay Inc.
