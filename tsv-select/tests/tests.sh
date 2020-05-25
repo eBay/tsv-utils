@@ -235,7 +235,12 @@ runtest ${prog} "-f 1 --nosuchparam input1.tsv" ${error_tests_1}
 runtest ${prog} "-f 0-1 input1.tsv" ${error_tests_1}
 runtest ${prog} "-f 2- input1.tsv" ${error_tests_1}
 runtest ${prog} "-f 1,3- input1.tsv" ${error_tests_1}
-runtest ${prog} "-f input1.tsv" ${error_tests_1}
+
+# Disable with introduction of named fields. This will wait for input from stdin.
+# Replace with a test that includes a second file.
+# runtest ${prog} "-f input1.tsv" ${error_tests_1}
+runtest ${prog} "-f input1.tsv input1.tsv" ${error_tests_1}
+
 runtest ${prog} "-f 1, input1.tsv" ${error_tests_1}
 runtest ${prog} "-f 1.1 input1.tsv" ${error_tests_1}
 

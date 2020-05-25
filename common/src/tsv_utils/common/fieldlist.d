@@ -239,6 +239,12 @@ alias ConsumeEntireFieldListString = Flag!"consumeEntireFieldListString";
          in the input string processing terminated.
    )
 
+   The optional `cmdOptionString` and `headerCmdArg` arguments are used to generate better
+   error messages. `cmdOptionString` should be the command line arguments string passed to
+   `std.getopt`. e.g `"f|field"`. The `headerCmdArg` should be the command line argument
+   argument string used to turn on header line processing. This is the same for most
+   tsv-utils tools.
+
    `parseFieldList` returns a reference range. This is so the `consumed` member function
    remains valid when using the range with facilities that would copy a value-based
    range.
@@ -247,7 +253,8 @@ auto parseFieldList(T = size_t,
                     ConvertToZeroBasedIndex convertToZero = No.convertToZeroBasedIndex,
                     AllowFieldNumZero allowZero = No.allowFieldNumZero,
                     ConsumeEntireFieldListString consumeEntire = Yes.consumeEntireFieldListString)
-(string fieldList, bool hasHeader = false, string[] headerFields = [], string headerCmdArg = "-H|--header")
+(string fieldList, bool hasHeader = false, string[] headerFields = [],
+ string cmdOptionString = "", string headerCmdArg = "-H|--header")
 if (isIntegral!T && (!allowZero || !convertToZero || !isUnsigned!T))
 {
     final class Result
@@ -255,6 +262,7 @@ if (isIntegral!T && (!allowZero || !convertToZero || !isUnsigned!T))
         private string _fieldList;
         private bool _hasHeader;
         private string[] _headerFields;
+        private string _cmdOptionMsgPart;
         private string _headerCmdArg;
         private ReturnType!(findFieldGroups!string) _fieldGroupRange;
         private bool _isFrontNumericRange;
@@ -262,11 +270,13 @@ if (isIntegral!T && (!allowZero || !convertToZero || !isUnsigned!T))
         private ReturnType!(namedFieldRegexMatches!(T, convertToZero, string[])) _namedFieldMatches;
         private size_t _consumed;
 
-        this(string fieldList, bool hasHeader, string[] headerFields, string headerCmdArg)
+        this(string fieldList, bool hasHeader, string[] headerFields,
+             string cmdOptionString, string headerCmdArg)
         {
             _fieldList = fieldList;
             _hasHeader = hasHeader;
             _headerFields = headerFields.dup;
+            if (!cmdOptionString.empty) _cmdOptionMsgPart = "[--" ~ cmdOptionString ~ "] ";
             _headerCmdArg = headerCmdArg;
             _fieldGroupRange = findFieldGroups(fieldList);
 
@@ -276,30 +286,36 @@ if (isIntegral!T && (!allowZero || !convertToZero || !isUnsigned!T))
             _namedFieldMatches = namedFieldRegexMatches!(T, convertToZero)(["X"], ctRegex!`^No Match$`);
 
             version(none) {
-            writeln("[parseFieldList.this] Before setFront()");
-            writeln("   _fieldList: ", _fieldList);
-            writeln("   _hasHeader: ", _hasHeader);
-            writeln("   _headerFields: ", _headerFields);
-            writeln("   _headerCmdArg: ", _headerCmdArg);
-            writeln("   _fieldGroupRange.empty: ", _fieldGroupRange.empty);
+                writeln("[parseFieldList.this] Before setConsumeNextFieldGroup()");
+                writeln("   _fieldList: ", _fieldList);
+                writeln("   _hasHeader: ", _hasHeader);
+                writeln("   _headerFields: ", _headerFields);
+                writeln("   _headerCmdArg: ", _headerCmdArg);
+                writeln("   _fieldGroupRange.empty: ", _fieldGroupRange.empty);
             }
 
-            consumeNextFieldGroup();
-
-            enforce(!empty, format("Empty field list: '%s'.", _fieldList));
+            try
+            {
+                consumeNextFieldGroup();
+                enforce(!empty, format("Empty field list: '%s'.", _fieldList));
+            }
+            catch (Exception e)
+            {
+                throw new Exception(_cmdOptionMsgPart ~ e.msg);
+            }
 
             assert(_consumed <= _fieldList.length);
 
             version(none) {
-            writeln("[parseFieldList.this] After setFront()");
-            writeln("   _fieldList: ", _fieldList);
-            writeln("   _hasHeader: ", _hasHeader);
-            writeln("   _headerFields: ", _headerFields);
-            writeln("   _headerCmdArg: ", _headerCmdArg);
-            writeln("   _isFrontNumericRange: ", _isFrontNumericRange);
-            writeln("   _fieldGroupRange.empty: ", _fieldGroupRange.empty);
-            writeln("   _numericFieldRange.empty: ", _numericFieldRange.empty);
-            writeln("   _namedFieldMatches.empty: ", _namedFieldMatches.empty);
+                writeln("[parseFieldList.this] After setConsumeNextFieldGroup()");
+                writeln("   _fieldList: ", _fieldList);
+                writeln("   _hasHeader: ", _hasHeader);
+                writeln("   _headerFields: ", _headerFields);
+                writeln("   _headerCmdArg: ", _headerCmdArg);
+                writeln("   _isFrontNumericRange: ", _isFrontNumericRange);
+                writeln("   _fieldGroupRange.empty: ", _fieldGroupRange.empty);
+                writeln("   _numericFieldRange.empty: ", _numericFieldRange.empty);
+                writeln("   _namedFieldMatches.empty: ", _namedFieldMatches.empty);
             }
         }
 
@@ -360,7 +376,7 @@ if (isIntegral!T && (!allowZero || !convertToZero || !isUnsigned!T))
                     }
                     else
                     {
-                        enforce (!fieldGroupRegex[0].empty, "Empty field list entry: '%s'", fieldGroup);
+                        enforce (!fieldGroupRegex[0].empty, "Empty field list entry: '%s'.", fieldGroup);
 
                         _isFrontNumericRange = false;
                         _namedFieldMatches =
@@ -389,7 +405,7 @@ if (isIntegral!T && (!allowZero || !convertToZero || !isUnsigned!T))
             assert(!empty, "Attempting to fetch the front of an empty field list.");
 
             version(none) {
-            writeln("[front] ", _isFrontNumericRange ? _numericFieldRange.front : cast(T) _namedFieldMatches.front[0]);
+            writeln("[front] ", _isFrontNumericRange ? _numericFieldRange.front : _namedFieldMatches.front[0]);
             }
 
             return _isFrontNumericRange ? _numericFieldRange.front : _namedFieldMatches.front[0];
@@ -404,30 +420,37 @@ if (isIntegral!T && (!allowZero || !convertToZero || !isUnsigned!T))
 
             assert(!empty, "Attempting to popFront an empty field-list.");
 
-            if (_isFrontNumericRange) _numericFieldRange.popFront;
-            else _namedFieldMatches.popFront;
-
-            if (_isFrontNumericRange ? _numericFieldRange.empty : _namedFieldMatches.empty)
+            try
             {
-                consumeNextFieldGroup();
+                if (_isFrontNumericRange) _numericFieldRange.popFront;
+                else _namedFieldMatches.popFront;
+
+                if (_isFrontNumericRange ? _numericFieldRange.empty : _namedFieldMatches.empty)
+                {
+                    consumeNextFieldGroup();
+                }
+
+                assert(_consumed <= _fieldList.length);
+
+                if (empty)
+                {
+                    static if (consumeEntire)
+                    {
+                        enforce(_consumed == _fieldList.length,
+                                format("Invalid field list: '%s'.", _fieldList));
+                    }
+                    else
+                    {
+                        enforce((_consumed == _fieldList.length ||
+                                 _fieldList[_consumed] == SPACE ||
+                                 _fieldList[_consumed] == COLON),
+                                format("Invalid field list: '%s'.", _fieldList));
+                    }
+                }
             }
-
-            assert(_consumed <= _fieldList.length);
-
-            if (empty)
+            catch (Exception e)
             {
-                static if (consumeEntire)
-                {
-                    enforce(_consumed == _fieldList.length,
-                            format("Invalid field list: '%s'.", _fieldList));
-                }
-                else
-                {
-                    enforce((_consumed == _fieldList.length ||
-                             _fieldList[_consumed] == SPACE ||
-                             _fieldList[_consumed] == COLON),
-                            format("Invalid field list: '%s'.", _fieldList));
-                }
+                throw new Exception(_cmdOptionMsgPart ~ e.msg);
             }
         }
 
@@ -437,7 +460,7 @@ if (isIntegral!T && (!allowZero || !convertToZero || !isUnsigned!T))
         }
     }
 
-    return new Result(fieldList, hasHeader, headerFields, headerCmdArg);
+    return new Result(fieldList, hasHeader, headerFields, cmdOptionString, headerCmdArg);
 }
 
 
@@ -490,61 +513,66 @@ if (isIntegral!T && (!allowZero || !convertToZero || !isUnsigned!T))
      * used during in command line arg processing.
      */
     {
+        string getoptOption = "f|fields";
         bool hasHeader = true;
         auto headerFields = [`A1`, `A2`, `B1`, `B2`];
         auto fieldListCmdArg = `B*,A1`;
-        auto fieldNumbers = fieldListCmdArg.parseFieldList(hasHeader, headerFields);
+        auto fieldNumbers = fieldListCmdArg.parseFieldList(hasHeader, headerFields, getoptOption);
         assert(fieldNumbers.equal([3, 4, 1]));
         assert(fieldNumbers.consumed == fieldListCmdArg.length);
     }
     {
         /* Supplimentary options after the field-list. */
-        string[] headerFields;
+        string getoptOption = "f|fields";
         bool hasHeader = false;
+        string[] headerFields;
         auto fieldListCmdArg = `3,4:option`;
         auto fieldNumbers =
             fieldListCmdArg.parseFieldList!(size_t, No.convertToZeroBasedIndex,
                                             No.allowFieldNumZero, No.consumeEntireFieldListString)
-            (hasHeader, headerFields);
+            (hasHeader, headerFields, getoptOption);
         assert(fieldNumbers.equal([3, 4]));
         assert(fieldNumbers.consumed == 3);
         assert(fieldListCmdArg[fieldNumbers.consumed .. $] == `:option`);
     }
     {
         /* Supplimentary options after the field-list. */
-        auto headerFields = [`A1`, `A2`, `B1`, `B2`];
+        string getoptOption = "f|fields";
         bool hasHeader = true;
+        auto headerFields = [`A1`, `A2`, `B1`, `B2`];
         auto fieldListCmdArg = `B*:option`;
         auto fieldNumbers =
             fieldListCmdArg.parseFieldList!(size_t, No.convertToZeroBasedIndex,
                                             No.allowFieldNumZero, No.consumeEntireFieldListString)
-            (hasHeader, headerFields);
+            (hasHeader, headerFields, getoptOption);
         assert(fieldNumbers.equal([3, 4]));
         assert(fieldNumbers.consumed == 2);
         assert(fieldListCmdArg[fieldNumbers.consumed .. $] == `:option`);
     }
     {
         /* Supplimentary options after the field-list. */
-        auto headerFields = [`A1`, `A2`, `B1`, `B2`];
+        string getoptOption = "f|fields";
         bool hasHeader = true;
+        auto headerFields = [`A1`, `A2`, `B1`, `B2`];
         auto fieldListCmdArg = `B* option`;
         auto fieldNumbers =
             fieldListCmdArg.parseFieldList!(size_t, No.convertToZeroBasedIndex,
                                             No.allowFieldNumZero, No.consumeEntireFieldListString)
-            (hasHeader, headerFields);
+            (hasHeader, headerFields, getoptOption);
         assert(fieldNumbers.equal([3, 4]));
         assert(fieldNumbers.consumed == 2);
         assert(fieldListCmdArg[fieldNumbers.consumed .. $] == ` option`);
     }
     {
         /* Mixed numeric and named fields. */
-        auto headerFields = [`A1`, `A2`, `B1`, `B2`];
+        string getoptOption = "f|fields";
         bool hasHeader = true;
+        auto headerFields = [`A1`, `A2`, `B1`, `B2`];
         auto fieldListCmdArg = `B2,1`;
         auto fieldNumbers =
             fieldListCmdArg.parseFieldList!(size_t, No.convertToZeroBasedIndex,
                                             No.allowFieldNumZero, No.consumeEntireFieldListString)
-            (hasHeader, headerFields);
+            (hasHeader, headerFields, getoptOption);
         assert(fieldNumbers.equal([4, 1]));
         assert(fieldNumbers.consumed == fieldListCmdArg.length);
     }
@@ -1365,7 +1393,7 @@ private auto namedFieldGroupToRegex(const char[] fieldGroup)
             if (g[0] == HYPHEN)
             {
                 enforce(!hyphenSeparatorFound && regexString.data.length != 0,
-                        format("Hyphens in field names must be backslash escaped unless separating two field names: '%s'\n",
+                        format("Hyphens in field names must be backslash escaped unless separating two field names: '%s'.\n",
                                fieldGroup));
 
                 assert(field1Regex.empty);
@@ -1393,7 +1421,7 @@ private auto namedFieldGroupToRegex(const char[] fieldGroup)
         }
     }
     enforce(!hyphenSeparatorFound || regexString.data.length != 0,
-            format("Hyphens in field names must be backslash escaped unless separating two field names: '%s'\n",
+            format("Hyphens in field names must be backslash escaped unless separating two field names: '%s'.\n",
                    fieldGroup));
 
     if (!hyphenSeparatorFound)
@@ -1419,7 +1447,7 @@ private auto namedFieldGroupToRegex(const char[] fieldGroup)
 
     /* Use when there should only be one regex. */
     void testFirstRegexMatches(string test, Tuple!(Regex!char, Regex!char) regexPair,
-                           string[] regex1Matches)
+                               string[] regex1Matches)
     {
         assert(!regexPair[0].empty, format("[namedFieldGroupToRegex: %s]", test));
         assert(regexPair[1].empty, format("[namedFieldGroupToRegex: %s]", test));
@@ -1832,7 +1860,7 @@ if (isIntegral!T && (!allowZero || !convertToZero || !isUnsigned!T))
 
     /* Make sure the range does not start or end with a dash. */
     enforce(rangeSplit[1].empty || (!rangeSplit[0].empty && !rangeSplit[2].empty),
-            format("Incomplete ranges are not supported: '%s'", fieldRange));
+            format("Incomplete ranges are not supported: '%s'.", fieldRange));
 
     S start = rangeSplit[0].to!S;
     S last = rangeSplit[1].empty ? start : rangeSplit[2].to!S;
@@ -1841,19 +1869,19 @@ if (isIntegral!T && (!allowZero || !convertToZero || !isUnsigned!T))
     static if (allowZero)
     {
         enforce(rangeSplit[1].empty || (start != 0 && last != 0),
-                format("Zero cannot be used as part of a range: '%s'", fieldRange));
+                format("Zero cannot be used as part of a range: '%s'.", fieldRange));
     }
 
     static if (allowZero)
     {
         enforce(start >= 0 && last >= 0,
-                format("Field numbers must be non-negative integers: '%d'",
+                format("Field numbers must be non-negative integers: '%d'.",
                        (start < 0) ? start : last));
     }
     else
     {
         enforce(start >= 1 && last >= 1,
-                format("Field numbers must be greater than zero: '%d'",
+                format("Field numbers must be greater than zero: '%d'.",
                        (start < 1) ? start : last));
     }
 

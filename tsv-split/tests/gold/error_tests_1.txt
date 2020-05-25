@@ -61,7 +61,7 @@ input1x3.txt: line 3
 [tsv-split] Error processing command line arguments: Whole line as key (--k|key-fields 0) cannot be combined with multiple fields.
 
 ====[tsv-split -n 2 -k -1 input4x58.tsv]====
-[tsv-split] Error processing command line arguments: [--k|key-fields] Incomplete ranges are not supported: '-1'
+[tsv-split] Error processing command line arguments: [--k|key-fields] Incomplete ranges are not supported: '-1'.
 
 ====[tsv-split -n 10 -k 99 input4x58.tsv]====
 Error [tsv-split]: Not enough fields in line. File: input4x58.tsv, Line: 1

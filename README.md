@@ -435,7 +435,7 @@ For some distributions a package can directly be installed:
 
 ### Build from source files
 
-[Download a D compiler](https://dlang.org/download.html). These tools have been tested with the DMD and LDC compilers, on Mac OSX and Linux. Use DMD version 2.087.0 or later, LDC version 1.17.0 or later.
+[Download a D compiler](https://dlang.org/download.html). These tools have been tested with the DMD and LDC compilers, on Mac OSX and Linux. Use DMD version 2.088.1 or later, LDC version 1.18.0 or later.
 
 Clone this repository, select a compiler, and run `make` from the top level directory:
 ```

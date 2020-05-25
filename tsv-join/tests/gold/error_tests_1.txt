@@ -99,7 +99,7 @@ f1	f2	f3	f4	f5
 [tsv-join] Error processing command line arguments: [--d|data-fields] Unexpected '.' when converting from type string to type ulong
 
 ====[tsv-join --header -f input1.tsv -k 2 -a 1- input2.tsv]====
-[tsv-join] Error processing command line arguments: [--a|append-fields] Incomplete ranges are not supported: '1-'
+[tsv-join] Error processing command line arguments: [--a|append-fields] Incomplete ranges are not supported: '1-'.
 
 ====[tsv-join --header -f input1.tsv -k 2,,4 input2.tsv]====
 [tsv-join] Error processing command line arguments: [--k|key-fields] Empty field number.

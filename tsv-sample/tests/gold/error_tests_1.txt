@@ -39,7 +39,7 @@ Error [tsv-sample]: Windows/DOS line ending found. Convert file to Unix newlines
 [tsv-sample] Error processing command line arguments: Whole line as key (--k|key-fields 0) cannot be combined with multiple fields.
 
 ====[tsv-sample -p .1 -k -1 input4x50.tsv input4x15.tsv]====
-[tsv-sample] Error processing command line arguments: [--k|key-fields] Incomplete ranges are not supported: '-1'
+[tsv-sample] Error processing command line arguments: [--k|key-fields] Incomplete ranges are not supported: '-1'.
 
 ====[tsv-sample -p 0 -k 1 input4x50.tsv input4x15.tsv]====
 [tsv-sample] Error processing command line arguments: Invalid --p|prob option: 0. Must satisfy 0.0 < prob <= 1.0.
