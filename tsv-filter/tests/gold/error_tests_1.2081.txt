@@ -2,10 +2,10 @@ Error test set 1
 ----------------
 
 ====[tsv-filter --header --le 2:10 nosuchfile.tsv]====
-Error [tsv-filter]: Cannot open file `nosuchfile.tsv' in mode `rb' (No such file or directory)
+[tsv-filter] Error processing command line arguments: Cannot open file `nosuchfile.tsv' in mode `rb' (No such file or directory)
 
 ====[tsv-filter --header --gt 0:10 input1.tsv]====
-[tsv-filter] Error processing command line arguments: [--gt 0:10]. Field numbers must be greater than zero: '0'
+[tsv-filter] Error processing command line arguments: [--gt 0:10]. Field numbers must be greater than zero: '0'.
    Expected: '--gt <field>:<val>' or '--gt <field-list>:<val> where <val> is a number.
 
 ====[tsv-filter --header --lt -1:10 input1.tsv]====
@@ -44,11 +44,11 @@ F1	F2	F3	F4
    Expected: '--empty <field>' or '--empty <field-list>'.
 
 ====[tsv-filter --header --empty 0 input1.tsv]====
-[tsv-filter] Error processing command line arguments: [--empty 0]. Field numbers must be greater than zero: '0'
+[tsv-filter] Error processing command line arguments: [--empty 0]. Field numbers must be greater than zero: '0'.
    Expected: '--empty <field>' or '--empty <field-list>'.
 
 ====[tsv-filter --header --str-gt 0:abc input1.tsv]====
-[tsv-filter] Error processing command line arguments: [--str-gt 0:abc]. Field numbers must be greater than zero: '0'
+[tsv-filter] Error processing command line arguments: [--str-gt 0:abc]. Field numbers must be greater than zero: '0'.
    Expected: '--str-gt <field>:<val>' or '--str-gt <field-list>:<val>' where <val> is a string.
 
 ====[tsv-filter --header --str-lt -1:ABC input1.tsv]====
@@ -63,7 +63,7 @@ F1	F2	F3	F4
    Expected: '--str-eq <field>:<val>' or '--str-eq <field-list>:<val>' where <val> is a string.
 
 ====[tsv-filter --header --str-eq 0:def input1.tsv]====
-[tsv-filter] Error processing command line arguments: [--str-eq 0:def]. Field numbers must be greater than zero: '0'
+[tsv-filter] Error processing command line arguments: [--str-eq 0:def]. Field numbers must be greater than zero: '0'.
    Expected: '--str-eq <field>:<val>' or '--str-eq <field-list>:<val>' where <val> is a string.
 
 ====[tsv-filter --header --str-eq :def input1.tsv]====
@@ -83,7 +83,7 @@ F1	F2	F3	F4
    Expected: '--istr-eq <field>:<val>' or '--istr-eq <field-list>:<val>' where <val> is a string.
 
 ====[tsv-filter --header --istr-eq 0:def input1.tsv]====
-[tsv-filter] Error processing command line arguments: [--istr-eq 0:def]. Field numbers must be greater than zero: '0'
+[tsv-filter] Error processing command line arguments: [--istr-eq 0:def]. Field numbers must be greater than zero: '0'.
    Expected: '--istr-eq <field>:<val>' or '--istr-eq <field-list>:<val>' where <val> is a string.
 
 ====[tsv-filter --header --istr-eq :def input1.tsv]====
@@ -103,7 +103,7 @@ F1	F2	F3	F4
    Expected: '--regex <field>:<val>' or '--regex <field-list>:<val>' where <val> is a regular expression.
 
 ====[tsv-filter --header --regex 0:^A[b|B]C$ input1.tsv]====
-[tsv-filter] Error processing command line arguments: [--regex 0:^A[b|B]C$]. Field numbers must be greater than zero: '0'
+[tsv-filter] Error processing command line arguments: [--regex 0:^A[b|B]C$]. Field numbers must be greater than zero: '0'.
    Expected: '--regex <field>:<val>' or '--regex <field-list>:<val>' where <val> is a regular expression.
 
 ====[tsv-filter --header --regex :^A[b|B]C$ input1.tsv]====
@@ -123,7 +123,7 @@ F1	F2	F3	F4
    Expected: '--iregex <field>:<val>' or '--iregex <field-list>:<val>' where <val> is a regular expression.
 
 ====[tsv-filter --header --iregex 0:^A[b|B]C$ input1.tsv]====
-[tsv-filter] Error processing command line arguments: [--iregex 0:^A[b|B]C$]. Field numbers must be greater than zero: '0'
+[tsv-filter] Error processing command line arguments: [--iregex 0:^A[b|B]C$]. Field numbers must be greater than zero: '0'.
    Expected: '--iregex <field>:<val>' or '--iregex <field-list>:<val>' where <val> is a regular expression.
 
 ====[tsv-filter --header --iregex :^A[b|B]C$ input1.tsv]====

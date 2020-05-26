@@ -177,6 +177,19 @@ runtest ${prog} "--header --exclude 1 input_header1.tsv" ${basic_tests_1}
 runtest ${prog} "-H -e 2 input_header1.tsv input_header2.tsv input_header3.tsv input_header4.tsv" ${basic_tests_1}
 runtest ${prog} "-H -e 1,2,3 input_header3.tsv input_header3.tsv input_header1.tsv" ${basic_tests_1}
 
+## Named fields tests
+runtest ${prog} "--header -f field1 input_header1.tsv" ${basic_tests_1}
+runtest ${prog} "-H -f field2 input_header1.tsv input_header2.tsv input_header3.tsv input_header4.tsv" ${basic_tests_1}
+runtest ${prog} "-H -f field1,field2,field3 input_header3.tsv input_header3.tsv input_header1.tsv" ${basic_tests_1}
+runtest ${prog} "-H -f f* input_header3.tsv input_header3.tsv input_header1.tsv" ${basic_tests_1}
+runtest ${prog} "-H -f field1-field2 input_header1.tsv input_header2.tsv input_header3.tsv input_header4.tsv" ${basic_tests_1}
+
+runtest ${prog} "--header --exclude field1 input_header1.tsv" ${basic_tests_1}
+runtest ${prog} "-H -e field2 input_header1.tsv input_header2.tsv input_header3.tsv input_header4.tsv" ${basic_tests_1}
+runtest ${prog} "-H -e field1,field2,field3 input_header3.tsv input_header3.tsv input_header1.tsv" ${basic_tests_1}
+runtest ${prog} "-H -e *2 input_header3.tsv input_header3.tsv input_header1.tsv" ${basic_tests_1}
+runtest ${prog} "-H -e field1-field2 input_header1.tsv input_header2.tsv input_header3.tsv input_header4.tsv" ${basic_tests_1}
+
 ## Help and Version printing
 
 echo "" >> ${basic_tests_1}
@@ -235,7 +248,12 @@ runtest ${prog} "-f 1 --nosuchparam input1.tsv" ${error_tests_1}
 runtest ${prog} "-f 0-1 input1.tsv" ${error_tests_1}
 runtest ${prog} "-f 2- input1.tsv" ${error_tests_1}
 runtest ${prog} "-f 1,3- input1.tsv" ${error_tests_1}
-runtest ${prog} "-f input1.tsv" ${error_tests_1}
+
+# Disable with introduction of named fields. This will wait for input from stdin.
+# Replace with a test that includes a second file.
+# runtest ${prog} "-f input1.tsv" ${error_tests_1}
+runtest ${prog} "-f input1.tsv input1.tsv" ${error_tests_1}
+
 runtest ${prog} "-f 1, input1.tsv" ${error_tests_1}
 runtest ${prog} "-f 1.1 input1.tsv" ${error_tests_1}
 
@@ -250,6 +268,16 @@ runtest ${prog} "-e 1048577 input1.tsv" ${error_tests_1}
 runtest ${prog} "-e 1048578 input1.tsv" ${error_tests_1}
 runtest ${prog} "-e 4-1048577 input1.tsv" ${error_tests_1}
 runtest ${prog} "-e 4-1048578 input1.tsv" ${error_tests_1}
+
+runtest ${prog} "-H -f no_such_field input1.tsv" ${error_tests_1}
+runtest ${prog} "-H -f field1,no_such_field input_header1.tsv" ${error_tests_1}
+runtest ${prog} "-H -f field1,no*such_field input_header1.tsv" ${error_tests_1}
+runtest ${prog} "-H -f field1-NoSuchField input_header1.tsv" ${error_tests_1}
+runtest ${prog} "-H -f field1-field* input_header1.tsv" ${error_tests_1}
+runtest ${prog} "-H -e no_such_field input1.tsv" ${error_tests_1}
+runtest ${prog} "-H -e field1,no*such_field input_header1.tsv" ${error_tests_1}
+runtest ${prog} "-H -e NoSuchField-field1 input_header1.tsv" ${error_tests_1}
+runtest ${prog} "-H -e field*-field1 input_header1.tsv" ${error_tests_1}
 
 # Windows line ending detection
 runtest ${prog} "-f 1 input1_dos.tsv" ${error_tests_1}

@@ -100,7 +100,7 @@ struct TsvJoinOptions
         import std.getopt;
         import std.path : baseName, stripExtension;
         import std.typecons : Yes, No;
-        import tsv_utils.common.utils :  makeFieldListOptionHandler;
+        import tsv_utils.common.fieldlist :  makeFieldListOptionHandler;
 
         string filterFile;               // --filter
         bool helpVerbose = false;        // --help-verbose

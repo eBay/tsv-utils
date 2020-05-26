@@ -11,10 +11,10 @@ Error test set 1
 [tsv-uniq] Error processing command line arguments: [--f|fields] Unexpected 'g' when converting from type string to type ulong
 
 ====[tsv-uniq -f 0-2 input1.tsv]====
-[tsv-uniq] Error processing command line arguments: [--f|fields] Zero cannot be used as part of a range: '0-2'
+[tsv-uniq] Error processing command line arguments: [--f|fields] Zero cannot be used as part of a range: '0-2'.
 
 ====[tsv-uniq -f 1- input1.tsv]====
-[tsv-uniq] Error processing command line arguments: [--f|fields] Incomplete ranges are not supported: '1-'
+[tsv-uniq] Error processing command line arguments: [--f|fields] Incomplete ranges are not supported: '1-'.
 
 ====[tsv-uniq -d abc -f 2 input1.tsv]====
 [tsv-uniq] Error processing command line arguments: Unexpected 'b' when converting from type string to type char

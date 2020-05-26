@@ -1250,6 +1250,68 @@ field1	field3
 
 
 
+====[tsv-select --header -f field1 input_header1.tsv]====
+field1
+11567
+21567
+
+====[tsv-select -H -f field2 input_header1.tsv input_header2.tsv input_header3.tsv input_header4.tsv]====
+field2
+12567
+22567
+12987
+12888
+22888
+
+====[tsv-select -H -f field1,field2,field3 input_header3.tsv input_header3.tsv input_header1.tsv]====
+field1	field2	field3
+11567	12567	13567
+21567	22567	23567
+
+====[tsv-select -H -f f* input_header3.tsv input_header3.tsv input_header1.tsv]====
+field1	field2	field3
+11567	12567	13567
+21567	22567	23567
+
+====[tsv-select -H -f field1-field2 input_header1.tsv input_header2.tsv input_header3.tsv input_header4.tsv]====
+field1	field2
+11567	12567
+21567	22567
+11987	12987
+11888	12888
+21888	22888
+
+====[tsv-select --header --exclude field1 input_header1.tsv]====
+field2	field3
+12567	13567
+22567	23567
+
+====[tsv-select -H -e field2 input_header1.tsv input_header2.tsv input_header3.tsv input_header4.tsv]====
+field1	field3
+11567	13567
+21567	23567
+11987	13987
+11888	13888
+21888	23888
+
+====[tsv-select -H -e field1,field2,field3 input_header3.tsv input_header3.tsv input_header1.tsv]====
+
+
+
+
+====[tsv-select -H -e *2 input_header3.tsv input_header3.tsv input_header1.tsv]====
+field1	field3
+11567	13567
+21567	23567
+
+====[tsv-select -H -e field1-field2 input_header1.tsv input_header2.tsv input_header3.tsv input_header4.tsv]====
+field3
+13567
+23567
+13987
+13888
+23888
+
 Help and Version printing 1
 -----------------
 

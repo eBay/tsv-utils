@@ -22,6 +22,7 @@ module tsv_utils.tsv_select;   // Module name defaults to file name, but hyphens
 
 // Imports used by multiple routines. Others imports made in local context.
 import std.exception : enforce;
+import std.range;
 import std.stdio;
 import std.typecons : tuple, Tuple;
 
@@ -128,13 +129,10 @@ struct TsvSelectOptions
 
     string programName;                 /// Program name
     ByLineSourceRange!() inputSources;  /// Input Files
-    bool helpVerbose = false;           /// --help-verbose
     bool hasHeader = false;             /// --H|header
     char delim = '\t';                  /// --d|delimiter
-    size_t[] fields;                    /// --f|fields
-    size_t[] excludedFieldsArg;         /// --e|exclude
     RestOption restArg;                 /// --rest first|last (none is hidden default)
-    bool versionWanted = false;         /// --V|version
+    size_t[] fields;                    /// Derived from --f|fields
     bool[] excludedFieldsTable;         /// Derived. Lookup table for excluded fields.
 
     /** Process command line arguments (getopt cover).
@@ -151,11 +149,21 @@ struct TsvSelectOptions
     auto processArgs (ref string[] cmdArgs)
     {
         import std.algorithm : any, each, maxElement;
+        import std.array : split;
+        import std.conv : to;
         import std.format : format;
         import std.getopt;
         import std.path : baseName, stripExtension;
         import std.typecons : Yes, No;
-        import tsv_utils.common.utils :  makeFieldListOptionHandler;
+        import tsv_utils.common.fieldlist;
+
+        bool helpVerbose = false;           // --help-verbose
+        string fieldsArg;                   // --f|fields
+        string excludedFieldsArg;           // --e|exclude
+        bool versionWanted = false;         // --V|version
+
+        string fieldsOptionString = "f|fields";
+        string excludedFieldsOptionString = "e|exclude";
 
         programName = (cmdArgs.length > 0) ? cmdArgs[0].stripExtension.baseName : "Unknown_program_name";
 
@@ -167,19 +175,31 @@ struct TsvSelectOptions
                 "help-verbose",    "     Print more detailed help.", &helpVerbose,
 
                 std.getopt.config.caseSensitive,
-                "H|header",    "              Treat the first line of each file as a header.", &hasHeader,
+                "H|header",
+                "              Treat the first line of each file as a header.",
+                &hasHeader,
                 std.getopt.config.caseInsensitive,
 
-                "f|fields",    "<field-list>  Fields to retain. Fields are output in the order listed.",
-                fields.makeFieldListOptionHandler!(size_t, Yes.convertToZeroBasedIndex),
+                fieldsOptionString,
+                "<field-list>  Fields to retain. Fields are output in the order listed.",
+                &fieldsArg,
 
-                "e|exclude",   "<field-list>  Fields to exclude.",
-                excludedFieldsArg.makeFieldListOptionHandler!(size_t, Yes.convertToZeroBasedIndex),
+                excludedFieldsOptionString,
+                "<field-list>  Fields to exclude.",
+                &excludedFieldsArg,
 
-                "r|rest",      "first|last    Output location for fields not included in '--f|fields'.", &restArg,
-                "d|delimiter", "CHR           Character to use as field delimiter. Default: TAB. (Single byte UTF-8 characters only.)", &delim,
+                "r|rest",
+                "first|last    Output location for fields not included in '--f|fields'.",
+                &restArg,
+
+                "d|delimiter",
+                "CHR           Character to use as field delimiter. Default: TAB. (Single byte UTF-8 characters only.)",
+                &delim,
+
                 std.getopt.config.caseSensitive,
-                "V|version",   "              Print version information and exit.", &versionWanted,
+                "V|version",
+                "              Print version information and exit.",
+                &versionWanted,
                 std.getopt.config.caseInsensitive,
                 );
 
@@ -200,24 +220,49 @@ struct TsvSelectOptions
                 return tuple(false, 0);
             }
 
-            /*
-             * Consistency checks and derivations.
-             */
-
-            enforce(fields.length != 0 || excludedFieldsArg.length != 0,
-                    "One of '--f|fields' or '--e|exclude' is required.");
-
             /* Remaining command line args are files. Use standard input if files
              * were not provided. Truncate cmdArgs to consume the arguments.
+             *
+             * Note: If reading from stdin, this will wait until a line is available.
              */
             string[] filepaths = (cmdArgs.length > 1) ? cmdArgs[1 .. $] : ["-"];
             cmdArgs.length = 1;
             inputSources = byLineSourceRange(filepaths);
 
-            if (excludedFieldsArg.length > 0)
+            /*
+             * Consistency checks and derivations.
+             */
+
+            string[] headerFields;
+
+            if (hasHeader && !inputSources.front.byLine.empty)
+            {
+                headerFields = inputSources.front.byLine.front.split(delim).to!(string[]);
+            }
+
+            if (!fieldsArg.empty)
+            {
+                fields = fieldsArg
+                    .parseFieldList!(size_t, Yes.convertToZeroBasedIndex)(hasHeader, headerFields, fieldsOptionString)
+                    .array;
+            }
+
+            size_t[] excludedFields;
+
+            if (!excludedFieldsArg.empty)
+            {
+                excludedFields = excludedFieldsArg
+                    .parseFieldList!(size_t, Yes.convertToZeroBasedIndex)(hasHeader, headerFields, excludedFieldsOptionString)
+                    .array;
+            }
+
+            enforce(fields.length != 0 || excludedFields.length != 0,
+                    "One of '--f|fields' or '--e|exclude' is required.");
+
+            if (excludedFields.length > 0)
             {
                 /* Make sure selected and excluded fields do not overlap. */
-                foreach (e; excludedFieldsArg)
+                foreach (e; excludedFields)
                 {
                     foreach (f; fields)
                     {
@@ -236,7 +281,7 @@ struct TsvSelectOptions
                  * big but reasonable (more than 1 million). The limit can be raised if use
                  * cases arise.
                  */
-                size_t maxExcludedField = excludedFieldsArg.maxElement;
+                size_t maxExcludedField = excludedFields.maxElement;
                 size_t maxAllowedExcludedField = 1024 * 1024;
 
                 enforce(maxExcludedField < maxAllowedExcludedField,
@@ -244,7 +289,7 @@ struct TsvSelectOptions
                                maxAllowedExcludedField));
 
                 excludedFieldsTable.length = maxExcludedField + 1;          // Initialized to false
-                foreach (e; excludedFieldsArg) excludedFieldsTable[e] = true;
+                foreach (e; excludedFields) excludedFieldsTable[e] = true;
             }
         }
         catch (Exception exc)
