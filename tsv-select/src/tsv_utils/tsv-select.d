@@ -159,7 +159,7 @@ struct TsvSelectOptions
 
         bool helpVerbose = false;           // --help-verbose
         string fieldsArg;                   // --f|fields
-        size_t[] excludedFieldsArg;         // --e|exclude
+        string excludedFieldsArg;           // --e|exclude
         bool versionWanted = false;         // --V|version
 
         string fieldsOptionString = "f|fields";
@@ -183,11 +183,10 @@ struct TsvSelectOptions
                 fieldsOptionString,
                 "<field-list>  Fields to retain. Fields are output in the order listed.",
                 &fieldsArg,
-                //fields.makeFieldListOptionHandler!(size_t, Yes.convertToZeroBasedIndex),
 
                 excludedFieldsOptionString,
                 "<field-list>  Fields to exclude.",
-                excludedFieldsArg.makeFieldListOptionHandler!(size_t, Yes.convertToZeroBasedIndex),
+                &excludedFieldsArg,
 
                 "r|rest",
                 "first|last    Output location for fields not included in '--f|fields'.",
@@ -248,13 +247,22 @@ struct TsvSelectOptions
                     .array;
             }
 
-            enforce(fields.length != 0 || excludedFieldsArg.length != 0,
+            size_t[] excludedFields;
+
+            if (!excludedFieldsArg.empty)
+            {
+                excludedFields = excludedFieldsArg
+                    .parseFieldList!(size_t, Yes.convertToZeroBasedIndex)(hasHeader, headerFields, excludedFieldsOptionString)
+                    .array;
+            }
+
+            enforce(fields.length != 0 || excludedFields.length != 0,
                     "One of '--f|fields' or '--e|exclude' is required.");
 
-            if (excludedFieldsArg.length > 0)
+            if (excludedFields.length > 0)
             {
                 /* Make sure selected and excluded fields do not overlap. */
-                foreach (e; excludedFieldsArg)
+                foreach (e; excludedFields)
                 {
                     foreach (f; fields)
                     {
@@ -273,7 +281,7 @@ struct TsvSelectOptions
                  * big but reasonable (more than 1 million). The limit can be raised if use
                  * cases arise.
                  */
-                size_t maxExcludedField = excludedFieldsArg.maxElement;
+                size_t maxExcludedField = excludedFields.maxElement;
                 size_t maxAllowedExcludedField = 1024 * 1024;
 
                 enforce(maxExcludedField < maxAllowedExcludedField,
@@ -281,7 +289,7 @@ struct TsvSelectOptions
                                maxAllowedExcludedField));
 
                 excludedFieldsTable.length = maxExcludedField + 1;          // Initialized to false
-                foreach (e; excludedFieldsArg) excludedFieldsTable[e] = true;
+                foreach (e; excludedFields) excludedFieldsTable[e] = true;
             }
         }
         catch (Exception exc)

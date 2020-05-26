@@ -241,9 +241,8 @@ alias ConsumeEntireFieldListString = Flag!"consumeEntireFieldListString";
 
    The optional `cmdOptionString` and `headerCmdArg` arguments are used to generate better
    error messages. `cmdOptionString` should be the command line arguments string passed to
-   `std.getopt`. e.g `"f|field"`. The `headerCmdArg` should be the command line argument
-   argument string used to turn on header line processing. This is the same for most
-   tsv-utils tools.
+   `std.getopt`. e.g `"f|field"`. The `headerCmdArg` argument should be the option for
+   turning on header line processing. Most tsv-utils tools can use the default value.
 
    `parseFieldList` returns a reference range. This is so the `consumed` member function
    remains valid when using the range with facilities that would copy a value-based
@@ -254,7 +253,7 @@ auto parseFieldList(T = size_t,
                     AllowFieldNumZero allowZero = No.allowFieldNumZero,
                     ConsumeEntireFieldListString consumeEntire = Yes.consumeEntireFieldListString)
 (string fieldList, bool hasHeader = false, string[] headerFields = [],
- string cmdOptionString = "", string headerCmdArg = "-H|--header")
+ string cmdOptionString = "", string headerCmdArg = "H|header")
 if (isIntegral!T && (!allowZero || !convertToZero || !isUnsigned!T))
 {
     final class Result
@@ -277,22 +276,13 @@ if (isIntegral!T && (!allowZero || !convertToZero || !isUnsigned!T))
             _hasHeader = hasHeader;
             _headerFields = headerFields.dup;
             if (!cmdOptionString.empty) _cmdOptionMsgPart = "[--" ~ cmdOptionString ~ "] ";
-            _headerCmdArg = headerCmdArg;
+            if (!headerCmdArg.empty) _headerCmdArg = "--" ~ headerCmdArg;
             _fieldGroupRange = findFieldGroups(fieldList);
 
             /* _namedFieldMatches must be initialized in the constructor because it
              * is a nested struct.
              */
             _namedFieldMatches = namedFieldRegexMatches!(T, convertToZero)(["X"], ctRegex!`^No Match$`);
-
-            version(none) {
-                writeln("[parseFieldList.this] Before setConsumeNextFieldGroup()");
-                writeln("   _fieldList: ", _fieldList);
-                writeln("   _hasHeader: ", _hasHeader);
-                writeln("   _headerFields: ", _headerFields);
-                writeln("   _headerCmdArg: ", _headerCmdArg);
-                writeln("   _fieldGroupRange.empty: ", _fieldGroupRange.empty);
-            }
 
             try
             {
@@ -305,18 +295,6 @@ if (isIntegral!T && (!allowZero || !convertToZero || !isUnsigned!T))
             }
 
             assert(_consumed <= _fieldList.length);
-
-            version(none) {
-                writeln("[parseFieldList.this] After setConsumeNextFieldGroup()");
-                writeln("   _fieldList: ", _fieldList);
-                writeln("   _hasHeader: ", _hasHeader);
-                writeln("   _headerFields: ", _headerFields);
-                writeln("   _headerCmdArg: ", _headerCmdArg);
-                writeln("   _isFrontNumericRange: ", _isFrontNumericRange);
-                writeln("   _fieldGroupRange.empty: ", _fieldGroupRange.empty);
-                writeln("   _numericFieldRange.empty: ", _numericFieldRange.empty);
-                writeln("   _namedFieldMatches.empty: ", _namedFieldMatches.empty);
-            }
         }
 
         private void consumeNextFieldGroup()
@@ -381,6 +359,9 @@ if (isIntegral!T && (!allowZero || !convertToZero || !isUnsigned!T))
                         _isFrontNumericRange = false;
                         _namedFieldMatches =
                             namedFieldRegexMatches!(T, convertToZero)(_headerFields, fieldGroupRegex[0]);
+
+                        enforce(!_namedFieldMatches.empty,
+                                format("Field not found in header: '%s'.", fieldGroup));
                     }
                 }
             }
@@ -388,14 +369,6 @@ if (isIntegral!T && (!allowZero || !convertToZero || !isUnsigned!T))
 
         bool empty() @safe
         {
-            version(none) {
-            writeln("[empty]");
-            writeln("   _fieldGroupRange.empty: " , _fieldGroupRange.empty);
-            writeln("   _isFrontNumericRange: " , _isFrontNumericRange);
-            writeln("   : _numericFieldRange.empty: " , _numericFieldRange.empty);
-            writeln("   : _namedFieldMatches.empty: " , _namedFieldMatches.empty);
-            }
-
             return _fieldGroupRange.empty &&
                 (_isFrontNumericRange ? _numericFieldRange.empty : _namedFieldMatches.empty);
         }
@@ -403,11 +376,6 @@ if (isIntegral!T && (!allowZero || !convertToZero || !isUnsigned!T))
         @property T front() @safe
         {
             assert(!empty, "Attempting to fetch the front of an empty field list.");
-
-            version(none) {
-            writeln("[front] ", _isFrontNumericRange ? _numericFieldRange.front : _namedFieldMatches.front[0]);
-            }
-
             return _isFrontNumericRange ? _numericFieldRange.front : _namedFieldMatches.front[0];
         }
 
@@ -578,7 +546,7 @@ if (isIntegral!T && (!allowZero || !convertToZero || !isUnsigned!T))
     }
 }
 
-// parseFieldList - Empty field list tests
+// parseFieldList - Empty and erroneous field list tests
 @safe unittest
 {
     import std.exception : assertThrown, assertNotThrown;
@@ -592,6 +560,62 @@ if (isIntegral!T && (!allowZero || !convertToZero || !isUnsigned!T))
     assertThrown(`:option`.parseFieldList);
     assertThrown(` option`.parseFieldList);
     assertThrown(`:1-3`.parseFieldList);
+
+    {
+        string getoptOption = "f|fields";
+        string cmdHeaderOption = "header";
+        bool hasHeader = true;
+        auto headerFields = [`A1`, `A2`, `B1`, `B2`];
+        auto fieldListCmdArg = `XYZ`;
+        size_t[] fieldNumbers;
+        bool wasCaught = false;
+        try fieldNumbers = fieldListCmdArg.parseFieldList(hasHeader, headerFields, getoptOption).array;
+        catch (Exception e)
+        {
+            wasCaught = true;
+            assert(e.msg == "[--f|fields] Field not found in header: 'XYZ'.");
+        }
+        finally assert(wasCaught);
+    }
+    {
+        string getoptOption = "f|fields";
+        bool hasHeader = false;             // hasHeader=false triggers this error.
+        auto headerFields = [`A1`, `A2`, `B1`, `B2`];
+        auto fieldListCmdArg = `A1`;
+        size_t[] fieldNumbers;
+        bool wasCaught = false;
+
+        try fieldNumbers = fieldListCmdArg.parseFieldList(hasHeader, headerFields, getoptOption).array;
+        catch (Exception e)
+        {
+            wasCaught = true;
+            assert(e.msg == "[--f|fields] Non-numeric field group: 'A1'. Use '--H|header' when using named field groups.");
+        }
+        finally assert(wasCaught);
+
+        string cmdHeaderOption = "ZETA";
+
+        try fieldNumbers = fieldListCmdArg.parseFieldList(hasHeader, headerFields, getoptOption, cmdHeaderOption).array;
+        catch (Exception e)
+        {
+            wasCaught = true;
+            assert(e.msg == "[--f|fields] Non-numeric field group: 'A1'. Use '--ZETA' when using named field groups.");
+        }
+        finally assert(wasCaught);
+    }
+    {
+        bool hasHeader = true;
+        auto headerFields = [`A1`, `A2`, `B1`, `B2`];
+
+        assertThrown(`XYZ`.parseFieldList(hasHeader, headerFields));
+        assertThrown(`XYZ-B1`.parseFieldList(hasHeader, headerFields));
+        assertThrown(`B1-XYZ`.parseFieldList(hasHeader, headerFields));
+        assertThrown(`A*-B1`.parseFieldList(hasHeader, headerFields));
+        assertThrown(`B1-A*`.parseFieldList(hasHeader, headerFields));
+        assertThrown(`B1-`.parseFieldList(hasHeader, headerFields));
+        assertThrown(`-A1`.parseFieldList(hasHeader, headerFields));
+    }
+
 }
 
 //parseFieldList - Named field groups
@@ -1226,33 +1250,6 @@ if (isInputRange!Range &&
                   tuple(5, `1-`),
                   tuple(7, `-`)
                  ]));
-
-    /* TODO: Remove or turn into unit tests. */
-    version(none)
-    {
-        /* This example shows how to use a for loop. */
-        foreach (consumed, fieldRange; `1-3,4:5-7`.findFieldGroups)
-        {
-            writefln("consumed: %d; fieldRange: '%s'", consumed, fieldRange);
-        }
-    }
-
-    version(none)
-    {
-        /* This example from when consumed was being returned for each field-group rather
-         * cummuatively. Currently expect uses to want the cumulative value, so putting
-         * in the range.
-         */
-        import std.algorithm : cumulativeFold;
-
-        writefln("cumulativeFold of: '%s'", "1-3,5,7-2");
-        auto emptyResult = tuple!("consumed", "value")(0UL, "");
-        foreach (x; "1-3,5,7-2".findFieldGroups
-                 .cumulativeFold!((a, b) => tuple(a.consumed + b.consumed, b.value))(emptyResult))
-        {
-            writefln("%s", x);
-        }
-    }
 }
 
 /**
@@ -1796,11 +1793,18 @@ if (isInputRange!Range && is(ElementEncodingType!Range == string))
          longEmptyRegexMatch);
 
     testBothRegexMatches!(uint, Yes.convertToZeroBasedIndex)
-        ("test-103",
+        ("test-203",
          [`a`, `b`, `c`],
          `c`.namedFieldGroupToRegex,
          [ tuple(2U, `c`) ],
          uintEmptyRegexMatch);
+
+    testBothRegexMatches!(uint, Yes.convertToZeroBasedIndex)(
+        "test-204",
+        [`a`, `b`, `c`],
+        `x`.namedFieldGroupToRegex,
+        uintEmptyRegexMatch,
+        uintEmptyRegexMatch);
 
     testBothRegexMatches!(int)
         ("test-211",

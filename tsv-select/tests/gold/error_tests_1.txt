@@ -8,7 +8,7 @@ Error test set 1
 [tsv-select] Error processing command line arguments: One of '--f|fields' or '--e|exclude' is required.
 
 ====[tsv-select input1.tsv --fields last]====
-[tsv-select] Error processing command line arguments: [--f|fields] Non-numeric field group: 'last'. Use '-H|--header' when using named field groups.
+[tsv-select] Error processing command line arguments: [--f|fields] Non-numeric field group: 'last'. Use '--H|header' when using named field groups.
 
 ====[tsv-select -f 0 input1.tsv]====
 [tsv-select] Error processing command line arguments: [--f|fields] Field numbers must be greater than zero: '0'.
@@ -45,13 +45,13 @@ Error [tsv-select]: Not enough fields in line. File: input_3plus_fields.tsv,  Li
 [tsv-select] Error processing command line arguments: [--f|fields] Incomplete ranges are not supported: '3-'.
 
 ====[tsv-select -f input1.tsv input1.tsv]====
-[tsv-select] Error processing command line arguments: [--f|fields] Non-numeric field group: 'input1.tsv'. Use '-H|--header' when using named field groups.
+[tsv-select] Error processing command line arguments: [--f|fields] Non-numeric field group: 'input1.tsv'. Use '--H|header' when using named field groups.
 
 ====[tsv-select -f 1, input1.tsv]====
 [tsv-select] Error processing command line arguments: [--f|fields] Invalid field list: '1,'.
 
 ====[tsv-select -f 1.1 input1.tsv]====
-[tsv-select] Error processing command line arguments: [--f|fields] Non-numeric field group: '1.1'. Use '-H|--header' when using named field groups.
+[tsv-select] Error processing command line arguments: [--f|fields] Non-numeric field group: '1.1'. Use '--H|header' when using named field groups.
 
 ====[tsv-select -e 0 input1.tsv]====
 [tsv-select] Error processing command line arguments: [--e|exclude] Field numbers must be greater than zero: '0'.
@@ -82,6 +82,37 @@ Error [tsv-select]: Not enough fields in line. File: input_3plus_fields.tsv,  Li
 
 ====[tsv-select -e 4-1048578 input1.tsv]====
 [tsv-select] Error processing command line arguments: Maximum allowed '--e|exclude' field number is 1048576.
+
+====[tsv-select -H -f no_such_field input1.tsv]====
+[tsv-select] Error processing command line arguments: [--f|fields] Field not found in header: 'no_such_field'.
+
+====[tsv-select -H -f field1,no_such_field input_header1.tsv]====
+[tsv-select] Error processing command line arguments: [--f|fields] Field not found in header: 'no_such_field'.
+
+====[tsv-select -H -f field1,no*such_field input_header1.tsv]====
+[tsv-select] Error processing command line arguments: [--f|fields] Field not found in header: 'no*such_field'.
+
+====[tsv-select -H -f field1-NoSuchField input_header1.tsv]====
+[tsv-select] Error processing command line arguments: [--f|fields] Second field in range not found in header. Range: 'field1-NoSuchField'.
+Not specifying a range? Backslash escape any hyphens in the field name.
+
+====[tsv-select -H -f field1-field* input_header1.tsv]====
+[tsv-select] Error processing command line arguments: [--f|fields] Second field in range matches multiple header fields. Range: 'field1-field*'.
+Not specifying a range? Backslash escape any hyphens in the field name.
+
+====[tsv-select -H -e no_such_field input1.tsv]====
+[tsv-select] Error processing command line arguments: [--e|exclude] Field not found in header: 'no_such_field'.
+
+====[tsv-select -H -e field1,no*such_field input_header1.tsv]====
+[tsv-select] Error processing command line arguments: [--e|exclude] Field not found in header: 'no*such_field'.
+
+====[tsv-select -H -e NoSuchField-field1 input_header1.tsv]====
+[tsv-select] Error processing command line arguments: [--e|exclude] First field in range not found in header. Range: 'NoSuchField-field1'.
+Not specifying a range? Backslash escape any hyphens in the field name.
+
+====[tsv-select -H -e field*-field1 input_header1.tsv]====
+[tsv-select] Error processing command line arguments: [--e|exclude] First field in range matches multiple header fields. Range: 'field*-field1'.
+Not specifying a range? Backslash escape any hyphens in the field name.
 
 ====[tsv-select -f 1 input1_dos.tsv]====
 Error [tsv-select]: Windows/DOS line ending found. Convert file to Unix newlines before processing (e.g. 'dos2unix').
