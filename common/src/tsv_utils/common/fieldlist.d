@@ -23,7 +23,7 @@
    )
 
    Fields specified by name must match a name in the header line of the input data.
-   Glob-style wildcarding is supported using the asterisk (`*`) character. When
+   Glob-style wildcards are supported using the asterisk (`*`) character. When
    wildcards are used with a single field, all matching fields in the header are used.
    When used in a field range, both field names must match a single header field.
 
@@ -47,25 +47,25 @@
        5    max_memory
    ```
 
-   Some examples using named fields for this file:
+   Some examples using named fields for this file. (Note: `-H` turns on header processing):
 
    $(CONSOLE
-       $ tsv-select data.tsv -f user_time           # Field  3
-       $ tsv-select data.tsv -f run,user_time       # Fields 1,3
-       $ tsv-select data.tsv -f run-user_time       # Fields 1,2,3
-       $ tsv-select data.tsv -f '*_memory'          # Field  6
-       $ tsv-select data.tsv -f '*_time'            # Fields 2,3,4
-       $ tsv-select data.tsv -f '*_time,*_memory'   # Fields 2,3,4,5
-       $ tsv-select data.tsv -f '*_memory,*_time'   # Fields 5,2,3,4
-       $ tsv-select data.tsv -f 'run-*_time'        # Invalid range. '*_time' matches 3 fields
+       $ tsv-select data.tsv -H -f user_time           # Field  3
+       $ tsv-select data.tsv -H -f run,user_time       # Fields 1,3
+       $ tsv-select data.tsv -H -f run-user_time       # Fields 1,2,3
+       $ tsv-select data.tsv -H -f '*_memory'          # Field  6
+       $ tsv-select data.tsv -H -f '*_time'            # Fields 2,3,4
+       $ tsv-select data.tsv -H -f '*_time,*_memory'   # Fields 2,3,4,5
+       $ tsv-select data.tsv -H -f '*_memory,*_time'   # Fields 5,2,3,4
+       $ tsv-select data.tsv -H -f 'run-*_time'        # Invalid range. '*_time' matches 3 fields
    )
 
    Both field numbers and fields names can both be used in the same field-list, except
    when specifying a field range:
 
    $(CONSOLE
-       $ tsv-select data.tsv -f 1,user_time         # Fields 1,3
-       $ tsv-select data.tsv -f 1-user_time         # Invalid range
+       $ tsv-select data.tsv -H -f 1,user_time         # Fields 1,3
+       $ tsv-select data.tsv -H -f 1-user_time         # Invalid range
    )
 
    A backslash is used to escape special characters occurring in field names. Characters
@@ -84,12 +84,12 @@
    These fields can be used in named field commands as follows:
 
    $(CONSOLE
-       $ tsv-select file.tsv -f 'test\ id'          # Field 1
-       $ tsv-select file.tsv -f 'run\:1'            # Field 2
-       $ tsv-select file.tsv -f 'time\-stamp'       # Field 3
-       $ tsv-select file.tsv -f '\001'              # Field 4
-       $ tsv-select file.tsv -f '\100'              # Field 5
-       $ tsv-select file.tsv -f '\001,\100'         # Fields 4,5
+       $ tsv-select file.tsv -H -f 'test\ id'          # Field 1
+       $ tsv-select file.tsv -H -f 'run\:1'            # Field 2
+       $ tsv-select file.tsv -H -f 'time\-stamp'       # Field 3
+       $ tsv-select file.tsv -H -f '\001'              # Field 4
+       $ tsv-select file.tsv -H -f '\100'              # Field 5
+       $ tsv-select file.tsv -H -f '\001,\100'         # Fields 4,5
    )
 
    $(NOTE Note: The use of single quotes on the command line is necessary to avoid shell
@@ -99,9 +99,9 @@
    and space characters are both terminator characters for field-lists. Some examples:
 
    $(CONSOLE
-       $ tsv-filter --le 3:100                        # Field 3 < 100
-       $ tsv-filter --le elapsed_time:100             # 'elapsed_time' field < 100
-       $ tsv-summarize --quantile '*_time:0.25,0.75'  # 1st and 3rd quantiles for time fields
+       $ tsv-filter -H --le 3:100                        # Field 3 < 100
+       $ tsv-filter -H --le elapsed_time:100             # 'elapsed_time' field < 100
+       $ tsv-summarize -H --quantile '*_time:0.25,0.75'  # 1st and 3rd quantiles for time fields
    )
 
    Field-list support routines identify the termination of the field-list. They do not
@@ -159,9 +159,9 @@
          single field, two are generated for a range. Wildcards and escape characters
          are translated into the correct regex format.
 
-       * [namedFieldRegexMatches] - Returns an input range interating over all the
+       * [namedFieldRegexMatches] - Returns an input range iterating over all the
          fields (strings) in a range matching a regular expression. It is used in
-         conjuction with [namedFieldGroupToRegex] to find the fields in a header line
+         conjunction with [namedFieldGroupToRegex] to find the fields in a header line
          matching a regular expression and map them to field numbers.
 
        * [parseNumericFieldGroup] - A helper function that parses a numeric field
@@ -518,7 +518,7 @@ if (isIntegral!T && (!allowZero || !convertToZero || !isUnsigned!T))
         assert(fieldListCmdArg[fieldNumbers.consumed .. $] == `:option`);
     }
     {
-        /* Supplimentary options after the field-list. */
+        /* Supplementary options after the field-list. */
         string getoptOption = "f|fields";
         bool hasHeader = true;
         auto headerFields = [`A1`, `A2`, `B1`, `B2`];
@@ -994,7 +994,7 @@ if (isIntegral!T && (!allowZero || !convertToZero || !isUnsigned!T))
    included in a field-group by preceding them with a backslash. A backslash not
    intended as an escape character must also be backslash escaped.
 
-   A field-list is also termininated if an unescaped backslash is encountered or a pair
+   A field-list is also terminated if an unescaped backslash is encountered or a pair
    of consecutive commas. This is normally an error, but handling of these cases is left
    to the caller.
 
@@ -2032,7 +2032,7 @@ if (isIntegral!T && (!allowZero || !convertToZero || !isUnsigned!T))
    Numeric field-lists
 
    Numeric field-lists are the original form of field-list supported by tsv-utils tools.
-   They have largely been superceded by the more general field-list support provided by
+   They have largely been superseded by the more general field-list support provided by
    [parseFieldList], but the basic facilities for processing numeric field-lists are
    still available.
 
@@ -2072,7 +2072,7 @@ if (isIntegral!T && (!allowZero || !convertToZero || !isUnsigned!T))
 
    $(LIST
        * Empty fields list
-       * Empty value, e.g. Two consequtive commas, a trailing comma, or a leading comma
+       * Empty value, e.g. Two consecutive commas, a trailing comma, or a leading comma
        * String that does not parse as a valid integer
        * Negative integers, or zero if zero is disallowed.
        * An incomplete range
@@ -2100,7 +2100,7 @@ if (isIntegral!T && (!allowZero || !convertToZero || !isUnsigned!T))
 alias OptionHandlerDelegate = void delegate(string option, string value);
 
 /**
-   `makeFieldListOptionHandler` creates a std.getopt option hander for processing field-lists
+   `makeFieldListOptionHandler` creates a std.getopt option handler for processing field-lists
    entered on the command line. A field-list is as defined by [parseNumericFieldList].
 */
 OptionHandlerDelegate makeFieldListOptionHandler(
