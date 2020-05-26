@@ -53,7 +53,7 @@
        $ tsv-select data.tsv -H -f user_time           # Field  3
        $ tsv-select data.tsv -H -f run,user_time       # Fields 1,3
        $ tsv-select data.tsv -H -f run-user_time       # Fields 1,2,3
-       $ tsv-select data.tsv -H -f '*_memory'          # Field  6
+       $ tsv-select data.tsv -H -f '*_memory'          # Field  5
        $ tsv-select data.tsv -H -f '*_time'            # Fields 2,3,4
        $ tsv-select data.tsv -H -f '*_time,*_memory'   # Fields 2,3,4,5
        $ tsv-select data.tsv -H -f '*_memory,*_time'   # Fields 5,2,3,4
