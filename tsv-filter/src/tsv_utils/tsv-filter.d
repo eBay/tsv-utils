@@ -364,17 +364,20 @@ bool ffRelDiffGT(const char[][] fields, size_t index1, size_t index2, double val
 /* CmdOptionHandler delegate signature - This is the call made to process the command
  * line option arguments after the header line has been read.
  */
-alias CmdOptionHandler1 = void delegate(ref FieldsPredicate[] tests, ref size_t maxFieldIndex);
-alias CmdOptionHandler = void delegate(ref FieldsPredicate[] tests, ref size_t maxFieldIndex, bool hasHeader, string[] headerFields);
+alias CmdOptionHandler = void delegate(ref FieldsPredicate[] tests, ref size_t maxFieldIndex,
+                                       bool hasHeader, string[] headerFields);
 
 
-CmdOptionHandler1 makeFieldUnaryOptionHandler(FieldUnaryPredicate predicateFn, string option, string optionVal)
+CmdOptionHandler makeFieldUnaryOptionHandler(FieldUnaryPredicate predicateFn, string option, string optionVal)
 {
-    return (ref FieldsPredicate[] tests, ref size_t maxFieldIndex) => fieldUnaryOptionHandler(tests, maxFieldIndex, predicateFn, option, optionVal);
+    return
+        (ref FieldsPredicate[] tests, ref size_t maxFieldIndex, bool hasHeader, string[] headerFields)
+        => fieldUnaryOptionHandler(tests, maxFieldIndex, hasHeader, headerFields, predicateFn, option, optionVal);
 }
 
 void fieldUnaryOptionHandler(
-    ref FieldsPredicate[] tests, ref size_t maxFieldIndex, FieldUnaryPredicate fn, string option, string optionVal)
+    ref FieldsPredicate[] tests, ref size_t maxFieldIndex, bool hasHeader, string[] headerFields,
+    FieldUnaryPredicate fn, string option, string optionVal)
 {
     import std.range : enumerate;
     import std.typecons : Yes, No;
@@ -395,14 +398,16 @@ void fieldUnaryOptionHandler(
     }
 }
 
-
-CmdOptionHandler1 makeFieldVsNumberOptionHandler(FieldVsNumberPredicate predicateFn, string option, string optionVal)
+CmdOptionHandler makeFieldVsNumberOptionHandler(FieldVsNumberPredicate predicateFn, string option, string optionVal)
 {
-    return (ref FieldsPredicate[] tests, ref size_t maxFieldIndex) => fieldVsNumberOptionHandler(tests, maxFieldIndex, predicateFn, option, optionVal);
+    return
+        (ref FieldsPredicate[] tests, ref size_t maxFieldIndex, bool hasHeader, string[] headerFields)
+        => fieldVsNumberOptionHandler(tests, maxFieldIndex, hasHeader, headerFields, predicateFn, option, optionVal);
 }
 
 void fieldVsNumberOptionHandler(
-    ref FieldsPredicate[] tests, ref size_t maxFieldIndex, FieldVsNumberPredicate fn, string option, string optionVal)
+    ref FieldsPredicate[] tests, ref size_t maxFieldIndex, bool hasHeader, string[] headerFields,
+    FieldVsNumberPredicate fn, string option, string optionVal)
 {
     import std.range : enumerate;
     import std.typecons : Yes, No;
@@ -446,14 +451,16 @@ void fieldVsNumberOptionHandler(
     }
 }
 
-
-CmdOptionHandler1 makeFieldVsStringOptionHandler(FieldVsStringPredicate predicateFn, string option, string optionVal)
+CmdOptionHandler makeFieldVsStringOptionHandler(FieldVsStringPredicate predicateFn, string option, string optionVal)
 {
-    return (ref FieldsPredicate[] tests, ref size_t maxFieldIndex) => fieldVsStringOptionHandler(tests, maxFieldIndex, predicateFn, option, optionVal);
+    return
+        (ref FieldsPredicate[] tests, ref size_t maxFieldIndex, bool hasHeader, string[] headerFields)
+        => fieldVsStringOptionHandler(tests, maxFieldIndex, hasHeader, headerFields, predicateFn, option, optionVal);
 }
 
 void fieldVsStringOptionHandler(
-    ref FieldsPredicate[] tests, ref size_t maxFieldIndex, FieldVsStringPredicate fn, string option, string optionVal)
+    ref FieldsPredicate[] tests, ref size_t maxFieldIndex, bool hasHeader, string[] headerFields,
+    FieldVsStringPredicate fn, string option, string optionVal)
 {
     import std.range : enumerate;
     import std.typecons : Yes, No;
@@ -487,13 +494,16 @@ void fieldVsStringOptionHandler(
  * case-insensitive comparison will be done on lower-cased values.
  */
 
-CmdOptionHandler1 makeFieldVsIStringOptionHandler(FieldVsIStringPredicate predicateFn, string option, string optionVal)
+CmdOptionHandler makeFieldVsIStringOptionHandler(FieldVsIStringPredicate predicateFn, string option, string optionVal)
 {
-    return (ref FieldsPredicate[] tests, ref size_t maxFieldIndex) => fieldVsIStringOptionHandler(tests, maxFieldIndex, predicateFn, option, optionVal);
+    return
+        (ref FieldsPredicate[] tests, ref size_t maxFieldIndex, bool hasHeader, string[] headerFields)
+        => fieldVsIStringOptionHandler(tests, maxFieldIndex, hasHeader, headerFields, predicateFn, option, optionVal);
 }
 
 void fieldVsIStringOptionHandler(
-    ref FieldsPredicate[] tests, ref size_t maxFieldIndex, FieldVsIStringPredicate fn, string option, string optionVal)
+    ref FieldsPredicate[] tests, ref size_t maxFieldIndex, bool hasHeader, string[] headerFields,
+    FieldVsIStringPredicate fn, string option, string optionVal)
 {
     import std.range : enumerate;
     import std.typecons : Yes, No;
@@ -523,14 +533,16 @@ void fieldVsIStringOptionHandler(
     }
 }
 
-CmdOptionHandler1 makeFieldVsRegexOptionHandler(FieldVsRegexPredicate predicateFn, string option, string optionVal, bool caseSensitive)
+CmdOptionHandler makeFieldVsRegexOptionHandler(FieldVsRegexPredicate predicateFn, string option, string optionVal, bool caseSensitive)
 {
-    return (ref FieldsPredicate[] tests, ref size_t maxFieldIndex) => fieldVsRegexOptionHandler(tests, maxFieldIndex, predicateFn, option, optionVal, caseSensitive);
+    return
+        (ref FieldsPredicate[] tests, ref size_t maxFieldIndex, bool hasHeader, string[] headerFields)
+        => fieldVsRegexOptionHandler(tests, maxFieldIndex, hasHeader, headerFields, predicateFn, option, optionVal, caseSensitive);
 }
 
 void fieldVsRegexOptionHandler(
-    ref FieldsPredicate[] tests, ref size_t maxFieldIndex, FieldVsRegexPredicate fn, string option, string optionVal,
-    bool caseSensitive)
+    ref FieldsPredicate[] tests, ref size_t maxFieldIndex, bool hasHeader, string[] headerFields,
+    FieldVsRegexPredicate fn, string option, string optionVal, bool caseSensitive)
 {
     import std.range : enumerate;
     import std.typecons : Yes, No;
@@ -572,13 +584,16 @@ void fieldVsRegexOptionHandler(
 }
 
 
-CmdOptionHandler1 makeFieldVsFieldOptionHandler(FieldVsFieldPredicate predicateFn, string option, string optionVal)
+CmdOptionHandler makeFieldVsFieldOptionHandler(FieldVsFieldPredicate predicateFn, string option, string optionVal)
 {
-    return (ref FieldsPredicate[] tests, ref size_t maxFieldIndex) => fieldVsFieldOptionHandler(tests, maxFieldIndex, predicateFn, option, optionVal);
+    return
+        (ref FieldsPredicate[] tests, ref size_t maxFieldIndex, bool hasHeader, string[] headerFields)
+        => fieldVsFieldOptionHandler(tests, maxFieldIndex, hasHeader, headerFields, predicateFn, option, optionVal);
 }
 
 void fieldVsFieldOptionHandler(
-    ref FieldsPredicate[] tests, ref size_t maxFieldIndex, FieldVsFieldPredicate fn, string option, string optionVal)
+    ref FieldsPredicate[] tests, ref size_t maxFieldIndex, bool hasHeader, string[] headerFields,
+    FieldVsFieldPredicate fn, string option, string optionVal)
 {
     immutable valSplit = findSplit(optionVal, ":");
 
@@ -613,13 +628,16 @@ void fieldVsFieldOptionHandler(
 }
 
 
-CmdOptionHandler1 makeFieldFieldNumOptionHandler(FieldFieldNumPredicate predicateFn, string option, string optionVal)
+CmdOptionHandler makeFieldFieldNumOptionHandler(FieldFieldNumPredicate predicateFn, string option, string optionVal)
 {
-    return (ref FieldsPredicate[] tests, ref size_t maxFieldIndex) => fieldFieldNumOptionHandler(tests, maxFieldIndex, predicateFn, option, optionVal);
+    return
+        (ref FieldsPredicate[] tests, ref size_t maxFieldIndex, bool hasHeader, string[] headerFields)
+        => fieldFieldNumOptionHandler(tests, maxFieldIndex, hasHeader, headerFields, predicateFn, option, optionVal);
 }
 
 void fieldFieldNumOptionHandler(
-    ref FieldsPredicate[] tests, ref size_t maxFieldIndex, FieldFieldNumPredicate fn, string option, string optionVal)
+    ref FieldsPredicate[] tests, ref size_t maxFieldIndex, bool hasHeader, string[] headerFields,
+    FieldFieldNumPredicate fn, string option, string optionVal)
 {
     size_t field1;
     size_t field2;
@@ -692,6 +710,8 @@ struct TsvFilterOptions
     auto processArgs (ref string[] cmdArgs)
     {
         import std.algorithm : each;
+        import std.array : split;
+        import std.conv: to;
         import std.getopt;
         import std.path : baseName, stripExtension;
         import tsv_utils.common.getopt_inorder;
@@ -703,7 +723,7 @@ struct TsvFilterOptions
          * option text from the option processing.
          */
 
-        CmdOptionHandler1[] cmdLineTestOptions;
+        CmdOptionHandler[] cmdLineTestOptions;
 
         void handlerFldEmpty(string option, string value)    { cmdLineTestOptions ~= makeFieldUnaryOptionHandler(&fldEmpty,    option, value); }
         void handlerFldNotEmpty(string option, string value) { cmdLineTestOptions ~= makeFieldUnaryOptionHandler(&fldNotEmpty, option, value); }
@@ -887,7 +907,11 @@ struct TsvFilterOptions
             ReadHeader readHeader = hasHeader ? Yes.readHeader : No.readHeader;
             inputSources = inputSourceRange(filepaths, readHeader);
 
-            cmdLineTestOptions.each!(dg => dg(tests, maxFieldIndex));
+            string[] headerFields;
+
+            if (hasHeader) headerFields = inputSources.front.header.split(delim).to!(string[]);
+
+            cmdLineTestOptions.each!(dg => dg(tests, maxFieldIndex, hasHeader, headerFields));
         }
         catch (Exception e)
         {
