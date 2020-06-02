@@ -40,6 +40,19 @@ runtest ${prog} "--header --ge 2:101 input1.tsv" ${basic_tests_1}
 runtest ${prog} "--header --gt 2:101 input1.tsv" ${basic_tests_1}
 runtest ${prog} "--header --ne 2:101 input1.tsv" ${basic_tests_1}
 
+# Numeric field tests: Named field versions
+runtest ${prog} "-H --eq F2:1 input1.tsv" ${basic_tests_1}
+runtest ${prog} "-H --eq F2:1. input1.tsv" ${basic_tests_1}
+runtest ${prog} "-H --eq F2:2 input1.tsv" ${basic_tests_1}
+runtest ${prog} "-H --eq F2:-100 input1.tsv" ${basic_tests_1}
+runtest ${prog} "-H --eq F1:0 --eq F2:100 input1.tsv" ${basic_tests_1}
+runtest ${prog} "-H --eq F1:0 --ne F2:100 input1.tsv" ${basic_tests_1}
+runtest ${prog} "-H --le F2:101 input1.tsv" ${basic_tests_1}
+runtest ${prog} "-H --lt F2:101 input1.tsv" ${basic_tests_1}
+runtest ${prog} "-H --ge F2:101 input1.tsv" ${basic_tests_1}
+runtest ${prog} "-H --gt F2:101 input1.tsv" ${basic_tests_1}
+runtest ${prog} "-H --ne F2:101 input1.tsv" ${basic_tests_1}
+
 # Empty and blank field tests
 echo "" >> ${basic_tests_1}; echo "====Empty and blank field tests===" >> ${basic_tests_1}
 
@@ -59,9 +72,18 @@ runtest ${prog} "--not-empty 1 input_onefield.txt" ${basic_tests_1}
 runtest ${prog} "--blank 1 input_onefield.txt" ${basic_tests_1}
 runtest ${prog} "--empty 1 input_onefield.txt" ${basic_tests_1}
 
+# Empty and blank fields: Named field versions
+runtest ${prog} "--header --empty F3 input1.tsv" ${basic_tests_1}
+runtest ${prog} "--header --eq F1:100 --empty F4 input1.tsv" ${basic_tests_1}
+runtest ${prog} "--header --eq F1:100 --not-empty F4 input1.tsv" ${basic_tests_1}
+runtest ${prog} "--header --not-empty F3 input2.tsv" ${basic_tests_1}
+runtest ${prog} "--header --blank F3 input2.tsv" ${basic_tests_1}
+runtest ${prog} "--header --not-blank F3 input2.tsv" ${basic_tests_1}
+
 # Short circuit by order. Ensure not blank or "none" before numeric test.
 echo "" >> ${basic_tests_1}; echo "====Short circuit tests===" >> ${basic_tests_1}
 runtest ${prog} "--header --not-blank 1 --str-ne 1:none --eq 1:100 input_num_or_empty.tsv" ${basic_tests_1}
+runtest ${prog} "--header --not-blank f1 --str-ne 1:none --eq 1:100 input_num_or_empty.tsv" ${basic_tests_1}
 runtest ${prog} "--header --or --blank 1 --str-eq 1:none --eq 1:100 input_num_or_empty.tsv" ${basic_tests_1}
 runtest ${prog} "--header --invert --not-blank 1 --str-ne 1:none --eq 1:100 input_num_or_empty.tsv" ${basic_tests_1}
 runtest ${prog} "--header --invert --or --blank 1 --str-eq 1:none --eq 1:100 input_num_or_empty.tsv" ${basic_tests_1}
@@ -75,6 +97,11 @@ runtest ${prog} "-H --is-numeric 2 --gt 2:10 input_numeric_tests.tsv" ${basic_te
 runtest ${prog} "-H --is-numeric 2 --le 2:10 input_numeric_tests.tsv" ${basic_tests_1}
 runtest ${prog} "-H --is-finite 2 --gt 2:10 input_numeric_tests.tsv" ${basic_tests_1}
 runtest ${prog} "-H --is-finite 2 --le 2:10 input_numeric_tests.tsv" ${basic_tests_1}
+runtest ${prog} "-H --is-nan f2 input_numeric_tests.tsv" ${basic_tests_1}
+runtest ${prog} "-H --is-infinity f2 input_numeric_tests.tsv" ${basic_tests_1}
+runtest ${prog} "-H --is-numeric f2 --le f2:10 input_numeric_tests.tsv" ${basic_tests_1}
+runtest ${prog} "-H --is-finite f2 --gt f2:10 input_numeric_tests.tsv" ${basic_tests_1}
+
 
 # String field tests
 echo "" >> ${basic_tests_1}; echo "====String tests===" >> ${basic_tests_1}
@@ -112,12 +139,39 @@ runtest ${prog} "--header --istr-not-in-fld 3:B input1.tsv" ${basic_tests_1}
 runtest ${prog} "--header --istr-not-in-fld 4:Sc input1.tsv" ${basic_tests_1}
 runtest ${prog} "--header --istr-not-in-fld 4:àsSC input1.tsv" ${basic_tests_1}
 
+# String field tests: Named fields
+runtest ${prog} "--header --str-eq F3:abc input1.tsv" ${basic_tests_1}
+runtest ${prog} "--header --str-eq F4:ABC input1.tsv" ${basic_tests_1}
+runtest ${prog} "--header --str-eq F3:ß input1.tsv" ${basic_tests_1}
+runtest ${prog} "--header --str-eq F3:àßc input1.tsv" ${basic_tests_1}
+runtest ${prog} "--header --str-ne F3:b input1.tsv" ${basic_tests_1}
+runtest ${prog} "--header --str-le F3:b input1.tsv" ${basic_tests_1}
+runtest ${prog} "--header --str-lt F3:b input1.tsv" ${basic_tests_1}
+runtest ${prog} "--header --str-ge F3:b input1.tsv" ${basic_tests_1}
+runtest ${prog} "--header --str-gt F3:b input1.tsv" ${basic_tests_1}
+runtest ${prog} "--header --str-in-fld F3:b input1.tsv" ${basic_tests_1}
+
+runtest ${prog} "--header --istr-eq F4:aBc input1.tsv" ${basic_tests_1}
+runtest ${prog} "--header --istr-eq F3:ÀßC input1.tsv" ${basic_tests_1}
+runtest ${prog} "--header --istr-ne F4:ÀSSC input1.tsv" ${basic_tests_1}
+
+runtest ${prog} "--header --istr-in-fld F3:b input1.tsv" ${basic_tests_1}
+runtest ${prog} "--header --istr-in-fld F4:àsSC input1.tsv" ${basic_tests_1}
+runtest ${prog} "--header --istr-not-in-fld F4:Sc input1.tsv" ${basic_tests_1}
+runtest ${prog} "--header --istr-not-in-fld F4:àsSC input1.tsv" ${basic_tests_1}
+
 ## Can't pass single quotes to runtest
 echo "" >> ${basic_tests_1}; echo "====[tsv-filter --header --str-in-fld '3: ' input1.tsv]====" >> ${basic_tests_1}
 ${prog} --header --str-in-fld '3: ' input1.tsv >> ${basic_tests_1} 2>&1
 
 echo "" >> ${basic_tests_1}; echo "====[tsv-filter --header --str-in-fld '4:abc def' input1.tsv]====" >> ${basic_tests_1}
 ${prog} --header --str-in-fld '4:abc def' input1.tsv >> ${basic_tests_1} 2>&1
+
+echo "" >> ${basic_tests_1}; echo "====[tsv-filter --header --str-in-fld 'F3: ' input1.tsv]====" >> ${basic_tests_1}
+${prog} --header --str-in-fld 'F3: ' input1.tsv >> ${basic_tests_1} 2>&1
+
+echo "" >> ${basic_tests_1}; echo "====[tsv-filter --header --str-in-fld 'F4:abc def' input1.tsv]====" >> ${basic_tests_1}
+${prog} --header --str-in-fld 'F4:abc def' input1.tsv >> ${basic_tests_1} 2>&1
 
 runtest ${prog} "--header --str-in-fld 3:ß input1.tsv" ${basic_tests_1}
 runtest ${prog} "--header --str-not-in-fld 3:b input1.tsv" ${basic_tests_1}
@@ -143,6 +197,13 @@ runtest ${prog} "--header --iregex 4:ß input1.tsv" ${basic_tests_1}
 runtest ${prog} "--header --regex 1:^\-[0-9]+ input1.tsv" ${basic_tests_1}
 runtest ${prog} "--header --not-iregex 4:abc input1.tsv" ${basic_tests_1}
 runtest ${prog} "--header --not-regex 4:z|d input1.tsv" ${basic_tests_1}
+
+# Regular expression tests: named fields
+runtest ${prog} "-H --regex F4:Às*C input1.tsv" ${basic_tests_1}
+runtest ${prog} "-H --regex F4:^A[b|B]C$ input1.tsv" ${basic_tests_1}
+runtest ${prog} "-H --regex F1:^\-[0-9]+ input1.tsv" ${basic_tests_1}
+runtest ${prog} "-H --not-iregex F4:abc input1.tsv" ${basic_tests_1}
+runtest ${prog} "-H --not-regex F4:z|d input1.tsv" ${basic_tests_1}
 
 echo "" >> ${basic_tests_1}; echo "====Character and Byte Length tests===" >> ${basic_tests_1}
 
@@ -189,6 +250,16 @@ runtest ${prog} "--header --byte-len-ne 3:3 input_unicode.tsv" ${basic_tests_1}
 runtest ${prog} "--header --char-len-lt 1:3 input_unicode.tsv" ${basic_tests_1}
 runtest ${prog} "--header --char-len-le 2:2 input_unicode.tsv" ${basic_tests_1}
 runtest ${prog} "--header --char-len-ge 4:2 input_unicode.tsv" ${basic_tests_1}
+
+# Character and byte length tests: Named fields
+runtest ${prog} "--header --char-len-ge Text*:3 input_unicode.tsv" ${basic_tests_1}
+runtest ${prog} "--header --byte-len-ge Text*:3 input_unicode.tsv" ${basic_tests_1}
+
+echo "" >> ${basic_tests_1}; echo "====[tsv-filter --header --char-len-lt 'Text\ 2:3' input_unicode.tsv] ====" >> ${basic_tests_1}
+${prog} --header --char-len-lt 'Text\ 2:3' input_unicode.tsv >> ${basic_tests_1}
+
+echo "" >> ${basic_tests_1}; echo "====[tsv-filter --header --char-len-lt 'Text\ 2 3' input_unicode.tsv] ====" >> ${basic_tests_1}
+${prog} --header --char-len-lt 'Text\ 2 3' input_unicode.tsv >> ${basic_tests_1}
 
 # Field List tests
 echo "" >> ${basic_tests_1}; echo "====Field list tests===" >> ${basic_tests_1}
@@ -240,10 +311,46 @@ runtest ${prog} "--header --ff-reldiff-gt 1:2:1e-5 input2.tsv" ${basic_tests_1}
 runtest ${prog} "--header --ff-reldiff-gt 1:2:1e-6 input2.tsv" ${basic_tests_1}
 runtest ${prog} "--header --ff-reldiff-gt 1:2:1e-7 input2.tsv" ${basic_tests_1}
 
+# Field vs Field tests: named field versions
+runtest ${prog} "--header --ff-eq F1:2 input1.tsv" ${basic_tests_1}
+runtest ${prog} "--header --ff-ne F1:2 input1.tsv" ${basic_tests_1}
+runtest ${prog} "--header --ff-le F1:2 input1.tsv" ${basic_tests_1}
+runtest ${prog} "--header --ff-lt F1:2 input1.tsv" ${basic_tests_1}
+runtest ${prog} "--header --ff-ge F1:2 input1.tsv" ${basic_tests_1}
+runtest ${prog} "--header --ff-gt F1:2 input1.tsv" ${basic_tests_1}
+runtest ${prog} "--header --ff-str-eq F3:4 input1.tsv" ${basic_tests_1}
+runtest ${prog} "--header --ff-str-ne F3:4 input1.tsv" ${basic_tests_1}
+runtest ${prog} "--header --ff-istr-eq F3:4 input1.tsv" ${basic_tests_1}
+runtest ${prog} "--header --ff-istr-ne F3:4 input1.tsv" ${basic_tests_1}
+
+runtest ${prog} "--header --ff-absdiff-le F1:F2:0.01 input2.tsv" ${basic_tests_1}
+runtest ${prog} "--header --ff-absdiff-le F2:F1:0.01 input2.tsv" ${basic_tests_1}
+runtest ${prog} "--header --ff-absdiff-le F1:F2:0.02 input2.tsv" ${basic_tests_1}
+runtest ${prog} "--header --ff-absdiff-gt F1:F2:0.01 input2.tsv" ${basic_tests_1}
+runtest ${prog} "--header --ff-absdiff-gt F1:F2:0.02 input2.tsv" ${basic_tests_1}
+
+runtest ${prog} "--header --ff-reldiff-le F1:F2:1e-5 input2.tsv" ${basic_tests_1}
+runtest ${prog} "--header --ff-reldiff-le F1:F2:1e-6 input2.tsv" ${basic_tests_1}
+runtest ${prog} "--header --ff-reldiff-le F1:F2:1e-7 input2.tsv" ${basic_tests_1}
+runtest ${prog} "--header --ff-reldiff-gt F1:F2:1e-5 input2.tsv" ${basic_tests_1}
+runtest ${prog} "--header --ff-reldiff-gt F1:F2:1e-6 input2.tsv" ${basic_tests_1}
+runtest ${prog} "--header --ff-reldiff-gt F1:F2:1e-7 input2.tsv" ${basic_tests_1}
+
 # No Header tests
 echo "" >> ${basic_tests_1}; echo "====No header===" >> ${basic_tests_1}
 runtest ${prog} "--str-in-fld 2:2 input1.tsv" ${basic_tests_1}
 runtest ${prog} "--str-eq 3:a input1.tsv" ${basic_tests_1}
+
+runtest ${prog} "--eq 2:1 input1_noheader.tsv" ${basic_tests_1}
+runtest ${prog} "--le 2:101 input1_noheader.tsv" ${basic_tests_1}
+runtest ${prog} "--lt 2:101 input1_noheader.tsv" ${basic_tests_1}
+runtest ${prog} "--empty 3 input1_noheader.tsv" ${basic_tests_1}
+runtest ${prog} "--eq 1:100 --empty 3 input1_noheader.tsv" ${basic_tests_1}
+runtest ${prog} "--str-eq 4:ABC input1_noheader.tsv" ${basic_tests_1}
+runtest ${prog} "--str-eq 3:ß input1_noheader.tsv" ${basic_tests_1}
+runtest ${prog} "--regex 4:Às*C input1_noheader.tsv" ${basic_tests_1}
+runtest ${prog} "--regex 4:^A[b|B]C$ input1_noheader.tsv" ${basic_tests_1}
+runtest ${prog} "--ff-eq 1:2 input1_noheader.tsv" ${basic_tests_1}
 
 # OR clause tests
 echo "" >> ${basic_tests_1}; echo "====OR clause tests===" >> ${basic_tests_1}
@@ -425,6 +532,18 @@ runtest ${prog} "--header --ff-absdiff-le 0:2:0.5 input1.tsv" ${error_tests_1}
 runtest ${prog} "--header --ff-absdiff-le g:2:0.5 input1.tsv" ${error_tests_1}
 runtest ${prog} "--header --ff-absdiff-le :2:0.5 input1.tsv" ${error_tests_1}
 runtest ${prog} "--eq 2:1 input1.tsv" ${error_tests_1}
+
+# No header versions targeting cases affected by named fields
+runtest ${prog} "--ne abc:15 input1_noheader.tsv" ${error_tests_1}
+runtest ${prog} "--le 1: input1_noheader.tsv" ${error_tests_1}
+runtest ${prog} "--le 1 input1_noheader.tsv" ${error_tests_1}
+runtest ${prog} "--le :10 input1_noheader.tsv" ${error_tests_1}
+runtest ${prog} "--le : input1_noheader.tsv" ${error_tests_1}
+runtest ${prog} "--empty 23g input1_noheader.tsv" ${error_tests_1}
+runtest ${prog} "--empty 0 input1_noheader.tsv" ${error_tests_1}
+runtest ${prog} "--str-gt 0:abc input1_noheader.tsv" ${error_tests_1}
+runtest ${prog} "--str-eq :def input1_noheader.tsv" ${error_tests_1}
+runtest ${prog} "--regex :^A[b|B]C$ input1_noheader.tsv" ${error_tests_1}
 
 # Standard input tests
 echo "" >> ${error_tests_1}; echo "====[cat input_3x2.tsv | tsv-filter --ge 2:23]====" >> ${error_tests_1}

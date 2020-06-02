@@ -99,8 +99,8 @@
    and space characters are both terminator characters for field-lists. Some examples:
 
    $(CONSOLE
-       $ tsv-filter -H --le 3:100                        # Field 3 < 100
-       $ tsv-filter -H --le elapsed_time:100             # 'elapsed_time' field < 100
+       $ tsv-filter -H --lt 3:100                        # Field 3 < 100
+       $ tsv-filter -H --lt elapsed_time:100             # 'elapsed_time' field < 100
        $ tsv-summarize -H --quantile '*_time:0.25,0.75'  # 1st and 3rd quantiles for time fields
    )
 
@@ -134,7 +134,7 @@
 
        * [makeFieldListOptionHandler] - Returns a delegate that can be passed to
          std.getopt for parsing numeric field-lists. It was part of the original code
-         supporting numeric field-lists. Note that delegate passed to std.getopt do
+         supporting numeric field-lists. Note that delegates passed to std.getopt do
          not have access to the header line of the input file, so the technique can
          only be used for numeric field-lists.
     )
@@ -150,9 +150,9 @@
 
        * [isNumericFieldGroupWithHyphenFirstOrLast] - Determines if a field-group is a
          valid numeric field-group, except for having a leading or trailing hyphen.
-         This test is used to provide better error messages. A field-group that does
-         not pass either [isNumericFieldGroup] or
-         [isNumericFieldGroupWithHyphenFirstOrLast] is processed as named field-group.
+         This test is used to provide better error messages. A field-group that does not
+         pass either [isNumericFieldGroup] or [isNumericFieldGroupWithHyphenFirstOrLast]
+         is processed as a named field-group.
 
        * [namedFieldGroupToRegex] - Generates regexes for matching field names in a
          field group to field names in the header line. One regex is generated for a

@@ -348,143 +348,199 @@ bool ffRelDiffGT(const char[][] fields, size_t index1, size_t index2, double val
  * the tests array. An exception is thrown if errors are detected while processing the
  * option, the error text is intended for the end user.
  *
- * These option handlers have similar functionality, differing in option processing and
+ * All the option handlers have similar functionality, differing in option processing and
  * error message generation. fieldVsNumberOptionHandler is described as an example. It
  * handles command options such as '--lt 3:1000', which tests field 3 for a values less
- * than 1000. It is passed the tests array, the 'numLE' function to use for the test, and
- * the string "3:1000" representing the option value. It parses the option value into
- * field index (unsigned int) and value (double). These are wrapped in a FieldsPredicate
- * which is added to the tests array. An error is signaled if the option string is invalid.
+ * than 1000. It is passed the tests array, the 'numLE' predicate function used for the
+ * test, and the string "3:1000" representing the option value. It is also passed the
+ * header line from the first input file and an indication of whether header processing
+ * is enabled (--H|header). parseFieldList (fieldlist module) is used to parse the
+ * field-list component of the option ("3" in the example). The comparison value ("1000")
+ * is converted to a double. These are wrapped in a FieldsPredicate delegate which is
+ * added to the tests array. An error is signaled if the option string is invalid.
  *
  * During processing, fields indexes are converted from one-based to zero-based. As an
  * optimization, the maximum field index is also tracked. This allows early termination of
  * line splitting.
+ *
+ * The header line from the input file is not available when std.getop processes the
+ * command line option. The processing described above must be deferred. This is done
+ * using a 'CmdOptionHandler' delegate. There is a 'make' function for every Command line
+ * option handler that creates these. These are created during std.getopt processing.
+ * They are run when the header line becomes available.
+ *
+ * The final setup for the '--lt' (numeric less-than) operator' is as follows:
+ *   - Function 'handlerNumLE' (in TsvFilterOptions.processArgs) is associated with the
+ *     command line option "--lt <val>". When called by std.getopt it creates an option
+ *     hander delegate via 'makeFieldVsNumberOptionHandler'. This is appended to an
+ *     array of delegates.
+ *   - 'fieldVsNumberOptionHandler' is invoked via the delegate after the header line
+ *     becomes available (in TsvFilterOptions.processArgs). If args are valid,
+ *     'makeFieldVsNumberDelegate' is used to create a delegate invoking the 'numLE'
+ *     predicate function. This delegate is added to the set of run-time tests.
+ *
+ * Note that in the above setup the 'numLE' predicate is specified in 'handlerNumLE'
+ * and passed through all the steps. This is how the command line option gets
+ * associated with the predicate function.
  */
-void fieldUnaryOptionHandler(
-    ref FieldsPredicate[] tests, ref size_t maxFieldIndex, FieldUnaryPredicate fn, string option, string optionVal)
+
+/* CmdOptionHandler delegate signature - This is the call made to process the command
+ * line option arguments after the header line has been read.
+ */
+alias CmdOptionHandler = void delegate(ref FieldsPredicate[] tests, ref size_t maxFieldIndex,
+                                       bool hasHeader, string[] headerFields);
+
+
+/* */
+CmdOptionHandler makeFieldUnaryOptionHandler(FieldUnaryPredicate predicateFn, string option, string optionVal)
 {
-    import std.range : enumerate;
-    import std.typecons : Yes, No;
-    import tsv_utils.common.fieldlist : parseNumericFieldList;
+    return
+        (ref FieldsPredicate[] tests, ref size_t maxFieldIndex, bool hasHeader, string[] headerFields)
+        => fieldUnaryOptionHandler(tests, maxFieldIndex, hasHeader, headerFields, predicateFn, option, optionVal);
+}
+
+void fieldUnaryOptionHandler(
+    ref FieldsPredicate[] tests, ref size_t maxFieldIndex, bool hasHeader, string[] headerFields,
+    FieldUnaryPredicate fn, string option, string optionVal)
+{
+    import tsv_utils.common.fieldlist;
 
     try foreach (fieldNum, fieldIndex;
-                 optionVal.parseNumericFieldList!(size_t, Yes.convertToZeroBasedIndex).enumerate(1))
+                 optionVal
+                 .parseFieldList!(size_t, Yes.convertToZeroBasedIndex)(hasHeader, headerFields)
+                 .enumerate(1))
         {
             tests ~= makeFieldUnaryDelegate(fn, fieldIndex);
             maxFieldIndex = (fieldIndex > maxFieldIndex) ? fieldIndex : maxFieldIndex;
         }
     catch (Exception e)
     {
-         import std.format : format;
-         e.msg = format("[--%s %s]. %s\n   Expected: '--%s <field>' or '--%s <field-list>'.",
+         e.msg = format("Invalid option: [--%s %s]. %s\n   Expected: '--%s <field>' or '--%s <field-list>'.",
                         option, optionVal, e.msg, option, option);
          throw e;
     }
 }
 
-void fieldVsNumberOptionHandler(
-    ref FieldsPredicate[] tests, ref size_t maxFieldIndex, FieldVsNumberPredicate fn, string option, string optionVal)
+CmdOptionHandler makeFieldVsNumberOptionHandler(FieldVsNumberPredicate predicateFn, string option, string optionVal)
 {
-    import std.range : enumerate;
-    import std.typecons : Yes, No;
-    import tsv_utils.common.fieldlist : parseNumericFieldList;
+    return
+        (ref FieldsPredicate[] tests, ref size_t maxFieldIndex, bool hasHeader, string[] headerFields)
+        => fieldVsNumberOptionHandler(tests, maxFieldIndex, hasHeader, headerFields, predicateFn, option, optionVal);
+}
+
+void fieldVsNumberOptionHandler(
+    ref FieldsPredicate[] tests, ref size_t maxFieldIndex, bool hasHeader, string[] headerFields,
+    FieldVsNumberPredicate fn, string option, string optionVal)
+{
+    import tsv_utils.common.fieldlist;
 
     auto formatErrorMsg(string option, string optionVal, string errorMessage="")
     {
-        import std.format;
-
         string optionalSpace = (errorMessage.length == 0) ? "" : " ";
         return format(
-            "Invalid option: '--%s %s'.%s%s\n   Expected: '--%s <field>:<val>' or '--%s <field-list>:<val> where <val> is a number.",
+            "Invalid option: [--%s %s].%s%s\n   Expected: '--%s <field>:<val>' or '--%s <field-list>:<val> where <val> is a number.",
             option, optionVal, optionalSpace, errorMessage, option, option);
     }
 
-    immutable valSplit = findSplit(optionVal, ":");
-
-    enforce(valSplit[1].length != 0 && valSplit[2].length != 0,
-            formatErrorMsg(option, optionVal));
-
-    double value;
-    try value = valSplit[2].to!double;
-    catch (Exception e)
+    try
     {
-        throw new Exception(formatErrorMsg(option, optionVal, e.msg));
-    }
+        auto optionValParse =
+            optionVal
+            .parseFieldList!(size_t, Yes.convertToZeroBasedIndex, No.allowFieldNumZero, No.consumeEntireFieldListString)
+            (hasHeader, headerFields);
 
-    try foreach (fieldNum, fieldIndex;
-                 valSplit[0].parseNumericFieldList!(size_t, Yes.convertToZeroBasedIndex).enumerate(1))
+        auto fieldIndices = optionValParse.array;
+        enforce(optionVal.length - optionValParse.consumed > 1, "No value after field list.");
+        double value = optionVal[optionValParse.consumed + 1 .. $].to!double;
+
+        foreach (fieldIndex; fieldIndices)
         {
             tests ~= makeFieldVsNumberDelegate(fn, fieldIndex, value);
             maxFieldIndex = (fieldIndex > maxFieldIndex) ? fieldIndex : maxFieldIndex;
         }
+    }
     catch (Exception e)
     {
-        import std.format : format;
-        e.msg = format(
-            "[--%s %s]. %s\n   Expected: '--%s <field>:<val>' or '--%s <field-list>:<val> where <val> is a number.",
-            option, optionVal, e.msg, option, option);
+        e.msg = formatErrorMsg(option, optionVal, e.msg);
         throw e;
     }
 }
 
-void fieldVsStringOptionHandler(
-    ref FieldsPredicate[] tests, ref size_t maxFieldIndex, FieldVsStringPredicate fn, string option, string optionVal)
+CmdOptionHandler makeFieldVsStringOptionHandler(FieldVsStringPredicate predicateFn, string option, string optionVal)
 {
-    import std.range : enumerate;
-    import std.typecons : Yes, No;
-    import tsv_utils.common.fieldlist : parseNumericFieldList;
+    return
+        (ref FieldsPredicate[] tests, ref size_t maxFieldIndex, bool hasHeader, string[] headerFields)
+        => fieldVsStringOptionHandler(tests, maxFieldIndex, hasHeader, headerFields, predicateFn, option, optionVal);
+}
 
-    immutable valSplit = findSplit(optionVal, ":");
+void fieldVsStringOptionHandler(
+    ref FieldsPredicate[] tests, ref size_t maxFieldIndex, bool hasHeader, string[] headerFields,
+    FieldVsStringPredicate fn, string option, string optionVal)
+{
+    import tsv_utils.common.fieldlist;
 
-    enforce(valSplit[1].length != 0 && valSplit[2].length != 0,
-            format("Invalid option: '--%s %s'.\n   Expected: '--%s <field>:<val>' or '--%s <field-list>:<val>' where <val> is a string.",
-                   option, optionVal, option, option));
+    try
+    {
+        auto optionValParse =
+            optionVal
+            .parseFieldList!(size_t, Yes.convertToZeroBasedIndex, No.allowFieldNumZero, No.consumeEntireFieldListString)
+            (hasHeader, headerFields);
 
-    string value = valSplit[2].to!string;
+        auto fieldIndices = optionValParse.array;
+        enforce(optionVal.length - optionValParse.consumed > 1, "No value after field list.");
+        string value = optionVal[optionValParse.consumed + 1 .. $].idup;
 
-    try foreach (fieldNum, fieldIndex;
-                 valSplit[0].parseNumericFieldList!(size_t, Yes.convertToZeroBasedIndex).enumerate(1))
+        foreach (fieldIndex; fieldIndices)
         {
             tests ~= makeFieldVsStringDelegate(fn, fieldIndex, value);
             maxFieldIndex = (fieldIndex > maxFieldIndex) ? fieldIndex : maxFieldIndex;
         }
+
+    }
     catch (Exception e)
     {
-        import std.format : format;
         e.msg = format(
             "[--%s %s]. %s\n   Expected: '--%s <field>:<val>' or '--%s <field-list>:<val>' where <val> is a string.",
             option, optionVal, e.msg, option, option);
         throw e;
     }
+}
+
+CmdOptionHandler makeFieldVsIStringOptionHandler(FieldVsIStringPredicate predicateFn, string option, string optionVal)
+{
+    return
+        (ref FieldsPredicate[] tests, ref size_t maxFieldIndex, bool hasHeader, string[] headerFields)
+        => fieldVsIStringOptionHandler(tests, maxFieldIndex, hasHeader, headerFields, predicateFn, option, optionVal);
 }
 
 /* The fieldVsIStringOptionHandler lower-cases the command line argument, assuming the
  * case-insensitive comparison will be done on lower-cased values.
  */
 void fieldVsIStringOptionHandler(
-    ref FieldsPredicate[] tests, ref size_t maxFieldIndex, FieldVsIStringPredicate fn, string option, string optionVal)
+    ref FieldsPredicate[] tests, ref size_t maxFieldIndex, bool hasHeader, string[] headerFields,
+    FieldVsIStringPredicate fn, string option, string optionVal)
 {
-    import std.range : enumerate;
-    import std.typecons : Yes, No;
-    import tsv_utils.common.fieldlist : parseNumericFieldList;
+    import tsv_utils.common.fieldlist;
 
-    immutable valSplit = findSplit(optionVal, ":");
+    try
+    {
+        auto optionValParse =
+            optionVal
+            .parseFieldList!(size_t, Yes.convertToZeroBasedIndex, No.allowFieldNumZero, No.consumeEntireFieldListString)
+            (hasHeader, headerFields);
 
-    enforce(valSplit[1].length != 0 && valSplit[2].length != 0,
-            format("Invalid option: '--%s %s'.\n   Expected: '--%s <field>:<val>' or '--%s <field-list>:<val>' where <val> is a string.",
-                   option, optionVal, option, option));
+        auto fieldIndices = optionValParse.array;
+        enforce(optionVal.length - optionValParse.consumed > 1, "No value after field list.");
+        string value = optionVal[optionValParse.consumed + 1 .. $].idup;
 
-    string value = valSplit[2].to!string;
-
-    try foreach (fieldNum, fieldIndex;
-                 valSplit[0].parseNumericFieldList!(size_t, Yes.convertToZeroBasedIndex).enumerate(1))
+        foreach (fieldIndex; fieldIndices)
         {
             tests ~= makeFieldVsIStringDelegate(fn, fieldIndex, value.to!dstring.toLower);
             maxFieldIndex = (fieldIndex > maxFieldIndex) ? fieldIndex : maxFieldIndex;
         }
+    }
     catch (Exception e)
     {
-        import std.format : format;
         e.msg = format(
             "[--%s %s]. %s\n   Expected: '--%s <field>:<val>' or '--%s <field-list>:<val>' where <val> is a string.",
             option, optionVal, e.msg, option, option);
@@ -492,42 +548,49 @@ void fieldVsIStringOptionHandler(
     }
 }
 
-void fieldVsRegexOptionHandler(
-    ref FieldsPredicate[] tests, ref size_t maxFieldIndex, FieldVsRegexPredicate fn, string option, string optionVal,
-    bool caseSensitive)
+CmdOptionHandler makeFieldVsRegexOptionHandler(FieldVsRegexPredicate predicateFn, string option, string optionVal, bool caseSensitive)
 {
-    import std.range : enumerate;
-    import std.typecons : Yes, No;
-    import tsv_utils.common.fieldlist : parseNumericFieldList;
+    return
+        (ref FieldsPredicate[] tests, ref size_t maxFieldIndex, bool hasHeader, string[] headerFields)
+        => fieldVsRegexOptionHandler(tests, maxFieldIndex, hasHeader, headerFields, predicateFn, option, optionVal, caseSensitive);
+}
 
-    immutable valSplit = findSplit(optionVal, ":");
+void fieldVsRegexOptionHandler(
+    ref FieldsPredicate[] tests, ref size_t maxFieldIndex, bool hasHeader, string[] headerFields,
+    FieldVsRegexPredicate fn, string option, string optionVal, bool caseSensitive)
+{
+    import tsv_utils.common.fieldlist;
 
-    enforce(valSplit[1].length != 0 && valSplit[2].length != 0,
-            format("Invalid option: '--%s %s'.\n   Expected: '--%s <field>:<val>' or '--%s <field-list>:<val>' where <val> is a regular expression.",
-                   option, optionVal, option, option));
-
-    Regex!char value;
     try
     {
-        immutable modifiers = caseSensitive ? "" : "i";
-        value = regex(valSplit[2], modifiers);
-    }
-    catch (Exception e)
-    {
-        throw new Exception(
-            format("Invalid regular expression: '--%s %s'. %s\n   Expected: '--%s <field>:<val>' or '--%s <field-list>:<val>' where <val> is a regular expression.",
-                   option, optionVal, e.msg, option, option));
-    }
+        auto optionValParse =
+            optionVal
+            .parseFieldList!(size_t, Yes.convertToZeroBasedIndex, No.allowFieldNumZero, No.consumeEntireFieldListString)
+            (hasHeader, headerFields);
 
-    try foreach (fieldNum, fieldIndex;
-                 valSplit[0].parseNumericFieldList!(size_t, Yes.convertToZeroBasedIndex).enumerate(1))
+        auto fieldIndices = optionValParse.array;
+        enforce(optionVal.length - optionValParse.consumed > 1, "No value after field list.");
+
+        immutable modifiers = caseSensitive ? "" : "i";
+        Regex!char value =
+            optionVal[optionValParse.consumed + 1 .. $]
+            .regex(modifiers);
+
+        foreach (fieldIndex; fieldIndices)
         {
             tests ~= makeFieldVsRegexDelegate(fn, fieldIndex, value);
             maxFieldIndex = (fieldIndex > maxFieldIndex) ? fieldIndex : maxFieldIndex;
         }
+    }
+    catch (RegexException e)
+    {
+        e.msg = format(
+            "[--%s %s]. Invalid regular expression: %s\n   Expected: '--%s <field>:<val>' or '--%s <field-list>:<val>' where <val> is a regular expression.",
+            option, optionVal, e.msg, option, option);
+        throw e;
+    }
     catch (Exception e)
     {
-        import std.format : format;
         e.msg = format(
             "[--%s %s]. %s\n   Expected: '--%s <field>:<val>' or '--%s <field-list>:<val>' where <val> is a regular expression.",
             option, optionVal, e.msg, option, option);
@@ -535,85 +598,111 @@ void fieldVsRegexOptionHandler(
     }
 }
 
-void fieldVsFieldOptionHandler(
-    ref FieldsPredicate[] tests, ref size_t maxFieldIndex, FieldVsFieldPredicate fn, string option, string optionVal)
+
+CmdOptionHandler makeFieldVsFieldOptionHandler(FieldVsFieldPredicate predicateFn, string option, string optionVal)
 {
-    immutable valSplit = findSplit(optionVal, ":");
+    return
+        (ref FieldsPredicate[] tests, ref size_t maxFieldIndex, bool hasHeader, string[] headerFields)
+        => fieldVsFieldOptionHandler(tests, maxFieldIndex, hasHeader, headerFields, predicateFn, option, optionVal);
+}
 
-    enforce(valSplit[1].length != 0 && valSplit[2].length != 0,
-            format("Invalid option: '--%s %s'. Expected: '--%s <field1>:<field2>' where fields are 1-upped integers.",
-                   option, optionVal, option));
+void fieldVsFieldOptionHandler(
+    ref FieldsPredicate[] tests, ref size_t maxFieldIndex, bool hasHeader, string[] headerFields,
+    FieldVsFieldPredicate fn, string option, string optionVal)
+{
+    import tsv_utils.common.fieldlist;
 
-    size_t field1;
-    size_t field2;
     try
     {
-        field1 = valSplit[0].to!size_t;
-        field2 = valSplit[2].to!size_t;
+        auto optionValParse =
+            optionVal
+            .parseFieldList!(size_t, Yes.convertToZeroBasedIndex, No.allowFieldNumZero, No.consumeEntireFieldListString)
+            (hasHeader, headerFields);
+
+        auto fieldIndices1 = optionValParse.array;
+
+        enforce(fieldIndices1.length != 0, "First field argument is empty.");
+        enforce(fieldIndices1.length == 1, "First field argument references multiple fields.");
+        enforce(optionVal.length - optionValParse.consumed > 1, " Second field argument is empty.");
+
+        auto fieldIndices2 =
+            optionVal[optionValParse.consumed + 1 .. $]
+            .parseFieldList!(size_t, Yes.convertToZeroBasedIndex)
+            .array;
+
+        enforce(fieldIndices2.length != 0, "Second field argument is empty.");
+        enforce(fieldIndices2.length == 1, "Second field argument references multiple fields.");
+
+        enforce(fieldIndices1[0] != fieldIndices2[0],
+                format("Invalid option: '--%s %s'. Field1 and field2 must be different fields", option, optionVal));
+
+        tests ~= makeFieldVsFieldDelegate(fn, fieldIndices1[0], fieldIndices2[0]);
+        maxFieldIndex = max(maxFieldIndex, fieldIndices1[0], fieldIndices2[0]);
     }
     catch (Exception e)
     {
-        throw new Exception(
-            format("Invalid values in option: '--%s %s'. Expected: '--%s <field1>:<field2>' where fields are 1-upped integers.",
-                   option, optionVal, option));
+        e.msg = format(
+            "[--%s %s]. %s\n   Expected: '--%s <field1>:<field2>' where <field1> and <field2> are individual fields.",
+            option, optionVal, e.msg, option);
+        throw e;
     }
-
-    enforce(field1 != 0 && field2 != 0,
-            format("Invalid option: '--%s %s'. Zero is not a valid field index.", option, optionVal));
-
-    enforce(field1 != field2,
-            format("Invalid option: '--%s %s'. Field1 and field2 must be different fields", option, optionVal));
-
-    immutable size_t zeroBasedIndex1 = field1 - 1;
-    immutable size_t zeroBasedIndex2 = field2 - 1;
-    tests ~= makeFieldVsFieldDelegate(fn, zeroBasedIndex1, zeroBasedIndex2);
-    maxFieldIndex = max(maxFieldIndex, zeroBasedIndex1, zeroBasedIndex2);
 }
 
+CmdOptionHandler makeFieldFieldNumOptionHandler(FieldFieldNumPredicate predicateFn, string option, string optionVal)
+{
+    return
+        (ref FieldsPredicate[] tests, ref size_t maxFieldIndex, bool hasHeader, string[] headerFields)
+        => fieldFieldNumOptionHandler(tests, maxFieldIndex, hasHeader, headerFields, predicateFn, option, optionVal);
+}
 
 void fieldFieldNumOptionHandler(
-    ref FieldsPredicate[] tests, ref size_t maxFieldIndex, FieldFieldNumPredicate fn, string option, string optionVal)
+    ref FieldsPredicate[] tests, ref size_t maxFieldIndex, bool hasHeader, string[] headerFields,
+    FieldFieldNumPredicate fn, string option, string optionVal)
 {
-    size_t field1;
-    size_t field2;
-    double value;
-    immutable valSplit = findSplit(optionVal, ":");
-    auto isValidOption = (valSplit[1].length != 0 && valSplit[2].length != 0);
+    import tsv_utils.common.fieldlist;
 
-    if (isValidOption)
+    try
     {
-        immutable valSplit2 = findSplit(valSplit[2], ":");
-        isValidOption = (valSplit2[1].length != 0 && valSplit2[2].length != 0);
+        auto optionValParse1 =
+            optionVal
+            .parseFieldList!(size_t, Yes.convertToZeroBasedIndex, No.allowFieldNumZero, No.consumeEntireFieldListString)
+            (hasHeader, headerFields);
 
-        if (isValidOption)
-        {
-            try
-            {
-                field1 = valSplit[0].to!size_t;
-                field2 = valSplit2[0].to!size_t;
-                value = valSplit2[2].to!double;
-            }
-            catch (Exception e)
-            {
-                isValidOption = false;
-            }
-        }
+        auto fieldIndices1 = optionValParse1.array;
+
+        enforce(fieldIndices1.length != 0, "First field argument is empty.");
+        enforce(fieldIndices1.length == 1, "First field argument references multiple fields.");
+        enforce(optionVal.length - optionValParse1.consumed > 1, " Second field argument is empty.");
+
+        auto optionValSegment2 = optionVal[optionValParse1.consumed + 1 .. $];
+        auto optionValParse2 =
+            optionValSegment2
+            .parseFieldList!(size_t, Yes.convertToZeroBasedIndex, No.allowFieldNumZero, No.consumeEntireFieldListString)
+            (hasHeader, headerFields);
+
+        auto fieldIndices2 = optionValParse2.array;
+
+        enforce(fieldIndices2.length != 0, "Second field argument is empty.");
+        enforce(fieldIndices2.length == 1, "Second field argument references multiple fields.");
+        enforce(optionValSegment2.length - optionValParse2.consumed > 1, "Number argument is empty.");
+
+        size_t field1 = fieldIndices1[0];
+        size_t field2 = fieldIndices2[0];
+        double value = optionValSegment2[optionValParse2.consumed + 1 .. $].to!double;
+
+        enforce(field1 != field2,
+                format("Invalid option: '--%s %s'. Field1 and field2 must be different fields", option, optionVal));
+
+        tests ~= makeFieldFieldNumDelegate(fn, field1, field2, value);
+        maxFieldIndex = max(maxFieldIndex, field1, field2);
     }
-
-    enforce(isValidOption,
-            format("Invalid values in option: '--%s %s'. Expected: '--%s <field1>:<field2>:<num>' where fields are 1-upped integers.",
-                   option, optionVal, option));
-
-    enforce(field1 != 0 && field2 != 0,
-            format("Invalid option: '--%s %s'. Zero is not a valid field index.", option, optionVal));
-
-    enforce(field1 != field2,
-            format("Invalid option: '--%s %s'. Field1 and field2 must be different fields", option, optionVal));
-
-    immutable size_t zeroBasedIndex1 = field1 - 1;
-    immutable size_t zeroBasedIndex2 = field2 - 1;
-    tests ~= makeFieldFieldNumDelegate(fn, zeroBasedIndex1, zeroBasedIndex2, value);
-    maxFieldIndex = max(maxFieldIndex, zeroBasedIndex1, zeroBasedIndex2);
+    catch (Exception e)
+    {
+        e.msg = format(
+            "[--%s %s]. %s\n   Expected: '--%s <field1>:<field2>:<num>' where <field1> and <field2> are individual fields.",
+            option, optionVal, e.msg, option);
+        throw e;
+    }
 }
 
 /** Command line options - This struct holds the results of command line option processing.
@@ -644,6 +733,9 @@ struct TsvFilterOptions
      */
     auto processArgs (ref string[] cmdArgs)
     {
+        import std.algorithm : each;
+        import std.array : split;
+        import std.conv: to;
         import std.getopt;
         import std.path : baseName, stripExtension;
         import tsv_utils.common.getopt_inorder;
@@ -654,73 +746,76 @@ struct TsvFilterOptions
          * getopt required handler signature, and separate knowledge the specific command
          * option text from the option processing.
          */
-        void handlerFldEmpty(string option, string value)    { fieldUnaryOptionHandler(tests, maxFieldIndex, &fldEmpty,    option, value); }
-        void handlerFldNotEmpty(string option, string value) { fieldUnaryOptionHandler(tests, maxFieldIndex, &fldNotEmpty, option, value); }
-        void handlerFldBlank(string option, string value)    { fieldUnaryOptionHandler(tests, maxFieldIndex, &fldBlank,    option, value); }
-        void handlerFldNotBlank(string option, string value) { fieldUnaryOptionHandler(tests, maxFieldIndex, &fldNotBlank, option, value); }
 
-        void handlerFldIsNumeric(string option, string value)  { fieldUnaryOptionHandler(tests, maxFieldIndex, &fldIsNumeric, option, value); }
-        void handlerFldIsFinite(string option, string value)   { fieldUnaryOptionHandler(tests, maxFieldIndex, &fldIsFinite, option, value); }
-        void handlerFldIsNaN(string option, string value)      { fieldUnaryOptionHandler(tests, maxFieldIndex, &fldIsNaN, option, value); }
-        void handlerFldIsInfinity(string option, string value) { fieldUnaryOptionHandler(tests, maxFieldIndex, &fldIsInfinity, option, value); }
+        CmdOptionHandler[] cmdLineTestOptions;
 
-        void handlerNumLE(string option, string value) { fieldVsNumberOptionHandler(tests, maxFieldIndex, &numLE, option, value); }
-        void handlerNumLT(string option, string value) { fieldVsNumberOptionHandler(tests, maxFieldIndex, &numLT, option, value); }
-        void handlerNumGE(string option, string value) { fieldVsNumberOptionHandler(tests, maxFieldIndex, &numGE, option, value); }
-        void handlerNumGT(string option, string value) { fieldVsNumberOptionHandler(tests, maxFieldIndex, &numGT, option, value); }
-        void handlerNumEQ(string option, string value) { fieldVsNumberOptionHandler(tests, maxFieldIndex, &numEQ, option, value); }
-        void handlerNumNE(string option, string value) { fieldVsNumberOptionHandler(tests, maxFieldIndex, &numNE, option, value); }
+        void handlerFldEmpty(string option, string value)    { cmdLineTestOptions ~= makeFieldUnaryOptionHandler(&fldEmpty,    option, value); }
+        void handlerFldNotEmpty(string option, string value) { cmdLineTestOptions ~= makeFieldUnaryOptionHandler(&fldNotEmpty, option, value); }
+        void handlerFldBlank(string option, string value)    { cmdLineTestOptions ~= makeFieldUnaryOptionHandler(&fldBlank,    option, value); }
+        void handlerFldNotBlank(string option, string value) { cmdLineTestOptions ~= makeFieldUnaryOptionHandler(&fldNotBlank, option, value); }
 
-        void handlerStrLE(string option, string value) { fieldVsStringOptionHandler(tests, maxFieldIndex, &strLE, option, value); }
-        void handlerStrLT(string option, string value) { fieldVsStringOptionHandler(tests, maxFieldIndex, &strLT, option, value); }
-        void handlerStrGE(string option, string value) { fieldVsStringOptionHandler(tests, maxFieldIndex, &strGE, option, value); }
-        void handlerStrGT(string option, string value) { fieldVsStringOptionHandler(tests, maxFieldIndex, &strGT, option, value); }
-        void handlerStrEQ(string option, string value) { fieldVsStringOptionHandler(tests, maxFieldIndex, &strEQ, option, value); }
-        void handlerStrNE(string option, string value) { fieldVsStringOptionHandler(tests, maxFieldIndex, &strNE, option, value); }
+        void handlerFldIsNumeric(string option, string value)  { cmdLineTestOptions ~= makeFieldUnaryOptionHandler(&fldIsNumeric,  option, value); }
+        void handlerFldIsFinite(string option, string value)   { cmdLineTestOptions ~= makeFieldUnaryOptionHandler(&fldIsFinite,   option, value); }
+        void handlerFldIsNaN(string option, string value)      { cmdLineTestOptions ~= makeFieldUnaryOptionHandler(&fldIsNaN,      option, value); }
+        void handlerFldIsInfinity(string option, string value) { cmdLineTestOptions ~= makeFieldUnaryOptionHandler(&fldIsInfinity, option, value); }
 
-        void handlerStrInFld(string option, string value)    { fieldVsStringOptionHandler(tests, maxFieldIndex, &strInFld,    option, value); }
-        void handlerStrNotInFld(string option, string value) { fieldVsStringOptionHandler(tests, maxFieldIndex, &strNotInFld, option, value); }
+        void handlerNumLE(string option, string value) { cmdLineTestOptions ~= makeFieldVsNumberOptionHandler(&numLE, option, value); }
+        void handlerNumLT(string option, string value) { cmdLineTestOptions ~= makeFieldVsNumberOptionHandler(&numLT, option, value); }
+        void handlerNumGE(string option, string value) { cmdLineTestOptions ~= makeFieldVsNumberOptionHandler(&numGE, option, value); }
+        void handlerNumGT(string option, string value) { cmdLineTestOptions ~= makeFieldVsNumberOptionHandler(&numGT, option, value); }
+        void handlerNumEQ(string option, string value) { cmdLineTestOptions ~= makeFieldVsNumberOptionHandler(&numEQ, option, value); }
+        void handlerNumNE(string option, string value) { cmdLineTestOptions ~= makeFieldVsNumberOptionHandler(&numNE, option, value); }
 
-        void handlerIStrEQ(string option, string value)       { fieldVsIStringOptionHandler(tests, maxFieldIndex, &istrEQ,       option, value); }
-        void handlerIStrNE(string option, string value)       { fieldVsIStringOptionHandler(tests, maxFieldIndex, &istrNE,       option, value); }
-        void handlerIStrInFld(string option, string value)    { fieldVsIStringOptionHandler(tests, maxFieldIndex, &istrInFld,    option, value); }
-        void handlerIStrNotInFld(string option, string value) { fieldVsIStringOptionHandler(tests, maxFieldIndex, &istrNotInFld, option, value); }
+        void handlerStrLE(string option, string value) { cmdLineTestOptions ~= makeFieldVsStringOptionHandler(&strLE, option, value); }
+        void handlerStrLT(string option, string value) { cmdLineTestOptions ~= makeFieldVsStringOptionHandler(&strLT, option, value); }
+        void handlerStrGE(string option, string value) { cmdLineTestOptions ~= makeFieldVsStringOptionHandler(&strGE, option, value); }
+        void handlerStrGT(string option, string value) { cmdLineTestOptions ~= makeFieldVsStringOptionHandler(&strGT, option, value); }
+        void handlerStrEQ(string option, string value) { cmdLineTestOptions ~= makeFieldVsStringOptionHandler(&strEQ, option, value); }
+        void handlerStrNE(string option, string value) { cmdLineTestOptions ~= makeFieldVsStringOptionHandler(&strNE, option, value); }
 
-        void handlerRegexMatch(string option, string value)     { fieldVsRegexOptionHandler(tests, maxFieldIndex, &regexMatch,    option, value, true); }
-        void handlerRegexNotMatch(string option, string value)  { fieldVsRegexOptionHandler(tests, maxFieldIndex, &regexNotMatch, option, value, true); }
-        void handlerIRegexMatch(string option, string value)    { fieldVsRegexOptionHandler(tests, maxFieldIndex, &regexMatch,    option, value, false); }
-        void handlerIRegexNotMatch(string option, string value) { fieldVsRegexOptionHandler(tests, maxFieldIndex, &regexNotMatch, option, value, false); }
+        void handlerStrInFld(string option, string value)    { cmdLineTestOptions ~= makeFieldVsStringOptionHandler(&strInFld,    option, value); }
+        void handlerStrNotInFld(string option, string value) { cmdLineTestOptions ~= makeFieldVsStringOptionHandler(&strNotInFld, option, value); }
 
-        void handlerCharLenLE(string option, string value) { fieldVsNumberOptionHandler(tests, maxFieldIndex, &charLenLE, option, value); }
-        void handlerCharLenLT(string option, string value) { fieldVsNumberOptionHandler(tests, maxFieldIndex, &charLenLT, option, value); }
-        void handlerCharLenGE(string option, string value) { fieldVsNumberOptionHandler(tests, maxFieldIndex, &charLenGE, option, value); }
-        void handlerCharLenGT(string option, string value) { fieldVsNumberOptionHandler(tests, maxFieldIndex, &charLenGT, option, value); }
-        void handlerCharLenEQ(string option, string value) { fieldVsNumberOptionHandler(tests, maxFieldIndex, &charLenEQ, option, value); }
-        void handlerCharLenNE(string option, string value) { fieldVsNumberOptionHandler(tests, maxFieldIndex, &charLenNE, option, value); }
+        void handlerIStrEQ(string option, string value)       { cmdLineTestOptions ~= makeFieldVsIStringOptionHandler(&istrEQ,       option, value); }
+        void handlerIStrNE(string option, string value)       { cmdLineTestOptions ~= makeFieldVsIStringOptionHandler(&istrNE,       option, value); }
+        void handlerIStrInFld(string option, string value)    { cmdLineTestOptions ~= makeFieldVsIStringOptionHandler(&istrInFld,    option, value); }
+        void handlerIStrNotInFld(string option, string value) { cmdLineTestOptions ~= makeFieldVsIStringOptionHandler(&istrNotInFld, option, value); }
 
-        void handlerByteLenLE(string option, string value) { fieldVsNumberOptionHandler(tests, maxFieldIndex, &byteLenLE, option, value); }
-        void handlerByteLenLT(string option, string value) { fieldVsNumberOptionHandler(tests, maxFieldIndex, &byteLenLT, option, value); }
-        void handlerByteLenGE(string option, string value) { fieldVsNumberOptionHandler(tests, maxFieldIndex, &byteLenGE, option, value); }
-        void handlerByteLenGT(string option, string value) { fieldVsNumberOptionHandler(tests, maxFieldIndex, &byteLenGT, option, value); }
-        void handlerByteLenEQ(string option, string value) { fieldVsNumberOptionHandler(tests, maxFieldIndex, &byteLenEQ, option, value); }
-        void handlerByteLenNE(string option, string value) { fieldVsNumberOptionHandler(tests, maxFieldIndex, &byteLenNE, option, value); }
+        void handlerRegexMatch(string option, string value)     { cmdLineTestOptions ~= makeFieldVsRegexOptionHandler(&regexMatch,    option, value, true); }
+        void handlerRegexNotMatch(string option, string value)  { cmdLineTestOptions ~= makeFieldVsRegexOptionHandler(&regexNotMatch, option, value, true); }
+        void handlerIRegexMatch(string option, string value)    { cmdLineTestOptions ~= makeFieldVsRegexOptionHandler(&regexMatch,    option, value, false); }
+        void handlerIRegexNotMatch(string option, string value) { cmdLineTestOptions ~= makeFieldVsRegexOptionHandler(&regexNotMatch, option, value, false); }
 
-        void handlerFFLE(string option, string value) { fieldVsFieldOptionHandler(tests, maxFieldIndex, &ffLE, option, value); }
-        void handlerFFLT(string option, string value) { fieldVsFieldOptionHandler(tests, maxFieldIndex, &ffLT, option, value); }
-        void handlerFFGE(string option, string value) { fieldVsFieldOptionHandler(tests, maxFieldIndex, &ffGE, option, value); }
-        void handlerFFGT(string option, string value) { fieldVsFieldOptionHandler(tests, maxFieldIndex, &ffGT, option, value); }
-        void handlerFFEQ(string option, string value) { fieldVsFieldOptionHandler(tests, maxFieldIndex, &ffEQ, option, value); }
-        void handlerFFNE(string option, string value) { fieldVsFieldOptionHandler(tests, maxFieldIndex, &ffNE, option, value); }
+        void handlerCharLenLE(string option, string value) { cmdLineTestOptions ~= makeFieldVsNumberOptionHandler(&charLenLE, option, value); }
+        void handlerCharLenLT(string option, string value) { cmdLineTestOptions ~= makeFieldVsNumberOptionHandler(&charLenLT, option, value); }
+        void handlerCharLenGE(string option, string value) { cmdLineTestOptions ~= makeFieldVsNumberOptionHandler(&charLenGE, option, value); }
+        void handlerCharLenGT(string option, string value) { cmdLineTestOptions ~= makeFieldVsNumberOptionHandler(&charLenGT, option, value); }
+        void handlerCharLenEQ(string option, string value) { cmdLineTestOptions ~= makeFieldVsNumberOptionHandler(&charLenEQ, option, value); }
+        void handlerCharLenNE(string option, string value) { cmdLineTestOptions ~= makeFieldVsNumberOptionHandler(&charLenNE, option, value); }
 
-        void handlerFFStrEQ(string option, string value)  { fieldVsFieldOptionHandler(tests, maxFieldIndex, &ffStrEQ,  option, value); }
-        void handlerFFStrNE(string option, string value)  { fieldVsFieldOptionHandler(tests, maxFieldIndex, &ffStrNE,  option, value); }
-        void handlerFFIStrEQ(string option, string value) { fieldVsFieldOptionHandler(tests, maxFieldIndex, &ffIStrEQ, option, value); }
-        void handlerFFIStrNE(string option, string value) { fieldVsFieldOptionHandler(tests, maxFieldIndex, &ffIStrNE, option, value); }
+        void handlerByteLenLE(string option, string value) { cmdLineTestOptions ~= makeFieldVsNumberOptionHandler(&byteLenLE, option, value); }
+        void handlerByteLenLT(string option, string value) { cmdLineTestOptions ~= makeFieldVsNumberOptionHandler(&byteLenLT, option, value); }
+        void handlerByteLenGE(string option, string value) { cmdLineTestOptions ~= makeFieldVsNumberOptionHandler(&byteLenGE, option, value); }
+        void handlerByteLenGT(string option, string value) { cmdLineTestOptions ~= makeFieldVsNumberOptionHandler(&byteLenGT, option, value); }
+        void handlerByteLenEQ(string option, string value) { cmdLineTestOptions ~= makeFieldVsNumberOptionHandler(&byteLenEQ, option, value); }
+        void handlerByteLenNE(string option, string value) { cmdLineTestOptions ~= makeFieldVsNumberOptionHandler(&byteLenNE, option, value); }
 
-        void handlerFFAbsDiffLE(string option, string value) { fieldFieldNumOptionHandler(tests, maxFieldIndex, &ffAbsDiffLE, option, value); }
-        void handlerFFAbsDiffGT(string option, string value) { fieldFieldNumOptionHandler(tests, maxFieldIndex, &ffAbsDiffGT, option, value); }
-        void handlerFFRelDiffLE(string option, string value) { fieldFieldNumOptionHandler(tests, maxFieldIndex, &ffRelDiffLE, option, value); }
-        void handlerFFRelDiffGT(string option, string value) { fieldFieldNumOptionHandler(tests, maxFieldIndex, &ffRelDiffGT, option, value); }
+        void handlerFFLE(string option, string value) { cmdLineTestOptions ~= makeFieldVsFieldOptionHandler(&ffLE, option, value); }
+        void handlerFFLT(string option, string value) { cmdLineTestOptions ~= makeFieldVsFieldOptionHandler(&ffLT, option, value); }
+        void handlerFFGE(string option, string value) { cmdLineTestOptions ~= makeFieldVsFieldOptionHandler(&ffGE, option, value); }
+        void handlerFFGT(string option, string value) { cmdLineTestOptions ~= makeFieldVsFieldOptionHandler(&ffGT, option, value); }
+        void handlerFFEQ(string option, string value) { cmdLineTestOptions ~= makeFieldVsFieldOptionHandler(&ffEQ, option, value); }
+        void handlerFFNE(string option, string value) { cmdLineTestOptions ~= makeFieldVsFieldOptionHandler(&ffNE, option, value); }
+
+        void handlerFFStrEQ(string option, string value)  { cmdLineTestOptions ~= makeFieldVsFieldOptionHandler(&ffStrEQ,  option, value); }
+        void handlerFFStrNE(string option, string value)  { cmdLineTestOptions ~= makeFieldVsFieldOptionHandler(&ffStrNE,  option, value); }
+        void handlerFFIStrEQ(string option, string value) { cmdLineTestOptions ~= makeFieldVsFieldOptionHandler(&ffIStrEQ, option, value); }
+        void handlerFFIStrNE(string option, string value) { cmdLineTestOptions ~= makeFieldVsFieldOptionHandler(&ffIStrNE, option, value); }
+
+        void handlerFFAbsDiffLE(string option, string value) { cmdLineTestOptions ~= makeFieldFieldNumOptionHandler(&ffAbsDiffLE, option, value); }
+        void handlerFFAbsDiffGT(string option, string value) { cmdLineTestOptions ~= makeFieldFieldNumOptionHandler(&ffAbsDiffGT, option, value); }
+        void handlerFFRelDiffLE(string option, string value) { cmdLineTestOptions ~= makeFieldFieldNumOptionHandler(&ffRelDiffLE, option, value); }
+        void handlerFFRelDiffGT(string option, string value) { cmdLineTestOptions ~= makeFieldFieldNumOptionHandler(&ffRelDiffGT, option, value); }
 
         try
         {
@@ -835,6 +930,12 @@ struct TsvFilterOptions
             cmdArgs.length = 1;
             ReadHeader readHeader = hasHeader ? Yes.readHeader : No.readHeader;
             inputSources = inputSourceRange(filepaths, readHeader);
+
+            string[] headerFields;
+
+            if (hasHeader) headerFields = inputSources.front.header.split(delim).to!(string[]);
+
+            cmdLineTestOptions.each!(dg => dg(tests, maxFieldIndex, hasHeader, headerFields));
         }
         catch (Exception e)
         {
