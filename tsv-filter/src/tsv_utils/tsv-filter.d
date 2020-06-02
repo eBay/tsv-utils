@@ -348,17 +348,40 @@ bool ffRelDiffGT(const char[][] fields, size_t index1, size_t index2, double val
  * the tests array. An exception is thrown if errors are detected while processing the
  * option, the error text is intended for the end user.
  *
- * These option handlers have similar functionality, differing in option processing and
+ * All the option handlers have similar functionality, differing in option processing and
  * error message generation. fieldVsNumberOptionHandler is described as an example. It
  * handles command options such as '--lt 3:1000', which tests field 3 for a values less
- * than 1000. It is passed the tests array, the 'numLE' function to use for the test, and
- * the string "3:1000" representing the option value. It parses the option value into
- * field index (unsigned int) and value (double). These are wrapped in a FieldsPredicate
- * which is added to the tests array. An error is signaled if the option string is invalid.
+ * than 1000. It is passed the tests array, the 'numLE' predicate function used for the
+ * test, and the string "3:1000" representing the option value. It is also passed the
+ * header line from the first input file and an indication of whether header processing
+ * is enabled (--H|header). parseFieldList (fieldlist module) is used to parse the
+ * field-list component of the option ("3" in the example). The comparison value ("1000")
+ * is converted to a double. These are wrapped in a FieldsPredicate delegate which is
+ * added to the tests array. An error is signaled if the option string is invalid.
  *
  * During processing, fields indexes are converted from one-based to zero-based. As an
  * optimization, the maximum field index is also tracked. This allows early termination of
  * line splitting.
+ *
+ * The header line from the input file is not available when std.getop processes the
+ * command line option. The processing described above must be deferred. This is done
+ * using a 'CmdOptionHandler' delegate. There is a 'make' function for every Command line
+ * option handler that creates these. These are created during std.getopt processing.
+ * They are run when the header line becomes available.
+ *
+ * The final setup for the '--lt' (numeric less-than) operator' is as follows:
+ *   - Function 'handlerNumLE' (in TsvFilterOptions.processArgs) is associated with the
+ *     command line option "--lt <val>". When called by std.getopt it creates an option
+ *     hander delegate via 'makeFieldVsNumberOptionHandler'. This is appended to an
+ *     array of delegates.
+ *   - 'fieldVsNumberOptionHandler' is invoked via the delegate after the header line
+ *     becomes available (in TsvFilterOptions.processArgs). If args are valid,
+ *     'makeFieldVsNumberDelegate' is used to create a delegate invoking the 'numLE'
+ *     predicate function. This delegate is added to the set of run-time tests.
+ *
+ * Note that in the above setup the 'numLE' predicate is specified in 'handlerNumLE'
+ * and passed through all the steps. This is how the command line option gets
+ * associated with the predicate function.
  */
 
 /* CmdOptionHandler delegate signature - This is the call made to process the command
@@ -368,6 +391,7 @@ alias CmdOptionHandler = void delegate(ref FieldsPredicate[] tests, ref size_t m
                                        bool hasHeader, string[] headerFields);
 
 
+/* */
 CmdOptionHandler makeFieldUnaryOptionHandler(FieldUnaryPredicate predicateFn, string option, string optionVal)
 {
     return
@@ -482,10 +506,6 @@ void fieldVsStringOptionHandler(
     }
 }
 
-/* The fieldVsIStringOptionHandler lower-cases the command line argument, assuming the
- * case-insensitive comparison will be done on lower-cased values.
- */
-
 CmdOptionHandler makeFieldVsIStringOptionHandler(FieldVsIStringPredicate predicateFn, string option, string optionVal)
 {
     return
@@ -493,6 +513,9 @@ CmdOptionHandler makeFieldVsIStringOptionHandler(FieldVsIStringPredicate predica
         => fieldVsIStringOptionHandler(tests, maxFieldIndex, hasHeader, headerFields, predicateFn, option, optionVal);
 }
 
+/* The fieldVsIStringOptionHandler lower-cases the command line argument, assuming the
+ * case-insensitive comparison will be done on lower-cased values.
+ */
 void fieldVsIStringOptionHandler(
     ref FieldsPredicate[] tests, ref size_t maxFieldIndex, bool hasHeader, string[] headerFields,
     FieldVsIStringPredicate fn, string option, string optionVal)
@@ -583,45 +606,6 @@ CmdOptionHandler makeFieldVsFieldOptionHandler(FieldVsFieldPredicate predicateFn
         => fieldVsFieldOptionHandler(tests, maxFieldIndex, hasHeader, headerFields, predicateFn, option, optionVal);
 }
 
-version(none)
-{
-void fieldVsFieldOptionHandler(
-    ref FieldsPredicate[] tests, ref size_t maxFieldIndex, bool hasHeader, string[] headerFields,
-    FieldVsFieldPredicate fn, string option, string optionVal)
-{
-    immutable valSplit = findSplit(optionVal, ":");
-
-    enforce(valSplit[1].length != 0 && valSplit[2].length != 0,
-            format("Invalid option: '--%s %s'. Expected: '--%s <field1>:<field2>' where fields are 1-upped integers.",
-                   option, optionVal, option));
-
-    size_t field1;
-    size_t field2;
-    try
-    {
-        field1 = valSplit[0].to!size_t;
-        field2 = valSplit[2].to!size_t;
-    }
-    catch (Exception e)
-    {
-        throw new Exception(
-            format("Invalid values in option: '--%s %s'. Expected: '--%s <field1>:<field2>' where fields are 1-upped integers.",
-                   option, optionVal, option));
-    }
-
-    enforce(field1 != 0 && field2 != 0,
-            format("Invalid option: '--%s %s'. Zero is not a valid field index.", option, optionVal));
-
-    enforce(field1 != field2,
-            format("Invalid option: '--%s %s'. Field1 and field2 must be different fields", option, optionVal));
-
-    immutable size_t zeroBasedIndex1 = field1 - 1;
-    immutable size_t zeroBasedIndex2 = field2 - 1;
-    tests ~= makeFieldVsFieldDelegate(fn, zeroBasedIndex1, zeroBasedIndex2);
-    maxFieldIndex = max(maxFieldIndex, zeroBasedIndex1, zeroBasedIndex2);
-}
-}
-
 void fieldVsFieldOptionHandler(
     ref FieldsPredicate[] tests, ref size_t maxFieldIndex, bool hasHeader, string[] headerFields,
     FieldVsFieldPredicate fn, string option, string optionVal)
@@ -669,54 +653,6 @@ CmdOptionHandler makeFieldFieldNumOptionHandler(FieldFieldNumPredicate predicate
     return
         (ref FieldsPredicate[] tests, ref size_t maxFieldIndex, bool hasHeader, string[] headerFields)
         => fieldFieldNumOptionHandler(tests, maxFieldIndex, hasHeader, headerFields, predicateFn, option, optionVal);
-}
-
-version(none) {
-void fieldFieldNumOptionHandler(
-    ref FieldsPredicate[] tests, ref size_t maxFieldIndex, bool hasHeader, string[] headerFields,
-    FieldFieldNumPredicate fn, string option, string optionVal)
-{
-    size_t field1;
-    size_t field2;
-    double value;
-    immutable valSplit = findSplit(optionVal, ":");
-    auto isValidOption = (valSplit[1].length != 0 && valSplit[2].length != 0);
-
-    if (isValidOption)
-    {
-        immutable valSplit2 = findSplit(valSplit[2], ":");
-        isValidOption = (valSplit2[1].length != 0 && valSplit2[2].length != 0);
-
-        if (isValidOption)
-        {
-            try
-            {
-                field1 = valSplit[0].to!size_t;
-                field2 = valSplit2[0].to!size_t;
-                value = valSplit2[2].to!double;
-            }
-            catch (Exception e)
-            {
-                isValidOption = false;
-            }
-        }
-    }
-
-    enforce(isValidOption,
-            format("Invalid values in option: '--%s %s'. Expected: '--%s <field1>:<field2>:<num>' where fields are 1-upped integers.",
-                   option, optionVal, option));
-
-    enforce(field1 != 0 && field2 != 0,
-            format("Invalid option: '--%s %s'. Zero is not a valid field index.", option, optionVal));
-
-    enforce(field1 != field2,
-            format("Invalid option: '--%s %s'. Field1 and field2 must be different fields", option, optionVal));
-
-    immutable size_t zeroBasedIndex1 = field1 - 1;
-    immutable size_t zeroBasedIndex2 = field2 - 1;
-    tests ~= makeFieldFieldNumDelegate(fn, zeroBasedIndex1, zeroBasedIndex2, value);
-    maxFieldIndex = max(maxFieldIndex, zeroBasedIndex1, zeroBasedIndex2);
-}
 }
 
 void fieldFieldNumOptionHandler(

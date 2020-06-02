@@ -238,6 +238,46 @@ Error [tsv-filter]: Could not process line or field: no digits seen for input "F
   File: input1.tsv Line: 1
   Is this a header line? Use --header to skip.
 
+====[tsv-filter --ne abc:15 input1_noheader.tsv]====
+[tsv-filter] Error processing command line arguments: Invalid option: [--ne abc:15]. Non-numeric field group: 'abc'. Use '--H|header' when using named field groups.
+   Expected: '--ne <field>:<val>' or '--ne <field-list>:<val> where <val> is a number.
+
+====[tsv-filter --le 1: input1_noheader.tsv]====
+[tsv-filter] Error processing command line arguments: Invalid option: [--le 1:]. No value after field list.
+   Expected: '--le <field>:<val>' or '--le <field-list>:<val> where <val> is a number.
+
+====[tsv-filter --le 1 input1_noheader.tsv]====
+[tsv-filter] Error processing command line arguments: Invalid option: [--le 1]. No value after field list.
+   Expected: '--le <field>:<val>' or '--le <field-list>:<val> where <val> is a number.
+
+====[tsv-filter --le :10 input1_noheader.tsv]====
+[tsv-filter] Error processing command line arguments: Invalid option: [--le :10]. Empty field list: ':10'.
+   Expected: '--le <field>:<val>' or '--le <field-list>:<val> where <val> is a number.
+
+====[tsv-filter --le : input1_noheader.tsv]====
+[tsv-filter] Error processing command line arguments: Invalid option: [--le :]. Empty field list: ':'.
+   Expected: '--le <field>:<val>' or '--le <field-list>:<val> where <val> is a number.
+
+====[tsv-filter --empty 23g input1_noheader.tsv]====
+[tsv-filter] Error processing command line arguments: Invalid option: [--empty 23g]. Non-numeric field group: '23g'. Use '--H|header' when using named field groups.
+   Expected: '--empty <field>' or '--empty <field-list>'.
+
+====[tsv-filter --empty 0 input1_noheader.tsv]====
+[tsv-filter] Error processing command line arguments: Invalid option: [--empty 0]. Field numbers must be greater than zero: '0'.
+   Expected: '--empty <field>' or '--empty <field-list>'.
+
+====[tsv-filter --str-gt 0:abc input1_noheader.tsv]====
+[tsv-filter] Error processing command line arguments: [--str-gt 0:abc]. Field numbers must be greater than zero: '0'.
+   Expected: '--str-gt <field>:<val>' or '--str-gt <field-list>:<val>' where <val> is a string.
+
+====[tsv-filter --str-eq :def input1_noheader.tsv]====
+[tsv-filter] Error processing command line arguments: [--str-eq :def]. Empty field list: ':def'.
+   Expected: '--str-eq <field>:<val>' or '--str-eq <field-list>:<val>' where <val> is a string.
+
+====[tsv-filter --regex :^A[b|B]C$ input1_noheader.tsv]====
+[tsv-filter] Error processing command line arguments: [--regex :^A[b|B]C$]. Empty field list: ':^A[b|B]C$'.
+   Expected: '--regex <field>:<val>' or '--regex <field-list>:<val>' where <val> is a regular expression.
+
 ====[cat input_3x2.tsv | tsv-filter --ge 2:23]====
 Error [tsv-filter]: Could not process line or field: no digits seen for input "f2".
   File: Standard Input Line: 1
