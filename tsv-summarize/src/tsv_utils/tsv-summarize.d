@@ -205,28 +205,28 @@ struct TsvSummarizeOptions {
                 "p|float-precision",  "NUM           'Precision' to use printing floating point numbers. Affects the number of digits printed and exponent use. Default: 12", &floatPrecision,
                 "x|exclude-missing",  "              Exclude missing (empty) fields from calculations.", &excludeMissing,
                 "r|replace-missing",  "STR           Replace missing (empty) fields with STR in calculations.", &missingValueReplacement,
-                "count",              "              Count occurrences of each unique key ('--g|group-by'), or the total number of records if no key field is specified.", &countOptionHandler,
-                "count-header",       "STR           Count occurrences of each unique key, like '--count', but use STR as the header.", &countHeaderOptionHandler,
-                "retain",             "<field-list>  Retain one copy of the field.", &operatorOptionHandler!RetainOperator,
-                "first",              "<field-list>[:STR]  First value seen.", &operatorOptionHandler!FirstOperator,
-                "last",               "<field-list>[:STR]  Last value seen.", &operatorOptionHandler!LastOperator,
-                "min",                "<field-list>[:STR]  Min value. (Numeric fields only.)", &operatorOptionHandler!MinOperator,
-                "max",                "<field-list>[:STR]  Max value. (Numeric fields only.)", &operatorOptionHandler!MaxOperator,
-                "range",              "<field-list>[:STR]  Difference between min and max values. (Numeric fields only.)", &operatorOptionHandler!RangeOperator,
-                "sum",                "<field-list>[:STR]  Sum of the values. (Numeric fields only.)", &operatorOptionHandler!SumOperator,
-                "mean",               "<field-list>[:STR]  Mean (average). (Numeric fields only.)", &operatorOptionHandler!MeanOperator,
-                "median",             "<field-list>[:STR]  Median value. (Numeric fields only. Reads all values into memory.)", &operatorOptionHandler!MedianOperator,
-                "quantile",           "<field-list>:p[,p...][:STR]  Quantiles. One or more fields, then one or more 0.0-1.0 probabilities. (Numeric fields only. Reads all values into memory.)", &quantileOperatorOptionHandler,
-                "mad",                "<field-list>[:STR]  Median absolute deviation from the median. Raw value, not scaled. (Numeric fields only. Reads all values into memory.)", &operatorOptionHandler!MadOperator,
-                "var",                "<field-list>[:STR]  Variance. (Sample variance, numeric fields only).", &operatorOptionHandler!VarianceOperator,
-                "stdev",              "<field-list>[:STR]  Standard deviation. (Sample st.dev, numeric fields only).", &operatorOptionHandler!StDevOperator,
-                "mode",               "<field-list>[:STR]  Mode. The most frequent value. (Reads all unique values into memory.)", &operatorOptionHandler!ModeOperator,
-                "mode-count",         "<field-list>[:STR]  Count of the most frequent value. (Reads all unique values into memory.)", &operatorOptionHandler!ModeCountOperator,
-                "unique-count",       "<field-list>[:STR]  Number of unique values. (Reads all unique values into memory.)", &operatorOptionHandler!UniqueCountOperator,
-                "missing-count",      "<field-list>[:STR]  Number of missing (empty) fields. Not affected by '--x|exclude-missing' or '--r|replace-missing'.", &operatorOptionHandler!MissingCountOperator,
-                "not-missing-count",  "<field-list>[:STR]  Number of filled (non-empty) fields. Not affected by '--r|replace-missing'.", &operatorOptionHandler!NotMissingCountOperator,
-                "values",             "<field-list>[:STR]  All the values, separated by --v|values-delimiter. (Reads all values into memory.)", &operatorOptionHandler!ValuesOperator,
-                "unique-values",      "<field-list>[:STR]  All the unique values, separated by --v|values-delimiter. (Reads all unique values into memory.)", &operatorOptionHandler!UniqueValuesOperator,
+                "count",              "              Count occurrences of each unique key ('--g|group-by'), or the total number of records if no key field is specified.", &addCountOptionHandler,
+                "count-header",       "STR           Count occurrences of each unique key, like '--count', but use STR as the header.", &addCountHeaderOptionHandler,
+                "retain",             "<field-list>  Retain one copy of the field.", &addOperatorOptionHandler!RetainOperator,
+                "first",              "<field-list>[:STR]  First value seen.", &addOperatorOptionHandler!FirstOperator,
+                "last",               "<field-list>[:STR]  Last value seen.", &addOperatorOptionHandler!LastOperator,
+                "min",                "<field-list>[:STR]  Min value. (Numeric fields only.)", &addOperatorOptionHandler!MinOperator,
+                "max",                "<field-list>[:STR]  Max value. (Numeric fields only.)", &addOperatorOptionHandler!MaxOperator,
+                "range",              "<field-list>[:STR]  Difference between min and max values. (Numeric fields only.)", &addOperatorOptionHandler!RangeOperator,
+                "sum",                "<field-list>[:STR]  Sum of the values. (Numeric fields only.)", &addOperatorOptionHandler!SumOperator,
+                "mean",               "<field-list>[:STR]  Mean (average). (Numeric fields only.)", &addOperatorOptionHandler!MeanOperator,
+                "median",             "<field-list>[:STR]  Median value. (Numeric fields only. Reads all values into memory.)", &addOperatorOptionHandler!MedianOperator,
+                "quantile",           "<field-list>:p[,p...][:STR]  Quantiles. One or more fields, then one or more 0.0-1.0 probabilities. (Numeric fields only. Reads all values into memory.)", &addQuantileOperatorOptionHandler,
+                "mad",                "<field-list>[:STR]  Median absolute deviation from the median. Raw value, not scaled. (Numeric fields only. Reads all values into memory.)", &addOperatorOptionHandler!MadOperator,
+                "var",                "<field-list>[:STR]  Variance. (Sample variance, numeric fields only).", &addOperatorOptionHandler!VarianceOperator,
+                "stdev",              "<field-list>[:STR]  Standard deviation. (Sample st.dev, numeric fields only).", &addOperatorOptionHandler!StDevOperator,
+                "mode",               "<field-list>[:STR]  Mode. The most frequent value. (Reads all unique values into memory.)", &addOperatorOptionHandler!ModeOperator,
+                "mode-count",         "<field-list>[:STR]  Count of the most frequent value. (Reads all unique values into memory.)", &addOperatorOptionHandler!ModeCountOperator,
+                "unique-count",       "<field-list>[:STR]  Number of unique values. (Reads all unique values into memory.)", &addOperatorOptionHandler!UniqueCountOperator,
+                "missing-count",      "<field-list>[:STR]  Number of missing (empty) fields. Not affected by '--x|exclude-missing' or '--r|replace-missing'.", &addOperatorOptionHandler!MissingCountOperator,
+                "not-missing-count",  "<field-list>[:STR]  Number of filled (non-empty) fields. Not affected by '--r|replace-missing'.", &addOperatorOptionHandler!NotMissingCountOperator,
+                "values",             "<field-list>[:STR]  All the values, separated by --v|values-delimiter. (Reads all values into memory.)", &addOperatorOptionHandler!ValuesOperator,
+                "unique-values",      "<field-list>[:STR]  All the unique values, separated by --v|values-delimiter. (Reads all unique values into memory.)", &addOperatorOptionHandler!UniqueValuesOperator,
                 );
 
             if (r.helpWanted)
@@ -255,6 +255,15 @@ struct TsvSummarizeOptions {
             cmdArgs.length = 1;
             inputSources = byLineSourceRange(filepaths);
 
+            string[] headerFields;
+
+            if (hasHeader && !inputSources.front.byLine.empty)
+            {
+                headerFields = inputSources.front.byLine.front.split(inputFieldDelimiter).to!(string[]);
+            }
+
+            cmdLineOperatorOptions.each!(dg => dg(hasHeader, headerFields));
+
             derivations();
         }
         catch (Exception exc)
@@ -265,12 +274,27 @@ struct TsvSummarizeOptions {
         return tuple(true, 0);
     }
 
+    /* CmdOptionHandler delegate signature - This is the call made to process the command
+     * line option arguments after the header line has been read.
+     */
+    alias CmdOptionHandler = void delegate(bool hasHeader, string[] headerFields);
+
+    CmdOptionHandler[]  cmdLineOperatorOptions;
+
+    void addOperatorOptionHandler(OperatorClass : SingleFieldOperator)(string option, string optionVal)
+    {
+        cmdLineOperatorOptions ~=
+            (bool hasHeader, string[] headerFields)
+            => operatorOptionHandler!OperatorClass(hasHeader, headerFields, option, optionVal);
+    }
+
     /* operationOptionHandler functions are callbacks that process command line options
      * specifying summarization operations. eg. '--max 5', '--last 3:LastEntry'. Handlers
      * check syntactic correctness and instantiate Operator objects that do the work. This
      * is also where 1-upped field numbers are converted to 0-based indices.
      */
-    private void operatorOptionHandler(OperatorClass : SingleFieldOperator)(string option, string optionVal)
+    private void operatorOptionHandler(OperatorClass : SingleFieldOperator)
+    (bool hasHeader, string[] headerFields, string option, string optionVal)
     {
         import std.range : enumerate;
         import std.typecons : Yes, No;
@@ -312,8 +336,15 @@ struct TsvSummarizeOptions {
         }
     }
 
+    void addQuantileOperatorOptionHandler(string option, string optionVal)
+    {
+        cmdLineOperatorOptions ~=
+            (bool hasHeader, string[] headerFields)
+            => quantileOperatorOptionHandler(hasHeader, headerFields, option, optionVal);
+    }
+
     /* QuantileOperator has a different syntax and needs a custom command option handler. */
-    private void quantileOperatorOptionHandler(string option, string optionVal)
+    private void quantileOperatorOptionHandler(bool hasHeader, string[] headerFields, string option, string optionVal)
     {
         import std.typecons : Yes, No;
         import tsv_utils.common.fieldlist :  parseNumericFieldList;
@@ -389,12 +420,26 @@ struct TsvSummarizeOptions {
         }
     }
 
-    private void countOptionHandler()
+    void addCountOptionHandler()
+    {
+        cmdLineOperatorOptions ~=
+            (bool hasHeader, string[] headerFields)
+            => countOptionHandler(hasHeader, headerFields);
+    }
+
+    private void countOptionHandler(bool hasHeader, string[] headerFields)
     {
         operators.insertBack(new CountOperator());
     }
 
-    private void countHeaderOptionHandler(string option, string optionVal)
+    void addCountHeaderOptionHandler(string option, string optionVal)
+    {
+        cmdLineOperatorOptions ~=
+            (bool hasHeader, string[] headerFields)
+            => countHeaderOptionHandler(hasHeader, headerFields, option, optionVal);
+    }
+
+    private void countHeaderOptionHandler(bool hasHeader, string[] headerFields, string option, string optionVal)
     {
         auto op = new CountOperator();
         op.setCustomHeader(optionVal);
@@ -404,7 +449,7 @@ struct TsvSummarizeOptions {
     /* This routine does validations not handled by processArgs. */
     private void consistencyValidations()
     {
-        enforce(!operators.empty, "At least one summary operator is required.");
+        enforce(!cmdLineOperatorOptions.empty, "At least one summary operator is required.");
 
         enforce(inputFieldDelimiter != valuesDelimiter,
                 "Cannot use the same character for both --d|field-delimiter and --v|values-delimiter.");
