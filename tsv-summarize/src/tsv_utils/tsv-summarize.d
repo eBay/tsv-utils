@@ -192,8 +192,7 @@ struct TsvSummarizeOptions {
                 "V|version",          "              Print version information and exit.", &versionWanted,
                 std.getopt.config.caseInsensitive,
 
-                "g|group-by",         "<field-list>  Fields to use as key.",
-                keyFields.makeFieldListOptionHandler!(size_t, Yes.convertToZeroBasedIndex),
+                "g|group-by",         "<field-list>  Fields to use as key.", &addGroupByOptionHandler,
 
                 std.getopt.config.caseSensitive,
                 "H|header",           "              Treat the first line of each file as a header.", &hasHeader,
@@ -246,8 +245,6 @@ struct TsvSummarizeOptions {
                 return tuple(false, 0);
             }
 
-            consistencyValidations();
-
             /* Remaining command line args are files. Use standard input if files
              * were not provided. Truncate cmdArgs to consume the arguments.
              */
@@ -262,9 +259,11 @@ struct TsvSummarizeOptions {
                 headerFields = inputSources.front.byLine.front.split(inputFieldDelimiter).to!(string[]);
             }
 
+            cmdLineOtherFieldOptions.each!(dg => dg(hasHeader, headerFields));
             cmdLineOperatorOptions.each!(dg => dg(hasHeader, headerFields));
 
-            derivations();
+            consistencyValidations();
+            derivations(); // After processing cmdLine[OtherField|Operator]Options.
         }
         catch (Exception exc)
         {
@@ -280,6 +279,32 @@ struct TsvSummarizeOptions {
     alias CmdOptionHandler = void delegate(bool hasHeader, string[] headerFields);
 
     CmdOptionHandler[]  cmdLineOperatorOptions;
+    CmdOptionHandler[]  cmdLineOtherFieldOptions;
+
+    void addGroupByOptionHandler(string option, string optionVal)
+    {
+        cmdLineOtherFieldOptions ~=
+            (bool hasHeader, string[] headerFields)
+            => groupByOptionHandler(hasHeader, headerFields, option, optionVal);
+    }
+
+    private void groupByOptionHandler(bool hasHeader, string[] headerFields, string option, string optionVal)
+    {
+        import tsv_utils.common.fieldlist;
+
+        try
+        {
+            keyFields =
+                optionVal
+                .parseFieldList!(size_t, Yes.convertToZeroBasedIndex)(hasHeader, headerFields)
+                .array;
+        }
+        catch (Exception e)
+        {
+            e.msg = format("[--%s %s]. %s", option, optionVal, e.msg);
+            throw e;
+        }
+    }
 
     void addOperatorOptionHandler(OperatorClass : SingleFieldOperator)(string option, string optionVal)
     {
@@ -298,40 +323,46 @@ struct TsvSummarizeOptions {
     {
         import std.range : enumerate;
         import std.typecons : Yes, No;
-        import tsv_utils.common.fieldlist :  parseNumericFieldList;
+        import tsv_utils.common.fieldlist;
 
-        auto valSplit = findSplit(optionVal, ":");
+        try
+        {
+            auto optionValParse =
+                optionVal
+                .parseFieldList!(size_t, Yes.convertToZeroBasedIndex, No.allowFieldNumZero, No.consumeEntireFieldListString)
+                (hasHeader, headerFields);
 
-        enforce(!valSplit[0].empty && (valSplit[1].empty || !valSplit[2].empty),
-                format("Invalid option value: '--%s %s'. Expected: '--%s <field-list>' or '--%s <field>:<header>'.",
-                       option, optionVal, option, option));
+            auto fieldIndices = optionValParse.array;
+            bool hasOptionalHeader = optionVal.length > optionValParse.consumed;
+            string optionalHeader;
 
-        try foreach (fieldNum, fieldIndex;
-                     valSplit[0].to!string
-                     .parseNumericFieldList!(size_t, Yes.convertToZeroBasedIndex).enumerate(1))
+            if (hasOptionalHeader)
+            {
+                enforce(fieldIndices.length <= 1, "Cannot specify a custom header when using multiple fields.");
+                enforce(optionVal.length - optionValParse.consumed > 1,
+                        format("No value after field list.\n   Expected: '--%s <field-list>' or '--%s <field>:<header>'.",
+                               option, option));
+                optionalHeader = optionVal[optionValParse.consumed + 1 .. $].idup;
+            }
+
+            foreach (fieldIndex; fieldIndices)
             {
                 auto op = new OperatorClass(fieldIndex, globalMissingPolicy);
 
-                if (!valSplit[2].empty) // Header specified
+                if (hasOptionalHeader)
                 {
-                    enforce(fieldNum <= 1,
-                            format("Invalid option: '--%s %s'. Cannot specify a custom header when using multiple fields.",
-                                   option, optionVal));
-
-                    enforce(op.allowCustomHeader,
-                            format("Invalid option: '--%s %s'. Operator does not support custom headers.",
-                                   option, optionVal));
-
-                    op.setCustomHeader(valSplit[2].to!string);
+                    enforce(op.allowCustomHeader, "Operator does not support custom headers.");
+                    op.setCustomHeader(optionalHeader);
                 }
 
                 operators.insertBack(op);
                 if (fieldIndex >= endFieldIndex) endFieldIndex = fieldIndex + 1;
             }
+        }
         catch (Exception exc)
         {
             import std.format : format;
-            exc.msg = format("[--%s] %s", option, exc.msg);
+            exc.msg = format("[--%s %s] %s", option, optionVal, exc.msg);
             throw exc;
         }
     }
@@ -347,77 +378,64 @@ struct TsvSummarizeOptions {
     private void quantileOperatorOptionHandler(bool hasHeader, string[] headerFields, string option, string optionVal)
     {
         import std.typecons : Yes, No;
-        import tsv_utils.common.fieldlist :  parseNumericFieldList;
+        import tsv_utils.common.fieldlist;
 
-        auto formatErrorMsg(string option, string optionVal)
+        try
         {
-            return format(
-                "Invalid option value: '--%s %s'. Expected: '--%s <field-list>:<prob>[,<prob>]' or '--%s <field>:<prob>:<header>' where <prob> is a number between 0.0 and 1.0.",
-                option, optionVal, option, option);
-        }
+            auto optionValParse =
+                optionVal
+                .parseFieldList!(size_t, Yes.convertToZeroBasedIndex, No.allowFieldNumZero, No.consumeEntireFieldListString)
+                (hasHeader, headerFields);
 
-        auto split1 = findSplit(optionVal, ":");
+            auto fieldIndices = optionValParse.array;
+            enforce(optionVal.length - optionValParse.consumed > 1, "No probabilities entered.");
 
-        enforce(!split1[0].empty && (split1[1].empty || !split1[2].empty),
-                formatErrorMsg(option, optionVal));
+            auto splitRemaining =
+                optionVal[optionValParse.consumed + 1 .. $]
+                .findSplit(":");
 
-        auto split2 = findSplit(split1[2], ":");
+            enforce(splitRemaining[1].empty || !splitRemaining[2].empty,
+                    "Empty custom header.");
 
-        enforce(!split2[0].empty && (split2[1].empty || !split2[2].empty),
-                formatErrorMsg(option, optionVal));
+            auto probStr = splitRemaining[0];
+            auto header = splitRemaining[2];
 
-        auto fieldStr = split1[0];
-        auto probStr = split2[0];
-        auto header = split2[2];
+            double[] probs;
 
-        size_t[] fieldIndices;
-        double[] probs;
-
-        try foreach (fieldIndex;
-                     fieldStr.to!string.parseNumericFieldList!(size_t, Yes.convertToZeroBasedIndex))
+            foreach (str; probStr.splitter(','))
             {
-                fieldIndices ~= fieldIndex;
+                double p = str.to!double;
+                enforce(p >= 0.0 && p <= 1.0,
+                        format("Probability '%g' is not in the interval [0.0,1.0].", p));
+                probs ~= p;
             }
-        catch (Exception exc)
-        {
-            import std.format : format;
-            exc.msg = format("[--%s] %s", option, exc.msg);
-            throw exc;
-        }
 
-        foreach (str; probStr.splitter(','))
-        {
-            double p;
+            enforce(header.empty || (fieldIndices.length <= 1 && probs.length <= 1),
+                    format("Cannot specify a custom header when using multiple fields or multiple probabilities."));
 
-            try p = str.to!double;
-            catch (Exception exc)
-                throw new Exception(formatErrorMsg(option, optionVal));
+            assert (fieldIndices.length > 0);
+            assert (probs.length > 0);
+            assert (header.empty || (fieldIndices.length == 1 && probs.length == 1));
 
-            enforce(p >= 0.0 && p <= 1.0,
-                    format("Invalid option: '--%s %s'. Probability '%g' is not in the interval [0.0,1.0].",
-                           option, optionVal, p));
-
-            probs ~= p;
-        }
-
-        enforce(header.empty || (fieldIndices.length <= 1 && probs.length <= 1),
-                format("Invalid option: '--%s %s'. Cannot specify a custom header when using multiple fields or multiple probabilities.",
-                       option, optionVal));
-
-        assert (fieldIndices.length > 0);
-        assert (probs.length > 0);
-        assert (header.empty || (fieldIndices.length == 1 && probs.length == 1));
-
-        foreach (fieldIndex; fieldIndices)
-        {
-            foreach (p; probs)
+            foreach (fieldIndex; fieldIndices)
             {
-                auto op = new QuantileOperator(fieldIndex, globalMissingPolicy, p);
-                if (!header.empty) op.setCustomHeader(header);
-                operators.insertBack(op);
+                foreach (p; probs)
+                {
+                    auto op = new QuantileOperator(fieldIndex, globalMissingPolicy, p);
+                    if (!header.empty) op.setCustomHeader(header);
+                    operators.insertBack(op);
+                }
+                if (fieldIndex >= endFieldIndex) endFieldIndex = fieldIndex + 1;
             }
-            if (fieldIndex >= endFieldIndex) endFieldIndex = fieldIndex + 1;
         }
+        catch (Exception e)
+        {
+            e.msg = format(
+                "[--%s %s]. %s\n   Expected: '--%s <field-list>:<prob>[,<prob>]' or '--%s <field>:<prob>:<header>' where <prob> is a number between 0.0 and 1.0.",
+                option, optionVal, e.msg, option, option);
+            throw e;
+        }
+
     }
 
     void addCountOptionHandler()
@@ -1113,7 +1131,21 @@ unittest
                     ["c", "c|c|c"],
                     ["",  ""]]
         );
+    testSummarizer(["unittest-sk-1-named", "--header", "--group-by", "fld1", "--values", "fld1", file1Path],
+                   file1,
+                   [["fld1", "fld1_values"],
+                    ["a", "a|a"],
+                    ["c", "c|c|c"],
+                    ["",  ""]]
+        );
     testSummarizer(["unittest-sk-2", "-H", "--group-by", "1", "--values", "2", file1Path],
+                   file1,
+                   [["fld1", "fld2_values"],
+                    ["a", "a|c"],
+                    ["c", "a|bc|bc"],
+                    ["",  "bc"]]
+        );
+    testSummarizer(["unittest-sk-2-named", "-H", "--group-by", "fld1", "--values", "fld2", file1Path],
                    file1,
                    [["fld1", "fld2_values"],
                     ["a", "a|c"],
@@ -1128,6 +1160,20 @@ unittest
                     ["",  ""]]
         );
     testSummarizer(["unittest-sk-4", "-H", "--group-by", "1", "--values", "1,2,3", file1Path],
+                   file1,
+                   [["fld1", "fld1_values", "fld2_values", "fld3_values"],
+                    ["a", "a|a",   "a|c",     "3|2b"],
+                    ["c", "c|c|c", "a|bc|bc", "2b||3"],
+                    ["",  "",      "bc",      ""]]
+        );
+    testSummarizer(["unittest-sk-4-named-a", "-H", "--group-by", "fld1", "--values", "fld1,fld2,fld3", file1Path],
+                   file1,
+                   [["fld1", "fld1_values", "fld2_values", "fld3_values"],
+                    ["a", "a|a",   "a|c",     "3|2b"],
+                    ["c", "c|c|c", "a|bc|bc", "2b||3"],
+                    ["",  "",      "bc",      ""]]
+        );
+    testSummarizer(["unittest-sk-4-named-b", "-H", "--group-by", "fld1", "--values", "fld*", file1Path],
                    file1,
                    [["fld1", "fld1_values", "fld2_values", "fld3_values"],
                     ["a", "a|a",   "a|c",     "3|2b"],
