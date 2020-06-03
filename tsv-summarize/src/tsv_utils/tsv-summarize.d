@@ -1079,13 +1079,13 @@ version(unittest)
                    expectedOutput.to!string, summarizerOutput.data.to!string));
     }
 
-    void writeDataFile(string filepath, string[][] fileData)
+    void writeDataFile(string filepath, string[][] fileData, string delimiter = "\t")
     {
         import std.algorithm;
         import std.stdio;
 
         auto f = filepath.File("w");
-        foreach (record; fileData) f.writeln(record.joiner("\t"));
+        foreach (record; fileData) f.writeln(record.joiner(delimiter));
         f.close;
     }
 }
@@ -1257,6 +1257,13 @@ unittest
                     ["2b", "c|a", "a|c"],
                     ["",   "c|",  "bc|bc"]]
         );
+    testSummarizer(["unittest-sk-15-named", "-H", "--group-by", "fld3", "--values", "fld1,fld2", file1Path],
+                   file1,
+                   [["fld3", "fld1_values", "fld2_values"],
+                    ["3",  "a|c", "a|bc"],
+                    ["2b", "c|a", "a|c"],
+                    ["",   "c|",  "bc|bc"]]
+        );
 
     /* Multi-key summarizer tests.
      */
@@ -1288,6 +1295,15 @@ unittest
                     ["", "bc",  ""]]
         );
     testSummarizer(["unittest-mk-4", "-H", "--group-by", "1,2", "--values", "3,1", file1Path],
+                   file1,
+                   [["fld1", "fld2", "fld3_values", "fld1_values"],
+                    ["a", "a",  "3", "a"],
+                    ["c", "a",  "2b", "c"],
+                    ["c", "bc", "|3", "c|c"],
+                    ["a", "c",  "2b", "a"],
+                    ["",  "bc", "",   ""]]
+        );
+    testSummarizer(["unittest-mk-4-named", "-H", "--group-by", "fld1,fld2", "--values", "fld3,fld1", file1Path],
                    file1,
                    [["fld1", "fld2", "fld3_values", "fld1_values"],
                     ["a", "a",  "3", "a"],
@@ -1375,6 +1391,13 @@ unittest
                     ["c", "2b|NA|3"],
                     ["",  "NA"]]
         );
+    testSummarizer(["unittest-mis-7-named", "-H", "-g", "fld1", "--values", "fld3", "-r", "NA", file1Path],
+                   file1,
+                   [["fld1", "fld3_values"],
+                    ["a", "3|2b"],
+                    ["c", "2b|NA|3"],
+                    ["",  "NA"]]
+        );
     testSummarizer(["unittest-mis-8", "-H", "--group-by", "1", "--values", "1,2,3", "-r", "NA", file1Path],
                    file1,
                    [["fld1", "fld1_values", "fld2_values", "fld3_values"],
@@ -1446,6 +1469,11 @@ unittest
                    [["fld1_values", "fld2_values"],
                     ["a|c|c|a||c", "a|a|bc|c|bc|bc"]]
         );
+    testSummarizer(["unittest-nk-1-named", "-H", "--values", "fld1,fld2", file1Path],
+                   file1,
+                   [["fld1_values", "fld2_values"],
+                    ["a|c|c|a||c", "a|a|bc|c|bc|bc"]]
+        );
 
     /* Header variations: no header line; auto-generated header line; custom headers.
      */
@@ -1487,6 +1515,24 @@ unittest
                     ["c",  "2b"]]
         );
     testSummarizer(["unittest-hdr-6", "-H", "--group-by", "1,2", "--values", "3:FieldThreeValues", "--values", "1:FieldOneValues", file1Path],
+                   file1,
+                   [["fld1", "fld2", "FieldThreeValues", "FieldOneValues"],
+                    ["a", "a",  "3", "a"],
+                    ["c", "a",  "2b", "c"],
+                    ["c", "bc", "|3", "c|c"],
+                    ["a", "c",  "2b", "a"],
+                    ["",  "bc", "",   ""]]
+        );
+    testSummarizer(["unittest-hdr-6-named-a", "-H", "--group-by", "fld1,fld2", "--values", "fld3:FieldThreeValues", "--values", "fld1:FieldOneValues", file1Path],
+                   file1,
+                   [["fld1", "fld2", "FieldThreeValues", "FieldOneValues"],
+                    ["a", "a",  "3", "a"],
+                    ["c", "a",  "2b", "c"],
+                    ["c", "bc", "|3", "c|c"],
+                    ["a", "c",  "2b", "a"],
+                    ["",  "bc", "",   ""]]
+        );
+    testSummarizer(["unittest-hdr-6-named-b", "-H", "--group-by", "fld1,fld2", "--values", "fld3 FieldThreeValues", "--values", "fld1 FieldOneValues", file1Path],
                    file1,
                    [["fld1", "fld2", "FieldThreeValues", "FieldOneValues"],
                     ["a", "a",  "3", "a"],
@@ -1575,6 +1621,11 @@ unittest
                    [["fld2", "fld1", "fld3_values"],
                     ["b", "a", "c"]]
         );
+    testSummarizer(["unittest-3x1-3-named", "-H", "--group-by", "fld2,fld1", "--values", "fld3", file3x1Path],
+                   file3x1,
+                   [["fld2", "fld1", "fld3_values"],
+                    ["b", "a", "c"]]
+        );
     testSummarizer(["unittest-3x1-4", "--group-by", "2,1", "--values", "3", file3x1NoHeaderPath],
                    file3x1[1..$],
                    [["b", "a", "c"]]
@@ -1589,6 +1640,10 @@ unittest
 
 
     testSummarizer(["unittest-3x0-1", "-H", "--group-by", "1", "--values", "3", file3x0Path],
+                   file3x0,
+                   [["fld1", "fld3_values"]]
+        );
+    testSummarizer(["unittest-3x0-1-named", "-H", "--group-by", "fld1", "--values", "fld3", file3x0Path],
                    file3x0,
                    [["fld1", "fld3_values"]]
         );
@@ -1696,6 +1751,11 @@ unittest
                    [["fld1", "fld1_values"],
                     ["x", "x"]]
         );
+    testSummarizer(["unittest-1x1-1-named", "-H", "--group-by", "fld1", "--values", "fld1", file1x1Path],
+                   file1x1,
+                   [["fld1", "fld1_values"],
+                    ["x", "x"]]
+        );
 
     testSummarizer(["unittest-1x1-2", "--group-by", "1", "--values", "1", file1x1NoHeaderPath],
                    file1x1[1..$],
@@ -1744,8 +1804,24 @@ unittest
                    [["field1", "field1_values"]]
         );
 
-    /* Alternate delimiters. */
-    testSummarizer(["unittest-delim-1", "-H", "--values", "1,2", "--delimiter", "%", file1Path],
+    /* Alternate delimiters.
+     *
+     * Note: In current unit test setup the data is already in memory (file1).
+     * 'file1Path' points to a file with equivalent data, but not read, except if
+     * processing the header line. A data file is created for the '%' and '#'
+     * delimiter cases (these read the header), but we don't bother for the others.
+     */
+    auto file1PctDelimPath = buildPath(testDir, "file1PctDelim.tsv");
+    auto file1HashDelimPath = buildPath(testDir, "file1HashDelim.tsv");
+    writeDataFile(file1PctDelimPath, file1, "%");
+    writeDataFile(file1HashDelimPath, file1, "#");
+
+    testSummarizer(["unittest-delim-1", "-H", "--values", "1,2", "--delimiter", "%", file1PctDelimPath],
+                   file1,
+                   [["fld1_values", "fld2_values"],
+                    ["a|c|c|a||c", "a|a|bc|c|bc|bc"]]
+        );
+    testSummarizer(["unittest-delim-1-named", "-H", "--values", "fld1,fld2", "--delimiter", "%", file1PctDelimPath],
                    file1,
                    [["fld1_values", "fld2_values"],
                     ["a|c|c|a||c", "a|a|bc|c|bc|bc"]]
@@ -1755,7 +1831,12 @@ unittest
                    [["fld1_values", "fld2_values"],
                     ["a$c$c$a$$c", "a$a$bc$c$bc$bc"]]
         );
-    testSummarizer(["unittest-delim-3", "-H", "--values", "1,2", "--delimiter", "#", "--values-delimiter", ",", file1Path],
+    testSummarizer(["unittest-delim-3", "-H", "--values", "1,2", "--delimiter", "#", "--values-delimiter", ",", file1HashDelimPath],
+                   file1,
+                   [["fld1_values", "fld2_values"],
+                    ["a,c,c,a,,c", "a,a,bc,c,bc,bc"]]
+        );
+    testSummarizer(["unittest-delim-3-named", "-H", "--values", "fld1,fld2", "--delimiter", "#", "--values-delimiter", ",", file1HashDelimPath],
                    file1,
                    [["fld1_values", "fld2_values"],
                     ["a,c,c,a,,c", "a,a,bc,c,bc,bc"]]
