@@ -192,8 +192,7 @@ struct TsvSummarizeOptions {
                 "V|version",          "              Print version information and exit.", &versionWanted,
                 std.getopt.config.caseInsensitive,
 
-                "g|group-by",         "<field-list>  Fields to use as key.",
-                keyFields.makeFieldListOptionHandler!(size_t, Yes.convertToZeroBasedIndex),
+                "g|group-by",         "<field-list>  Fields to use as key.", &addGroupByOptionHandler,
 
                 std.getopt.config.caseSensitive,
                 "H|header",           "              Treat the first line of each file as a header.", &hasHeader,
@@ -205,28 +204,28 @@ struct TsvSummarizeOptions {
                 "p|float-precision",  "NUM           'Precision' to use printing floating point numbers. Affects the number of digits printed and exponent use. Default: 12", &floatPrecision,
                 "x|exclude-missing",  "              Exclude missing (empty) fields from calculations.", &excludeMissing,
                 "r|replace-missing",  "STR           Replace missing (empty) fields with STR in calculations.", &missingValueReplacement,
-                "count",              "              Count occurrences of each unique key ('--g|group-by'), or the total number of records if no key field is specified.", &countOptionHandler,
-                "count-header",       "STR           Count occurrences of each unique key, like '--count', but use STR as the header.", &countHeaderOptionHandler,
-                "retain",             "<field-list>  Retain one copy of the field.", &operatorOptionHandler!RetainOperator,
-                "first",              "<field-list>[:STR]  First value seen.", &operatorOptionHandler!FirstOperator,
-                "last",               "<field-list>[:STR]  Last value seen.", &operatorOptionHandler!LastOperator,
-                "min",                "<field-list>[:STR]  Min value. (Numeric fields only.)", &operatorOptionHandler!MinOperator,
-                "max",                "<field-list>[:STR]  Max value. (Numeric fields only.)", &operatorOptionHandler!MaxOperator,
-                "range",              "<field-list>[:STR]  Difference between min and max values. (Numeric fields only.)", &operatorOptionHandler!RangeOperator,
-                "sum",                "<field-list>[:STR]  Sum of the values. (Numeric fields only.)", &operatorOptionHandler!SumOperator,
-                "mean",               "<field-list>[:STR]  Mean (average). (Numeric fields only.)", &operatorOptionHandler!MeanOperator,
-                "median",             "<field-list>[:STR]  Median value. (Numeric fields only. Reads all values into memory.)", &operatorOptionHandler!MedianOperator,
-                "quantile",           "<field-list>:p[,p...][:STR]  Quantiles. One or more fields, then one or more 0.0-1.0 probabilities. (Numeric fields only. Reads all values into memory.)", &quantileOperatorOptionHandler,
-                "mad",                "<field-list>[:STR]  Median absolute deviation from the median. Raw value, not scaled. (Numeric fields only. Reads all values into memory.)", &operatorOptionHandler!MadOperator,
-                "var",                "<field-list>[:STR]  Variance. (Sample variance, numeric fields only).", &operatorOptionHandler!VarianceOperator,
-                "stdev",              "<field-list>[:STR]  Standard deviation. (Sample st.dev, numeric fields only).", &operatorOptionHandler!StDevOperator,
-                "mode",               "<field-list>[:STR]  Mode. The most frequent value. (Reads all unique values into memory.)", &operatorOptionHandler!ModeOperator,
-                "mode-count",         "<field-list>[:STR]  Count of the most frequent value. (Reads all unique values into memory.)", &operatorOptionHandler!ModeCountOperator,
-                "unique-count",       "<field-list>[:STR]  Number of unique values. (Reads all unique values into memory.)", &operatorOptionHandler!UniqueCountOperator,
-                "missing-count",      "<field-list>[:STR]  Number of missing (empty) fields. Not affected by '--x|exclude-missing' or '--r|replace-missing'.", &operatorOptionHandler!MissingCountOperator,
-                "not-missing-count",  "<field-list>[:STR]  Number of filled (non-empty) fields. Not affected by '--r|replace-missing'.", &operatorOptionHandler!NotMissingCountOperator,
-                "values",             "<field-list>[:STR]  All the values, separated by --v|values-delimiter. (Reads all values into memory.)", &operatorOptionHandler!ValuesOperator,
-                "unique-values",      "<field-list>[:STR]  All the unique values, separated by --v|values-delimiter. (Reads all unique values into memory.)", &operatorOptionHandler!UniqueValuesOperator,
+                "count",              "              Count occurrences of each unique key ('--g|group-by'), or the total number of records if no key field is specified.", &addCountOptionHandler,
+                "count-header",       "STR           Count occurrences of each unique key, like '--count', but use STR as the header.", &addCountHeaderOptionHandler,
+                "retain",             "<field-list>  Retain one copy of the field.", &addOperatorOptionHandler!RetainOperator,
+                "first",              "<field-list>[:STR]  First value seen.", &addOperatorOptionHandler!FirstOperator,
+                "last",               "<field-list>[:STR]  Last value seen.", &addOperatorOptionHandler!LastOperator,
+                "min",                "<field-list>[:STR]  Min value. (Numeric fields only.)", &addOperatorOptionHandler!MinOperator,
+                "max",                "<field-list>[:STR]  Max value. (Numeric fields only.)", &addOperatorOptionHandler!MaxOperator,
+                "range",              "<field-list>[:STR]  Difference between min and max values. (Numeric fields only.)", &addOperatorOptionHandler!RangeOperator,
+                "sum",                "<field-list>[:STR]  Sum of the values. (Numeric fields only.)", &addOperatorOptionHandler!SumOperator,
+                "mean",               "<field-list>[:STR]  Mean (average). (Numeric fields only.)", &addOperatorOptionHandler!MeanOperator,
+                "median",             "<field-list>[:STR]  Median value. (Numeric fields only. Reads all values into memory.)", &addOperatorOptionHandler!MedianOperator,
+                "quantile",           "<field-list>:p[,p...][:STR]  Quantiles. One or more fields, then one or more 0.0-1.0 probabilities. (Numeric fields only. Reads all values into memory.)", &addQuantileOperatorOptionHandler,
+                "mad",                "<field-list>[:STR]  Median absolute deviation from the median. Raw value, not scaled. (Numeric fields only. Reads all values into memory.)", &addOperatorOptionHandler!MadOperator,
+                "var",                "<field-list>[:STR]  Variance. (Sample variance, numeric fields only).", &addOperatorOptionHandler!VarianceOperator,
+                "stdev",              "<field-list>[:STR]  Standard deviation. (Sample st.dev, numeric fields only).", &addOperatorOptionHandler!StDevOperator,
+                "mode",               "<field-list>[:STR]  Mode. The most frequent value. (Reads all unique values into memory.)", &addOperatorOptionHandler!ModeOperator,
+                "mode-count",         "<field-list>[:STR]  Count of the most frequent value. (Reads all unique values into memory.)", &addOperatorOptionHandler!ModeCountOperator,
+                "unique-count",       "<field-list>[:STR]  Number of unique values. (Reads all unique values into memory.)", &addOperatorOptionHandler!UniqueCountOperator,
+                "missing-count",      "<field-list>[:STR]  Number of missing (empty) fields. Not affected by '--x|exclude-missing' or '--r|replace-missing'.", &addOperatorOptionHandler!MissingCountOperator,
+                "not-missing-count",  "<field-list>[:STR]  Number of filled (non-empty) fields. Not affected by '--r|replace-missing'.", &addOperatorOptionHandler!NotMissingCountOperator,
+                "values",             "<field-list>[:STR]  All the values, separated by --v|values-delimiter. (Reads all values into memory.)", &addOperatorOptionHandler!ValuesOperator,
+                "unique-values",      "<field-list>[:STR]  All the unique values, separated by --v|values-delimiter. (Reads all unique values into memory.)", &addOperatorOptionHandler!UniqueValuesOperator,
                 );
 
             if (r.helpWanted)
@@ -246,8 +245,6 @@ struct TsvSummarizeOptions {
                 return tuple(false, 0);
             }
 
-            consistencyValidations();
-
             /* Remaining command line args are files. Use standard input if files
              * were not provided. Truncate cmdArgs to consume the arguments.
              */
@@ -255,7 +252,18 @@ struct TsvSummarizeOptions {
             cmdArgs.length = 1;
             inputSources = byLineSourceRange(filepaths);
 
-            derivations();
+            string[] headerFields;
+
+            if (hasHeader && !inputSources.front.byLine.empty)
+            {
+                headerFields = inputSources.front.byLine.front.split(inputFieldDelimiter).to!(string[]);
+            }
+
+            cmdLineOtherFieldOptions.each!(dg => dg(hasHeader, headerFields));
+            cmdLineOperatorOptions.each!(dg => dg(hasHeader, headerFields));
+
+            consistencyValidations();
+            derivations(); // After processing cmdLine[OtherField|Operator]Options.
         }
         catch (Exception exc)
         {
@@ -265,136 +273,191 @@ struct TsvSummarizeOptions {
         return tuple(true, 0);
     }
 
+    /* CmdOptionHandler delegate signature - This is the call made to process the command
+     * line option arguments after the header line has been read.
+     */
+    alias CmdOptionHandler = void delegate(bool hasHeader, string[] headerFields);
+
+    CmdOptionHandler[]  cmdLineOperatorOptions;
+    CmdOptionHandler[]  cmdLineOtherFieldOptions;
+
+    void addGroupByOptionHandler(string option, string optionVal)
+    {
+        cmdLineOtherFieldOptions ~=
+            (bool hasHeader, string[] headerFields)
+            => groupByOptionHandler(hasHeader, headerFields, option, optionVal);
+    }
+
+    private void groupByOptionHandler(bool hasHeader, string[] headerFields, string option, string optionVal)
+    {
+        import tsv_utils.common.fieldlist;
+
+        try
+        {
+            keyFields =
+                optionVal
+                .parseFieldList!(size_t, Yes.convertToZeroBasedIndex)(hasHeader, headerFields)
+                .array;
+        }
+        catch (Exception e)
+        {
+            e.msg = format("[--%s %s]. %s", option, optionVal, e.msg);
+            throw e;
+        }
+    }
+
+    void addOperatorOptionHandler(OperatorClass : SingleFieldOperator)(string option, string optionVal)
+    {
+        cmdLineOperatorOptions ~=
+            (bool hasHeader, string[] headerFields)
+            => operatorOptionHandler!OperatorClass(hasHeader, headerFields, option, optionVal);
+    }
+
     /* operationOptionHandler functions are callbacks that process command line options
      * specifying summarization operations. eg. '--max 5', '--last 3:LastEntry'. Handlers
      * check syntactic correctness and instantiate Operator objects that do the work. This
      * is also where 1-upped field numbers are converted to 0-based indices.
      */
-    private void operatorOptionHandler(OperatorClass : SingleFieldOperator)(string option, string optionVal)
+    private void operatorOptionHandler(OperatorClass : SingleFieldOperator)
+    (bool hasHeader, string[] headerFields, string option, string optionVal)
     {
         import std.range : enumerate;
         import std.typecons : Yes, No;
-        import tsv_utils.common.fieldlist :  parseNumericFieldList;
+        import tsv_utils.common.fieldlist;
 
-        auto valSplit = findSplit(optionVal, ":");
+        try
+        {
+            auto optionValParse =
+                optionVal
+                .parseFieldList!(size_t, Yes.convertToZeroBasedIndex, No.allowFieldNumZero, No.consumeEntireFieldListString)
+                (hasHeader, headerFields);
 
-        enforce(!valSplit[0].empty && (valSplit[1].empty || !valSplit[2].empty),
-                format("Invalid option value: '--%s %s'. Expected: '--%s <field-list>' or '--%s <field>:<header>'.",
-                       option, optionVal, option, option));
+            auto fieldIndices = optionValParse.array;
+            bool hasOptionalHeader = optionVal.length > optionValParse.consumed;
+            string optionalHeader;
 
-        try foreach (fieldNum, fieldIndex;
-                     valSplit[0].to!string
-                     .parseNumericFieldList!(size_t, Yes.convertToZeroBasedIndex).enumerate(1))
+            if (hasOptionalHeader)
+            {
+                enforce(fieldIndices.length <= 1, "Cannot specify a custom header when using multiple fields.");
+                enforce(optionVal.length - optionValParse.consumed > 1,
+                        format("No value after field list.\n   Expected: '--%s <field-list>' or '--%s <field>:<header>'.",
+                               option, option));
+                optionalHeader = optionVal[optionValParse.consumed + 1 .. $].idup;
+            }
+
+            foreach (fieldIndex; fieldIndices)
             {
                 auto op = new OperatorClass(fieldIndex, globalMissingPolicy);
 
-                if (!valSplit[2].empty) // Header specified
+                if (hasOptionalHeader)
                 {
-                    enforce(fieldNum <= 1,
-                            format("Invalid option: '--%s %s'. Cannot specify a custom header when using multiple fields.",
-                                   option, optionVal));
-
-                    enforce(op.allowCustomHeader,
-                            format("Invalid option: '--%s %s'. Operator does not support custom headers.",
-                                   option, optionVal));
-
-                    op.setCustomHeader(valSplit[2].to!string);
+                    enforce(op.allowCustomHeader, "Operator does not support custom headers.");
+                    op.setCustomHeader(optionalHeader);
                 }
 
                 operators.insertBack(op);
                 if (fieldIndex >= endFieldIndex) endFieldIndex = fieldIndex + 1;
             }
+        }
         catch (Exception exc)
         {
             import std.format : format;
-            exc.msg = format("[--%s] %s", option, exc.msg);
+            exc.msg = format("[--%s %s] %s", option, optionVal, exc.msg);
             throw exc;
         }
+    }
+
+    void addQuantileOperatorOptionHandler(string option, string optionVal)
+    {
+        cmdLineOperatorOptions ~=
+            (bool hasHeader, string[] headerFields)
+            => quantileOperatorOptionHandler(hasHeader, headerFields, option, optionVal);
     }
 
     /* QuantileOperator has a different syntax and needs a custom command option handler. */
-    private void quantileOperatorOptionHandler(string option, string optionVal)
+    private void quantileOperatorOptionHandler(bool hasHeader, string[] headerFields, string option, string optionVal)
     {
         import std.typecons : Yes, No;
-        import tsv_utils.common.fieldlist :  parseNumericFieldList;
+        import tsv_utils.common.fieldlist;
 
-        auto formatErrorMsg(string option, string optionVal)
+        try
         {
-            return format(
-                "Invalid option value: '--%s %s'. Expected: '--%s <field-list>:<prob>[,<prob>]' or '--%s <field>:<prob>:<header>' where <prob> is a number between 0.0 and 1.0.",
-                option, optionVal, option, option);
-        }
+            auto optionValParse =
+                optionVal
+                .parseFieldList!(size_t, Yes.convertToZeroBasedIndex, No.allowFieldNumZero, No.consumeEntireFieldListString)
+                (hasHeader, headerFields);
 
-        auto split1 = findSplit(optionVal, ":");
+            auto fieldIndices = optionValParse.array;
+            enforce(optionVal.length - optionValParse.consumed > 1, "No probabilities entered.");
 
-        enforce(!split1[0].empty && (split1[1].empty || !split1[2].empty),
-                formatErrorMsg(option, optionVal));
+            auto splitRemaining =
+                optionVal[optionValParse.consumed + 1 .. $]
+                .findSplit(":");
 
-        auto split2 = findSplit(split1[2], ":");
+            enforce(splitRemaining[1].empty || !splitRemaining[2].empty,
+                    "Empty custom header.");
 
-        enforce(!split2[0].empty && (split2[1].empty || !split2[2].empty),
-                formatErrorMsg(option, optionVal));
+            auto probStr = splitRemaining[0];
+            auto header = splitRemaining[2];
 
-        auto fieldStr = split1[0];
-        auto probStr = split2[0];
-        auto header = split2[2];
+            double[] probs;
 
-        size_t[] fieldIndices;
-        double[] probs;
-
-        try foreach (fieldIndex;
-                     fieldStr.to!string.parseNumericFieldList!(size_t, Yes.convertToZeroBasedIndex))
+            foreach (str; probStr.splitter(','))
             {
-                fieldIndices ~= fieldIndex;
+                double p = str.to!double;
+                enforce(p >= 0.0 && p <= 1.0,
+                        format("Probability '%g' is not in the interval [0.0,1.0].", p));
+                probs ~= p;
             }
-        catch (Exception exc)
-        {
-            import std.format : format;
-            exc.msg = format("[--%s] %s", option, exc.msg);
-            throw exc;
-        }
 
-        foreach (str; probStr.splitter(','))
-        {
-            double p;
+            enforce(header.empty || (fieldIndices.length <= 1 && probs.length <= 1),
+                    format("Cannot specify a custom header when using multiple fields or multiple probabilities."));
 
-            try p = str.to!double;
-            catch (Exception exc)
-                throw new Exception(formatErrorMsg(option, optionVal));
+            assert (fieldIndices.length > 0);
+            assert (probs.length > 0);
+            assert (header.empty || (fieldIndices.length == 1 && probs.length == 1));
 
-            enforce(p >= 0.0 && p <= 1.0,
-                    format("Invalid option: '--%s %s'. Probability '%g' is not in the interval [0.0,1.0].",
-                           option, optionVal, p));
-
-            probs ~= p;
-        }
-
-        enforce(header.empty || (fieldIndices.length <= 1 && probs.length <= 1),
-                format("Invalid option: '--%s %s'. Cannot specify a custom header when using multiple fields or multiple probabilities.",
-                       option, optionVal));
-
-        assert (fieldIndices.length > 0);
-        assert (probs.length > 0);
-        assert (header.empty || (fieldIndices.length == 1 && probs.length == 1));
-
-        foreach (fieldIndex; fieldIndices)
-        {
-            foreach (p; probs)
+            foreach (fieldIndex; fieldIndices)
             {
-                auto op = new QuantileOperator(fieldIndex, globalMissingPolicy, p);
-                if (!header.empty) op.setCustomHeader(header);
-                operators.insertBack(op);
+                foreach (p; probs)
+                {
+                    auto op = new QuantileOperator(fieldIndex, globalMissingPolicy, p);
+                    if (!header.empty) op.setCustomHeader(header);
+                    operators.insertBack(op);
+                }
+                if (fieldIndex >= endFieldIndex) endFieldIndex = fieldIndex + 1;
             }
-            if (fieldIndex >= endFieldIndex) endFieldIndex = fieldIndex + 1;
         }
+        catch (Exception e)
+        {
+            e.msg = format(
+                "[--%s %s]. %s\n   Expected: '--%s <field-list>:<prob>[,<prob>]' or '--%s <field>:<prob>:<header>' where <prob> is a number between 0.0 and 1.0.",
+                option, optionVal, e.msg, option, option);
+            throw e;
+        }
+
     }
 
-    private void countOptionHandler()
+    void addCountOptionHandler()
+    {
+        cmdLineOperatorOptions ~=
+            (bool hasHeader, string[] headerFields)
+            => countOptionHandler(hasHeader, headerFields);
+    }
+
+    private void countOptionHandler(bool hasHeader, string[] headerFields)
     {
         operators.insertBack(new CountOperator());
     }
 
-    private void countHeaderOptionHandler(string option, string optionVal)
+    void addCountHeaderOptionHandler(string option, string optionVal)
+    {
+        cmdLineOperatorOptions ~=
+            (bool hasHeader, string[] headerFields)
+            => countHeaderOptionHandler(hasHeader, headerFields, option, optionVal);
+    }
+
+    private void countHeaderOptionHandler(bool hasHeader, string[] headerFields, string option, string optionVal)
     {
         auto op = new CountOperator();
         op.setCustomHeader(optionVal);
@@ -404,7 +467,7 @@ struct TsvSummarizeOptions {
     /* This routine does validations not handled by processArgs. */
     private void consistencyValidations()
     {
-        enforce(!operators.empty, "At least one summary operator is required.");
+        enforce(!cmdLineOperatorOptions.empty, "At least one summary operator is required.");
 
         enforce(inputFieldDelimiter != valuesDelimiter,
                 "Cannot use the same character for both --d|field-delimiter and --v|values-delimiter.");
@@ -1016,13 +1079,13 @@ version(unittest)
                    expectedOutput.to!string, summarizerOutput.data.to!string));
     }
 
-    void writeDataFile(string filepath, string[][] fileData)
+    void writeDataFile(string filepath, string[][] fileData, string delimiter = "\t")
     {
         import std.algorithm;
         import std.stdio;
 
         auto f = filepath.File("w");
-        foreach (record; fileData) f.writeln(record.joiner("\t"));
+        foreach (record; fileData) f.writeln(record.joiner(delimiter));
         f.close;
     }
 }
@@ -1068,7 +1131,21 @@ unittest
                     ["c", "c|c|c"],
                     ["",  ""]]
         );
+    testSummarizer(["unittest-sk-1-named", "--header", "--group-by", "fld1", "--values", "fld1", file1Path],
+                   file1,
+                   [["fld1", "fld1_values"],
+                    ["a", "a|a"],
+                    ["c", "c|c|c"],
+                    ["",  ""]]
+        );
     testSummarizer(["unittest-sk-2", "-H", "--group-by", "1", "--values", "2", file1Path],
+                   file1,
+                   [["fld1", "fld2_values"],
+                    ["a", "a|c"],
+                    ["c", "a|bc|bc"],
+                    ["",  "bc"]]
+        );
+    testSummarizer(["unittest-sk-2-named", "-H", "--group-by", "fld1", "--values", "fld2", file1Path],
                    file1,
                    [["fld1", "fld2_values"],
                     ["a", "a|c"],
@@ -1083,6 +1160,20 @@ unittest
                     ["",  ""]]
         );
     testSummarizer(["unittest-sk-4", "-H", "--group-by", "1", "--values", "1,2,3", file1Path],
+                   file1,
+                   [["fld1", "fld1_values", "fld2_values", "fld3_values"],
+                    ["a", "a|a",   "a|c",     "3|2b"],
+                    ["c", "c|c|c", "a|bc|bc", "2b||3"],
+                    ["",  "",      "bc",      ""]]
+        );
+    testSummarizer(["unittest-sk-4-named-a", "-H", "--group-by", "fld1", "--values", "fld1,fld2,fld3", file1Path],
+                   file1,
+                   [["fld1", "fld1_values", "fld2_values", "fld3_values"],
+                    ["a", "a|a",   "a|c",     "3|2b"],
+                    ["c", "c|c|c", "a|bc|bc", "2b||3"],
+                    ["",  "",      "bc",      ""]]
+        );
+    testSummarizer(["unittest-sk-4-named-b", "-H", "--group-by", "fld1", "--values", "fld*", file1Path],
                    file1,
                    [["fld1", "fld1_values", "fld2_values", "fld3_values"],
                     ["a", "a|a",   "a|c",     "3|2b"],
@@ -1166,6 +1257,13 @@ unittest
                     ["2b", "c|a", "a|c"],
                     ["",   "c|",  "bc|bc"]]
         );
+    testSummarizer(["unittest-sk-15-named", "-H", "--group-by", "fld3", "--values", "fld1,fld2", file1Path],
+                   file1,
+                   [["fld3", "fld1_values", "fld2_values"],
+                    ["3",  "a|c", "a|bc"],
+                    ["2b", "c|a", "a|c"],
+                    ["",   "c|",  "bc|bc"]]
+        );
 
     /* Multi-key summarizer tests.
      */
@@ -1197,6 +1295,15 @@ unittest
                     ["", "bc",  ""]]
         );
     testSummarizer(["unittest-mk-4", "-H", "--group-by", "1,2", "--values", "3,1", file1Path],
+                   file1,
+                   [["fld1", "fld2", "fld3_values", "fld1_values"],
+                    ["a", "a",  "3", "a"],
+                    ["c", "a",  "2b", "c"],
+                    ["c", "bc", "|3", "c|c"],
+                    ["a", "c",  "2b", "a"],
+                    ["",  "bc", "",   ""]]
+        );
+    testSummarizer(["unittest-mk-4-named", "-H", "--group-by", "fld1,fld2", "--values", "fld3,fld1", file1Path],
                    file1,
                    [["fld1", "fld2", "fld3_values", "fld1_values"],
                     ["a", "a",  "3", "a"],
@@ -1284,6 +1391,13 @@ unittest
                     ["c", "2b|NA|3"],
                     ["",  "NA"]]
         );
+    testSummarizer(["unittest-mis-7-named", "-H", "-g", "fld1", "--values", "fld3", "-r", "NA", file1Path],
+                   file1,
+                   [["fld1", "fld3_values"],
+                    ["a", "3|2b"],
+                    ["c", "2b|NA|3"],
+                    ["",  "NA"]]
+        );
     testSummarizer(["unittest-mis-8", "-H", "--group-by", "1", "--values", "1,2,3", "-r", "NA", file1Path],
                    file1,
                    [["fld1", "fld1_values", "fld2_values", "fld3_values"],
@@ -1355,6 +1469,11 @@ unittest
                    [["fld1_values", "fld2_values"],
                     ["a|c|c|a||c", "a|a|bc|c|bc|bc"]]
         );
+    testSummarizer(["unittest-nk-1-named", "-H", "--values", "fld1,fld2", file1Path],
+                   file1,
+                   [["fld1_values", "fld2_values"],
+                    ["a|c|c|a||c", "a|a|bc|c|bc|bc"]]
+        );
 
     /* Header variations: no header line; auto-generated header line; custom headers.
      */
@@ -1396,6 +1515,24 @@ unittest
                     ["c",  "2b"]]
         );
     testSummarizer(["unittest-hdr-6", "-H", "--group-by", "1,2", "--values", "3:FieldThreeValues", "--values", "1:FieldOneValues", file1Path],
+                   file1,
+                   [["fld1", "fld2", "FieldThreeValues", "FieldOneValues"],
+                    ["a", "a",  "3", "a"],
+                    ["c", "a",  "2b", "c"],
+                    ["c", "bc", "|3", "c|c"],
+                    ["a", "c",  "2b", "a"],
+                    ["",  "bc", "",   ""]]
+        );
+    testSummarizer(["unittest-hdr-6-named-a", "-H", "--group-by", "fld1,fld2", "--values", "fld3:FieldThreeValues", "--values", "fld1:FieldOneValues", file1Path],
+                   file1,
+                   [["fld1", "fld2", "FieldThreeValues", "FieldOneValues"],
+                    ["a", "a",  "3", "a"],
+                    ["c", "a",  "2b", "c"],
+                    ["c", "bc", "|3", "c|c"],
+                    ["a", "c",  "2b", "a"],
+                    ["",  "bc", "",   ""]]
+        );
+    testSummarizer(["unittest-hdr-6-named-b", "-H", "--group-by", "fld1,fld2", "--values", "fld3 FieldThreeValues", "--values", "fld1 FieldOneValues", file1Path],
                    file1,
                    [["fld1", "fld2", "FieldThreeValues", "FieldOneValues"],
                     ["a", "a",  "3", "a"],
@@ -1484,6 +1621,11 @@ unittest
                    [["fld2", "fld1", "fld3_values"],
                     ["b", "a", "c"]]
         );
+    testSummarizer(["unittest-3x1-3-named", "-H", "--group-by", "fld2,fld1", "--values", "fld3", file3x1Path],
+                   file3x1,
+                   [["fld2", "fld1", "fld3_values"],
+                    ["b", "a", "c"]]
+        );
     testSummarizer(["unittest-3x1-4", "--group-by", "2,1", "--values", "3", file3x1NoHeaderPath],
                    file3x1[1..$],
                    [["b", "a", "c"]]
@@ -1498,6 +1640,10 @@ unittest
 
 
     testSummarizer(["unittest-3x0-1", "-H", "--group-by", "1", "--values", "3", file3x0Path],
+                   file3x0,
+                   [["fld1", "fld3_values"]]
+        );
+    testSummarizer(["unittest-3x0-1-named", "-H", "--group-by", "fld1", "--values", "fld3", file3x0Path],
                    file3x0,
                    [["fld1", "fld3_values"]]
         );
@@ -1605,6 +1751,11 @@ unittest
                    [["fld1", "fld1_values"],
                     ["x", "x"]]
         );
+    testSummarizer(["unittest-1x1-1-named", "-H", "--group-by", "fld1", "--values", "fld1", file1x1Path],
+                   file1x1,
+                   [["fld1", "fld1_values"],
+                    ["x", "x"]]
+        );
 
     testSummarizer(["unittest-1x1-2", "--group-by", "1", "--values", "1", file1x1NoHeaderPath],
                    file1x1[1..$],
@@ -1653,8 +1804,24 @@ unittest
                    [["field1", "field1_values"]]
         );
 
-    /* Alternate delimiters. */
-    testSummarizer(["unittest-delim-1", "-H", "--values", "1,2", "--delimiter", "%", file1Path],
+    /* Alternate delimiters.
+     *
+     * Note: In current unit test setup the data is already in memory (file1).
+     * 'file1Path' points to a file with equivalent data, but not read, except if
+     * processing the header line. A data file is created for the '%' and '#'
+     * delimiter cases (these read the header), but we don't bother for the others.
+     */
+    auto file1PctDelimPath = buildPath(testDir, "file1PctDelim.tsv");
+    auto file1HashDelimPath = buildPath(testDir, "file1HashDelim.tsv");
+    writeDataFile(file1PctDelimPath, file1, "%");
+    writeDataFile(file1HashDelimPath, file1, "#");
+
+    testSummarizer(["unittest-delim-1", "-H", "--values", "1,2", "--delimiter", "%", file1PctDelimPath],
+                   file1,
+                   [["fld1_values", "fld2_values"],
+                    ["a|c|c|a||c", "a|a|bc|c|bc|bc"]]
+        );
+    testSummarizer(["unittest-delim-1-named", "-H", "--values", "fld1,fld2", "--delimiter", "%", file1PctDelimPath],
                    file1,
                    [["fld1_values", "fld2_values"],
                     ["a|c|c|a||c", "a|a|bc|c|bc|bc"]]
@@ -1664,7 +1831,12 @@ unittest
                    [["fld1_values", "fld2_values"],
                     ["a$c$c$a$$c", "a$a$bc$c$bc$bc"]]
         );
-    testSummarizer(["unittest-delim-3", "-H", "--values", "1,2", "--delimiter", "#", "--values-delimiter", ",", file1Path],
+    testSummarizer(["unittest-delim-3", "-H", "--values", "1,2", "--delimiter", "#", "--values-delimiter", ",", file1HashDelimPath],
+                   file1,
+                   [["fld1_values", "fld2_values"],
+                    ["a,c,c,a,,c", "a,a,bc,c,bc,bc"]]
+        );
+    testSummarizer(["unittest-delim-3-named", "-H", "--values", "fld1,fld2", "--delimiter", "#", "--values-delimiter", ",", file1HashDelimPath],
                    file1,
                    [["fld1_values", "fld2_values"],
                     ["a,c,c,a,,c", "a,a,bc,c,bc,bc"]]

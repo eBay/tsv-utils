@@ -12,7 +12,7 @@ Error test set 1
 [tsv-filter] Error processing command line arguments: Missing value for argument --lt.
 
 ====[tsv-filter --header --ne abc:15 input1.tsv]====
-[tsv-filter] Error processing command line arguments: Invalid option: [--ne abc:15]. Field not found in header: 'abc'.
+[tsv-filter] Error processing command line arguments: Invalid option: [--ne abc:15]. Field not found in file header: 'abc'.
    Expected: '--ne <field>:<val>' or '--ne <field-list>:<val> where <val> is a number.
 
 ====[tsv-filter --header --eq 2:def input1.tsv]====
@@ -40,7 +40,7 @@ F1	F2	F3	F4
    Expected: '--le <field>:<val>' or '--le <field-list>:<val> where <val> is a number.
 
 ====[tsv-filter --header --empty 23g input1.tsv]====
-[tsv-filter] Error processing command line arguments: Invalid option: [--empty 23g]. Field not found in header: '23g'.
+[tsv-filter] Error processing command line arguments: Invalid option: [--empty 23g]. Field not found in file header: '23g'.
    Expected: '--empty <field>' or '--empty <field-list>'.
 
 ====[tsv-filter --header --empty 0 input1.tsv]====
@@ -55,11 +55,11 @@ F1	F2	F3	F4
 [tsv-filter] Error processing command line arguments: Missing value for argument --str-lt.
 
 ====[tsv-filter --header --str-ne abc:a22 input1.tsv]====
-[tsv-filter] Error processing command line arguments: [--str-ne abc:a22]. Field not found in header: 'abc'.
+[tsv-filter] Error processing command line arguments: [--str-ne abc:a22]. Field not found in file header: 'abc'.
    Expected: '--str-ne <field>:<val>' or '--str-ne <field-list>:<val>' where <val> is a string.
 
 ====[tsv-filter --header --str-eq 2.2:def input1.tsv]====
-[tsv-filter] Error processing command line arguments: [--str-eq 2.2:def]. Field not found in header: '2.2'.
+[tsv-filter] Error processing command line arguments: [--str-eq 2.2:def]. Field not found in file header: '2.2'.
    Expected: '--str-eq <field>:<val>' or '--str-eq <field-list>:<val>' where <val> is a string.
 
 ====[tsv-filter --header --str-eq 0:def input1.tsv]====
@@ -79,7 +79,7 @@ F1	F2	F3	F4
    Expected: '--str-eq <field>:<val>' or '--str-eq <field-list>:<val>' where <val> is a string.
 
 ====[tsv-filter --header --istr-eq 2.2:def input1.tsv]====
-[tsv-filter] Error processing command line arguments: [--istr-eq 2.2:def]. Field not found in header: '2.2'.
+[tsv-filter] Error processing command line arguments: [--istr-eq 2.2:def]. Field not found in file header: '2.2'.
    Expected: '--istr-eq <field>:<val>' or '--istr-eq <field-list>:<val>' where <val> is a string.
 
 ====[tsv-filter --header --istr-eq 0:def input1.tsv]====
@@ -99,7 +99,7 @@ F1	F2	F3	F4
    Expected: '--istr-eq <field>:<val>' or '--istr-eq <field-list>:<val>' where <val> is a string.
 
 ====[tsv-filter --header --regex z:^A[b|B]C$ input1.tsv]====
-[tsv-filter] Error processing command line arguments: [--regex z:^A[b|B]C$]. Field not found in header: 'z'.
+[tsv-filter] Error processing command line arguments: [--regex z:^A[b|B]C$]. Field not found in file header: 'z'.
    Expected: '--regex <field>:<val>' or '--regex <field-list>:<val>' where <val> is a regular expression.
 
 ====[tsv-filter --header --regex 0:^A[b|B]C$ input1.tsv]====
@@ -119,7 +119,7 @@ F1	F2	F3	F4
    Expected: '--regex <field>:<val>' or '--regex <field-list>:<val>' where <val> is a regular expression.
 
 ====[tsv-filter --header --iregex a:^A[b|B]C$ input1.tsv]====
-[tsv-filter] Error processing command line arguments: [--iregex a:^A[b|B]C$]. Field not found in header: 'a'.
+[tsv-filter] Error processing command line arguments: [--iregex a:^A[b|B]C$]. Field not found in file header: 'a'.
    Expected: '--iregex <field>:<val>' or '--iregex <field-list>:<val>' where <val> is a regular expression.
 
 ====[tsv-filter --header --iregex 0:^A[b|B]C$ input1.tsv]====
@@ -166,11 +166,11 @@ F1	F2	F3	F4
    Expected: '--ff-lt <field1>:<field2>' where <field1> and <field2> are individual fields.
 
 ====[tsv-filter --header --ff-ne abc:3 input1.tsv]====
-[tsv-filter] Error processing command line arguments: [--ff-ne abc:3]. Field not found in header: 'abc'.
+[tsv-filter] Error processing command line arguments: [--ff-ne abc:3]. Field not found in file header: 'abc'.
    Expected: '--ff-ne <field1>:<field2>' where <field1> and <field2> are individual fields.
 
 ====[tsv-filter --header --ff-eq 2.2:4 input1.tsv]====
-[tsv-filter] Error processing command line arguments: [--ff-eq 2.2:4]. Field not found in header: '2.2'.
+[tsv-filter] Error processing command line arguments: [--ff-eq 2.2:4]. Field not found in file header: '2.2'.
    Expected: '--ff-eq <field1>:<field2>' where <field1> and <field2> are individual fields.
 
 ====[tsv-filter --header --ff-le 2:3.1 input1.tsv]====
@@ -190,11 +190,11 @@ F1	F2	F3	F4
    Expected: '--ff-le <field1>:<field2>' where <field1> and <field2> are individual fields.
 
 ====[tsv-filter --header --ff-str-ne abc:3 input1.tsv]====
-[tsv-filter] Error processing command line arguments: [--ff-str-ne abc:3]. Field not found in header: 'abc'.
+[tsv-filter] Error processing command line arguments: [--ff-str-ne abc:3]. Field not found in file header: 'abc'.
    Expected: '--ff-str-ne <field1>:<field2>' where <field1> and <field2> are individual fields.
 
 ====[tsv-filter --header --ff-str-eq 2.2:4 input1.tsv]====
-[tsv-filter] Error processing command line arguments: [--ff-str-eq 2.2:4]. Field not found in header: '2.2'.
+[tsv-filter] Error processing command line arguments: [--ff-str-eq 2.2:4]. Field not found in file header: '2.2'.
    Expected: '--ff-str-eq <field1>:<field2>' where <field1> and <field2> are individual fields.
 
 ====[tsv-filter --header --ff-absdiff-le 1:2:g input1.tsv]====
@@ -214,7 +214,7 @@ F1	F2	F3	F4
    Expected: '--ff-absdiff-le <field1>:<field2>:<num>' where <field1> and <field2> are individual fields.
 
 ====[tsv-filter --header --ff-absdiff-le 1:g:0.5 input1.tsv]====
-[tsv-filter] Error processing command line arguments: [--ff-absdiff-le 1:g:0.5]. Field not found in header: 'g'.
+[tsv-filter] Error processing command line arguments: [--ff-absdiff-le 1:g:0.5]. Field not found in file header: 'g'.
    Expected: '--ff-absdiff-le <field1>:<field2>:<num>' where <field1> and <field2> are individual fields.
 
 ====[tsv-filter --header --ff-absdiff-le 1::0.5 input1.tsv]====
@@ -226,7 +226,7 @@ F1	F2	F3	F4
    Expected: '--ff-absdiff-le <field1>:<field2>:<num>' where <field1> and <field2> are individual fields.
 
 ====[tsv-filter --header --ff-absdiff-le g:2:0.5 input1.tsv]====
-[tsv-filter] Error processing command line arguments: [--ff-absdiff-le g:2:0.5]. Field not found in header: 'g'.
+[tsv-filter] Error processing command line arguments: [--ff-absdiff-le g:2:0.5]. Field not found in file header: 'g'.
    Expected: '--ff-absdiff-le <field1>:<field2>:<num>' where <field1> and <field2> are individual fields.
 
 ====[tsv-filter --header --ff-absdiff-le :2:0.5 input1.tsv]====
