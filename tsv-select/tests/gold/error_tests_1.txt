@@ -84,16 +84,16 @@ Error [tsv-select]: Not enough fields in line. File: input_3plus_fields.tsv,  Li
 [tsv-select] Error processing command line arguments: Maximum allowed '--e|exclude' field number is 1048576.
 
 ====[tsv-select -H -f no_such_field input1.tsv]====
-[tsv-select] Error processing command line arguments: [--f|fields] Field not found in header: 'no_such_field'.
+[tsv-select] Error processing command line arguments: [--f|fields] Field not found in file header: 'no_such_field'.
 
 ====[tsv-select -H -f field1,no_such_field input_header1.tsv]====
-[tsv-select] Error processing command line arguments: [--f|fields] Field not found in header: 'no_such_field'.
+[tsv-select] Error processing command line arguments: [--f|fields] Field not found in file header: 'no_such_field'.
 
 ====[tsv-select -H -f field1,no*such_field input_header1.tsv]====
-[tsv-select] Error processing command line arguments: [--f|fields] Field not found in header: 'no*such_field'.
+[tsv-select] Error processing command line arguments: [--f|fields] Field not found in file header: 'no*such_field'.
 
 ====[tsv-select -H -f field1-NoSuchField input_header1.tsv]====
-[tsv-select] Error processing command line arguments: [--f|fields] Second field in range not found in header. Range: 'field1-NoSuchField'.
+[tsv-select] Error processing command line arguments: [--f|fields] Second field in range not found in file header. Range: 'field1-NoSuchField'.
 Not specifying a range? Backslash escape any hyphens in the field name.
 
 ====[tsv-select -H -f field1-field* input_header1.tsv]====
@@ -101,13 +101,13 @@ Not specifying a range? Backslash escape any hyphens in the field name.
 Not specifying a range? Backslash escape any hyphens in the field name.
 
 ====[tsv-select -H -e no_such_field input1.tsv]====
-[tsv-select] Error processing command line arguments: [--e|exclude] Field not found in header: 'no_such_field'.
+[tsv-select] Error processing command line arguments: [--e|exclude] Field not found in file header: 'no_such_field'.
 
 ====[tsv-select -H -e field1,no*such_field input_header1.tsv]====
-[tsv-select] Error processing command line arguments: [--e|exclude] Field not found in header: 'no*such_field'.
+[tsv-select] Error processing command line arguments: [--e|exclude] Field not found in file header: 'no*such_field'.
 
 ====[tsv-select -H -e NoSuchField-field1 input_header1.tsv]====
-[tsv-select] Error processing command line arguments: [--e|exclude] First field in range not found in header. Range: 'NoSuchField-field1'.
+[tsv-select] Error processing command line arguments: [--e|exclude] First field in range not found in file header. Range: 'NoSuchField-field1'.
 Not specifying a range? Backslash escape any hyphens in the field name.
 
 ====[tsv-select -H -e field*-field1 input_header1.tsv]====

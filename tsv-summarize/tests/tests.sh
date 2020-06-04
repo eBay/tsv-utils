@@ -33,7 +33,11 @@ echo "-----------------" >> ${basic_tests_1}
 ## One test for each operator. Make sure it is hooked up to the command line args properly
 runtest ${prog} "--header --float-precision 2 --retain 1 --first 1 --last 1 --min 3 --max 3 --range 3 --sum 3 --median 3 --quantile 3:0.5 --mad 3 --var 3 --stdev 3 --mode 1 --mode-count 1 --values 1 --unique-values 1 input_5field_a.tsv" ${basic_tests_1}
 
+runtest ${prog} "--header --float-precision 2 --retain color --first color --last color --min length --max length --range length --sum length --median length --quantile length:0.5 --mad length --var length --stdev length --mode color --mode-count color --values color --unique-values color input_5field_a.tsv" ${basic_tests_1}
+
 runtest ${prog} "--header --missing-count 1 --not-missing-count 1 input_1field_a.tsv" ${basic_tests_1}
+
+runtest ${prog} "--header --missing-count size --not-missing-count size input_1field_a.tsv" ${basic_tests_1}
 
 ## Functionality tests
 runtest ${prog} "--header --count --min 3,4,5 --max 3,4,5 input_5field_a.tsv" ${basic_tests_1}
@@ -41,6 +45,7 @@ runtest ${prog} "--header --count-header the_count input_5field_a.tsv" ${basic_t
 runtest ${prog} "--header --group-by 1 --count --min 3,4,5 --max 3,4,5 input_5field_a.tsv" ${basic_tests_1}
 runtest ${prog} "--header --group-by 1,2 --count --min 3,4,5 --max 3,4,5 input_5field_a.tsv" ${basic_tests_1}
 runtest ${prog} "--header --group-by 1-2 --count --min 3-5 --max 5-3 input_5field_a.tsv" ${basic_tests_1}
+runtest ${prog} "--header --group-by color,pattern --count --min length-height --max height-length input_5field_a.tsv" ${basic_tests_1}
 
 runtest ${prog} "--header --count --min 3,4,5 --max 3,4,5 input_5field_a.tsv input_5field_b.tsv input_5field_c.tsv empty_file.tsv input_5field_header_only.tsv" ${basic_tests_1}
 runtest ${prog} "--header --group-by 1 --count --min 3,4,5 --max 3,4,5 input_5field_a.tsv input_5field_b.tsv input_5field_c.tsv empty_file.tsv input_5field_header_only.tsv" ${basic_tests_1}
@@ -48,6 +53,8 @@ runtest ${prog} "--header --group-by 1 --count --min 3,4,5 --max 3,4,5 input_5fi
 runtest ${prog} "--header --group-by 1,2 --count --min 3,4,5 --max 3,4,5 input_5field_a.tsv input_5field_b.tsv input_5field_c.tsv empty_file.tsv input_5field_header_only.tsv" ${basic_tests_1}
 
 runtest ${prog} "--header --group-by 1 --count --range 3,4,5 input_5field_a.tsv empty_file.tsv input_5field_b.tsv input_5field_header_only.tsv input_5field_c.tsv" ${basic_tests_1}
+
+runtest ${prog} "--header --group-by 1 --count --range length,width,height input_5field_a.tsv empty_file.tsv input_5field_b.tsv input_5field_header_only.tsv input_5field_c.tsv" ${basic_tests_1}
 
 ## No header tests.
 runtest ${prog} "--count --unique-count 1,2,3,4,5 input_5field_a.tsv empty_file.tsv input_5field_b.tsv input_5field_header_only.tsv input_5field_c.tsv" ${basic_tests_1}
@@ -163,6 +170,11 @@ runtest ${prog} "--quantile 0:0.25 input_5field_a.tsv" ${error_tests_1}
 runtest ${prog} "--quantile 1.5:0.25 input_5field_a.tsv" ${error_tests_1}
 runtest ${prog} "--quantile 1-:0.25 input_5field_a.tsv" ${error_tests_1}
 runtest ${prog} "--quantile -2:0.25 input_5field_a.tsv" ${error_tests_1}
+
+runtest ${prog} "--group-by 2 --sum width,len input_5field_a.tsv" ${error_tests_1}
+runtest ${prog} "-H --group-by 2 --sum width,len input_5field_a.tsv" ${error_tests_1}
+runtest ${prog} "--quantile len,width:0.25,0.75 input_5field_a.tsv" ${error_tests_1}
+runtest ${prog} "-H --quantile len,width:0.25,0.75 input_5field_a.tsv" ${error_tests_1}
 
 # Windows line endings detection
 runtest ${prog} "--count input_1field_a_dos.tsv" ${error_tests_1}

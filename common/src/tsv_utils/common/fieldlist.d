@@ -335,10 +335,10 @@ if (isIntegral!T && (!allowZero || !convertToZero || !isUnsigned!T))
                         string hintMsg = "Not specifying a range? Backslash escape any hyphens in the field name.";
 
                         enforce(f0.length > 0,
-                                format("First field in range not found in header. Range: '%s'.\n%s",
+                                format("First field in range not found in file header. Range: '%s'.\n%s",
                                        fieldGroup, hintMsg));
                         enforce(f1.length > 0,
-                                format("Second field in range not found in header. Range: '%s'.\n%s",
+                                format("Second field in range not found in file header. Range: '%s'.\n%s",
                                        fieldGroup, hintMsg));
                         enforce(f0.length == 1,
                                 format("First field in range matches multiple header fields. Range: '%s'.\n%s",
@@ -361,7 +361,7 @@ if (isIntegral!T && (!allowZero || !convertToZero || !isUnsigned!T))
                             namedFieldRegexMatches!(T, convertToZero)(_headerFields, fieldGroupRegex[0]);
 
                         enforce(!_namedFieldMatches.empty,
-                                format("Field not found in header: '%s'.", fieldGroup));
+                                format("Field not found in file header: '%s'.", fieldGroup));
                     }
                 }
             }
@@ -573,7 +573,7 @@ if (isIntegral!T && (!allowZero || !convertToZero || !isUnsigned!T))
         catch (Exception e)
         {
             wasCaught = true;
-            assert(e.msg == "[--f|fields] Field not found in header: 'XYZ'.");
+            assert(e.msg == "[--f|fields] Field not found in file header: 'XYZ'.");
         }
         finally assert(wasCaught);
     }

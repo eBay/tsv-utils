@@ -145,6 +145,20 @@ Error [tsv-summarize]: Could not process line or field: no digits seen for input
 ====[tsv-summarize --quantile -2:0.25 input_5field_a.tsv]====
 [tsv-summarize] Error processing command line arguments: Missing value for argument --quantile.
 
+====[tsv-summarize --group-by 2 --sum width,len input_5field_a.tsv]====
+[tsv-summarize] Error processing command line arguments: [--sum width,len] Non-numeric field group: 'width'. Use '--H|header' when using named field groups.
+
+====[tsv-summarize -H --group-by 2 --sum width,len input_5field_a.tsv]====
+[tsv-summarize] Error processing command line arguments: [--sum width,len] Field not found in file header: 'len'.
+
+====[tsv-summarize --quantile len,width:0.25,0.75 input_5field_a.tsv]====
+[tsv-summarize] Error processing command line arguments: [--quantile len,width:0.25,0.75]. Non-numeric field group: 'len'. Use '--H|header' when using named field groups.
+   Expected: '--quantile <field-list>:<prob>[,<prob>]' or '--quantile <field>:<prob>:<header>' where <prob> is a number between 0.0 and 1.0.
+
+====[tsv-summarize -H --quantile len,width:0.25,0.75 input_5field_a.tsv]====
+[tsv-summarize] Error processing command line arguments: [--quantile len,width:0.25,0.75]. Field not found in file header: 'len'.
+   Expected: '--quantile <field-list>:<prob>[,<prob>]' or '--quantile <field>:<prob>:<header>' where <prob> is a number between 0.0 and 1.0.
+
 ====[tsv-summarize --count input_1field_a_dos.tsv]====
 Error [tsv-summarize]: Windows/DOS line ending found. Convert file to Unix newlines before processing (e.g. 'dos2unix').
   File: input_1field_a_dos.tsv, Line: 1
