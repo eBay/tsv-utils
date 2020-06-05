@@ -316,8 +316,10 @@ runtest ${prog} "--header --ff-eq F1:2 input1.tsv" ${basic_tests_1}
 runtest ${prog} "--header --ff-ne F1:2 input1.tsv" ${basic_tests_1}
 runtest ${prog} "--header --ff-le F1:2 input1.tsv" ${basic_tests_1}
 runtest ${prog} "--header --ff-lt F1:2 input1.tsv" ${basic_tests_1}
+runtest ${prog} "--header --ff-lt F1:F2 input1.tsv" ${basic_tests_1}
 runtest ${prog} "--header --ff-ge F1:2 input1.tsv" ${basic_tests_1}
 runtest ${prog} "--header --ff-gt F1:2 input1.tsv" ${basic_tests_1}
+runtest ${prog} "--header --ff-gt F1:F2 input1.tsv" ${basic_tests_1}
 runtest ${prog} "--header --ff-str-eq F3:4 input1.tsv" ${basic_tests_1}
 runtest ${prog} "--header --ff-str-ne F3:4 input1.tsv" ${basic_tests_1}
 runtest ${prog} "--header --ff-istr-eq F3:4 input1.tsv" ${basic_tests_1}
@@ -544,6 +546,7 @@ runtest ${prog} "--empty 0 input1_noheader.tsv" ${error_tests_1}
 runtest ${prog} "--str-gt 0:abc input1_noheader.tsv" ${error_tests_1}
 runtest ${prog} "--str-eq :def input1_noheader.tsv" ${error_tests_1}
 runtest ${prog} "--regex :^A[b|B]C$ input1_noheader.tsv" ${error_tests_1}
+runtest ${prog} "--ff-le 2:3.1 input1.tsv" ${error_tests_1}
 
 # Standard input tests
 echo "" >> ${error_tests_1}; echo "====[cat input_3x2.tsv | tsv-filter --ge 2:23]====" >> ${error_tests_1}
