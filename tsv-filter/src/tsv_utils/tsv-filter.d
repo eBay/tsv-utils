@@ -627,7 +627,8 @@ void fieldVsFieldOptionHandler(
 
         auto fieldIndices2 =
             optionVal[optionValParse.consumed + 1 .. $]
-            .parseFieldList!(size_t, Yes.convertToZeroBasedIndex)
+            .parseFieldList!(size_t, Yes.convertToZeroBasedIndex, No.allowFieldNumZero, Yes.consumeEntireFieldListString)
+            (hasHeader, headerFields)
             .array;
 
         enforce(fieldIndices2.length != 0, "Second field argument is empty.");

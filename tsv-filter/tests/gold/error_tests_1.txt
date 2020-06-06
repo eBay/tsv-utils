@@ -174,7 +174,7 @@ F1	F2	F3	F4
    Expected: '--ff-eq <field1>:<field2>' where <field1> and <field2> are individual fields.
 
 ====[tsv-filter --header --ff-le 2:3.1 input1.tsv]====
-[tsv-filter] Error processing command line arguments: [--ff-le 2:3.1]. Non-numeric field group: '3.1'. Use '--H|header' when using named field groups.
+[tsv-filter] Error processing command line arguments: [--ff-le 2:3.1]. Field not found in file header: '3.1'.
    Expected: '--ff-le <field1>:<field2>' where <field1> and <field2> are individual fields.
 
 ====[tsv-filter --header --ff-le 2: input1.tsv]====
@@ -277,6 +277,10 @@ Error [tsv-filter]: Could not process line or field: no digits seen for input "F
 ====[tsv-filter --regex :^A[b|B]C$ input1_noheader.tsv]====
 [tsv-filter] Error processing command line arguments: [--regex :^A[b|B]C$]. Empty field list: ':^A[b|B]C$'.
    Expected: '--regex <field>:<val>' or '--regex <field-list>:<val>' where <val> is a regular expression.
+
+====[tsv-filter --ff-le 2:3.1 input1.tsv]====
+[tsv-filter] Error processing command line arguments: [--ff-le 2:3.1]. Non-numeric field group: '3.1'. Use '--H|header' when using named field groups.
+   Expected: '--ff-le <field1>:<field2>' where <field1> and <field2> are individual fields.
 
 ====[cat input_3x2.tsv | tsv-filter --ge 2:23]====
 Error [tsv-filter]: Could not process line or field: no digits seen for input "f2".
