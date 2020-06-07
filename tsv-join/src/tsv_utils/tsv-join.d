@@ -134,15 +134,6 @@ struct TsvJoinOptions
                 "help-verbose",    "              Print full help.", &helpVerbose,
                 "f|filter-file",   "FILE          (Required) File with records to use as a filter.", &filterFile,
 
-                // "k|key-fields",    "<field-list>  Fields to use as join key. Default: 0 (entire line).",
-                // keyFields.makeFieldListOptionHandler!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero),
-
-                // "d|data-fields",   "<field-list>  Data record fields to use as join key, if different than --key-fields.",
-                // dataFields.makeFieldListOptionHandler!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero),
-
-                // "a|append-fields", "<field-list>  Filter fields to append to matched records.",
-                // appendFields.makeFieldListOptionHandler!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero),
-
                 keyFieldsOptionString,
                 "<field-list>  Fields to use as join key. Default: 0 (entire line).",
                 &keyFieldsArg,
@@ -202,6 +193,19 @@ struct TsvJoinOptions
             cmdArgs.length = 1;
             ReadHeader readHeader = hasHeader ? Yes.readHeader : No.readHeader;
             inputSources = inputSourceRange(filepaths, readHeader);
+
+            /* Field-list args (--k|key-fields, --d|data-fields --a|append-fields are
+             * parsed after header lines from the filter file and first data file have
+             * been read. The files were opened in the previous step, when setting up
+             * the 'filterSource' and 'inputSources' ranges.
+             *
+             * The field-list parsing step translates any named fields to one-based
+             * field numbers. Note that a named field may have different field
+             * numbers in the filter file and data files.
+             *
+             * The 'derivations()' method works off the one-based indices, converting
+             * them to zero-based. It also handles the full-line cases.
+             */
 
             string[] filterFileHeaderFields;
             string[] inputSourceHeaderFields;

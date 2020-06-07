@@ -1394,7 +1394,7 @@ private auto namedFieldGroupToRegex(const char[] fieldGroup)
             if (g[0] == HYPHEN)
             {
                 enforce(!hyphenSeparatorFound && regexString.data.length != 0,
-                        format("Hyphens in field names must be backslash escaped unless separating two field names: '%s'.\n",
+                        format("Hyphens in field names must be backslash escaped unless separating two field names: '%s'.",
                                fieldGroup));
 
                 assert(field1Regex.empty);
@@ -1422,7 +1422,7 @@ private auto namedFieldGroupToRegex(const char[] fieldGroup)
         }
     }
     enforce(!hyphenSeparatorFound || regexString.data.length != 0,
-            format("Hyphens in field names must be backslash escaped unless separating two field names: '%s'.\n",
+            format("Hyphens in field names must be backslash escaped unless separating two field names: '%s'.",
                    fieldGroup));
 
     if (!hyphenSeparatorFound)
