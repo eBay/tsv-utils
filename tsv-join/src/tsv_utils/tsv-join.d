@@ -16,6 +16,7 @@ module tsv_utils.tsv_join;
 import std.exception : enforce;
 import std.stdio;
 import std.format : format;
+import std.range;
 import std.typecons : tuple;
 
 auto helpText = q"EOS
@@ -70,12 +71,12 @@ struct TsvJoinOptions
     /* Data available the main program. Variables used only command line argument
      * processing are local to processArgs.
      */
-    string programName;
-    InputSourceRange inputSources;     // Input Files
-    ByLineSourceRange!() filterSource; // Derived: --filter
-    size_t[] keyFields;                // --key-fields
-    size_t[] dataFields;               // --data-fields
-    size_t[] appendFields;             // --append-fields
+    string programName;                /// Program name
+    InputSourceRange inputSources;     /// Input Files
+    ByLineSourceRange!() filterSource; /// Derived: --filter
+    size_t[] keyFields;                /// Derived: --key-fields
+    size_t[] dataFields;               /// Derived: --data-fields
+    size_t[] appendFields;             /// Derived: --append-fields
     bool hasHeader = false;            // --H|header
     string appendHeaderPrefix = "";    // --append-header-prefix
     bool writeAll = false;             // --write-all
@@ -97,14 +98,23 @@ struct TsvJoinOptions
      */
     auto processArgs (ref string[] cmdArgs)
     {
+        import std.array : split;
+        import std.conv : to;
         import std.getopt;
         import std.path : baseName, stripExtension;
         import std.typecons : Yes, No;
-        import tsv_utils.common.fieldlist :  makeFieldListOptionHandler;
+        import tsv_utils.common.fieldlist;
 
-        string filterFile;               // --filter
         bool helpVerbose = false;        // --help-verbose
         bool versionWanted = false;      // --V|version
+        string filterFile;               // --filter
+        string keyFieldsArg;             // --key-fields
+        string dataFieldsArg;            // --data-fields
+        string appendFieldsArg;          // --append-fields
+
+        string keyFieldsOptionString = "k|key-fields";
+        string dataFieldsOptionString = "d|data-fields";
+        string appendFieldsOptionString = "a|append-fields";
 
         programName = (cmdArgs.length > 0) ? cmdArgs[0].stripExtension.baseName : "Unknown_program_name";
 
@@ -124,14 +134,26 @@ struct TsvJoinOptions
                 "help-verbose",    "              Print full help.", &helpVerbose,
                 "f|filter-file",   "FILE          (Required) File with records to use as a filter.", &filterFile,
 
-                "k|key-fields",    "<field-list>  Fields to use as join key. Default: 0 (entire line).",
-                keyFields.makeFieldListOptionHandler!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero),
+                // "k|key-fields",    "<field-list>  Fields to use as join key. Default: 0 (entire line).",
+                // keyFields.makeFieldListOptionHandler!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero),
 
-                "d|data-fields",   "<field-list>  Data record fields to use as join key, if different than --key-fields.",
-                dataFields.makeFieldListOptionHandler!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero),
+                // "d|data-fields",   "<field-list>  Data record fields to use as join key, if different than --key-fields.",
+                // dataFields.makeFieldListOptionHandler!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero),
 
-                "a|append-fields", "<field-list>  Filter fields to append to matched records.",
-                appendFields.makeFieldListOptionHandler!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero),
+                // "a|append-fields", "<field-list>  Filter fields to append to matched records.",
+                // appendFields.makeFieldListOptionHandler!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero),
+
+                keyFieldsOptionString,
+                "<field-list>  Fields to use as join key. Default: 0 (entire line).",
+                &keyFieldsArg,
+
+                dataFieldsOptionString,
+                "<field-list>  Data record fields to use as join key, if different than --key-fields.",
+                &dataFieldsArg,
+
+                appendFieldsOptionString,
+                "<field-list>  Filter fields to append to matched records.",
+                &appendFieldsArg,
 
                 std.getopt.config.caseSensitive,
                 "H|header",        "              Treat the first line of each file as a header.", &hasHeader,
@@ -180,6 +202,51 @@ struct TsvJoinOptions
             cmdArgs.length = 1;
             ReadHeader readHeader = hasHeader ? Yes.readHeader : No.readHeader;
             inputSources = inputSourceRange(filepaths, readHeader);
+
+            string[] filterFileHeaderFields;
+            string[] inputSourceHeaderFields;
+
+            if (hasHeader && !filterSource.front.byLine.empty)
+            {
+                filterFileHeaderFields = filterSource.front.byLine.front.split(delim).to!(string[]);
+            }
+
+            if (hasHeader) inputSourceHeaderFields = inputSources.front.header.split(delim).to!(string[]);
+
+            if (!keyFieldsArg.empty)
+            {
+                keyFields =
+                    keyFieldsArg
+                    .parseFieldList!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero)
+                    (hasHeader, filterFileHeaderFields, keyFieldsOptionString)
+                    .array;
+            }
+
+            if (!dataFieldsArg.empty)
+            {
+                dataFields =
+                    dataFieldsArg
+                    .parseFieldList!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero)
+                    (hasHeader, inputSourceHeaderFields, dataFieldsOptionString)
+                    .array;
+            }
+            else if (!keyFieldsArg.empty)
+            {
+                dataFields =
+                    keyFieldsArg
+                    .parseFieldList!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero)
+                    (hasHeader, inputSourceHeaderFields, dataFieldsOptionString)
+                    .array;
+            }
+
+            if (!appendFieldsArg.empty)
+            {
+                appendFields =
+                    appendFieldsArg
+                    .parseFieldList!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero)
+                    (hasHeader, filterFileHeaderFields, appendFieldsOptionString)
+                    .array;
+            }
 
             consistencyValidations(cmdArgs);
             derivations();

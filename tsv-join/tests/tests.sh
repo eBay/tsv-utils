@@ -38,6 +38,14 @@ runtest ${prog} "--header -f input1.tsv --append-fields 1,2 input2.tsv" ${basic_
 runtest ${prog} "--header -f input1.tsv --append-fields 2,1 input2.tsv" ${basic_tests_1}
 runtest ${prog} "--header -f input1.tsv --append-fields 2,1 --prefix i1_ input2.tsv" ${basic_tests_1}
 
+runtest ${prog} "--filter-file input1_noheader.tsv input2_noheader.tsv" ${basic_tests_1}
+runtest ${prog} "-f input1_noheader.tsv --key-fields 0 input2_noheader.tsv" ${basic_tests_1}
+runtest ${prog} "-f input1_noheader.tsv --key-fields 0 --data-fields 0 input2_noheader.tsv" ${basic_tests_1}
+runtest ${prog} "-f input1_noheader.tsv --exclude input2_noheader.tsv" ${basic_tests_1}
+runtest ${prog} "-f input1_noheader.tsv --append-fields 1 input2_noheader.tsv" ${basic_tests_1}
+runtest ${prog} "-f input1_noheader.tsv --append-fields 1,2 input2_noheader.tsv" ${basic_tests_1}
+runtest ${prog} "-f input1_noheader.tsv --append-fields 2,1 input2_noheader.tsv" ${basic_tests_1}
+
 # Single key
 echo "" >> ${basic_tests_1}; echo "====Single key===" >> ${basic_tests_1}
 
@@ -46,6 +54,12 @@ runtest ${prog} "--header -f input1.tsv --key-fields 2 input2.tsv" ${basic_tests
 runtest ${prog} "--header -f input1.tsv -k 3 input2.tsv" ${basic_tests_1}
 runtest ${prog} "--header -f input1.tsv -k 2 -e input2.tsv" ${basic_tests_1}
 runtest ${prog} "--header -f input1.tsv -k 3 -e input2.tsv" ${basic_tests_1}
+
+runtest ${prog} "-f input1_noheader.tsv --key-fields 1 input2_noheader.tsv" ${basic_tests_1}
+runtest ${prog} "-f input1_noheader.tsv --key-fields 2 input2_noheader.tsv" ${basic_tests_1}
+runtest ${prog} "-f input1_noheader.tsv -k 3 input2_noheader.tsv" ${basic_tests_1}
+runtest ${prog} "-f input1_noheader.tsv -k 2 -e input2_noheader.tsv" ${basic_tests_1}
+runtest ${prog} "-f input1_noheader.tsv -k 3 -e input2_noheader.tsv" ${basic_tests_1}
 
 # Single key, different data key
 echo "" >> ${basic_tests_1}; echo "====Single key, different data key===" >> ${basic_tests_1}
@@ -57,6 +71,14 @@ runtest ${prog} "--header -f input1.tsv -k 2 -d 3 input2.tsv" ${basic_tests_1}
 runtest ${prog} "--header -f input1.tsv -k 3 -d 2 input2.tsv" ${basic_tests_1}
 runtest ${prog} "--header -f input1.tsv -k 2 -d 3 -e input2.tsv" ${basic_tests_1}
 runtest ${prog} "--header -f input1.tsv -k 3 -d 3 -e input2.tsv" ${basic_tests_1}
+
+runtest ${prog} "-f input1_noheader.tsv -k 2 --data-fields 2 input2_noheader.tsv" ${basic_tests_1}
+runtest ${prog} "-f input1_noheader.tsv -k 1 -d 3 input2_noheader.tsv" ${basic_tests_1}
+runtest ${prog} "-f input1_noheader.tsv -k 1 -d 3 input2_noheader.tsv input2_noheader.tsv" ${basic_tests_1}
+runtest ${prog} "-f input1_noheader.tsv -k 2 -d 3 input2_noheader.tsv" ${basic_tests_1}
+runtest ${prog} "-f input1_noheader.tsv -k 3 -d 2 input2_noheader.tsv" ${basic_tests_1}
+runtest ${prog} "-f input1_noheader.tsv -k 2 -d 3 -e input2_noheader.tsv" ${basic_tests_1}
+runtest ${prog} "-f input1_noheader.tsv -k 3 -d 3 -e input2_noheader.tsv" ${basic_tests_1}
 
 # Single key append variants
 echo "" >> ${basic_tests_1}; echo "====Single key append variants===" >> ${basic_tests_1}
@@ -75,6 +97,21 @@ runtest ${prog} "--header -f input1.tsv -k 2 -a 1,2,3,4,5 --allow-duplicate-keys
 runtest ${prog} "--header -f input1.tsv -k 2 -a 1-5 --allow-duplicate-keys -p i1_ input2.tsv" ${basic_tests_1}
 runtest ${prog} "--header -f input1.tsv -k 2 -a 5,4,3,2,1 --allow-duplicate-keys -p i1_ input2.tsv" ${basic_tests_1}
 runtest ${prog} "--header -f input1.tsv -k 2 -a 5-1 --allow-duplicate-keys -p i1_ input2.tsv" ${basic_tests_1}
+
+runtest ${prog} "-f input1_noheader.tsv -k 2 -a 5 --allow-duplicate-keys input2_noheader.tsv" ${basic_tests_1}
+runtest ${prog} "-f input1_noheader.tsv -k 2 -a 2 --allow-duplicate-keys input2_noheader.tsv" ${basic_tests_1}
+runtest ${prog} "-f input1_noheader.tsv -k 2 -a 3 --allow-duplicate-keys input2_noheader.tsv" ${basic_tests_1}
+runtest ${prog} "-f input1_noheader.tsv -k 2 -a 4 --allow-duplicate-keys input2_noheader.tsv" ${basic_tests_1}
+runtest ${prog} "-f input1_noheader.tsv -k 2 -a 5 --allow-duplicate-keys input2_noheader.tsv" ${basic_tests_1}
+runtest ${prog} "-f input1_noheader.tsv -k 2 -d 3 -a 4 --allow-duplicate-keys input2_noheader.tsv" ${basic_tests_1}
+runtest ${prog} "-f input1_noheader.tsv -k 2 -a 2,3 --allow-duplicate-keys input2_noheader.tsv" ${basic_tests_1}
+runtest ${prog} "-f input1_noheader.tsv -k 2 -a 3,2 --allow-duplicate-keys input2_noheader.tsv" ${basic_tests_1}
+runtest ${prog} "-f input1_noheader.tsv -k 2 -a 3,2,4 --allow-duplicate-keys input2_noheader.tsv" ${basic_tests_1}
+runtest ${prog} "-f input1_noheader.tsv -k 2 -a 3-2,4 --allow-duplicate-keys input2_noheader.tsv" ${basic_tests_1}
+runtest ${prog} "-f input1_noheader.tsv -k 2 -a 1,2,3,4,5 --allow-duplicate-keys input2_noheader.tsv" ${basic_tests_1}
+runtest ${prog} "-f input1_noheader.tsv -k 2 -a 1-5 --allow-duplicate-keys input2_noheader.tsv" ${basic_tests_1}
+runtest ${prog} "-f input1_noheader.tsv -k 2 -a 5,4,3,2,1 --allow-duplicate-keys input2_noheader.tsv" ${basic_tests_1}
+runtest ${prog} "-f input1_noheader.tsv -k 2 -a 5-1 --allow-duplicate-keys input2_noheader.tsv" ${basic_tests_1}
 
 # Whole line appends
 echo "" >> ${basic_tests_1}; echo "====Whole line appends===" >> ${basic_tests_1}
@@ -189,16 +226,25 @@ echo "" >> ${error_tests_1}; echo "===Duplicate keys===" >> ${error_tests_1}
 runtest ${prog} "--header -f input1.tsv -k 2 -a 0 input2.tsv" ${error_tests_1}
 runtest ${prog} "--header -f input1.tsv -k 2 -a 4 input2.tsv" ${error_tests_1}
 
+runtest ${prog} "-f input1_noheader.tsv -k 2 -a 0 input2_noheader.tsv" ${error_tests_1}
+runtest ${prog} "-f input1_noheader.tsv -k 2 -a 4 input2_noheader.tsv" ${error_tests_1}
+
 echo "" >> ${error_tests_1}; echo "===Invalid field indicies===" >> ${error_tests_1}
 runtest ${prog} "--header -f input1.tsv -k 6 input2.tsv" ${error_tests_1}
 runtest ${prog} "--header -f input1.tsv -k 4 -a 6 input2.tsv" ${error_tests_1}
 runtest ${prog} "--header -f input1.tsv -k 4 -d 6 input2.tsv" ${error_tests_1}
 
+runtest ${prog} "-f input1_noheader.tsv -k 6 input2_noheader.tsv" ${error_tests_1}
+runtest ${prog} "-f input1_noheader.tsv -k 4 -a 6 input2_noheader.tsv" ${error_tests_1}
+runtest ${prog} "-f input1_noheader.tsv -k 4 -d 6 input2_noheader.tsv" ${error_tests_1}
+
 echo "" >> ${error_tests_1}; echo "===Missing filter file===" >> ${error_tests_1}
 runtest ${prog} "--header -k 2 input2.tsv" ${error_tests_1}
+runtest ${prog} "-k 2 input2_noheader.tsv" ${error_tests_1}
 
 echo "" >> ${error_tests_1}; echo "===Stdin filter file, no data file===" >> ${error_tests_1}
 runtest ${prog} "--header -f - -k 2" ${error_tests_1}
+runtest ${prog} "-f - -k 2" ${error_tests_1}
 
 echo "" >> ${error_tests_1}; echo "===Invalid Whole line and individual field combos===" >> ${error_tests_1}
 runtest ${prog} "--header -f input1.tsv -k 2,0 input2.tsv" ${error_tests_1}
@@ -210,27 +256,50 @@ runtest ${prog} "--header -f input1.tsv -k 1 -a 0,2 input2.tsv" ${error_tests_1}
 runtest ${prog} "--header -f input1.tsv -k 2 -d 0 input2.tsv" ${error_tests_1}
 runtest ${prog} "--header -f input1.tsv -k 0 -d 2 input2.tsv" ${error_tests_1}
 
+runtest ${prog} "-f input1_noheader.tsv -k 2,0 input2_noheader.tsv" ${error_tests_1}
+runtest ${prog} "-f input1_noheader.tsv -k 0,2 input2_noheader.tsv" ${error_tests_1}
+runtest ${prog} "-f input1_noheader.tsv -k 2,3 -d 0,2 input2_noheader.tsv" ${error_tests_1}
+runtest ${prog} "-f input1_noheader.tsv -k 2,3 -d 2,0 input2_noheader.tsv" ${error_tests_1}
+runtest ${prog} "-f input1_noheader.tsv -k 1 -a 2,0 input2_noheader.tsv" ${error_tests_1}
+runtest ${prog} "-f input1_noheader.tsv -k 1 -a 0,2 input2_noheader.tsv" ${error_tests_1}
+runtest ${prog} "-f input1_noheader.tsv -k 2 -d 0 input2_noheader.tsv" ${error_tests_1}
+runtest ${prog} "-f input1_noheader.tsv -k 0 -d 2 input2_noheader.tsv" ${error_tests_1}
+
 echo "" >> ${error_tests_1}; echo "===Different number of filter and data keys===" >> ${error_tests_1}
 runtest ${prog} "--header -f input1.tsv -k 2 -d 2,3 input2.tsv" ${error_tests_1}
 runtest ${prog} "--header -f input1.tsv -k 2,3 -d 2 input2.tsv" ${error_tests_1}
+
+runtest ${prog} "-f input1_noheader.tsv -k 2 -d 2,3 input2_noheader.tsv" ${error_tests_1}
+runtest ${prog} "-f input1_noheader.tsv -k 2,3 -d 2 input2_noheader.tsv" ${error_tests_1}
 
 echo "" >> ${error_tests_1}; echo "===Header prefix without header===" >> ${error_tests_1}
 runtest ${prog} "--prefix -f input1.tsv -k 2 input1_ input2.tsv" ${error_tests_1}
 
 echo "" >> ${error_tests_1}; echo "===Exclude with an append field===" >> ${error_tests_1}
 runtest ${prog} "--header --exclude -a 3 -f input1.tsv -k 6 input2.tsv" ${error_tests_1}
+runtest ${prog} "--exclude -a 3 -f input1_noheader.tsv -k 6 input2_noheader.tsv" ${error_tests_1}
 
 echo "" >> ${error_tests_1}; echo "===Invalid write-all combinations===" >> ${error_tests_1}
 runtest ${prog} "--header --write-all MISSING -f input1.tsv -k 2,3 input2.tsv" ${error_tests_1}
 runtest ${prog} "--header --write-all MISSING -a 0 -f input1.tsv -k 2,3 input2.tsv" ${error_tests_1}
 runtest ${prog} "--header --write-all MISSING -a 1 --exclude  -f input1.tsv -k 2,3 input2.tsv" ${error_tests_1}
 
+runtest ${prog} "--write-all MISSING -f input1_noheader.tsv -k 2,3 input2_noheader.tsv" ${error_tests_1}
+runtest ${prog} "--write-all MISSING -a 0 -f input1_noheader.tsv -k 2,3 input2_noheader.tsv" ${error_tests_1}
+runtest ${prog} "--write-all MISSING -a 1 --exclude  -f input1_noheader.tsv -k 2,3 input2_noheader.tsv" ${error_tests_1}
+
 echo "" >> ${error_tests_1}; echo "===Invalid field ranges===" >> ${error_tests_1}
 runtest ${prog} "--header -f input1.tsv -k 2,x input2.tsv" ${error_tests_1}
 runtest ${prog} "--header -f input1.tsv -k 2,3 -d 2,1.5 input2.tsv" ${error_tests_1}
 runtest ${prog} "--header -f input1.tsv -k 2 -a 1- input2.tsv" ${error_tests_1}
 runtest ${prog} "--header -f input1.tsv -k 2,,4 input2.tsv" ${error_tests_1}
-runtest ${prog} "--header -f input1.tsv -k input2.tsv" ${error_tests_1}
+runtest ${prog} "--header -f input1.tsv -k input2.tsv input_emptyfile.tsv" ${error_tests_1}
+
+runtest ${prog} "-f input1_noheader.tsv -k 2,x input2_noheader.tsv" ${error_tests_1}
+runtest ${prog} "-f input1_noheader.tsv -k 2,3 -d 2,1.5 input2_noheader.tsv" ${error_tests_1}
+runtest ${prog} "-f input1_noheader.tsv -k 2 -a 1- input2_noheader.tsv" ${error_tests_1}
+runtest ${prog} "-f input1_noheader.tsv -k 2,,4 input2_noheader.tsv" ${error_tests_1}
+runtest ${prog} "-f input1_noheader.tsv -k input2_noheader.tsv input_emptyfile.tsv" ${error_tests_1}
 
 echo "" >> ${error_tests_1}; echo "===Windows Newline detection===" >> ${error_tests_1}
 runtest ${prog} "--header -f input1_dos.tsv -k 2,3 input2.tsv" ${error_tests_1}
@@ -241,5 +310,8 @@ runtest ${prog} "-f input1.tsv -k 2,3 input2_dos.tsv" ${error_tests_1}
 echo "" >> ${error_tests_1}; echo "===No such file===" >> ${error_tests_1}
 runtest ${prog} "--header -f input1.tsv -k 2 -d 2,3 no_such-file.tsv" ${error_tests_1}
 runtest ${prog} "--header -f no_such_file -k 2,3 -d 2 input2.tsv" ${error_tests_1}
+
+runtest ${prog} "-f input1_noheader.tsv -k 2 -d 2,3 no_such-file.tsv" ${error_tests_1}
+runtest ${prog} "-f no_such_file -k 2,3 -d 2 input2_noheader.tsv" ${error_tests_1}
 
 exit $?
