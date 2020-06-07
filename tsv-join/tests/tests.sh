@@ -118,6 +118,7 @@ echo "" >> ${basic_tests_1}; echo "====Whole line appends===" >> ${basic_tests_1
 
 runtest ${prog} "--header -f input1.tsv -k 3 -d 2 -a 0 --allow-duplicate-keys input2.tsv" ${basic_tests_1}
 runtest ${prog} "--header -f input1.tsv -k 3 -d 2 -a 0 --allow-duplicate-keys -p i1_ input2.tsv" ${basic_tests_1}
+runtest ${prog} "-f input1_noheader.tsv -k 3 -d 2 -a 0 --allow-duplicate-keys input2_noheader.tsv" ${basic_tests_1}
 
 # Multiple field keys
 echo "" >> ${basic_tests_1}; echo "====Multi-field keys===" >> ${basic_tests_1}
@@ -140,16 +141,28 @@ runtest ${prog} "--header -f input1.tsv -k 2-3 -a 4-5 input2.tsv" ${basic_tests_
 runtest ${prog} "--header -f input1.tsv -k 2,3 -a 4 -p i1_ input2.tsv" ${basic_tests_1}
 runtest ${prog} "--header -f input1.tsv -k 2,3 -a 4,5 -p i1_ input2.tsv" ${basic_tests_1}
 
+runtest ${prog} "-f input1_noheader.tsv -k 2,3 input2_noheader.tsv" ${basic_tests_1}
+runtest ${prog} "-f input1_noheader.tsv -k 3,2 -d 3,2 input2_noheader.tsv" ${basic_tests_1}
+runtest ${prog} "-f input1_noheader.tsv -k 3,2 input2_noheader.tsv" ${basic_tests_1}
+runtest ${prog} "-f input1_noheader.tsv -k 2,3 -e input2_noheader.tsv" ${basic_tests_1}
+runtest ${prog} "-f input1_noheader.tsv -k 3,2 -d 3,2 -e input2_noheader.tsv" ${basic_tests_1}
+runtest ${prog} "-f input1_noheader.tsv -k 2,3 -a 4,5 input2_noheader.tsv" ${basic_tests_1}
+
+
 # Repeated fields tests
 echo "" >> ${basic_tests_1}; echo "====Repeated fields tests===" >> ${basic_tests_1}
 
 runtest ${prog} "--header -f input1.tsv -k 2,3,2 -a 4,5,4 -p i1_ input2.tsv" ${basic_tests_1}
 runtest ${prog} "--header -f input1.tsv -k 2,3 -d 3,3 -a 5,5,1,5 -p i1_ input2.tsv" ${basic_tests_1}
 
+runtest ${prog} "-f input1_noheader.tsv -k 2,3,2 -a 4,5,4 input2_noheader.tsv" ${basic_tests_1}
+runtest ${prog} "-f input1_noheader.tsv -k 2,3 -d 3,3 -a 5,5,1,5 input2_noheader.tsv" ${basic_tests_1}
+
 # Write all tests
 echo "" >> ${basic_tests_1}; echo "====Write all tests===" >> ${basic_tests_1}
 
 runtest ${prog} "--header -f input1.tsv -k 2,3 -a 5 --write-all MISSING  input2.tsv" ${basic_tests_1}
+runtest ${prog} "-f input1_noheader.tsv -k 2,3 -a 5 --write-all MISSING  input2_noheader.tsv" ${basic_tests_1}
 
 ## Can't pass the single quotes to runtest
 echo "" >> ${basic_tests_1}; echo "====[tsv-join --header -f input1.tsv -k 2,3 -a 5 --write-all ''  input2.tsv]====" >> ${basic_tests_1}

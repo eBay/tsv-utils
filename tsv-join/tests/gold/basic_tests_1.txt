@@ -1329,6 +1329,15 @@ f1	f2	f3	f4	f5	i1_f1	i1_f2	i1_f3	i1_f4	i1_f5
 16			1634b	1602b	16			1634	1602
 31	 	 	sp-sp	2020b	20	 	 	sp-sp	2020
 
+====[tsv-join -f input1_noheader.tsv -k 3 -d 2 -a 0 --allow-duplicate-keys input2_noheader.tsv]====
+3	nnn	GGG	336b	3b	10	GGG	nnn	101	102
+8	vv	v	85b	832b	9	v	vv	97	91
+9	v	vv	97	91	8	vv	v	85	832
+10	GGG	nnn	101	102	3	nnn	GGG	336	 3
+15		B	1522b	1567b	16			1634	1602
+16			1634b	1602b	16			1634	1602
+31	 	 	sp-sp	2020b	20	 	 	sp-sp	2020
+
 ====Multi-field keys===
 
 ====[tsv-join --header -f input1.tsv -k 2,3 input2.tsv]====
@@ -1674,6 +1683,136 @@ f1	f2	f3	f4	f5	i1_f4	i1_f5
 26	bbb	ZZZ	21	28	21	28
 31	 	 	sp-sp	2020b	sp-sp	2020
 
+====[tsv-join -f input1_noheader.tsv -k 2,3 input2_noheader.tsv]====
+1	ggg	UUU	101b	15b
+2	bbb	ZZZ	21	28
+3	nnn	GGG	336b	3b
+4	vvv	VVV	43b	403b
+5	ggg	CCC	5734b	52b
+6	ddd	ZZZ	65b	602b
+7	ßßß	SSS	7b	771b
+8	vv	v	85b	832b
+9	v	vv	97	91
+10	GGG	nnn	101	102
+11	v12	PPP	1123b	1167b
+12	àbc	P	1209b	1234b
+13	ÀSSC		1367b	1331b
+14	-1	1	1489b	1421b
+15		B	1522b	1567b
+16			1634b	1602b
+17	0	X	1721b	1703
+18	a g  ß	Y	1845b	1801b
+19	%tg-0	Z	1931b	1956b
+20	bbb	ZZZ	21	28
+21	bbb	ZZZ	21	28
+22	ddd	ZZZ	65b	602b
+23	v12	PPP	1123b	1167b
+24	ÀSSC		1367b	1331b
+25	0	X	1721b	1703
+26	bbb	ZZZ	21	28
+31	 	 	sp-sp	2020b
+
+====[tsv-join -f input1_noheader.tsv -k 3,2 -d 3,2 input2_noheader.tsv]====
+1	ggg	UUU	101b	15b
+2	bbb	ZZZ	21	28
+3	nnn	GGG	336b	3b
+4	vvv	VVV	43b	403b
+5	ggg	CCC	5734b	52b
+6	ddd	ZZZ	65b	602b
+7	ßßß	SSS	7b	771b
+8	vv	v	85b	832b
+9	v	vv	97	91
+10	GGG	nnn	101	102
+11	v12	PPP	1123b	1167b
+12	àbc	P	1209b	1234b
+13	ÀSSC		1367b	1331b
+14	-1	1	1489b	1421b
+15		B	1522b	1567b
+16			1634b	1602b
+17	0	X	1721b	1703
+18	a g  ß	Y	1845b	1801b
+19	%tg-0	Z	1931b	1956b
+20	bbb	ZZZ	21	28
+21	bbb	ZZZ	21	28
+22	ddd	ZZZ	65b	602b
+23	v12	PPP	1123b	1167b
+24	ÀSSC		1367b	1331b
+25	0	X	1721b	1703
+26	bbb	ZZZ	21	28
+31	 	 	sp-sp	2020b
+
+====[tsv-join -f input1_noheader.tsv -k 3,2 input2_noheader.tsv]====
+1	ggg	UUU	101b	15b
+2	bbb	ZZZ	21	28
+3	nnn	GGG	336b	3b
+4	vvv	VVV	43b	403b
+5	ggg	CCC	5734b	52b
+6	ddd	ZZZ	65b	602b
+7	ßßß	SSS	7b	771b
+8	vv	v	85b	832b
+9	v	vv	97	91
+10	GGG	nnn	101	102
+11	v12	PPP	1123b	1167b
+12	àbc	P	1209b	1234b
+13	ÀSSC		1367b	1331b
+14	-1	1	1489b	1421b
+15		B	1522b	1567b
+16			1634b	1602b
+17	0	X	1721b	1703
+18	a g  ß	Y	1845b	1801b
+19	%tg-0	Z	1931b	1956b
+20	bbb	ZZZ	21	28
+21	bbb	ZZZ	21	28
+22	ddd	ZZZ	65b	602b
+23	v12	PPP	1123b	1167b
+24	ÀSSC		1367b	1331b
+25	0	X	1721b	1703
+26	bbb	ZZZ	21	28
+31	 	 	sp-sp	2020b
+
+====[tsv-join -f input1_noheader.tsv -k 2,3 -e input2_noheader.tsv]====
+27	xa	gg	44	45
+28	xb	gh	45	46
+29	xc	gi	46	47
+30	xd	gj	47	48
+32	xe	gk	48	49
+
+====[tsv-join -f input1_noheader.tsv -k 3,2 -d 3,2 -e input2_noheader.tsv]====
+27	xa	gg	44	45
+28	xb	gh	45	46
+29	xc	gi	46	47
+30	xd	gj	47	48
+32	xe	gk	48	49
+
+====[tsv-join -f input1_noheader.tsv -k 2,3 -a 4,5 input2_noheader.tsv]====
+1	ggg	UUU	101b	15b	101	15
+2	bbb	ZZZ	21	28	21	28
+3	nnn	GGG	336b	3b	336	 3
+4	vvv	VVV	43b	403b	43	403
+5	ggg	CCC	5734b	52b	5734	52
+6	ddd	ZZZ	65b	602b	65	602
+7	ßßß	SSS	7b	771b	 7	771
+8	vv	v	85b	832b	85	832
+9	v	vv	97	91	97	91
+10	GGG	nnn	101	102	101	102
+11	v12	PPP	1123b	1167b	1123	1167
+12	àbc	P	1209b	1234b	1209	1234
+13	ÀSSC		1367b	1331b	1367	1331
+14	-1	1	1489b	1421b	1489	1421
+15		B	1522b	1567b	1522	1567
+16			1634b	1602b	1634	1602
+17	0	X	1721b	1703	1721	1703
+18	a g  ß	Y	1845b	1801b	1845	1801
+19	%tg-0	Z	1931b	1956b	1931	1956
+20	bbb	ZZZ	21	28	21	28
+21	bbb	ZZZ	21	28	21	28
+22	ddd	ZZZ	65b	602b	65	602
+23	v12	PPP	1123b	1167b	1123	1167
+24	ÀSSC		1367b	1331b	1367	1331
+25	0	X	1721b	1703	1721	1703
+26	bbb	ZZZ	21	28	21	28
+31	 	 	sp-sp	2020b	sp-sp	2020
+
 ====Repeated fields tests===
 
 ====[tsv-join --header -f input1.tsv -k 2,3,2 -a 4,5,4 -p i1_ input2.tsv]====
@@ -1713,10 +1852,79 @@ f1	f2	f3	f4	f5	i1_f5	i1_f5	i1_f1	i1_f5
 24	ÀSSC		1367b	1331b	1602	1602	16	1602
 31	 	 	sp-sp	2020b	2020	2020	20	2020
 
+====[tsv-join -f input1_noheader.tsv -k 2,3,2 -a 4,5,4 input2_noheader.tsv]====
+1	ggg	UUU	101b	15b	101	15	101
+2	bbb	ZZZ	21	28	21	28	21
+3	nnn	GGG	336b	3b	336	 3	336
+4	vvv	VVV	43b	403b	43	403	43
+5	ggg	CCC	5734b	52b	5734	52	5734
+6	ddd	ZZZ	65b	602b	65	602	65
+7	ßßß	SSS	7b	771b	 7	771	 7
+8	vv	v	85b	832b	85	832	85
+9	v	vv	97	91	97	91	97
+10	GGG	nnn	101	102	101	102	101
+11	v12	PPP	1123b	1167b	1123	1167	1123
+12	àbc	P	1209b	1234b	1209	1234	1209
+13	ÀSSC		1367b	1331b	1367	1331	1367
+14	-1	1	1489b	1421b	1489	1421	1489
+15		B	1522b	1567b	1522	1567	1522
+16			1634b	1602b	1634	1602	1634
+17	0	X	1721b	1703	1721	1703	1721
+18	a g  ß	Y	1845b	1801b	1845	1801	1845
+19	%tg-0	Z	1931b	1956b	1931	1956	1931
+20	bbb	ZZZ	21	28	21	28	21
+21	bbb	ZZZ	21	28	21	28	21
+22	ddd	ZZZ	65b	602b	65	602	65
+23	v12	PPP	1123b	1167b	1123	1167	1123
+24	ÀSSC		1367b	1331b	1367	1331	1367
+25	0	X	1721b	1703	1721	1703	1721
+26	bbb	ZZZ	21	28	21	28	21
+31	 	 	sp-sp	2020b	sp-sp	2020	sp-sp
+
+====[tsv-join -f input1_noheader.tsv -k 2,3 -d 3,3 -a 5,5,1,5 input2_noheader.tsv]====
+13	ÀSSC		1367b	1331b	1602	1602	16	1602
+16			1634b	1602b	1602	1602	16	1602
+24	ÀSSC		1367b	1331b	1602	1602	16	1602
+31	 	 	sp-sp	2020b	2020	2020	20	2020
+
 ====Write all tests===
 
 ====[tsv-join --header -f input1.tsv -k 2,3 -a 5 --write-all MISSING  input2.tsv]====
 f1	f2	f3	f4	f5	f5
+1	ggg	UUU	101b	15b	15
+2	bbb	ZZZ	21	28	28
+3	nnn	GGG	336b	3b	 3
+4	vvv	VVV	43b	403b	403
+5	ggg	CCC	5734b	52b	52
+6	ddd	ZZZ	65b	602b	602
+7	ßßß	SSS	7b	771b	771
+8	vv	v	85b	832b	832
+9	v	vv	97	91	91
+10	GGG	nnn	101	102	102
+11	v12	PPP	1123b	1167b	1167
+12	àbc	P	1209b	1234b	1234
+13	ÀSSC		1367b	1331b	1331
+14	-1	1	1489b	1421b	1421
+15		B	1522b	1567b	1567
+16			1634b	1602b	1602
+17	0	X	1721b	1703	1703
+18	a g  ß	Y	1845b	1801b	1801
+19	%tg-0	Z	1931b	1956b	1956
+20	bbb	ZZZ	21	28	28
+21	bbb	ZZZ	21	28	28
+22	ddd	ZZZ	65b	602b	602
+23	v12	PPP	1123b	1167b	1167
+24	ÀSSC		1367b	1331b	1331
+25	0	X	1721b	1703	1703
+26	bbb	ZZZ	21	28	28
+27	xa	gg	44	45	MISSING
+28	xb	gh	45	46	MISSING
+29	xc	gi	46	47	MISSING
+30	xd	gj	47	48	MISSING
+31	 	 	sp-sp	2020b	2020
+32	xe	gk	48	49	MISSING
+
+====[tsv-join -f input1_noheader.tsv -k 2,3 -a 5 --write-all MISSING  input2_noheader.tsv]====
 1	ggg	UUU	101b	15b	15
 2	bbb	ZZZ	21	28	28
 3	nnn	GGG	336b	3b	 3
