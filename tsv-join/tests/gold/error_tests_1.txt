@@ -13,6 +13,36 @@ Error [tsv-join]: Duplicate keys with different append values (use --z|allow-dup
    [key 1][values]: [ggg][101]
    [key 2][values]: [ggg][5734]
 
+====[tsv-join -f input1_noheader.tsv -k 2 -a 0 input2_noheader.tsv]====
+Error [tsv-join]: Duplicate keys with different append values (use --z|allow-duplicate-keys to ignore)
+   [key 1][values]: [ggg][1	ggg	UUU	101	15]
+   [key 2][values]: [ggg][5	ggg	CCC	5734	52]
+
+====[tsv-join -f input1_noheader.tsv -k 2 -a 4 input2_noheader.tsv]====
+Error [tsv-join]: Duplicate keys with different append values (use --z|allow-duplicate-keys to ignore)
+   [key 1][values]: [ggg][101]
+   [key 2][values]: [ggg][5734]
+
+====[tsv-join --header -f input1.tsv -k f2 -a 0 input2.tsv]====
+Error [tsv-join]: Duplicate keys with different append values (use --z|allow-duplicate-keys to ignore)
+   [key 1][values]: [ggg][1	ggg	UUU	101	15]
+   [key 2][values]: [ggg][5	ggg	CCC	5734	52]
+
+====[tsv-join --header -f input1.tsv -k f2 -a f4 input2.tsv]====
+Error [tsv-join]: Duplicate keys with different append values (use --z|allow-duplicate-keys to ignore)
+   [key 1][values]: [ggg][101]
+   [key 2][values]: [ggg][5734]
+
+====[tsv-join --header -f input1_rotated.tsv -k f2 -a 0 input2.tsv]====
+Error [tsv-join]: Duplicate keys with different append values (use --z|allow-duplicate-keys to ignore)
+   [key 1][values]: [ggg][15	1	ggg	UUU	101]
+   [key 2][values]: [ggg][52	5	ggg	CCC	5734]
+
+====[tsv-join --header -f input1_rotated.tsv -k f2 -a f4 input2.tsv]====
+Error [tsv-join]: Duplicate keys with different append values (use --z|allow-duplicate-keys to ignore)
+   [key 1][values]: [ggg][101]
+   [key 2][values]: [ggg][5734]
+
 ===Invalid field indicies===
 
 ====[tsv-join --header -f input1.tsv -k 6 input2.tsv]====
@@ -25,14 +55,38 @@ Error [tsv-join]: Not enough fields in line. File: input1.tsv, Line: 1
 Error [tsv-join]: Not enough fields in line. File: input2.tsv, Line: 2
 f1	f2	f3	f4	f5
 
+====[tsv-join -f input1_noheader.tsv -k 6 input2_noheader.tsv]====
+Error [tsv-join]: Not enough fields in line. File: input1_noheader.tsv, Line: 1
+
+====[tsv-join -f input1_noheader.tsv -k 4 -a 6 input2_noheader.tsv]====
+Error [tsv-join]: Not enough fields in line. File: input1_noheader.tsv, Line: 1
+
+====[tsv-join -f input1_noheader.tsv -k 4 -d 6 input2_noheader.tsv]====
+Error [tsv-join]: Not enough fields in line. File: input2_noheader.tsv, Line: 1
+
+====[tsv-join --header -f input1.tsv -k no_field_6 input2.tsv]====
+[tsv-join] Error processing command line arguments: [--k|key-fields] Field not found in file header: 'no_field_6'.
+
+====[tsv-join --header -f input1.tsv -k 4 -a no_field_6 input2.tsv]====
+[tsv-join] Error processing command line arguments: [--a|append-fields] Field not found in file header: 'no_field_6'.
+
+====[tsv-join --header -f input1.tsv -k 4 -d no_field_6 input2.tsv]====
+[tsv-join] Error processing command line arguments: [--d|data-fields] Field not found in file header: 'no_field_6'.
+
 ===Missing filter file===
 
 ====[tsv-join --header -k 2 input2.tsv]====
 [tsv-join] Error processing command line arguments: Required option --filter-file was not supplied.
 
+====[tsv-join -k 2 input2_noheader.tsv]====
+[tsv-join] Error processing command line arguments: Required option --filter-file was not supplied.
+
 ===Stdin filter file, no data file===
 
 ====[tsv-join --header -f - -k 2]====
+[tsv-join] Error processing command line arguments: A data file is required when standard input is used for the filter file (--f|filter-file -).
+
+====[tsv-join -f - -k 2]====
 [tsv-join] Error processing command line arguments: A data file is required when standard input is used for the filter file (--f|filter-file -).
 
 ===Invalid Whole line and individual field combos===
@@ -61,12 +115,72 @@ f1	f2	f3	f4	f5
 ====[tsv-join --header -f input1.tsv -k 0 -d 2 input2.tsv]====
 [tsv-join] Error processing command line arguments: If either --k|key-field or --d|data-field is zero both must be zero.
 
+====[tsv-join -f input1_noheader.tsv -k 2,0 input2_noheader.tsv]====
+[tsv-join] Error processing command line arguments: Field 0 (whole line) cannot be combined with individual fields (non-zero).
+
+====[tsv-join -f input1_noheader.tsv -k 0,2 input2_noheader.tsv]====
+[tsv-join] Error processing command line arguments: Field 0 (whole line) cannot be combined with individual fields (non-zero).
+
+====[tsv-join -f input1_noheader.tsv -k 2,3 -d 0,2 input2_noheader.tsv]====
+[tsv-join] Error processing command line arguments: Field 0 (whole line) cannot be combined with individual fields (non-zero).
+
+====[tsv-join -f input1_noheader.tsv -k 2,3 -d 2,0 input2_noheader.tsv]====
+[tsv-join] Error processing command line arguments: Field 0 (whole line) cannot be combined with individual fields (non-zero).
+
+====[tsv-join -f input1_noheader.tsv -k 1 -a 2,0 input2_noheader.tsv]====
+[tsv-join] Error processing command line arguments: Field 0 (whole line) cannot be combined with individual fields (non-zero).
+
+====[tsv-join -f input1_noheader.tsv -k 1 -a 0,2 input2_noheader.tsv]====
+[tsv-join] Error processing command line arguments: Field 0 (whole line) cannot be combined with individual fields (non-zero).
+
+====[tsv-join -f input1_noheader.tsv -k 2 -d 0 input2_noheader.tsv]====
+[tsv-join] Error processing command line arguments: If either --k|key-field or --d|data-field is zero both must be zero.
+
+====[tsv-join -f input1_noheader.tsv -k 0 -d 2 input2_noheader.tsv]====
+[tsv-join] Error processing command line arguments: If either --k|key-field or --d|data-field is zero both must be zero.
+
+====[tsv-join --header -f input1.tsv -k f2,0 input2.tsv]====
+[tsv-join] Error processing command line arguments: Field 0 (whole line) cannot be combined with individual fields (non-zero).
+
+====[tsv-join --header -f input1.tsv -k 0,f2 input2.tsv]====
+[tsv-join] Error processing command line arguments: Field 0 (whole line) cannot be combined with individual fields (non-zero).
+
+====[tsv-join --header -f input1.tsv -k f2,f3 -d 0,f2 input2.tsv]====
+[tsv-join] Error processing command line arguments: Field 0 (whole line) cannot be combined with individual fields (non-zero).
+
+====[tsv-join --header -f input1.tsv -k f2,f3 -d f2,0 input2.tsv]====
+[tsv-join] Error processing command line arguments: Field 0 (whole line) cannot be combined with individual fields (non-zero).
+
+====[tsv-join --header -f input1.tsv -k f1 -a f2,0 input2.tsv]====
+[tsv-join] Error processing command line arguments: Field 0 (whole line) cannot be combined with individual fields (non-zero).
+
+====[tsv-join --header -f input1.tsv -k f1 -a 0,f2 input2.tsv]====
+[tsv-join] Error processing command line arguments: Field 0 (whole line) cannot be combined with individual fields (non-zero).
+
+====[tsv-join --header -f input1.tsv -k f2 -d 0 input2.tsv]====
+[tsv-join] Error processing command line arguments: If either --k|key-field or --d|data-field is zero both must be zero.
+
+====[tsv-join --header -f input1.tsv -k 0 -d f2 input2.tsv]====
+[tsv-join] Error processing command line arguments: If either --k|key-field or --d|data-field is zero both must be zero.
+
 ===Different number of filter and data keys===
 
 ====[tsv-join --header -f input1.tsv -k 2 -d 2,3 input2.tsv]====
 [tsv-join] Error processing command line arguments: Different number of --k|key-fields and --d|data-fields.
 
 ====[tsv-join --header -f input1.tsv -k 2,3 -d 2 input2.tsv]====
+[tsv-join] Error processing command line arguments: Different number of --k|key-fields and --d|data-fields.
+
+====[tsv-join -f input1_noheader.tsv -k 2 -d 2,3 input2_noheader.tsv]====
+[tsv-join] Error processing command line arguments: Different number of --k|key-fields and --d|data-fields.
+
+====[tsv-join -f input1_noheader.tsv -k 2,3 -d 2 input2_noheader.tsv]====
+[tsv-join] Error processing command line arguments: Different number of --k|key-fields and --d|data-fields.
+
+====[tsv-join --header -f input1.tsv -k f2 -d f2,f3 input2.tsv]====
+[tsv-join] Error processing command line arguments: Different number of --k|key-fields and --d|data-fields.
+
+====[tsv-join --header -f input1.tsv -k f2,f3 -d f2 input2.tsv]====
 [tsv-join] Error processing command line arguments: Different number of --k|key-fields and --d|data-fields.
 
 ===Header prefix without header===
@@ -77,6 +191,12 @@ f1	f2	f3	f4	f5
 ===Exclude with an append field===
 
 ====[tsv-join --header --exclude -a 3 -f input1.tsv -k 6 input2.tsv]====
+[tsv-join] Error processing command line arguments: --e|exclude cannot be used with --a|append-fields.
+
+====[tsv-join --exclude -a 3 -f input1_noheader.tsv -k 6 input2_noheader.tsv]====
+[tsv-join] Error processing command line arguments: --e|exclude cannot be used with --a|append-fields.
+
+====[tsv-join --header --exclude -a f3 -f input1.tsv -k 6 input2.tsv]====
 [tsv-join] Error processing command line arguments: --e|exclude cannot be used with --a|append-fields.
 
 ===Invalid write-all combinations===
@@ -90,22 +210,70 @@ f1	f2	f3	f4	f5
 ====[tsv-join --header --write-all MISSING -a 1 --exclude  -f input1.tsv -k 2,3 input2.tsv]====
 [tsv-join] Error processing command line arguments: --e|exclude cannot be used with --a|append-fields.
 
+====[tsv-join --write-all MISSING -f input1_noheader.tsv -k 2,3 input2_noheader.tsv]====
+[tsv-join] Error processing command line arguments: Use --a|append-fields when using --w|write-all.
+
+====[tsv-join --write-all MISSING -a 0 -f input1_noheader.tsv -k 2,3 input2_noheader.tsv]====
+[tsv-join] Error processing command line arguments: Cannot use '--a|append-fields 0' (whole line) when using --w|write-all.
+
+====[tsv-join --write-all MISSING -a 1 --exclude  -f input1_noheader.tsv -k 2,3 input2_noheader.tsv]====
+[tsv-join] Error processing command line arguments: --e|exclude cannot be used with --a|append-fields.
+
+====[tsv-join --header --write-all MISSING -f input1.tsv -k f2,f3 input2.tsv]====
+[tsv-join] Error processing command line arguments: Use --a|append-fields when using --w|write-all.
+
+====[tsv-join --header --write-all MISSING -a 0 -f input1.tsv -k f2,f3 input2.tsv]====
+[tsv-join] Error processing command line arguments: Cannot use '--a|append-fields 0' (whole line) when using --w|write-all.
+
+====[tsv-join --header --write-all MISSING -a f1 --exclude  -f input1.tsv -k f2,f3 input2.tsv]====
+[tsv-join] Error processing command line arguments: --e|exclude cannot be used with --a|append-fields.
+
 ===Invalid field ranges===
 
 ====[tsv-join --header -f input1.tsv -k 2,x input2.tsv]====
-[tsv-join] Error processing command line arguments: [--k|key-fields] Unexpected 'x' when converting from type string to type ulong
+[tsv-join] Error processing command line arguments: [--k|key-fields] Field not found in file header: 'x'.
 
 ====[tsv-join --header -f input1.tsv -k 2,3 -d 2,1.5 input2.tsv]====
-[tsv-join] Error processing command line arguments: [--d|data-fields] Unexpected '.' when converting from type string to type ulong
+[tsv-join] Error processing command line arguments: [--d|data-fields] Field not found in file header: '1.5'.
 
 ====[tsv-join --header -f input1.tsv -k 2 -a 1- input2.tsv]====
 [tsv-join] Error processing command line arguments: [--a|append-fields] Incomplete ranges are not supported: '1-'.
 
 ====[tsv-join --header -f input1.tsv -k 2,,4 input2.tsv]====
-[tsv-join] Error processing command line arguments: [--k|key-fields] Empty field number.
+[tsv-join] Error processing command line arguments: [--k|key-fields] Invalid field list: '2,,4'.
 
-====[tsv-join --header -f input1.tsv -k input2.tsv]====
-[tsv-join] Error processing command line arguments: [--k|key-fields] Unexpected 'i' when converting from type string to type ulong
+====[tsv-join --header -f input1.tsv -k input2.tsv input_emptyfile.tsv]====
+[tsv-join] Error processing command line arguments: [--k|key-fields] Field not found in file header: 'input2.tsv'.
+
+====[tsv-join -f input1_noheader.tsv -k 2,x input2_noheader.tsv]====
+[tsv-join] Error processing command line arguments: [--k|key-fields] Non-numeric field group: 'x'. Use '--H|header' when using named field groups.
+
+====[tsv-join -f input1_noheader.tsv -k 2,3 -d 2,1.5 input2_noheader.tsv]====
+[tsv-join] Error processing command line arguments: [--d|data-fields] Non-numeric field group: '1.5'. Use '--H|header' when using named field groups.
+
+====[tsv-join -f input1_noheader.tsv -k 2 -a 1- input2_noheader.tsv]====
+[tsv-join] Error processing command line arguments: [--a|append-fields] Incomplete ranges are not supported: '1-'.
+
+====[tsv-join -f input1_noheader.tsv -k 2,,4 input2_noheader.tsv]====
+[tsv-join] Error processing command line arguments: [--k|key-fields] Invalid field list: '2,,4'.
+
+====[tsv-join -f input1_noheader.tsv -k input2_noheader.tsv input_emptyfile.tsv]====
+[tsv-join] Error processing command line arguments: [--k|key-fields] Non-numeric field group: 'input2_noheader.tsv'. Use '--H|header' when using named field groups.
+
+====[tsv-join --header -f input1.tsv -k f2,x input2.tsv]====
+[tsv-join] Error processing command line arguments: [--k|key-fields] Field not found in file header: 'x'.
+
+====[tsv-join --header -f input1.tsv -k f2,f3 -d f2,1.5 input2.tsv]====
+[tsv-join] Error processing command line arguments: [--d|data-fields] Field not found in file header: '1.5'.
+
+====[tsv-join --header -f input1.tsv -k f2 -a f1- input2.tsv]====
+[tsv-join] Error processing command line arguments: [--a|append-fields] Hyphens in field names must be backslash escaped unless separating two field names: 'f1-'.
+
+====[tsv-join --header -f input1.tsv -k f2,,f4 input2.tsv]====
+[tsv-join] Error processing command line arguments: [--k|key-fields] Invalid field list: 'f2,,f4'.
+
+====[tsv-join --header -f input1.tsv -k input2.tsv input_emptyfile.tsv]====
+[tsv-join] Error processing command line arguments: [--k|key-fields] Field not found in file header: 'input2.tsv'.
 
 ===Windows Newline detection===
 
@@ -131,4 +299,10 @@ Error [tsv-join]: Windows/DOS line ending found. Convert file to Unix newlines b
 [tsv-join] Error processing command line arguments: Cannot open file `no_such-file.tsv' in mode `rb' (No such file or directory)
 
 ====[tsv-join --header -f no_such_file -k 2,3 -d 2 input2.tsv]====
+[tsv-join] Error processing command line arguments: Cannot open file `no_such_file' in mode `rb' (No such file or directory)
+
+====[tsv-join -f input1_noheader.tsv -k 2 -d 2,3 no_such-file.tsv]====
+[tsv-join] Error processing command line arguments: Cannot open file `no_such-file.tsv' in mode `rb' (No such file or directory)
+
+====[tsv-join -f no_such_file -k 2,3 -d 2 input2_noheader.tsv]====
 [tsv-join] Error processing command line arguments: Cannot open file `no_such_file' in mode `rb' (No such file or directory)

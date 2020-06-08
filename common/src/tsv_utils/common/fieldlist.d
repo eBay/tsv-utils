@@ -241,8 +241,12 @@ alias ConsumeEntireFieldListString = Flag!"consumeEntireFieldListString";
 
    The optional `cmdOptionString` and `headerCmdArg` arguments are used to generate better
    error messages. `cmdOptionString` should be the command line arguments string passed to
-   `std.getopt`. e.g `"f|field"`. The `headerCmdArg` argument should be the option for
-   turning on header line processing. Most tsv-utils tools can use the default value.
+   `std.getopt`. e.g `"f|field"`. This is added to the error message. Callers already
+   adding the option name to the error message should pass the empty string.
+
+   The `headerCmdArg` argument should be the option for turning on header line processing.
+   This is standard for tsv-utils tools (`--H|header`), so most tsv-utils tools will use
+   the default value.
 
    `parseFieldList` returns a reference range. This is so the `consumed` member function
    remains valid when using the range with facilities that would copy a value-based
@@ -1390,7 +1394,7 @@ private auto namedFieldGroupToRegex(const char[] fieldGroup)
             if (g[0] == HYPHEN)
             {
                 enforce(!hyphenSeparatorFound && regexString.data.length != 0,
-                        format("Hyphens in field names must be backslash escaped unless separating two field names: '%s'.\n",
+                        format("Hyphens in field names must be backslash escaped unless separating two field names: '%s'.",
                                fieldGroup));
 
                 assert(field1Regex.empty);
@@ -1418,7 +1422,7 @@ private auto namedFieldGroupToRegex(const char[] fieldGroup)
         }
     }
     enforce(!hyphenSeparatorFound || regexString.data.length != 0,
-            format("Hyphens in field names must be backslash escaped unless separating two field names: '%s'.\n",
+            format("Hyphens in field names must be backslash escaped unless separating two field names: '%s'.",
                    fieldGroup));
 
     if (!hyphenSeparatorFound)
