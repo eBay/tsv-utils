@@ -94,22 +94,20 @@ struct TsvUniqOptions
     enum defaultNumberHeader = "equiv_line";
 
     string programName;
-    InputSourceRange inputSources;            // Input files
-    bool helpVerbose = false;                 // --h|help-verbose
-    bool versionWanted = false;               // --V|version
-    size_t[] fields;                          // --f|fields
-    bool hasHeader = false;                   // --H|header
-    bool onlyRepeated = false;                // --r|repeated. Shorthand for '--atleast 2'
-    size_t atLeast = 0;                       // --a|at-least. Zero implies default behavior.
-    size_t max = 0;                           // --m|max. Zero implies default behavior.
-    bool numberMode = false;                  // --z|number
-    string numberHeader = defaultNumberHeader;  // --number-header
-    bool equivMode = false;                   // --e|equiv
-    string equivHeader = defaultEquivHeader;  // --equiv-header
-    long equivStartID = defaultEquivStartID;  // --equiv-start
-    bool ignoreCase = false;                  // --i|ignore-case
-    char delim = '\t';                        // --d|delimiter
-    bool keyIsFullLine = false;               // Derived. True if no fields specified or '--f|fields 0'
+    InputSourceRange inputSources;            /// Input files
+    size_t[] fields;                          /// Derived: --f|fields
+    bool hasHeader = false;                   /// --H|header
+    bool onlyRepeated = false;                /// --r|repeated. Shorthand for '--atleast 2'
+    size_t atLeast = 0;                       /// --a|at-least. Zero implies default behavior.
+    size_t max = 0;                           /// --m|max. Zero implies default behavior.
+    bool numberMode = false;                  /// --z|number
+    string numberHeader = defaultNumberHeader;  /// --number-header
+    bool equivMode = false;                   /// --e|equiv
+    string equivHeader = defaultEquivHeader;  /// --equiv-header
+    long equivStartID = defaultEquivStartID;  /// --equiv-start
+    bool ignoreCase = false;                  /// --i|ignore-case
+    char delim = '\t';                        /// --d|delimiter
+    bool keyIsFullLine = false;               /// Derived. True if no fields specified or '--f|fields 0'
 
     /* Returns a tuple. First value is true if command line arguments were successfully
      * processed and execution should continue, or false if an error occurred or the user
@@ -134,10 +132,17 @@ struct TsvUniqOptions
     auto processArgs (ref string[] cmdArgs)
     {
         import std.algorithm : all, each;
+        import std.conv : to;
         import std.getopt;
         import std.path : baseName, stripExtension;
         import std.typecons : Yes, No;
-        import tsv_utils.common.fieldlist :  makeFieldListOptionHandler;
+        import tsv_utils.common.fieldlist;
+
+        bool helpVerbose = false;         // --h|help-verbose
+        bool versionWanted = false;       // --V|version
+        string fieldsArg;                 // --f|fields
+
+        string fieldsOptionString = "f|fields";
 
         programName = (cmdArgs.length > 0) ? cmdArgs[0].stripExtension.baseName : "Unknown_program_name";
 
@@ -152,8 +157,7 @@ struct TsvUniqOptions
                 "H|header",      "              Treat the first line of each file as a header.", &hasHeader,
                 std.getopt.config.caseInsensitive,
 
-                "f|fields",      "<field-list>  Fields to use as the key. Default: 0 (entire line).",
-                fields.makeFieldListOptionHandler!(size_t, No.convertToZeroBasedIndex,Yes.allowFieldNumZero),
+                fieldsOptionString,      "<field-list>  Fields to use as the key. Default: 0 (entire line).", &fieldsArg,
 
                 "i|ignore-case", "              Ignore case when comparing keys.", &ignoreCase,
                 "r|repeated",    "              Output only lines that are repeated (based on the key).", &onlyRepeated,
@@ -165,7 +169,7 @@ struct TsvUniqOptions
                 "z|number",      "              Output equivalence class occurrence counts rather than uniq'ing entries.", &numberMode,
                 "number-header", "STR           Use STR as the '--number' field header (when using '-H --number)'. Default: 'equiv_line'.", &numberHeader,
                 "d|delimiter",   "CHR           Field delimiter. Default: TAB. (Single byte UTF-8 characters only.)", &delim,
-                );
+            );
 
             if (r.helpWanted)
             {
@@ -189,6 +193,19 @@ struct TsvUniqOptions
             cmdArgs.length = 1;
             ReadHeader readHeader = hasHeader ? Yes.readHeader : No.readHeader;
             inputSources = inputSourceRange(filepaths, readHeader);
+
+            string[] headerFields;
+
+            if (hasHeader) headerFields = inputSources.front.header.split(delim).to!(string[]);
+
+            if (!fieldsArg.empty)
+            {
+                fields =
+                    fieldsArg
+                    .parseFieldList!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero)
+                    (hasHeader, headerFields, fieldsOptionString)
+                    .array;
+            }
 
             /* Consistency checks */
             if (!equivMode)

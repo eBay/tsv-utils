@@ -235,8 +235,57 @@ f1	f2	f3	f4	f5
 12	 	 	sp-sp	2020
 13	0.0	Z	1931	1956
 
+====[tsv-uniq input1_noheader.tsv -f 2]====
+1	ggg	UUU	101	15
+2	bbb	ZZZ	21	28
+4	ddd	ZZZ	65	602
+5	ßßß	SSS	 7	771
+6	sss	sss	17	15
+7	ssssss	sss	18	16
+8	àbc	P	1209	1234
+9	ÀBC		1367	1331
+10			e-e	1602
+11	0	X	1721	1703
+12	 	 	sp-sp	2020
+13	0.0	Z	1931	1956
+
 ====[tsv-uniq input1.tsv --header -f 3,4]====
 f1	f2	f3	f4	f5
+1	ggg	UUU	101	15
+2	bbb	ZZZ	21	28
+3	ggg	CCC	5734	52
+4	ddd	ZZZ	65	602
+5	ßßß	SSS	 7	771
+6	sss	sss	17	15
+7	ssssss	sss	18	16
+8	àbc	P	1209	1234
+9	ÀBC		1367	1331
+10			e-e	1602
+11	0	X	1721	1703
+12	 	 	sp-sp	2020
+13	0.0	Z	1931	1956
+8	ÀBC	p	1209	1234
+17	0	Z	5734	602
+
+====[tsv-uniq input1.tsv --header -f f3,f4]====
+f1	f2	f3	f4	f5
+1	ggg	UUU	101	15
+2	bbb	ZZZ	21	28
+3	ggg	CCC	5734	52
+4	ddd	ZZZ	65	602
+5	ßßß	SSS	 7	771
+6	sss	sss	17	15
+7	ssssss	sss	18	16
+8	àbc	P	1209	1234
+9	ÀBC		1367	1331
+10			e-e	1602
+11	0	X	1721	1703
+12	 	 	sp-sp	2020
+13	0.0	Z	1931	1956
+8	ÀBC	p	1209	1234
+17	0	Z	5734	602
+
+====[tsv-uniq input1_noheader.tsv -f 3,4]====
 1	ggg	UUU	101	15
 2	bbb	ZZZ	21	28
 3	ggg	CCC	5734	52
@@ -307,6 +356,22 @@ f1	f2	f3	f4	f5
 17	0	Z	5734	602
 
 ====[tsv-uniq input1.tsv --header -f 5]====
+f1	f2	f3	f4	f5
+1	ggg	UUU	101	15
+2	bbb	ZZZ	21	28
+3	ggg	CCC	5734	52
+4	ddd	ZZZ	65	602
+5	ßßß	SSS	 7	771
+7	ssssss	sss	18	16
+8	àbc	P	1209	1234
+9	ÀBC		1367	1331
+10			e-e	1602
+11	0	X	1721	1703
+12	 	 	sp-sp	2020
+13	0.0	Z	1931	1956
+14	 	 	sp-sp	2022
+
+====[tsv-uniq input1.tsv --header -f f5]====
 f1	f2	f3	f4	f5
 1	ggg	UUU	101	15
 2	bbb	ZZZ	21	28
@@ -498,7 +563,7 @@ f1	f2	f3	f4	f5
 5	Baseball	Baseball	野球	Béisbol
 2	white	WEISS	白い	Blanca
 
-====[tsv-uniq input3.tsv -H -f 2,3 -i]====
+====[tsv-uniq input3.tsv -H -f f2,f3 -i]====
 f1	f2	f3	f4	f5
 1	Green	Grün	緑	Verde
 2	WHITE	WEIẞ	白い	BLANCA
@@ -714,6 +779,28 @@ f1	f2	f3	f4	f5
 9	ÀBC		1367	1331
 15	7	xyz	9999	8888
 
+====[tsv-uniq -H -f f3,f5 --max 3 input2.tsv input2.tsv]====
+f1	f2	f3	f4	f5
+1	ggg	UUU	101	15
+3	ggg	CCC	5734	52
+5	ßßß	SSSa	 7	771
+17	8	str	9997	8886
+5	ßßßz	SSS	 7	771
+16	pqr	uvw	9998	8887
+5	ßßß	SSS	 7	771
+5	ßßß	SSS	 76	771
+11	0	X	1721	1703
+9	ÀBC		1367	1331
+15	7	xyz	9999	8888
+1	ggg	UUU	101	15
+3	ggg	CCC	5734	52
+5	ßßß	SSSa	 7	771
+17	8	str	9997	8886
+16	pqr	uvw	9998	8887
+11	0	X	1721	1703
+9	ÀBC		1367	1331
+15	7	xyz	9999	8888
+
 ====[tsv-uniq -H -f 2 --equiv --max 3 input2.tsv input2.tsv]====
 f1	f2	f3	f4	f5	equiv_id
 1	ggg	UUU	101	15	1
@@ -794,6 +881,9 @@ f1	f2	f3	f4	f5
 9	ÀBC		1367	1331
 
 ====[tsv-uniq --at-least 3 input1.tsv]====
+9	ÀBC		1367	1331
+
+====[tsv-uniq --at-least 3 input1_noheader.tsv]====
 9	ÀBC		1367	1331
 
 ====[tsv-uniq -H -a 3 input1.tsv input1.tsv]====
@@ -1047,6 +1137,20 @@ f1	f2	f3	f4	f5
 9	ÀBC		1367	1331
 15	7	xyz	9999	8888
 
+====[tsv-uniq -H -f f3,f5 --at-least 2 --max 4 input2.tsv input2.tsv]====
+f1	f2	f3	f4	f5
+5	ßßß	SSS	 7	771
+5	ßßß	SSS	 76	771
+1	ggg	UUU	101	15
+3	ggg	CCC	5734	52
+5	ßßß	SSSa	 7	771
+17	8	str	9997	8886
+5	ßßßz	SSS	 7	771
+16	pqr	uvw	9998	8887
+11	0	X	1721	1703
+9	ÀBC		1367	1331
+15	7	xyz	9999	8888
+
 ====[tsv-uniq -H -f 2 --equiv --at-least 3 --max 5 input2.tsv input2.tsv input2.tsv]====
 f1	f2	f3	f4	f5	equiv_id
 5	ßßß	SSS	 76	771	2
@@ -1219,6 +1323,28 @@ f1	f2	f3	f4	f5	1
 17	0	Z	5734	602	1
 
 ====[tsv-uniq input1.tsv -H -f 3,4 --number --ignore-case]====
+f1	f2	f3	f4	f5	equiv_line
+1	ggg	UUU	101	15	1
+2	bbb	ZZZ	21	28	1
+3	ggg	CCC	5734	52	1
+4	ddd	ZZZ	65	602	1
+5	ßßß	SSS	 7	771	1
+6	sss	sss	17	15	1
+7	ssssss	sss	18	16	1
+8	àbc	P	1209	1234	1
+9	ÀBC		1367	1331	1
+10			e-e	1602	1
+11	0	X	1721	1703	1
+9	ÀBC		1367	1331	2
+12	 	 	sp-sp	2020	1
+13	0.0	Z	1931	1956	1
+8	ÀBC	p	1209	1234	2
+14	 	 	sp-sp	2022	2
+3	ggg	CCC	5734	52	2
+9	ÀBC		1367	1331	3
+17	0	Z	5734	602	1
+
+====[tsv-uniq input1.tsv -H -f f3,f4 --number --ignore-case]====
 f1	f2	f3	f4	f5	equiv_line
 1	ggg	UUU	101	15	1
 2	bbb	ZZZ	21	28	1
@@ -1533,6 +1659,29 @@ f1	f2	f3	f4	f5
 15	7	xyz	9999	8888
 
 ====[cat input1.tsv | tsv-uniq --header -f 3,4 -- - input2.tsv]====
+f1	f2	f3	f4	f5
+1	ggg	UUU	101	15
+2	bbb	ZZZ	21	28
+3	ggg	CCC	5734	52
+4	ddd	ZZZ	65	602
+5	ßßß	SSS	 7	771
+6	sss	sss	17	15
+7	ssssss	sss	18	16
+8	àbc	P	1209	1234
+9	ÀBC		1367	1331
+10			e-e	1602
+11	0	X	1721	1703
+12	 	 	sp-sp	2020
+13	0.0	Z	1931	1956
+8	ÀBC	p	1209	1234
+17	0	Z	5734	602
+5	ßßß	SSSa	 7	771
+17	8	str	9997	8886
+16	pqr	uvw	9998	8887
+5	ßßß	SSS	 76	771
+15	7	xyz	9999	8888
+
+====[cat input1.tsv | tsv-uniq --header -f 3,f4 -- - input2.tsv]====
 f1	f2	f3	f4	f5
 1	ggg	UUU	101	15
 2	bbb	ZZZ	21	28
