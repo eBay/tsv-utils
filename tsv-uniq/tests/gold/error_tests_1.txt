@@ -5,10 +5,10 @@ Error test set 1
 [tsv-uniq] Error processing command line arguments: Whole line as key (--f|field 0) cannot be combined with multiple fields.
 
 ====[tsv-uniq -f 1,g input1.tsv]====
-[tsv-uniq] Error processing command line arguments: [--f|fields] Unexpected 'g' when converting from type string to type ulong
+[tsv-uniq] Error processing command line arguments: [--f|fields] Non-numeric field group: 'g'. Use '--H|header' when using named field groups.
 
 ====[tsv-uniq -f 1-g input1.tsv]====
-[tsv-uniq] Error processing command line arguments: [--f|fields] Unexpected 'g' when converting from type string to type ulong
+[tsv-uniq] Error processing command line arguments: [--f|fields] Non-numeric field group: '1-g'. Use '--H|header' when using named field groups.
 
 ====[tsv-uniq -f 0-2 input1.tsv]====
 [tsv-uniq] Error processing command line arguments: [--f|fields] Zero cannot be used as part of a range: '0-2'.
@@ -36,3 +36,48 @@ Error [tsv-uniq]: Not enough fields in line. File: input1.tsv, Line: 1
 
 ====[tsv-uniq -f 2-30 input1.tsv]====
 Error [tsv-uniq]: Not enough fields in line. File: input1.tsv, Line: 1
+
+====[tsv-uniq -H -f 1,0 input1.tsv]====
+[tsv-uniq] Error processing command line arguments: Whole line as key (--f|field 0) cannot be combined with multiple fields.
+
+====[tsv-uniq -H -f f1,0 input1.tsv]====
+[tsv-uniq] Error processing command line arguments: Whole line as key (--f|field 0) cannot be combined with multiple fields.
+
+====[tsv-uniq -H -f 1,g input1.tsv]====
+[tsv-uniq] Error processing command line arguments: [--f|fields] Field not found in file header: 'g'.
+
+====[tsv-uniq -H -f f1,g input1.tsv]====
+[tsv-uniq] Error processing command line arguments: [--f|fields] Field not found in file header: 'g'.
+
+====[tsv-uniq -H -f 1-g input1.tsv]====
+[tsv-uniq] Error processing command line arguments: [--f|fields] First field in range not found in file header. Range: '1-g'.
+Not specifying a range? Backslash escape any hyphens in the field name.
+
+====[tsv-uniq -H -f 0-2 input1.tsv]====
+[tsv-uniq] Error processing command line arguments: [--f|fields] Zero cannot be used as part of a range: '0-2'.
+
+====[tsv-uniq -H -f 1- input1.tsv]====
+[tsv-uniq] Error processing command line arguments: [--f|fields] Incomplete ranges are not supported: '1-'.
+
+====[tsv-uniq -H -d abc -f f2 input1.tsv]====
+[tsv-uniq] Error processing command line arguments: Unexpected 'b' when converting from type string to type char
+
+====[tsv-uniq -H -d ß -f f1 input1.tsv]====
+[tsv-uniq] Error processing command line arguments: Invalid UTF-8 sequence (at index 1)
+
+====[tsv-uniq -H -f 2 --equiv-start 10 input1.tsv]====
+[tsv-uniq] Error processing command line arguments: --equiv-start requires --e|equiv
+
+====[tsv-uniq -H -f 2 --equiv-header abc input1.tsv]====
+[tsv-uniq] Error processing command line arguments: --equiv-header requires --e|equiv
+
+====[tsv-uniq -H -f 2 --number-header abc input1.tsv]====
+[tsv-uniq] Error processing command line arguments: --number-header requires --z|number
+
+====[tsv-uniq -H -f 2,30 input1.tsv]====
+Error [tsv-uniq]: Not enough fields in line. File: input1.tsv, Line: 2
+f1	f2	f3	f4	f5
+
+====[tsv-uniq -H -f 2-30 input1.tsv]====
+Error [tsv-uniq]: Not enough fields in line. File: input1.tsv, Line: 2
+f1	f2	f3	f4	f5

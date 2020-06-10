@@ -77,16 +77,16 @@ struct TsvJoinOptions
     size_t[] keyFields;                /// Derived: --key-fields
     size_t[] dataFields;               /// Derived: --data-fields
     size_t[] appendFields;             /// Derived: --append-fields
-    bool hasHeader = false;            // --H|header
-    string appendHeaderPrefix = "";    // --append-header-prefix
-    bool writeAll = false;             // --write-all
-    string writeAllValue;              // --write-all
-    bool exclude = false;              // --exclude
-    char delim = '\t';                 // --delimiter
-    bool allowDupliateKeys = false;    // --allow-duplicate-keys
-    bool keyIsFullLine = false;        // Derived: --key-fields 0
-    bool dataIsFullLine = false;       // Derived: --data-fields 0
-    bool appendFullLine = false;       // Derived: --append-fields 0
+    bool hasHeader = false;            /// --H|header
+    string appendHeaderPrefix = "";    /// --append-header-prefix
+    bool writeAll = false;             /// --write-all
+    string writeAllValue;              /// --write-all
+    bool exclude = false;              /// --exclude
+    char delim = '\t';                 /// --delimiter
+    bool allowDupliateKeys = false;    /// --allow-duplicate-keys
+    bool keyIsFullLine = false;        /// Derived: --key-fields 0
+    bool dataIsFullLine = false;       /// Derived: --data-fields 0
+    bool appendFullLine = false;       /// Derived: --append-fields 0
 
     /* Returns a tuple. First value is true if command line arguments were successfully
      * processed and execution should continue, or false if an error occurred or the user

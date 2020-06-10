@@ -40,11 +40,15 @@ runtest ${prog} "--header --equiv --equiv-header id --ignore-case input1.tsv" ${
 echo "" >> ${basic_tests_1}; echo "====Individual keys===" >> ${basic_tests_1}
 runtest ${prog} "input1.tsv --fields 1" ${basic_tests_1}
 runtest ${prog} "input1.tsv --header -f 2" ${basic_tests_1}
+runtest ${prog} "input1_noheader.tsv -f 2" ${basic_tests_1}
 runtest ${prog} "input1.tsv --header -f 3,4" ${basic_tests_1}
+runtest ${prog} "input1.tsv --header -f f3,f4" ${basic_tests_1}
+runtest ${prog} "input1_noheader.tsv -f 3,4" ${basic_tests_1}
 runtest ${prog} "input1.tsv --header -f 4,3" ${basic_tests_1}
 runtest ${prog} "input1.tsv --header -f 4-3" ${basic_tests_1}
 runtest ${prog} "input1.tsv --header -f 3,4 --ignore-case" ${basic_tests_1}
 runtest ${prog} "input1.tsv --header -f 5" ${basic_tests_1}
+runtest ${prog} "input1.tsv --header -f f5" ${basic_tests_1}
 runtest ${prog} "input1.tsv --header -f 3,4 --equiv --ignore-case" ${basic_tests_1}
 runtest ${prog} "input1.tsv -H -f 3,4 --equiv --ignore-case" ${basic_tests_1}
 runtest ${prog} "input1.tsv --header -f 3,4 --equiv --equiv-start 10 --ignore-case" ${basic_tests_1}
@@ -59,7 +63,7 @@ runtest ${prog} "input3.tsv -H -f 1" ${basic_tests_1}
 runtest ${prog} "input3.tsv -H -f 1 -i" ${basic_tests_1}
 runtest ${prog} "input3.tsv -H -f 2,3" ${basic_tests_1}
 runtest ${prog} "input3.tsv -H -f 2,3 -i" ${basic_tests_1}
-runtest ${prog} "input3.tsv -H -f 2,3 -i" ${basic_tests_1}
+runtest ${prog} "input3.tsv -H -f f2,f3 -i" ${basic_tests_1}
 runtest ${prog} "input3.tsv -H -f 2,3,5" ${basic_tests_1}
 runtest ${prog} "input3.tsv -H -f 2,3,5 -i" ${basic_tests_1}
 
@@ -72,6 +76,7 @@ runtest ${prog} "-H -m 3 input1.tsv input1.tsv" ${basic_tests_1}
 runtest ${prog} "-H -m 2 input1.tsv input1.tsv input1.tsv" ${basic_tests_1}
 runtest ${prog} "-H -f 2 --max 3 input2.tsv input2.tsv" ${basic_tests_1}
 runtest ${prog} "-H -f 3,5 --max 3 input2.tsv input2.tsv" ${basic_tests_1}
+runtest ${prog} "-H -f f3,f5 --max 3 input2.tsv input2.tsv" ${basic_tests_1}
 runtest ${prog} "-H -f 2 --equiv --max 3 input2.tsv input2.tsv" ${basic_tests_1}
 
 echo "" >> ${basic_tests_1}; echo "====repeated and at-least count tests===" >> ${basic_tests_1}
@@ -82,6 +87,7 @@ runtest ${prog} "-H --at-least 1 input1.tsv" ${basic_tests_1}
 runtest ${prog} "-H --at-least 2 input1.tsv" ${basic_tests_1}
 runtest ${prog} "-H --at-least 3 input1.tsv" ${basic_tests_1}
 runtest ${prog} "--at-least 3 input1.tsv" ${basic_tests_1}
+runtest ${prog} "--at-least 3 input1_noheader.tsv" ${basic_tests_1}
 runtest ${prog} "-H -a 3 input1.tsv input1.tsv" ${basic_tests_1}
 runtest ${prog} "-H -r input1.tsv input1.tsv input1.tsv" ${basic_tests_1}
 runtest ${prog} "-H -f 2 -r input2.tsv input2.tsv" ${basic_tests_1}
@@ -105,6 +111,7 @@ runtest ${prog} "-H --at-least 3 --max 5 input1.tsv input1.tsv input1.tsv" ${bas
 runtest ${prog} "-H -f 2 -r  --max 4 input2.tsv input2.tsv" ${basic_tests_1}
 runtest ${prog} "-H -f 2 --at-least 3 --max 4 input2.tsv input2.tsv" ${basic_tests_1}
 runtest ${prog} "-H -f 3,5 --at-least 2 --max 4 input2.tsv input2.tsv" ${basic_tests_1}
+runtest ${prog} "-H -f f3,f5 --at-least 2 --max 4 input2.tsv input2.tsv" ${basic_tests_1}
 runtest ${prog} "-H -f 2 --equiv --at-least 3 --max 5 input2.tsv input2.tsv input2.tsv" ${basic_tests_1}
 
 # Number-lines tests
@@ -123,6 +130,7 @@ runtest ${prog} "--header --equiv --equiv-header id -z --number-header id_linenu
 # --number-lines, individual fields as key
 runtest ${prog} "input1.tsv -f 3,4 --number --ignore-case" ${basic_tests_1}
 runtest ${prog} "input1.tsv -H -f 3,4 --number --ignore-case" ${basic_tests_1}
+runtest ${prog} "input1.tsv -H -f f3,f4 --number --ignore-case" ${basic_tests_1}
 runtest ${prog} "input1.tsv --header -f 3,4 -z --number-header key_linenum --ignore-case" ${basic_tests_1}
 
 # --number-lines --equiv-id, individual fields as key
@@ -157,6 +165,9 @@ cat input1.tsv input2.tsv | ${prog} >> ${basic_tests_1} 2>&1
 echo "" >> ${basic_tests_1}; echo "====[cat input1.tsv | tsv-uniq --header -f 3,4 -- - input2.tsv]====" >> ${basic_tests_1}
 cat input1.tsv | ${prog} --header -f 3,4 -- - input2.tsv >> ${basic_tests_1} 2>&1
 
+echo "" >> ${basic_tests_1}; echo "====[cat input1.tsv | tsv-uniq --header -f 3,f4 -- - input2.tsv]====" >> ${basic_tests_1}
+cat input1.tsv | ${prog} --header -f 3,f4 -- - input2.tsv >> ${basic_tests_1} 2>&1
+
 ## Help and Version printing
 
 echo "" >> ${basic_tests_1}
@@ -184,9 +195,7 @@ echo "Error test set 1" > ${error_tests_1}
 echo "----------------" >> ${error_tests_1}
 
 runtest ${prog} "-f 1,0 input1.tsv" ${error_tests_1}
-
 runtest ${prog} "-f 1,g input1.tsv" ${error_tests_1}
-
 runtest ${prog} "-f 1-g input1.tsv" ${error_tests_1}
 runtest ${prog} "-f 0-2 input1.tsv" ${error_tests_1}
 runtest ${prog} "-f 1- input1.tsv" ${error_tests_1}
@@ -198,5 +207,21 @@ runtest ${prog} "-f 2 --equiv-header abc input1.tsv" ${error_tests_1}
 runtest ${prog} "-f 2 --number-header abc input1.tsv" ${error_tests_1}
 runtest ${prog} "-f 2,30 input1.tsv" ${error_tests_1}
 runtest ${prog} "-f 2-30 input1.tsv" ${error_tests_1}
+
+runtest ${prog} "-H -f 1,0 input1.tsv" ${error_tests_1}
+runtest ${prog} "-H -f f1,0 input1.tsv" ${error_tests_1}
+runtest ${prog} "-H -f 1,g input1.tsv" ${error_tests_1}
+runtest ${prog} "-H -f f1,g input1.tsv" ${error_tests_1}
+runtest ${prog} "-H -f 1-g input1.tsv" ${error_tests_1}
+runtest ${prog} "-H -f 0-2 input1.tsv" ${error_tests_1}
+runtest ${prog} "-H -f 1- input1.tsv" ${error_tests_1}
+
+runtest ${prog} "-H -d abc -f f2 input1.tsv" ${error_tests_1}
+runtest ${prog} "-H -d ß -f f1 input1.tsv" ${error_tests_1}
+runtest ${prog} "-H -f 2 --equiv-start 10 input1.tsv" ${error_tests_1}
+runtest ${prog} "-H -f 2 --equiv-header abc input1.tsv" ${error_tests_1}
+runtest ${prog} "-H -f 2 --number-header abc input1.tsv" ${error_tests_1}
+runtest ${prog} "-H -f 2,30 input1.tsv" ${error_tests_1}
+runtest ${prog} "-H -f 2-30 input1.tsv" ${error_tests_1}
 
 exit $?
