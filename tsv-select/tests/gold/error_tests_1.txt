@@ -114,6 +114,18 @@ Not specifying a range? Backslash escape any hyphens in the field name.
 [tsv-select] Error processing command line arguments: [--e|exclude] First field in range matches multiple header fields. Range: 'field*-field1'.
 Not specifying a range? Backslash escape any hyphens in the field name.
 
+====[tsv-select -H -f 1- input_header1.tsv]====
+[tsv-select] Error processing command line arguments: [--f|fields] Incomplete ranges are not supported: '1-'.
+
+====[tsv-select -H -f 1-g input_header1.tsv]====
+[tsv-select] Error processing command line arguments: [--f|fields] Ranges with both numeric and named components are not supported: '1-g'.
+
+====[tsv-select -H -f field1-2 input_header1.tsv]====
+[tsv-select] Error processing command line arguments: [--f|fields] Ranges with both numeric and named components are not supported: 'field1-2'.
+
+====[tsv-select -H -f field1-field2,field2-1 input_header1.tsv]====
+[tsv-select] Error processing command line arguments: [--f|fields] Ranges with both numeric and named components are not supported: 'field2-1'.
+
 ====[tsv-select -f 1 input1_dos.tsv]====
 Error [tsv-select]: Windows/DOS line ending found. Convert file to Unix newlines before processing (e.g. 'dos2unix').
   File: input1_dos.tsv, Line: 1

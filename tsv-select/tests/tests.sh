@@ -278,6 +278,10 @@ runtest ${prog} "-H -e no_such_field input1.tsv" ${error_tests_1}
 runtest ${prog} "-H -e field1,no*such_field input_header1.tsv" ${error_tests_1}
 runtest ${prog} "-H -e NoSuchField-field1 input_header1.tsv" ${error_tests_1}
 runtest ${prog} "-H -e field*-field1 input_header1.tsv" ${error_tests_1}
+runtest ${prog} "-H -f 1- input_header1.tsv" ${error_tests_1}
+runtest ${prog} "-H -f 1-g input_header1.tsv" ${error_tests_1}
+runtest ${prog} "-H -f field1-2 input_header1.tsv" ${error_tests_1}
+runtest ${prog} "-H -f field1-field2,field2-1 input_header1.tsv" ${error_tests_1}
 
 # Windows line ending detection
 runtest ${prog} "-f 1 input1_dos.tsv" ${error_tests_1}
