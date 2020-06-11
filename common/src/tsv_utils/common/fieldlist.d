@@ -154,6 +154,10 @@
          pass either [isNumericFieldGroup] or [isNumericFieldGroupWithHyphenFirstOrLast]
          is processed as a named field-group.
 
+       * [isMixedNumericNamedFieldGroup] - determines if a field group is a range where
+         one element is a field number and the other element is a named field (not a
+         number). This is used for error handling.
+
        * [namedFieldGroupToRegex] - Generates regexes for matching field names in a
          field group to field names in the header line. One regex is generated for a
          single field, two are generated for a range. Wildcards and escape characters
@@ -324,6 +328,10 @@ if (isIntegral!T && (!allowZero || !convertToZero || !isUnsigned!T))
                     enforce(_hasHeader,
                             format("Non-numeric field group: '%s'. Use '%s' when using named field groups.",
                                    fieldGroup, _headerCmdArg));
+
+                    enforce(!fieldGroup.isMixedNumericNamedFieldGroup,
+                            format("Ranges with both numeric and named components are not supported: '%s'.",
+                                   fieldGroup));
 
                     auto fieldGroupRegex = namedFieldGroupToRegex(fieldGroup);
 
@@ -618,6 +626,8 @@ if (isIntegral!T && (!allowZero || !convertToZero || !isUnsigned!T))
         assertThrown(`B1-A*`.parseFieldList(hasHeader, headerFields));
         assertThrown(`B1-`.parseFieldList(hasHeader, headerFields));
         assertThrown(`-A1`.parseFieldList(hasHeader, headerFields));
+        assertThrown(`A1-3`.parseFieldList(hasHeader, headerFields));
+        assertThrown(`1-A3`.parseFieldList(hasHeader, headerFields));
     }
 
 }
@@ -1330,6 +1340,44 @@ private bool isNumericFieldGroupWithHyphenFirstOrLast(const char[] fieldGroup) @
     assert(isNumericFieldGroupWithHyphenFirstOrLast(`1-`));
     assert(isNumericFieldGroupWithHyphenFirstOrLast(`12-`));
     assert(!isNumericFieldGroupWithHyphenFirstOrLast(`-1333-`));
+}
+
+/**
+   `isMixedNumericNamedFieldGroup` determines if a field group is a range where one
+   element is a field number and the other element is a named field (not a number).
+
+   This routine is used for better error handling. Currently, field ranges must be
+   either entirely numeric or entirely named. This is primarily to catch unintended
+   used of a mixed range on the command line.
+
+   $(ALWAYS_DOCUMENT)
+ */
+private bool isMixedNumericNamedFieldGroup(const char[] fieldGroup) @safe
+{
+    return cast(bool) fieldGroup.matchFirst(ctRegex!`^((.*[^0-9].*\-[0-9]+)|([0-9]+\-.*[^0-9].*))$`);
+}
+
+@safe unittest
+{
+    assert(isMixedNumericNamedFieldGroup(`1-g`));
+    assert(isMixedNumericNamedFieldGroup(`y-2`));
+    assert(isMixedNumericNamedFieldGroup(`23-zy`));
+    assert(isMixedNumericNamedFieldGroup(`pB-37`));
+    assert(isMixedNumericNamedFieldGroup(`18-23t`));
+    assert(isMixedNumericNamedFieldGroup(`x12-632`));
+    assert(isMixedNumericNamedFieldGroup(`15-15.5`));
+    assert(!isMixedNumericNamedFieldGroup(`a-c`));
+    assert(!isMixedNumericNamedFieldGroup(`1-3`));
+    assert(!isMixedNumericNamedFieldGroup(`\1-g`));
+    assert(!isMixedNumericNamedFieldGroup(`-g`));
+    assert(!isMixedNumericNamedFieldGroup(`h-`));
+    assert(!isMixedNumericNamedFieldGroup(`-`));
+    assert(!isMixedNumericNamedFieldGroup(``));
+    assert(!isMixedNumericNamedFieldGroup(`\10-\20`));
+    assert(!isMixedNumericNamedFieldGroup(`x`));
+    assert(!isMixedNumericNamedFieldGroup(`xyz`));
+    assert(!isMixedNumericNamedFieldGroup(`0`));
+    assert(!isMixedNumericNamedFieldGroup(`9`));
 }
 
 /**
