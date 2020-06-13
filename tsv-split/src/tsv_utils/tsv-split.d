@@ -223,12 +223,11 @@ struct TsvSplitOptions
 
     string programName;                        /// Program name
     InputSourceRange inputSources;             /// Input files
-    bool helpVerbose = false;                  /// --help-verbose
     bool headerInOut = false;                  /// --H|header
     bool headerIn = false;                     /// --I|header-in-only
     size_t linesPerFile = 0;                   /// --l|lines-per-file
     uint numFiles = 0;                         /// --n|num-files
-    size_t[] keyFields;                        /// --k|key-fields
+    size_t[] keyFields;                        /// Derived: --k|key-fields
     string dir;                                /// --dir
     string prefix = "part_";                   /// --prefix
     string suffix = invalidFileSuffix;         /// --suffix
@@ -238,7 +237,6 @@ struct TsvSplitOptions
     uint seedValueOptionArg = 0;               /// --v|seed-value
     char delim = '\t';                         /// --d|delimiter
     uint maxOpenFilesArg = 0;                  /// --max-open-files
-    bool versionWanted = false;                /// --V|version
     bool hasHeader = false;                    /// Derived. True if either '--H|header' or '--I|header-in-only' is set.
     bool keyIsFullLine = false;                /// Derived. True if '--f|fields 0' is specfied.
     bool usingUnpredictableSeed = true;        /// Derived from --static-seed, --seed-value
@@ -265,12 +263,19 @@ struct TsvSplitOptions
     auto processArgs(ref string[] cmdArgs)
     {
         import std.algorithm : all, canFind, each, min;
+        import std.conv : to;
         import std.file : exists, isDir;
         import std.getopt;
         import std.math : isNaN;
         import std.path : baseName, expandTilde, extension, stripExtension;
         import std.typecons : Yes, No;
-        import tsv_utils.common.fieldlist : makeFieldListOptionHandler;
+        import tsv_utils.common.fieldlist;
+
+        bool helpVerbose = false;                  // --help-verbose
+        bool versionWanted = false;                // --V|version
+        string keyFieldsArg;                       // --k|key-fields
+
+        string keyFieldsOptionString = "k|key-fields";
 
         programName = (cmdArgs.length > 0) ? cmdArgs[0].stripExtension.baseName : "Unknown_program_name";
 
@@ -288,8 +293,13 @@ struct TsvSplitOptions
 
                 "l|lines-per-file", "NUM  Number of lines to write to each output file (excluding the header line).", &linesPerFile,
                 "n|num-files",      "NUM  Number of output files to generate.", &numFiles,
-                "k|key-fields",     "<field-list>  Fields to use as key. Lines with the same key are written to the same output file. Use '--k|key-fields 0' to use the entire line as the key.",
-                keyFields.makeFieldListOptionHandler!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero),
+
+                //"k|key-fields",     "<field-list>  Fields to use as key. Lines with the same key are written to the same output file. Use '--k|key-fields 0' to use the entire line as the key.",
+                //keyFields.makeFieldListOptionHandler!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero),
+
+                keyFieldsOptionString,
+                "<field-list>  Fields to use as key. Lines with the same key are written to the same output file. Use '--k|key-fields 0' to use the entire line as the key.",
+                &keyFieldsArg,
 
                 "dir",              "STR  Directory to write to. Default: Current working directory.", &dir,
                 "prefix",           "STR  Filename prefix. Default: 'part_'", &prefix,
@@ -328,9 +338,22 @@ struct TsvSplitOptions
                 return tuple(false, 0);
             }
 
-            /*
-             * Validation and derivations.
+            /* Remaining command line args are files.
              */
+            string[] filepaths = (cmdArgs.length > 1) ? cmdArgs[1 .. $] : ["-"];
+            cmdArgs.length = 1;
+
+            /* Validation and derivations - Do as much validation prior to header line
+             * processing as possible (avoids waiting on stdin).
+             *
+             * Note: keyFields depends on header line processing, but keyFieldsArg
+             * can be used to detect whether the command line argument was specified.
+             */
+
+            enforce(!(headerInOut && headerIn),
+                    "Use only one of '--H|header' and '--I|header-in-only'.");
+
+            hasHeader = headerInOut || headerIn;
 
             enforce(linesPerFile != 0 || numFiles != 0,
                     "Either '--l|lines-per-file' or '--n|num-files' is required.");
@@ -338,30 +361,10 @@ struct TsvSplitOptions
             enforce(linesPerFile == 0 || numFiles == 0,
                     "'--l|lines-per-file' and '--n|num-files' cannot be used together.");
 
-            enforce(linesPerFile == 0 || keyFields.length == 0,
+            enforce(linesPerFile == 0 || keyFieldsArg.length == 0,
                     "'--l|lines-per-file' and '--k|key-fields' cannot be used together.");
 
             enforce(numFiles != 1, "'--n|num-files must be two or more.");
-
-            if (keyFields.length > 0)
-            {
-                if (keyFields.length == 1 && keyFields[0] == 0)
-                {
-                    keyIsFullLine = true;
-                }
-                else
-                {
-                    enforce(keyFields.all!(x => x != 0),
-                            "Whole line as key (--k|key-fields 0) cannot be combined with multiple fields.");
-
-                    keyFields.each!((ref x) => --x);  // Convert to zero-based indexing.
-                }
-            }
-
-            enforce(!(headerInOut && headerIn),
-                    "Use only one of '--H|header' and '--I|header-in-only'.");
-
-            hasHeader = headerInOut || headerIn;
 
             if (!dir.empty)
             {
@@ -395,7 +398,6 @@ struct TsvSplitOptions
             immutable uint numReservedOpenFiles = 4;
             immutable uint rlimitOpenFilesLimit = rlimitCurrOpenFilesLimit();
 
-
             enforce(maxOpenFilesArg == 0 || maxOpenFilesArg > numReservedOpenFiles,
                     format("'--max-open-files' must be at least %d.",
                            numReservedOpenFiles + 1));
@@ -422,13 +424,6 @@ struct TsvSplitOptions
             assert(openFilesLimit > numReservedOpenFiles);
 
             maxOpenOutputFiles = openFilesLimit - numReservedOpenFiles;
-
-            /* Remaining command line args are files.
-             */
-            string[] filepaths = (cmdArgs.length > 1) ? cmdArgs[1 .. $] : ["-"];
-            cmdArgs.length = 1;
-            ReadHeader readHeader = hasHeader ? Yes.readHeader : No.readHeader;
-            inputSources = inputSourceRange(filepaths, readHeader);
 
             /* Suffix - If not provided, use the extension of the first input file.
              * No suffix if reading from standard input.
@@ -472,6 +467,41 @@ struct TsvSplitOptions
                 }
             }
             assert(digitWidth != 0);
+
+            /*
+             * Create the inputSourceRange and perform header line processing.
+             */
+            ReadHeader readHeader = hasHeader ? Yes.readHeader : No.readHeader;
+            inputSources = inputSourceRange(filepaths, readHeader);
+
+            string[] headerFields;
+
+            if (hasHeader) headerFields = inputSources.front.header.split(delim).to!(string[]);
+
+            if (!keyFieldsArg.empty)
+            {
+                keyFields =
+                    keyFieldsArg
+                    .parseFieldList!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero)
+                    (hasHeader, headerFields, keyFieldsOptionString)
+                    .array;
+            }
+
+            if (keyFields.length > 0)
+            {
+                if (keyFields.length == 1 && keyFields[0] == 0)
+                {
+                    keyIsFullLine = true;
+                }
+                else
+                {
+                    enforce(keyFields.all!(x => x != 0),
+                            "Whole line as key (--k|key-fields 0) cannot be combined with multiple fields.");
+
+                    keyFields.each!((ref x) => --x);  // Convert to zero-based indexing.
+                }
+            }
+
         }
         catch (Exception exc)
         {
@@ -495,7 +525,7 @@ unittest
     import std.path : buildPath;
 
     /* A dummy file is used so we don't have to worry about the cases where command
-     * line processing might open a file. Don't want to use stanard input for this,
+     * line processing might open a file. Don't want to use standard input for this,
      * at least in cases where it might try to read to get the header line.
      */
     auto testDir = makeUnittestTempDir("tsv_split_bylinecount");
@@ -577,7 +607,7 @@ unittest
     }
 
     /* In these tests, don't use headers and when files are listed, use 'somefile_txt' first.
-     * This make sure there is no attempt to read standard input and that there won't be an
+     * This makes sure there is no attempt to read standard input and that there won't be an
      * open failure trying to find a file.
      */
     testSuffix(["unittest", "-n", "2"], "");
