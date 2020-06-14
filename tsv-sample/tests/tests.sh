@@ -43,6 +43,7 @@ runtest ${prog} "--header --static-seed --compatibility-mode input3x10.tsv input
 runtest ${prog} "-H -s --print-random input3x10.tsv input3x25.tsv" ${basic_tests_1}
 runtest ${prog} "-H -s --print-random --weight-field 3 input3x10.tsv input3x25.tsv" ${basic_tests_1}
 runtest ${prog} "-H -s --print-random -w 3 --num 15 input3x10.tsv input3x25.tsv" ${basic_tests_1}
+runtest ${prog} "-H -s --print-random -w weight --num 15 input3x10.tsv input3x25.tsv" ${basic_tests_1}
 runtest ${prog} "-H -s --print-random -n 15 input3x10.tsv input3x25.tsv" ${basic_tests_1}
 runtest ${prog} "-H -s -n 100  --compatibility-mode input3x10.tsv input3x25.tsv" ${basic_tests_1}
 runtest ${prog} "-H -s --gen-random-inorder --weight-field 3 input3x10.tsv input3x25.tsv" ${basic_tests_1}
@@ -52,6 +53,7 @@ runtest ${prog} "-H -s --gen-random-inorder -n 15 input3x10.tsv input3x25.tsv" $
 runtest ${prog} "-H -s --inorder -n 15 --compatibility-mode input3x10.tsv input3x25.tsv" ${basic_tests_1}
 runtest ${prog} "-H -s --inorder -n 15 --prefer-algorithm-r input3x10.tsv input3x25.tsv" ${basic_tests_1}
 runtest ${prog} "-H -s --inorder -n 15 --weight-field 3 input3x10.tsv input3x25.tsv" ${basic_tests_1}
+runtest ${prog} "-H -s --inorder -n 15 --weight-field weight input3x10.tsv input3x25.tsv" ${basic_tests_1}
 
 # Bernoulli sampling
 runtest ${prog} "-H -s --prob 1.0 --print-random input3x10.tsv input3x25.tsv" ${basic_tests_1}
@@ -67,7 +69,9 @@ runtest ${prog} "-s --r input2x5_noheader.tsv --num 7 --compatibility-mode" ${ba
 
 # Distinct Sampling
 runtest ${prog} "-H -s --prob .25 -k 3,1 input4x50.tsv input4x15.tsv" ${basic_tests_1}
+runtest ${prog} "-H -s --prob .25 -k c\-3,c\-1 input4x50.tsv input4x15.tsv" ${basic_tests_1}
 runtest ${prog} "-H -s --prob .25 -k 3,1 --inorder input4x50.tsv input4x15.tsv" ${basic_tests_1}
+runtest ${prog} "-H -s --prob .25 -k c\-3,c\-1 --inorder input4x50.tsv input4x15.tsv" ${basic_tests_1}
 runtest ${prog} "-H -s -p .25 -k 1,3 input4x50.tsv input4x15.tsv" ${basic_tests_1}
 runtest ${prog} "-H -s -p .25 -k 1,1 input4x50.tsv input4x15.tsv" ${basic_tests_1}
 runtest ${prog} "-H -s -p .25 --key-fields 1 input4x50.tsv input4x15.tsv" ${basic_tests_1}
@@ -78,6 +82,7 @@ runtest ${prog} "-s -p 1 -k 3,1 input4x50.tsv input4x15.tsv" ${basic_tests_1}
 runtest ${prog} "-H -s -p .2 -k 3 --print-random input4x50.tsv input4x15.tsv" ${basic_tests_1}
 runtest ${prog} "-H -s -p .2 -k 3 --print-random -n 5 input4x50.tsv input4x15.tsv" ${basic_tests_1}
 runtest ${prog} "-H -s -p .2 -k 3 --gen-random-inorder -n 10 input4x50.tsv input4x15.tsv" ${basic_tests_1}
+runtest ${prog} "-H -s -p .2 -k c\-3 --gen-random-inorder -n 10 input4x50.tsv input4x15.tsv" ${basic_tests_1}
 
 runtest ${prog} "--static-seed --compatibility-mode input2x10_noheader.tsv input2x5_noheader.tsv" ${basic_tests_1}
 runtest ${prog} "-s --print-random input2x10_noheader.tsv input2x5_noheader.tsv" ${basic_tests_1}
@@ -94,6 +99,7 @@ runtest ${prog} "--delimiter @ -H --static-seed --compatibility-mode input2x7_at
 runtest ${prog} "-d @ -H -s --print-random input2x7_atsign.tsv" ${basic_tests_1}
 runtest ${prog} "-d @ -H -s --print-random -w 2 input2x7_atsign.tsv" ${basic_tests_1}
 runtest ${prog} "-d @ -H -s --print-random -w 2 -n 3 input2x7_atsign.tsv" ${basic_tests_1}
+runtest ${prog} "-d @ -H -s --print-random -w weight -n 3 input2x7_atsign.tsv" ${basic_tests_1}
 runtest ${prog} "-d @ -H -s --print-random -n 20 input2x7_atsign.tsv" ${basic_tests_1}
 runtest ${prog} "-d @ -H -s --print-random --prob 1.0 input2x7_atsign.tsv" ${basic_tests_1}
 
@@ -128,6 +134,8 @@ cat input3x3.tsv | ${prog} -s --compatibility-mode -- input3x4.tsv - >> ${basic_
 echo "" >> ${basic_tests_1}; echo "====[cat input3x10.tsv tsv-sample -H -s -w 3 --compatibility-mode -- input3x3.tsv - input3x4.tsv]====" >> ${basic_tests_1}
 cat input3x10.tsv | ${prog} -H -s -w 3 --compatibility-mode -- input3x3.tsv - input3x4.tsv >> ${basic_tests_1} 2>&1
 
+echo "" >> ${basic_tests_1}; echo "====[cat input3x10.tsv tsv-sample -H -s -w weight --compatibility-mode -- input3x3.tsv - input3x4.tsv]====" >> ${basic_tests_1}
+cat input3x10.tsv | ${prog} -H -s -w weight --compatibility-mode -- input3x3.tsv - input3x4.tsv >> ${basic_tests_1} 2>&1
 
 echo "" >> ${basic_tests_1}; echo "====[cat input3x10.tsv tsv-sample -H -s --replace --num 10 --compatibility-mode]====" >> ${basic_tests_1}
 cat input3x10.tsv | ${prog} -H -s --replace --num 10 --compatibility-mode >> ${basic_tests_1} 2>&1
@@ -194,9 +202,14 @@ runtest ${prog} "no_such_file.tsv" ${error_tests}
 runtest ${prog} "--no-such-param input3x25.tsv" ${error_tests}
 runtest ${prog} "-d ß input3x25.tsv" ${error_tests}
 runtest ${prog} "-H -w 11 input3x25.tsv" ${error_tests}
+runtest ${prog} "-H -w 0 input3x25.tsv" ${error_tests}
+runtest ${prog} "-H -w no_such_field input3x25.tsv" ${error_tests}
+runtest ${prog} "-w weight input3x25.tsv" ${error_tests}
 runtest ${prog} "-H -w 3 input3x25_dos.tsv" ${error_tests}
+runtest ${prog} "-H -w weight input3x25_dos.tsv" ${error_tests}
 runtest ${prog} "-w 1 input2x5_noheader_dos.tsv" ${error_tests}
 runtest ${prog} "--prob 0.5 --weight-field 3 input3x25.tsv" ${error_tests}
+runtest ${prog} "--prob 0.5 --weight-field 0 input3x25.tsv" ${error_tests}
 runtest ${prog} "--prob 0 input3x25.tsv" ${error_tests}
 runtest ${prog} "--prob 1.00001 input3x25.tsv" ${error_tests}
 runtest ${prog} "-p .1 -k 0,1 input4x50.tsv input4x15.tsv" ${error_tests}
@@ -208,6 +221,7 @@ runtest ${prog} "-p 0.5 -v -10 -k 1 input4x50.tsv input4x15.tsv" ${error_tests}
 runtest ${prog} "-k 1 input4x50.tsv input4x15.tsv" ${error_tests}
 runtest ${prog} "-p 0.5 -k 5 input4x50.tsv input4x15.tsv" ${error_tests}
 runtest ${prog} "-H -p 0.5 -k 5 input4x50.tsv input4x15.tsv" ${error_tests}
+runtest ${prog} "-H -p 0.5 -k no_such_field input4x50.tsv input4x15.tsv" ${error_tests}
 runtest ${prog} "-p 0.05 -k 1 --compatibility-mode input3x25.tsv" ${error_tests}
 runtest ${prog} "-H -p 0.5 --gen-random-inorder input4x50.tsv input4x15.tsv" ${error_tests}
 runtest ${prog} "-H --gen-random-inorder -d , --random-value-header abc,def input3x25.tsv" ${error_tests}

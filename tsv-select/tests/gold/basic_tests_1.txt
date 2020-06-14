@@ -1312,6 +1312,22 @@ field3
 13888
 23888
 
+====[tsv-select -H input_header_variants.tsv -f '濡れ羽色,ab\*56,ab.56,ab\,56,ab/56,ab\56,ab\-56,ab\ 56,ab\:56,56\*7,56.7,56\,7,56/7,56\7,56\-7,56\ 7,56\:7,\01,\1,ab\*c,ab\.c,ab\,c,ab/c,ab\c,ab\-c,ab\ c,ab\:c']===
+濡れ羽色	ab*56	ab.56	ab,56	ab/56	ab\56	ab-56	ab 56	ab:56	56*7	56.7	56,7	56/7	56\7	56-7	56 7	56:7	01	1	ab*c	ab.c	ab,c	ab/c	ab\c	ab-c	ab c	ab:c
+r1c26	r1c25	r1c24	r1c23	r1c22	r1c21	r1c20	r1c19	r1c18	r1c17	r1c16	r1c15	r1c14	r1c13	r1c12	r1c11	r1c10	r1c9	r1c8	r1c7	r1c6	r1c5	r1c4	r1c3	r1c2	r1c1	r1c0
+
+====[tsv-select -H input_header_variants.tsv -f '濡れ羽色-ab\:c']===
+濡れ羽色	ab*56	ab.56	ab,56	ab/56	ab\56	ab-56	ab 56	ab:56	56*7	56.7	56,7	56/7	56\7	56-7	56 7	56:7	01	1	ab*c	ab.c	ab,c	ab/c	ab\c	ab-c	ab c	ab:c
+r1c26	r1c25	r1c24	r1c23	r1c22	r1c21	r1c20	r1c19	r1c18	r1c17	r1c16	r1c15	r1c14	r1c13	r1c12	r1c11	r1c10	r1c9	r1c8	r1c7	r1c6	r1c5	r1c4	r1c3	r1c2	r1c1	r1c0
+
+====[tsv-select -H input_header_variants.tsv -f 'ab\-56-56\-7,ab\,c,ab\-c]===
+ab-56	ab 56	ab:56	56*7	56.7	56,7	56/7	56\7	56-7	ab,c	ab-c
+r1c20	r1c19	r1c18	r1c17	r1c16	r1c15	r1c14	r1c13	r1c12	r1c5	r1c2
+
+====[tsv-select -H input_header_variants.tsv -f '濡れ羽色-ab\*56,ab.56-ab\,56,ab/56-ab\56,ab\-56-ab\ 56,ab\:56-56\*7,56.7-56\,7,56/7-56\7,56\-7-56\ 7,56\:7-\01,\1-ab\*c,ab\.c-ab\,c,ab/c-ab\c,ab\-c-ab\ c,ab\:c']===
+濡れ羽色	ab*56	ab.56	ab,56	ab/56	ab\56	ab-56	ab 56	ab:56	56*7	56.7	56,7	56/7	56\7	56-7	56 7	56:7	01	1	ab*c	ab.c	ab,c	ab/c	ab\c	ab-c	ab c	ab:c
+r1c26	r1c25	r1c24	r1c23	r1c22	r1c21	r1c20	r1c19	r1c18	r1c17	r1c16	r1c15	r1c14	r1c13	r1c12	r1c11	r1c10	r1c9	r1c8	r1c7	r1c6	r1c5	r1c4	r1c3	r1c2	r1c1	r1c0
+
 Help and Version printing 1
 -----------------
 
