@@ -55,7 +55,7 @@ input1x3.txt: line 3
 [tsv-split] Error processing command line arguments: '--n|num-files must be two or more.
 
 ====[tsv-split -n 2 -k 1.5 input4x58.tsv]====
-[tsv-split] Error processing command line arguments: [--k|key-fields] Unexpected '.' when converting from type string to type ulong
+[tsv-split] Error processing command line arguments: [--k|key-fields] Non-numeric field group: '1.5'. Use '--H|header' when using named field groups.
 
 ====[tsv-split -n 2 -k 0,1 input4x58.tsv]====
 [tsv-split] Error processing command line arguments: Whole line as key (--k|key-fields 0) cannot be combined with multiple fields.
@@ -95,6 +95,15 @@ Error [tsv-split]: Not enough fields in line. File: input4x58.tsv, Line: 1
 
 ====[tsv-split -n 2 --suffix ab/cd input4x58.tsv]====
 [tsv-split] Error processing command line arguments: '--suffix' cannot contain forward slash characters. Use '--dir' to specify an output directory.
+
+====[tsv-split -n 2 --key-fields c\-1 input4x58.tsv]====
+[tsv-split] Error processing command line arguments: [--k|key-fields] Non-numeric field group: 'c\-1'. Use '--H|header' when using named field groups.
+
+====[tsv-split -n 2 -H --key-fields c-1 input4x58.tsv]====
+[tsv-split] Error processing command line arguments: [--k|key-fields] Ranges with both numeric and named components are not supported: 'c-1'.
+
+====[tsv-split -n 2 -I --key-fields c-1 input4x58.tsv]====
+[tsv-split] Error processing command line arguments: [--k|key-fields] Ranges with both numeric and named components are not supported: 'c-1'.
 
 ====[ulimit -Sn 5 && tsv-split -s -n 101 -k 3 --max-open-files 6 ../input4x58.tsv]====
 [tsv-split] Error processing command line arguments: '--max-open-files' value (6) greater current system limit (5).

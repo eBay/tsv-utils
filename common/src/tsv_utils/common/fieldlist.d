@@ -1340,6 +1340,10 @@ private bool isNumericFieldGroupWithHyphenFirstOrLast(const char[] fieldGroup) @
     assert(isNumericFieldGroupWithHyphenFirstOrLast(`1-`));
     assert(isNumericFieldGroupWithHyphenFirstOrLast(`12-`));
     assert(!isNumericFieldGroupWithHyphenFirstOrLast(`-1333-`));
+    assert(!isNumericFieldGroupWithHyphenFirstOrLast(`\-1`));
+    assert(!isNumericFieldGroupWithHyphenFirstOrLast(`\-12`));
+    assert(!isNumericFieldGroupWithHyphenFirstOrLast(`1\-`));
+    assert(!isNumericFieldGroupWithHyphenFirstOrLast(`12\-`));
 }
 
 /**
@@ -1354,7 +1358,22 @@ private bool isNumericFieldGroupWithHyphenFirstOrLast(const char[] fieldGroup) @
  */
 private bool isMixedNumericNamedFieldGroup(const char[] fieldGroup) @safe
 {
-    return cast(bool) fieldGroup.matchFirst(ctRegex!`^((.*[^0-9].*\-[0-9]+)|([0-9]+\-.*[^0-9].*))$`);
+    /* Patterns cases:
+     * - Field group starts with a series of digits followed by a hyphen, followed
+     *   sequence containing a non-digit character.
+     *      ^([0-9]+\-.*[^0-9].*)$
+     * - Field ends with an unescaped hyphen and a series of digits. Two start cases:
+     *   - Non-digit, non-backslash immediately preceding the hyphen
+     *     ^(.*[^0-9\\]\-[0-9]+)$
+     *   - Digit immediately preceding the hyphen, non-hyphen earlier
+     *     ^(.*[^0-9].*[0-9]\-[0-9]+)$
+     *   These two combined:
+     *     ^( ( (.*[^0-9\\]) | (.*[^0-9].*[0-9]) ) \-[0-9]+ )$
+     *
+     * All cases combined:
+     *   ^( ([0-9]+\-.*[^0-9].*) | ( (.*[^0-9\\]) | (.*[^0-9].*[0-9]) ) \-[0-9]+)$
+     */
+    return cast(bool) fieldGroup.matchFirst(ctRegex!`^(([0-9]+\-.*[^0-9].*)|((.*[^0-9\\])|(.*[^0-9].*[0-9]))\-[0-9]+)$`);
 }
 
 @safe unittest
@@ -1363,9 +1382,25 @@ private bool isMixedNumericNamedFieldGroup(const char[] fieldGroup) @safe
     assert(isMixedNumericNamedFieldGroup(`y-2`));
     assert(isMixedNumericNamedFieldGroup(`23-zy`));
     assert(isMixedNumericNamedFieldGroup(`pB-37`));
+
+    assert(isMixedNumericNamedFieldGroup(`5x-0`));
+    assert(isMixedNumericNamedFieldGroup(`x5-9`));
+    assert(isMixedNumericNamedFieldGroup(`0-2m`));
+    assert(isMixedNumericNamedFieldGroup(`9-m2`));
+    assert(isMixedNumericNamedFieldGroup(`5x-37`));
+    assert(isMixedNumericNamedFieldGroup(`x5-37`));
+    assert(isMixedNumericNamedFieldGroup(`37-2m`));
+    assert(isMixedNumericNamedFieldGroup(`37-m2`));
+
     assert(isMixedNumericNamedFieldGroup(`18-23t`));
     assert(isMixedNumericNamedFieldGroup(`x12-632`));
     assert(isMixedNumericNamedFieldGroup(`15-15.5`));
+
+    assert(isMixedNumericNamedFieldGroup(`1-g\-h`));
+    assert(isMixedNumericNamedFieldGroup(`z\-y-2`));
+    assert(isMixedNumericNamedFieldGroup(`23-zy\-st`));
+    assert(isMixedNumericNamedFieldGroup(`ts\-pB-37`));
+
     assert(!isMixedNumericNamedFieldGroup(`a-c`));
     assert(!isMixedNumericNamedFieldGroup(`1-3`));
     assert(!isMixedNumericNamedFieldGroup(`\1-g`));
@@ -1373,11 +1408,41 @@ private bool isMixedNumericNamedFieldGroup(const char[] fieldGroup) @safe
     assert(!isMixedNumericNamedFieldGroup(`h-`));
     assert(!isMixedNumericNamedFieldGroup(`-`));
     assert(!isMixedNumericNamedFieldGroup(``));
+    assert(!isMixedNumericNamedFieldGroup(`\2-\3`));
     assert(!isMixedNumericNamedFieldGroup(`\10-\20`));
     assert(!isMixedNumericNamedFieldGroup(`x`));
     assert(!isMixedNumericNamedFieldGroup(`xyz`));
     assert(!isMixedNumericNamedFieldGroup(`0`));
     assert(!isMixedNumericNamedFieldGroup(`9`));
+
+    assert(!isMixedNumericNamedFieldGroup(`1\-g`));
+    assert(!isMixedNumericNamedFieldGroup(`y\-2`));
+    assert(!isMixedNumericNamedFieldGroup(`23\-zy`));
+    assert(!isMixedNumericNamedFieldGroup(`pB\-37`));
+    assert(!isMixedNumericNamedFieldGroup(`18\-23t`));
+    assert(!isMixedNumericNamedFieldGroup(`x12\-632`));
+
+    assert(!isMixedNumericNamedFieldGroup(`5x\-0`));
+    assert(!isMixedNumericNamedFieldGroup(`x5\-9`));
+    assert(!isMixedNumericNamedFieldGroup(`0\-2m`));
+    assert(!isMixedNumericNamedFieldGroup(`9\-m2`));
+    assert(!isMixedNumericNamedFieldGroup(`5x\-37`));
+    assert(!isMixedNumericNamedFieldGroup(`x5\-37`));
+    assert(!isMixedNumericNamedFieldGroup(`37\-2m`));
+    assert(!isMixedNumericNamedFieldGroup(`37\-m2`));
+
+    assert(!isMixedNumericNamedFieldGroup(`1\-g\-h`));
+    assert(!isMixedNumericNamedFieldGroup(`z\-y\-2`));
+    assert(!isMixedNumericNamedFieldGroup(`23\-zy\-st`));
+    assert(!isMixedNumericNamedFieldGroup(`ts\-pB\-37`));
+
+    assert(!isMixedNumericNamedFieldGroup(`\-g`));
+    assert(!isMixedNumericNamedFieldGroup(`h\-`));
+    assert(!isMixedNumericNamedFieldGroup(`i\-j`));
+    assert(!isMixedNumericNamedFieldGroup(`\-2`));
+    assert(!isMixedNumericNamedFieldGroup(`2\-`));
+    assert(!isMixedNumericNamedFieldGroup(`2\-3`));
+    assert(!isMixedNumericNamedFieldGroup(`\2\-\3`));
 }
 
 /**

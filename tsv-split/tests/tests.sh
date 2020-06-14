@@ -353,6 +353,9 @@ runtest_wdir ${prog} "-s -n 17 -k 1,3 ${testdir_relpath}/input4x58.tsv" ${key_as
 runtest_wdir ${prog} "-s -n 101 -k 1,3 ${testdir_relpath}/input4x58.tsv" ${key_assignment_tests}
 runtest_wdir ${prog} "-s -n 2 -k 1,3,4 ${testdir_relpath}/input4x58.tsv" ${key_assignment_tests}
 
+runtest_wdir ${prog} "--header -s -n 2 -k c\-3 ${testdir_relpath}/input4x58.tsv" ${key_assignment_tests}
+runtest_wdir ${prog} "-H -s -n 2 -k c\-1,c\-3,c\-4 ${testdir_relpath}/input4x58.tsv" ${key_assignment_tests}
+
 runtest_wdir ${prog} "--seed-value 15017 --num-files 2 --key-fields 1 ${testdir_relpath}/input4x58.tsv" ${key_assignment_tests}
 runtest_wdir ${prog} "-v 15017 -n 101 -k 3 ${testdir_relpath}/input4x58.tsv" ${key_assignment_tests}
 
@@ -364,6 +367,7 @@ runtest_wdir ${prog} "-H -v 15017 -n 101 -k 1,3 ${testdir_relpath}/input4x58.tsv
 
 runtest_wdir ${prog} "--header-in-only --static-seed --num-files 2 --key-fields 1 ${testdir_relpath}/input4x58.tsv" ${key_assignment_tests}
 runtest_wdir ${prog} "-I -s -n 11 -k 3 ${testdir_relpath}/input4x58.tsv" ${key_assignment_tests}
+runtest_wdir ${prog} "-I -s -n 11 -k c\-3 ${testdir_relpath}/input4x58.tsv" ${key_assignment_tests}
 runtest_wdir ${prog} "-I -s -n 101 -k 1,3 ${testdir_relpath}/input4x58.tsv" ${key_assignment_tests}
 runtest_wdir ${prog} "-I -v 15017 -n 101 -k 1,3 ${testdir_relpath}/input4x58.tsv ${testdir_relpath}/input4x18.tsv" ${key_assignment_tests}
 
@@ -459,6 +463,9 @@ runtest ${prog} "-l 10 -n 3 -k 1 input4x58.tsv" ${error_tests_1}
 runtest ${prog} "-l 10 --header --header-in-only input4x58.tsv" ${error_tests_1}
 runtest ${prog} "-n 2 --prefix dir/file input4x58.tsv" ${error_tests_1}
 runtest ${prog} "-n 2 --suffix ab/cd input4x58.tsv" ${error_tests_1}
+runtest ${prog} "-n 2 --key-fields c\-1 input4x58.tsv" ${error_tests_1}
+runtest ${prog} "-n 2 -H --key-fields c-1 input4x58.tsv" ${error_tests_1}
+runtest ${prog} "-n 2 -I --key-fields c-1 input4x58.tsv" ${error_tests_1}
 runtest_wdir_ulimit ${prog} "-s -n 101 -k 3 --max-open-files 6 ${testdir_relpath}/input4x58.tsv" ${error_tests_1} 5
 runtest_wdir_ulimit ${prog} "-s -n 101 -k 3 ${testdir_relpath}/input4x58.tsv" ${error_tests_1} 4
 runtest_wdir_append ${prog} "-l 3" ${error_tests_1} ${testdir_relpath}/input1x5.txt ${testdir_relpath}/input1x5.txt
