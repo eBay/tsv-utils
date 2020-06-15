@@ -439,58 +439,70 @@ struct TsvSampleOptions
             else if (staticSeed) seed = 2438424139;
             else assert(0, "Internal error, invalid seed option states.");
 
+            string[] headerFields;
+
+            /* FieldListArgProcessing encapsulates the field list processing. It is
+             * called prior to reading the header line if headers are not being used,
+             * and after if headers are being used.
+             */
+            void fieldListArgProcessing()
+            {
+                if (!weightFieldArg.empty)
+                {
+                    auto fieldIndices =
+                        weightFieldArg
+                        .parseFieldList!(size_t, Yes.convertToZeroBasedIndex, No.allowFieldNumZero)
+                        (hasHeader, headerFields, weightFieldOptionString)
+                        .array;
+
+                    enforce(fieldIndices.length == 1,
+                            format("'--%s' must be a single field.", weightFieldOptionString));
+
+                    weightField = fieldIndices[0];
+                }
+
+                if (!keyFieldsArg.empty)
+                {
+                    keyFields =
+                        keyFieldsArg
+                        .parseFieldList!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero)
+                        (hasHeader, headerFields, keyFieldsOptionString)
+                        .array;
+
+                    assert(keyFields.length > 0);
+
+                    if (keyFields.length > 0)
+                    {
+                        if (keyFields.length == 1 && keyFields[0] == 0)
+                        {
+                            distinctKeyIsFullLine = true;
+                        }
+                        else
+                        {
+                            enforce(keyFields.length <= 1 || keyFields.all!(x => x != 0),
+                                    "Whole line as key (--k|key-fields 0) cannot be combined with multiple fields.");
+
+                            keyFields.each!((ref x) => --x);  // Convert to zero-based indexing.
+                        }
+                    }
+                }
+            }
+
+            if (!hasHeader) fieldListArgProcessing();
+
             /*
              * Create the inputSourceRange and perform header line processing.
              */
             ReadHeader readHeader = hasHeader ? Yes.readHeader : No.readHeader;
             inputSources = inputSourceRange(filepaths, readHeader);
 
-            string[] headerFields;
             if (hasHeader)
             {
                 throwIfWindowsNewlineOnUnix(inputSources.front.header, inputSources.front.name, 1);
                 headerFields = inputSources.front.header.split(delim).to!(string[]);
+                fieldListArgProcessing();
             }
 
-            if (!weightFieldArg.empty)
-            {
-                auto fieldIndices =
-                    weightFieldArg
-                    .parseFieldList!(size_t, Yes.convertToZeroBasedIndex, No.allowFieldNumZero)
-                    (hasHeader, headerFields, weightFieldOptionString)
-                    .array;
-
-                enforce(fieldIndices.length == 1,
-                        format("'--%s' must be a single field.", weightFieldOptionString));
-
-                weightField = fieldIndices[0];
-            }
-
-            if (!keyFieldsArg.empty)
-            {
-                keyFields =
-                    keyFieldsArg
-                    .parseFieldList!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero)
-                    (hasHeader, headerFields, keyFieldsOptionString)
-                    .array;
-
-                assert(keyFields.length > 0);
-
-                if (keyFields.length > 0)
-                {
-                    if (keyFields.length == 1 && keyFields[0] == 0)
-                    {
-                        distinctKeyIsFullLine = true;
-                    }
-                    else
-                    {
-                        enforce(keyFields.length <= 1 || keyFields.all!(x => x != 0),
-                                "Whole line as key (--k|key-fields 0) cannot be combined with multiple fields.");
-
-                        keyFields.each!((ref x) => --x);  // Convert to zero-based indexing.
-                    }
-                }
-            }
         }
         catch (Exception exc)
         {
