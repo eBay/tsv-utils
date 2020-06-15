@@ -190,6 +190,19 @@ runtest ${prog} "-H -e field1,field2,field3 input_header3.tsv input_header3.tsv 
 runtest ${prog} "-H -e *2 input_header3.tsv input_header3.tsv input_header1.tsv" ${basic_tests_1}
 runtest ${prog} "-H -e field1-field2 input_header1.tsv input_header2.tsv input_header3.tsv input_header4.tsv" ${basic_tests_1}
 
+## Named field tests: Header field escaping cases
+echo "" >> ${basic_tests_1}; echo "====[tsv-select -H input_header_variants.tsv -f '濡れ羽色,ab\*56,ab.56,ab\,56,ab/56,ab\\56,ab\-56,ab\ 56,ab\:56,56\*7,56.7,56\,7,56/7,56\\7,56\-7,56\ 7,56\:7,\01,\1,ab\*c,ab\.c,ab\,c,ab/c,ab\\c,ab\-c,ab\ c,ab\:c']===" >> ${basic_tests_1}
+${prog} -H input_header_variants.tsv -f '濡れ羽色,ab\*56,ab.56,ab\,56,ab/56,ab\\56,ab\-56,ab\ 56,ab\:56,56\*7,56.7,56\,7,56/7,56\\7,56\-7,56\ 7,56\:7,\01,\1,ab\*c,ab\.c,ab\,c,ab/c,ab\\c,ab\-c,ab\ c,ab\:c' >> ${basic_tests_1} 2>&1
+
+echo "" >> ${basic_tests_1}; echo "====[tsv-select -H input_header_variants.tsv -f '濡れ羽色-ab\:c']===" >> ${basic_tests_1}
+${prog} -H input_header_variants.tsv -f '濡れ羽色-ab\:c' >> ${basic_tests_1} 2>&1
+
+echo "" >> ${basic_tests_1}; echo "====[tsv-select -H input_header_variants.tsv -f 'ab\-56-56\-7,ab\,c,ab\-c]===" >> ${basic_tests_1}
+${prog} -H input_header_variants.tsv -f 'ab\-56-56\-7,ab\,c,ab\-c' >> ${basic_tests_1} 2>&1
+
+echo "" >> ${basic_tests_1}; echo "====[tsv-select -H input_header_variants.tsv -f '濡れ羽色-ab\*56,ab.56-ab\,56,ab/56-ab\\56,ab\-56-ab\ 56,ab\:56-56\*7,56.7-56\,7,56/7-56\\7,56\-7-56\ 7,56\:7-\01,\1-ab\*c,ab\.c-ab\,c,ab/c-ab\\c,ab\-c-ab\ c,ab\:c']===" >> ${basic_tests_1}
+${prog} -H input_header_variants.tsv -f '濡れ羽色-ab\*56,ab.56-ab\,56,ab/56-ab\\56,ab\-56-ab\ 56,ab\:56-56\*7,56.7-56\,7,56/7-56\\7,56\-7-56\ 7,56\:7-\01,\1-ab\*c,ab\.c-ab\,c,ab/c-ab\\c,ab\-c-ab\ c,ab\:c' >> ${basic_tests_1} 2>&1
+
 ## Help and Version printing
 
 echo "" >> ${basic_tests_1}

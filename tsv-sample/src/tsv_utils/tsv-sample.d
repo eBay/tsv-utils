@@ -207,12 +207,11 @@ struct TsvSampleOptions
 
     string programName;                        /// Program name
     InputSourceRange inputSources;             /// Input files
-    bool helpVerbose = false;                  /// --help-verbose
     bool hasHeader = false;                    /// --H|header
     ulong sampleSize = 0;                      /// --n|num - Size of the desired sample
     double inclusionProbability = double.nan;  /// --p|prob - Inclusion probability
-    size_t[] keyFields;                        /// --k|key-fields - Used with inclusion probability
-    size_t weightField = 0;                    /// --w|weight-field - Field holding the weight
+    size_t[] keyFields;                        /// Derived: --k|key-fields - Used with inclusion probability
+    size_t weightField = 0;                    /// Derived: --w|weight-field - Field holding the weight
     bool srsWithReplacement = false;           /// --r|replace
     bool preserveInputOrder = false;           /// --i|inorder
     bool staticSeed = false;                   /// --s|static-seed
@@ -222,7 +221,6 @@ struct TsvSampleOptions
     string randomValueHeader = "random_value"; /// --random-value-header
     bool compatibilityMode = false;            /// --compatibility-mode
     char delim = '\t';                         /// --d|delimiter
-    bool versionWanted = false;                /// --V|version
     bool preferSkipSampling = false;           /// --prefer-skip-sampling
     bool preferAlgorithmR = false;             /// --prefer-algorithm-r
     bool hasWeightField = false;               /// Derived.
@@ -252,12 +250,21 @@ struct TsvSampleOptions
     auto processArgs(ref string[] cmdArgs)
     {
         import std.algorithm : all, canFind, each;
+        import std.conv : to;
         import std.getopt;
         import std.math : isNaN;
         import std.path : baseName, stripExtension;
         import std.typecons : Yes, No;
-        import tsv_utils.common.utils : inputSourceRange, ReadHeader;
-        import tsv_utils.common.fieldlist : makeFieldListOptionHandler;
+        import tsv_utils.common.utils : inputSourceRange, ReadHeader, throwIfWindowsNewlineOnUnix;
+        import tsv_utils.common.fieldlist;
+
+        bool helpVerbose = false;                  // --help-verbose
+        bool versionWanted = false;                // --V|version
+        string keyFieldsArg;                       // --k|key-fields
+        string weightFieldArg;                     // --w|weight-field
+
+        string keyFieldsOptionString = "k|key-fields";
+        string weightFieldOptionString = "w|weight-field";
 
         programName = (cmdArgs.length > 0) ? cmdArgs[0].stripExtension.baseName : "Unknown_program_name";
 
@@ -275,10 +282,14 @@ struct TsvSampleOptions
                 "n|num",           "NUM  Maximum number of lines to output. All selected lines are output if not provided or zero.", &sampleSize,
                 "p|prob",          "NUM  Inclusion probability (0.0 < NUM <= 1.0). For Bernoulli sampling, the probability each line is selected output. For distinct sampling, the probability each unique key is selected for output.", &inclusionProbability,
 
-                "k|key-fields",    "<field-list>  Fields to use as key for distinct sampling. Use with '--p|prob'. Specify '--k|key-fields 0' to use the entire line as the key.",
-                keyFields.makeFieldListOptionHandler!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero),
+                keyFieldsOptionString,
+                "<field-list>  Fields to use as key for distinct sampling. Use with '--p|prob'. Specify '--k|key-fields 0' to use the entire line as the key.",
+                &keyFieldsArg,
 
-                "w|weight-field",  "NUM  Field containing weights. All lines get equal weight if not provided or zero.", &weightField,
+                weightFieldOptionString,
+                "NUM  Field containing weights. All lines get equal weight if not provided.",
+                &weightFieldArg,
+
                 "r|replace",       "     Simple random sampling with replacement. Use --n|num to specify the sample size.", &srsWithReplacement,
                 "i|inorder",       "     Output random samples in original input order. Requires use of --n|num.", &preserveInputOrder,
                 "s|static-seed",   "     Use the same random seed every run.", &staticSeed,
@@ -325,16 +336,21 @@ struct TsvSampleOptions
             /* Input files. Remaining command line args are files. */
             string[] filepaths = (cmdArgs.length > 1) ? cmdArgs[1 .. $] : ["-"];
             cmdArgs.length = 1;
-            ReadHeader readHeader = hasHeader ? Yes.readHeader : No.readHeader;
-            inputSources = inputSourceRange(filepaths, readHeader);
 
-            /* Derivations and validations. */
-            if (weightField > 0)
-            {
-                hasWeightField = true;
-                weightField--;    // Switch to zero-based indexes.
-            }
+            /* Validation and derivations - Do as much validation prior to header line
+             * processing as possible (avoids waiting on stdin).
+             *
+             * Note: keyFields and weightField depend on header line processing, but
+             * keyFieldsArg and weightFieldArg can be used to detect whether the
+             * command line argument was specified.
+             */
 
+            /* Set hasWeightField here so it can be used in other validation checks.
+             * Field validity checked after reading file header.
+             */
+            hasWeightField = !weightFieldArg.empty;
+
+            /* Sampling with replacement checks (--r|replace). */
             if (srsWithReplacement)
             {
                 enforce(!hasWeightField,
@@ -343,7 +359,7 @@ struct TsvSampleOptions
                 enforce(inclusionProbability.isNaN,
                         "Sampling with replacement (--r|replace) cannot be used with probabilities (--p|prob).");
 
-                enforce(keyFields.length == 0,
+                enforce(keyFieldsArg.empty,
                         "Sampling with replacement (--r|replace) cannot be used with distinct sampling (--k|key-fields).");
 
                 enforce(!printRandom && !genRandomInorder,
@@ -353,32 +369,19 @@ struct TsvSampleOptions
                         "Sampling with replacement (--r|replace) does not support input order preservation (--i|inorder option).");
             }
 
-            if (keyFields.length > 0)
-            {
-                /* Note: useDistinctSampling is set as part of the inclusion probability checks below. */
+            /* Distinct sampling checks (--k|key-fields --p|prob). */
+            enforce(keyFieldsArg.empty | !inclusionProbability.isNaN,
+                    "--p|prob is required when using --k|key-fields.");
 
-                enforce(!inclusionProbability.isNaN, "--p|prob is required when using --k|key-fields.");
-
-                if (keyFields.length == 1 && keyFields[0] == 0)
-                {
-                    distinctKeyIsFullLine = true;
-                }
-                else
-                {
-                    enforce(keyFields.length <= 1 || keyFields.all!(x => x != 0),
-                            "Whole line as key (--k|key-fields 0) cannot be combined with multiple fields.");
-
-                    keyFields.each!((ref x) => --x);  // Convert to zero-based indexing.
-                }
-            }
-
-            /* Inclusion probability (--p|prob) is used for both Bernoulli sampling and distinct sampling. */
+            /* Inclusion probability (--p|prob) is used for both Bernoulli sampling
+             * and distinct sampling.
+             */
             if (!inclusionProbability.isNaN)
             {
                 enforce(inclusionProbability > 0.0 && inclusionProbability <= 1.0,
                         format("Invalid --p|prob option: %g. Must satisfy 0.0 < prob <= 1.0.", inclusionProbability));
 
-                if (keyFields.length > 0) useDistinctSampling = true;
+                if (!keyFieldsArg.empty) useDistinctSampling = true;
                 else useBernoulliSampling = true;
 
                 enforce(!hasWeightField, "--w|weight-field and --p|prob cannot be used together.");
@@ -393,7 +396,10 @@ struct TsvSampleOptions
                 useBernoulliSampling = true;
             }
 
-            enforce(randomValueHeader.length != 0 && !randomValueHeader.canFind('\n') &&
+            /* randomValueHeader (--random-value-header) validity. Note that
+               randomValueHeader is initialized to a valid, non-empty string.
+            */
+            enforce(!randomValueHeader.empty && !randomValueHeader.canFind('\n') &&
                     !randomValueHeader.canFind(delim),
                     "--randomValueHeader must be at least one character and not contain field delimiters or newlines.");
 
@@ -408,6 +414,7 @@ struct TsvSampleOptions
                     useDistinctSampling,
                     "Preserving input order (--i|inorder) is not compatible with full data set shuffling. Switch to random sampling with a sample size (--n|num) to use --i|inorder.");
 
+
             /* Compatibility mode checks:
              * - Random value printing implies compatibility-mode, otherwise user's
              *   selection is used.
@@ -421,6 +428,7 @@ struct TsvSampleOptions
 
             if (printRandom || genRandomInorder) compatibilityMode = true;
 
+
             /* Seed. */
             import std.random : unpredictableSeed;
 
@@ -430,6 +438,59 @@ struct TsvSampleOptions
             else if (seedValueOptionArg != 0) seed = seedValueOptionArg;
             else if (staticSeed) seed = 2438424139;
             else assert(0, "Internal error, invalid seed option states.");
+
+            /*
+             * Create the inputSourceRange and perform header line processing.
+             */
+            ReadHeader readHeader = hasHeader ? Yes.readHeader : No.readHeader;
+            inputSources = inputSourceRange(filepaths, readHeader);
+
+            string[] headerFields;
+            if (hasHeader)
+            {
+                throwIfWindowsNewlineOnUnix(inputSources.front.header, inputSources.front.name, 1);
+                headerFields = inputSources.front.header.split(delim).to!(string[]);
+            }
+
+            if (!weightFieldArg.empty)
+            {
+                auto fieldIndices =
+                    weightFieldArg
+                    .parseFieldList!(size_t, Yes.convertToZeroBasedIndex, No.allowFieldNumZero)
+                    (hasHeader, headerFields, weightFieldOptionString)
+                    .array;
+
+                enforce(fieldIndices.length == 1,
+                        format("'--%s' must be a single field.", weightFieldOptionString));
+
+                weightField = fieldIndices[0];
+            }
+
+            if (!keyFieldsArg.empty)
+            {
+                keyFields =
+                    keyFieldsArg
+                    .parseFieldList!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero)
+                    (hasHeader, headerFields, keyFieldsOptionString)
+                    .array;
+
+                assert(keyFields.length > 0);
+
+                if (keyFields.length > 0)
+                {
+                    if (keyFields.length == 1 && keyFields[0] == 0)
+                    {
+                        distinctKeyIsFullLine = true;
+                    }
+                    else
+                    {
+                        enforce(keyFields.length <= 1 || keyFields.all!(x => x != 0),
+                                "Whole line as key (--k|key-fields 0) cannot be combined with multiple fields.");
+
+                        keyFields.each!((ref x) => --x);  // Convert to zero-based indexing.
+                    }
+                }
+            }
         }
         catch (Exception exc)
         {
@@ -2206,7 +2267,7 @@ unittest
     string fpath_dataEmpty = buildPath(testDir, "dataEmpty.tsv");
     writeUnittestTsvFile(fpath_dataEmpty, dataEmpty);
 
-    /* 3x1, header only. */
+    /* 3x0, header only. */
     string[][] data3x0 = [["field_a", "field_b", "field_c"]];
     string fpath_data3x0 = buildPath(testDir, "data3x0.tsv");
     writeUnittestTsvFile(fpath_data3x0, data3x0);
@@ -3273,11 +3334,15 @@ unittest
     testTsvSample(["test-a6", "-H", "-s", "--compatibility-mode", fpath_data3x6], data3x6ExpectedPermuteCompat);
     testTsvSample(["test-a7", "-H", "-s", "--print-random", fpath_data3x6], data3x6ExpectedPermuteCompatProbs);
     testTsvSample(["test-a8", "-H", "-s", "--weight-field", "3", fpath_data3x6], data3x6ExpectedPermuteWt3);
+    testTsvSample(["test-a8b", "-H", "-s", "--weight-field", "field_c", fpath_data3x6], data3x6ExpectedPermuteWt3);
     testTsvSample(["test-a9", "-H", "-s", "--print-random", "-w", "3", fpath_data3x6], data3x6ExpectedPermuteWt3Probs);
+    testTsvSample(["test-a9b", "-H", "-s", "--print-random", "-w", "field_c", fpath_data3x6], data3x6ExpectedPermuteWt3Probs);
+    testTsvSample(["test-a9c", "-H", "-s", "--print-random", "-w", "f*c", fpath_data3x6], data3x6ExpectedPermuteWt3Probs);
     testTsvSample(["test-a10", "-H", "--seed-value", "41", "--print-random", fpath_data3x6], data3x6ExpectedPermuteCompatV41Probs);
     testTsvSample(["test-a11", "-H", "-s", "-v", "41", "--print-random", fpath_data3x6], data3x6ExpectedPermuteCompatV41Probs);
     testTsvSample(["test-a12", "-H", "-s", "-v", "0", "--print-random", fpath_data3x6], data3x6ExpectedPermuteCompatProbs);
     testTsvSample(["test-a13", "-H", "-v", "41", "-w", "3", "--print-random", fpath_data3x6], data3x6ExpectedPermuteWt3V41Probs);
+    testTsvSample(["test-a13b", "-H", "-v", "41", "-w", "field_c", "--print-random", fpath_data3x6], data3x6ExpectedPermuteWt3V41Probs);
 
     /* Shuffling, without compatibility mode, or with both compatibility and printing. */
     testTsvSample(["test-aa1", "--header", "--static-seed", fpath_dataEmpty], dataEmpty);
@@ -3288,6 +3353,7 @@ unittest
     testTsvSample(["test-aa6", "-H", "-s", fpath_data3x6], data3x6ExpectedPermuteSwap);
     testTsvSample(["test-aa7", "-H", "-s", "--weight-field", "3", fpath_data3x6], data3x6ExpectedPermuteWt3);
     testTsvSample(["test-aa8", "-H", "-s", "--print-random", "-w", "3", "--compatibility-mode", fpath_data3x6], data3x6ExpectedPermuteWt3Probs);
+    testTsvSample(["test-aa8b", "-H", "-s", "--print-random", "-w", "field_c", "--compatibility-mode", fpath_data3x6], data3x6ExpectedPermuteWt3Probs);
     testTsvSample(["test-aa9", "-H", "--seed-value", "41", "--print-random", "--compatibility-mode", fpath_data3x6], data3x6ExpectedPermuteCompatV41Probs);
 
     /* Reservoir sampling using Algorithm R.
@@ -3345,10 +3411,13 @@ unittest
     /* Distinct sampling cases. */
     testTsvSample(["test-a23", "--header", "--static-seed", "--prob", "0.001", "--key-fields", "1", fpath_dataEmpty], dataEmpty);
     testTsvSample(["test-a24", "--header", "--static-seed", "--prob", "0.001", "--key-fields", "1", fpath_data3x0], data3x0);
+    testTsvSample(["test-a24b", "--header", "--static-seed", "--prob", "0.001", "--key-fields", "field_a", fpath_data3x0], data3x0);
     testTsvSample(["test-a25", "-H", "-s", "-p", "1.0", "-k", "2", fpath_data3x1], data3x1);
+    testTsvSample(["test-a25b", "-H", "-s", "-p", "1.0", "-k", "field_b", fpath_data3x1], data3x1);
     testTsvSample(["test-a26", "-H", "-s", "-p", "1.0", "-k", "2", fpath_data3x6], data3x6);
+    testTsvSample(["test-a26b", "-H", "-s", "-p", "1.0", "-k", "field_b", fpath_data3x6], data3x6);
     testTsvSample(["test-a27", "-H", "-s", "-p", "0.6", "-k", "1,3", fpath_data3x6], data3x6ExpectedDistinctK1K3P60);
-
+    testTsvSample(["test-a27b", "-H", "-s", "-p", "0.6", "-k", "field_a,field_c", fpath_data3x6], data3x6ExpectedDistinctK1K3P60);
 
     /* Generating random weights. Use Bernoulli sampling test set at prob 100% for uniform sampling.
      * For weighted sampling, use the weighted cases, but with expected using the original ordering.
@@ -3357,9 +3426,13 @@ unittest
     testTsvSample(["test-a29", "-H", "-s", "--gen-random-inorder", fpath_data3x6], data3x6ExpectedBernoulliProbsP100);
     testTsvSample(["test-a30", "-H", "-s", "--gen-random-inorder", "--weight-field", "3", fpath_data3x6],
                   data3x6ExpectedWt3ProbsInorder);
+    testTsvSample(["test-a30b", "-H", "-s", "--gen-random-inorder", "--weight-field", "field_c", fpath_data3x6],
+                  data3x6ExpectedWt3ProbsInorder);
     testTsvSample(["test-a31", "-H", "-v", "41", "--gen-random-inorder", "--weight-field", "3", fpath_data3x6],
                   data3x6ExpectedWt3V41ProbsInorder);
     testTsvSample(["test-a32", "-H", "-s", "-p", "0.6", "-k", "1,3", "--print-random", fpath_data3x6],
+                  data3x6ExpectedDistinctK1K3P60Probs);
+    testTsvSample(["test-a32b", "-H", "-s", "-p", "0.6", "-k", "field_a,field_c", "--print-random", fpath_data3x6],
                   data3x6ExpectedDistinctK1K3P60Probs);
     testTsvSample(["test-a33", "-H", "-s", "-p", "0.6", "-k", "1,3", "--print-random", "--random-value-header",
                    "custom_random_value_header", fpath_data3x6], data3x6ExpectedDistinctK1K3P60ProbsRVCustom);
@@ -3469,6 +3542,9 @@ unittest
     testTsvSample(["test-c3", "--header", "--static-seed", "--print-random", "--weight-field", "3",
                    fpath_data3x0, fpath_data3x3, fpath_data3x1, fpath_dataEmpty, fpath_data3x6, fpath_data3x2],
                   combo1ExpectedPermuteWt3Probs);
+    testTsvSample(["test-c3b", "--header", "--static-seed", "--print-random", "--weight-field", "field_c",
+                   fpath_data3x0, fpath_data3x3, fpath_data3x1, fpath_dataEmpty, fpath_data3x6, fpath_data3x2],
+                  combo1ExpectedPermuteWt3Probs);
     testTsvSample(["test-c4", "--header", "--static-seed", "--weight-field", "3", "--compatibility-mode",
                    fpath_data3x0, fpath_data3x3, fpath_data3x1, fpath_dataEmpty, fpath_data3x6, fpath_data3x2],
                   combo1ExpectedPermuteWt3);
@@ -3533,6 +3609,9 @@ unittest
     testTsvSample(["test-c13", "--header", "--static-seed", "--key-fields", "1", "--prob", ".4",
                    fpath_data3x0, fpath_data3x3, fpath_data3x1, fpath_dataEmpty, fpath_data3x6, fpath_data3x2],
                   combo1ExpectedDistinctK1P40);
+    testTsvSample(["test-c13b", "--header", "--static-seed", "--key-fields", "field_a", "--prob", ".4",
+                   fpath_data3x0, fpath_data3x3, fpath_data3x1, fpath_dataEmpty, fpath_data3x6, fpath_data3x2],
+                  combo1ExpectedDistinctK1P40);
     testTsvSample(["test-c14", "--static-seed", "--key-fields", "1", "--prob", ".4",
                    fpath_data3x3_noheader, fpath_data3x1_noheader, fpath_dataEmpty,
                    fpath_data3x6_noheader, fpath_data3x2_noheader],
@@ -3563,6 +3642,7 @@ unittest
 
     /* Distributions. */
     testTsvSample(["test-e1", "-H", "-s", "-w", "2", "--print-random", fpath_data2x10a], data2x10aExpectedPermuteWt2Probs);
+    testTsvSample(["test-e1b", "-H", "-s", "-w", "weight", "--print-random", fpath_data2x10a], data2x10aExpectedPermuteWt2Probs);
     testTsvSample(["test-e2", "-H", "-s", "-w", "2", "--print-random", fpath_data2x10b], data2x10bExpectedPermuteWt2Probs);
     testTsvSample(["test-e3", "-H", "-s", "-w", "2", "--print-random", fpath_data2x10c], data2x10cExpectedPermuteWt2Probs);
     testTsvSample(["test-e4", "-H", "-s", "-w", "2", "--print-random", fpath_data2x10d], data2x10dExpectedPermuteWt2Probs);
@@ -3749,10 +3829,19 @@ unittest
     testTsvSample(["test-j1", "--header", "--static-seed", "--prob", "0.40", "--key-fields", "2", fpath_data5x25],
                   data5x25ExpectedDistinctK2P40);
 
+    testTsvSample(["test-j1b", "--header", "--static-seed", "--prob", "0.40", "--key-fields", "Shape", fpath_data5x25],
+                  data5x25ExpectedDistinctK2P40);
+
     testTsvSample(["test-j2", "-H", "-s", "-p", "0.20", "-k", "2,4", fpath_data5x25],
                   data5x25ExpectedDistinctK2K4P20);
 
+    testTsvSample(["test-j2b", "-H", "-s", "-p", "0.20", "-k", "Shape,Size", fpath_data5x25],
+                  data5x25ExpectedDistinctK2K4P20);
+
     testTsvSample(["test-j3", "-H", "-s", "-p", "0.20", "-k", "2-4", fpath_data5x25],
+                  data5x25ExpectedDistinctK2K3K4P20);
+
+    testTsvSample(["test-j3b", "-H", "-s", "-p", "0.20", "-k", "Shape-Size", fpath_data5x25],
                   data5x25ExpectedDistinctK2K3K4P20);
 
     testTsvSample(["test-j4", "--static-seed", "--prob", "0.40", "--key-fields", "2", fpath_data5x25_noheader],
@@ -3775,6 +3864,9 @@ unittest
     testTsvSample(["test-j8", "-H", "-s", "-p", "0.20", "-k", "0", fpath_data2x25],
                   data2x25ExpectedDistinctK1K2P20);
 
+    testTsvSample(["test-j8b", "-H", "-s", "-p", "0.20", "-k", "*", fpath_data2x25],
+                  data2x25ExpectedDistinctK1K2P20);
+
     testTsvSample(["test-j9", "-s", "-p", "0.20", "-k", "1,2", fpath_data2x25_noheader],
                   data2x25ExpectedDistinctK1K2P20[1 .. $]);
 
@@ -3788,17 +3880,25 @@ unittest
     testTsvSample(["test-j12", "-H", "-s", "-p", "0.20", "-k", "0", fpath_data1x25],
                   data1x25ExpectedDistinctK1P20);
 
+    testTsvSample(["test-j12b", "-H", "-s", "-p", "0.20", "-k", "*", fpath_data1x25],
+                  data1x25ExpectedDistinctK1P20);
+
     testTsvSample(["test-j13", "-s", "-p", "0.20", "-k", "1", fpath_data1x25_noheader],
                   data1x25ExpectedDistinctK1P20[1 .. $]);
 
     testTsvSample(["test-j14", "-s", "-p", "0.20", "-k", "0", fpath_data1x25_noheader],
                   data1x25ExpectedDistinctK1P20[1 .. $]);
 
-
     testTsvSample(["test-j15", "-H", "-s", "-p", "0.20", "-k", "1", "--print-random", fpath_data1x25],
                   data1x25ExpectedDistinctK1P20Probs);
 
+    testTsvSample(["test-j15b", "-H", "-s", "-p", "0.20", "-k", `Shape\-Size`, "--print-random", fpath_data1x25],
+                  data1x25ExpectedDistinctK1P20Probs);
+
     testTsvSample(["test-j16", "-H", "-s", "-p", "0.20", "-k", "0", "--print-random", fpath_data1x25],
+                  data1x25ExpectedDistinctK1P20Probs);
+
+    testTsvSample(["test-j16b", "-H", "-s", "-p", "0.20", "-k", "*", "--print-random", fpath_data1x25],
                   data1x25ExpectedDistinctK1P20Probs);
 
     testTsvSample(["test-j17", "-s", "-p", "0.20", "-k", "1", "--print-random", fpath_data1x25_noheader],
@@ -3807,11 +3907,16 @@ unittest
     testTsvSample(["test-j18", "-s", "-p", "0.20", "-k", "0", "--print-random", fpath_data1x25_noheader],
                   data1x25ExpectedDistinctK1P20Probs[1 .. $]);
 
-
     testTsvSample(["test-j19", "-H", "-s", "-p", "0.20", "-k", "1", "--gen-random-inorder", fpath_data1x25],
                   data1x25ExpectedDistinctK1P20ProbsInorder);
 
+    testTsvSample(["test-j19b", "-H", "-s", "-p", "0.20", "-k", `Shape\-Size`, "--gen-random-inorder", fpath_data1x25],
+                  data1x25ExpectedDistinctK1P20ProbsInorder);
+
     testTsvSample(["test-j20", "-H", "-s", "-p", "0.20", "-k", "0", "--gen-random-inorder", fpath_data1x25],
+                  data1x25ExpectedDistinctK1P20ProbsInorder);
+
+    testTsvSample(["test-j20b", "-H", "-s", "-p", "0.20", "-k", "*", "--gen-random-inorder", fpath_data1x25],
                   data1x25ExpectedDistinctK1P20ProbsInorder);
 
     testTsvSample(["test-j21", "-s", "-p", "0.20", "-k", "1", "--gen-random-inorder", fpath_data1x25_noheader],

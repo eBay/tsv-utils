@@ -294,9 +294,6 @@ struct TsvSplitOptions
                 "l|lines-per-file", "NUM  Number of lines to write to each output file (excluding the header line).", &linesPerFile,
                 "n|num-files",      "NUM  Number of output files to generate.", &numFiles,
 
-                //"k|key-fields",     "<field-list>  Fields to use as key. Lines with the same key are written to the same output file. Use '--k|key-fields 0' to use the entire line as the key.",
-                //keyFields.makeFieldListOptionHandler!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero),
-
                 keyFieldsOptionString,
                 "<field-list>  Fields to use as key. Lines with the same key are written to the same output file. Use '--k|key-fields 0' to use the entire line as the key.",
                 &keyFieldsArg,
