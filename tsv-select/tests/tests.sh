@@ -299,5 +299,7 @@ runtest ${prog} "-H -f field1-field2,field2-1 input_header1.tsv" ${error_tests_1
 # Windows line ending detection
 runtest ${prog} "-f 1 input1_dos.tsv" ${error_tests_1}
 runtest ${prog} "-H -f 1 input1_dos.tsv" ${error_tests_1}
+runtest ${prog} "-f 1 input1.tsv input1_dos.tsv" ${error_tests_1}
+runtest ${prog} "-H -f 1 input1.tsv input1_dos.tsv" ${error_tests_1}
 
 exit $?
