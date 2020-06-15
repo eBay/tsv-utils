@@ -599,7 +599,8 @@ void bernoulliSampling(Flag!"generateRandomAll" generateRandomAll, OutputRange)
 if (isOutputRange!(OutputRange, char))
 {
     import std.random : Random = Mt19937, uniform01;
-    import tsv_utils.common.utils : bufferedByLine, InputSourceRange, throwIfWindowsNewlineOnUnix;
+    import tsv_utils.common.utils : bufferedByLine, isFlushableOutputRange,
+        InputSourceRange, throwIfWindowsNewlineOnUnix;
 
     static if (generateRandomAll) assert(cmdopt.genRandomInorder);
     else assert(!cmdopt.genRandomInorder);
@@ -613,7 +614,6 @@ if (isOutputRange!(OutputRange, char))
     if (cmdopt.hasHeader && !cmdopt.inputSources.front.isHeaderEmpty)
     {
         auto inputStream = cmdopt.inputSources.front;
-        throwIfWindowsNewlineOnUnix(inputStream.header, inputStream.name, 1);
 
         static if (generateRandomAll)
         {
@@ -628,6 +628,11 @@ if (isOutputRange!(OutputRange, char))
 
         outputStream.put(inputStream.header);
         outputStream.put("\n");
+
+        /* Immediately flush the header so subsequent processes in a unix command
+         * pipeline see it early. This helps provide timely error messages.
+         */
+        static if (isFlushableOutputRange!OutputRange) outputStream.flush;
     }
 
     /* Process each line. */
@@ -719,7 +724,8 @@ void bernoulliSkipSampling(OutputRange)(ref TsvSampleOptions cmdopt, OutputRange
     import std.conv : to;
     import std.math : log, trunc;
     import std.random : Random = Mt19937, uniform01;
-    import tsv_utils.common.utils : bufferedByLine, InputSourceRange, throwIfWindowsNewlineOnUnix;
+    import tsv_utils.common.utils : bufferedByLine, isFlushableOutputRange,
+        InputSourceRange, throwIfWindowsNewlineOnUnix;
 
     assert(cmdopt.inclusionProbability > 0.0 && cmdopt.inclusionProbability < 1.0);
     assert(!cmdopt.printRandom);
@@ -742,10 +748,14 @@ void bernoulliSkipSampling(OutputRange)(ref TsvSampleOptions cmdopt, OutputRange
     if (cmdopt.hasHeader && !cmdopt.inputSources.front.isHeaderEmpty)
     {
         auto inputStream = cmdopt.inputSources.front;
-        throwIfWindowsNewlineOnUnix(inputStream.header, inputStream.name, 1);
 
         outputStream.put(inputStream.header);
         outputStream.put("\n");
+
+        /* Immediately flush the header so subsequent processes in a unix command
+         * pipeline see it early. This helps provide timely error messages.
+         */
+        static if (isFlushableOutputRange!OutputRange) outputStream.flush;
     }
 
     /* Process each line. */
@@ -808,8 +818,8 @@ if (isOutputRange!(OutputRange, char))
     import std.conv : to;
     import std.digest.murmurhash;
     import std.math : lrint;
-    import tsv_utils.common.utils : bufferedByLine, InputFieldReordering,
-        InputSourceRange, throwIfWindowsNewlineOnUnix;
+    import tsv_utils.common.utils : bufferedByLine, isFlushableOutputRange,
+        InputFieldReordering, InputSourceRange, throwIfWindowsNewlineOnUnix;
 
     static if (generateRandomAll) assert(cmdopt.genRandomInorder);
     else assert(!cmdopt.genRandomInorder);
@@ -837,7 +847,6 @@ if (isOutputRange!(OutputRange, char))
     if (cmdopt.hasHeader && !cmdopt.inputSources.front.isHeaderEmpty)
     {
         auto inputStream = cmdopt.inputSources.front;
-        throwIfWindowsNewlineOnUnix(inputStream.header, inputStream.name, 1);
 
         static if (generateRandomAll)
         {
@@ -852,6 +861,11 @@ if (isOutputRange!(OutputRange, char))
 
         outputStream.put(inputStream.header);
         outputStream.put("\n");
+
+        /* Immediately flush the header so subsequent processes in a unix command
+         * pipeline see it early. This helps provide timely error messages.
+         */
+        static if (isFlushableOutputRange!OutputRange) outputStream.flush;
     }
 
     /* Process each line. */
@@ -1053,7 +1067,8 @@ if (isOutputRange!(OutputRange, char))
     import std.container.binaryheap;
     import std.meta : AliasSeq;
     import std.random : Random = Mt19937, uniform01;
-    import tsv_utils.common.utils : bufferedByLine, InputSourceRange, throwIfWindowsNewlineOnUnix;
+    import tsv_utils.common.utils : bufferedByLine, isFlushableOutputRange,
+        InputSourceRange, throwIfWindowsNewlineOnUnix;
 
     static if (isWeighted) assert(cmdopt.hasWeightField);
     else assert(!cmdopt.hasWeightField);
@@ -1090,7 +1105,6 @@ if (isOutputRange!(OutputRange, char))
     if (cmdopt.hasHeader && !cmdopt.inputSources.front.isHeaderEmpty)
     {
         auto inputStream = cmdopt.inputSources.front;
-        throwIfWindowsNewlineOnUnix(inputStream.header, inputStream.name, 1);
 
         if (cmdopt.printRandom)
         {
@@ -1099,6 +1113,11 @@ if (isOutputRange!(OutputRange, char))
         }
         outputStream.put(inputStream.header);
         outputStream.put("\n");
+
+        /* Immediately flush the header so subsequent processes in a unix command
+         * pipeline see it early. This helps provide timely error messages.
+         */
+        static if (isFlushableOutputRange!OutputRange) outputStream.flush;
     }
 
     /* Process each line. */
@@ -1192,7 +1211,8 @@ void generateWeightedRandomValuesInorder(OutputRange)
 if (isOutputRange!(OutputRange, char))
 {
     import std.random : Random = Mt19937, uniform01;
-    import tsv_utils.common.utils : bufferedByLine, InputSourceRange, throwIfWindowsNewlineOnUnix;
+    import tsv_utils.common.utils : bufferedByLine, isFlushableOutputRange,
+        InputSourceRange, throwIfWindowsNewlineOnUnix;
 
     assert(cmdopt.hasWeightField);
 
@@ -1205,12 +1225,16 @@ if (isOutputRange!(OutputRange, char))
     if (cmdopt.hasHeader && !cmdopt.inputSources.front.isHeaderEmpty)
     {
         auto inputStream = cmdopt.inputSources.front;
-        throwIfWindowsNewlineOnUnix(inputStream.header, inputStream.name, 1);
 
         outputStream.put(cmdopt.randomValueHeader);
         outputStream.put(cmdopt.delim);
         outputStream.put(inputStream.header);
         outputStream.put("\n");
+
+        /* Immediately flush the header so subsequent processes in a unix command
+         * pipeline see it early. This helps provide timely error messages.
+         */
+        static if (isFlushableOutputRange!OutputRange) outputStream.flush;
     }
 
     /* Process each line. */
@@ -1284,7 +1308,8 @@ if (isOutputRange!(OutputRange, char))
     import std.meta : AliasSeq;
     import std.random : Random = Mt19937, randomShuffle, uniform;
     import std.algorithm : sort;
-    import tsv_utils.common.utils : bufferedByLine, InputSourceRange, throwIfWindowsNewlineOnUnix;
+    import tsv_utils.common.utils : bufferedByLine, isFlushableOutputRange,
+        InputSourceRange, throwIfWindowsNewlineOnUnix;
 
     assert(cmdopt.sampleSize > 0);
     assert(!cmdopt.hasWeightField);
@@ -1311,10 +1336,14 @@ if (isOutputRange!(OutputRange, char))
     if (cmdopt.hasHeader && !cmdopt.inputSources.front.isHeaderEmpty)
     {
         auto inputStream = cmdopt.inputSources.front;
-        throwIfWindowsNewlineOnUnix(inputStream.header, inputStream.name, 1);
 
         outputStream.put(inputStream.header);
         outputStream.put("\n");
+
+        /* Immediately flush the header so subsequent processes in a unix command
+         * pipeline see it early. This helps provide timely error messages.
+         */
+        static if (isFlushableOutputRange!OutputRange) outputStream.flush;
     }
 
     /* Process each line. */
@@ -1582,7 +1611,8 @@ if (isOutputRange!(OutputRange, char))
 {
     import std.algorithm : find, min;
     import std.range : retro;
-    import tsv_utils.common.utils : InputSourceRange, throwIfWindowsNewlineOnUnix;
+    import tsv_utils.common.utils : InputSourceRange, isFlushableOutputRange,
+        throwIfWindowsNewlineOnUnix;
 
     static if(!hasRandomValue) assert(!cmdopt.printRandom);
 
@@ -1593,7 +1623,6 @@ if (isOutputRange!(OutputRange, char))
     if (cmdopt.hasHeader && !cmdopt.inputSources.front.isHeaderEmpty)
     {
         auto inputStream = cmdopt.inputSources.front;
-        throwIfWindowsNewlineOnUnix(inputStream.header, inputStream.name, 1);
 
         if (cmdopt.printRandom)
         {
@@ -1602,6 +1631,11 @@ if (isOutputRange!(OutputRange, char))
         }
         outputStream.put(inputStream.header);
         outputStream.put("\n");
+
+        /* Immediately flush the header so subsequent processes in a unix command
+         * pipeline see it early. This helps provide timely error messages.
+         */
+        static if (isFlushableOutputRange!OutputRange) outputStream.flush;
     }
 
     enum BlockSize = 1024L * 1024L * 1024L;  // 1 GB. ('L' notation avoids overflow w/ 2GB+ sizes.)
