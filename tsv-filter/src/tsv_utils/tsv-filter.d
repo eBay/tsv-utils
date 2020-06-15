@@ -714,16 +714,13 @@ struct TsvFilterOptions
     import tsv_utils.common.utils : inputSourceRange, InputSourceRange, ReadHeader;
 
     string programName;
-    InputSourceRange inputSources;   // Input files
-    FieldsPredicate[] tests;         // Derived from tests
-    size_t maxFieldIndex;            // Derived from tests
-    bool hasHeader = false;          // --H|header
-    bool invert = false;             // --invert
-    bool disjunct = false;           // --or
-    char delim = '\t';               // --delimiter
-    bool helpVerbose = false;        // --help-verbose
-    bool helpOptions = false;        // --help-options
-    bool versionWanted = false;      // --V|version
+    InputSourceRange inputSources;   /// Input files
+    FieldsPredicate[] tests;         /// Derived from tests
+    size_t maxFieldIndex;            /// Derived from tests
+    bool hasHeader = false;          /// --H|header
+    bool invert = false;             /// --invert
+    bool disjunct = false;           /// --or
+    char delim = '\t';               /// --delimiter
 
     /* Returns a tuple. First value is true if command line arguments were successfully
      * processed and execution should continue, or false if an error occurred or the user
@@ -736,10 +733,15 @@ struct TsvFilterOptions
     {
         import std.algorithm : each;
         import std.array : split;
-        import std.conv: to;
+        import std.conv : to;
         import std.getopt;
         import std.path : baseName, stripExtension;
         import tsv_utils.common.getopt_inorder;
+        import tsv_utils.common.utils : throwIfWindowsNewlineOnUnix;
+
+        bool helpVerbose = false;        // --help-verbose
+        bool helpOptions = false;        // --help-options
+        bool versionWanted = false;      // --V|version
 
         programName = (cmdArgs.length > 0) ? cmdArgs[0].stripExtension.baseName : "Unknown_program_name";
 
@@ -929,14 +931,29 @@ struct TsvFilterOptions
             /* Input files. Remaining command line args are files. */
             string[] filepaths = (cmdArgs.length > 1) ? cmdArgs[1 .. $] : ["-"];
             cmdArgs.length = 1;
-            ReadHeader readHeader = hasHeader ? Yes.readHeader : No.readHeader;
-            inputSources = inputSourceRange(filepaths, readHeader);
 
             string[] headerFields;
 
-            if (hasHeader) headerFields = inputSources.front.header.split(delim).to!(string[]);
+            /* FieldListArgProcessing encapsulates the field list processing. It is
+             * called prior to reading the header line if headers are not being used,
+             * and after if headers are being used.
+             */
+            void fieldListArgProcessing()
+            {
+                cmdLineTestOptions.each!(dg => dg(tests, maxFieldIndex, hasHeader, headerFields));
+            }
 
-            cmdLineTestOptions.each!(dg => dg(tests, maxFieldIndex, hasHeader, headerFields));
+            if (!hasHeader) fieldListArgProcessing();
+
+            ReadHeader readHeader = hasHeader ? Yes.readHeader : No.readHeader;
+            inputSources = inputSourceRange(filepaths, readHeader);
+
+            if (hasHeader)
+            {
+                throwIfWindowsNewlineOnUnix(inputSources.front.header, inputSources.front.name, 1);
+                headerFields = inputSources.front.header.split(delim).to!(string[]);
+                fieldListArgProcessing();
+            }
         }
         catch (Exception e)
         {
@@ -970,12 +987,15 @@ void tsvFilter(ref TsvFilterOptions cmdopt)
 
     auto bufferedOutput = BufferedOutputRange!(typeof(stdout))(stdout);
 
-     /* First header is read during command line argument processing. */
+     /* First header is read during command line argument processing. Immediately
+      * flush it so subsequent processes in a unix command pipeline see it early.
+      * This helps provide timely error messages.
+      */
     if (cmdopt.hasHeader && !cmdopt.inputSources.front.isHeaderEmpty)
     {
         auto inputStream = cmdopt.inputSources.front;
-        throwIfWindowsNewlineOnUnix(inputStream.header, inputStream.name, 1);
         bufferedOutput.appendln(inputStream.header);
+        bufferedOutput.flush;
     }
 
     /* Process each input file, one line at a time. */
