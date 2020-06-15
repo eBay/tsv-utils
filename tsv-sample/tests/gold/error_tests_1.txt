@@ -24,6 +24,15 @@ line	title	weight
 ====[tsv-sample -w weight input3x25.tsv]====
 [tsv-sample] Error processing command line arguments: [--w|weight-field] Non-numeric field group: 'weight'. Use '--H|header' when using named field groups.
 
+====[tsv-sample -H -w weight,line input3x25.tsv]====
+[tsv-sample] Error processing command line arguments: '--w|weight-field' must be a single field.
+
+====[tsv-sample -H -w line,weight input3x25.tsv]====
+[tsv-sample] Error processing command line arguments: '--w|weight-field' must be a single field.
+
+====[tsv-sample -w 1,3 input3x25.tsv]====
+[tsv-sample] Error processing command line arguments: '--w|weight-field' must be a single field.
+
 ====[tsv-sample -H -w 3 input3x25_dos.tsv]====
 [tsv-sample] Error processing command line arguments: Windows/DOS line ending found. Convert file to Unix newlines before processing (e.g. 'dos2unix').
   File: input3x25_dos.tsv, Line: 1

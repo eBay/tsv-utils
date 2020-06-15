@@ -205,6 +205,9 @@ runtest ${prog} "-H -w 11 input3x25.tsv" ${error_tests}
 runtest ${prog} "-H -w 0 input3x25.tsv" ${error_tests}
 runtest ${prog} "-H -w no_such_field input3x25.tsv" ${error_tests}
 runtest ${prog} "-w weight input3x25.tsv" ${error_tests}
+runtest ${prog} "-H -w weight,line input3x25.tsv" ${error_tests}
+runtest ${prog} "-H -w line,weight input3x25.tsv" ${error_tests}
+runtest ${prog} "-w 1,3 input3x25.tsv" ${error_tests}
 runtest ${prog} "-H -w 3 input3x25_dos.tsv" ${error_tests}
 runtest ${prog} "-H -w weight input3x25_dos.tsv" ${error_tests}
 runtest ${prog} "-w 1 input2x5_noheader_dos.tsv" ${error_tests}
