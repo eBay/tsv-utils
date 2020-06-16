@@ -334,6 +334,7 @@ struct TsvJoinOptions
                     throwIfWindowsNewlineOnUnix(filterSource.front.byLine.front, filterSource.front.name, 1);
                     filterFileHeaderFields = filterSource.front.byLine.front.split(delim).to!(string[]);
                 }
+                throwIfWindowsNewlineOnUnix(inputSources.front.header, inputSources.front.name, 1);
                 inputSourceHeaderFields = inputSources.front.header.split(delim).to!(string[]);
                 fieldListArgProcessing();
             }
@@ -377,7 +378,7 @@ int main(string[] cmdArgs)
 void tsvJoin(ref TsvJoinOptions cmdopt)
 {
     import tsv_utils.common.utils : ByLineSourceRange, bufferedByLine, BufferedOutputRange,
-        InputFieldReordering, InputSourceRange, throwIfWindowsNewlineOnUnix;
+        isFlushableOutputRange, InputFieldReordering, InputSourceRange, throwIfWindowsNewlineOnUnix;
     import std.algorithm : splitter;
     import std.array : join;
     import std.range;
@@ -425,7 +426,6 @@ void tsvJoin(ref TsvJoinOptions cmdopt)
      * assembled in the order specified, though this only required for append fields.
      */
     string[string] filterHash;
-    string appendFieldsHeader;
 
     /* The append values for unmatched records. */
     char[] appendFieldsUnmatchedValue;
@@ -444,6 +444,11 @@ void tsvJoin(ref TsvJoinOptions cmdopt)
             appendFieldsUnmatchedValue ~= cmdopt.writeAllValue;
         }
     }
+
+    /* Buffered output range for the final output. Setup here because the header line
+     * (if any) gets written while reading the filter file.
+     */
+    auto bufferedOutput = BufferedOutputRange!(typeof(stdout))(stdout);
 
     /* Read the filter file. */
     {
@@ -485,18 +490,41 @@ void tsvJoin(ref TsvJoinOptions cmdopt)
 
             if (lineNum == 1 && cmdopt.hasHeader)
             {
-                if (cmdopt.appendHeaderPrefix.length == 0)
+                /* When the input has headers, the header line from the first data
+                 * file is read during command line argument processing. Output the
+                 * header now to push it to the next tool in the unix pipeline. This
+                 * enables earlier error detection in downstream tools.
+                 *
+                 * If the input data is empty there will be no header.
+                 */
+                auto inputStream = cmdopt.inputSources.front;
+
+                if (!inputStream.isHeaderEmpty)
                 {
-                    appendFieldsHeader = appendValues;
-                }
-                else
-                {
-                    foreach (fieldIndex, fieldValue; appendValues.splitter(cmdopt.delim).enumerate)
+                    string appendFieldsHeader;
+
+                    if (cmdopt.appendHeaderPrefix.length == 0)
                     {
-                        if (fieldIndex > 0) appendFieldsHeader ~= cmdopt.delim;
-                        appendFieldsHeader ~= cmdopt.appendHeaderPrefix;
-                        appendFieldsHeader ~= fieldValue;
+                        appendFieldsHeader = appendValues;
                     }
+                    else
+                    {
+                        foreach (fieldIndex, fieldValue; appendValues.splitter(cmdopt.delim).enumerate)
+                        {
+                            if (fieldIndex > 0) appendFieldsHeader ~= cmdopt.delim;
+                            appendFieldsHeader ~= cmdopt.appendHeaderPrefix;
+                            appendFieldsHeader ~= fieldValue;
+                        }
+                    }
+
+                    bufferedOutput.append(inputStream.header);
+                    if (isAppending)
+                    {
+                        bufferedOutput.append(cmdopt.delim);
+                        bufferedOutput.append(appendFieldsHeader);
+                    }
+                    bufferedOutput.appendln;
+                    bufferedOutput.flush;
                 }
             }
             else
@@ -518,23 +546,6 @@ void tsvJoin(ref TsvJoinOptions cmdopt)
     }
 
     /* Now process each input file, one line at a time. */
-
-    auto bufferedOutput = BufferedOutputRange!(typeof(stdout))(stdout);
-
-    /* First header is read during command line argument processing. */
-    if (cmdopt.hasHeader && !cmdopt.inputSources.front.isHeaderEmpty)
-    {
-        auto inputStream = cmdopt.inputSources.front;
-        throwIfWindowsNewlineOnUnix(inputStream.header, inputStream.name, 1);
-
-        bufferedOutput.append(inputStream.header);
-        if (isAppending)
-        {
-            bufferedOutput.append(cmdopt.delim);
-            bufferedOutput.append(appendFieldsHeader);
-        }
-        bufferedOutput.appendln;
-    }
 
     immutable size_t fileBodyStartLine = cmdopt.hasHeader ? 2 : 1;
 

@@ -282,7 +282,7 @@ Error [tsv-join]: Not enough fields in line. File: input2_noheader.tsv, Line: 1
   File: input1_dos.tsv, Line: 1
 
 ====[tsv-join --header -f input1.tsv -k 2,3 input2_dos.tsv]====
-Error [tsv-join]: Windows/DOS line ending found. Convert file to Unix newlines before processing (e.g. 'dos2unix').
+[tsv-join] Error processing command line arguments: Windows/DOS line ending found. Convert file to Unix newlines before processing (e.g. 'dos2unix').
   File: input2_dos.tsv, Line: 1
 
 ====[tsv-join -f input1_dos.tsv -k 2,3 input2.tsv]====
