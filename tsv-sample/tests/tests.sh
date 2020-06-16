@@ -34,6 +34,15 @@ runtest () {
     return 0
 }
 
+## A special version used by some of the error handling tests. It is used to
+## filter out lines other than error lines. See the calls for examples.
+runtest_filter () {
+    echo "" >> $3
+    echo "====[tsv-sample $2]====" >> $3
+    $1 $2 2>&1 | grep -v $4 >> $3 2>&1
+    return 0
+}
+
 basic_tests_1=${odir}/basic_tests_1.txt
 
 echo "Basic tests set 1" > ${basic_tests_1}
@@ -208,9 +217,6 @@ runtest ${prog} "-w weight input3x25.tsv" ${error_tests}
 runtest ${prog} "-H -w weight,line input3x25.tsv" ${error_tests}
 runtest ${prog} "-H -w line,weight input3x25.tsv" ${error_tests}
 runtest ${prog} "-w 1,3 input3x25.tsv" ${error_tests}
-runtest ${prog} "-H -w 3 input3x25_dos.tsv" ${error_tests}
-runtest ${prog} "-H -w weight input3x25_dos.tsv" ${error_tests}
-runtest ${prog} "-w 1 input2x5_noheader_dos.tsv" ${error_tests}
 runtest ${prog} "--prob 0.5 --weight-field 3 input3x25.tsv" ${error_tests}
 runtest ${prog} "--prob 0.5 --weight-field 0 input3x25.tsv" ${error_tests}
 runtest ${prog} "--prob 0 input3x25.tsv" ${error_tests}
@@ -236,6 +242,53 @@ runtest ${prog} "--replace -n 5 --gen-random-inorder input3x25.tsv" ${error_test
 runtest ${prog} "--inorder --replace -n 5 input3x25.tsv" ${error_tests}
 runtest ${prog} "--inorder input3x25.tsv" ${error_tests}
 runtest ${prog} "--inorder -n 0 input3x25.tsv" ${error_tests}
+
+# Windows line endings. The tests where the windows line ending is in the second
+# file use a single line first file that is filtered out of the output.
+
+header_line_3x0='line[[:blank:]]title[[:blank:]]weight'
+line1_2x1='0.157876295	Jacques le fataliste et son maître'
+
+runtest ${prog} "-H input3x25_dos.tsv" ${error_tests}
+runtest_filter ${prog} "-H input3x0.tsv input3x25_dos.tsv" ${error_tests} ${header_line_3x0}
+runtest ${prog} "input3x25_dos.tsv" ${error_tests}
+runtest_filter ${prog} "input3x0.tsv input3x25_dos.tsv" ${error_tests} ${header_line_3x0}
+
+runtest ${prog} "-n 2 -H input3x25_dos.tsv" ${error_tests}
+runtest_filter ${prog} "-n 2 -H input3x0.tsv input3x25_dos.tsv" ${error_tests} ${header_line_3x0}
+runtest ${prog} "-n 2 input3x25_dos.tsv" ${error_tests}
+runtest_filter ${prog} "-n 2 input3x0.tsv input3x25_dos.tsv" ${error_tests} ${header_line_3x0}
+
+runtest ${prog} "-H -w 3 input3x25_dos.tsv" ${error_tests}
+runtest_filter ${prog} "-H -w 3 input3x0.tsv input3x25_dos.tsv" ${error_tests} ${header_line_3x0}
+runtest ${prog} "-H -w weight input3x25_dos.tsv" ${error_tests}
+runtest_filter ${prog} "-H -w weight input3x0.tsv input3x25_dos.tsv" ${error_tests} ${header_line_3x0}
+runtest ${prog} "-w 1 input2x5_noheader_dos.tsv" ${error_tests}
+runtest_filter ${prog} "-w 1 input2x1_noheader.tsv input2x5_noheader_dos.tsv" ${error_tests} ${line1_2x1}
+
+runtest ${prog} "-n 2 -H -w 3 input3x25_dos.tsv" ${error_tests}
+runtest_filter ${prog} "-n 2 -H -w 3 input3x0.tsv input3x25_dos.tsv" ${error_tests} ${header_line_3x0}
+runtest ${prog} "-n 2 -H -w weight input3x25_dos.tsv" ${error_tests}
+runtest_filter ${prog} "-n 2 -H -w weight input3x0.tsv input3x25_dos.tsv" ${error_tests} ${header_line_3x0}
+runtest ${prog} "-n 2 -w 1 input2x5_noheader_dos.tsv" ${error_tests}
+runtest_filter ${prog} "-n 2 -w 1 input2x1_noheader.tsv input2x5_noheader_dos.tsv" ${error_tests} ${line1_2x1}
+
+runtest ${prog} "-r -n 2 -H input3x25_dos.tsv" ${error_tests}
+runtest_filter ${prog} "-r -n 2 -H input3x0.tsv input3x25_dos.tsv" ${error_tests} ${header_line_3x0}
+runtest ${prog} "-r -n 2 input3x25_dos.tsv" ${error_tests}
+runtest_filter ${prog} "-r -n 2 input3x0.tsv input3x25_dos.tsv" ${error_tests} ${header_line_3x0}
+
+runtest ${prog} "-p .2 -H input3x25_dos.tsv" ${error_tests}
+runtest_filter ${prog} "-p .2 -H input3x0.tsv input3x25_dos.tsv" ${error_tests} ${header_line_3x0}
+runtest ${prog} "-p .2 input3x25_dos.tsv" ${error_tests}
+runtest_filter ${prog} "-p .2 input3x0.tsv input3x25_dos.tsv" ${error_tests} ${header_line_3x0}
+
+runtest ${prog} "-H -p .2 -k 2 input3x25_dos.tsv" ${error_tests}
+runtest_filter ${prog} "-H -p .2 -k 2 input3x0.tsv input3x25_dos.tsv" ${error_tests} ${header_line_3x0}
+runtest ${prog} "-H -p .2 -k title input3x25_dos.tsv" ${error_tests}
+runtest_filter ${prog} "-H -p .2 -k title input3x0.tsv input3x25_dos.tsv" ${error_tests} ${header_line_3x0}
+runtest ${prog} "-p .2 -k 2 input2x5_noheader_dos.tsv" ${error_tests}
+runtest_filter ${prog} "-p .2 -k 2 input2x1_noheader.tsv input2x5_noheader_dos.tsv" ${error_tests} ${line1_2x1}
 
 # Error tests 2 are tests that are compiler version dependent. There are multiple
 # version files in test-config.json.

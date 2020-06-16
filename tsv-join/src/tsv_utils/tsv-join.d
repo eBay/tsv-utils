@@ -104,6 +104,7 @@ struct TsvJoinOptions
         import std.path : baseName, stripExtension;
         import std.typecons : Yes, No;
         import tsv_utils.common.fieldlist;
+        import tsv_utils.common.utils : throwIfWindowsNewlineOnUnix;
 
         bool helpVerbose = false;        // --help-verbose
         bool versionWanted = false;      // --V|version
@@ -187,73 +188,156 @@ struct TsvJoinOptions
             enforce(!(filterFile == "-" && cmdArgs.length == 1),
                     "A data file is required when standard input is used for the filter file (--f|filter-file -).");
 
-            filterSource = byLineSourceRange([filterFile]);
-
             string[] filepaths = (cmdArgs.length > 1) ? cmdArgs[1 .. $] : ["-"];
             cmdArgs.length = 1;
-            ReadHeader readHeader = hasHeader ? Yes.readHeader : No.readHeader;
-            inputSources = inputSourceRange(filepaths, readHeader);
 
-            /* Field-list args (--k|key-fields, --d|data-fields --a|append-fields are
-             * parsed after header lines from the filter file and first data file have
-             * been read. The files were opened in the previous step, when setting up
-             * the 'filterSource' and 'inputSources' ranges.
+             /* Validation and derivations - Do as much validation prior to header line
+             * processing as possible (avoids waiting on stdin).
              *
-             * The field-list parsing step translates any named fields to one-based
-             * field numbers. Note that a named field may have different field
-             * numbers in the filter file and data files.
-             *
-             * The 'derivations()' method works off the one-based indices, converting
-             * them to zero-based. It also handles the full-line cases.
+             * Note: In tsv-join, when header processing is on, there is very little
+             * validatation that can be done prior to reading the header line. All the
+             * logic is in the fieldListArgProcessing function.
              */
 
             string[] filterFileHeaderFields;
             string[] inputSourceHeaderFields;
 
-            if (hasHeader && !filterSource.front.byLine.empty)
+            /* fieldListArgProcessing encapsulates the field list dependent processing.
+             * It is called prior to reading the header line if headers are not being used,
+             * and after if headers are being used.
+             */
+            void fieldListArgProcessing()
             {
-                filterFileHeaderFields = filterSource.front.byLine.front.split(delim).to!(string[]);
-            }
+                import std.algorithm : all, each;
 
-            if (hasHeader) inputSourceHeaderFields = inputSources.front.header.split(delim).to!(string[]);
+                /* field list parsing. */
+                if (!keyFieldsArg.empty)
+                {
+                    keyFields =
+                        keyFieldsArg
+                        .parseFieldList!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero)
+                        (hasHeader, filterFileHeaderFields, keyFieldsOptionString)
+                        .array;
+                }
 
-            if (!keyFieldsArg.empty)
+                if (!dataFieldsArg.empty)
+                {
+                    dataFields =
+                        dataFieldsArg
+                        .parseFieldList!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero)
+                        (hasHeader, inputSourceHeaderFields, dataFieldsOptionString)
+                        .array;
+                }
+                else if (!keyFieldsArg.empty)
+                {
+                    dataFields =
+                        keyFieldsArg
+                        .parseFieldList!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero)
+                        (hasHeader, inputSourceHeaderFields, dataFieldsOptionString)
+                        .array;
+                }
+
+                if (!appendFieldsArg.empty)
+                {
+                    appendFields =
+                        appendFieldsArg
+                        .parseFieldList!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero)
+                        (hasHeader, filterFileHeaderFields, appendFieldsOptionString)
+                        .array;
+                }
+
+                /* Validations */
+                if (writeAll)
+                {
+                    enforce(appendFields.length != 0,
+                            "Use --a|append-fields when using --w|write-all.");
+
+                    enforce(!(appendFields.length == 1 && appendFields[0] == 0),
+                            "Cannot use '--a|append-fields 0' (whole line) when using --w|write-all.");
+                }
+
+                enforce(!(appendFields.length > 0 && exclude),
+                        "--e|exclude cannot be used with --a|append-fields.");
+
+                enforce(appendHeaderPrefix.length == 0 || hasHeader,
+                        "Use --header when using --p|prefix.");
+
+                enforce(dataFields.length == 0 || keyFields.length == dataFields.length,
+                        "Different number of --k|key-fields and --d|data-fields.");
+
+                enforce(keyFields.length != 1 ||
+                        dataFields.length != 1 ||
+                        (keyFields[0] == 0 && dataFields[0] == 0) ||
+                        (keyFields[0] != 0 && dataFields[0] != 0),
+                        "If either --k|key-field or --d|data-field is zero both must be zero.");
+
+                enforce((keyFields.length <= 1 || all!(a => a != 0)(keyFields)) &&
+                        (dataFields.length <= 1 || all!(a => a != 0)(dataFields)) &&
+                        (appendFields.length <= 1 || all!(a => a != 0)(appendFields)),
+                        "Field 0 (whole line) cannot be combined with individual fields (non-zero).");
+
+                /* Derivations. */
+
+                // Convert 'full-line' field indexes (index zero) to boolean flags.
+                if (keyFields.length == 0)
+                {
+                    assert(dataFields.length == 0);
+                    keyIsFullLine = true;
+                    dataIsFullLine = true;
+                }
+                else if (keyFields.length == 1 && keyFields[0] == 0)
+                {
+                    keyIsFullLine = true;
+                    keyFields.popFront;
+                    dataIsFullLine = true;
+
+                    if (dataFields.length == 1)
+                    {
+                        assert(dataFields[0] == 0);
+                        dataFields.popFront;
+                    }
+                }
+
+                if (appendFields.length == 1 && appendFields[0] == 0)
+                {
+                    appendFullLine = true;
+                    appendFields.popFront;
+                }
+
+                assert(!(keyIsFullLine && keyFields.length > 0));
+                assert(!(dataIsFullLine && dataFields.length > 0));
+                assert(!(appendFullLine && appendFields.length > 0));
+
+                // Switch to zero-based field indexes.
+                keyFields.each!((ref a) => --a);
+                dataFields.each!((ref a) => --a);
+                appendFields.each!((ref a) => --a);
+
+            } // End fieldListArgProcessing()
+
+
+            if (!hasHeader) fieldListArgProcessing();
+
+            /*
+             * Create the input source ranges for the filter file and data stream files
+             * and perform header line processing.
+             */
+
+            filterSource = byLineSourceRange([filterFile]);
+            ReadHeader readHeader = hasHeader ? Yes.readHeader : No.readHeader;
+            inputSources = inputSourceRange(filepaths, readHeader);
+
+            if (hasHeader)
             {
-                keyFields =
-                    keyFieldsArg
-                    .parseFieldList!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero)
-                    (hasHeader, filterFileHeaderFields, keyFieldsOptionString)
-                    .array;
+                if (!filterSource.front.byLine.empty)
+                {
+                    throwIfWindowsNewlineOnUnix(filterSource.front.byLine.front, filterSource.front.name, 1);
+                    filterFileHeaderFields = filterSource.front.byLine.front.split(delim).to!(string[]);
+                }
+                throwIfWindowsNewlineOnUnix(inputSources.front.header, inputSources.front.name, 1);
+                inputSourceHeaderFields = inputSources.front.header.split(delim).to!(string[]);
+                fieldListArgProcessing();
             }
-
-            if (!dataFieldsArg.empty)
-            {
-                dataFields =
-                    dataFieldsArg
-                    .parseFieldList!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero)
-                    (hasHeader, inputSourceHeaderFields, dataFieldsOptionString)
-                    .array;
-            }
-            else if (!keyFieldsArg.empty)
-            {
-                dataFields =
-                    keyFieldsArg
-                    .parseFieldList!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero)
-                    (hasHeader, inputSourceHeaderFields, dataFieldsOptionString)
-                    .array;
-            }
-
-            if (!appendFieldsArg.empty)
-            {
-                appendFields =
-                    appendFieldsArg
-                    .parseFieldList!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero)
-                    (hasHeader, filterFileHeaderFields, appendFieldsOptionString)
-                    .array;
-            }
-
-            consistencyValidations(cmdArgs);
-            derivations();
         }
         catch (Exception exc)
         {
@@ -261,85 +345,6 @@ struct TsvJoinOptions
             return tuple(false, 1);
         }
         return tuple(true, 0);
-    }
-
-    /* This routine does validations not handled by getopt, usually because they
-     * involve interactions between multiple parameters.
-     */
-    private void consistencyValidations(ref string[] processedCmdArgs)
-    {
-        import std.algorithm : all;
-
-        if (writeAll)
-        {
-            enforce(appendFields.length != 0,
-                    "Use --a|append-fields when using --w|write-all.");
-
-            enforce(!(appendFields.length == 1 && appendFields[0] == 0),
-                    "Cannot use '--a|append-fields 0' (whole line) when using --w|write-all.");
-        }
-
-        enforce(!(appendFields.length > 0 && exclude),
-                "--e|exclude cannot be used with --a|append-fields.");
-
-        enforce(appendHeaderPrefix.length == 0 || hasHeader,
-                "Use --header when using --p|prefix.");
-
-        enforce(dataFields.length == 0 || keyFields.length == dataFields.length,
-                "Different number of --k|key-fields and --d|data-fields.");
-
-        enforce(keyFields.length != 1 ||
-                dataFields.length != 1 ||
-                (keyFields[0] == 0 && dataFields[0] == 0) ||
-                (keyFields[0] != 0 && dataFields[0] != 0),
-                "If either --k|key-field or --d|data-field is zero both must be zero.");
-
-        enforce((keyFields.length <= 1 || all!(a => a != 0)(keyFields)) &&
-                (dataFields.length <= 1 || all!(a => a != 0)(dataFields)) &&
-                (appendFields.length <= 1 || all!(a => a != 0)(appendFields)),
-                "Field 0 (whole line) cannot be combined with individual fields (non-zero).");
-    }
-
-    /* Post-processing derivations. */
-    void derivations()
-    {
-        import std.algorithm : each;
-        import std.range;
-
-        // Convert 'full-line' field indexes (index zero) to boolean flags.
-        if (keyFields.length == 0)
-        {
-            assert(dataFields.length == 0);
-            keyIsFullLine = true;
-            dataIsFullLine = true;
-        }
-        else if (keyFields.length == 1 && keyFields[0] == 0)
-        {
-            keyIsFullLine = true;
-            keyFields.popFront;
-            dataIsFullLine = true;
-
-            if (dataFields.length == 1)
-            {
-                assert(dataFields[0] == 0);
-                dataFields.popFront;
-            }
-        }
-
-        if (appendFields.length == 1 && appendFields[0] == 0)
-        {
-            appendFullLine = true;
-            appendFields.popFront;
-        }
-
-        assert(!(keyIsFullLine && keyFields.length > 0));
-        assert(!(dataIsFullLine && dataFields.length > 0));
-        assert(!(appendFullLine && appendFields.length > 0));
-
-        // Switch to zero-based field indexes.
-        keyFields.each!((ref a) => --a);
-        dataFields.each!((ref a) => --a);
-        appendFields.each!((ref a) => --a);
     }
 }
 
@@ -373,7 +378,7 @@ int main(string[] cmdArgs)
 void tsvJoin(ref TsvJoinOptions cmdopt)
 {
     import tsv_utils.common.utils : ByLineSourceRange, bufferedByLine, BufferedOutputRange,
-        InputFieldReordering, InputSourceRange, throwIfWindowsNewlineOnUnix;
+        isFlushableOutputRange, InputFieldReordering, InputSourceRange, throwIfWindowsNewlineOnUnix;
     import std.algorithm : splitter;
     import std.array : join;
     import std.range;
@@ -421,7 +426,6 @@ void tsvJoin(ref TsvJoinOptions cmdopt)
      * assembled in the order specified, though this only required for append fields.
      */
     string[string] filterHash;
-    string appendFieldsHeader;
 
     /* The append values for unmatched records. */
     char[] appendFieldsUnmatchedValue;
@@ -440,6 +444,11 @@ void tsvJoin(ref TsvJoinOptions cmdopt)
             appendFieldsUnmatchedValue ~= cmdopt.writeAllValue;
         }
     }
+
+    /* Buffered output range for the final output. Setup here because the header line
+     * (if any) gets written while reading the filter file.
+     */
+    auto bufferedOutput = BufferedOutputRange!(typeof(stdout))(stdout);
 
     /* Read the filter file. */
     {
@@ -481,18 +490,41 @@ void tsvJoin(ref TsvJoinOptions cmdopt)
 
             if (lineNum == 1 && cmdopt.hasHeader)
             {
-                if (cmdopt.appendHeaderPrefix.length == 0)
+                /* When the input has headers, the header line from the first data
+                 * file is read during command line argument processing. Output the
+                 * header now to push it to the next tool in the unix pipeline. This
+                 * enables earlier error detection in downstream tools.
+                 *
+                 * If the input data is empty there will be no header.
+                 */
+                auto inputStream = cmdopt.inputSources.front;
+
+                if (!inputStream.isHeaderEmpty)
                 {
-                    appendFieldsHeader = appendValues;
-                }
-                else
-                {
-                    foreach (fieldIndex, fieldValue; appendValues.splitter(cmdopt.delim).enumerate)
+                    string appendFieldsHeader;
+
+                    if (cmdopt.appendHeaderPrefix.length == 0)
                     {
-                        if (fieldIndex > 0) appendFieldsHeader ~= cmdopt.delim;
-                        appendFieldsHeader ~= cmdopt.appendHeaderPrefix;
-                        appendFieldsHeader ~= fieldValue;
+                        appendFieldsHeader = appendValues;
                     }
+                    else
+                    {
+                        foreach (fieldIndex, fieldValue; appendValues.splitter(cmdopt.delim).enumerate)
+                        {
+                            if (fieldIndex > 0) appendFieldsHeader ~= cmdopt.delim;
+                            appendFieldsHeader ~= cmdopt.appendHeaderPrefix;
+                            appendFieldsHeader ~= fieldValue;
+                        }
+                    }
+
+                    bufferedOutput.append(inputStream.header);
+                    if (isAppending)
+                    {
+                        bufferedOutput.append(cmdopt.delim);
+                        bufferedOutput.append(appendFieldsHeader);
+                    }
+                    bufferedOutput.appendln;
+                    bufferedOutput.flush;
                 }
             }
             else
@@ -514,23 +546,6 @@ void tsvJoin(ref TsvJoinOptions cmdopt)
     }
 
     /* Now process each input file, one line at a time. */
-
-    auto bufferedOutput = BufferedOutputRange!(typeof(stdout))(stdout);
-
-    /* First header is read during command line argument processing. */
-    if (cmdopt.hasHeader && !cmdopt.inputSources.front.isHeaderEmpty)
-    {
-        auto inputStream = cmdopt.inputSources.front;
-        throwIfWindowsNewlineOnUnix(inputStream.header, inputStream.name, 1);
-
-        bufferedOutput.append(inputStream.header);
-        if (isAppending)
-        {
-            bufferedOutput.append(cmdopt.delim);
-            bufferedOutput.append(appendFieldsHeader);
-        }
-        bufferedOutput.appendln;
-    }
 
     immutable size_t fileBodyStartLine = cmdopt.hasHeader ? 2 : 1;
 

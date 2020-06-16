@@ -439,58 +439,70 @@ struct TsvSampleOptions
             else if (staticSeed) seed = 2438424139;
             else assert(0, "Internal error, invalid seed option states.");
 
+            string[] headerFields;
+
+            /* fieldListArgProcessing encapsulates the field list processing. It is
+             * called prior to reading the header line if headers are not being used,
+             * and after if headers are being used.
+             */
+            void fieldListArgProcessing()
+            {
+                if (!weightFieldArg.empty)
+                {
+                    auto fieldIndices =
+                        weightFieldArg
+                        .parseFieldList!(size_t, Yes.convertToZeroBasedIndex, No.allowFieldNumZero)
+                        (hasHeader, headerFields, weightFieldOptionString)
+                        .array;
+
+                    enforce(fieldIndices.length == 1,
+                            format("'--%s' must be a single field.", weightFieldOptionString));
+
+                    weightField = fieldIndices[0];
+                }
+
+                if (!keyFieldsArg.empty)
+                {
+                    keyFields =
+                        keyFieldsArg
+                        .parseFieldList!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero)
+                        (hasHeader, headerFields, keyFieldsOptionString)
+                        .array;
+
+                    assert(keyFields.length > 0);
+
+                    if (keyFields.length > 0)
+                    {
+                        if (keyFields.length == 1 && keyFields[0] == 0)
+                        {
+                            distinctKeyIsFullLine = true;
+                        }
+                        else
+                        {
+                            enforce(keyFields.length <= 1 || keyFields.all!(x => x != 0),
+                                    "Whole line as key (--k|key-fields 0) cannot be combined with multiple fields.");
+
+                            keyFields.each!((ref x) => --x);  // Convert to zero-based indexing.
+                        }
+                    }
+                }
+            }
+
+            if (!hasHeader) fieldListArgProcessing();
+
             /*
              * Create the inputSourceRange and perform header line processing.
              */
             ReadHeader readHeader = hasHeader ? Yes.readHeader : No.readHeader;
             inputSources = inputSourceRange(filepaths, readHeader);
 
-            string[] headerFields;
             if (hasHeader)
             {
                 throwIfWindowsNewlineOnUnix(inputSources.front.header, inputSources.front.name, 1);
                 headerFields = inputSources.front.header.split(delim).to!(string[]);
+                fieldListArgProcessing();
             }
 
-            if (!weightFieldArg.empty)
-            {
-                auto fieldIndices =
-                    weightFieldArg
-                    .parseFieldList!(size_t, Yes.convertToZeroBasedIndex, No.allowFieldNumZero)
-                    (hasHeader, headerFields, weightFieldOptionString)
-                    .array;
-
-                enforce(fieldIndices.length == 1,
-                        format("'--%s' must be a single field.", weightFieldOptionString));
-
-                weightField = fieldIndices[0];
-            }
-
-            if (!keyFieldsArg.empty)
-            {
-                keyFields =
-                    keyFieldsArg
-                    .parseFieldList!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero)
-                    (hasHeader, headerFields, keyFieldsOptionString)
-                    .array;
-
-                assert(keyFields.length > 0);
-
-                if (keyFields.length > 0)
-                {
-                    if (keyFields.length == 1 && keyFields[0] == 0)
-                    {
-                        distinctKeyIsFullLine = true;
-                    }
-                    else
-                    {
-                        enforce(keyFields.length <= 1 || keyFields.all!(x => x != 0),
-                                "Whole line as key (--k|key-fields 0) cannot be combined with multiple fields.");
-
-                        keyFields.each!((ref x) => --x);  // Convert to zero-based indexing.
-                    }
-                }
-            }
         }
         catch (Exception exc)
         {
@@ -587,7 +599,8 @@ void bernoulliSampling(Flag!"generateRandomAll" generateRandomAll, OutputRange)
 if (isOutputRange!(OutputRange, char))
 {
     import std.random : Random = Mt19937, uniform01;
-    import tsv_utils.common.utils : bufferedByLine, InputSourceRange, throwIfWindowsNewlineOnUnix;
+    import tsv_utils.common.utils : bufferedByLine, isFlushableOutputRange,
+        InputSourceRange, throwIfWindowsNewlineOnUnix;
 
     static if (generateRandomAll) assert(cmdopt.genRandomInorder);
     else assert(!cmdopt.genRandomInorder);
@@ -601,7 +614,6 @@ if (isOutputRange!(OutputRange, char))
     if (cmdopt.hasHeader && !cmdopt.inputSources.front.isHeaderEmpty)
     {
         auto inputStream = cmdopt.inputSources.front;
-        throwIfWindowsNewlineOnUnix(inputStream.header, inputStream.name, 1);
 
         static if (generateRandomAll)
         {
@@ -616,6 +628,11 @@ if (isOutputRange!(OutputRange, char))
 
         outputStream.put(inputStream.header);
         outputStream.put("\n");
+
+        /* Immediately flush the header so subsequent processes in a unix command
+         * pipeline see it early. This helps provide timely error messages.
+         */
+        static if (isFlushableOutputRange!OutputRange) outputStream.flush;
     }
 
     /* Process each line. */
@@ -707,7 +724,8 @@ void bernoulliSkipSampling(OutputRange)(ref TsvSampleOptions cmdopt, OutputRange
     import std.conv : to;
     import std.math : log, trunc;
     import std.random : Random = Mt19937, uniform01;
-    import tsv_utils.common.utils : bufferedByLine, InputSourceRange, throwIfWindowsNewlineOnUnix;
+    import tsv_utils.common.utils : bufferedByLine, isFlushableOutputRange,
+        InputSourceRange, throwIfWindowsNewlineOnUnix;
 
     assert(cmdopt.inclusionProbability > 0.0 && cmdopt.inclusionProbability < 1.0);
     assert(!cmdopt.printRandom);
@@ -730,10 +748,14 @@ void bernoulliSkipSampling(OutputRange)(ref TsvSampleOptions cmdopt, OutputRange
     if (cmdopt.hasHeader && !cmdopt.inputSources.front.isHeaderEmpty)
     {
         auto inputStream = cmdopt.inputSources.front;
-        throwIfWindowsNewlineOnUnix(inputStream.header, inputStream.name, 1);
 
         outputStream.put(inputStream.header);
         outputStream.put("\n");
+
+        /* Immediately flush the header so subsequent processes in a unix command
+         * pipeline see it early. This helps provide timely error messages.
+         */
+        static if (isFlushableOutputRange!OutputRange) outputStream.flush;
     }
 
     /* Process each line. */
@@ -796,8 +818,8 @@ if (isOutputRange!(OutputRange, char))
     import std.conv : to;
     import std.digest.murmurhash;
     import std.math : lrint;
-    import tsv_utils.common.utils : bufferedByLine, InputFieldReordering,
-        InputSourceRange, throwIfWindowsNewlineOnUnix;
+    import tsv_utils.common.utils : bufferedByLine, isFlushableOutputRange,
+        InputFieldReordering, InputSourceRange, throwIfWindowsNewlineOnUnix;
 
     static if (generateRandomAll) assert(cmdopt.genRandomInorder);
     else assert(!cmdopt.genRandomInorder);
@@ -825,7 +847,6 @@ if (isOutputRange!(OutputRange, char))
     if (cmdopt.hasHeader && !cmdopt.inputSources.front.isHeaderEmpty)
     {
         auto inputStream = cmdopt.inputSources.front;
-        throwIfWindowsNewlineOnUnix(inputStream.header, inputStream.name, 1);
 
         static if (generateRandomAll)
         {
@@ -840,6 +861,11 @@ if (isOutputRange!(OutputRange, char))
 
         outputStream.put(inputStream.header);
         outputStream.put("\n");
+
+        /* Immediately flush the header so subsequent processes in a unix command
+         * pipeline see it early. This helps provide timely error messages.
+         */
+        static if (isFlushableOutputRange!OutputRange) outputStream.flush;
     }
 
     /* Process each line. */
@@ -1041,7 +1067,8 @@ if (isOutputRange!(OutputRange, char))
     import std.container.binaryheap;
     import std.meta : AliasSeq;
     import std.random : Random = Mt19937, uniform01;
-    import tsv_utils.common.utils : bufferedByLine, InputSourceRange, throwIfWindowsNewlineOnUnix;
+    import tsv_utils.common.utils : bufferedByLine, isFlushableOutputRange,
+        InputSourceRange, throwIfWindowsNewlineOnUnix;
 
     static if (isWeighted) assert(cmdopt.hasWeightField);
     else assert(!cmdopt.hasWeightField);
@@ -1078,7 +1105,6 @@ if (isOutputRange!(OutputRange, char))
     if (cmdopt.hasHeader && !cmdopt.inputSources.front.isHeaderEmpty)
     {
         auto inputStream = cmdopt.inputSources.front;
-        throwIfWindowsNewlineOnUnix(inputStream.header, inputStream.name, 1);
 
         if (cmdopt.printRandom)
         {
@@ -1087,6 +1113,11 @@ if (isOutputRange!(OutputRange, char))
         }
         outputStream.put(inputStream.header);
         outputStream.put("\n");
+
+        /* Immediately flush the header so subsequent processes in a unix command
+         * pipeline see it early. This helps provide timely error messages.
+         */
+        static if (isFlushableOutputRange!OutputRange) outputStream.flush;
     }
 
     /* Process each line. */
@@ -1180,7 +1211,8 @@ void generateWeightedRandomValuesInorder(OutputRange)
 if (isOutputRange!(OutputRange, char))
 {
     import std.random : Random = Mt19937, uniform01;
-    import tsv_utils.common.utils : bufferedByLine, InputSourceRange, throwIfWindowsNewlineOnUnix;
+    import tsv_utils.common.utils : bufferedByLine, isFlushableOutputRange,
+        InputSourceRange, throwIfWindowsNewlineOnUnix;
 
     assert(cmdopt.hasWeightField);
 
@@ -1193,12 +1225,16 @@ if (isOutputRange!(OutputRange, char))
     if (cmdopt.hasHeader && !cmdopt.inputSources.front.isHeaderEmpty)
     {
         auto inputStream = cmdopt.inputSources.front;
-        throwIfWindowsNewlineOnUnix(inputStream.header, inputStream.name, 1);
 
         outputStream.put(cmdopt.randomValueHeader);
         outputStream.put(cmdopt.delim);
         outputStream.put(inputStream.header);
         outputStream.put("\n");
+
+        /* Immediately flush the header so subsequent processes in a unix command
+         * pipeline see it early. This helps provide timely error messages.
+         */
+        static if (isFlushableOutputRange!OutputRange) outputStream.flush;
     }
 
     /* Process each line. */
@@ -1272,7 +1308,8 @@ if (isOutputRange!(OutputRange, char))
     import std.meta : AliasSeq;
     import std.random : Random = Mt19937, randomShuffle, uniform;
     import std.algorithm : sort;
-    import tsv_utils.common.utils : bufferedByLine, InputSourceRange, throwIfWindowsNewlineOnUnix;
+    import tsv_utils.common.utils : bufferedByLine, isFlushableOutputRange,
+        InputSourceRange, throwIfWindowsNewlineOnUnix;
 
     assert(cmdopt.sampleSize > 0);
     assert(!cmdopt.hasWeightField);
@@ -1299,10 +1336,14 @@ if (isOutputRange!(OutputRange, char))
     if (cmdopt.hasHeader && !cmdopt.inputSources.front.isHeaderEmpty)
     {
         auto inputStream = cmdopt.inputSources.front;
-        throwIfWindowsNewlineOnUnix(inputStream.header, inputStream.name, 1);
 
         outputStream.put(inputStream.header);
         outputStream.put("\n");
+
+        /* Immediately flush the header so subsequent processes in a unix command
+         * pipeline see it early. This helps provide timely error messages.
+         */
+        static if (isFlushableOutputRange!OutputRange) outputStream.flush;
     }
 
     /* Process each line. */
@@ -1570,7 +1611,8 @@ if (isOutputRange!(OutputRange, char))
 {
     import std.algorithm : find, min;
     import std.range : retro;
-    import tsv_utils.common.utils : InputSourceRange, throwIfWindowsNewlineOnUnix;
+    import tsv_utils.common.utils : InputSourceRange, isFlushableOutputRange,
+        throwIfWindowsNewlineOnUnix;
 
     static if(!hasRandomValue) assert(!cmdopt.printRandom);
 
@@ -1581,7 +1623,6 @@ if (isOutputRange!(OutputRange, char))
     if (cmdopt.hasHeader && !cmdopt.inputSources.front.isHeaderEmpty)
     {
         auto inputStream = cmdopt.inputSources.front;
-        throwIfWindowsNewlineOnUnix(inputStream.header, inputStream.name, 1);
 
         if (cmdopt.printRandom)
         {
@@ -1590,6 +1631,11 @@ if (isOutputRange!(OutputRange, char))
         }
         outputStream.put(inputStream.header);
         outputStream.put("\n");
+
+        /* Immediately flush the header so subsequent processes in a unix command
+         * pipeline see it early. This helps provide timely error messages.
+         */
+        static if (isFlushableOutputRange!OutputRange) outputStream.flush;
     }
 
     enum BlockSize = 1024L * 1024L * 1024L;  // 1 GB. ('L' notation avoids overflow w/ 2GB+ sizes.)

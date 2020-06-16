@@ -18,6 +18,15 @@ runtest () {
     return 0
 }
 
+## A special version used by some of the error handling tests. It is used to
+## filter out lines other than error lines. See the calls for examples.
+runtest_filter () {
+    echo "" >> $3
+    echo "====[tsv-join $2]====" >> $3
+    $1 $2 2>&1 | grep -v $4 >> $3 2>&1
+    return 0
+}
+
 ## Note: input1.tsv has duplicate values in fields 2 & 3. Tests with those fields
 ## as keys that have append values need to use --allow-duplicate-keys (unless
 ## testing error handling).
@@ -301,17 +310,22 @@ echo "Error test set 1" > ${error_tests_1}
 echo "----------------" >> ${error_tests_1}
 
 echo "" >> ${error_tests_1}; echo "===Duplicate keys===" >> ${error_tests_1}
-runtest ${prog} "--header -f input1.tsv -k 2 -a 0 input2.tsv" ${error_tests_1}
-runtest ${prog} "--header -f input1.tsv -k 2 -a 4 input2.tsv" ${error_tests_1}
+
+# Note: If headers are being processed, the header will be output before the duplicates
+# are detected. Filter out the header line to avoids issues with stdout/stderr output order.
+input2_header='f1[[:blank:]]f2[[:blank:]]f3[[:blank:]]f4[[:blank:]]f5'
+
+runtest_filter ${prog} "--header -f input1.tsv -k 2 -a 0 input2.tsv" ${error_tests_1} ${input2_header}
+runtest_filter ${prog} "--header -f input1.tsv -k 2 -a 4 input2.tsv" ${error_tests_1} ${input2_header}
 
 runtest ${prog} "-f input1_noheader.tsv -k 2 -a 0 input2_noheader.tsv" ${error_tests_1}
 runtest ${prog} "-f input1_noheader.tsv -k 2 -a 4 input2_noheader.tsv" ${error_tests_1}
 
-runtest ${prog} "--header -f input1.tsv -k f2 -a 0 input2.tsv" ${error_tests_1}
-runtest ${prog} "--header -f input1.tsv -k f2 -a f4 input2.tsv" ${error_tests_1}
+runtest_filter ${prog} "--header -f input1.tsv -k f2 -a 0 input2.tsv" ${error_tests_1} ${input2_header}
+runtest_filter ${prog} "--header -f input1.tsv -k f2 -a f4 input2.tsv" ${error_tests_1} ${input2_header}
 
-runtest ${prog} "--header -f input1_rotated.tsv -k f2 -a 0 input2.tsv" ${error_tests_1}
-runtest ${prog} "--header -f input1_rotated.tsv -k f2 -a f4 input2.tsv" ${error_tests_1}
+runtest_filter ${prog} "--header -f input1_rotated.tsv -k f2 -a 0 input2.tsv" ${error_tests_1} ${input2_header}
+runtest_filter ${prog} "--header -f input1_rotated.tsv -k f2 -a f4 input2.tsv" ${error_tests_1} ${input2_header}
 
 echo "" >> ${error_tests_1}; echo "===Invalid field indicies===" >> ${error_tests_1}
 runtest ${prog} "--header -f input1.tsv -k 6 input2.tsv" ${error_tests_1}
@@ -424,5 +438,11 @@ runtest ${prog} "--header -f no_such_file -k 2,3 -d 2 input2.tsv" ${error_tests_
 
 runtest ${prog} "-f input1_noheader.tsv -k 2 -d 2,3 no_such-file.tsv" ${error_tests_1}
 runtest ${prog} "-f no_such_file -k 2,3 -d 2 input2_noheader.tsv" ${error_tests_1}
+
+runtest ${prog} "--header -f input1.tsv -k 2 -d 2 no_such-file.tsv" ${error_tests_1}
+runtest ${prog} "--header -f no_such_file -k 2 -d 2 input2.tsv" ${error_tests_1}
+
+runtest ${prog} "-f input1_noheader.tsv -k 2 -d 2 no_such-file.tsv" ${error_tests_1}
+runtest ${prog} "-f no_such_file -k 2 -d 2 input2_noheader.tsv" ${error_tests_1}
 
 exit $?

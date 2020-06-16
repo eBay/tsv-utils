@@ -3186,7 +3186,6 @@ col a:col b:Field B
 ====[tsv-join -f input_emptyfile.tsv input2.tsv]====
 
 ====[tsv-join -H -f input_emptyfile.tsv input2.tsv]====
-f1	f2	f3	f4	f5
 
 ====[tsv-join -f input1.tsv input_emptyfile.tsv]====
 

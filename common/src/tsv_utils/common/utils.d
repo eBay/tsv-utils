@@ -12,6 +12,9 @@ $(LIST
     * [BufferedOutputRange] - An OutputRange with an internal buffer used to buffer
       output. Intended for use with stdout, it is a significant performance benefit.
 
+    * [isFlushableOutputRange] - Tests if something is an OutputRange with a flush
+      member.
+
     * [bufferedByLine] - An input range that reads from a File handle line by line.
       It is similar to the standard library method std.stdio.File.byLine, but quite a
       bit faster. This is achieved by reading in larger blocks and buffering.
@@ -45,7 +48,7 @@ License: Boost Licence 1.0 (http://boost.org/LICENSE_1_0.txt)
 module tsv_utils.common.utils;
 
 import std.range;
-import std.traits : isIntegral, isSomeChar, isSomeString, isUnsigned;
+import std.traits : isIntegral, isSomeChar, isSomeString, isUnsigned, ReturnType;
 import std.typecons : Flag, No, Yes;
 
 // InputFieldReording class.
@@ -789,6 +792,40 @@ unittest
     }
     assert(app5.data == "123456789012123456789012ab-cdde-gh-ij");
 }
+
+/**
+isFlushableOutputRange returns true if R is an output range with a flush member.
+*/
+enum bool isFlushableOutputRange(R, E=char) = isOutputRange!(R, E)
+    && is(ReturnType!((R r) => r.flush) == void);
+
+@safe unittest
+{
+    import std.array;
+    auto app = appender!(char[]);
+    auto ostream = BufferedOutputRange!(typeof(app))(app, 5, 0, 10); // maxSize 10
+
+    static assert(isOutputRange!(typeof(app), char));
+    static assert(!isFlushableOutputRange!(typeof(app), char));
+    static assert(!isFlushableOutputRange!(typeof(app)));
+
+    static assert(isOutputRange!(typeof(ostream), char));
+    static assert(isFlushableOutputRange!(typeof(ostream), char));
+    static assert(isFlushableOutputRange!(typeof(ostream)));
+
+    static assert(isOutputRange!(Appender!string, string));
+    static assert(!isFlushableOutputRange!(Appender!string, string));
+    static assert(!isFlushableOutputRange!(Appender!string));
+
+    static assert(isOutputRange!(Appender!(char[]), char));
+    static assert(!isFlushableOutputRange!(Appender!(char[]), char));
+    static assert(!isFlushableOutputRange!(Appender!(char[])));
+
+    static assert(isOutputRange!(BufferedOutputRange!(Appender!(char[])), char));
+    static assert(isFlushableOutputRange!(BufferedOutputRange!(Appender!(char[]))));
+    static assert(isFlushableOutputRange!(BufferedOutputRange!(Appender!(char[])), char));
+}
+
 
 /**
 bufferedByLine is a performance enhancement over std.stdio.File.byLine. It works by

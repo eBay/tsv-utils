@@ -156,6 +156,7 @@ struct TsvSelectOptions
         import std.path : baseName, stripExtension;
         import std.typecons : Yes, No;
         import tsv_utils.common.fieldlist;
+        import tsv_utils.common.utils : throwIfWindowsNewlineOnUnix;
 
         bool helpVerbose = false;           // --help-verbose
         string fieldsArg;                   // --f|fields
@@ -222,75 +223,97 @@ struct TsvSelectOptions
 
             /* Remaining command line args are files. Use standard input if files
              * were not provided. Truncate cmdArgs to consume the arguments.
-             *
-             * Note: If reading from stdin, this will wait until a line is available.
              */
             string[] filepaths = (cmdArgs.length > 1) ? cmdArgs[1 .. $] : ["-"];
             cmdArgs.length = 1;
-            inputSources = byLineSourceRange(filepaths);
 
-            /*
-             * Consistency checks and derivations.
+            /* Validation and derivations - Do as much validation prior to header line
+             * processing as possible (avoids waiting on stdin).
+             *
+             * Note: fields and excludedFields depend on header line processing, but
+             * fieldsArg and excludedFieldsArg can be used to detect whether the
+             * command line argument was specified.
              */
+
+            enforce(!fieldsArg.empty || !excludedFieldsArg.empty,
+                    "One of '--f|fields' or '--e|exclude' is required.");
 
             string[] headerFields;
 
-            if (hasHeader && !inputSources.front.byLine.empty)
+            /* fieldListArgProcessing encapsulates the field list processing. It is
+             * called prior to reading the header line if headers are not being used,
+             * and after if headers are being used.
+             */
+            void fieldListArgProcessing()
             {
-                headerFields = inputSources.front.byLine.front.split(delim).to!(string[]);
-            }
-
-            if (!fieldsArg.empty)
-            {
-                fields = fieldsArg
-                    .parseFieldList!(size_t, Yes.convertToZeroBasedIndex)(hasHeader, headerFields, fieldsOptionString)
-                    .array;
-            }
-
-            size_t[] excludedFields;
-
-            if (!excludedFieldsArg.empty)
-            {
-                excludedFields = excludedFieldsArg
-                    .parseFieldList!(size_t, Yes.convertToZeroBasedIndex)(hasHeader, headerFields, excludedFieldsOptionString)
-                    .array;
-            }
-
-            enforce(fields.length != 0 || excludedFields.length != 0,
-                    "One of '--f|fields' or '--e|exclude' is required.");
-
-            if (excludedFields.length > 0)
-            {
-                /* Make sure selected and excluded fields do not overlap. */
-                foreach (e; excludedFields)
+                if (!fieldsArg.empty)
                 {
-                    foreach (f; fields)
-                    {
-                        enforce(e != f, "'--f|fields' and '--e|exclude' have overlapping fields.");
-                    }
+                    fields = fieldsArg
+                        .parseFieldList!(size_t, Yes.convertToZeroBasedIndex)(hasHeader, headerFields, fieldsOptionString)
+                        .array;
                 }
 
-                /* '--exclude' changes '--rest' default to 'last'. */
-                if (restArg == RestOption.none) restArg = RestOption.last;
+                size_t[] excludedFields;
 
-                /* Build the excluded field lookup table.
-                 *
-                 * Note: Users won't have any reason to expect memory is allocated based
-                 * on the max field number. However, users might pick arbitrarily large
-                 * numbers when trimming fields. So, limit the max field number to something
-                 * big but reasonable (more than 1 million). The limit can be raised if use
-                 * cases arise.
-                 */
-                size_t maxExcludedField = excludedFields.maxElement;
-                size_t maxAllowedExcludedField = 1024 * 1024;
+                if (!excludedFieldsArg.empty)
+                {
+                    excludedFields = excludedFieldsArg
+                        .parseFieldList!(size_t, Yes.convertToZeroBasedIndex)(hasHeader, headerFields, excludedFieldsOptionString)
+                        .array;
+                }
 
-                enforce(maxExcludedField < maxAllowedExcludedField,
-                        format("Maximum allowed '--e|exclude' field number is %d.",
-                               maxAllowedExcludedField));
+                if (excludedFields.length > 0)
+                {
+                    /* Make sure selected and excluded fields do not overlap. */
+                    foreach (e; excludedFields)
+                    {
+                        foreach (f; fields)
+                        {
+                            enforce(e != f, "'--f|fields' and '--e|exclude' have overlapping fields.");
+                        }
+                    }
 
-                excludedFieldsTable.length = maxExcludedField + 1;          // Initialized to false
-                foreach (e; excludedFields) excludedFieldsTable[e] = true;
+                    /* '--exclude' changes '--rest' default to 'last'. */
+                    if (restArg == RestOption.none) restArg = RestOption.last;
+
+                    /* Build the excluded field lookup table.
+                     *
+                     * Note: Users won't have any reason to expect memory is allocated based
+                     * on the max field number. However, users might pick arbitrarily large
+                     * numbers when trimming fields. So, limit the max field number to something
+                     * big but reasonable (more than 1 million). The limit can be raised if use
+                     * cases arise.
+                     */
+                    size_t maxExcludedField = excludedFields.maxElement;
+                    size_t maxAllowedExcludedField = 1024 * 1024;
+
+                    enforce(maxExcludedField < maxAllowedExcludedField,
+                            format("Maximum allowed '--e|exclude' field number is %d.",
+                                   maxAllowedExcludedField));
+
+                    excludedFieldsTable.length = maxExcludedField + 1;          // Initialized to false
+                    foreach (e; excludedFields) excludedFieldsTable[e] = true;
+                }
             }
+
+            if (!hasHeader) fieldListArgProcessing();
+
+            /*
+             * Create the byLineSourceRange and perform header line processing.
+             */
+            inputSources = byLineSourceRange(filepaths);
+
+            if (hasHeader)
+            {
+                if (!inputSources.front.byLine.empty)
+                {
+                    throwIfWindowsNewlineOnUnix(inputSources.front.byLine.front, inputSources.front.name, 1);
+                    headerFields = inputSources.front.byLine.front.split(delim).to!(string[]);
+                }
+
+                fieldListArgProcessing();
+            }
+
         }
         catch (Exception exc)
         {
@@ -417,8 +440,8 @@ void tsvSelect(RestLocation rest)(ref TsvSelectOptions cmdopt)
         auto leftOverFieldsAppender = appender!(char[][]);
     }
 
-    /* BufferedOutputRange (from tsvutils.d) is a performance improvement over writing
-     * directly to stdout.
+    /* BufferedOutputRange (from common/utils.d) is a performance improvement over
+     * writing directly to stdout.
      */
     auto bufferedOutput = BufferedOutputRange!(typeof(stdout))(stdout);
 
@@ -521,6 +544,12 @@ void tsvSelect(RestLocation rest)(ref TsvSelectOptions cmdopt)
             }
 
             bufferedOutput.appendln;
+
+            /* Send the first line of the first file immediately. This helps detect
+             * errors quickly in multi-stage unix pipelines. Note that tsv-select may
+             * have been sent one line from an upstream process, usually a header line.
+             */
+            if (lineNum == 1 && fileNum == 0) bufferedOutput.flush;
         }
     }
 }
