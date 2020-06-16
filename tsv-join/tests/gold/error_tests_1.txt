@@ -278,7 +278,7 @@ Error [tsv-join]: Not enough fields in line. File: input2_noheader.tsv, Line: 1
 ===Windows Newline detection===
 
 ====[tsv-join --header -f input1_dos.tsv -k 2,3 input2.tsv]====
-Error [tsv-join]: Windows/DOS line ending found. Convert file to Unix newlines before processing (e.g. 'dos2unix').
+[tsv-join] Error processing command line arguments: Windows/DOS line ending found. Convert file to Unix newlines before processing (e.g. 'dos2unix').
   File: input1_dos.tsv, Line: 1
 
 ====[tsv-join --header -f input1.tsv -k 2,3 input2_dos.tsv]====
@@ -302,7 +302,19 @@ Error [tsv-join]: Windows/DOS line ending found. Convert file to Unix newlines b
 [tsv-join] Error processing command line arguments: Cannot open file `no_such_file' in mode `rb' (No such file or directory)
 
 ====[tsv-join -f input1_noheader.tsv -k 2 -d 2,3 no_such-file.tsv]====
-[tsv-join] Error processing command line arguments: Cannot open file `no_such-file.tsv' in mode `rb' (No such file or directory)
+[tsv-join] Error processing command line arguments: Different number of --k|key-fields and --d|data-fields.
 
 ====[tsv-join -f no_such_file -k 2,3 -d 2 input2_noheader.tsv]====
+[tsv-join] Error processing command line arguments: Different number of --k|key-fields and --d|data-fields.
+
+====[tsv-join --header -f input1.tsv -k 2 -d 2 no_such-file.tsv]====
+[tsv-join] Error processing command line arguments: Cannot open file `no_such-file.tsv' in mode `rb' (No such file or directory)
+
+====[tsv-join --header -f no_such_file -k 2 -d 2 input2.tsv]====
+[tsv-join] Error processing command line arguments: Cannot open file `no_such_file' in mode `rb' (No such file or directory)
+
+====[tsv-join -f input1_noheader.tsv -k 2 -d 2 no_such-file.tsv]====
+[tsv-join] Error processing command line arguments: Cannot open file `no_such-file.tsv' in mode `rb' (No such file or directory)
+
+====[tsv-join -f no_such_file -k 2 -d 2 input2_noheader.tsv]====
 [tsv-join] Error processing command line arguments: Cannot open file `no_such_file' in mode `rb' (No such file or directory)

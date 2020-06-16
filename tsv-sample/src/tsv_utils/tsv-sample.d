@@ -441,7 +441,7 @@ struct TsvSampleOptions
 
             string[] headerFields;
 
-            /* FieldListArgProcessing encapsulates the field list processing. It is
+            /* fieldListArgProcessing encapsulates the field list processing. It is
              * called prior to reading the header line if headers are not being used,
              * and after if headers are being used.
              */

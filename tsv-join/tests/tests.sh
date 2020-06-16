@@ -425,4 +425,10 @@ runtest ${prog} "--header -f no_such_file -k 2,3 -d 2 input2.tsv" ${error_tests_
 runtest ${prog} "-f input1_noheader.tsv -k 2 -d 2,3 no_such-file.tsv" ${error_tests_1}
 runtest ${prog} "-f no_such_file -k 2,3 -d 2 input2_noheader.tsv" ${error_tests_1}
 
+runtest ${prog} "--header -f input1.tsv -k 2 -d 2 no_such-file.tsv" ${error_tests_1}
+runtest ${prog} "--header -f no_such_file -k 2 -d 2 input2.tsv" ${error_tests_1}
+
+runtest ${prog} "-f input1_noheader.tsv -k 2 -d 2 no_such-file.tsv" ${error_tests_1}
+runtest ${prog} "-f no_such_file -k 2 -d 2 input2_noheader.tsv" ${error_tests_1}
+
 exit $?
