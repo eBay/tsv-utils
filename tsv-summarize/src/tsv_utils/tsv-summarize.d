@@ -491,8 +491,8 @@ struct TsvSummarizeOptions {
  */
 void tsvSummarize(ref TsvSummarizeOptions cmdopt)
 {
-    import tsv_utils.common.utils : ByLineSourceRange, bufferedByLine,
-        throwIfWindowsNewlineOnUnix;
+    import tsv_utils.common.utils : BufferedOutputRange, ByLineSourceRange,
+        bufferedByLine, throwIfWindowsNewlineOnUnix;
 
     /* Check that the input files were setup as expected. Should at least have one
      * input, stdin if nothing else, and newlines removed from the byLine range.
@@ -500,17 +500,22 @@ void tsvSummarize(ref TsvSummarizeOptions cmdopt)
     assert(!cmdopt.inputSources.empty);
     static assert(is(typeof(cmdopt.inputSources) == ByLineSourceRange!(No.keepTerminator)));
 
+    /* BufferedOutputRange is faster than writing directly to stdout if many lines are
+     * being written. This will happen mostly when group-by is used.
+     */
+    auto bufferedOutput = BufferedOutputRange!(typeof(stdout))(stdout);
+
     /* Pick the Summarizer based on the number of key-fields entered. */
     auto summarizer =
         (cmdopt.keyFields.length == 0)
-        ? new NoKeySummarizer!(typeof(stdout.lockingTextWriter()))(
+        ? new NoKeySummarizer!(typeof(bufferedOutput))(
             cmdopt.inputFieldDelimiter, cmdopt.globalMissingPolicy)
 
         : (cmdopt.keyFields.length == 1)
-        ? new OneKeySummarizer!(typeof(stdout.lockingTextWriter()))(
+        ? new OneKeySummarizer!(typeof(bufferedOutput))(
             cmdopt.keyFields[0], cmdopt.inputFieldDelimiter, cmdopt.globalMissingPolicy)
 
-        : new MultiKeySummarizer!(typeof(stdout.lockingTextWriter()))(
+        : new MultiKeySummarizer!(typeof(bufferedOutput))(
             cmdopt.keyFields, cmdopt.inputFieldDelimiter, cmdopt.globalMissingPolicy);
 
     /* Add the operators to the Summarizer. */
@@ -591,14 +596,13 @@ void tsvSummarize(ref TsvSummarizeOptions cmdopt)
     /* Whew! We're done processing input data. Run the calculations and print. */
     auto printOptions = SummarizerPrintOptions(
         cmdopt.inputFieldDelimiter, cmdopt.valuesDelimiter, cmdopt.floatPrecision);
-    auto stdoutWriter = stdout.lockingTextWriter;
 
     if (cmdopt.hasHeader || cmdopt.writeHeader)
     {
-        summarizer.writeSummaryHeader(stdoutWriter, printOptions);
+        summarizer.writeSummaryHeader(bufferedOutput, printOptions);
     }
 
-    summarizer.writeSummaryBody(stdoutWriter, printOptions);
+    summarizer.writeSummaryBody(bufferedOutput, printOptions);
 }
 
 /** The default field header. This is used when the input doesn't have field headers,
