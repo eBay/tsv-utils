@@ -25,6 +25,15 @@ runtest () {
     return 0
 }
 
+## A special version used by some of the error handling tests. It is used to
+## filter out lines other than error lines. See the calls for examples.
+runtest_filter () {
+    echo "" >> $3
+    echo "====[tsv-summarize $2]====" >> $3
+    $1 $2 2>&1 | grep -v $4 >> $3 2>&1
+    return 0
+}
+
 basic_tests_1=${odir}/basic_tests_1.txt
 
 echo "Basic tests set 1" > ${basic_tests_1}
@@ -89,6 +98,11 @@ runtest ${prog} "--count --unique-count 1 input_1field_a.tsv input_1field_b.tsv 
 runtest ${prog} "--group-by 1 --count --unique-count 1 input_1field_a.tsv input_1field_b.tsv " ${basic_tests_1}
 runtest ${prog} "--group-by 1 --count --unique-count 1 input_1field_a.tsv input_1field_b.tsv empty_file.tsv" ${basic_tests_1}
 
+runtest ${prog} "--header --write-header --count input_1field_a.tsv" ${basic_tests_1}
+runtest ${prog} "--header --write-header --count empty_file.tsv" ${basic_tests_1}
+runtest ${prog} "--write-header --count input_1field_a.tsv" ${basic_tests_1}
+runtest ${prog} "--write-header --count empty_file.tsv" ${basic_tests_1}
+
 runtest ${prog} "--count input_1field_a.tsv --exclude-missing" ${basic_tests_1}
 runtest ${prog} "--values 1 input_1field_a.tsv --exclude-missing" ${basic_tests_1}
 runtest ${prog} "--count input_1field_a.tsv --replace-missing XYZ" ${basic_tests_1}
@@ -139,14 +153,14 @@ runtest ${prog} "--unique-count x input_5field_a.tsv" ${error_tests_1}
 runtest ${prog} "--unique-count 2 input_5field_a.tsv input_1field_a.tsv" ${error_tests_1}
 runtest ${prog} "--group-by 1 input_5field_a.tsv" ${error_tests_1}
 runtest ${prog} "--group-by 0 --count input_5field_a.tsv" ${error_tests_1}
-runtest ${prog} "--group-by 0 input_5field_a.tsv" ${error_tests_1}
-runtest ${prog} "--group-by 2, input_5field_a.tsv" ${error_tests_1}
-runtest ${prog} "--group-by 2: input_5field_a.tsv" ${error_tests_1}
-runtest ${prog} "--group-by x input_5field_a.tsv" ${error_tests_1}
+runtest ${prog} "--group-by 0 --count input_5field_a.tsv" ${error_tests_1}
+runtest ${prog} "--group-by 2, --count input_5field_a.tsv" ${error_tests_1}
+runtest ${prog} "--group-by 2: --count input_5field_a.tsv" ${error_tests_1}
+runtest ${prog} "--group-by x --count input_5field_a.tsv" ${error_tests_1}
 runtest ${prog} "--group-by 2 --unique-count 1 input_5field_a.tsv input_1field_a.tsv" ${error_tests_1}
-runtest ${prog} "--group-by 1- input_5field_a.tsv" ${error_tests_1}
-runtest ${prog} "--group-by 3-0 input_5field_a.tsv" ${error_tests_1}
-runtest ${prog} "--header --max 1 input_1field_a.tsv" ${error_tests_1}
+runtest ${prog} "--group-by 1- --count input_5field_a.tsv" ${error_tests_1}
+runtest ${prog} "--group-by 3-0 --count input_5field_a.tsv" ${error_tests_1}
+runtest_filter ${prog} "--header --max 1 input_1field_a.tsv" ${error_tests_1} 'size_max'
 runtest ${prog} "-d abc --count input_5field_a.tsv" ${error_tests_1}
 runtest ${prog} "-d ß --count input_5field_a.tsv" ${error_tests_1}
 runtest ${prog} "-v abc --count input_5field_a.tsv" ${error_tests_1}

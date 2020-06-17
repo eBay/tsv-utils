@@ -101,14 +101,12 @@ EOS";
 struct TsvAppendOptions
 {
     string programName;
-    string[] files;                    // Input files
-    string[string] fileSourceNames;    // Maps file path to the 'source' value
-    bool helpVerbose = false;          // --help-verbose
-    string sourceHeader;               // --s|source-header
-    bool trackSource = false;          // --t|track-source
-    bool hasHeader = false;            // --H|header
-    char delim = '\t';                 // --d|delimiter
-    bool versionWanted = false;        // --V|version
+    string[] files;                    /// Input files
+    string[string] fileSourceNames;    /// Maps file path to the 'source' value
+    string sourceHeader;               /// --s|source-header
+    bool trackSource = false;          /// --t|track-source
+    bool hasHeader = false;            /// --H|header
+    char delim = '\t';                 /// --d|delimiter
 
     /* fileOptionHandler processes the '--f|file source=file' option. */
     private void fileOptionHandler(string option, string optionVal) pure @safe
@@ -143,6 +141,9 @@ struct TsvAppendOptions
         import std.algorithm : any, each;
         import std.getopt;
         import std.path : baseName, stripExtension;
+
+        bool helpVerbose = false;          // --help-verbose
+        bool versionWanted = false;        // --V|version
 
         programName = (cmdArgs.length > 0) ? cmdArgs[0].stripExtension.baseName : "Unknown_program_name";
 
@@ -211,7 +212,7 @@ struct TsvAppendOptions
 void tsvAppend(OutputRange)(TsvAppendOptions cmdopt, auto ref OutputRange outputStream)
 if (isOutputRange!(OutputRange, char))
 {
-    import tsv_utils.common.utils : bufferedByLine;
+    import tsv_utils.common.utils : bufferedByLine, isFlushableOutputRange;
 
     bool headerWritten = false;
     foreach (filename; (cmdopt.files.length > 0) ? cmdopt.files : ["-"])
@@ -232,6 +233,14 @@ if (isOutputRange!(OutputRange, char))
                     outputStream.put(line);
                     outputStream.put('\n');
                     headerWritten = true;
+
+                    /* Flush the header immediately. This helps tasks further on in a
+                     * unix pipeline detect errors quickly, without waiting for all
+                     * the data to flow through the pipeline. Note that an upstream
+                     * task may have flushed its header line, so the header may
+                     * arrive long before the main block of data.
+                     */
+                    static if (isFlushableOutputRange!OutputRange) outputStream.flush;
                 }
             }
             else
