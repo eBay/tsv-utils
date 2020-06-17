@@ -150,6 +150,14 @@ void numberLines(const NumberLinesOptions cmdopt, const string[] inputFiles)
                     bufferedOutput.append(cmdopt.delim);
                     bufferedOutput.appendln(line);
                     headerWritten = true;
+
+                    /* Flush the header immediately. This helps tasks further on in a
+                     * unix pipeline detect errors quickly, without waiting for all
+                     * the data to flow through the pipeline. Note that an upstream
+                     * task may have flushed its header line, so the header may
+                     * arrive long before the main block of data.
+                     */
+                    bufferedOutput.flush;
                 }
             }
             else

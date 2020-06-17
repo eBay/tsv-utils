@@ -148,21 +148,35 @@ EOS";
 struct TsvSummarizeOptions {
     import tsv_utils.common.utils : byLineSourceRange, ByLineSourceRange;
 
-    string programName;                // Program name
-    ByLineSourceRange!() inputSources; // Input Files
-    size_t[] keyFields;                // -g, --group-by
-    bool hasHeader = false;            // --header
-    bool writeHeader = false;          // -w, --write-header
-    char inputFieldDelimiter = '\t';   // --d|delimiter
-    char valuesDelimiter = '|';        // --v|values-delimiter
-    size_t floatPrecision = 12;        // --p|float-precision
-    bool excludeMissing = false;       // --x|exclude-missing
-    string missingValueReplacement;    // --r|replace-missing
-    bool helpVerbose = false;          // --help-verbose
-    bool versionWanted = false;        // --V|version
-    DList!Operator operators;          // Operators, in the order specified.
-    size_t endFieldIndex = 0;          // Derived value. Max field index used plus one.
-    MissingFieldPolicy globalMissingPolicy = new MissingFieldPolicy;   // Derived value.
+    string programName;                /// Program name
+    ByLineSourceRange!() inputSources; /// Input Files
+    size_t[] keyFields;                /// -g, --group-by
+    bool hasHeader = false;            /// --header
+    bool writeHeader = false;          /// -w, --write-header
+    char inputFieldDelimiter = '\t';   /// --d|delimiter
+    char valuesDelimiter = '|';        /// --v|values-delimiter
+    size_t floatPrecision = 12;        /// --p|float-precision
+    DList!Operator operators;          /// Operators, in the order specified.
+    size_t endFieldIndex = 0;          /// Derived value. Max field index used plus one.
+    MissingFieldPolicy globalMissingPolicy = new MissingFieldPolicy;   /// Derived value.
+
+    /* tsv-summarize operators require access to the header line when the operator is
+     * created. This is because named fields may be used to describe fields names. To
+     * enable this, a CmdOptionHandler delegate is added to the cmdLinOperatorOptions
+     * array during during initial processing by std.getopt. The group-by operation is
+     * similar, but is added to the cmdLineOtherFieldOptions instead. At least one
+     * cmdLineOperatorOptions entry is required.
+     *
+     * The different handlers are defined after processArgs.
+     */
+
+    /* CmdOptionHandler delegate signature - This is the call made to process the command
+     * line option arguments after the header line has been read.
+     */
+    alias CmdOptionHandler = void delegate(bool hasHeader, string[] headerFields);
+
+    private CmdOptionHandler[]  cmdLineOperatorOptions;
+    private CmdOptionHandler[]  cmdLineOtherFieldOptions;
 
     /* Returns a tuple. First value is true if command line arguments were successfully
      * processed and execution should continue, or false if an error occurred or the user
@@ -177,7 +191,13 @@ struct TsvSummarizeOptions {
         import std.path : baseName, stripExtension;
         import std.typecons : Yes, No;
         import tsv_utils.common.getopt_inorder;
-        import tsv_utils.common.fieldlist :  makeFieldListOptionHandler;
+        import tsv_utils.common.utils : throwIfWindowsNewlineOnUnix;
+
+        bool helpVerbose = false;          // --help-verbose
+        bool versionWanted = false;        // --V|version
+        bool excludeMissing = false;       // --x|exclude-missing
+        string missingValueReplacement;    // --r|replace-missing
+
 
         programName = (cmdArgs.length > 0) ? cmdArgs[0].stripExtension.baseName : "Unknown_program_name";
 
@@ -250,20 +270,60 @@ struct TsvSummarizeOptions {
              */
             string[] filepaths = (cmdArgs.length > 1) ? cmdArgs[1 .. $] : ["-"];
             cmdArgs.length = 1;
-            inputSources = byLineSourceRange(filepaths);
+
+            /* Validation and derivations - Do as much validation prior to header line
+             * processing as possible (avoids waiting on stdin).
+             */
+
+            enforce(!cmdLineOperatorOptions.empty, "At least one summary operator is required.");
+
+            enforce(inputFieldDelimiter != valuesDelimiter,
+                    "Cannot use the same character for both --d|field-delimiter and --v|values-delimiter.");
+
+            enforce(!(excludeMissing && missingValueReplacement.length != 0),
+                    "Cannot use both '--x|exclude-missing' and '--r|replace-missing'.");
+
+            /* Missing field policy. */
+            globalMissingPolicy.updatePolicy(excludeMissing, missingValueReplacement);
 
             string[] headerFields;
 
-            if (hasHeader && !inputSources.front.byLine.empty)
+            /* fieldListArgProcessing encapsulates the field list processing. It is
+             * called prior to reading the header line if headers are not being used,
+             * and after if headers are being used.
+             */
+            void fieldListArgProcessing()
             {
-                headerFields = inputSources.front.byLine.front.split(inputFieldDelimiter).to!(string[]);
+                /* Run all the operator handlers. */
+                cmdLineOtherFieldOptions.each!(dg => dg(hasHeader, headerFields));
+                cmdLineOperatorOptions.each!(dg => dg(hasHeader, headerFields));
+
+                /* keyFields need to be part of the endFieldIndex, which is one past
+                 * the last field index. */
+                keyFields.each!(delegate (size_t x)
+                                {
+                                    if (x >= endFieldIndex) endFieldIndex = x + 1;
+                                } );
             }
 
-            cmdLineOtherFieldOptions.each!(dg => dg(hasHeader, headerFields));
-            cmdLineOperatorOptions.each!(dg => dg(hasHeader, headerFields));
+            if (!hasHeader) fieldListArgProcessing();
 
-            consistencyValidations();
-            derivations(); // After processing cmdLine[OtherField|Operator]Options.
+            /*
+             * Create the byLineSourceRange and perform header line processing.
+             */
+            inputSources = byLineSourceRange(filepaths);
+
+
+            if (hasHeader)
+            {
+                if (!inputSources.front.byLine.empty)
+                {
+                    throwIfWindowsNewlineOnUnix(inputSources.front.byLine.front, inputSources.front.name, 1);
+                    headerFields = inputSources.front.byLine.front.split(inputFieldDelimiter).to!(string[]);
+                }
+
+                fieldListArgProcessing();
+            }
         }
         catch (Exception exc)
         {
@@ -273,15 +333,7 @@ struct TsvSummarizeOptions {
         return tuple(true, 0);
     }
 
-    /* CmdOptionHandler delegate signature - This is the call made to process the command
-     * line option arguments after the header line has been read.
-     */
-    alias CmdOptionHandler = void delegate(bool hasHeader, string[] headerFields);
-
-    CmdOptionHandler[]  cmdLineOperatorOptions;
-    CmdOptionHandler[]  cmdLineOtherFieldOptions;
-
-    void addGroupByOptionHandler(string option, string optionVal)
+    private void addGroupByOptionHandler(string option, string optionVal)
     {
         cmdLineOtherFieldOptions ~=
             (bool hasHeader, string[] headerFields)
@@ -306,7 +358,7 @@ struct TsvSummarizeOptions {
         }
     }
 
-    void addOperatorOptionHandler(OperatorClass : SingleFieldOperator)(string option, string optionVal)
+    private void addOperatorOptionHandler(OperatorClass : SingleFieldOperator)(string option, string optionVal)
     {
         cmdLineOperatorOptions ~=
             (bool hasHeader, string[] headerFields)
@@ -367,7 +419,7 @@ struct TsvSummarizeOptions {
         }
     }
 
-    void addQuantileOperatorOptionHandler(string option, string optionVal)
+    private void addQuantileOperatorOptionHandler(string option, string optionVal)
     {
         cmdLineOperatorOptions ~=
             (bool hasHeader, string[] headerFields)
@@ -438,7 +490,7 @@ struct TsvSummarizeOptions {
 
     }
 
-    void addCountOptionHandler()
+    private void addCountOptionHandler()
     {
         cmdLineOperatorOptions ~=
             (bool hasHeader, string[] headerFields)
@@ -450,7 +502,7 @@ struct TsvSummarizeOptions {
         operators.insertBack(new CountOperator());
     }
 
-    void addCountHeaderOptionHandler(string option, string optionVal)
+   private  void addCountHeaderOptionHandler(string option, string optionVal)
     {
         cmdLineOperatorOptions ~=
             (bool hasHeader, string[] headerFields)
@@ -462,28 +514,6 @@ struct TsvSummarizeOptions {
         auto op = new CountOperator();
         op.setCustomHeader(optionVal);
         operators.insertBack(op);
-    }
-
-    /* This routine does validations not handled by processArgs. */
-    private void consistencyValidations()
-    {
-        enforce(!cmdLineOperatorOptions.empty, "At least one summary operator is required.");
-
-        enforce(inputFieldDelimiter != valuesDelimiter,
-                "Cannot use the same character for both --d|field-delimiter and --v|values-delimiter.");
-
-        enforce(!(excludeMissing && missingValueReplacement.length != 0),
-                "Cannot use both '--x|exclude-missing' and '--r|replace-missing'.");
-    }
-
-    /* Post-processing derivations. */
-    void derivations()
-    {
-        /* keyFields need to part of the endFieldIndex, which is one past the last field index. */
-        keyFields.each!(delegate (size_t x) { if (x >= endFieldIndex) endFieldIndex = x + 1; } );
-
-        /* Missing field policy. */
-        globalMissingPolicy.updatePolicy(excludeMissing, missingValueReplacement);
     }
 }
 
@@ -520,6 +550,19 @@ void tsvSummarize(ref TsvSummarizeOptions cmdopt)
 
     /* Add the operators to the Summarizer. */
     summarizer.setOperators(inputRangeObject(cmdopt.operators[]));
+
+    /* If there's no input header line, but writing an output header anyway, then
+     * write it now. This helps tasks further on in a unix pipeline detect errors
+     * quickly, without waiting for all the data to flow through the pipeline.
+     */
+    auto printOptions = SummarizerPrintOptions(
+        cmdopt.inputFieldDelimiter, cmdopt.valuesDelimiter, cmdopt.floatPrecision);
+
+    if (!cmdopt.hasHeader && cmdopt.writeHeader)
+    {
+        summarizer.writeSummaryHeader(bufferedOutput, printOptions);
+        bufferedOutput.flush;
+    }
 
     /* Process each input file, one line at a time. */
     auto lineFields = new char[][](cmdopt.endFieldIndex);
@@ -572,6 +615,15 @@ void tsvSummarize(ref TsvSummarizeOptions cmdopt)
                 {
                     summarizer.processHeaderLine(lineFields);
                     headerFound = true;
+
+                    /* Write the header now. This helps tasks further on in a unix
+                     * pipeline detect errors quickly, without waiting for all the
+                     * data to flow through the pipeline. Note that an upstream task
+                     * may have flushed its header line, so the header may arrive
+                     * long before the main block of data.
+                     */
+                    summarizer.writeSummaryHeader(bufferedOutput, printOptions);
+                    bufferedOutput.flush;
                 }
             }
             else
@@ -594,13 +646,6 @@ void tsvSummarize(ref TsvSummarizeOptions cmdopt)
     debug writeln("[tsvSummarize] After reading all data.");
 
     /* Whew! We're done processing input data. Run the calculations and print. */
-    auto printOptions = SummarizerPrintOptions(
-        cmdopt.inputFieldDelimiter, cmdopt.valuesDelimiter, cmdopt.floatPrecision);
-
-    if (cmdopt.hasHeader || cmdopt.writeHeader)
-    {
-        summarizer.writeSummaryHeader(bufferedOutput, printOptions);
-    }
 
     summarizer.writeSummaryBody(bufferedOutput, printOptions);
 }

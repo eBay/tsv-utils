@@ -35,25 +35,25 @@ Error [tsv-summarize]: Not enough fields in line. File: input_1field_a.tsv, Line
 ====[tsv-summarize --group-by 0 --count input_5field_a.tsv]====
 [tsv-summarize] Error processing command line arguments: [--g|group-by 0]. Field numbers must be greater than zero: '0'.
 
-====[tsv-summarize --group-by 0 input_5field_a.tsv]====
+====[tsv-summarize --group-by 0 --count input_5field_a.tsv]====
 [tsv-summarize] Error processing command line arguments: [--g|group-by 0]. Field numbers must be greater than zero: '0'.
 
-====[tsv-summarize --group-by 2, input_5field_a.tsv]====
+====[tsv-summarize --group-by 2, --count input_5field_a.tsv]====
 [tsv-summarize] Error processing command line arguments: [--g|group-by 2,]. Invalid field list: '2,'.
 
-====[tsv-summarize --group-by 2: input_5field_a.tsv]====
+====[tsv-summarize --group-by 2: --count input_5field_a.tsv]====
 [tsv-summarize] Error processing command line arguments: [--g|group-by 2:]. Invalid field list: '2:'.
 
-====[tsv-summarize --group-by x input_5field_a.tsv]====
+====[tsv-summarize --group-by x --count input_5field_a.tsv]====
 [tsv-summarize] Error processing command line arguments: [--g|group-by x]. Non-numeric field group: 'x'. Use '--H|header' when using named field groups.
 
 ====[tsv-summarize --group-by 2 --unique-count 1 input_5field_a.tsv input_1field_a.tsv]====
 Error [tsv-summarize]: Not enough fields in line. File: input_1field_a.tsv, Line: 1
 
-====[tsv-summarize --group-by 1- input_5field_a.tsv]====
+====[tsv-summarize --group-by 1- --count input_5field_a.tsv]====
 [tsv-summarize] Error processing command line arguments: [--g|group-by 1-]. Incomplete ranges are not supported: '1-'.
 
-====[tsv-summarize --group-by 3-0 input_5field_a.tsv]====
+====[tsv-summarize --group-by 3-0 --count input_5field_a.tsv]====
 [tsv-summarize] Error processing command line arguments: [--g|group-by 3-0]. Field numbers must be greater than zero: '0'.
 
 ====[tsv-summarize --header --max 1 input_1field_a.tsv]====
@@ -164,5 +164,5 @@ Error [tsv-summarize]: Windows/DOS line ending found. Convert file to Unix newli
   File: input_1field_a_dos.tsv, Line: 1
 
 ====[tsv-summarize -H --count input_1field_a_dos.tsv]====
-Error [tsv-summarize]: Windows/DOS line ending found. Convert file to Unix newlines before processing (e.g. 'dos2unix').
+[tsv-summarize] Error processing command line arguments: Windows/DOS line ending found. Convert file to Unix newlines before processing (e.g. 'dos2unix').
   File: input_1field_a_dos.tsv, Line: 1

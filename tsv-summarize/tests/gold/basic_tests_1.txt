@@ -149,7 +149,6 @@ count
 6
 
 ====[tsv-summarize --header --count empty_file.tsv]====
-count
 0
 
 ====[tsv-summarize --header --count --unique-count 1 input_1field_a.tsv input_1field_b.tsv]====
@@ -207,6 +206,21 @@ small	2	1
 8	1	1
 9	1	1
 medium	1	1
+
+====[tsv-summarize --header --write-header --count input_1field_a.tsv]====
+count
+6
+
+====[tsv-summarize --header --write-header --count empty_file.tsv]====
+0
+
+====[tsv-summarize --write-header --count input_1field_a.tsv]====
+count
+7
+
+====[tsv-summarize --write-header --count empty_file.tsv]====
+count
+0
 
 ====[tsv-summarize --count input_1field_a.tsv --exclude-missing]====
 7

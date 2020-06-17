@@ -137,6 +137,7 @@ struct TsvUniqOptions
         import std.path : baseName, stripExtension;
         import std.typecons : Yes, No;
         import tsv_utils.common.fieldlist;
+        import tsv_utils.common.utils : throwIfWindowsNewlineOnUnix;
 
         bool helpVerbose = false;         // --h|help-verbose
         bool versionWanted = false;       // --V|version
@@ -191,23 +192,10 @@ struct TsvUniqOptions
             /* Input files. Remaining command line args are files. */
             string[] filepaths = (cmdArgs.length > 1) ? cmdArgs[1 .. $] : ["-"];
             cmdArgs.length = 1;
-            ReadHeader readHeader = hasHeader ? Yes.readHeader : No.readHeader;
-            inputSources = inputSourceRange(filepaths, readHeader);
 
-            string[] headerFields;
-
-            if (hasHeader) headerFields = inputSources.front.header.split(delim).to!(string[]);
-
-            if (!fieldsArg.empty)
-            {
-                fields =
-                    fieldsArg
-                    .parseFieldList!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero)
-                    (hasHeader, headerFields, fieldsOptionString)
-                    .array;
-            }
-
-            /* Consistency checks */
+            /* Validation - Do as much validation prior to header line processing as
+             * possible (avoids waiting on stdin).
+             */
             if (!equivMode)
             {
                 enforce(equivHeader == defaultEquivHeader, "--equiv-header requires --e|equiv");
@@ -217,29 +205,60 @@ struct TsvUniqOptions
             enforce(numberMode || numberHeader == defaultNumberHeader,
                     "--number-header requires --z|number");
 
-            enforce(fields.length <= 1 || fields.all!(x => x != 0),
-                    "Whole line as key (--f|field 0) cannot be combined with multiple fields.");
+            string[] headerFields;
 
-            /* Derivations */
-            if (fields.length == 0)
+            /* fieldListArgProcessing encapsulates the field list processing. It is
+             * called prior to reading the header line if headers are not being used,
+             * and after if headers are being used.
+             */
+            void fieldListArgProcessing()
             {
-                keyIsFullLine = true;
+                if (!fieldsArg.empty)
+                {
+                    fields =
+                        fieldsArg
+                        .parseFieldList!(size_t, No.convertToZeroBasedIndex, Yes.allowFieldNumZero)
+                        (hasHeader, headerFields, fieldsOptionString)
+                        .array;
+                }
+
+                enforce(fields.length <= 1 || fields.all!(x => x != 0),
+                        "Whole line as key (--f|field 0) cannot be combined with multiple fields.");
+
+                if (fields.length == 0)
+                {
+                    keyIsFullLine = true;
+                }
+                else if (fields.length == 1 && fields[0] == 0)
+                {
+                    keyIsFullLine = true;
+                    fields.length = 0;
+                }
+
+                if (onlyRepeated && atLeast <= 1) atLeast = 2;
+                if (atLeast >= 2 && max < atLeast)
+                {
+                    // Don't modify max if it is zero and equivMode or numberMode is in effect.
+                    if (max != 0 || (!equivMode && !numberMode)) max = atLeast;
+                }
+
+                if (!keyIsFullLine) fields.each!((ref x) => --x);  // Convert to 0-based indexing.
             }
-            else if (fields.length == 1 && fields[0] == 0)
+
+            if (!hasHeader) fieldListArgProcessing();
+
+            /*
+             * Create the inputSourceRange and perform header line processing.
+             */
+            ReadHeader readHeader = hasHeader ? Yes.readHeader : No.readHeader;
+            inputSources = inputSourceRange(filepaths, readHeader);
+
+            if (hasHeader)
             {
-                keyIsFullLine = true;
-                fields.length = 0;
+                throwIfWindowsNewlineOnUnix(inputSources.front.header, inputSources.front.name, 1);
+                headerFields = inputSources.front.header.split(delim).to!(string[]);
+                fieldListArgProcessing();
             }
-
-            if (onlyRepeated && atLeast <= 1) atLeast = 2;
-            if (atLeast >= 2 && max < atLeast)
-            {
-                // Don't modify max if it is zero and equivMode or numberMode is in effect.
-                if (max != 0 || (!equivMode && !numberMode)) max = atLeast;
-            }
-
-            if (!keyIsFullLine) fields.each!((ref x) => --x);  // Convert to 0-based indexing.
-
         }
         catch (Exception exc)
         {
@@ -322,11 +341,13 @@ void tsvUniq(ref TsvUniqOptions cmdopt)
     const size_t numKeyFields = cmdopt.fields.length;
     long nextEquivID = cmdopt.equivStartID;
 
-    /* First header is read during command line arg processing. */
+    /* First header is read during command line arg processing. Flush it immediately
+     * so subsequent processes in a unix command pipeline see it early. This helps
+     * provide timely error messages.
+     */
     if (cmdopt.hasHeader && !cmdopt.inputSources.front.isHeaderEmpty)
     {
         auto inputStream = cmdopt.inputSources.front;
-        throwIfWindowsNewlineOnUnix(inputStream.header, inputStream.name, 1);
 
         bufferedOutput.append(inputStream.header);
 
@@ -343,6 +364,7 @@ void tsvUniq(ref TsvUniqOptions cmdopt)
         }
 
         bufferedOutput.appendln();
+        bufferedOutput.flush();
     }
 
     immutable size_t fileBodyStartLine = cmdopt.hasHeader ? 2 : 1;
