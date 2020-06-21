@@ -130,6 +130,8 @@ Examples:
    # Move field 2 to the end, dropping fields 10-15
    tsv-select -f 2 -rest first -e 10-15 file.tsv
 
+Use '--help-fields' for detailed help on field lists.
+
 Notes:
 * One of '--f|fields' or '--e|exclude' is required.
 * Fields specified by '--f|fields' and '--e|exclude' cannot overlap.
@@ -185,9 +187,9 @@ struct TsvSelectOptions
 
         bool helpVerbose = false;           // --help-verbose
         bool helpFields = false;            // --help-fields
+        bool versionWanted = false;         // --V|version
         string fieldsArg;                   // --f|fields
         string excludedFieldsArg;           // --e|exclude
-        bool versionWanted = false;         // --V|version
 
         string fieldsOptionString = "f|fields";
         string excludedFieldsOptionString = "e|exclude";

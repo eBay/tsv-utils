@@ -35,6 +35,10 @@ based on the entire line when key fields are not provided. Options are
 also available for assigning a unique id to each key and numbering the
 occurrences of each key. Use '--help-verbose' for more details.
 
+Fields are specified using field number or field name. Field names
+require that the input file has a header line. Use '--help-fields' for
+details about field names.
+
 Options:
 EOS";
 
@@ -52,6 +56,13 @@ uniq's a file on fields 2 and 3:
 
 This is similar to the Unix 'uniq' program, but based on individual
 fields and without requiring sorted data.
+
+Field names can be used if the input file has a header line. This command
+uniq's a file based on the 'time' and 'date' fields:
+
+   tsv-uniq -H -f time,date file.tsv
+
+Use '--help-fields' for details about field names.
 
 tsv-uniq can be run without specifying a key field. In this case the
 whole line is used as a key, same as the Unix 'uniq' program. This works
@@ -140,6 +151,7 @@ struct TsvUniqOptions
         import tsv_utils.common.utils : throwIfWindowsNewlineOnUnix;
 
         bool helpVerbose = false;         // --h|help-verbose
+        bool helpFields = false;          // --help-fields
         bool versionWanted = false;       // --V|version
         string fieldsArg;                 // --f|fields
 
@@ -153,6 +165,7 @@ struct TsvUniqOptions
             auto r = getopt(
                 cmdArgs,
                 "help-verbose",  "              Print full help.", &helpVerbose,
+                "help-fields",   "              Print detailed help on specifying fields.", &helpFields,
                 std.getopt.config.caseSensitive,
                 "V|version",     "              Print version information and exit.", &versionWanted,
                 "H|header",      "              Treat the first line of each file as a header.", &hasHeader,
@@ -180,6 +193,11 @@ struct TsvUniqOptions
             else if (helpVerbose)
             {
                 defaultGetoptPrinter(helpTextVerbose, r.options);
+                return tuple(false, 0);
+            }
+            else if (helpFields)
+            {
+                writeln(fieldListHelpText);
                 return tuple(false, 0);
             }
             else if (versionWanted)
