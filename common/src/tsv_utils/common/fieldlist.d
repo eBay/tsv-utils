@@ -212,7 +212,7 @@ of fields. Here are some examples (using tsv-select):
   $ tsv-select -H -f RecordID file.txt    # Selection using a field name
   $ tsv-select -H -f Date,Time,3,5-7,9    # Mix of names, numbers, ranges
 
-Wildcards - Named fields support a simple 'glob' style wildcarding scheme.
+Wildcards: Named fields support a simple 'glob' style wildcarding scheme.
 The asterisk character ('*') can be used to match any sequence of
 characters, including no characters. This is similar to how '*' can be
 used to match file names on the Unix command line. All fields with
@@ -220,7 +220,7 @@ matching names are selected, so wildcards are a convenient way to select
 a set of related fields. Quotes should be placed around command line
 arguments containing wildcards to avoid interpretation by the shell.
 
-More examples - Consider a file 'data.tsv' containing timing information:
+Examples - Consider a file 'data.tsv' containing timing information:
 
   $ tsv-pretty data.tsv
   run  elapsed_time  user_time  system_time  max_memory
@@ -238,13 +238,14 @@ Some examples selecting fields from this file:
   $ tsv-select data.tsv -H -f 1-3            # Fields 1,2,3
   $ tsv-select data.tsv -H -f run-user_time  # Fields 1,2,3 (range with names)
 
-Special characters - There are several special characters that need to be
+Special characters: There are several special characters that need to be
 escaped when specifying field names. Escaping is done by preceeding the
 special character with a backslash. Characters requiring escapes are:
 asterisk (`*`), comma(`,`), colon (`:`), space (` `), hyphen (`-`), and
 backslash (`\`). A field name that contains only digits also needs to be
 backslash escaped, this indicates it should be treated as a field name
-and not a field number.
+and not a field number. A backslash can be used to escape any character,
+so it's not necessary to remember the list. Use an escape when not sure.
 
 Examples - Consider a file with five fields named as follows:
 
@@ -257,6 +258,7 @@ Examples - Consider a file with five fields named as follows:
 Some examples using specifying these fields by name:
 
   $ tsv-select file.tsv -H -f 'test\ id'          # Field 1
+  $ tsv-select file.tsv -H -f '\test\ id'         # Field 1
   $ tsv-select file.tsv -H -f 'run\:1'            # Field 2
   $ tsv-select file.tsv -H -f 'time\-stamp'       # Field 3
   $ tsv-select file.tsv -H -f '\001'              # Field 4

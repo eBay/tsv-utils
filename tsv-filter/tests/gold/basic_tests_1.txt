@@ -2563,6 +2563,8 @@ Help and Version printing 1
 1
 ====[tsv-filter --help-options | grep -c Synopsis]====
 1
+====[tsv-filter --help-fields | head -n 1]====
+tsv-utils Field Syntax
 ====[tsv-filter --version | grep -c 'tsv-filter (eBay/tsv-utils)']====
 1
 ====[tsv-filter -V | grep -c 'tsv-filter (eBay/tsv-utils)']====

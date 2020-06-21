@@ -67,9 +67,13 @@ Synopsis: tsv-filter [options] [file...]
 Filter tab-delimited files for matching lines via comparison tests against
 individual fields. Use '--help-verbose' for a more detailed description.
 
+Fields are specified using field number or field name. Field names require
+that the input file has a header line. Use '--help-fields' for details.
+
 Global options:
   --help-verbose      Print full help.
   --help-options      Print the options list by itself.
+  --help-fields       Print detailed help on specifying fields.
   --V|version         Print version information and exit.
   --H|header          Treat the first line of each file as a header.
   --or                Evaluate tests as an OR rather than an AND clause.
@@ -79,68 +83,82 @@ Global options:
 Operators:
 * Test if a field is empty (no characters) or blank (empty or whitespace only).
   Syntax:  --empty|not-empty|blank|not-blank  FIELD
-  Example: --empty 5          // True if field 5 is empty
+  Example: --empty name               # True if the 'name' field is empty
 
 * Test if a field is numeric, finite, NaN, or infinity
   Syntax:  --is-numeric|is-finite|is-nan|is-infinity FIELD
-  Example: --is-numeric 5 --gt 5:100  // Ensure field 5 is numeric before --gt test.
+  Example: --is-numeric 5 --gt 5:100  # Ensure field 5 is numeric before --gt test.
 
 * Compare a field to a number (integer or float)
   Syntax:  --eq|ne|lt|le|gt|ge  FIELD:NUM
-  Example: --lt 5:1000 --gt 2:0.5  // True if (field 5 < 1000) and (field 2 > 0.5)
+  Example: --lt size:1000 --gt weight:0.5  # ('size' < 1000) and ('weight' > 0.5)
 
 * Compare a field to a string
-  Syntax:  --str-eq|str-ne  FIELD:STR
-  Example: --str-eq 3:abc        // True if field 3 is "abc"
+  Syntax:  --str-eq|str-ne|istr-eq|istr-ne  FIELD:STR
+  Example: --str-eq color:red         # True if 'color' field is "red"
 
 * Test if a field contains a string (substring search)
   Syntax:  --str-in-fld|str-not-in-fld|istr-in-fld|istr-not-in-fld  FIELD:STR
-  Example: --str-in-fld 1:hello  // True if field 1 contains "hello"
+  Example: --str-in-fld color:dark    # True if 'color field contains "dark"
 
 * Test if a field matches a regular expression.
   Syntax:  --regex|iregex|not-regex|not-iregex  FIELD:REGEX
-  Example: --regex '3:ab*c'      // True if field 3 contains "ac", "abc", "abbc", etc.
+  Example: --regex '3:ab*c'     # True if field 3 contains "ac", "abc", "abbc", etc.
 
 * Test a field's character or byte length
   Syntax:  --char-len-[le|lt|ge|gt|eq|ne] FIELD:NUM
            --byte-len-[le|lt|ge|gt|eq|ne] FIELD:NUM
-  Example: --char-len-lt 2:10    // True if field 2 is less than 10 characters long.
-           --byte-len-gt 2:10    // True if field 2 is greater than 10 bytes long.
+  Example: --char-len-lt 2:10   # True if field 2 is less than 10 characters long.
+           --byte-len-gt 2:10   # True if field 2 is greater than 10 bytes long.
 
 * Field to field comparisons - Similar to field vs literal comparisons, but field vs field.
   Syntax:  --ff-eq|ff-ne|ff-lt|ff-le|ff-gt|ff-ge  FIELD1:FIELD2
            --ff-str-eq|ff-str-ne|ff-istr-eq|ff-istr-ne  FIELD1:FIELD2
-  Example: --ff-eq 2:4           // True if fields 2 and 4 are numerically equivalent
-           --ff-str-eq 2:4       // True if fields 2 and 4 are the same strings
+  Example: --ff-eq 2:4          # True if fields 2 and 4 are numerically equivalent
+           --ff-str-eq 2:4      # True if fields 2 and 4 are the same strings
 
 * Field to field difference comparisons - Absolute and relative difference
   Syntax:  --ff-absdiff-le|ff-absdiff-gt FIELD1:FIELD2:NUM
            --ff-reldiff-le|ff-reldiff-gt FIELD1:FIELD2:NUM
-  Example: --ff-absdiff-lt 1:3:0.25   // True if abs(field1 - field2) < 0.25
+  Example: --ff-absdiff-lt 1:3:0.25   # True if abs(field1 - field2) < 0.25
 
 EOS";
 
 immutable helpTextVerbose = q"EOS
 Synopsis: tsv-filter [options] [file...]
 
-Filter lines of tab-delimited files via comparison tests against fields. Multiple
-tests can be specified, by default they are evaluated as AND clause. Lines
-satisfying the tests are written to standard output.
+Filter lines of tab-delimited files via comparison tests against fields.
+Multiple tests can be specified, by default they are evaluated as an AND
+clause. Lines satisfying the tests are written to standard output.
 
-Typical test syntax is '--op field:value', where 'op' is an operator, 'field' is a
-1-based field index, and 'value' is the comparison basis. For example, '--lt 3:500'
-tests if field 3 is less than 500. A more complete example:
+Typical test syntax is '--op field:value', where 'op' is an operator,
+'field' is a either a field name and or field number, and 'value' is the
+comparison basis. For example, '--lt length:500' tests if the 'length'
+field is less than 500. A more complete example:
 
-  tsv-filter --header --gt 1:50 --lt 1:100 --le 2:1000 data.tsv
+  tsv-filter --header --gt length:50 --lt length:100 --le width:200 data.tsv
 
-This outputs all lines from file data.tsv where field 1 is greater than 50 and less
-than 100, and field 2 is less than or equal to 1000. The header is also output.
+This outputs all lines from file data.tsv where the 'length' field is
+greater than 50 and less than 100, and the 'width' field is less than or
+equal to 200. The header line is also output.
+
+Field numbers can also be used to identify fields, and must be used when
+the input file doesn't have a header line. For example:
+
+  tsv-filter --gt 1:50 --lt 1:100 --le 2:200 data.tsv
 
 Field lists can be used to specify multiple fields at once. For example:
 
   tsv-filter --not-blank 1-10 --str-ne 1,2,5:'--' data.tsv
 
 tests that fields 1-10 are not blank and fields 1,2,5 are not "--".
+
+Wildcarded field names can also be used to specify multiple fields. The
+following finds lines where any field name ending in '*_id' is empty:
+
+  tsv-filter -H --or --empty '*_id'
+
+Use '--help-fields' for details on using field names.
 
 Tests available include:
   * Test if a field is empty (no characters) or blank (empty or whitespace only).
@@ -741,6 +759,7 @@ struct TsvFilterOptions
 
         bool helpVerbose = false;        // --help-verbose
         bool helpOptions = false;        // --help-options
+        bool helpFields = false;         // --help-fields
         bool versionWanted = false;      // --V|version
 
         programName = (cmdArgs.length > 0) ? cmdArgs[0].stripExtension.baseName : "Unknown_program_name";
@@ -827,6 +846,7 @@ struct TsvFilterOptions
                 cmdArgs,
                 "help-verbose",    "     Print full help.", &helpVerbose,
                 "help-options",    "     Print the options list by itself.", &helpOptions,
+                "help-fields",     "     Print detailed help on specifying fields.", &helpFields,
                  std.getopt.config.caseSensitive,
                 "V|version",       "     Print version information and exit.", &versionWanted,
                 "H|header",        "     Treat the first line of each file as a header.", &hasHeader,
@@ -919,6 +939,12 @@ struct TsvFilterOptions
             else if (helpOptions)
             {
                 defaultGetoptPrinter(helpTextOptions, r.options);
+                return tuple(false, 0);
+            }
+            else if (helpFields)
+            {
+                import tsv_utils.common.fieldlist : fieldListHelpText ;
+                writeln(fieldListHelpText);
                 return tuple(false, 0);
             }
             else if (versionWanted)
