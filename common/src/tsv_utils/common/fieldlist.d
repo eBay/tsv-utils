@@ -1114,7 +1114,7 @@ if (isInputRange!Range &&
                               hasLength!Range))
    )
 {
-    struct Result
+    static struct Result
     {
         private alias R = Unqual!Range;
         private alias Char = ElementType!R;
