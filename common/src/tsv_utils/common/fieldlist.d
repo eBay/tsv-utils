@@ -2490,22 +2490,34 @@ auto parseNumericFieldList(
 if (isIntegral!T && (!allowZero || !convertToZero || !isUnsigned!T))
 {
     import std.algorithm : splitter;
+    import std.conv : to;
 
-    auto _splitFieldList = fieldList.splitter(delim);
-    auto _currFieldParse =
-        (_splitFieldList.empty ? "" : _splitFieldList.front)
-        .parseNumericFieldGroup!(T, convertToZero, allowZero);
+    alias SplitFieldListRange = typeof(fieldList.splitter(delim));
+    alias NumericFieldGroupParse
+        = ReturnType!(parseNumericFieldGroup!(T, convertToZero, allowZero));
 
-    if (!_splitFieldList.empty) _splitFieldList.popFront;
-
-    struct Result
+    static struct Result
     {
-        @property bool empty() pure nothrow @safe @nogc
+        private SplitFieldListRange _splitFieldList;
+        private NumericFieldGroupParse _currFieldParse;
+
+
+        this(string fieldList, char delim)
+        {
+            _splitFieldList = fieldList.splitter(delim);
+            _currFieldParse =
+                (_splitFieldList.empty ? "" : _splitFieldList.front)
+                .parseNumericFieldGroup!(T, convertToZero, allowZero);
+
+            if (!_splitFieldList.empty) _splitFieldList.popFront;
+        }
+
+        bool empty() pure nothrow @safe @nogc
         {
             return _currFieldParse.empty;
         }
 
-        @property T front() pure @safe
+        T front() pure @safe
         {
             import std.conv : to;
 
@@ -2529,7 +2541,7 @@ if (isIntegral!T && (!allowZero || !convertToZero || !isUnsigned!T))
         }
     }
 
-    return Result();
+    return Result(fieldList, delim);
 }
 
 // parseNumericFieldList.
