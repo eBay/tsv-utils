@@ -293,6 +293,9 @@ echo "" >> ${basic_tests_1}
 echo "====[tsv-join --help | grep -c Synopsis]====" >> ${basic_tests_1}
 ${prog} --help 2>&1 | grep -c Synopsis >> ${basic_tests_1} 2>&1
 
+echo "====[tsv-join --help-fields | head -n 1]====" >> ${basic_tests_1}
+${prog} --help-fields 2>&1 | head -n 1 >> ${basic_tests_1} 2>&1
+
 echo "====[tsv-join --help-verbose | grep -c Synopsis]====" >> ${basic_tests_1}
 ${prog} --help-verbose 2>&1 | grep -c Synopsis >> ${basic_tests_1} 2>&1
 

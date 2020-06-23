@@ -34,27 +34,37 @@ tsv-select reads files or standard input and writes selected fields to
 standard output. Fields are written in the order listed. This is similar
 to Unix 'cut', but with the ability to reorder fields.
 
-Fields numbers start with one. They are comma separated and ranges can be
-used. Fields can be repeated, and fields not included in the '--f|fields'
-option can be selected as a group using '--r|rest'. Fields can be dropped
-using '--e|exclude'. Multiple files with header lines can be managed with
-'--H|header', which retains the header of the first file only.
+Fields can be specified by field number or, for files with header lines,
+by field name. Use '--H|header' to enable selection by name. This also
+manages header lines from multiple files, retaining only the first header.
+
+Field numbers start with one. The field list is comma separated. Ranges
+can be used, and wildcards can be used when specifying fields by name.
+
+Fields can be dropped using '--e|exclude'. Fields not included in the
+'--f|fields' option can be selected as a group using '--r|rest'.
 
 Examples:
 
-   # Output fields 2 and 1, in that order
-   tsv-select -f 2,1 data.tsv
+   # Selecting fields. Output is in the order listed
+   tsv-select -H date,time file.tsv
+   tsv-select -f 2,1 file.tsv
+   tsv-select -f 5-7,2,9-11
+   tsv-select -H -f '*_date' file.tsv
 
-   # Drop the first field, keep everything else.
+   # Dropping fields
    tsv-select --exclude 1 file.tsv
+   tsv-select -H -e date,time file.tsv
 
-   # Move the first field to the end
-   tsv-select -f 1 --rest first data.tsv
+   # Move fields the front or the back
+   tsv-select -f 1 --rest first file.tsv  # Move field 1 to the end
+   tsv-select -H -f date --rest last      # Move 'date' field to the front
 
-   # Multiple files with header lines. Keep only one header.
+   # Read multiple files, keep the header from only the first
    tsv-select data*.tsv -H --fields 1,2,4-7,14
 
-Use '--help-verbose' for detailed information.
+Use '--help-verbose' for detailed information. Use '--help-fields' for
+detailed help on field lists.
 
 Options:
 EOS";
@@ -66,22 +76,36 @@ tsv-select reads files or standard input and writes selected fields to
 standard output. Fields are written in the order listed. This is similar
 to Unix 'cut', but with the ability to reorder fields.
 
-Fields numbers start with one. They are comma separated and ranges can be
-used. Fields can be repeated, and fields not included in the '--f|fields'
-option can be selected as a group using '--r|rest'. Use '--H|header' to
-retain the header line from only the first file.
+Fields can be specified by field number or, for files with header lines,
+by field name. Use '--H|header' to enable selection by name. This also
+manages header lines from multiple files, retaining only the first header.
+
+Field numbers start with one. The field list is comma separated. Fields
+can be repeated and ranges can be used. Wildcards can be used when
+specifying fields by name, and escapes can be used to specify fields names
+containing special characters. Run '--help-fields' for details.
 
 Fields can be excluded using '--e|exclude'. All fields not excluded are
-output. '--f|fields' and '--r|rest' can be used with '--e|exclude' to
-reorder non-excluded fields.
+output. Fields not included in the '--f|fields' option can be selected as
+a group using '--r|rest'. '--f|fields' and '--r|rest' can be used with
+ '--e|exclude' to reorder non-excluded fields.
 
 Examples:
 
    # Keep the first field from two files
    tsv-select -f 1 file1.tsv file2.tsv
 
-   # Keep fields 1 and 2, retain the header from the first file
+   # Keep fields 1 and 2, retaining the header from only the first file
    tsv-select -H -f 1,2 file1.tsv file2.tsv
+
+   # Keep the 'time' field
+   tsv-select -H -f time file1.tsv
+
+   # Keep all fields ending '_date' or '_time'
+   tsv-select -H -f '*_date,*_time' file.tsv
+
+   # Drop all the '*_time' fields
+   tsv-select -H --exclude '*_time' file.tsv
 
    # Field reordering and field ranges
    tsv-select -f 3,2,1 file.tsv
@@ -92,20 +116,21 @@ Examples:
    tsv-select -f 1,2,1 file.tsv
    tsv-select -f 1-3,3-1 file.tsv
 
-   # Move field 5 to the front
+   # Move fields to the front
    tsv-select -f 5 --rest last file.tsv
+   tsv-select -H -f Date,Time --rest last file.tsv
 
-   # Move fields 4 and 5 to the end
+   # Move fields to the end
    tsv-select -f 4,5 --rest first file.tsv
-
-   # Drop the first field, keep everything else
-   tsv-select --exclude 1 file.tsv
+   tsv-select -f '*_time' --rest first file.tsv
 
    # Move field 2 to the front and drop fields 10-15
    tsv-select -f 2 -e 10-15 file.tsv
 
    # Move field 2 to the end, dropping fields 10-15
    tsv-select -f 2 -rest first -e 10-15 file.tsv
+
+Use '--help-fields' for detailed help on field lists.
 
 Notes:
 * One of '--f|fields' or '--e|exclude' is required.
@@ -114,6 +139,8 @@ Notes:
   specify '--rest last'. This can be overridden by using '--rest first'.
 * Each input line must be long enough to contain all fields specified with
   '--f|fields'. This is not necessary for '--e|exclude' fields.
+* Specifying names for fields that contain special characters may require
+  escaping the special characters. See '--help-fields' for details.
 
 Options:
 EOS";
@@ -159,9 +186,10 @@ struct TsvSelectOptions
         import tsv_utils.common.utils : throwIfWindowsNewlineOnUnix;
 
         bool helpVerbose = false;           // --help-verbose
+        bool helpFields = false;            // --help-fields
+        bool versionWanted = false;         // --V|version
         string fieldsArg;                   // --f|fields
         string excludedFieldsArg;           // --e|exclude
-        bool versionWanted = false;         // --V|version
 
         string fieldsOptionString = "f|fields";
         string excludedFieldsOptionString = "e|exclude";
@@ -174,6 +202,7 @@ struct TsvSelectOptions
             auto r = getopt(
                 cmdArgs,
                 "help-verbose",    "     Print more detailed help.", &helpVerbose,
+                "help-fields",     "     Print detailed help on specifying fields.", &helpFields,
 
                 std.getopt.config.caseSensitive,
                 "H|header",
@@ -214,6 +243,11 @@ struct TsvSelectOptions
                 defaultGetoptPrinter(helpTextVerbose, r.options);
                 return tuple(false, 0);
             }
+            else if (helpFields)
+            {
+                writeln(fieldListHelpText);
+                return tuple(false, 0);
+            }
             else if (versionWanted)
             {
                 import tsv_utils.common.tsvutils_version;
@@ -249,7 +283,8 @@ struct TsvSelectOptions
                 if (!fieldsArg.empty)
                 {
                     fields = fieldsArg
-                        .parseFieldList!(size_t, Yes.convertToZeroBasedIndex)(hasHeader, headerFields, fieldsOptionString)
+                        .parseFieldList!(size_t, Yes.convertToZeroBasedIndex)(
+                            hasHeader, headerFields, fieldsOptionString)
                         .array;
                 }
 
@@ -258,7 +293,8 @@ struct TsvSelectOptions
                 if (!excludedFieldsArg.empty)
                 {
                     excludedFields = excludedFieldsArg
-                        .parseFieldList!(size_t, Yes.convertToZeroBasedIndex)(hasHeader, headerFields, excludedFieldsOptionString)
+                        .parseFieldList!(size_t, Yes.convertToZeroBasedIndex)(
+                            hasHeader, headerFields, excludedFieldsOptionString)
                         .array;
                 }
 

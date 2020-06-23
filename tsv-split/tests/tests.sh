@@ -425,6 +425,9 @@ ${prog} --help 2>&1 | grep -c Synopsis >> ${help_and_version_tests} 2>&1
 echo "====[tsv-split --help-verbose | grep -c Synopsis]====" >> ${help_and_version_tests}
 ${prog} --help-verbose 2>&1 | grep -c Synopsis >> ${help_and_version_tests} 2>&1
 
+echo "====[tsv-split --help-fields | head -n 1]====" >> ${help_and_version_tests}
+${prog} --help-fields 2>&1 | head -n 1 >> ${help_and_version_tests} 2>&1
+
 echo "====[tsv-split --version | grep -c 'tsv-split (eBay/tsv-utils)']====" >> ${help_and_version_tests}
 ${prog} --version 2>&1 | grep -c 'tsv-split (eBay/tsv-utils)' >> ${help_and_version_tests} 2>&1
 

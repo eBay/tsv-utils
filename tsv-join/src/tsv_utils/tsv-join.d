@@ -22,8 +22,9 @@ import std.typecons : tuple;
 auto helpText = q"EOS
 Synopsis: tsv-join --filter-file file [options] file [file...]
 
-tsv-join matches input lines against lines from a 'filter' file. The match is
-based on fields or the entire line. Use '--help-verbose' for more details.
+tsv-join matches input lines against lines from a 'filter' file. The match
+is based on fields or the entire line. Fields can be specified either by
+field number or field name. Use '--help-verbose' for more details.
 
 Options:
 EOS";
@@ -31,26 +32,35 @@ EOS";
 auto helpTextVerbose = q"EOS
 Synopsis: tsv-join --filter-file file [options] file [file...]
 
-tsv-join matches input lines against lines from a 'filter' file. The match is
-based on exact match comparison of one or more 'key' fields. Fields are TAB
-delimited by default. Matching lines are written to standard output, along with
-any additional fields from the key file that have been specified. An example:
+tsv-join matches input lines against lines from a 'filter' file. The match
+is based on exact match comparison of one or more 'key' fields. Fields are
+TAB delimited by default. Matching lines are written to standard output,
+along with any additional fields from the key file that have been specified.
+For example:
 
   tsv-join --filter-file filter.tsv --key-fields 1 --append-fields 5,6 data.tsv
 
-This reads filter.tsv, creating a hash table keyed on field 1. Lines from data.tsv
-are read one at a time. If field 1 is found in the hash table, the line is written
-to standard output with fields 5 and 6 from the filter file appended. In database
-parlance this is a "hash semi join". Note the asymmetric relationship: Records in
-the filter file should be unique, but data.tsv lines can repeat.
+This reads filter.tsv, creating a hash table keyed on field 1. Lines from
+data.tsv are read one at a time. If field 1 is found in the hash table, the
+line is written to standard output with fields 5 and 6 from the filter file
+appended. In database parlance this is a "hash semi join". Note the
+asymmetric relationship: Records in the filter file should be unique, but
+data.tsv lines can repeat.
 
-tsv-join can also work as a simple filter, this is the default behavior. Example:
+Field names can be used instead of field numbers if the files have header
+lines. The following command is similar to the previous example, except
+using field names:
 
-  tsv-join --filter-file filter.tsv data.tsv
+  tsv-join -H -f filter.tsv -k ID --append-fields Date,Time data.tsv
 
-This outputs all lines from data.tsv found in filter.tsv. --key-fields can still
-be used to define the match key. The --exclude option can be used to exclude
-matched lines rather than keep them.
+tsv-join can also work as a simple filter based on the whole line. This is
+the default behavior. Example:
+
+  tsv-join -f filter.tsv data.tsv
+
+This outputs all lines from data.tsv found in filter.tsv. --k|key-fields
+can still be used to define the match key. The --e|exclude option can be
+used to exclude matched lines rather than keep them.
 
 Multiple fields can be specified as keys and append fields. Field numbers start
 at one, zero represents the whole line. Fields are comma separated and ranges
@@ -107,6 +117,7 @@ struct TsvJoinOptions
         import tsv_utils.common.utils : throwIfWindowsNewlineOnUnix;
 
         bool helpVerbose = false;        // --help-verbose
+        bool helpFields = false;         // --help-fields
         bool versionWanted = false;      // --V|version
         string filterFile;               // --filter
         string keyFieldsArg;             // --key-fields
@@ -133,6 +144,8 @@ struct TsvJoinOptions
             auto r = getopt(
                 cmdArgs,
                 "help-verbose",    "              Print full help.", &helpVerbose,
+                "help-fields",        "              Print detailed help on specifying fields.", &helpFields,
+
                 "f|filter-file",   "FILE          (Required) File with records to use as a filter.", &filterFile,
 
                 keyFieldsOptionString,
@@ -169,6 +182,11 @@ struct TsvJoinOptions
             else if (helpVerbose)
             {
                 defaultGetoptPrinter(helpTextVerbose, r.options);
+                return tuple(false, 0);
+            }
+            else if (helpFields)
+            {
+                writeln(fieldListHelpText);
                 return tuple(false, 0);
             }
             else if (versionWanted)

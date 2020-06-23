@@ -83,6 +83,10 @@ being the extension of the first input file. If the input file is
 'file.txt', the names will take the form 'part_NNN.txt'. The output
 directory and file names are customizable.
 
+Fields are specified using field number or field name. Field names
+require that the input file has a header line. Use '--help-fields' for
+details about field names.
+
 Use '--help-verbose' for more detailed information.
 
 Options:
@@ -136,7 +140,9 @@ same key are written to the same file. This partitioning enables parallel
 computation based on the key. For example, statistical calculation
 ('tsv-summarize --group-by') or duplicate removal ('tsv-uniq --fields').
 These operations can be parallelized using tools like GNU parallel, which
-simplifies concurrent operations on multiple files.
+simplifies concurrent operations on multiple files. Fields are specified
+using field number or field name. Field names require that the input file
+has a header line. Use '--help-fields' for details about field names.
 
 Random seed: By default, each tsv-split invocation using random assignment
 or random assignment by key produces different assignments to the output
@@ -272,6 +278,7 @@ struct TsvSplitOptions
         import tsv_utils.common.fieldlist;
 
         bool helpVerbose = false;                  // --help-verbose
+        bool helpFields = false;                   // --help-fields
         bool versionWanted = false;                // --V|version
         string keyFieldsArg;                       // --k|key-fields
 
@@ -285,6 +292,7 @@ struct TsvSplitOptions
             auto r = getopt(
                 cmdArgs,
                 "help-verbose",    "     Print more detailed help.", &helpVerbose,
+                "help-fields",     "     Print detailed help on specifying fields.", &helpFields,
 
                 std.getopt.config.caseSensitive,
                 "H|header",         "     Input files have a header line. Write the header to each output file.", &headerInOut,
@@ -326,6 +334,11 @@ struct TsvSplitOptions
             else if (helpVerbose)
             {
                 defaultGetoptPrinter(helpTextVerbose, r.options);
+                return tuple(false, 0);
+            }
+            else if (helpFields)
+            {
+                writeln(fieldListHelpText);
                 return tuple(false, 0);
             }
             else if (versionWanted)

@@ -137,6 +137,9 @@
          supporting numeric field-lists. Note that delegates passed to std.getopt do
          not have access to the header line of the input file, so the technique can
          only be used for numeric field-lists.
+
+       * [fieldListHelpText] - A global variable containing help text describing the
+         field list syntax that can be shown to end users.
     )
 
     The following private functions handle key parts of the implementation:
@@ -185,6 +188,83 @@ import std.regex;
 import std.stdio;
 import std.traits : isIntegral, isNarrowString, isUnsigned, ReturnType, Unqual;
 import std.typecons : tuple, Tuple;
+
+/**
+    fieldListHelpText is text intended display to end users to describe the field-list
+    syntax.
+*/
+immutable fieldListHelpText = q"EOS
+tsv-utils Field Syntax
+
+Most tsv-utils tools operate on fields specified on the command line. All
+tools use the same syntax to identify fields. tsv-select is used in this
+document for examples, but the syntax shown applies to all tools.
+
+Fields can be identified either by a one-upped field number or by field
+name. Field names require the first line of input data to be a header with
+field names. Header line processing is enabled by the '--H|header' option.
+
+Some command options only accept a single field, but many operate on lists
+of fields. Here are some examples (using tsv-select):
+
+  $ tsv-select -f 1,2 file.tsv            # Selection using field numbers
+  $ tsv-select -f 5-9 file.txt            # Selection using a range
+  $ tsv-select -H -f RecordID file.txt    # Selection using a field name
+  $ tsv-select -H -f Date,Time,3,5-7,9    # Mix of names, numbers, ranges
+
+Wildcards: Named fields support a simple 'glob' style wildcarding scheme.
+The asterisk character ('*') can be used to match any sequence of
+characters, including no characters. This is similar to how '*' can be
+used to match file names on the Unix command line. All fields with
+matching names are selected, so wildcards are a convenient way to select
+a set of related fields. Quotes should be placed around command line
+arguments containing wildcards to avoid interpretation by the shell.
+
+Examples - Consider a file 'data.tsv' containing timing information:
+
+  $ tsv-pretty data.tsv
+  run  elapsed_time  user_time  system_time  max_memory
+    1          57.5       52.0          5.5        1420
+    2          52.0       49.0          3.0        1270
+    3          55.5       51.0          4.5        1410
+
+Some examples selecting fields from this file:
+
+  $ tsv-select data.tsv -H -f 3              # Field 3 (user_time)
+  $ tsv-select data.tsv -H -f user_time      # Field 3
+  $ tsv-select data.tsv -H -f run,user_time  # Fields 1,3
+  $ tsv-select data.tsv -H -f '*_memory'     # Field 5
+  $ tsv-select data.tsv -H -f '*_time'       # Fields 2,3,4
+  $ tsv-select data.tsv -H -f 1-3            # Fields 1,2,3
+  $ tsv-select data.tsv -H -f run-user_time  # Fields 1,2,3 (range with names)
+
+Special characters: There are several special characters that need to be
+escaped when specifying field names. Escaping is done by preceeding the
+special character with a backslash. Characters requiring escapes are:
+asterisk (`*`), comma(`,`), colon (`:`), space (` `), hyphen (`-`), and
+backslash (`\`). A field name that contains only digits also needs to be
+backslash escaped, this indicates it should be treated as a field name
+and not a field number. A backslash can be used to escape any character,
+so it's not necessary to remember the list. Use an escape when not sure.
+
+Examples - Consider a file with five fields named as follows:
+
+  1   test id
+  2   run:id
+  3   time-stamp
+  4   001
+  5   100
+
+Some examples using specifying these fields by name:
+
+  $ tsv-select file.tsv -H -f 'test\ id'          # Field 1
+  $ tsv-select file.tsv -H -f '\test\ id'         # Field 1
+  $ tsv-select file.tsv -H -f 'run\:1'            # Field 2
+  $ tsv-select file.tsv -H -f 'time\-stamp'       # Field 3
+  $ tsv-select file.tsv -H -f '\001'              # Field 4
+  $ tsv-select file.tsv -H -f '\100'              # Field 5
+  $ tsv-select file.tsv -H -f '\001,\100'         # Fields 4,5
+EOS";
 
 /**
    The `convertToZeroBasedIndex` flag is used as a template parameter controlling
@@ -1034,7 +1114,7 @@ if (isInputRange!Range &&
                               hasLength!Range))
    )
 {
-    struct Result
+    static struct Result
     {
         private alias R = Unqual!Range;
         private alias Char = ElementType!R;
@@ -2410,22 +2490,34 @@ auto parseNumericFieldList(
 if (isIntegral!T && (!allowZero || !convertToZero || !isUnsigned!T))
 {
     import std.algorithm : splitter;
+    import std.conv : to;
 
-    auto _splitFieldList = fieldList.splitter(delim);
-    auto _currFieldParse =
-        (_splitFieldList.empty ? "" : _splitFieldList.front)
-        .parseNumericFieldGroup!(T, convertToZero, allowZero);
+    alias SplitFieldListRange = typeof(fieldList.splitter(delim));
+    alias NumericFieldGroupParse
+        = ReturnType!(parseNumericFieldGroup!(T, convertToZero, allowZero));
 
-    if (!_splitFieldList.empty) _splitFieldList.popFront;
-
-    struct Result
+    static struct Result
     {
-        @property bool empty() pure nothrow @safe @nogc
+        private SplitFieldListRange _splitFieldList;
+        private NumericFieldGroupParse _currFieldParse;
+
+
+        this(string fieldList, char delim)
+        {
+            _splitFieldList = fieldList.splitter(delim);
+            _currFieldParse =
+                (_splitFieldList.empty ? "" : _splitFieldList.front)
+                .parseNumericFieldGroup!(T, convertToZero, allowZero);
+
+            if (!_splitFieldList.empty) _splitFieldList.popFront;
+        }
+
+        bool empty() pure nothrow @safe @nogc
         {
             return _currFieldParse.empty;
         }
 
-        @property T front() pure @safe
+        T front() pure @safe
         {
             import std.conv : to;
 
@@ -2449,7 +2541,7 @@ if (isIntegral!T && (!allowZero || !convertToZero || !isUnsigned!T))
         }
     }
 
-    return Result();
+    return Result(fieldList, delim);
 }
 
 // parseNumericFieldList.

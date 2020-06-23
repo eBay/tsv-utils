@@ -90,6 +90,9 @@ are available:
   on the inclusion probability (a 'distinct' set of keys). All lines with
   one of the selected keys are output. Line order is not changed.
 
+Fields are specified using field number or field name. Field names require
+that the input file has a header line. Use '--help-fields' for details.
+
 Use '--help-verbose' for detailed information.
 
 Options:
@@ -121,6 +124,9 @@ are available:
   based on the values in the key fields. A subset of keys are chosen based
   on the inclusion probability (a 'distinct' set of keys). All lines with
   one of the selected keys are output. Line order is not changed.
+
+Fields: Fields are specified by field number or name. Field names require
+the input file to have a header line. Use '--help-fields' for details.
 
 Sample size: The '--n|num' option controls the sample size for all
 sampling methods. In the case of simple and weighted random sampling it
@@ -259,6 +265,7 @@ struct TsvSampleOptions
         import tsv_utils.common.fieldlist;
 
         bool helpVerbose = false;                  // --help-verbose
+        bool helpFields = false;                   // --help-fields
         bool versionWanted = false;                // --V|version
         string keyFieldsArg;                       // --k|key-fields
         string weightFieldArg;                     // --w|weight-field
@@ -274,6 +281,7 @@ struct TsvSampleOptions
             auto r = getopt(
                 cmdArgs,
                 "help-verbose",    "     Print more detailed help.", &helpVerbose,
+                "help-fields",     "     Print detailed help on specifying fields.", &helpFields,
 
                 std.getopt.config.caseSensitive,
                 "H|header",        "     Treat the first line of each file as a header.", &hasHeader,
@@ -324,6 +332,11 @@ struct TsvSampleOptions
             else if (helpVerbose)
             {
                 defaultGetoptPrinter(helpTextVerbose, r.options);
+                return tuple(false, 0);
+            }
+            else if (helpFields)
+            {
+                writeln(fieldListHelpText);
                 return tuple(false, 0);
             }
             else if (versionWanted)
