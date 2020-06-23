@@ -257,6 +257,8 @@ Help and Version printing 1
 
 ====[tsv-summarize --help | grep -c Synopsis]====
 1
+====[tsv-summarize --help-fields | head -n 1]====
+tsv-utils Field Syntax
 ====[tsv-summarize --help-verbose | grep -c Synopsis]====
 1
 ====[tsv-summarize --version | grep -c 'tsv-summarize (eBay/tsv-utils)']====
