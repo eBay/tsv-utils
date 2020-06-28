@@ -36,12 +36,12 @@ File an [issue](https://github.com/eBay/tsv-utils/issues) if you have problems, 
 
 These tools perform data manipulation and statistical calculations on tab delimited data. They are intended for large files. Larger than ideal for loading entirely in memory in an application like R, but not so big as to necessitate moving to Hadoop or similar distributed compute environments. The features supported are useful both for standalone analysis and for preparing data for use in R, Pandas, and similar toolkits.
 
-The tools work like traditional Unix command line utilities such as `cut`, `sort`, `grep` and `awk`, and are intended to complement these tools. Each tool is a standalone executable. They follow common Unix conventions for pipeline programs. Data is read from files or standard input, results are written to standard output. The field separator defaults to TAB, but any character can be used. Input and output is UTF-8, and all operations are Unicode ready, including regular expression match (`tsv-filter`). Documentation is available for each tool by invoking it with the `--help` option. TSV format is similar to CSV, see [Comparing TSV and CSV formats](docs/comparing-tsv-and-csv.md) for the differences.
+The tools work like traditional Unix command line utilities such as `cut`, `sort`, `grep` and `awk`, and are intended to complement these tools. Each tool is a standalone executable. They follow common Unix conventions for pipeline programs. Data is read from files or standard input, results are written to standard output. Fields are identified either by field name or field number. The field separator defaults to TAB, but any character can be used. Input and output is UTF-8, and all operations are Unicode ready, including regular expression match (`tsv-filter`). Documentation is available for each tool by invoking it with the `--help` option. TSV format is similar to CSV, see [Comparing TSV and CSV formats](docs/comparing-tsv-and-csv.md) for the differences.
 
 The rest of this section contains descriptions of each tool. Click on the links below to jump directly to one of the tools. Full documentation is available in the [tool reference](docs/ToolReference.md).
 
 * [tsv-filter](#tsv-filter) - Filter lines using numeric, string and regular expression comparisons against individual fields. This description also provides an introduction to features found throughout the toolkit.
-* [tsv-select](#tsv-select) - Keep a subset of columns (fields). Like `cut`, but with field reordering.
+* [tsv-select](#tsv-select) - Keep a subset of columns (fields). Like `cut`, but supporting named fields, field reordering, and field exclusions.
 * [tsv-uniq](#tsv-uniq) - Filter out duplicate lines using either the full line or individual fields as a key.
 * [tsv-summarize](#tsv-summarize) - Summary statistics on selected fields, against the full data set or grouped by key.
 * [tsv-sample](#tsv-sample) - Sample input lines or randomize their order. A number of sampling methods are available.
@@ -69,24 +69,28 @@ $ tsv-pretty data.tsv | head -n 5
 
 The following command finds all entries where 'year' (field 3) is 2008:
 ```
-$ tsv-filter -H --eq 3:2008 data.tsv
+$ tsv-filter -H --eq year:2008 data.tsv
 ```
 
-The `--eq` operator performs a numeric equality test. String comparisons are also available. The following command finds entries where 'color' (field 2) is "red":
+The `-H` option indicates the first input line is a header. The `--eq` operator performs a numeric equality test. String comparisons are also available. The following command finds entries where 'color' (field 2) is "red":
 ```
+$ tsv-filter -H --str-eq color:red data.tsv
+```
+
+Fields can also be identified by field number, same as traditional Unix tools. This works for files with and without header lines. The following commands are equivalent to the previous two:
+```
+$ tsv-filter -H --eq 3:2008 data.tsv
 $ tsv-filter -H --str-eq 2:red data.tsv
 ```
 
-Fields are identified by a 1-up field number, same as traditional Unix tools. The `-H` option preserves the header line.
-
-Multiple tests can be specified. The following command finds `red` entries with years between 1850 and 1950:
+Multiple tests can be specified. The following command finds `red` entries with `year` between 1850 and 1950:
 ```
-$ tsv-filter -H --str-eq 2:red --ge 3:1850 --lt 3:1950 data.tsv
+$ tsv-filter -H --str-eq color:red --ge year:1850 --lt year:1950 data.tsv
 ```
 
 Viewing the first few results produced by this command:
 ```
-$ tsv-filter -H --str-eq 2:red --ge 3:1850 --lt 3:1950 data.tsv | tsv-pretty | head -n 5
+$ tsv-filter -H --str-eq color:red --ge year:1850 --lt year:1950 data.tsv | tsv-pretty | head -n 5
  id  color  year  count
 101  red    1935    756
 106  red    1883   1156
@@ -96,9 +100,9 @@ $ tsv-filter -H --str-eq 2:red --ge 3:1850 --lt 3:1950 data.tsv | tsv-pretty | h
 
 Files can be placed anywhere on the command line. Data will be read from standard input if a file is not specified. The following commands are equivalent:
 ```
-$ tsv-filter -H --str-eq 2:red --ge 3:1850 --lt 3:1950 data.tsv
-$ tsv-filter data.tsv -H --str-eq 2:red --ge 3:1850 --lt 3:1950
-$ cat data.tsv | tsv-filter -H --str-eq 2:red --ge 3:1850 --lt 3:1950
+$ tsv-filter -H --str-eq color:red --ge year:1850 --lt year:1950 data.tsv
+$ tsv-filter data.tsv -H --str-eq color:red --ge year:1850 --lt year:1950
+$ cat data.tsv | tsv-filter -H --str-eq color:red --ge year:1850 --lt year:1950
 ```
 
 Multiple files can be provided. Only the header line from the first file will be kept when the `-H` option is used:
@@ -153,7 +157,19 @@ The earlier `--not-empty` example uses a "field list". Fields lists specify a se
 $ tsv-filter -H --lt 1-3,7:100 file.tsv
 ```
 
-Most of the TSV Utilities tools support field lists. See [Field numbers and field-lists](docs/ToolReference.md#field-numbers-and-field-lists) in the [Tools reference](docs/ToolReference.md) document for details.
+Field names can be used in field lists as well. The following command selects lines where both 'color' and 'count' fields are not empty:
+```
+$ tsv-filter -H messy.tsv --not-empty color,count
+```
+
+Field names can be matched using wildcards. The previous command could also be written as:
+```
+$ tsv-filter -H messy.tsv --not-empty 'co*'
+```
+
+The `co*` matches both the 'color' and 'count' fields. (Note: Single quotes are used to prevent the shell from interpreting the asterisk character.)
+
+All TSV Utilities tools use the same syntax for specifying fields. See [Field syntax](docs/ToolReference.md#field-syntax) in the [Tools reference](docs/ToolReference.md) document for details.
 
 Bash completion is especially helpful with `tsv-filter`. It allows quickly seeing and selecting from the different operators available. See [bash completion](docs/TipsAndTricks.md#enable-bash-completion) on the [Tips and tricks](docs/TipsAndTricks.md) page for setup information.
 
@@ -168,23 +184,35 @@ See the [tsv-filter reference](docs/ToolReference.md#tsv-filter-reference) for m
 
 ### tsv-select
 
-A version of the Unix `cut` utility with the ability to re-order fields. The following command writes fields [4, 2, 9, 10, 11] from a pair of files to stdout:
+A version of the Unix `cut` utility with the ability to select fields by name, drop fields, and re-order fields. The following command writes the `date` and `time` fields from a pair of files to standard output:
+```
+$ tsv-select -H -f date,time file1.tsv file2.tsv
+```
+The previous command selected fields by name. Fields can also be selected by field number:
 ```
 $ tsv-select -f 4,2,9-11 file1.tsv file2.tsv
 ```
 
-Fields can be listed more than once, and fields not specified can be selected as a group using `--r|rest`. Fields can be dropped using `--e|exclude`. When working with multiple files, the `--H|header` option can be used to retain the header from just the first file.
+Fields can be listed more than once, and fields not specified can be selected as a group using `--r|rest`. Fields can be dropped using `--e|exclude`.
+
+The `--H|header` option turns on header processing. This enables specifying fields by name. When multiple input files are provided, only the header from the first file is retained.
 
 Examples:
 ```
 $ # Output fields 2 and 1, in that order.
 $ tsv-select -f 2,1 data.tsv
 
+$ # Output the 'Name' and 'RecordNum' fields.
+$ tsv-select -H -f Name,RecordNum data.tsv.
+
 $ # Drop the first field, keep everything else.
 $ tsv-select --exclude 1 file.tsv
 
-$ # Move field 7 to the start of the line.
-$ tsv-select -f 7 --rest last data.tsv
+$ # Drop the 'Color' field, keep everything else.
+$ tsv-select -H --exclude Color file.tsv
+
+$ # Move the 'RecordNum' field to the start of the line.
+$ tsv-select -H -f RecordNum --rest last data.tsv
 
 $ # Move field 1 to the end of the line.
 $ tsv-select -f 1 --rest first data.tsv
@@ -192,11 +220,14 @@ $ tsv-select -f 1 --rest first data.tsv
 $ # Output a range of fields in reverse order.
 $ tsv-select -f 30-3 data.tsv
 
+$ # Drop all the fields ending in '_time'
+$ tsv-select -H -e '*_time' data.tsv
+
 $ # Multiple files with header lines. Keep only one header.
 $ tsv-select data*.tsv -H --fields 1,2,4-7,14
 ```
 
-See the [tsv-select reference](docs/ToolReference.md#tsv-select-reference) for details.
+See the [tsv-select reference](docs/ToolReference.md#tsv-select-reference) for details on `tsv-select`. See the [Field syntax](docs/ToolReference.md#field-syntax) for more information on selecting fields by name.
 
 ### tsv-uniq
 
@@ -204,12 +235,19 @@ Similar in spirit to the Unix `uniq` tool, `tsv-uniq` filters a dataset so there
 
 `tsv-uniq` can also be run in 'equivalence class identification' mode, where lines with equivalent keys are marked with a unique id rather than filtered out. Another variant is 'number' mode, which generates lines numbers grouped by the key.
 
-An example uniq'ing a file on fields 2 and 3:
-```
-$ tsv-uniq -f 2,3 data.tsv
-```
-
 `tsv-uniq` operates on the entire line when no fields are specified. This is a useful alternative to the traditional `sort -u` or `sort | uniq` paradigms for identifying unique lines in unsorted files, as it is quite a bit faster, especially when there are many duplicate lines. As a bonus, order of the input lines is retained.
+
+Examples:
+```
+$ # Unique a file based on the full line.
+$ tsv-uniq data.tsv
+
+$ # Unique a file with fields 2 and 3 as the key.
+$ tsv-uniq -f 2,3 data.tsv
+
+$ # Unique a file using the 'RecordID' field as the key.
+$ tsv-uniq -H -f RecordID data.tsv
+```
 
 An in-memory lookup table is used to record unique entries. This ultimately limits the data sizes that can be processed. The author has found that datasets with up to about 10 million unique entries work fine, but performance starts to degrade after that. Even then it remains faster than the alternatives.
 
@@ -228,17 +266,17 @@ blue    10
 ```
 Calculations of the sum and mean of the `weight` column is shown below. The first command runs calculations on all values. The second groups them by color.
 ```
-$ tsv-summarize --header --sum 2 --mean 2 data.tsv
+$ tsv-summarize --header --sum weight --mean weight data.tsv
 weight_sum  weight_mean
 40          8
 
-$ tsv-summarize --header --group-by 1 --sum 2 --mean 2 data.tsv
+$ tsv-summarize --header --group-by color --sum weight --mean color data.tsv
 color  weight_sum  weight_mean
 red    15          5
 blue   25          12.5
 ```
 
-Multiple fields can be used as the `--group-by` key. The file's sort order does not matter, there is no need to sort in the `--group-by` order first.
+Multiple fields can be used as the `--group-by` key. The file's sort order does not matter, there is no need to sort in the `--group-by` order first. Fields can be specified either by name or field number, like other tsv-utils tools. 
 
 See the [tsv-summarize reference](docs/ToolReference.md#tsv-summarize-reference) for the list of statistical and other aggregation operations available.
 
@@ -259,12 +297,14 @@ See the [tsv-sample reference](docs/ToolReference.md#tsv-sample-reference) for f
 
 ### tsv-join
 
-Joins lines from multiple files based on a common key. One file, the 'filter' file, contains the records (lines) being matched. The other input files are scanned for matching records. Matching records are written to standard output, along with any designated fields from the filter file. In database parlance this is a hash semi-join. Example:
+Joins lines from multiple files based on a common key. One file, the 'filter' file, contains the records (lines) being matched. The other input files are scanned for matching records. Matching records are written to standard output, along with any designated fields from the filter file. In database parlance this is a hash semi-join. It is similar to the "stream-static" joins available in Spark Structured Streaming and "KStream-KTable" joins in Kafka. (The filter file plays the same role as the Spark static Dataset or Kafka KTable.)
+
+Example:
 ```
-$ tsv-join --filter-file filter.tsv --key-fields 1,3 --append-fields 5,6 data.tsv
+$ tsv-join -H --filter-file filter.tsv --key-fields Country,City --append-fields Population,Elevation data.tsv
 ```
 
-This reads `filter.tsv`, creating a lookup table keyed on fields 1 and 3. `data.tsv` is read, lines with a matching key are written to standard output with fields 5 and 6 from `filter.tsv` appended. This is a form of inner-join. Outer-joins and anti-joins can also be done.
+This reads `filter.tsv`, creating a lookup table keyed on the fields `Country` and `City` fields. `data.tsv` is read, lines with a matching key are written to standard output with the `Population` and `Elevation` fields from `filter.tsv` appended. This is an inner join. Left outer joins and anti-joins are also supported.
 
 Common uses for `tsv-join` are to join related datasets or to filter one dataset based on another. Filter file entries are kept in memory, this limits the ultimate size that can be handled effectively. The author has found that filter files up to about 10 million lines are processed effectively, but performance starts to degrade after that.
 
