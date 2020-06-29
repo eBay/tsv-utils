@@ -25,11 +25,11 @@ ___
 Information in this section applies to all the tools. Topics:
 
 * [Specifying options](#specifying-options)
-* [Help](#help)
+* [Help](#help--h---help---help-verbose---helpfields)
 * [UTF-8 input](#utf-8-input)
 * [Line endings](#line-endings)
-* [File format and alternate delimiters](#file-format-and-alternate-delimiters)
-* [Header line processing](#header-line-processing)
+* [File format and alternate delimiters](#file-format-and-alternate-delimiters---delimiter)
+* [Header line processing](#header-line-processing--h---header)
 * [Multiple files and standard input](#Multiple-files-and-standard-input)
 * [Field syntax](#field-syntax)
 
@@ -88,8 +88,8 @@ Fields can be identified either by a one-upped field number or by field name. Fi
 
 Some command line options only accept a single field, but many operate on lists of fields. Here are some examples of field selection (using `tsv-select`):
 ```
-$ tsv-select -f 1 file.tsv              # First field, by field number
-$ tsv-select -f 1,3 file.tsv            # Field numbers
+$ tsv-select -f 1 file.tsv              # First field
+$ tsv-select -f 1,3 file.tsv            # Pair of field numbers
 $ tsv-select -f 5-9 file.txt            # A range
 $ tsv-select -H -f RecordID file.txt    # Field name
 $ tsv-select -H -f Date,Time,3,5-7,9    # Mix of names, numbers, ranges
@@ -101,7 +101,7 @@ $ tsv-select -f 5-1       # Fields 5, 4, 3, 2, 1
 $ tsv-select -f 1-3,2,1   # Fields 1, 2, 3, 2, 1
 ```
 
-Field name match is case sensitive and [wildcards](#wildcards) are supported. Field numbers are one-upped integers, following Unix conventions. Some tools accept field number zero (`0`) to represent the entire line. This is documented in the help for each tool.
+Field name match is case sensitive and wildcards are supported. Field numbers are one-upped integers, following Unix conventions. Some tools accept field number zero (`0`) to represent the entire line. This is documented in the help for each tool.
 
 #### Wildcards
 
@@ -117,6 +117,7 @@ run  elapsed_time  user_time  system_time  max_memory
   2          52.0       49.0          3.0        1270
   3          55.5       51.0          4.5        1410
 ```
+
 Some examples selecting fields from this file:
 ```
 $ tsv-select data.tsv -H -f 3               # Field 3 (user_time)

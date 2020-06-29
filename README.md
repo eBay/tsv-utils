@@ -115,12 +115,12 @@ Numeric comparisons are among the most useful tests. Numeric operators include:
 * Equality: `--eq`, `--ne` (equal, not-equal).
 * Relational: `--lt`, `--le`, `--gt`, `--ge` (less-than, less-equal, greater-than, greater-equal).
 
-Several filters are available to help with invalid entries. Assume there is a messier version of the 4-field file where some fields are not filled in. The following command will filter out all lines with an empty value in any of the four fields:
+Several filters are available to help with invalid data. Assume there is a messier version of the 4-field file where some fields are not filled in. The following command will filter out all lines with an empty value in any of the four fields:
 ```
 $ tsv-filter -H messy.tsv --not-empty 1-4
 ```
 
-The above command uses a "field list" to specify running the test on each of fields 1-4. The test can be "inverted" to see the lines that were filtered out:
+The above command uses a "field list" to run the test on each of fields 1-4. The test can be "inverted" to see the lines that were filtered out:
 ```
 $ tsv-filter -H messy.tsv --invert --not-empty 1-4 | head -n 5 | tsv-pretty
  id  color   year  count
@@ -188,14 +188,14 @@ A version of the Unix `cut` utility with the ability to select fields by name, d
 ```
 $ tsv-select -H -f date,time file1.tsv file2.tsv
 ```
-The previous command selected fields by name. Fields can also be selected by field number:
+Fields can also be selected by field number:
 ```
 $ tsv-select -f 4,2,9-11 file1.tsv file2.tsv
 ```
 
 Fields can be listed more than once, and fields not specified can be selected as a group using `--r|rest`. Fields can be dropped using `--e|exclude`.
 
-The `--H|header` option turns on header processing. This enables specifying fields by name. When multiple input files are provided, only the header from the first file is retained.
+The `--H|header` option turns on header processing. This enables specifying fields by name. Only the header from the first file is retained when multiple input files are provided.
 
 Examples:
 ```
