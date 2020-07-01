@@ -481,7 +481,7 @@ This is similar to the "stream-static" joins available in Spark Structured Strea
 * `--a|append-fields <field-list>` - Filter file fields to append to matched records.
 * `--H|header` - Treat the first line of each file as a header.
 * `--p|prefix STR` - String to use as a prefix for `--append-fields` when writing a header line.
-* `--w|write-all STR` - Output all data records. STR is the `--append-fields` value when writing unmatched records. This is an outer join.
+* `--w|write-all STR` - Output all data stream records. STR is the `--append-fields` value when writing unmatched records. This is a left outer join.
 * `--e|exclude` - Exclude matching records. This is an anti-join.
 * `--delimiter CHR` - Field delimiter. Default: TAB. (Single byte UTF-8 characters only.)
 * `--z|allow-duplicate-keys` - Allow duplicate keys with different append values (last entry wins). Default behavior is that this is an error.

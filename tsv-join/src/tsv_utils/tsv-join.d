@@ -23,9 +23,9 @@ auto helpText = q"EOS
 Synopsis: tsv-join --filter-file file [options] file [file...]
 
 tsv-join matches input lines (the 'data stream') against lines from a
-'filter' file. The match is based on fields or the entire line. Fields can
-be specified either by field number or field name. Use '--help-verbose'
-for more details.
+'filter' file. The match is based on individual fields or the entire
+line. Fields can be specified either by field number or field name.
+Use '--help-verbose' for details.
 
 Options:
 EOS";
@@ -170,7 +170,7 @@ struct TsvJoinOptions
                 "H|header",        "              Treat the first line of each file as a header.", &hasHeader,
                 std.getopt.config.caseInsensitive,
                 "p|prefix",        "STR           String to use as a prefix for --append-fields when writing a header line.", &appendHeaderPrefix,
-                "w|write-all",     "STR           Output all data records. STR is the --append-fields value when writing unmatched records.", &writeAllHandler,
+                "w|write-all",     "STR           Output all data stream records. STR is the --append-fields value when writing unmatched records.", &writeAllHandler,
                 "e|exclude",       "              Exclude matching records.", &exclude,
                 "delimiter",       "CHR           Field delimiter. Default: TAB. (Single byte UTF-8 characters only.)", &delim,
                 "z|allow-duplicate-keys",
