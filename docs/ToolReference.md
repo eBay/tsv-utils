@@ -300,7 +300,7 @@ _Note: See the [tsv-filter](../README.md#tsv-filter) description in the project 
 
 **Synopsis:** tsv-filter [options] [file...]
 
-Filter lines of tab-delimited files via comparison tests against fields. Multiple tests can be specified, by default they are evaluated as AND clause. Lines satisfying the tests are written to standard output.
+Filter lines by comparison tests against fields. Multiple tests can be specified. By default, only lines satisfying all tests are output. This can be change using the `--or` option. A variety of tests are available.
 
 **General options:**
 * `--help` - Print help.
@@ -389,20 +389,23 @@ Field to field comparisons:
 
 Basic comparisons:
 ```
+$ # 'Count' field non-zero
+$ tsv-filter --header --ne Count:0
+
 $ # Field 2 non-zero
 $ tsv-filter --ne 2:0 data.tsv
 
 $ # Field 1 == 0 and Field 2 >= 100, first line is a header.
 $ tsv-filter --header --eq 1:0 --ge 2:100 data.tsv
 
-$ # Field 1 == -1 or Field 1 > 100
-$ tsv-filter --or --eq 1:-1 --gt 1:100
+$ # 'Count' field == -1 or 'Count' field > 100
+$ tsv-filter --or --eq Count:-1 --gt Count:100
 
-$ # Field 3 is foo, Field 4 contains bar
-$ tsv-filter --header --str-eq 3:foo --str-in-fld 4:bar data.tsv
+$ # 'Name1' field is foo, 'Name2' field contains bar
+$ tsv-filter -H --str-eq Name1:foo --str-in-fld Name2:bar data.tsv
 
-$ # Field 3 == field 4 (numeric test)
-$ tsv-filter --header --ff-eq 3:4 data.tsv
+$ # 'start_date' field == 'end-date' field (numeric test)
+$ tsv-filter -H --ff-eq start_date:end_date data.tsv
 ```
 
 Field lists:
@@ -413,10 +416,13 @@ $ # Test that fields 1-10 are not blank
 $ tsv-filter --not-blank 1-10 data.tsv
 
 $ # Test that fields 1-5 are not zero
-$ tsv-filter --ne 1-5:0
+$ tsv-filter --ne 1-5:0 data.tsv
+
+$ # Test that all the '_time' fields are not zero
+$ tsv-filter -H --ne '*_time:0' data.tsv
 
 $ # Test that fields 1-5, 7, and 10-20 are less than 100
-$ tsv-filter --lt 1-5,7,10-20:100
+$ tsv-filter --lt 1-5,7,10-20:100 data.tsv
 ```
 
 Regular expressions:
@@ -430,12 +436,12 @@ $ tsv-filter --regex '2:aa[0-9]+aa' data.tsv
 $ # Same thing, except the field starts and ends with the two a's.
 $ tsv-filter --regex '2:^aa[0-9]+aa$' data.tsv
 
-$ # Field 2 is a sequence of "word" characters with two or more embedded
+$ # 'Name' field is a sequence of "word" characters with two or more embedded
 $ # whitespace sequences (match against entire field)
-$ tsv-filter --regex '2:^\w+\s+(\w+\s+)+\w+$' data.tsv
+$ tsv-filter -H --regex 'Name:^\w+\s+(\w+\s+)+\w+$' data.tsv
 
-$ # Field 2 containing at least one cyrillic character.
-$ tsv-filter --regex '2:\p{Cyrillic}' data.tsv
+$ # 'Title' field containing at least one cyrillic character.
+$ tsv-filter -H --regex 'Title:\p{Cyrillic}' data.tsv
 ```
 
 Short-circuiting expressions:
@@ -443,8 +449,8 @@ Short-circuiting expressions:
 Numeric tests like `--gt` (greater-than) assume field values can be interpreted as numbers. An error occurs if the field cannot be parsed as a number, halting the program. This can be avoiding by including a testing ensure the field is recognizable as a number. For example:
 
 ```
-$ # Ensure field 2 is a number before testing for greater-than 10.
-$ tsv-filter --is-numeric 2 --gt 2:10 data.tsv
+$ # Ensure 'count' field is a number before testing for greater-than 10.
+$ tsv-filter -H --is-numeric count --gt count:10 data.tsv
 
 $ # Ensure field 2 is a number, not NaN or infinity before greater-than test.
 $ tsv-filter --is-finite 2 --gt 2:10 data.tsv
@@ -460,16 +466,19 @@ _**Tip:**_ Bash completion is very helpful when using commands like `tsv-filter`
 
 **Synopsis:** tsv-join --filter-file file [options] file [file...]
 
-tsv-join matches input lines against lines from a 'filter' file. The match is based on exact match comparison of one or more 'key' fields. Fields are TAB delimited by default. Matching lines are written to standard output, along with any additional fields from the key file that have been specified.
+tsv-join matches input lines (the 'data stream') against lines from a 'filter' file. The match is based on exact match comparison of one or more 'key' fields. Matching lines are written to standard output, along with any additional fields from the filter file that have been specified.
+
+This is similar to the "stream-static" joins available in Spark Structured Streaming and "KStream-KTable" joins in Kafka. The filter file plays the same role as the Spark static dataset or Kafka KTable.
 
 **Options:**
 * `--h|help` - Print help.
 * `--h|help-verbose` - Print detailed help.
+* `--help-fields ` - Print help on specifying fields.
 * `--V|version` - Print version information and exit.
 * `--f|filter-file FILE` - (Required) File with records to use as a filter.
 * `--k|key-fields <field-list>` - Fields to use as join key. Default: 0 (entire line).
-* `--d|data-fields <field-list>` - Data record fields to use as join key, if different than `--key-fields`.
-* `--a|append-fields <field-list>` - Filter fields to append to matched records.
+* `--d|data-fields <field-list>` - Data stream fields to use as join key, if different than `--key-fields`.
+* `--a|append-fields <field-list>` - Filter file fields to append to matched records.
 * `--H|header` - Treat the first line of each file as a header.
 * `--p|prefix STR` - String to use as a prefix for `--append-fields` when writing a header line.
 * `--w|write-all STR` - Output all data records. STR is the `--append-fields` value when writing unmatched records. This is an outer join.
@@ -488,12 +497,17 @@ $ # Output lines in data.txt that do not appear in filter.txt
 $ tsv-join -f filter.txt --exclude data.txt
 ```
 
-Filter multiple files, using fields 2 & 3 as the filter key.
+Filter multiple files, using the 'ID' field as the join key.
+```
+$ tsv-join -H -f filter.tsv --key-fields ID data1.tsv data2.tsv data3.tsv
+```
+
+Filter multiple files, using fields 2 & 3 as the join key.
 ```
 $ tsv-join -f filter.tsv --key-fields 2,3 data1.tsv data2.tsv data3.tsv
 ```
 
-Same as previous, except use field 4 & 5 from the data files.
+Same as previous, except use fields 4 & 5 from the data files as the key.
 ```
 $ tsv-join -f filter.tsv --key-fields 2,3 --data-fields 4,5 data1.tsv data2.tsv data3.tsv
 ```

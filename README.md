@@ -297,7 +297,7 @@ See the [tsv-sample reference](docs/ToolReference.md#tsv-sample-reference) for f
 
 ### tsv-join
 
-Joins lines from multiple files based on a common key. One file, the 'filter' file, contains the records (lines) being matched. The other input files are scanned for matching records. Matching records are written to standard output, along with any designated fields from the filter file. In database parlance this is a hash semi-join. It is similar to the "stream-static" joins available in Spark Structured Streaming and "KStream-KTable" joins in Kafka. (The filter file plays the same role as the Spark static Dataset or Kafka KTable.)
+Joins lines from multiple files based on a common key. One file, the 'filter' file, contains the records (lines) being matched. The other input files are scanned for matching records. Matching records are written to standard output, along with any designated fields from the filter file. In database parlance this is a hash semi-join. This is similar to the "stream-static" joins available in Spark Structured Streaming and "KStream-KTable" joins in Kafka. (The filter file plays the same role as the Spark static dataset or Kafka KTable.)
 
 Example:
 ```

@@ -76,10 +76,10 @@ Error [tsv-join]: Not enough fields in line. File: input2_noheader.tsv, Line: 1
 ===Missing filter file===
 
 ====[tsv-join --header -k 2 input2.tsv]====
-[tsv-join] Error processing command line arguments: Required option --filter-file was not supplied.
+[tsv-join] Error processing command line arguments: Required option --f|filter-file was not supplied.
 
 ====[tsv-join -k 2 input2_noheader.tsv]====
-[tsv-join] Error processing command line arguments: Required option --filter-file was not supplied.
+[tsv-join] Error processing command line arguments: Required option --f|filter-file was not supplied.
 
 ===Stdin filter file, no data file===
 
