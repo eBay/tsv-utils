@@ -481,50 +481,66 @@ This is similar to the "stream-static" joins available in Spark Structured Strea
 * `--a|append-fields <field-list>` - Filter file fields to append to matched records.
 * `--H|header` - Treat the first line of each file as a header.
 * `--p|prefix STR` - String to use as a prefix for `--append-fields` when writing a header line.
-* `--w|write-all STR` - Output all data stream records. STR is the `--append-fields` value when writing unmatched records. This is a left outer join.
+* `--w|write-all STR` - Output all data stream records. STR is the `--append-fields` value when writing unmatched records. This is a left outer join. (The data stream is the 'left'.)
 * `--e|exclude` - Exclude matching records. This is an anti-join.
 * `--delimiter CHR` - Field delimiter. Default: TAB. (Single byte UTF-8 characters only.)
 * `--z|allow-duplicate-keys` - Allow duplicate keys with different append values (last entry wins). Default behavior is that this is an error.
 
 **Examples:**
 
-Filter one file based on another, using the full line as the key.
+Join using the `Name` field as the key. The `Name` field may be in different columns in the filter file and data stream files. All matching rows from `data.tsv` are written to standard output. The output order is the same as in `data.tsv`.
 ```
-$ # Output lines in data.txt that appear in filter.txt
-$ tsv-join -f filter.txt data.txt
-
-$ # Output lines in data.txt that do not appear in filter.txt
-$ tsv-join -f filter.txt --exclude data.txt
+$ tsv-join -H --filter-file filter.tsv --key-fields Name data.tsv
 ```
 
-Filter multiple files, using the 'ID' field as the join key.
+Join using `Name` field as key, but also append the `RefID` field from the filter file.
 ```
-$ tsv-join -H -f filter.tsv --key-fields ID data1.tsv data2.tsv data3.tsv
+$ tsv-join -H -f filter.tsv -k Name --append-fields RefID data.tsv
 ```
 
-Filter multiple files, using fields 2 & 3 as the join key.
+Exclude lines from the data stream having the same `RecordNum` as a record in the filter file.
 ```
-$ tsv-join -f filter.tsv --key-fields 2,3 data1.tsv data2.tsv data3.tsv
+$ tsv-join -H -f filter.tsv -k RecordNum --exclude data.tsv
+```
+
+Filter multiple files, using field numbers 2 & 3 as the join key.
+```
+$ tsv-join -f filter.tsv -k 2,3 data1.tsv data2.tsv data3.tsv
 ```
 
 Same as previous, except use fields 4 & 5 from the data files as the key.
 ```
-$ tsv-join -f filter.tsv --key-fields 2,3 --data-fields 4,5 data1.tsv data2.tsv data3.tsv
+$ tsv-join -f filter.tsv -k 2,3 -d 4,5 data1.tsv data2.tsv data3.tsv
 ```
 
-Append fields from the filter file to matched records.
+Same as the previous command, but reading the data stream from standard input.
 ```
-$ tsv-join -f filter.tsv --key-fields 1 --append-fields 2-5 data.tsv
-```
-
-Write out all records from the data file, but when there is no match, write the 'append fields' as NULL. This is an outer join.
-```
-$ tsv-join -f filter.tsv --key-fields 1 --append-fields 2 --write-all NULL data.tsv
+$ cat data*.tsv | tsv-join -f filter.tsv -k 2,3 -d 4,5
 ```
 
-Managing headers: Often it's useful to join a field from one data file to anther, where the data fields are related and the headers have the same name in both files. They can be kept distinct by adding a prefix to the filter file header. Example:
+Add population data from `cities.tsv` to a data stream.
 ```
-$ tsv-join -f run1.tsv --header --key-fields 1 --append-fields 2 --prefix run1_ run2.tsv
+$ tsv-join -H -f cities.tsv -k CityID --append-fields Population data.tsv
+```
+
+As in the previous example, add population data, but this time write all records. Use the value '-1' if the city does not appear in the `cities.tsv` file. This is a left outer join (with the data stream as 'left').
+```
+$ tsv-join -H -f cities.tsv -k CityID -a Population --write-all -1 Population data.tsv
+```
+
+Filter one file based on another, using the full line as the key.
+```
+$ tsv-join -f filter.txt data.txt
+```
+
+Modifying output headers: Often it's useful to join a field from one data file to anther, where the fields being appended have the same names in the data stream file. The appended fields can be kept distinct by adding a prefix to the header. The following command joins on the `test_id` field, appending the `time` field to matched records. The header for the appended field is `run1_time`, differentiating it from an existing `time` field in the data file (run2.tsv).
+```
+$ tsv-join -f run1.tsv run2.tsv -H -k test_id --append-fields time --prefix run1_
+```
+
+The prefix will be applied to all appended fields. The next example is similar to the previous one, except that is appends all fields ending in `_time`, prefixing `run1_` to all the names:
+```
+$ tsv-join -f run1.tsv run2.tsv -H -k test_id --append-fields '*_time' --prefix run1_
 ```
 
 ---
