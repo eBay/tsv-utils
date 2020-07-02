@@ -20,7 +20,7 @@ import std.range;
 import std.typecons : tuple;
 
 auto helpText = q"EOS
-Synopsis: tsv-join --filter-file file [options] file [file...]
+Synopsis: tsv-join --filter-file file [options] [file...]
 
 tsv-join matches input lines (the 'data stream') against lines from a
 'filter' file. The match is based on individual fields or the entire
@@ -31,13 +31,14 @@ Options:
 EOS";
 
 auto helpTextVerbose = q"EOS
-Synopsis: tsv-join --filter-file file [options] file [file...]
+Synopsis: tsv-join --filter-file file [options] [file...]
 
 tsv-join matches input lines (the 'data stream') against lines from a
 'filter' file. The match is based on exact match comparison of one or more
-'key' fields. Fields are TAB delimited by default. Matching lines are
-written to standard output, along with any additional fields from the
-filter file that have been specified. For example:
+'key' fields. Fields are TAB delimited by default. Input lines are read
+from files or standard input. Matching lines are written to standard
+output, along with any additional fields from the filter file that have
+been specified. For example:
 
   tsv-join --filter-file filter.tsv --key-fields 1 --append-fields 5,6 data.tsv
 

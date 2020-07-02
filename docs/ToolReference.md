@@ -464,11 +464,13 @@ _**Tip:**_ Bash completion is very helpful when using commands like `tsv-filter`
 
 ## tsv-join reference
 
-**Synopsis:** tsv-join --filter-file file [options] file [file...]
+**Synopsis:** tsv-join --filter-file file [options] [file...]
 
-tsv-join matches input lines (the 'data stream') against lines from a 'filter' file. The match is based on exact match comparison of one or more 'key' fields. Matching lines are written to standard output, along with any additional fields from the filter file that have been specified.
+tsv-join matches input lines (the 'data stream') against lines from a 'filter' file. The match is based on exact match comparison of one or more 'key' fields. The data stream is read from files or standard input. Matching lines are written to standard output, along with any additional fields from the filter file that have been specified.
 
 This is similar to the "stream-static" joins available in Spark Structured Streaming and "KStream-KTable" joins in Kafka. The filter file plays the same role as the Spark static dataset or Kafka KTable.
+
+The filter file needs to fit into available memory (the join key and append fields). The data stream is processed one line at a time and can be arbitrarily large.
 
 **Options:**
 * `--h|help` - Print help.
