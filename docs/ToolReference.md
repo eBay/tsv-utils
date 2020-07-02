@@ -498,7 +498,7 @@ Join using `Name` field as key, but also append the `RefID` field from the filte
 $ tsv-join -H -f filter.tsv -k Name --append-fields RefID data.tsv
 ```
 
-Exclude lines from the data stream having the same `RecordNum` as a record in the filter file.
+Exclude lines from the data stream having the same `RecordNum` as a line in the filter file.
 ```
 $ tsv-join -H -f filter.tsv -k RecordNum --exclude data.tsv
 ```
@@ -538,7 +538,7 @@ Modifying output headers: Often it's useful to append a field that has a name id
 $ tsv-join -f run1.tsv run2.tsv -H -k test_id --append-fields time --prefix run1_
 ```
 
-The prefix will be applied to all appended fields. The next example is similar to the previous one, except that is appends all fields ending in `_time`, prefixing `run1_` to all the names:
+The prefix will be applied to all appended fields. The next example is similar to the previous one, except that it appends all fields ending in `_time`, prefixing `run1_` to all the appended field names:
 ```
 $ tsv-join -f run1.tsv run2.tsv -H -k test_id -a '*_time' --prefix run1_
 ```
