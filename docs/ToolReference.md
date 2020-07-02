@@ -523,7 +523,7 @@ Add population data from `cities.tsv` to a data stream.
 $ tsv-join -H -f cities.tsv -k CityID --append-fields Population data.tsv
 ```
 
-As in the previous example, add population data, but this time write all records. Use the value '-1' if the city does not appear in the `cities.tsv` file. This is a left outer join (with the data stream as 'left').
+As in the previous example, add population data, but this time write all records. Use the value '-1' if the city does not appear in the `cities.tsv` file. This is a left outer join, with the data stream as 'left'.
 ```
 $ tsv-join -H -f cities.tsv -k CityID -a Population --write-all -1 Population data.tsv
 ```
@@ -533,14 +533,14 @@ Filter one file based on another, using the full line as the key.
 $ tsv-join -f filter.txt data.txt
 ```
 
-Modifying output headers: Often it's useful to join a field from one data file to anther, where the fields being appended have the same names in the data stream file. The appended fields can be kept distinct by adding a prefix to the header. The following command joins on the `test_id` field, appending the `time` field to matched records. The header for the appended field is `run1_time`, differentiating it from an existing `time` field in the data file (run2.tsv).
+Modifying output headers: Often it's useful to append a field that has a name identical to a field already in the data stream files. The '--p|prefix' option can be used to rename the appended field and avoid name duplication. The following command joins on the `test_id` field, appending the `time` field to matched records. The header for the appended field is `run1_time`, differentiating it from an existing `time` field in the data file (run2.tsv).
 ```
 $ tsv-join -f run1.tsv run2.tsv -H -k test_id --append-fields time --prefix run1_
 ```
 
 The prefix will be applied to all appended fields. The next example is similar to the previous one, except that is appends all fields ending in `_time`, prefixing `run1_` to all the names:
 ```
-$ tsv-join -f run1.tsv run2.tsv -H -k test_id --append-fields '*_time' --prefix run1_
+$ tsv-join -f run1.tsv run2.tsv -H -k test_id -a '*_time' --prefix run1_
 ```
 
 ---
