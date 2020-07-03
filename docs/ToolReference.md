@@ -1,3 +1,6 @@
+---
+title: "eBay's TSV Utilities: Tool Reference"
+---
 _Visit the [main page](../README.md)_
 
 # Tool reference
@@ -59,9 +62,9 @@ The `dos2unix` tool can be used to convert Windows line endings to Unix format. 
 
 ### File format and alternate delimiters (`--delimiter`)
 
-Any character can be used as a delimiter, TAB is the default. However, there is no escaping for including the delimiter character or newlines within a field. This differs from CSV file format which provides an escaping mechanism. In practice the lack of an escaping mechanism is not a meaningful limitation for data oriented files.
+Any character can be used as a field delimiter, TAB is the default. However, there is no mechanism to include the delimiter character or newlines within a field. This differs from CSV file format which provides an escaping mechanism. In practice the lack of an escaping mechanism is not a meaningful limitation for data oriented files. See [Comparing TSV and CSV formats](comparing-tsv-and-csv.md) for more information on these formats.
 
-Aside from a header line, all lines are expected to have data. There is no comment mechanism and no special handling for blank lines. Tools taking field indices as arguments expect the specified fields to be available on every line.
+All lines are expected to have data. There is no mechanism for recognizing comments or blank lines. Tools taking field indices as arguments expect the specified fields to be available on every line.
 
 ### Header line processing (`-H`, `--header`)
 
@@ -69,7 +72,7 @@ Most tools handle the first line of files as a header when given the `-H` or `--
 
 * Enables selection of fields by name rather than by number. See [Field Syntax](#field-syntax) for details.
 * Only one header line is written to standard output. If multiple files are being processed, the header line from the first file is kept and header lines from subsequent files are dropped.
-* Excludes the header line from the normal processing of the command, if appropriate. For example, `tsv-filter` passes the header line through without filtering it.
+* Excludes the header line from the normal processing of the command, if appropriate. For example, `tsv-filter` exempts the header from filtering.
 
 ### Multiple files and standard input
 
@@ -78,24 +81,24 @@ Tools can read from any number of files and from standard input. As per typical 
 $ head -n 1000 file-c.tsv | tsv-filter --eq 2:1000 -- file-a.tsv file-b.tsv - > out.tsv
 ```
 
-The above passes `file-a.tsv`, `file-b.tsv`, and the first 1000 lines of `file-c.tsv` to `tsv-filter` and write the results to `out.tsv`.
+The above passes `file-a.tsv`, `file-b.tsv`, and the first 1000 lines of `file-c.tsv` to `tsv-filter` and writes the results to `out.tsv`.
 
 ### Field syntax
 
-Most tsv-utils tools operate on fields specified on the command line. All tools use the same syntax to identify fields. `tsv-select` is used in this document for examples, but the syntax shown applies to all tools.
+Most tsv-utils tools operate on fields specified on the command line. All tools use the same syntax to identify fields. `tsv-select` is used in this document to provide examples, but the syntax shown applies to all tools.
 
 Fields can be identified either by a one-upped field number or by field name. Field names require the first line of input data to be a header with field names. Header line processing is enabled by the `--H|header` option.
 
 Some command line options only accept a single field, but many operate on lists of fields. Here are some examples of field selection (using `tsv-select`):
 ```
 $ tsv-select -f 1 file.tsv              # First field
-$ tsv-select -f 1,3 file.tsv            # Pair of field numbers
+$ tsv-select -f 1,3 file.tsv            # Pair of fields
 $ tsv-select -f 5-9 file.txt            # A range
 $ tsv-select -H -f RecordID file.txt    # Field name
 $ tsv-select -H -f Date,Time,3,5-7,9    # Mix of names, numbers, ranges
 ```
 
-Most tools process or output fields in the order listed, and repeated use is usually fine:
+Most tools process fields in the order listed, and repeated use is usually allowed:
 ```
 $ tsv-select -f 5-1       # Fields 5, 4, 3, 2, 1
 $ tsv-select -f 1-3,2,1   # Fields 1, 2, 3, 2, 1
@@ -103,9 +106,11 @@ $ tsv-select -f 1-3,2,1   # Fields 1, 2, 3, 2, 1
 
 Field name match is case sensitive and wildcards are supported. Field numbers are one-upped integers, following Unix conventions. Some tools accept field number zero (`0`) to represent the entire line. This is documented in the help for each tool.
 
+Field ranges are specified as a pair of fields separated by a hyphen. This works for both field numbers and field names, but names and numbers cannot be mixed in the same range.
+
 #### Wildcards
 
-Named fields support a simple 'glob' style wildcarding scheme. The asterisk character (`*`) can be used to match any sequence of characters, including no characters. This is similar to how `*` can be used to match file names on the Unix command line. All fields with matching names are selected, so wildcards are a convenient way to select a set of related fields. Quotes should be placed around command line arguments containing wildcards to avoid interpretation by the shell.
+Named fields support a simple 'glob' style wildcard scheme. The asterisk character (`*`) can be used to match any sequence of characters, including no characters. This is similar to how `*` can be used to match file names on the Unix command line. All fields with matching names are selected, so wildcards are a convenient way to select a set of related fields. Quotes should be placed around command line arguments containing wildcards to avoid interpretation by the shell.
 
 #### Examples
 
@@ -131,7 +136,7 @@ $ tsv-select data.tsv -H -f run-user_time   # Fields 1,2,3 (range with names)
 
 #### Special characters
 
-There are several special characters that need to be escaped when specifying field names. Escaping is done by preceeding the special character with a backslash. Characters requiring escapes are: asterisk (`*`), comma(`,`), colon (`:`), space (` `), hyphen (`-`), and backslash (`\`). A field name that contains only digits also needs to be backslash escaped, this indicates it should be treated as a field name and not a field number. A backslash can be used to escape any character, so it's not necessary to remember the list. Use an escape when not sure.
+There are several special characters that need to be escaped when specifying field names. Escaping is done by preceding the special character with a backslash. Characters requiring escapes are: asterisk (`*`), comma(`,`), colon (`:`), space (` `), hyphen (`-`), and backslash (`\`). A field name that contains only digits also needs to be backslash escaped, this indicates it should be treated as a field name and not a field number. A backslash can be used to escape any character, so it's not necessary to remember the list. Use an escape when not sure.
 
 Consider a file with five fields named as follows:
 ```
@@ -310,8 +315,8 @@ Filter lines by comparison tests against fields. Multiple tests can be specified
 * `--V|version` - Print version information and exit.
 * `--H|header` - Treat the first line of each file as a header.
 * `--d|delimiter CHR` - Field delimiter. Default: TAB. (Single byte UTF-8 characters only.)
-* `--or` - Evaluate tests as an OR rather than an AND. This applies globally.
-* `--v|invert` - Invert the filter, printing lines that do not match. This applies globally.
+* `--or` - Evaluate tests as an OR rather than an AND.
+* `--v|invert` - Invert the filter, printing lines that do not match.
 
 **Tests:**
 
@@ -495,7 +500,7 @@ Join using the `Name` field as the key. The `Name` field may be in different col
 $ tsv-join -H --filter-file filter.tsv --key-fields Name data.tsv
 ```
 
-Join using `Name` field as key, but also append the `RefID` field from the filter file.
+Join using the `Name` field as key, but also append the `RefID` field from the filter file.
 ```
 $ tsv-join -H -f filter.tsv -k Name --append-fields RefID data.tsv
 ```
