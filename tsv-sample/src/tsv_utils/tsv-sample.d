@@ -91,7 +91,7 @@ are available:
   one of the selected keys are output. Line order is not changed.
 
 Fields are specified using field number or field name. Field names require
-that the input file has a header line. Use '--help-fields' for details.
+that the input file has a header line.
 
 Use '--help-verbose' for detailed information.
 
@@ -281,7 +281,7 @@ struct TsvSampleOptions
             auto r = getopt(
                 cmdArgs,
                 "help-verbose",    "     Print more detailed help.", &helpVerbose,
-                "help-fields",     "     Print detailed help on specifying fields.", &helpFields,
+                "help-fields",     "     Print help on specifying fields.", &helpFields,
 
                 std.getopt.config.caseSensitive,
                 "H|header",        "     Treat the first line of each file as a header.", &hasHeader,

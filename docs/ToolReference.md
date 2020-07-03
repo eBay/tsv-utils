@@ -1,6 +1,3 @@
----
-title: "eBay's TSV Utilities: Tool Reference"
----
 _Visit the [main page](../README.md)_
 
 # Tool reference
@@ -693,6 +690,7 @@ The specifics behind these random values are subject to change in future release
 
 * `--h|help` - This help information.
 * `--help-verbose` - Print more detailed help.
+* `--help-fields ` - Print help on specifying fields.
 * `--V|version` - Print version information and exit.
 * `--H|header` - Treat the first line of each file as a header.
 * `--n|num NUM` - Maximum number of lines to output. All selected lines are output if not provided or zero.
@@ -814,7 +812,7 @@ $ tsv-sample data.tsv | tsv-split -l NUM
 
 However, alternate approaches are needed when data is too large for convenient shuffling. tsv-split's random assignment feature can be useful in these cases. Each input line is written to a randomly selected output file. Note that output files will have similar but not identical numbers of records.
 
-**About Random assignment by key** (`--n|num-files NUM`, `--k|key-fields FIELDS`): This splits a data set into multiple files sharded by key. All lines with the same key are written to the same file. This partitioning enables parallel computation based on the key. For example, statistical calculation (`tsv-summarize --group-by`) or duplicate removal (`tsv-uniq --fields`). These operations can be parallelized using tools like GNU parallel, which simplifies concurrent operations on multiple files.
+**About Random assignment by key** (`--n|num-files NUM`, `--k|key-fields FIELDS`): This splits a data set into multiple files sharded by key. All lines with the same key are written to the same file. This partitioning enables parallel computation based on the key. For example, statistical calculation (`tsv-summarize --group-by`) or duplicate removal (`tsv-uniq --fields`). These operations can be parallelized using tools like GNU parallel, which simplifies concurrent operations on multiple files. Fields are specified using field number or field name. Field names require that the input file has a header line.
 
 **Random seed**: By default, each tsv-split invocation using random assignment or random assignment by key produces different assignments to the output files. Using `--s|static-seed` changes this so multiple runs produce the same assignments. This works by using the same random seed each run. The seed can be specified using `--v|seed-value`.
 
@@ -845,9 +843,9 @@ $ tsv-split data.txt -I --lines-per-file 10000
 $ # Randomly assign lines to 1000 files
 $ tsv-split data.txt --num-files 1000
 
-$ # Randomly assign lines to 1000 files while keeping unique keys from
-$  # field 3 together.
-$  tsv-split data.tsv --num-files 1000 -k 3
+$ # Randomly assign lines to 1000 files while keeping unique entries
+$ # from the 'url' field together.
+$ tsv-split data.tsv -H -k url --num-files 1000
 
 $ # Randomly assign lines to 1000 files. Later, randomly assign lines
 $ # from a second data file to the same output files.
@@ -867,6 +865,7 @@ $ ( ulimit -Sn 1000 && tsv-split --num-files 1000 data.txt )
 **Options**:
 * `--h|--help` - Print help.
 * `--help-verbose` - Print more detailed help.
+* `--help-fields ` - Print help on specifying fields.
 * `--V|--version` -  Print version information and exit.
 * `--H|header` - Input files have a header line. Write the header to each output file.
 * `--I|header-in-only` - Input files have a header line. Do not write the header to output files.
