@@ -1005,7 +1005,7 @@ _**Tip:**_ Bash completion is very helpful when using commands like `tsv-summari
 
 `tsv-uniq` can be run without specifying a key field. In this case the whole line is used as a key, same as the Unix `uniq` program. As with `uniq`, this works on any line-oriented text file, not just TSV files. There is no need to sort the data and the original input order is preserved.
 
-The alternates to the default 'uniq' mode are 'number' mode and 'equiv-class' mode. In 'equiv-class' mode (`--e|equiv`), all lines are written to standard output, but with a field appended marking equivalent entries with an ID. The ID is a one-upped counter.
+The alternatives to the default 'uniq' mode are 'number' mode and 'equiv-class' mode. In 'equiv-class' mode (`--e|equiv`), all lines are written to standard output, but with a field appended marking equivalent entries with an ID. The ID is a one-upped counter.
 
 'Number' mode (`--z|number`) also writes all lines to standard output, but with a field appended numbering the occurrence count for the line's key. The first line with a specific key is assigned the number '1', the second with the key is assigned number '2', etc. 'Number' and 'equiv-class' modes can be used together.
 
@@ -1020,6 +1020,7 @@ If both `--a|at-least` and `--m|max` are specified, the occurrences starting wit
 **Options:**
 * `-h|help` - Print help.
 * `--help-verbose` - Print detailed help.
+* `--help-fields ` - Print help on specifying fields.
 * `--V|version` - Print version information and exit.
 * `--H|header` - Treat the first line of each file as a header.
 * `--f|fields <field-list>` - Fields to use as the key. Default: 0 (entire line).
@@ -1048,14 +1049,14 @@ $ tsv-unique -f 1 data.tsv
 $ # Unique a file based on two fields
 $ tsv-uniq -f 1,2 data.tsv
 
-$ # Unique a file based on the first four fields
-$ tsv-uniq -f 1-4 data.tsv
+$ # Unique a file based on the 'URL' field
+$ tsv-uniq -H -f URL data.tsv
+
+$ # Unique a file based on the 'URL' and 'Date' fields
+$ tsv-uniq -H -f URL,Date data.tsv
 
 $ # Output all the lines, generating an ID for each unique entry
 $ tsv-uniq -f 1,2 --equiv data.tsv
-
-$ # Generate uniq IDs, but account for headers
-$ tsv-uniq -f 1,2 --equiv --header data.tsv
 
 $ # Generate line numbers specific to each key
 $ tsv-uniq -f 1,2 --number --header data.tsv
@@ -1079,12 +1080,12 @@ efgh    5678    stu
 wxyz    1234    stu
 
 $ # Uniq using field 2 as key
-$ tsv-uniq -H -f 2 data.tsv
+$ tsv-uniq -H -f field2 data.tsv
 field1  field2  field2
 ABCD    1234    PQR
 efgh    5678    stu
 
-$ # Generate equivalence class IDs
+$ # Generate equivalence class IDs, using the whole line as key
 $ tsv-uniq -H --equiv data.tsv
 field1  field2  field2  equiv_id
 ABCD    1234    PQR     1
