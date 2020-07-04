@@ -184,7 +184,7 @@ See the [tsv-filter reference](docs/ToolReference.md#tsv-filter-reference) for m
 
 ### tsv-select
 
-A version of the Unix `cut` utility with the ability to select fields by name, drop fields, and re-order fields. The following command writes the `date` and `time` fields from a pair of files to standard output:
+A version of the Unix `cut` utility with the ability to select fields by name, drop fields, and reorder fields. The following command writes the `date` and `time` fields from a pair of files to standard output:
 ```
 $ tsv-select -H -f date,time file1.tsv file2.tsv
 ```
