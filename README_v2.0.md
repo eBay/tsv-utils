@@ -11,7 +11,7 @@ File an [issue](https://github.com/eBay/tsv-utils/issues) if you have problems, 
 * [Obtaining and installation](#obtaining-and-installation)
 
 **Additional documents:**
-* [Tools reference](docs/ToolReference.md) - Detailed documentation.
+* [Tools Reference](docs/ToolReference.md) - Detailed documentation.
 * [Releases](https://github.com/eBay/tsv-utils/releases) - Prebuilt binaries and release notes.
 * [Tips and tricks](docs/TipsAndTricks.md) - Simpler and faster command line tool use.
 * [Performance Studies](docs/Performance.md) - Benchmarks against similar tools and other performance studies.
@@ -38,7 +38,7 @@ These tools perform data manipulation and statistical calculations on tab delimi
 
 The tools work like traditional Unix command line utilities such as `cut`, `sort`, `grep` and `awk`, and are intended to complement these tools. Each tool is a standalone executable. They follow common Unix conventions for pipeline programs. Data is read from files or standard input, results are written to standard output. Fields are identified either by field name or field number. The field separator defaults to TAB, but any character can be used. Input and output is UTF-8, and all operations are Unicode ready, including regular expression match (`tsv-filter`). Documentation is available for each tool by invoking it with the `--help` option. TSV format is similar to CSV, see [Comparing TSV and CSV formats](docs/comparing-tsv-and-csv.md) for the differences.
 
-The rest of this section contains descriptions of each tool. Click on the links below to jump directly to one of the tools. Full documentation is available in the [tool reference](docs/ToolReference.md).
+The rest of this section contains descriptions of each tool. Click on the links below to jump directly to one of the tools. Full documentation is available in the [Tools Reference](docs/ToolReference.md).
 
 * [tsv-filter](#tsv-filter) - Filter lines using numeric, string and regular expression comparisons against individual fields. This description also provides an introduction to features found throughout the toolkit.
 * [tsv-select](#tsv-select) - Keep a subset of columns (fields). Like `cut`, but supporting named fields, field reordering, and field exclusions.
@@ -169,7 +169,7 @@ $ tsv-filter -H messy.tsv --not-empty 'co*'
 
 The `co*` matches both the 'color' and 'count' fields. (Note: Single quotes are used to prevent the shell from interpreting the asterisk character.)
 
-All TSV Utilities tools use the same syntax for specifying fields. See [Field syntax](docs/tool_reference/common-options-and-behavior.md#field-syntax) in the [Tools reference](docs/ToolReference.md) document for details.
+All TSV Utilities tools use the same syntax for specifying fields. See [Field syntax](docs/tool_reference/common-options-and-behavior.md#field-syntax) in the [Tools Reference](docs/ToolReference.md) document for details.
 
 Bash completion is especially helpful with `tsv-filter`. It allows quickly seeing and selecting from the different operators available. See [bash completion](docs/TipsAndTricks.md#enable-bash-completion) on the [Tips and tricks](docs/TipsAndTricks.md) page for setup information.
 

@@ -83,3 +83,5 @@ The prefix will be applied to all appended fields. The next example is similar t
 ```
 $ tsv-join -f run1.tsv run2.tsv -H -k test_id -a '*_time' --prefix run1_
 ```
+
+See [Field syntax](common-options-and-behavior.md#field-syntax) for more information about specifying fields.

@@ -27,4 +27,4 @@ $ number-lines --header data*.tsv
 
 **See Also:**
 
-* [tsv-uniq](tsv-uniq-reference.md) supports numbering lines grouped by key.
+* [tsv-uniq](tsv-uniq.md) supports numbering lines grouped by key.

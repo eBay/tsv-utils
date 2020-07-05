@@ -17,6 +17,8 @@ The `--m|max MAX` option changes the behavior to output the first MAX lines for 
 
 If both `--a|at-least` and `--m|max` are specified, the occurrences starting with 'at-least' and ending with 'max' are output.
 
+See [Field syntax](common-options-and-behavior.md#field-syntax) for more information about specifying fields.
+
 **Synopsis:** tsv-uniq [options] [file...]
 
 **Options:**

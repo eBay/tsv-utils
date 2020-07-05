@@ -132,6 +132,8 @@ $ # Test that fields 1-5, 7, and 10-20 are less than 100
 $ tsv-filter --lt 1-5,7,10-20:100 data.tsv
 ```
 
+See [Field syntax](common-options-and-behavior.md#field-syntax) for more information on field lists and specifying fields by name.
+
 Regular expressions:
 
 The regular expression syntax supported is that defined by the [D regex library](<http://dlang.org/phobos/std_regex.html>). The  basic syntax has become quite standard and is used by many tools. It will rarely be necessary to consult the D language documentation. A general reference such as the guide available at [Regular-Expressions.info](http://www.regular-expressions.info/) will suffice in nearly all cases. (Note: Unicode properties are supported.)

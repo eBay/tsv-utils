@@ -36,7 +36,9 @@ The examples above specify fields by name. Fields can also be specified by field
 $ tsv-summarize --header --group-by 1 --min 3 --mean 3 data.tsv
 ```
 
-The program tries to generate useful headers, but custom headers can be specified. Example:
+See [Field syntax](common-options-and-behavior.md#field-syntax) for more information about specifying fields.
+
+`tsv-summarize` tries to generate useful headers, but custom headers can be specified. Example:
 ```
 $ tsv-summarize --header --group-by 1 --min 3:Fastest --mean 3:Average data.tsv
 Make  Fastest  Average
