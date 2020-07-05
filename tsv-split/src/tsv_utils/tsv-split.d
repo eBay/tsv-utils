@@ -84,8 +84,7 @@ being the extension of the first input file. If the input file is
 directory and file names are customizable.
 
 Fields are specified using field number or field name. Field names
-require that the input file has a header line. Use '--help-fields' for
-details about field names.
+require that the input file has a header line.
 
 Use '--help-verbose' for more detailed information.
 
@@ -190,9 +189,9 @@ Examples:
   # Randomly assign lines to 1000 files
   tsv-split data.txt --num-files 1000
 
-  # Randomly assign lines to 1000 files while keeping unique keys from
-  # field 3 together.
-  tsv-split data.tsv --num-files 1000 -k 3
+  # Randomly assign lines to 1000 files while keeping unique entries
+  # from the 'url' field together.
+  tsv-split data.tsv -H -k url --num-files 1000
 
   # Randomly assign lines to 1000 files. Later, randomly assign lines
   # from a second data file to the same output files.
@@ -292,7 +291,7 @@ struct TsvSplitOptions
             auto r = getopt(
                 cmdArgs,
                 "help-verbose",    "     Print more detailed help.", &helpVerbose,
-                "help-fields",     "     Print detailed help on specifying fields.", &helpFields,
+                "help-fields",     "     Print help on specifying fields.", &helpFields,
 
                 std.getopt.config.caseSensitive,
                 "H|header",         "     Input files have a header line. Write the header to each output file.", &headerInOut,

@@ -73,7 +73,7 @@ that the input file has a header line. Use '--help-fields' for details.
 Global options:
   --help-verbose      Print full help.
   --help-options      Print the options list by itself.
-  --help-fields       Print detailed help on specifying fields.
+  --help-fields       Print help on specifying fields.
   --V|version         Print version information and exit.
   --H|header          Treat the first line of each file as a header.
   --or                Evaluate tests as an OR rather than an AND clause.
@@ -408,8 +408,6 @@ bool ffRelDiffGT(const char[][] fields, size_t index1, size_t index2, double val
 alias CmdOptionHandler = void delegate(ref FieldsPredicate[] tests, ref size_t maxFieldIndex,
                                        bool hasHeader, string[] headerFields);
 
-
-/* */
 CmdOptionHandler makeFieldUnaryOptionHandler(FieldUnaryPredicate predicateFn, string option, string optionVal)
 {
     return
@@ -846,7 +844,7 @@ struct TsvFilterOptions
                 cmdArgs,
                 "help-verbose",    "     Print full help.", &helpVerbose,
                 "help-options",    "     Print the options list by itself.", &helpOptions,
-                "help-fields",     "     Print detailed help on specifying fields.", &helpFields,
+                "help-fields",     "     Print help on specifying fields.", &helpFields,
                  std.getopt.config.caseSensitive,
                 "V|version",       "     Print version information and exit.", &versionWanted,
                 "H|header",        "     Treat the first line of each file as a header.", &hasHeader,

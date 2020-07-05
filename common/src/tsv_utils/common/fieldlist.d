@@ -523,7 +523,6 @@ if (isIntegral!T && (!allowZero || !convertToZero || !isUnsigned!T))
     return new Result(fieldList, hasHeader, headerFields, cmdOptionString, headerCmdArg);
 }
 
-
 /// Basic cases showing how `parseFieldList` works
 @safe unittest
 {
@@ -2224,7 +2223,6 @@ if (isIntegral!T && (!allowZero || !convertToZero || !isUnsigned!T))
     assert("32767".parseNumericFieldGroup!(ushort, Yes.convertToZeroBasedIndex).equal([32766]));
 }
 
-
 /**
    Numeric field-lists
 
@@ -2366,7 +2364,7 @@ unittest
         assert(fields == [1, 2, 4, 7, 8, 9, 23, 22, 21]);
     }
 
-    /* Basic cases involved unsinged types smaller than size_t. */
+    /* Basic cases involved unsigned types smaller than size_t. */
     {
         uint[] fields;
         auto args = ["program", "-f", "0", "-f", "1,0", "-f", "0,1", "-f", "55-58"];
@@ -2500,7 +2498,6 @@ if (isIntegral!T && (!allowZero || !convertToZero || !isUnsigned!T))
     {
         private SplitFieldListRange _splitFieldList;
         private NumericFieldGroupParse _currFieldParse;
-
 
         this(string fieldList, char delim)
         {

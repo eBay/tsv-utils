@@ -81,7 +81,7 @@ This produces:
   bmw    118      122
 
 Using '--group-by Make,Color' will group by both 'Make' and 'Color'.
-Omitting the '--group-by' entirely summarizes fields for full file.
+Omitting the '--group-by' entirely summarizes fields for the full file.
 
 The previous example uses field names to identify fields. Field numbers
 can be used as well. The next two commands are equivalent:
@@ -104,13 +104,13 @@ fields (though not when a custom header is specified). Examples:
   --median 2,3,4
   --median 2-5,7-11
   --median elapsed_time,system_time,user_time
-  --median '*_time'             # Wildcard. All fields ending in '_time'.
+  --median '*_time'              # Wildcard. All fields ending in '_time'.
 
 The quantile operator requires one or more probabilities after the fields:
 
-  --quantile run_time:0.25         // Quantile 1 of the 'run_time' field
-  --quantile 2:0.25                // Quantile 1 of field 2
-  --quantile 2-4:0.25,0.5,0.75     // Q1, Median, Q3 of fields 2, 3, 4
+  --quantile run_time:0.25       # Quantile 1 of the 'run_time' field
+  --quantile 2:0.25              # Quantile 1 of field 2
+  --quantile 2-4:0.25,0.5,0.75   # Q1, Median, Q3 of fields 2, 3, 4
 
 Summarization operators available are:
   count       range        mad            values
@@ -219,7 +219,7 @@ struct TsvSummarizeOptions {
             auto r = getoptInorder(
                 cmdArgs,
                 "help-verbose",       "              Print full help.", &helpVerbose,
-                "help-fields",        "              Print detailed help on specifying fields.", &helpFields,
+                "help-fields",        "              Print help on specifying fields.", &helpFields,
 
                 std.getopt.config.caseSensitive,
                 "V|version",          "              Print version information and exit.", &versionWanted,

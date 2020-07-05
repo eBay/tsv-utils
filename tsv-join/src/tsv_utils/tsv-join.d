@@ -20,32 +20,34 @@ import std.range;
 import std.typecons : tuple;
 
 auto helpText = q"EOS
-Synopsis: tsv-join --filter-file file [options] file [file...]
+Synopsis: tsv-join --filter-file file [options] [file...]
 
-tsv-join matches input lines against lines from a 'filter' file. The match
-is based on fields or the entire line. Fields can be specified either by
-field number or field name. Use '--help-verbose' for more details.
+tsv-join matches input lines (the 'data stream') against lines from a
+'filter' file. The match is based on individual fields or the entire
+line. Fields can be specified either by field number or field name.
+Use '--help-verbose' for details.
 
 Options:
 EOS";
 
 auto helpTextVerbose = q"EOS
-Synopsis: tsv-join --filter-file file [options] file [file...]
+Synopsis: tsv-join --filter-file file [options] [file...]
 
-tsv-join matches input lines against lines from a 'filter' file. The match
-is based on exact match comparison of one or more 'key' fields. Fields are
-TAB delimited by default. Matching lines are written to standard output,
-along with any additional fields from the key file that have been specified.
-For example:
+tsv-join matches input lines (the 'data stream') against lines from a
+'filter' file. The match is based on exact match comparison of one or more
+'key' fields. Fields are TAB delimited by default. Input lines are read
+from files or standard input. Matching lines are written to standard
+output, along with any additional fields from the filter file that have
+been specified. For example:
 
   tsv-join --filter-file filter.tsv --key-fields 1 --append-fields 5,6 data.tsv
 
 This reads filter.tsv, creating a hash table keyed on field 1. Lines from
-data.tsv are read one at a time. If field 1 is found in the hash table, the
-line is written to standard output with fields 5 and 6 from the filter file
-appended. In database parlance this is a "hash semi join". Note the
+data.tsv are read one at a time. If field 1 is found in the hash table,
+the line is written to standard output with fields 5 and 6 from the filter
+file appended. In database parlance this is a "hash semi join". Note the
 asymmetric relationship: Records in the filter file should be unique, but
-data.tsv lines can repeat.
+lines in the data stream (data.tsv) can repeat.
 
 Field names can be used instead of field numbers if the files have header
 lines. The following command is similar to the previous example, except
@@ -58,15 +60,20 @@ the default behavior. Example:
 
   tsv-join -f filter.tsv data.tsv
 
-This outputs all lines from data.tsv found in filter.tsv. --k|key-fields
-can still be used to define the match key. The --e|exclude option can be
-used to exclude matched lines rather than keep them.
+This outputs all lines from data.tsv found in filter.tsv.
 
-Multiple fields can be specified as keys and append fields. Field numbers start
-at one, zero represents the whole line. Fields are comma separated and ranges
-can be used. Example:
+Multiple fields can be specified as keys and append fields. Field numbers
+start at one, zero represents the whole line. Fields are comma separated
+and ranges can be used. Example:
 
   tsv-join -f filter.tsv -k 1,2 --append-fields 3-7 data.tsv
+
+The --e|exclude option can be used to exclude matched lines rather than
+keep them.
+
+The joins supported are similar to the "stream-static" joins available in
+Spark Structured Streaming and "KStream-KTable" joins in Kafka. The filter
+file plays the same role as the Spark static dataset or Kafka KTable.
 
 Options:
 EOS";
@@ -144,7 +151,7 @@ struct TsvJoinOptions
             auto r = getopt(
                 cmdArgs,
                 "help-verbose",    "              Print full help.", &helpVerbose,
-                "help-fields",        "              Print detailed help on specifying fields.", &helpFields,
+                "help-fields",     "              Print help on specifying fields.", &helpFields,
 
                 "f|filter-file",   "FILE          (Required) File with records to use as a filter.", &filterFile,
 
@@ -153,18 +160,18 @@ struct TsvJoinOptions
                 &keyFieldsArg,
 
                 dataFieldsOptionString,
-                "<field-list>  Data record fields to use as join key, if different than --key-fields.",
+                "<field-list>  Data stream fields to use as join key, if different than --key-fields.",
                 &dataFieldsArg,
 
                 appendFieldsOptionString,
-                "<field-list>  Filter fields to append to matched records.",
+                "<field-list>  Filter file fields to append to matched data stream records.",
                 &appendFieldsArg,
 
                 std.getopt.config.caseSensitive,
                 "H|header",        "              Treat the first line of each file as a header.", &hasHeader,
                 std.getopt.config.caseInsensitive,
                 "p|prefix",        "STR           String to use as a prefix for --append-fields when writing a header line.", &appendHeaderPrefix,
-                "w|write-all",     "STR           Output all data records. STR is the --append-fields value when writing unmatched records.", &writeAllHandler,
+                "w|write-all",     "STR           Output all data stream records. STR is the --append-fields value when writing unmatched records.", &writeAllHandler,
                 "e|exclude",       "              Exclude matching records.", &exclude,
                 "delimiter",       "CHR           Field delimiter. Default: TAB. (Single byte UTF-8 characters only.)", &delim,
                 "z|allow-duplicate-keys",
@@ -201,7 +208,7 @@ struct TsvJoinOptions
              *   *  Remaining command line args are input files.
              */
             enforce(filterFile.length != 0,
-                    "Required option --filter-file was not supplied.");
+                    "Required option --f|filter-file was not supplied.");
 
             enforce(!(filterFile == "-" && cmdArgs.length == 1),
                     "A data file is required when standard input is used for the filter file (--f|filter-file -).");

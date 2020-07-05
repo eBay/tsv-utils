@@ -56,7 +56,7 @@ Examples:
    tsv-select --exclude 1 file.tsv
    tsv-select -H -e date,time file.tsv
 
-   # Move fields the front or the back
+   # Move fields to the front or the back
    tsv-select -f 1 --rest first file.tsv  # Move field 1 to the end
    tsv-select -H -f date --rest last      # Move 'date' field to the front
 
@@ -64,7 +64,7 @@ Examples:
    tsv-select data*.tsv -H --fields 1,2,4-7,14
 
 Use '--help-verbose' for detailed information. Use '--help-fields' for
-detailed help on field lists.
+details about field lists and field names.
 
 Options:
 EOS";
@@ -137,9 +137,9 @@ Notes:
 * Fields specified by '--f|fields' and '--e|exclude' cannot overlap.
 * When '--f|fields' and '--e|exclude' are used together, the effect is to
   specify '--rest last'. This can be overridden by using '--rest first'.
-* Each input line must be long enough to contain all fields specified with
-  '--f|fields'. This is not necessary for '--e|exclude' fields.
-* Specifying names for fields that contain special characters may require
+* Each input line must be long enough to contain all fields specified
+  with '--f|fields'. This is not necessary for '--e|exclude' fields.
+* Specifying names of fields containing special characters may require
   escaping the special characters. See '--help-fields' for details.
 
 Options:
@@ -201,8 +201,13 @@ struct TsvSelectOptions
             arraySep = ",";    // Use comma to separate values in command line options
             auto r = getopt(
                 cmdArgs,
-                "help-verbose",    "     Print more detailed help.", &helpVerbose,
-                "help-fields",     "     Print detailed help on specifying fields.", &helpFields,
+                "help-verbose",
+                "              Print more detailed help.",
+                &helpVerbose,
+
+                "help-fields",
+                "              Print help on specifying fields.",
+                &helpFields,
 
                 std.getopt.config.caseSensitive,
                 "H|header",
