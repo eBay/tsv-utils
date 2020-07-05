@@ -477,3 +477,11 @@ The applications can be built with LTO and PGO when source code is fetched by DU
 ### Setup customization
 
 There are a number of simple ways to ways to improve the utility of these tools, these are listed on the [Tips and tricks](docs/TipsAndTricks.md) page. [Bash aliases](docs/TipsAndTricks.md#useful-bash-aliases), [Unix sort command customization](docs/TipsAndTricks.md#customize-the-unix-sort-command), and [bash completion](docs/TipsAndTricks.md#enable-bash-completion) are especially useful.
+
+---
+
+## Upcoming feature: Named Fields
+
+Named field support is being added to the toolkit in an upcoming release. This can be previewed by building the master branch. Documentation is being written, the current versions can be found here:
+* [README](README_v2.0.md)
+* [Tools reference](docs/ToolReference_v2.0.md)
