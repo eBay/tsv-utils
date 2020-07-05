@@ -22,16 +22,7 @@ ___
 
 ## Common options and behavior
 
-Information in this section applies to all the tools. Topics:
-
-* [Specifying options](#specifying-options)
-* [Help](#help--h---help---help-verbose---helpfields)
-* [UTF-8 input](#utf-8-input)
-* [Line endings](#line-endings)
-* [File format and alternate delimiters](#file-format-and-alternate-delimiters---delimiter)
-* [Header line processing](#header-line-processing--h---header)
-* [Multiple files and standard input](#Multiple-files-and-standard-input)
-* [Field syntax](#field-syntax)
+Information in this section applies to all the tools.
 
 ### Specifying options
 
@@ -43,9 +34,28 @@ $ tsv-select --fields 1,2   # Valid
 $ tsv-select -fields 1,2    # Invalid.
 ```
 
-### Help (`-h`, `--help`, `--help-verbose`, `--helpfields`)
+### Help (`-h`, `--help`, `--help-verbose`)
 
-All tools print help if given the `-h` or `--help` option. Many provide more detail via the `--help-verbose` option. Tools taking fields as parameters provide detailed help on specifying fields via the `--help-fields` option.
+All tools print help if given the `-h` or `--help` option. Many provide more detail via the `--help-verbose` option.
+
+### Field numbers and field-lists.
+
+Field numbers are one-upped integers, following Unix conventions. Some tools use zero to represent the entire line (`tsv-join`, `tsv-uniq`).
+
+In many cases multiple fields can be entered as a "field-list". A field-list is a comma separated list of field numbers or field ranges. For example:
+
+```
+$ tsv-select -f 3          # Field 3
+$ tsv-select -f 3,5        # Fields 3 and 5
+$ tsv-select -f 3-5        # Fields 3, 4, 5
+$ tsv-select -f 1,3-5      # Fields 1, 3, 4, 5
+```
+
+Most tools process or output fields in the order listed, and repeated use is usually fine:
+```
+$ tsv-select -f 5-1       # Fields 5, 4, 3, 2, 1
+$ tsv-select -f 1-3,2,1   # Fields 1, 2, 3, 2, 1
+```
 
 ### UTF-8 input
 
@@ -57,19 +67,17 @@ These tools have been tested on Unix platforms, including macOS, but not Windows
 
 The `dos2unix` tool can be used to convert Windows line endings to Unix format. See [Convert newline format and character encoding with dos2unix and iconv](TipsAndTricks.md#convert-newline-format-and-character-encoding-with-dos2unix-and-iconv)
 
+The tools were written to respect platform line endings. If built on Windows, then Windows line endings. However, given the lack of testing, a Windows build should be expected to have some issues with line endings.
+
 ### File format and alternate delimiters (`--delimiter`)
 
-Any character can be used as a field delimiter, TAB is the default. However, there is no mechanism to include the delimiter character or newlines within a field. This differs from CSV file format which provides an escaping mechanism. In practice the lack of an escaping mechanism is not a meaningful limitation for data oriented files. See [Comparing TSV and CSV formats](comparing-tsv-and-csv.md) for more information on these formats.
+Any character can be used as a delimiter, TAB is the default. However, there is no escaping for including the delimiter character or newlines within a field. This differs from CSV file format which provides an escaping mechanism. In practice the lack of an escaping mechanism is not a meaningful limitation for data oriented files.
 
-All lines are expected to have data. There is no mechanism for recognizing comments or blank lines. Tools taking field indices as arguments expect the specified fields to be available on every line.
+Aside from a header line, all lines are expected to have data. There is no comment mechanism and no special handling for blank lines. Tools taking field indices as arguments expect the specified fields to be available on every line.
 
-### Header line processing (`-H`, `--header`)
+### Headers (`-H`, `--header`)
 
-Most tools handle the first line of files as a header when given the `-H` or `--header` option. Turning on header line processing does three things:
-
-* Enables selection of fields by name rather than by number. See [Field Syntax](#field-syntax) for details.
-* Only one header line is written to standard output. If multiple files are being processed, the header line from the first file is kept and header lines from subsequent files are dropped.
-* Excludes the header line from the normal processing of the command, if appropriate. For example, `tsv-filter` exempts the header from filtering.
+Most tools handle the first line of files as a header when given the `-H` or `--header` option. For example, `tsv-filter` passes the header through without filtering it. When `--header` is used, all files and stdin are assumed to have header lines. Only one header line is written to stdout. If multiple files are being processed, header lines from subsequent files are discarded.
 
 ### Multiple files and standard input
 
@@ -78,83 +86,7 @@ Tools can read from any number of files and from standard input. As per typical 
 $ head -n 1000 file-c.tsv | tsv-filter --eq 2:1000 -- file-a.tsv file-b.tsv - > out.tsv
 ```
 
-The above passes `file-a.tsv`, `file-b.tsv`, and the first 1000 lines of `file-c.tsv` to `tsv-filter` and writes the results to `out.tsv`.
-
-### Field syntax
-
-Most tsv-utils tools operate on fields specified on the command line. All tools use the same syntax to identify fields. `tsv-select` is used in this document to provide examples, but the syntax shown applies to all tools.
-
-Fields can be identified either by a one-upped field number or by field name. Field names require the first line of input data to be a header with field names. Header line processing is enabled by the `--H|header` option.
-
-Some command line options only accept a single field, but many operate on lists of fields. Here are some examples of field selection (using `tsv-select`):
-```
-$ tsv-select -f 1 file.tsv              # First field
-$ tsv-select -f 1,3 file.tsv            # Pair of fields
-$ tsv-select -f 5-9 file.txt            # A range
-$ tsv-select -H -f RecordID file.txt    # Field name
-$ tsv-select -H -f Date,Time,3,5-7,9    # Mix of names, numbers, ranges
-```
-
-Most tools process fields in the order listed, and repeated use is usually allowed:
-```
-$ tsv-select -f 5-1       # Fields 5, 4, 3, 2, 1
-$ tsv-select -f 1-3,2,1   # Fields 1, 2, 3, 2, 1
-```
-
-Field name match is case sensitive and wildcards are supported. Field numbers are one-upped integers, following Unix conventions. Some tools accept field number zero (`0`) to represent the entire line. This is documented in the help for each tool.
-
-Field ranges are specified as a pair of fields separated by a hyphen. This works for both field numbers and field names, but names and numbers cannot be mixed in the same range.
-
-#### Wildcards
-
-Named fields support a simple 'glob' style wildcard scheme. The asterisk character (`*`) can be used to match any sequence of characters, including no characters. This is similar to how `*` can be used to match file names on the Unix command line. All fields with matching names are selected, so wildcards are a convenient way to select a set of related fields. Quotes should be placed around command line arguments containing wildcards to avoid interpretation by the shell.
-
-#### Examples
-
-Consider a file `data.tsv` containing timing information:
-```
-$ tsv-pretty data.tsv
-run  elapsed_time  user_time  system_time  max_memory
-  1          57.5       52.0          5.5        1420
-  2          52.0       49.0          3.0        1270
-  3          55.5       51.0          4.5        1410
-```
-
-Some examples selecting fields from this file:
-```
-$ tsv-select data.tsv -H -f 3               # Field 3 (user_time)
-$ tsv-select data.tsv -H -f user_time       # Field 3
-$ tsv-select data.tsv -H -f run,user_time   # Fields 1,3
-$ tsv-select data.tsv -H -f '*_memory'      # Field 5
-$ tsv-select data.tsv -H -f '*_time'        # Fields 2,3,4
-$ tsv-select data.tsv -H -f 1-3             # Fields 1,2,3
-$ tsv-select data.tsv -H -f run-user_time   # Fields 1,2,3 (range with names)
-```
-
-#### Special characters
-
-There are several special characters that need to be escaped when specifying field names. Escaping is done by preceding the special character with a backslash. Characters requiring escapes are: asterisk (`*`), comma(`,`), colon (`:`), space (` `), hyphen (`-`), and backslash (`\`). A field name that contains only digits also needs to be backslash escaped, this indicates it should be treated as a field name and not a field number. A backslash can be used to escape any character, so it's not necessary to remember the list. Use an escape when not sure.
-
-Consider a file with five fields named as follows:
-```
-1   test id
-2   run:id
-3   time-stamp
-4   001
-5   100
-```
-Some examples using specifying these fields by name:
-```
-$ tsv-select file.tsv -H -f 'test\ id'     # Field 1
-$ tsv-select file.tsv -H -f '\test\ id'    # Field 1
-$ tsv-select file.tsv -H -f 'run\:1'       # Field 2
-$ tsv-select file.tsv -H -f 'time\-stamp'  # Field 3
-$ tsv-select file.tsv -H -f '\001'         # Field 4
-$ tsv-select file.tsv -H -f '\100'         # Field 5
-$ tsv-select file.tsv -H -f '\001,\100'    # Fields 4,5
-```
-
-Note the use of single quotes to prevent the shell from interpreting these characters.
+The above passes `file-a.tsv`, `file-b.tsv`, and the first 1000 lines of `file-c.tsv` to `tsv-filter` and write the results to `out.tsv`.
 
 ---
 
@@ -302,18 +234,17 @@ _Note: See the [tsv-filter](../README.md#tsv-filter) description in the project 
 
 **Synopsis:** tsv-filter [options] [file...]
 
-Filter lines by comparison tests against fields. Multiple tests can be specified. By default, only lines satisfying all tests are output. This can be change using the `--or` option. A variety of tests are available.
+Filter lines of tab-delimited files via comparison tests against fields. Multiple tests can be specified, by default they are evaluated as AND clause. Lines satisfying the tests are written to standard output.
 
 **General options:**
 * `--help` - Print help.
 * `--help-verbose` - Print detailed help.
 * `--help-options` - Print the options list by itself.
-* `--help-fields ` - Print help on specifying fields.
 * `--V|version` - Print version information and exit.
 * `--H|header` - Treat the first line of each file as a header.
 * `--d|delimiter CHR` - Field delimiter. Default: TAB. (Single byte UTF-8 characters only.)
-* `--or` - Evaluate tests as an OR rather than an AND.
-* `--v|invert` - Invert the filter, printing lines that do not match.
+* `--or` - Evaluate tests as an OR rather than an AND. This applies globally.
+* `--v|invert` - Invert the filter, printing lines that do not match. This applies globally.
 
 **Tests:**
 
@@ -391,23 +322,20 @@ Field to field comparisons:
 
 Basic comparisons:
 ```
-$ # 'Count' field non-zero
-$ tsv-filter --header --ne Count:0
-
 $ # Field 2 non-zero
 $ tsv-filter --ne 2:0 data.tsv
 
 $ # Field 1 == 0 and Field 2 >= 100, first line is a header.
 $ tsv-filter --header --eq 1:0 --ge 2:100 data.tsv
 
-$ # 'Count' field == -1 or 'Count' field > 100
-$ tsv-filter --or --eq Count:-1 --gt Count:100
+$ # Field 1 == -1 or Field 1 > 100
+$ tsv-filter --or --eq 1:-1 --gt 1:100
 
-$ # 'Name1' field is foo, 'Name2' field contains bar
-$ tsv-filter -H --str-eq Name1:foo --str-in-fld Name2:bar data.tsv
+$ # Field 3 is foo, Field 4 contains bar
+$ tsv-filter --header --str-eq 3:foo --str-in-fld 4:bar data.tsv
 
-$ # 'start_date' field == 'end-date' field (numeric test)
-$ tsv-filter -H --ff-eq start_date:end_date data.tsv
+$ # Field 3 == field 4 (numeric test)
+$ tsv-filter --header --ff-eq 3:4 data.tsv
 ```
 
 Field lists:
@@ -418,13 +346,10 @@ $ # Test that fields 1-10 are not blank
 $ tsv-filter --not-blank 1-10 data.tsv
 
 $ # Test that fields 1-5 are not zero
-$ tsv-filter --ne 1-5:0 data.tsv
-
-$ # Test that all the '_time' fields are not zero
-$ tsv-filter -H --ne '*_time:0' data.tsv
+$ tsv-filter --ne 1-5:0
 
 $ # Test that fields 1-5, 7, and 10-20 are less than 100
-$ tsv-filter --lt 1-5,7,10-20:100 data.tsv
+$ tsv-filter --lt 1-5,7,10-20:100
 ```
 
 Regular expressions:
@@ -438,12 +363,12 @@ $ tsv-filter --regex '2:aa[0-9]+aa' data.tsv
 $ # Same thing, except the field starts and ends with the two a's.
 $ tsv-filter --regex '2:^aa[0-9]+aa$' data.tsv
 
-$ # 'Name' field is a sequence of "word" characters with two or more embedded
+$ # Field 2 is a sequence of "word" characters with two or more embedded
 $ # whitespace sequences (match against entire field)
-$ tsv-filter -H --regex 'Name:^\w+\s+(\w+\s+)+\w+$' data.tsv
+$ tsv-filter --regex '2:^\w+\s+(\w+\s+)+\w+$' data.tsv
 
-$ # 'Title' field containing at least one cyrillic character.
-$ tsv-filter -H --regex 'Title:\p{Cyrillic}' data.tsv
+$ # Field 2 containing at least one cyrillic character.
+$ tsv-filter --regex '2:\p{Cyrillic}' data.tsv
 ```
 
 Short-circuiting expressions:
@@ -451,8 +376,8 @@ Short-circuiting expressions:
 Numeric tests like `--gt` (greater-than) assume field values can be interpreted as numbers. An error occurs if the field cannot be parsed as a number, halting the program. This can be avoiding by including a testing ensure the field is recognizable as a number. For example:
 
 ```
-$ # Ensure 'count' field is a number before testing for greater-than 10.
-$ tsv-filter -H --is-numeric count --gt count:10 data.tsv
+$ # Ensure field 2 is a number before testing for greater-than 10.
+$ tsv-filter --is-numeric 2 --gt 2:10 data.tsv
 
 $ # Ensure field 2 is a number, not NaN or infinity before greater-than test.
 $ tsv-filter --is-finite 2 --gt 2:10 data.tsv
@@ -466,85 +391,59 @@ _**Tip:**_ Bash completion is very helpful when using commands like `tsv-filter`
 
 ## tsv-join reference
 
-**Synopsis:** tsv-join --filter-file file [options] [file...]
+**Synopsis:** tsv-join --filter-file file [options] file [file...]
 
-tsv-join matches input lines (the 'data stream') against lines from a 'filter' file. The match is based on exact match comparison of one or more 'key' fields. The data stream is read from files or standard input. Matching lines are written to standard output, along with any additional fields from the filter file that have been specified.
-
-This is similar to the "stream-static" joins available in Spark Structured Streaming and "KStream-KTable" joins in Kafka. The filter file plays the same role as the Spark static dataset or Kafka KTable.
-
-The filter file needs to fit into available memory (the join key and append fields). The data stream is processed one line at a time and can be arbitrarily large.
+tsv-join matches input lines against lines from a 'filter' file. The match is based on exact match comparison of one or more 'key' fields. Fields are TAB delimited by default. Matching lines are written to standard output, along with any additional fields from the key file that have been specified.
 
 **Options:**
 * `--h|help` - Print help.
 * `--h|help-verbose` - Print detailed help.
-* `--help-fields ` - Print help on specifying fields.
 * `--V|version` - Print version information and exit.
 * `--f|filter-file FILE` - (Required) File with records to use as a filter.
 * `--k|key-fields <field-list>` - Fields to use as join key. Default: 0 (entire line).
-* `--d|data-fields <field-list>` - Data stream fields to use as join key, if different than `--key-fields`.
-* `--a|append-fields <field-list>` - Filter file fields to append to matched records.
+* `--d|data-fields <field-list>` - Data record fields to use as join key, if different than `--key-fields`.
+* `--a|append-fields <field-list>` - Filter fields to append to matched records.
 * `--H|header` - Treat the first line of each file as a header.
 * `--p|prefix STR` - String to use as a prefix for `--append-fields` when writing a header line.
-* `--w|write-all STR` - Output all data stream records. STR is the `--append-fields` value when writing unmatched records. This is a left outer join. (The data stream is the 'left'.)
+* `--w|write-all STR` - Output all data records. STR is the `--append-fields` value when writing unmatched records. This is an outer join.
 * `--e|exclude` - Exclude matching records. This is an anti-join.
 * `--delimiter CHR` - Field delimiter. Default: TAB. (Single byte UTF-8 characters only.)
 * `--z|allow-duplicate-keys` - Allow duplicate keys with different append values (last entry wins). Default behavior is that this is an error.
 
 **Examples:**
 
-Join using the `Name` field as the key. The `Name` field may be in different columns in the filter file and data stream files. All matching rows from `data.tsv` are written to standard output. The output order is the same as in `data.tsv`.
-```
-$ tsv-join -H --filter-file filter.tsv --key-fields Name data.tsv
-```
-
-Join using the `Name` field as key, but also append the `RefID` field from the filter file.
-```
-$ tsv-join -H -f filter.tsv -k Name --append-fields RefID data.tsv
-```
-
-Exclude lines from the data stream having the same `RecordNum` as a line in the filter file.
-```
-$ tsv-join -H -f filter.tsv -k RecordNum --exclude data.tsv
-```
-
-Filter multiple files, using field numbers 2 & 3 as the join key.
-```
-$ tsv-join -f filter.tsv -k 2,3 data1.tsv data2.tsv data3.tsv
-```
-
-Same as previous, except use fields 4 & 5 from the data files as the key.
-```
-$ tsv-join -f filter.tsv -k 2,3 -d 4,5 data1.tsv data2.tsv data3.tsv
-```
-
-Same as the previous command, but reading the data stream from standard input.
-```
-$ cat data*.tsv | tsv-join -f filter.tsv -k 2,3 -d 4,5
-```
-
-Add population data from `cities.tsv` to a data stream.
-```
-$ tsv-join -H -f cities.tsv -k CityID --append-fields Population data.tsv
-```
-
-As in the previous example, add population data, but this time write all records. Use the value '-1' if the city does not appear in the `cities.tsv` file. This is a left outer join, with the data stream as 'left'.
-```
-$ tsv-join -H -f cities.tsv -k CityID -a Population --write-all -1 Population data.tsv
-```
-
 Filter one file based on another, using the full line as the key.
 ```
+$ # Output lines in data.txt that appear in filter.txt
 $ tsv-join -f filter.txt data.txt
+
+$ # Output lines in data.txt that do not appear in filter.txt
+$ tsv-join -f filter.txt --exclude data.txt
 ```
 
-Modifying output headers: Often it's useful to append a field that has a name identical to a field already in the data stream files. The '--p|prefix' option can be used to rename the appended field and avoid name duplication. The following command joins on the `test_id` field, appending the `time` field to matched records. The header for the appended field is `run1_time`, differentiating it from an existing `time` field in the data file (run2.tsv).
+Filter multiple files, using fields 2 & 3 as the filter key.
 ```
-$ tsv-join -f run1.tsv run2.tsv -H -k test_id --append-fields time --prefix run1_
+$ tsv-join -f filter.tsv --key-fields 2,3 data1.tsv data2.tsv data3.tsv
 ```
 
-The prefix will be applied to all appended fields. The next example is similar to the previous one, except that it appends all fields ending in `_time`, prefixing `run1_` to all the appended field names:
+Same as previous, except use field 4 & 5 from the data files.
 ```
-$ tsv-join -f run1.tsv run2.tsv -H -k test_id -a '*_time' --prefix run1_
+$ tsv-join -f filter.tsv --key-fields 2,3 --data-fields 4,5 data1.tsv data2.tsv data3.tsv
+```
+
+Append fields from the filter file to matched records.
+```
+$ tsv-join -f filter.tsv --key-fields 1 --append-fields 2-5 data.tsv
+```
+
+Write out all records from the data file, but when there is no match, write the 'append fields' as NULL. This is an outer join.
+```
+$ tsv-join -f filter.tsv --key-fields 1 --append-fields 2 --write-all NULL data.tsv
+```
+
+Managing headers: Often it's useful to join a field from one data file to anther, where the data fields are related and the headers have the same name in both files. They can be kept distinct by adding a prefix to the filter file header. Example:
+```
+$ tsv-join -f run1.tsv --header --key-fields 1 --append-fields 2 --prefix run1_ run2.tsv
 ```
 
 ---
@@ -690,7 +589,6 @@ The specifics behind these random values are subject to change in future release
 
 * `--h|help` - This help information.
 * `--help-verbose` - Print more detailed help.
-* `--help-fields ` - Print help on specifying fields.
 * `--V|version` - Print version information and exit.
 * `--H|header` - Treat the first line of each file as a header.
 * `--n|num NUM` - Maximum number of lines to output. All selected lines are output if not provided or zero.
@@ -714,16 +612,15 @@ The specifics behind these random values are subject to change in future release
 
 **Synopsis:** tsv-select [options] [file...]
 
-tsv-select reads files or standard input and writes selected fields to standard output. Fields are written in the order listed. This is similar to Unix `cut`, but with the ability to select fields by name, reorder fields, and drop fields.
+tsv-select reads files or standard input and writes specified fields to standard output in the order listed. Similar to Unix `cut` with the ability to reorder fields.
 
-Fields can be specified by field number or, for files with header lines, by field name. Fields numbers start with one. They are comma separated, and ranges can be used. The `--H|header` option enables selection by field name. This also manages header lines from multiple files, retaining only the first header.
+Fields numbers start with one. They are comma separated, and ranges can be used. Fields can be listed more than once, and fields not listed can be selected as a group using the `--rest` option. When working with multiple files, the `--header` option can be used to retain the header from the just the first file.
 
-Fields can be listed more than once, and fields not listed can be selected as a group using the `--rest` option. Fields can be dropped using `--e|exclude`. All fields not excluded are output. `--f|fields` and `--r|rest` can be used with `--e|exclude` to change the order of non-excluded fields.
+Fields can be excluded using `--e|exclude`. All fields not excluded are output. `--f|fields` and `--r|rest` can be used with `--e|exclude` to change the order of non-excluded fields.
 
 **Options:**
 * `--h|help` - Print help.
 * `--help-verbose` -  Print more detailed help.
-* `--help-fields ` - Print help on specifying fields.
 * `--V|version` - Print version information and exit.
 * `--H|header` - Treat the first line of each file as a header.
 * `--f|fields <field-list>` - Fields to retain. Fields are output in the order listed.
@@ -736,7 +633,6 @@ Fields can be listed more than once, and fields not listed can be selected as a 
 * Fields specified by `--f|fields` and `--e|exclude` cannot overlap.
 * When `--f|fields` and `--e|exclude` are used together, the effect is to specify `--rest last`. This can be overridden by specifying `--rest first`.
 * Each input line must be long enough to contain all fields specified with `--f|fields`. This is not necessary for `--e|exclude` fields.
-* Specifying names of fields containing special characters may require escaping the special characters. See [Field syntax](#field-syntax) for details.
 
 **Examples:**
 ```
@@ -745,15 +641,6 @@ $ tsv-select -f 1 file1.tsv file2.tsv
 
 $ # Keep fields 1 and 2, retain the header from the first file
 $ tsv-select -H -f 1,2 file1.tsv file2.tsv
-
-$ # Keep the 'time' field
-$ tsv-select -H -f time file1.tsv
-
-$ # Keep all fields ending '_date' or '_time'
-$ tsv-select -H -f '*_date,*_time' file.tsv
-
-$ # Drop all the '*_time' fields
-$  tsv-select -H --exclude '*_time' file.tsv
    
 $ # Output fields 2 and 1, in that order
 $ tsv-select -f 2,1 file.tsv
@@ -772,8 +659,8 @@ $ tsv-select -e 1 file.tsv
 $ # Move field 1 to the end of the line
 $ tsv-select -f 1 --rest first file.tsv
 
-$ # Move the 'Date' and 'Time' fields to the start of the line
-$ tsv-select -H -f Date,Time --rest last file.tsv
+$ # Move fields 7 and 3 to the start of the line
+$ tsv-select -f 7,3 --rest last file.tsv
 
 # Output with repeating fields
 $ tsv-select -f 1,2,1 file.tsv
@@ -823,7 +710,7 @@ $ tsv-sample data.tsv | tsv-split -l NUM
 
 However, alternate approaches are needed when data is too large for convenient shuffling. tsv-split's random assignment feature can be useful in these cases. Each input line is written to a randomly selected output file. Note that output files will have similar but not identical numbers of records.
 
-**About Random assignment by key** (`--n|num-files NUM`, `--k|key-fields FIELDS`): This splits a data set into multiple files sharded by key. All lines with the same key are written to the same file. This partitioning enables parallel computation based on the key. For example, statistical calculation (`tsv-summarize --group-by`) or duplicate removal (`tsv-uniq --fields`). These operations can be parallelized using tools like GNU parallel, which simplifies concurrent operations on multiple files. Fields are specified using field number or field name. Field names require that the input file has a header line.
+**About Random assignment by key** (`--n|num-files NUM`, `--k|key-fields FIELDS`): This splits a data set into multiple files sharded by key. All lines with the same key are written to the same file. This partitioning enables parallel computation based on the key. For example, statistical calculation (`tsv-summarize --group-by`) or duplicate removal (`tsv-uniq --fields`). These operations can be parallelized using tools like GNU parallel, which simplifies concurrent operations on multiple files.
 
 **Random seed**: By default, each tsv-split invocation using random assignment or random assignment by key produces different assignments to the output files. Using `--s|static-seed` changes this so multiple runs produce the same assignments. This works by using the same random seed each run. The seed can be specified using `--v|seed-value`.
 
@@ -854,9 +741,9 @@ $ tsv-split data.txt -I --lines-per-file 10000
 $ # Randomly assign lines to 1000 files
 $ tsv-split data.txt --num-files 1000
 
-$ # Randomly assign lines to 1000 files while keeping unique entries
-$ # from the 'url' field together.
-$ tsv-split data.tsv -H -k url --num-files 1000
+$ # Randomly assign lines to 1000 files while keeping unique keys from
+$  # field 3 together.
+$  tsv-split data.tsv --num-files 1000 -k 3
 
 $ # Randomly assign lines to 1000 files. Later, randomly assign lines
 $ # from a second data file to the same output files.
@@ -876,7 +763,6 @@ $ ( ulimit -Sn 1000 && tsv-split --num-files 1000 data.txt )
 **Options**:
 * `--h|--help` - Print help.
 * `--help-verbose` - Print more detailed help.
-* `--help-fields ` - Print help on specifying fields.
 * `--V|--version` -  Print version information and exit.
 * `--H|header` - Input files have a header line. Write the header to each output file.
 * `--I|header-in-only` - Input files have a header line. Do not write the header to output files.
@@ -901,7 +787,7 @@ Synopsis: tsv-summarize [options] file [file...]
 
 `tsv-summarize` generates summary statistics on fields of a TSV file. A variety of statistics are supported. Calculations can run against the entire data stream or grouped by key. Consider the file data.tsv:
 ```
-Make    Color   Time
+make    color   time
 ford    blue    131
 chevy   green   124
 ford    red     128
@@ -912,31 +798,26 @@ ford    blue    122
 
 The min and average 'time' values for the 'make' field is generated by the command:
 ```
-$ tsv-summarize --header --group-by Make --min Time --mean Time data.tsv
+$ tsv-summarize --header --group-by 1 --min 3 --mean 3 data.tsv
 ```
 
 This produces:
 ```
-Make   Time_min Time_mean
+make   time_min time_mean
 ford   122      127
 chevy  124      124
 bmw    118      122
 ```
 
-Using `--group-by Make,Color` will group by both 'Make' and 'Color'. Omitting the `--group-by` entirely summarizes fields for full file.
-
-The examples above specify fields by name. Fields can also be specified by field number, this works for files with and without header lines. For example:
-```
-$ tsv-summarize --header --group-by 1 --min 3 --mean 3 data.tsv
-```
+Using `--group-by 1,2` will group by both 'make' and 'color'. Omitting the `--group-by` entirely summarizes fields for full file.
 
 The program tries to generate useful headers, but custom headers can be specified. Example:
 ```
-$ tsv-summarize --header --group-by 1 --min 3:Fastest --mean 3:Average data.tsv
-Make  Fastest  Average
-ford  122      127
-chevy 124      124
-bmw   118      122
+$ tsv-summarize --header --group-by 1 --min 3:fastest --mean 3:average data.tsv
+make	fastest	average
+ford	122	127
+chevy	124	124
+bmw	118	122
 ```
 
 Most operators take custom headers in a manner shown above, following the syntax:
@@ -946,14 +827,13 @@ Most operators take custom headers in a manner shown above, following the syntax
 
 Operators can be specified multiple times. They can also take multiple fields (though not when a custom header is specified). Examples:
 ```
+--median 2,3,4
 --median 1,5-8
---median Count,Kilograms
---median '*_seconds'
 ```
 
 The quantile operator requires one or more probabilities after the fields:
 ```
---quantile Count:0.25          # Quantile 1 of the 'Count' field
+--quantile 2:0.25              # Quantile 1 of field 2
 --quantile 2-4:0.25,0.5,0.75   # Q1, Median, Q3 of fields 2, 3, 4
 ```
 
@@ -978,7 +858,6 @@ Missing values are not treated specially by default, this can be changed using t
 **Options:**
 * `--h|help` - Print help.
 * `--help-verbose` - Print detailed help.
-* `--help-fields ` - Print help on specifying fields.
 * `--V|version` - Print version information and exit.
 * `--g|group-by <field-list>` - Fields to use as key.
 * `--H|header` - Treat the first line of each file as a header.
@@ -1023,7 +902,7 @@ _**Tip:**_ Bash completion is very helpful when using commands like `tsv-summari
 
 `tsv-uniq` can be run without specifying a key field. In this case the whole line is used as a key, same as the Unix `uniq` program. As with `uniq`, this works on any line-oriented text file, not just TSV files. There is no need to sort the data and the original input order is preserved.
 
-The alternatives to the default 'uniq' mode are 'number' mode and 'equiv-class' mode. In 'equiv-class' mode (`--e|equiv`), all lines are written to standard output, but with a field appended marking equivalent entries with an ID. The ID is a one-upped counter.
+The alternates to the default 'uniq' mode are 'number' mode and 'equiv-class' mode. In 'equiv-class' mode (`--e|equiv`), all lines are written to standard output, but with a field appended marking equivalent entries with an ID. The ID is a one-upped counter.
 
 'Number' mode (`--z|number`) also writes all lines to standard output, but with a field appended numbering the occurrence count for the line's key. The first line with a specific key is assigned the number '1', the second with the key is assigned number '2', etc. 'Number' and 'equiv-class' modes can be used together.
 
@@ -1038,7 +917,6 @@ If both `--a|at-least` and `--m|max` are specified, the occurrences starting wit
 **Options:**
 * `-h|help` - Print help.
 * `--help-verbose` - Print detailed help.
-* `--help-fields ` - Print help on specifying fields.
 * `--V|version` - Print version information and exit.
 * `--H|header` - Treat the first line of each file as a header.
 * `--f|fields <field-list>` - Fields to use as the key. Default: 0 (entire line).
@@ -1067,14 +945,14 @@ $ tsv-unique -f 1 data.tsv
 $ # Unique a file based on two fields
 $ tsv-uniq -f 1,2 data.tsv
 
-$ # Unique a file based on the 'URL' field
-$ tsv-uniq -H -f URL data.tsv
-
-$ # Unique a file based on the 'URL' and 'Date' fields
-$ tsv-uniq -H -f URL,Date data.tsv
+$ # Unique a file based on the first four fields
+$ tsv-uniq -f 1-4 data.tsv
 
 $ # Output all the lines, generating an ID for each unique entry
 $ tsv-uniq -f 1,2 --equiv data.tsv
+
+$ # Generate uniq IDs, but account for headers
+$ tsv-uniq -f 1,2 --equiv --header data.tsv
 
 $ # Generate line numbers specific to each key
 $ tsv-uniq -f 1,2 --number --header data.tsv
@@ -1098,12 +976,12 @@ efgh    5678    stu
 wxyz    1234    stu
 
 $ # Uniq using field 2 as key
-$ tsv-uniq -H -f field2 data.tsv
+$ tsv-uniq -H -f 2 data.tsv
 field1  field2  field2
 ABCD    1234    PQR
 efgh    5678    stu
 
-$ # Generate equivalence class IDs, using the whole line as key
+$ # Generate equivalence class IDs
 $ tsv-uniq -H --equiv data.tsv
 field1  field2  field2  equiv_id
 ABCD    1234    PQR     1
