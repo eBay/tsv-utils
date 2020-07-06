@@ -14,7 +14,7 @@ Information in this section applies to all the tools. Topics:
 * [Multiple files and standard input](#Multiple-files-and-standard-input)
 * [Field syntax](#field-syntax)
 
-### Specifying options
+## Specifying options
 
 Multi-letter options are specified with a double dash. Single letter options can be specified with a single dash or double dash. For example:
 ```
@@ -24,27 +24,27 @@ $ tsv-select --fields 1,2   # Valid
 $ tsv-select -fields 1,2    # Invalid.
 ```
 
-### Help (`-h`, `--help`, `--help-verbose`, `--helpfields`)
+## Help (`-h`, `--help`, `--help-verbose`, `--helpfields`)
 
 All tools print help if given the `-h` or `--help` option. Many provide more detail via the `--help-verbose` option. Tools taking fields as parameters provide detailed help on specifying fields via the `--help-fields` option.
 
-### UTF-8 input
+## UTF-8 input
 
 These tools assume data is utf-8 encoded.
 
-### Line endings
+## Line endings
 
 These tools have been tested on Unix platforms, including macOS, but not Windows. On Unix platforms, Unix line endings (`\n`) are expected, with the notable exception of `tsv2csv`. Not all the tools are affected by DOS and Windows line endings (`\r\n`), those that are check the first line and flag an error. `csv2tsv` explicitly handles DOS and Windows line endings, converting to Unix line endings as part of the conversion.
 
 The `dos2unix` tool can be used to convert Windows line endings to Unix format. See [Convert newline format and character encoding with dos2unix and iconv](../TipsAndTricks.md#convert-newline-format-and-character-encoding-with-dos2unix-and-iconv)
 
-### File format and alternate delimiters (`--delimiter`)
+## File format and alternate delimiters (`--delimiter`)
 
 Any character can be used as a field delimiter, TAB is the default. However, there is no mechanism to include the delimiter character or newlines within a field. This differs from CSV file format which provides an escaping mechanism. In practice the lack of an escaping mechanism is not a meaningful limitation for data oriented files. See [Comparing TSV and CSV formats](../comparing-tsv-and-csv.md) for more information on these formats.
 
 All lines are expected to have data. There is no mechanism for recognizing comments or blank lines. Tools taking field indices as arguments expect the specified fields to be available on every line.
 
-### Header line processing (`-H`, `--header`)
+## Header line processing (`-H`, `--header`)
 
 Most tools handle the first line of files as a header when given the `-H` or `--header` option. Turning on header line processing does three things:
 
@@ -52,7 +52,7 @@ Most tools handle the first line of files as a header when given the `-H` or `--
 * Only one header line is written to standard output. If multiple files are being processed, the header line from the first file is kept and header lines from subsequent files are dropped.
 * Excludes the header line from the normal processing of the command, if appropriate. For example, `tsv-filter` exempts the header from filtering.
 
-### Multiple files and standard input
+## Multiple files and standard input
 
 Tools can read from any number of files and from standard input. As per typical Unix behavior, a single dash represents standard input when included in a list of files. Terminate non-file arguments with a double dash (`--`) when using a single dash in this fashion. Example:
 ```
@@ -61,7 +61,7 @@ $ head -n 1000 file-c.tsv | tsv-filter --eq 2:1000 -- file-a.tsv file-b.tsv - > 
 
 The above passes `file-a.tsv`, `file-b.tsv`, and the first 1000 lines of `file-c.tsv` to `tsv-filter` and writes the results to `out.tsv`.
 
-### Field syntax
+## Field syntax
 
 Most tsv-utils tools operate on fields specified on the command line. All tools use the same syntax to identify fields. `tsv-select` is used in this document to provide examples, but the syntax shown applies to all tools.
 
@@ -86,11 +86,11 @@ Field name match is case sensitive and wildcards are supported. Field numbers ar
 
 Field ranges are specified as a pair of fields separated by a hyphen. This works for both field numbers and field names, but names and numbers cannot be mixed in the same range.
 
-#### Wildcards
+### Wildcards
 
 Named fields support a simple 'glob' style wildcard scheme. The asterisk character (`*`) can be used to match any sequence of characters, including no characters. This is similar to how `*` can be used to match file names on the Unix command line. All fields with matching names are selected, so wildcards are a convenient way to select a set of related fields. Quotes should be placed around command line arguments containing wildcards to avoid interpretation by the shell.
 
-#### Examples
+### Examples
 
 Consider a file `data.tsv` containing timing information:
 ```
@@ -112,7 +112,7 @@ $ tsv-select data.tsv -H -f 1-3             # Fields 1,2,3
 $ tsv-select data.tsv -H -f run-user_time   # Fields 1,2,3 (range with names)
 ```
 
-#### Special characters
+### Special characters
 
 There are several special characters that need to be escaped when specifying field names. Escaping is done by preceding the special character with a backslash. Characters requiring escapes are: asterisk (`*`), comma(`,`), colon (`:`), space (` `), hyphen (`-`), and backslash (`\`). A field name that contains only digits also needs to be backslash escaped, this indicates it should be treated as a field name and not a field number. A backslash can be used to escape any character, so it's not necessary to remember the list. Use an escape when not sure.
 
