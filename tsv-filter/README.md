@@ -4,7 +4,7 @@ _Visit the eBay TSV utilities [main page](../README.md)_
 
 Filter lines by running tests against individual fields. Multiple tests can be specified in a single call. A variety of numeric and string comparison tests are available, including regular expressions.
 
-Consider a file having 4 fields: `id`, `color`, `year`, `count`. Using [tsv-pretty](#tsv-pretty) to view the first few lines:
+Consider a file having 4 fields: `id`, `color`, `year`, `count`. Using [tsv-pretty](../docs/tool_reference/tsv-pretty.md) to view the first few lines:
 ```
 $ tsv-pretty data.tsv | head -n 5
  id  color   year  count

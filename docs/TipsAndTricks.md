@@ -35,7 +35,7 @@ $ tsv-header worldcitiespop.tsv
      7	Longitude
 ```
 
-A similar alias can be setup for CSV files. Here are two. The first uses [csv2tsv](ToolReference.md#csv2tsv-reference) to interpret the CSV header line, including CSV escape characters. The second uses only standard Unix tools. It won't interpret CSV escapes, but many header lines don't use escapes. (Define only one):
+A similar alias can be setup for CSV files. Here are two. The first uses [csv2tsv](tool_reference/csv2tsv.md) to interpret the CSV header line, including CSV escape characters. The second uses only standard Unix tools. It won't interpret CSV escapes, but many header lines don't use escapes. (Define only one):
 ```
 csv-header () { csv2tsv "$@" | head -n 1 | tr $'\t' $'\n' | nl -ba ; }
 csv-header () { head -n 1 "$@" | tr $',' $'\n' | nl -ba ; }
@@ -93,7 +93,7 @@ Use your system's package manager to upgrade to the latest sort utility and cons
 
 Unix `sort` utilities are able to sort using fields as keys. To use this feature on TSV files the TAB character must be passed as the field delimiter. This is easy enough, but specifying it on every sort invocation is a nuisance.
 
-The way to fix this is to create either a `bash` alias or a shell script. A shell script is a better fit for `sort`, as shell commands can be invoked by other programs. This is convenient when using tools like [keep-header](ToolReference.md#keep-header-reference).
+The way to fix this is to create either a `bash` alias or a shell script. A shell script is a better fit for `sort`, as shell commands can be invoked by other programs. This is convenient when using tools like [keep-header](tool_reference/keep-header.md).
 
 Put the lines below in a file, eg. `tsv-sort`. Run `$ chmod a+x tsv-sort` and add the file to the PATH:
 
@@ -110,7 +110,7 @@ $ tsv-sort worldcitiespop.tsv -k2,2
 
 ### Set the buffer size for reading from standard input
 
-GNU `sort` uses a small buffer by default when reading from standard input. This causes it to run much more slowly than when reading files directly. On the author's system the delta is about 2-3x. This will happen when using Unix pipelines. The [keep-header](ToolReference.md#keep-header-reference) tool uses a pipe internally, so it is affected as well. Examples:
+GNU `sort` uses a small buffer by default when reading from standard input. This causes it to run much more slowly than when reading files directly. On the author's system the delta is about 2-3x. This will happen when using Unix pipelines. The [keep-header](tool_reference/keep-header.md) tool uses a pipe internally, so it is affected as well. Examples:
 ```
 $ grep green file.txt | sort
 $ keep-header file.txt -- sort
@@ -480,7 +480,7 @@ This took 110 seconds. Here's the parallel version. It produces the same results
 $ parallel tsv-summarize --group-by 2 --max 3 ::: ngram-*.tsv | tsv-summarize --group-by 1 --max 2 | tsv-sort-fast -k1,1n
 ```
 
-Notice that in the "group-by year" example, the second `tsv-summarize` pass is necessary because the entries for each year occur in multiple files. If the files are organized by the group-by key, then the second pass is not necessary. The google ngram files are organized by first letter of the ngram (a file for "a", a file for "b", etc.), so "group-by" operations on the ngram field would not need the second pass. The [tsv-split](ToolReference.md#tsv-split-reference) tool's "random assignment by key" feature can be used to split a data set into files sharded by key. This is especially helpful when the number of unique keys in the data set is very large.
+Notice that in the "group-by year" example, the second `tsv-summarize` pass is necessary because the entries for each year occur in multiple files. If the files are organized by the group-by key, then the second pass is not necessary. The google ngram files are organized by first letter of the ngram (a file for "a", a file for "b", etc.), so "group-by" operations on the ngram field would not need the second pass. The [tsv-split](tool_reference/tsv-split.md) tool's "random assignment by key" feature can be used to split a data set into files sharded by key. This is especially helpful when the number of unique keys in the data set is very large.
 
 ### Using GNU Parallel on files with header lines
 
@@ -525,7 +525,7 @@ The first two use the `pipe` function to create the shell command. `fread` does 
 
 ## Shuffling large files
 
-Line order randomization, or "shuffling", is one of the operations supported by [tsv-sample](ToolReference.md#tsv-sample-reference). Most `tsv-sample` operations can be performed with limited system memory. However, system memory becomes a limitation when shuffling very large data sets, as the entire data set must be loaded into memory. ([GNU shuf](https://www.gnu.org/software/coreutils/manual/html_node/shuf-invocation.html) has the same limitation.)
+Line order randomization, or "shuffling", is one of the operations supported by [tsv-sample](tool_reference/tsv-sample.md). Most `tsv-sample` operations can be performed with limited system memory. However, system memory becomes a limitation when shuffling very large data sets, as the entire data set must be loaded into memory. ([GNU shuf](https://www.gnu.org/software/coreutils/manual/html_node/shuf-invocation.html) has the same limitation.)
 
 In many cases the most effective solution is simply to get more memory, or find a machine with enough memory. However, when more memory is not an option, another solution to consider is disk-based shuffling. This is approach described here.
 
