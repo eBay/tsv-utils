@@ -10,4 +10,4 @@ Source tracking is useful when creating long/narrow form tabular data. This form
 
 In this scenario, files have been used to capture related data sets, the difference between data sets being a condition represented by the file. For example, results from different variants of an experiment might each be recorded in their own files. Retaining the source file as an output column preserves the condition represented by the file. The source values default to the file names, but this can be customized.
 
-See the [tsv-append reference](../docs/ToolReference.md#tsv-append-reference) for the complete list of options available.
+See the [tsv-append reference](../docs/tool_reference/tsv-append.md) for the complete list of options available.

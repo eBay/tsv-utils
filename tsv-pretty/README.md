@@ -25,4 +25,4 @@ Chartreuse           1139    77.02  6.220
 Fluorescent Orange    422  1141.70  7.921
 Grey                   19   140.30  1.030
 ```
-See the [tsv-pretty reference](../docs/ToolReference.md#tsv-pretty-reference) for details.
+See the [tsv-pretty reference](../docs/tool_reference/tsv-pretty.md) for details.
