@@ -42,4 +42,4 @@ $ # script described on the "Tips and Tricks" page.
 $ keep-header *.tsv -- tsv-sort-fast -k2,2n
 ```
 
-See the [keep-header reference](../docs/ToolReference.md#keep-header-reference) for more information.
+See the [keep-header reference](../docs/tool_reference/keep-header.md) for more information.

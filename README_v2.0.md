@@ -7,7 +7,7 @@ These tools are especially useful when working with large data sets. They run fa
 File an [issue](https://github.com/eBay/tsv-utils/issues) if you have problems, questions or suggestions.
 
 **In this README:**
-* [Tools overview](#tools-overview) - Descriptions of each tool.
+* [Tools overview](#tools-overview) - Toolkit introduction and descriptions of each tool.
 * [Obtaining and installation](#obtaining-and-installation)
 
 **Additional documents:**
@@ -38,9 +38,9 @@ These tools perform data manipulation and statistical calculations on tab delimi
 
 The tools work like traditional Unix command line utilities such as `cut`, `sort`, `grep` and `awk`, and are intended to complement these tools. Each tool is a standalone executable. They follow common Unix conventions for pipeline programs. Data is read from files or standard input, results are written to standard output. Fields are identified either by field name or field number. The field separator defaults to TAB, but any character can be used. Input and output is UTF-8, and all operations are Unicode ready, including regular expression match (`tsv-filter`). Documentation is available for each tool by invoking it with the `--help` option. TSV format is similar to CSV, see [Comparing TSV and CSV formats](docs/comparing-tsv-and-csv.md) for the differences.
 
-The rest of this section contains descriptions of each tool. Click on the links below to jump directly to one of the tools. Full documentation is available in the [Tools Reference](docs/ToolReference.md).
+The rest of this section contains descriptions of each tool. Click on the links below to jump directly to one of the tools. Full documentation is available in the [Tools Reference](docs/ToolReference.md). The first tool listed, [tsv-filter](#tsv-filter), provides a tutorial introduction to features found throughout the toolkit.
 
-* [tsv-filter](#tsv-filter) - Filter lines using numeric, string and regular expression comparisons against individual fields. This description also provides an introduction to features found throughout the toolkit.
+* [tsv-filter](#tsv-filter) - Filter lines using numeric, string and regular expression comparisons against individual fields.
 * [tsv-select](#tsv-select) - Keep a subset of columns (fields). Like `cut`, but supporting named fields, field reordering, and field exclusions.
 * [tsv-uniq](#tsv-uniq) - Filter out duplicate lines using either the full line or individual fields as a key.
 * [tsv-summarize](#tsv-summarize) - Summary statistics on selected fields, against the full data set or grouped by key.

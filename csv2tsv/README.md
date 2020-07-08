@@ -17,6 +17,6 @@ Many csv-to-tsv conversion tools don't remove escapes. Instead they generate CSV
 
 Another useful benefit of the `csv2tsv` converter is that it normalizes newlines. Many programs generate Windows newlines when exporting in CSV format, even on Unix systems.
 
-CSV files come in different formats. See the [csv2tsv reference](../docs/ToolReference.md#csv2tsv-reference) for details of how this tool operates and the format variations handled.
+CSV files come in different formats. See the [csv2tsv reference](../docs/tool_reference/csv2tsv.md) for details of how this tool operates and the format variations handled.
 
 See [Comparing TSV and CSV formats](../docs/comparing-tsv-and-csv.md) for more information on CSV escapes and other differences between CSV and TSV formats.

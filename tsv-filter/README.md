@@ -4,7 +4,7 @@ _Visit the eBay TSV utilities [main page](../README.md)_
 
 Filter lines by running tests against individual fields. Multiple tests can be specified in a single call. A variety of numeric and string comparison tests are available, including regular expressions.
 
-Consider a file having 4 fields: `id`, `color`, `year`, `count`. Using [tsv-pretty](../README.md#tsv-pretty) to view the first few lines:
+Consider a file having 4 fields: `id`, `color`, `year`, `count`. Using [tsv-pretty](#tsv-pretty) to view the first few lines:
 ```
 $ tsv-pretty data.tsv | head -n 5
  id  color   year  count
@@ -16,24 +16,28 @@ $ tsv-pretty data.tsv | head -n 5
 
 The following command finds all entries where 'year' (field 3) is 2008:
 ```
-$ tsv-filter -H --eq 3:2008 data.tsv
+$ tsv-filter -H --eq year:2008 data.tsv
 ```
 
-The `--eq` operator performs a numeric equality test. String comparisons are also available. The following command finds entries where 'color' (field 2) is "red":
+The `-H` option indicates the first input line is a header. The `--eq` operator performs a numeric equality test. String comparisons are also available. The following command finds entries where 'color' (field 2) is "red":
 ```
+$ tsv-filter -H --str-eq color:red data.tsv
+```
+
+Fields can also be identified by field number, same as traditional Unix tools. This works for files with and without header lines. The following commands are equivalent to the previous two:
+```
+$ tsv-filter -H --eq 3:2008 data.tsv
 $ tsv-filter -H --str-eq 2:red data.tsv
 ```
 
-Fields are identified by a 1-up field number, same as traditional Unix tools. The `-H` option preserves the header line.
-
-Multiple tests can be specified. The following command finds `red` entries with years between 1850 and 1950:
+Multiple tests can be specified. The following command finds `red` entries with `year` between 1850 and 1950:
 ```
-$ tsv-filter -H --str-eq 2:red --ge 3:1850 --lt 3:1950 data.tsv
+$ tsv-filter -H --str-eq color:red --ge year:1850 --lt year:1950 data.tsv
 ```
 
 Viewing the first few results produced by this command:
 ```
-$ tsv-filter -H --str-eq 2:red --ge 3:1850 --lt 3:1950 data.tsv | tsv-pretty | head -n 5
+$ tsv-filter -H --str-eq color:red --ge year:1850 --lt year:1950 data.tsv | tsv-pretty | head -n 5
  id  color  year  count
 101  red    1935    756
 106  red    1883   1156
@@ -43,9 +47,9 @@ $ tsv-filter -H --str-eq 2:red --ge 3:1850 --lt 3:1950 data.tsv | tsv-pretty | h
 
 Files can be placed anywhere on the command line. Data will be read from standard input if a file is not specified. The following commands are equivalent:
 ```
-$ tsv-filter -H --str-eq 2:red --ge 3:1850 --lt 3:1950 data.tsv
-$ tsv-filter data.tsv -H --str-eq 2:red --ge 3:1850 --lt 3:1950
-$ cat data.tsv | tsv-filter -H --str-eq 2:red --ge 3:1850 --lt 3:1950
+$ tsv-filter -H --str-eq color:red --ge year:1850 --lt year:1950 data.tsv
+$ tsv-filter data.tsv -H --str-eq color:red --ge year:1850 --lt year:1950
+$ cat data.tsv | tsv-filter -H --str-eq color:red --ge year:1850 --lt year:1950
 ```
 
 Multiple files can be provided. Only the header line from the first file will be kept when the `-H` option is used:
@@ -58,12 +62,12 @@ Numeric comparisons are among the most useful tests. Numeric operators include:
 * Equality: `--eq`, `--ne` (equal, not-equal).
 * Relational: `--lt`, `--le`, `--gt`, `--ge` (less-than, less-equal, greater-than, greater-equal).
 
-Several filters are available to help with invalid entries. Assume there is a messier version of the 4-field file where some fields are not filled in. The following command will filter out all lines with an empty value in any of the four fields:
+Several filters are available to help with invalid data. Assume there is a messier version of the 4-field file where some fields are not filled in. The following command will filter out all lines with an empty value in any of the four fields:
 ```
 $ tsv-filter -H messy.tsv --not-empty 1-4
 ```
 
-The above command uses a "field list" to specify running the test on each of fields 1-4. The test can be "inverted" to see the lines that were filtered out:
+The above command uses a "field list" to run the test on each of fields 1-4. The test can be "inverted" to see the lines that were filtered out:
 ```
 $ tsv-filter -H messy.tsv --invert --not-empty 1-4 | head -n 5 | tsv-pretty
  id  color   year  count
@@ -100,7 +104,19 @@ The earlier `--not-empty` example uses a "field list". Fields lists specify a se
 $ tsv-filter -H --lt 1-3,7:100 file.tsv
 ```
 
-Most of the TSV Utilities tools support field lists. See [Field numbers and field-lists](../docs/ToolReference.md#field-numbers-and-field-lists) in the [Tools reference](../docs/ToolReference.md) document for details.
+Field names can be used in field lists as well. The following command selects lines where both 'color' and 'count' fields are not empty:
+```
+$ tsv-filter -H messy.tsv --not-empty color,count
+```
+
+Field names can be matched using wildcards. The previous command could also be written as:
+```
+$ tsv-filter -H messy.tsv --not-empty 'co*'
+```
+
+The `co*` matches both the 'color' and 'count' fields. (Note: Single quotes are used to prevent the shell from interpreting the asterisk character.)
+
+All TSV Utilities tools use the same syntax for specifying fields. See [Field syntax](../docs/tool_reference/common-options-and-behavior.md#field-syntax) in the [Tools Reference](../docs/ToolReference.md) document for details.
 
 Bash completion is especially helpful with `tsv-filter`. It allows quickly seeing and selecting from the different operators available. See [bash completion](../docs/TipsAndTricks.md#enable-bash-completion) on the [Tips and tricks](../docs/TipsAndTricks.md) page for setup information.
 
@@ -111,4 +127,4 @@ This makes `tsv-filter` ideal for preparing data for applications like R and Pan
 $ tsv-filter --ne 4:0 file.tsv | wc -l
 ```
 
-See the [tsv-filter reference](../docs/ToolReference.md#tsv-filter-reference) for more details and the full list of operators.
+See the [tsv-filter reference](../docs/tool_reference/tsv-filter.md) for more details and the full list of operators.

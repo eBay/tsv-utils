@@ -13,4 +13,4 @@ _Visit the eBay TSV utilities [main page](../README.md)_
 
 `tsv-sample` is designed for large data sets. Streaming algorithms make immediate decisions on each line. They do not accumulate memory and can run on infinite length input streams. Shuffling algorithms need to hold the full output set into memory and are therefore limited by available memory. Simple and weighted random sampling use reservoir sampling and only need to hold the specified sample size (`--n|num`) in memory. By default, a new random order is generated every run, but options are available for using the same randomization order over multiple runs. The random values assigned to each line can be printed, either to observe the behavior or to run custom selection algorithms on the results.
 
-See the [tsv-sample reference](../docs/ToolReference.md#tsv-sample-reference) for further details.
+See the [tsv-sample reference](../docs/tool_reference/tsv-sample.md) for further details.
