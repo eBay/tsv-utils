@@ -458,10 +458,10 @@ There are several ways to obtain the tools: [prebuilt binaries](#prebuilt-binari
 
 ### Prebuilt binaries
 
-Prebuilt binaries are available for Linux and Mac, these can be found on the [Github releases](https://github.com/eBay/tsv-utils/releases) page. Download and unpack the tar.gz file. Executables are in the `bin` directory. Add the `bin` directory or individual tools to the `PATH` environment variable. As an example, the 1.6.1 releases for Linux and MacOS can be downloaded and unpacked with these commands:
+Prebuilt binaries are available for Linux and Mac, these can be found on the [Github releases](https://github.com/eBay/tsv-utils/releases) page. Download and unpack the tar.gz file. Executables are in the `bin` directory. Add the `bin` directory or individual tools to the `PATH` environment variable. As an example, the 2.0.0 releases for Linux and MacOS can be downloaded and unpacked with these commands:
 ```
-$ curl -L https://github.com/eBay/tsv-utils/releases/download/v1.6.1/tsv-utils-v1.6.1_linux-x86_64_ldc2.tar.gz | tar xz
-$ curl -L https://github.com/eBay/tsv-utils/releases/download/v1.6.1/tsv-utils-v1.6.1_osx-x86_64_ldc2.tar.gz | tar xz
+$ curl -L https://github.com/eBay/tsv-utils/releases/download/v2.0.0/tsv-utils-v2.0.0_linux-x86_64_ldc2.tar.gz | tar xz
+$ curl -L https://github.com/eBay/tsv-utils/releases/download/v2.0.0/tsv-utils-v2.0.0_osx-x86_64_ldc2.tar.gz | tar xz
 ```
 
 See the [Github releases](https://github.com/eBay/tsv-utils/releases) page for the latest release.
@@ -502,10 +502,10 @@ The above requires LDC 1.9.0 or later. See [Building with Link Time Optimization
 
 ### Install using DUB
 
-If you are a D user you likely use DUB, the D package manager. DUB comes packaged with DMD starting with DMD 2.072. You can install and build using DUB as follows (replace `1.6.1` with the current version):
+If you are a D user you likely use DUB, the D package manager. DUB comes packaged with DMD starting with DMD 2.072. You can install and build using DUB as follows (replace `2.0.0` with the current version):
 ```
 $ dub fetch tsv-utils --cache=local
-$ cd tsv-utils-1.6.1/tsv-utils
+$ cd tsv-utils-2.0.0/tsv-utils
 $ dub run    # For LDC: dub run -- --compiler=ldc2
 ```
 
