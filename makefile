@@ -1,4 +1,4 @@
-appdirs = csv2tsv keep-header number-lines tsv-append tsv-filter tsv-join tsv-pretty tsv-sample tsv-select tsv-split tsv-summarize tsv-uniq
+appdirs = csv2tsv csv2tsv_v2 keep-header number-lines tsv-append tsv-filter tsv-join tsv-pretty tsv-sample tsv-select tsv-split tsv-summarize tsv-uniq
 subdirs = common $(appdirs)
 buildtools_dir = buildtools
 
