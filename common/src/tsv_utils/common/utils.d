@@ -406,7 +406,6 @@ This is checked at newline boundaries, when appendln is called or when put is ca
 with a single newline character. Other writes check maxSize, which is used to avoid
 runaway buffers.
 
-
 BufferedOutputRange has a put method allowing it to be used a range. It has a number
 of other methods providing additional control.
 
