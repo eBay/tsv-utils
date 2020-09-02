@@ -446,6 +446,12 @@ unittest
     auto csv31a = "1-1\n2-1,2-2\n3-1,3-2,3-3\n\n,5-2\n,,6-3\n";
     auto csv32a = ",1-2,\"1-3\"\n\"2-1\",\"2-2\",\n\"3-1\",,\"3-3\"";
 
+    // Newlines terminating a line ending a non-quoted field
+    auto csv33a = "\rX\r\nX\n\r\nX\r\n";
+
+    // Newlines inside a quoted field and terminating a line following a quoted field
+    auto csv34a = "\"\r\",\"X\r\",\"X\rY\",\"\rY\"\r\"\r\n\",\"X\r\n\",\"X\r\nY\",\"\r\nY\"\r\n\"\n\",\"X\n\",\"X\nY\",\"\nY\"\n";
+
     /* Set B has the same data and TSV results as set A, but uses # for quote and ^ for comma. */
     auto csv1b = "a^b^c";
     auto csv2b = "a^bc^^^def";
@@ -479,6 +485,8 @@ unittest
     auto csv30b = "$^$\n#$#^#$$#^$$\n#^##$#^#$##^#^###$^#^#^$###\n";
     auto csv31b = "1-1\n2-1^2-2\n3-1^3-2^3-3\n\n^5-2\n^^6-3\n";
     auto csv32b = "^1-2^#1-3#\n#2-1#^#2-2#^\n#3-1#^^#3-3#";
+    auto csv33b = "\rX\r\nX\n\r\nX\r\n";
+    auto csv34b = "#\r#^#X\r#^#X\rY#^#\rY#\r#\r\n#^#X\r\n#^#X\r\nY#^#\r\nY#\r\n#\n#^#X\n#^#X\nY#^#\nY#\n";
 
     /* The expected results for csv sets A and B. This is for the default TSV delimiters.*/
     auto tsv1 = "a\tb\tc\n";
@@ -513,6 +521,8 @@ unittest
     auto tsv30 = "$\t$\n$\t$$\t$$\n^#$\t$#^\t#$^\t^$#\n";
     auto tsv31 = "1-1\n2-1\t2-2\n3-1\t3-2\t3-3\n\n\t5-2\n\t\t6-3\n";
     auto tsv32 = "\t1-2\t1-3\n2-1\t2-2\t\n3-1\t\t3-3\n";
+    auto tsv33 = "\nX\nX\n\nX\n";
+    auto tsv34 = " \tX \tX Y\t Y\n \tX \tX Y\t Y\n \tX \tX Y\t Y\n";
 
     /* The TSV results for CSV sets 1a and 1b, but with $ as the delimiter rather than tab.
      * This will also result in different replacements when TAB and $ appear in the CSV.
@@ -549,6 +559,8 @@ unittest
     auto tsv30_x = " $ \n $  $  \n^# $ #^$# ^$^ #\n";
     auto tsv31_x = "1-1\n2-1$2-2\n3-1$3-2$3-3\n\n$5-2\n$$6-3\n";
     auto tsv32_x = "$1-2$1-3\n2-1$2-2$\n3-1$$3-3\n";
+    auto tsv33_x = "\nX\nX\n\nX\n";
+    auto tsv34_x = " $X $X Y$ Y\n $X $X Y$ Y\n $X $X Y$ Y\n";
 
     /* The TSV results for CSV sets 1a and 1b, but with $ as the delimiter rather than tab,
      * and with the delimiter/newline replacement string being |--|. Basically, newlines
@@ -586,31 +598,33 @@ unittest
     auto tsv30_y = "|--|$|--|\n|--|$|--||--|$|--||--|\n^#|--|$|--|#^$#|--|^$^|--|#\n";
     auto tsv31_y = "1-1\n2-1$2-2\n3-1$3-2$3-3\n\n$5-2\n$$6-3\n";
     auto tsv32_y = "$1-2$1-3\n2-1$2-2$\n3-1$$3-3\n";
+    auto tsv33_y = "\nX\nX\n\nX\n";
+    auto tsv34_y = "|--|$X|--|$X|--|Y$|--|Y\n|--|$X|--|$X|--|Y$|--|Y\n|--|$X|--|$X|--|Y$|--|Y\n";
 
     auto csvSet1a = [csv1a, csv2a, csv3a, csv4a, csv5a, csv6a, csv7a, csv8a, csv9a, csv10a,
                      csv11a, csv12a, csv13a, csv14a, csv15a, csv16a, csv17a, csv18a, csv19a, csv20a,
                      csv21a, csv22a, csv23a, csv24a, csv25a, csv26a, csv27a, csv28a, csv29a, csv30a,
-                     csv31a, csv32a];
+                     csv31a, csv32a, csv33a, csv34a];
 
     auto csvSet1b = [csv1b, csv2b, csv3b, csv4b, csv5b, csv6b, csv7b, csv8b, csv9b, csv10b,
                      csv11b, csv12b, csv13b, csv14b, csv15b, csv16b, csv17b, csv18b, csv19b, csv20b,
                      csv21b, csv22b, csv23b, csv24b, csv25b, csv26b, csv27b, csv28b, csv29b, csv30b,
-                     csv31b, csv32b];
+                     csv31b, csv32b, csv33b, csv34b];
 
     auto tsvSet1  = [tsv1, tsv2, tsv3, tsv4, tsv5, tsv6, tsv7, tsv8, tsv9, tsv10,
                      tsv11, tsv12, tsv13, tsv14, tsv15, tsv16, tsv17, tsv18, tsv19, tsv20,
                      tsv21, tsv22, tsv23, tsv24, tsv25, tsv26, tsv27, tsv28, tsv29, tsv30,
-                     tsv31, tsv32];
+                     tsv31, tsv32, tsv33, tsv34];
 
     auto tsvSet1_x  = [tsv1_x, tsv2_x, tsv3_x, tsv4_x, tsv5_x, tsv6_x, tsv7_x, tsv8_x, tsv9_x, tsv10_x,
                        tsv11_x, tsv12_x, tsv13_x, tsv14_x, tsv15_x, tsv16_x, tsv17_x, tsv18_x, tsv19_x, tsv20_x,
                        tsv21_x, tsv22_x, tsv23_x, tsv24_x, tsv25_x, tsv26_x, tsv27_x, tsv28_x, tsv29_x, tsv30_x,
-                       tsv31_x, tsv32_x];
+                       tsv31_x, tsv32_x, tsv33_x, tsv34_x];
 
     auto tsvSet1_y  = [tsv1_y, tsv2_y, tsv3_y, tsv4_y, tsv5_y, tsv6_y, tsv7_y, tsv8_y, tsv9_y, tsv10_y,
                        tsv11_y, tsv12_y, tsv13_y, tsv14_y, tsv15_y, tsv16_y, tsv17_y, tsv18_y, tsv19_y, tsv20_y,
                        tsv21_y, tsv22_y, tsv23_y, tsv24_y, tsv25_y, tsv26_y, tsv27_y, tsv28_y, tsv29_y, tsv30_y,
-                       tsv31_y, tsv32_y];
+                       tsv31_y, tsv32_y, tsv33_y, tsv34_y];
 
     foreach (i, csva, csvb, tsv, tsv_x, tsv_y; lockstep(csvSet1a, csvSet1b, tsvSet1, tsvSet1_x, tsvSet1_y))
     {
