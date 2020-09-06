@@ -15,8 +15,8 @@ import std.stdio;
 import std.exception : enforce;
 import std.format : format;
 import std.range;
-import std.traits : Unqual;
-import std.typecons : Nullable, tuple;
+import std.traits : isArray, Unqual;
+import std.typecons : tuple;
 
 immutable helpText = q"EOS
 Synopsis: csv2tsv [options] [file...]
@@ -188,209 +188,642 @@ else
     }
 }
 
-/* This uses a D feature where a type can reserve a single value to represent null. */
-alias NullableSizeT = Nullable!(size_t, size_t.max);
-
-
-/** csv2tsvFiles reads multiple files and standard input and writes the results to
- * standard output.
- */
 void csv2tsvFiles(const ref Csv2tsvOptions cmdopt, const string[] inputFiles)
 {
-    import std.algorithm : joiner;
     import tsv_utils.common.utils : BufferedOutputRange;
 
     ubyte[1024 * 128] fileRawBuf;
-    ubyte[] stdinRawBuf = fileRawBuf[0..1024];
     auto stdoutWriter = BufferedOutputRange!(typeof(stdout))(stdout);
     bool firstFile = true;
 
     foreach (filename; (inputFiles.length > 0) ? inputFiles : ["-"])
     {
-        auto ubyteChunkedStream = (filename == "-") ?
-            stdin.byChunk(stdinRawBuf) : filename.File.byChunk(fileRawBuf);
-        auto ubyteStream = ubyteChunkedStream.joiner;
+        auto inputStream = (filename == "-") ? stdin : filename.File;
+        auto printFileName = (filename == "-") ? "stdin" : filename;
 
-        if (firstFile || !cmdopt.hasHeader)
-        {
-            csv2tsv(ubyteStream, stdoutWriter, filename, 0,
-                    cmdopt.csvQuoteChar, cmdopt.csvDelimChar,
-                    cmdopt.tsvDelimChar, cmdopt.tsvDelimReplacement);
-        }
-        else
-        {
-            /* Don't write the header on subsequent files. Write the first
-             * record to a null sink instead.
-             */
-            auto nullWriter = NullSink();
-            csv2tsv(ubyteStream, nullWriter, filename, 0,
-                    cmdopt.csvQuoteChar, cmdopt.csvDelimChar,
-                    cmdopt.tsvDelimChar, cmdopt.tsvDelimReplacement,
-                    NullableSizeT(1));
-            csv2tsv(ubyteStream, stdoutWriter, filename, 1,
-                    cmdopt.csvQuoteChar, cmdopt.csvDelimChar,
-                    cmdopt.tsvDelimChar, cmdopt.tsvDelimReplacement);
-        }
+        auto skipLines = (firstFile || !cmdopt.hasHeader) ? 0 : 1;
+
+        csv2tsv(inputStream, stdoutWriter, fileRawBuf, printFileName, skipLines,
+                cmdopt.csvQuoteChar, cmdopt.csvDelimChar,
+                cmdopt.tsvDelimChar, cmdopt.tsvDelimReplacement,
+                cmdopt.tsvDelimReplacement);
+
         firstFile = false;
+    }
+}
+
+/* csv2tsv buffered conversion approach
+
+This version of csv2tsv uses a buffered approach to csv-to-tsv conversion. This is a
+change from the original version, which used a character-at-a-time approach, with
+characters coming from an infinite stream of characters. The character-at-a-time
+approach was nice from a simplicity perspective, but the approach didn't optimize well.
+Note that the original version read input in blocks and wrote to stdout in blocks, it
+was the conversion algorithm itself that was character oriented.
+
+The idea is to convert a buffer at a time, writing larger blocks to the output stream
+rather than one character at a time. In addition, the read buffer is modified in-place
+when the only change is to convert a single character. The notable case is converting
+the field delimiter character, typically comma to TAB. The result is writing longer
+blocks to the output stream (BufferedOutputRange).
+
+Performance improvements from the new algorithm are notable. This is especially true
+versus the previous version 2.0.0. Note though that the more recent versions of
+csv2tsv were slower due to degradations coming from compiler and/or language version.
+Version 1.1.19 was quite a bit faster. Regardless of version, the performance
+improvement is especially good when run against "simple" CSV files, with limited
+amounts of CSV escape syntax. In these files the main change is converting the field
+delimiter character, typically comma to TAB.
+
+In some benchmarks on Mac OS, the new version was 40% faster than csv2tsv 2.0.0 on
+files with significant CSV escapes, and 60% faster on files with limited CSV escapes.
+Versus csv2tsv version 1.1.19, the new version is 10% and 40% faster on the same
+files. On the "simple CSV" file, where Unix 'tr' is an option, 'tr' was still faster,
+by about 20%. But getting into the 'tr' ballpark while retaining safety of correct
+csv2tsv conversion is a good result.
+
+Algorithm notes:
+
+The algorithm works by reading an input block, then examing each byte in-order to
+identify needed modifications. The region of consecutive characters without a change
+is tracked. Single character changes are done in-place, in the read buffer. This
+allows assembling longer blocks before write is needed. The region being tracked is
+written to the output stream when it can no longer be extended in a continuous
+fashion. At this point a new region is started. When the current read buffer has
+been processed the current region is written out and a new block of data read in.
+
+The read buffer uses fixed size blocks. This means the algorithm is actually
+operating on bytes (UTF-8 code units), and not characters. This works because all
+delimiters and CSV escape syntax characters are single byte UTF-8 characters. These
+are the only characters requiring interpretation. The main nuisance is the 2-byte
+CRLF newline sequence, as this might be split across two read buffers. This is
+handled by embedding 'CR' states in the finite state machine.
+
+Processing CSV escapes will often cause the character removals and additions. These
+will not be representable in a continuous stream of bytes without moving bytes around
+Instead of moving bytes, these cases are handled by immediately  writing to the output
+stream. This allows restarting a new block of contiguous characters. Handling by the
+new algorithm is described below. Note that the length of the replacement characters
+for TSV field and record delimiters (e.g. TAB, newline) affects the processing.
+
+All replacement character lengths:
+
+* Windows newline (CRLF) at the end of a line - Replace the CRLF with LF.
+
+  Replace the CR with LF, add it to the current write region and terminate it. The
+  next write region starts at the character after the LF.
+
+* Double quote starting or ending a field - Drop the double quote.
+
+  Terminate the current write region, next write region starts at the next character.
+
+* Double quote pair inside a quoted field - Drop one of the double quotes.
+
+  The algorithm drops the first double quote and keep the second. This avoids
+  look-ahead and both field terminating double quote and double quote pair can
+  handled the same way. Terminate the current write region without adding the double
+  quote. The next write region starts at the next character.
+
+Single byte replacement characters:
+
+* Windows newline (CRLF) in a quoted field
+
+  Replace the CR with the replacement char, add it to the current write region and
+  terminate it. The next write region starts at the character after the LF.
+
+Multi-byte replacement sequences:
+
+* TSV Delimiter (TAB by default) in a field
+
+  Terminate the current write region, write it out and the replacement. The next
+  write region starts at the next character.
+
+* LF, CR, or CRLF in a quoted field
+
+  Terminate the current write region, write it and the replacement. The next write
+  region starts at the next character.
+
+csv2tsv API
+
+At the API level, it is desirable to handle at both open files and input streams.
+Open files are the key requirement, but handling input streams simplifies unit
+testing, and in-memory conversion is likely to be useful anyway. Internally, it
+should be easy enough to encapsulate the differences between input streams and files.
+Reading files can be done using File.byChunk and reading from input streams can be
+done using std.range.chunks.
+
+This has been handled by creating a new range that can iterate either files or
+input streams chunk-by-chunk.
+*/
+
+/** Defines the 'bufferable' input sources supported by inputSourceByChunk.
+ *
+ * This includes std.stdio.File objects and mutable dynamic ubyte arrays (inputRange
+ * with slicing).
+ *
+ * Note: The mutable, dynamic arrays restriction is based on what is supported by
+ * std.range.chunks. This could be extended to include any type of array with ubyte
+ * elements, but it would require custom code in inputSourceByChunk. A test could be
+ * added as '(isArray!(R) && is(Unqual!(typeof(R.init[0])) == ubyte))'.
+ */
+enum bool isBufferableInputSource(R) =
+    isFileHandle!(Unqual!R) ||
+    (isInputRange!R && is(ElementEncodingType!R == ubyte) && hasSlicing!R);
+
+@safe unittest
+{
+    static assert(isBufferableInputSource!(File));
+    static assert(isBufferableInputSource!(typeof(stdin)));
+    static assert(isBufferableInputSource!(ubyte[]));
+    static assert(!isBufferableInputSource!(char[]));
+    static assert(!isBufferableInputSource!(string));
+
+    ubyte[10] x1;
+    const ubyte[1] x2;
+    immutable ubyte[1] x3;
+    ubyte[] x4 = new ubyte[](10);
+    const ubyte[] x5 = new ubyte[](10);
+    immutable ubyte[] x6 = new ubyte[](10);
+
+    static assert(!isBufferableInputSource!(typeof(x1)));
+    static assert(!isBufferableInputSource!(typeof(x2)));
+    static assert(!isBufferableInputSource!(typeof(x3)));
+    static assert(isBufferableInputSource!(typeof(x4)));
+    static assert(!isBufferableInputSource!(typeof(x5)));
+    static assert(!isBufferableInputSource!(typeof(x6)));
+
+    static assert(is(Unqual!(ElementType!(typeof(x1))) == ubyte));
+    static assert(is(Unqual!(ElementType!(typeof(x2))) == ubyte));
+    static assert(is(Unqual!(ElementType!(typeof(x3))) == ubyte));
+    static assert(is(Unqual!(ElementType!(typeof(x4))) == ubyte));
+    static assert(is(Unqual!(ElementType!(typeof(x5))) == ubyte));
+    static assert(is(Unqual!(ElementType!(typeof(x6))) == ubyte));
+
+    struct S1
+    {
+        void popFront();
+        @property bool empty();
+        @property ubyte front();
+    }
+
+    struct S2
+    {
+        @property ubyte front();
+        void popFront();
+        @property bool empty();
+        @property auto save() { return this; }
+        @property size_t length();
+        S2 opSlice(size_t, size_t);
+    }
+
+    static assert(isInputRange!S1);
+    static assert(!isBufferableInputSource!S1);
+
+    static assert(isInputRange!S2);
+    static assert(is(ElementEncodingType!S2 == ubyte));
+    static assert(hasSlicing!S2);
+    static assert(isBufferableInputSource!S2);
+
+    /* For code coverage. */
+    S2 s2;
+    auto x = s2.save;
+}
+
+/** inputSourceByChunk returns a range that reads either a file handle (File) or a
+ * ubyte[] array a chunk at a time.
+ *
+ * This is a cover for File.byChunk that allows passing an in-memory array as well.
+ * At present the motivation is primarily to enable unit testing of chunk-based
+ * algorithms using in-memory strings. At present the in-memory input types are
+ * limited. In the future this may be changed to accept any type of character or
+ * ubyte array.
+ *
+ * inputSourceByChunk takes either a File open for reading or a ubyte[] array
+ * containing input data. Data is read a buffer at a time. The buffer can be
+ * user provided, or allocated by inputSourceByChunk based on a caller provided
+ * buffer size.
+ *
+ * A ubyte[] input source must satisfy isBufferableInputSource, which at present
+ * means that it is a dynamic, mutable ubyte[].
+ *
+ * The chunks are returned as an input range.
+ */
+
+auto inputSourceByChunk(InputSource)(InputSource source, size_t size)
+{
+    return inputSourceByChunk(source, new ubyte[](size));
+}
+
+/// Ditto
+auto inputSourceByChunk(InputSource)(InputSource source, ubyte[] buffer)
+if (isBufferableInputSource!InputSource)
+{
+    static if (isFileHandle!(Unqual!InputSource))
+    {
+        return source.byChunk(buffer);
+    }
+    else
+    {
+        static struct BufferedChunk
+        {
+            private Chunks!InputSource _chunks;
+            private ubyte[] _buffer;
+
+            private void readNextChunk()
+            {
+                if (_chunks.empty)
+                {
+                    _buffer.length = 0;
+                }
+                else
+                {
+                    size_t len = _chunks.front.length;
+                    _buffer[0 .. len] = _chunks.front[];
+                    _chunks.popFront;
+
+                    // Only the last chunk should be shorter than the buffer.
+                    assert(_buffer.length == len || _chunks.empty);
+
+                    if (_buffer.length != len) _buffer.length = len;
+                }
+            }
+
+            this(InputSource source, ubyte[] buffer)
+            {
+                enforce(buffer.length > 0, "buffer size must be larger than 0");
+                _chunks = source.chunks(buffer.length);
+                _buffer = buffer;
+                readNextChunk();
+            }
+
+            @property bool empty()
+            {
+                return (_buffer.length == 0);
+            }
+
+            @property ubyte[] front()
+            {
+                assert(!empty, "Attempting to fetch the front of an empty inputSourceByChunks");
+                return _buffer;
+            }
+
+            void popFront()
+            {
+                assert(!empty, "Attempting to popFront an empty inputSourceByChunks");
+                readNextChunk();
+            }
+        }
+
+        return BufferedChunk(source, buffer);
+    }
+}
+
+unittest  // inputSourceByChunk
+{
+    import tsv_utils.common.unittest_utils;   // tsv-utils unit test helpers
+    import std.file : mkdir, rmdirRecurse;
+    import std.path : buildPath;
+
+    auto testDir = makeUnittestTempDir("csv2tsv_inputSourceByChunk");
+    scope(exit) testDir.rmdirRecurse;
+
+    import std.algorithm : equal, joiner;
+    import std.format;
+    import std.string : representation;
+
+    auto charData = "abcde,ßÀß,あめりか物語,012345";
+    ubyte[] ubyteData = charData.dup.representation;
+
+    ubyte[1024] rawBuffer;  // Must be larger than largest bufferSize in tests.
+
+    void writeFileData(string filePath, ubyte[] data)
+    {
+        import std.stdio;
+
+        auto f = filePath.File("w");
+        f.rawWrite(data);
+        f.close;
+    }
+
+    foreach (size_t dataSize; 0 .. ubyteData.length)
+    {
+        auto data = ubyteData[0 .. dataSize];
+        auto filePath = buildPath(testDir, format("data_%d.txt", dataSize));
+        writeFileData(filePath, data);
+
+        foreach (size_t bufferSize; 1 .. dataSize + 2)
+        {
+            assert(data.inputSourceByChunk(bufferSize).joiner.equal(data),
+                   format("[Test-A] dataSize: %d, bufferSize: %d", dataSize, bufferSize));
+
+            assert (rawBuffer.length >= bufferSize);
+
+            ubyte[] buffer = rawBuffer[0 .. bufferSize];
+            assert(data.inputSourceByChunk(buffer).joiner.equal(data),
+                   format("[Test-B] dataSize: %d, bufferSize: %d", dataSize, bufferSize));
+
+            {
+                auto inputStream = filePath.File;
+                assert(inputStream.inputSourceByChunk(bufferSize).joiner.equal(data),
+                       format("[Test-C] dataSize: %d, bufferSize: %d", dataSize, bufferSize));
+                inputStream.close;
+            }
+
+            {
+                auto inputStream = filePath.File;
+                assert(inputStream.inputSourceByChunk(buffer).joiner.equal(data),
+                       format("[Test-D] dataSize: %d, bufferSize: %d", dataSize, bufferSize));
+                inputStream.close;
+            }
+        }
     }
 }
 
 /** Read CSV from an input source, covert to TSV and write to an output source.
  *
  * Params:
- *   InputRange          =  A ubyte input range to read CSV text from. A ubyte range
- *                          matched byChunck. It also avoids convesion to dchar by front().
- *   OutputRange         =  An output range to write TSV text to.
- *   filename            =  Name of file to use when reporting errors. A descriptive name
- *                       =  can be used in lieu of a file name.
- *   currFileLineNumber  =  First line being processed. Used when reporting errors. Needed
- *                          only when part of the input has already been processed.
- *   csvQuote            =  The quoting character used in the input CSV file.
- *   csvDelim            =  The field delimiter character used in the input CSV file.
- *   tsvDelim            =  The field delimiter character to use in the generated TSV file.
- *   tsvDelimReplacement =  A string to use when replacing newlines and TSV field delimiters
- *                          occurring in CSV fields.
- *   maxRecords          =  The maximum number of records to process (output lines). This is
- *                          intended to support processing the header line separately.
+ *   inputSource           =  A "bufferable" input source, either a file open for
+ *                            read, or a dynamic, mutable ubyte array.
+ *   outputStream          =  An output range to write TSV bytes to.
+ *   readBuffer            =  A buffer to use for reading.
+ *   filename              =  Name of file to use when reporting errors. A descriptive
+ *                            name can be used in lieu of a file name.
+ *   skipLines             =  Number of lines to skip before outputting records.
+ *                            Typically used to skip writing header lines.
+ *   csvQuote              =  The quoting character used in the CSV input.
+ *   csvDelim              =  The field delimiter character used in the CSV input.
+ *   tsvDelim              =  The field delimiter character to use in the TSV output.
+ *   tsvDelimReplacement   =  String to use when replacing TSV field delimiters
+ *                            (e.g. TABs) found in the CSV data fields.
+ *   tsvNewlineReplacement =  String to use when replacing newlines found in the CSV
+ *                            data fields.
  *
  * Throws: Exception on finding inconsistent CSV. Exception text includes the filename and
  *         line number where the error was identified.
  */
-void csv2tsv(InputRange, OutputRange)
-    (auto ref InputRange inputStream, auto ref OutputRange outputStream,
-     string filename = "(none)", size_t currFileLineNumber = 0,
-     const char csvQuote = '"', const char csvDelim = ',', const char tsvDelim = '\t',
-     string tsvDelimReplacement = " ",
-     NullableSizeT maxRecords=NullableSizeT.init,
-     )
-if (isInputRange!InputRange && isOutputRange!(OutputRange, char) &&
-    is(Unqual!(ElementType!InputRange) == ubyte))
+void csv2tsv(InputSource, OutputRange)(
+    InputSource inputSource,
+    auto ref OutputRange outputStream,
+    ubyte[] readBuffer,
+    string filename = "(none)",
+    size_t skipLines = 0,
+    const char csvQuote = '"',
+    const char csvDelim = ',',
+    const char tsvDelim = '\t',
+    const string tsvDelimReplacement = " ",
+    const string tsvNewlineReplacement = " ",
+)
+if (isBufferableInputSource!InputSource &&
+    isOutputRange!(OutputRange, char))
 {
-    enum State { FieldEnd, NonQuotedField, QuotedField, QuoteInQuotedField }
+    assert (readBuffer.length >= 1);
 
-    State currState = State.FieldEnd;
-    size_t recordNum = 1;      // Record number. Output line number.
-    size_t fieldNum = 0;       // Field on current line.
+    enum char LF = '\n';
+    enum char CR = '\r';
 
-InputLoop: while (!inputStream.empty)
+    /* Process state information - These variables are defined either in the outer
+     * context or within one of the foreach loops.
+     *
+     *   * recordNum - The current CSV input line/record number. Starts at one.
+     *   * fieldNum - Field number in the current line/record. Field numbers are
+     *     one-upped. The field number set to zero at the start of a new record,
+     *     prior to processing the first character of the first field on the record.
+     *   * byteIndex - Read buffer index of the current byte being processed.
+     *   * csvState - The current state of CSV processing. In particular, the state
+     *     of the finite state machine.
+     *   * writeRegionStart - Read buffer index where the next write starts from.
+     *   * nextIndex - The index of the current input ubyte being processed. The
+     *     current write region extends from the writeRegionStart to nextIndex.
+     *   * nextChar - The current input ubyte. The ubyte/char at nextIndex.
+     */
+
+    enum CSVState
     {
-        char nextChar = inputStream.front;
-        inputStream.popFront;
+     FieldEnd,           // Start of input or after consuming a field or record delimiter.
+     NonQuotedField,     // Processing a non-quoted field
+     QuotedField,        // Processing a quoted field
+     QuoteInQuotedField, // Last char was a quote in a quoted field
+     CRAtFieldEnd,       // Last char was a CR terminating a record/line
+     CRInQuotedField,    // Last char was a CR in a quoted field
+    }
 
-        if (nextChar == '\r')
+    CSVState csvState = CSVState.FieldEnd;
+    size_t recordNum = 1;
+    size_t fieldNum = 0;
+
+    foreach (inputChunk; inputSource.inputSourceByChunk(readBuffer))
+    {
+        size_t writeRegionStart = 0;
+
+        /* flushCurrentRegion flushes the current write region and moves the start of
+         * the next write region one byte past the end of the current region. If
+         * appendChars are provided they are ouput as well.
+         *
+         * This routine is called when the current character (byte) terminates the
+         * current write region and should not itself be output. That is why the next
+         * write region always starts one byte past the current region end.
+         */
+        void flushCurrentRegion(size_t regionEnd, const char[] appendChars = "")
         {
-            /* Collapse newline cases to '\n'. */
-            if (!inputStream.empty && inputStream.front == '\n')
+            assert(regionEnd <= inputChunk.length);
+
+            if (recordNum > skipLines)
             {
-                inputStream.popFront;
+                if (regionEnd > writeRegionStart)
+                {
+                    outputStream.put(inputChunk[writeRegionStart .. regionEnd]);
+                }
+                if (appendChars.length > 0)
+                {
+                    outputStream.put(appendChars);
+                }
             }
-            nextChar = '\n';
+
+            writeRegionStart = regionEnd + 1;
         }
 
-    OuterSwitch: final switch (currState)
+        foreach (size_t nextIndex, char nextChar; inputChunk)
         {
-        case State.FieldEnd:
-            /* Start of input or after consuming a field terminator. */
-            ++fieldNum;
+        OuterSwitch: final switch (csvState)
+            {
+            case CSVState.FieldEnd:
+                /* Start of input or after consuming a field terminator. */
+                ++fieldNum;
 
-            /* Note: Can't use a switch here do the 'goto case' to the OuterSwitch.  */
-            if (nextChar == csvQuote)
-            {
-                currState = State.QuotedField;
-                break OuterSwitch;
-            }
-            else
-            {
-                /* Processing state change only. Don't consume the character. */
-                currState = State.NonQuotedField;
-                goto case State.NonQuotedField;
-            }
-
-        case State.NonQuotedField:
-            switch (nextChar)
-            {
-            default:
-                put(outputStream, nextChar);
-                break OuterSwitch;
-            case csvDelim:
-                put(outputStream, tsvDelim);
-                currState = State.FieldEnd;
-                break OuterSwitch;
-            case tsvDelim:
-                put(outputStream, tsvDelimReplacement);
-                break OuterSwitch;
-            case '\n':
-                put(outputStream, '\n');
-                ++recordNum;
-                fieldNum = 0;
-                currState = State.FieldEnd;
-                if (!maxRecords.isNull && recordNum > maxRecords) break InputLoop;
-                else break OuterSwitch;
-            }
-
-        case State.QuotedField:
-            switch (nextChar)
-            {
-            default:
-                put(outputStream, nextChar);
-                break OuterSwitch;
-            case csvQuote:
-                /* Quote in a quoted field. Need to look at the next character.*/
-                if (!inputStream.empty)
+                /* Note: Can't use switch due to the 'goto case' to the OuterSwitch.  */
+                if (nextChar == csvQuote)
                 {
-                    currState = State.QuoteInQuotedField;
+                    flushCurrentRegion(nextIndex);
+                    csvState = CSVState.QuotedField;
+                    break OuterSwitch;
                 }
                 else
                 {
-                    /* End of input. A rare case: Quoted field on last line with no
-                     * following trailing newline. Reset the state to avoid triggering
-                     * an invalid quoted field exception, plus adding additional newline.
-                     */
-                    currState = State.FieldEnd;
+                    /* Processing state change only. Don't consume the character. */
+                    csvState = CSVState.NonQuotedField;
+                    goto case CSVState.NonQuotedField;
                 }
-                break OuterSwitch;
-            case '\n':
-                /* Newline in a quoted field. */
-                put(outputStream, tsvDelimReplacement);
-                break OuterSwitch;
-            case tsvDelim:
-                put(outputStream, tsvDelimReplacement);
-                break OuterSwitch;
-            }
 
-        case State.QuoteInQuotedField:
-            /* Just processed a quote in a quoted field. */
-            switch (nextChar)
-            {
-            case csvQuote:
-                put(outputStream, csvQuote);
-                currState = State.QuotedField;
-                break OuterSwitch;
-            case csvDelim:
-                put(outputStream, tsvDelim);
-                currState = State.FieldEnd;
-                break OuterSwitch;
-            case '\n':
-                put(outputStream, '\n');
-                ++recordNum;
-                fieldNum = 0;
-                currState = State.FieldEnd;
+            case CSVState.NonQuotedField:
+                switch (nextChar)
+                {
+                default:
+                    break OuterSwitch;
+                case csvDelim:
+                    inputChunk[nextIndex] = tsvDelim;
+                    csvState = CSVState.FieldEnd;
+                    break OuterSwitch;
+                case LF:
+                    if (recordNum == skipLines) flushCurrentRegion(nextIndex);
+                    ++recordNum;
+                    fieldNum = 0;
+                    csvState = CSVState.FieldEnd;
+                    break OuterSwitch;
+                case CR:
+                    inputChunk[nextIndex] = LF;
+                    if (recordNum == skipLines) flushCurrentRegion(nextIndex);
+                    ++recordNum;
+                    fieldNum = 0;
+                    csvState = CSVState.CRAtFieldEnd;
+                    break OuterSwitch;
+                case tsvDelim:
+                    if (tsvDelimReplacement.length == 1)
+                    {
+                        inputChunk[nextIndex] = tsvDelimReplacement[0];
+                    }
+                    else
+                    {
+                        flushCurrentRegion(nextIndex, tsvDelimReplacement);
+                    }
+                    break OuterSwitch;
+                }
 
-                if (!maxRecords.isNull && recordNum > maxRecords) break InputLoop;
-                else break OuterSwitch;
-            default:
-                throw new Exception(
-                    format("Invalid CSV. Improperly terminated quoted field. File: %s, Line: %d",
-                           (filename == "-") ? "Standard Input" : filename,
-                           currFileLineNumber + recordNum));
+            case CSVState.QuotedField:
+                switch (nextChar)
+                {
+                default:
+                    break OuterSwitch;
+                case csvQuote:
+                    /*
+                     * Flush the current region, without the double quote. Switch state
+                     * to QuoteInQuotedField, which determines whether to output a quote.
+                     */
+                    flushCurrentRegion(nextIndex);
+                    csvState = CSVState.QuoteInQuotedField;
+                    break OuterSwitch;
+
+                case tsvDelim:
+                    if (tsvDelimReplacement.length == 1)
+                    {
+                        inputChunk[nextIndex] = tsvDelimReplacement[0];
+                    }
+                    else
+                    {
+                        flushCurrentRegion(nextIndex, tsvDelimReplacement);
+                    }
+                    break OuterSwitch;
+                case LF:
+                    /* Newline in a quoted field. */
+                    if (tsvNewlineReplacement.length == 1)
+                    {
+                        inputChunk[nextIndex] = tsvNewlineReplacement[0];
+                        if (recordNum == skipLines) flushCurrentRegion(nextIndex);
+                    }
+                    else
+                    {
+                        flushCurrentRegion(nextIndex, tsvNewlineReplacement);
+                    }
+                    break OuterSwitch;
+                case CR:
+                    /* Carriage Return in a quoted field. */
+                    if (tsvNewlineReplacement.length == 1)
+                    {
+                        inputChunk[nextIndex] = tsvNewlineReplacement[0];
+                        if (recordNum == skipLines) flushCurrentRegion(nextIndex);
+                    }
+                    else
+                    {
+                        flushCurrentRegion(nextIndex, tsvNewlineReplacement);
+                    }
+                    csvState = CSVState.CRInQuotedField;
+                    break OuterSwitch;
+                }
+
+            case CSVState.QuoteInQuotedField:
+                /* Just processed a quote in a quoted field. The buffer, without the
+                 * quote, was just flushed. Only legal characters here are quote,
+                 * comma (field delimiter), newline (record delimiter).
+                 */
+                switch (nextChar)
+                {
+                case csvQuote:
+                    csvState = CSVState.QuotedField;
+                    break OuterSwitch;
+                case csvDelim:
+                    inputChunk[nextIndex] = tsvDelim;
+                    csvState = CSVState.FieldEnd;
+                    break OuterSwitch;
+                case LF:
+                    if (recordNum == skipLines) flushCurrentRegion(nextIndex);
+                    ++recordNum;
+                    fieldNum = 0;
+                    csvState = CSVState.FieldEnd;
+                    break OuterSwitch;
+                case CR:
+                    inputChunk[nextIndex] = LF;
+                    if (recordNum == skipLines) flushCurrentRegion(nextIndex);
+                    ++recordNum;
+                    fieldNum = 0;
+                    csvState = CSVState.CRAtFieldEnd;
+                    break OuterSwitch;
+                default:
+                    throw new Exception(
+                        format("Invalid CSV. Improperly terminated quoted field. File: %s, Line: %d",
+                               (filename == "-") ? "Standard Input" : filename,
+                               recordNum));
+                }
+
+            case CSVState.CRInQuotedField:
+                if (nextChar == LF)
+                {
+                    flushCurrentRegion(nextIndex);
+                    csvState = CSVState.QuotedField;
+                    break OuterSwitch;
+                }
+                else {
+                    /* Naked CR. State change only, don't consume current character. */
+                    csvState = CSVState.QuotedField;
+                    goto case CSVState.QuotedField;
+                }
+
+            case CSVState.CRAtFieldEnd:
+                if (nextChar == LF)
+                {
+                    flushCurrentRegion(nextIndex);
+                    csvState = CSVState.FieldEnd;
+                    break OuterSwitch;
+                }
+                else {
+                    /* Naked CR. State change only, don't consume current character. */
+                    csvState = CSVState.FieldEnd;
+                    goto case CSVState.FieldEnd;
+                }
             }
         }
+
+        /* End of buffer. */
+        if (writeRegionStart < inputChunk.length && recordNum > skipLines)
+        {
+            outputStream.put(inputChunk[writeRegionStart .. $]);
+        }
+
+        writeRegionStart = 0;
     }
 
-    enforce(currState != State.QuotedField,
+    enforce(csvState != CSVState.QuotedField,
             format("Invalid CSV. Improperly terminated quoted field. File: %s, Line: %d",
                    (filename == "-") ? "Standard Input" : filename,
-                   currFileLineNumber + recordNum));
+                   recordNum));
 
     if (fieldNum > 0) put(outputStream, '\n');    // Last line w/o terminating newline.
 }
@@ -446,6 +879,15 @@ unittest
     auto csv31a = "1-1\n2-1,2-2\n3-1,3-2,3-3\n\n,5-2\n,,6-3\n";
     auto csv32a = ",1-2,\"1-3\"\n\"2-1\",\"2-2\",\n\"3-1\",,\"3-3\"";
 
+    // Newlines terminating a line ending a non-quoted field
+    auto csv33a = "\rX\r\nX\n\r\nX\r\n";
+
+    // Newlines inside a quoted field and terminating a line following a quoted field
+    auto csv34a = "\"\r\",\"X\r\",\"X\rY\",\"\rY\"\r\"\r\n\",\"X\r\n\",\"X\r\nY\",\"\r\nY\"\r\n\"\n\",\"X\n\",\"X\nY\",\"\nY\"\n";
+
+    // CR at field end
+    auto csv35a = "abc,def\r\"ghi\",\"jkl\"\r\"mno\",pqr\r";
+
     /* Set B has the same data and TSV results as set A, but uses # for quote and ^ for comma. */
     auto csv1b = "a^b^c";
     auto csv2b = "a^bc^^^def";
@@ -479,6 +921,9 @@ unittest
     auto csv30b = "$^$\n#$#^#$$#^$$\n#^##$#^#$##^#^###$^#^#^$###\n";
     auto csv31b = "1-1\n2-1^2-2\n3-1^3-2^3-3\n\n^5-2\n^^6-3\n";
     auto csv32b = "^1-2^#1-3#\n#2-1#^#2-2#^\n#3-1#^^#3-3#";
+    auto csv33b = "\rX\r\nX\n\r\nX\r\n";
+    auto csv34b = "#\r#^#X\r#^#X\rY#^#\rY#\r#\r\n#^#X\r\n#^#X\r\nY#^#\r\nY#\r\n#\n#^#X\n#^#X\nY#^#\nY#\n";
+    auto csv35b = "abc^def\r#ghi#^#jkl#\r#mno#^pqr\r";
 
     /* The expected results for csv sets A and B. This is for the default TSV delimiters.*/
     auto tsv1 = "a\tb\tc\n";
@@ -513,6 +958,9 @@ unittest
     auto tsv30 = "$\t$\n$\t$$\t$$\n^#$\t$#^\t#$^\t^$#\n";
     auto tsv31 = "1-1\n2-1\t2-2\n3-1\t3-2\t3-3\n\n\t5-2\n\t\t6-3\n";
     auto tsv32 = "\t1-2\t1-3\n2-1\t2-2\t\n3-1\t\t3-3\n";
+    auto tsv33 = "\nX\nX\n\nX\n";
+    auto tsv34 = " \tX \tX Y\t Y\n \tX \tX Y\t Y\n \tX \tX Y\t Y\n";
+    auto tsv35 = "abc\tdef\nghi\tjkl\nmno\tpqr\n";
 
     /* The TSV results for CSV sets 1a and 1b, but with $ as the delimiter rather than tab.
      * This will also result in different replacements when TAB and $ appear in the CSV.
@@ -549,6 +997,9 @@ unittest
     auto tsv30_x = " $ \n $  $  \n^# $ #^$# ^$^ #\n";
     auto tsv31_x = "1-1\n2-1$2-2\n3-1$3-2$3-3\n\n$5-2\n$$6-3\n";
     auto tsv32_x = "$1-2$1-3\n2-1$2-2$\n3-1$$3-3\n";
+    auto tsv33_x = "\nX\nX\n\nX\n";
+    auto tsv34_x = " $X $X Y$ Y\n $X $X Y$ Y\n $X $X Y$ Y\n";
+    auto tsv35_x = "abc$def\nghi$jkl\nmno$pqr\n";
 
     /* The TSV results for CSV sets 1a and 1b, but with $ as the delimiter rather than tab,
      * and with the delimiter/newline replacement string being |--|. Basically, newlines
@@ -586,269 +1037,148 @@ unittest
     auto tsv30_y = "|--|$|--|\n|--|$|--||--|$|--||--|\n^#|--|$|--|#^$#|--|^$^|--|#\n";
     auto tsv31_y = "1-1\n2-1$2-2\n3-1$3-2$3-3\n\n$5-2\n$$6-3\n";
     auto tsv32_y = "$1-2$1-3\n2-1$2-2$\n3-1$$3-3\n";
+    auto tsv33_y = "\nX\nX\n\nX\n";
+    auto tsv34_y = "|--|$X|--|$X|--|Y$|--|Y\n|--|$X|--|$X|--|Y$|--|Y\n|--|$X|--|$X|--|Y$|--|Y\n";
+    auto tsv35_y = "abc$def\nghi$jkl\nmno$pqr\n";
 
+    /* The TSV results for CSV sets 1a and 1b, but with the TAB replacement as |TAB|
+     * and newline replacement |NL|.
+     */
+    auto tsv1_z = "a\tb\tc\n";
+    auto tsv2_z = "a\tbc\t\t\tdef\n";
+    auto tsv3_z = "\ta\t b \t cd \t\n";
+    auto tsv4_z = "ß\tßÀß\tあめりか物語\t书名: 五色石\n";
+    auto tsv5_z = "<NL>\t<NL><NL>\t<NL><NL><NL>\n";
+    auto tsv6_z = "<TAB>\t<TAB><TAB>\t<TAB><TAB><TAB>\n";
+    auto tsv7_z = ",\t,,\t,,,\n";
+    auto tsv8_z = "\t\"\t\"\"\n";
+    auto tsv9_z = "ab, de<TAB>fg\"<NL>hij\n";
+    auto tsv10_z = "";
+    auto tsv11_z = "\t\n";
+    auto tsv12_z = "\t\t\n";
+    auto tsv13_z = "<NL>\t<NL><NL>\t<NL><NL><NL>\n";
+    auto tsv14_z = "<NL>\t<NL><NL>\t<NL><NL><NL>\n";
+    auto tsv15_z = "ab, de<TAB>fg\"<NL>hij\n";
+    auto tsv16_z = "ab, de<TAB>fg\"<NL>hij\n";
+    auto tsv17_z = "ab\"\tab\"cd\n";
+    auto tsv18_z = "\n\n\n";
+    auto tsv19_z = "<TAB>\n";
+    auto tsv20_z = "<TAB><TAB>\n";
+    auto tsv21_z = "a\n";
+    auto tsv22_z = "a\t\n";
+    auto tsv23_z = "a\tb\n";
+    auto tsv24_z = "\t\n";
+    auto tsv25_z = "#\n";
+    auto tsv26_z = "^\n";
+    auto tsv27_z = "#^#\n";
+    auto tsv28_z = "^#^\n";
+    auto tsv29_z = "$\n";
+    auto tsv30_z = "$\t$\n$\t$$\t$$\n^#$\t$#^\t#$^\t^$#\n";
+    auto tsv31_z = "1-1\n2-1\t2-2\n3-1\t3-2\t3-3\n\n\t5-2\n\t\t6-3\n";
+    auto tsv32_z = "\t1-2\t1-3\n2-1\t2-2\t\n3-1\t\t3-3\n";
+    auto tsv33_z = "\nX\nX\n\nX\n";
+    auto tsv34_z = "<NL>\tX<NL>\tX<NL>Y\t<NL>Y\n<NL>\tX<NL>\tX<NL>Y\t<NL>Y\n<NL>\tX<NL>\tX<NL>Y\t<NL>Y\n";
+    auto tsv35_z = "abc\tdef\nghi\tjkl\nmno\tpqr\n";
+
+    /* Aggregate the test data into parallel arrays. */
     auto csvSet1a = [csv1a, csv2a, csv3a, csv4a, csv5a, csv6a, csv7a, csv8a, csv9a, csv10a,
                      csv11a, csv12a, csv13a, csv14a, csv15a, csv16a, csv17a, csv18a, csv19a, csv20a,
                      csv21a, csv22a, csv23a, csv24a, csv25a, csv26a, csv27a, csv28a, csv29a, csv30a,
-                     csv31a, csv32a];
+                     csv31a, csv32a, csv33a, csv34a, csv35a];
 
     auto csvSet1b = [csv1b, csv2b, csv3b, csv4b, csv5b, csv6b, csv7b, csv8b, csv9b, csv10b,
                      csv11b, csv12b, csv13b, csv14b, csv15b, csv16b, csv17b, csv18b, csv19b, csv20b,
                      csv21b, csv22b, csv23b, csv24b, csv25b, csv26b, csv27b, csv28b, csv29b, csv30b,
-                     csv31b, csv32b];
+                     csv31b, csv32b, csv33b, csv34b, csv35b];
 
     auto tsvSet1  = [tsv1, tsv2, tsv3, tsv4, tsv5, tsv6, tsv7, tsv8, tsv9, tsv10,
                      tsv11, tsv12, tsv13, tsv14, tsv15, tsv16, tsv17, tsv18, tsv19, tsv20,
                      tsv21, tsv22, tsv23, tsv24, tsv25, tsv26, tsv27, tsv28, tsv29, tsv30,
-                     tsv31, tsv32];
+                     tsv31, tsv32, tsv33, tsv34, tsv35];
 
     auto tsvSet1_x  = [tsv1_x, tsv2_x, tsv3_x, tsv4_x, tsv5_x, tsv6_x, tsv7_x, tsv8_x, tsv9_x, tsv10_x,
                        tsv11_x, tsv12_x, tsv13_x, tsv14_x, tsv15_x, tsv16_x, tsv17_x, tsv18_x, tsv19_x, tsv20_x,
                        tsv21_x, tsv22_x, tsv23_x, tsv24_x, tsv25_x, tsv26_x, tsv27_x, tsv28_x, tsv29_x, tsv30_x,
-                       tsv31_x, tsv32_x];
+                       tsv31_x, tsv32_x, tsv33_x, tsv34_x, tsv35_x];
 
     auto tsvSet1_y  = [tsv1_y, tsv2_y, tsv3_y, tsv4_y, tsv5_y, tsv6_y, tsv7_y, tsv8_y, tsv9_y, tsv10_y,
                        tsv11_y, tsv12_y, tsv13_y, tsv14_y, tsv15_y, tsv16_y, tsv17_y, tsv18_y, tsv19_y, tsv20_y,
                        tsv21_y, tsv22_y, tsv23_y, tsv24_y, tsv25_y, tsv26_y, tsv27_y, tsv28_y, tsv29_y, tsv30_y,
-                       tsv31_y, tsv32_y];
+                       tsv31_y, tsv32_y, tsv33_y, tsv34_y, tsv35_y];
 
-    foreach (i, csva, csvb, tsv, tsv_x, tsv_y; lockstep(csvSet1a, csvSet1b, tsvSet1, tsvSet1_x, tsvSet1_y))
+    auto tsvSet1_z  = [tsv1_z, tsv2_z, tsv3_z, tsv4_z, tsv5_z, tsv6_z, tsv7_z, tsv8_z, tsv9_z, tsv10_z,
+                       tsv11_z, tsv12_z, tsv13_z, tsv14_z, tsv15_z, tsv16_z, tsv17_z, tsv18_z, tsv19_z, tsv20_z,
+                       tsv21_z, tsv22_z, tsv23_z, tsv24_z, tsv25_z, tsv26_z, tsv27_z, tsv28_z, tsv29_z, tsv30_z,
+                       tsv31_z, tsv32_z, tsv33_z, tsv34_z, tsv35_z];
+
+    /* The tests. */
+    auto bufferSizeTests = [1, 2, 3, 8, 128];
+
+    foreach (bufferSize; bufferSizeTests)
     {
-        import std.conv : to;
+        ubyte[] readBuffer = new ubyte[](bufferSize);
 
-        /* Byte streams for csv2tsv. Consumed by csv2tsv, so need to be reset when re-used. */
-        ubyte[] csvInputA = cast(ubyte[])csva;
-        ubyte[] csvInputB = cast(ubyte[])csvb;
+        foreach (i, csva, csvb, tsv, tsv_x, tsv_y, tsv_z; lockstep(csvSet1a, csvSet1b, tsvSet1, tsvSet1_x, tsvSet1_y, tsvSet1_z))
+        {
+            import std.conv : to;
 
-        /* CSV Set A vs TSV expected. */
-        auto tsvResultA = appender!(char[])();
-        csv2tsv(csvInputA, tsvResultA, "csvInputA_defaultTSV", i);
-        assert(tsv == tsvResultA.data,
-               format("Unittest failure. tsv != tsvResultA.data. Test: %d\ncsv: |%s|\ntsv: |%s|\nres: |%s|\n",
-                      i + 1, csva, tsv, tsvResultA.data));
+            /* Byte streams for csv2tsv. Consumed by csv2tsv, so need to be reset when re-used. */
+            ubyte[] csvInputA = cast(ubyte[])csva;
+            ubyte[] csvInputB = cast(ubyte[])csvb;
 
-        /* CSV Set B vs TSV expected. Different CSV delimiters, same TSV results as CSV Set A.*/
-        auto tsvResultB = appender!(char[])();
-        csv2tsv(csvInputB, tsvResultB, "csvInputB_defaultTSV", i, '#', '^');
-        assert(tsv == tsvResultB.data,
-               format("Unittest failure. tsv != tsvResultB.data.  Test: %d\ncsv: |%s|\ntsv: |%s|\nres: |%s|\n",
-                      i + 1, csvb, tsv, tsvResultB.data));
+            /* CSV Set A vs TSV expected. */
+            auto tsvResultA = appender!(char[])();
+            csv2tsv(csvInputA, tsvResultA, readBuffer, "csvInputA_defaultTSV");
+            assert(tsv == tsvResultA.data,
+                   format("Unittest failure. tsv != tsvResultA.data. Test: %d\ncsv: |%s|\ntsv: |%s|\nres: |%s|\n",
+                          i + 1, csva, tsv, tsvResultA.data));
 
-        /* CSV Set A and TSV with $ separator.*/
-        csvInputA = cast(ubyte[])csva;
-        auto tsvResult_XA = appender!(char[])();
-        csv2tsv(csvInputA, tsvResult_XA, "csvInputA_TSV_WithDollarDelimiter", i, '"', ',', '$');
-        assert(tsv_x == tsvResult_XA.data,
-               format("Unittest failure. tsv_x != tsvResult_XA.data. Test: %d\ncsv: |%s|\ntsv: |%s|\nres: |%s|\n",
-                      i + 1, csva, tsv_x, tsvResult_XA.data));
+            /* CSV Set B vs TSV expected. Different CSV delimiters, same TSV results as CSV Set A.*/
+            auto tsvResultB = appender!(char[])();
+            csv2tsv(csvInputB, tsvResultB, readBuffer, "csvInputB_defaultTSV", 0, '#', '^');
+            assert(tsv == tsvResultB.data,
+                   format("Unittest failure. tsv != tsvResultB.data.  Test: %d\ncsv: |%s|\ntsv: |%s|\nres: |%s|\n",
+                          i + 1, csvb, tsv, tsvResultB.data));
 
-        /* CSV Set B and TSV with $ separator. Same TSV results as CSV Set A.*/
-        csvInputB = cast(ubyte[])csvb;
-        auto tsvResult_XB = appender!(char[])();
-        csv2tsv(csvInputB, tsvResult_XB, "csvInputB__TSV_WithDollarDelimiter", i, '#', '^', '$');
-        assert(tsv_x == tsvResult_XB.data,
-               format("Unittest failure. tsv_x != tsvResult_XB.data.  Test: %d\ncsv: |%s|\ntsv: |%s|\nres: |%s|\n",
-                      i + 1, csvb, tsv_x, tsvResult_XB.data));
+            /* CSV Set A and TSV with $ separator.*/
+            csvInputA = cast(ubyte[])csva;
+            auto tsvResult_XA = appender!(char[])();
+            csv2tsv(csvInputA, tsvResult_XA, readBuffer, "csvInputA_TSV_WithDollarDelimiter", 0, '"', ',', '$');
+            assert(tsv_x == tsvResult_XA.data,
+                   format("Unittest failure. tsv_x != tsvResult_XA.data. Test: %d\ncsv: |%s|\ntsv: |%s|\nres: |%s|\n",
+                          i + 1, csva, tsv_x, tsvResult_XA.data));
 
-        /* CSV Set A and TSV with $ separator and tsv delimiter/newline replacement. */
-        csvInputA = cast(ubyte[])csva;
-        auto tsvResult_YA = appender!(char[])();
-        csv2tsv(csvInputA, tsvResult_YA, "csvInputA_TSV_WithDollarAndDelimReplacement", i, '"', ',', '$', "|--|");
-        assert(tsv_y == tsvResult_YA.data,
-               format("Unittest failure. tsv_y != tsvResult_YA.data. Test: %d\ncsv: |%s|\ntsv: |%s|\nres: |%s|\n",
-                      i + 1, csva, tsv_y, tsvResult_YA.data));
+            /* CSV Set B and TSV with $ separator. Same TSV results as CSV Set A.*/
+            csvInputB = cast(ubyte[])csvb;
+            auto tsvResult_XB = appender!(char[])();
+            csv2tsv(csvInputB, tsvResult_XB, readBuffer, "csvInputB__TSV_WithDollarDelimiter", 0, '#', '^', '$');
+            assert(tsv_x == tsvResult_XB.data,
+                   format("Unittest failure. tsv_x != tsvResult_XB.data.  Test: %d\ncsv: |%s|\ntsv: |%s|\nres: |%s|\n",
+                          i + 1, csvb, tsv_x, tsvResult_XB.data));
 
-        /* CSV Set A and TSV with $ separator and tsv delimiter/newline replacement. Same TSV as CSV Set A.*/
-        csvInputB = cast(ubyte[])csvb;
-        auto tsvResult_YB = appender!(char[])();
-        csv2tsv(csvInputB, tsvResult_YB, "csvInputB__TSV_WithDollarAndDelimReplacement", i, '#', '^', '$', "|--|");
-        assert(tsv_y == tsvResult_YB.data,
-               format("Unittest failure. tsv_y != tsvResult_YB.data.  Test: %d\ncsv: |%s|\ntsv: |%s|\nres: |%s|\n",
-                      i + 1, csvb, tsv_y, tsvResult_YB.data));
+            /* CSV Set A and TSV with $ separator and tsv delimiter/newline replacement. */
+            csvInputA = cast(ubyte[])csva;
+            auto tsvResult_YA = appender!(char[])();
+            csv2tsv(csvInputA, tsvResult_YA, readBuffer, "csvInputA_TSV_WithDollarAndDelimReplacement", 0, '"', ',', '$', "|--|", "|--|");
+            assert(tsv_y == tsvResult_YA.data,
+                   format("Unittest failure. tsv_y != tsvResult_YA.data. Test: %d\ncsv: |%s|\ntsv: |%s|\nres: |%s|\n",
+                          i + 1, csva, tsv_y, tsvResult_YA.data));
 
-    }
-}
+            /* CSV Set B and TSV with $ separator and tsv delimiter/newline replacement. Same TSV as CSV Set A.*/
+            csvInputB = cast(ubyte[])csvb;
+            auto tsvResult_YB = appender!(char[])();
+            csv2tsv(csvInputB, tsvResult_YB, readBuffer, "csvInputB__TSV_WithDollarAndDelimReplacement", 0, '#', '^', '$', "|--|", "|--|");
+            assert(tsv_y == tsvResult_YB.data,
+                   format("Unittest failure. tsv_y != tsvResult_YB.data.  Test: %d\ncsv: |%s|\ntsv: |%s|\nres: |%s|\n",
+                          i + 1, csvb, tsv_y, tsvResult_YB.data));
 
-unittest
-{
-    /* Unit tests for 'maxRecords' feature of the csv2tsv function.
-     */
-
-    /* Input CSV. */
-    auto csv1 = "";
-    auto csv2 = ",";
-    auto csv3 = "a";
-    auto csv4 = "a\n";
-    auto csv5 = "a\nb";
-    auto csv6 = "a\nb\n";
-    auto csv7 = "a\nb\nc";
-    auto csv8 = "a\nb\nc\n";
-    auto csv9 = "a,aa";
-    auto csv10 = "a,aa\n";
-    auto csv11 = "a,aa\nb,bb";
-    auto csv12 = "a,aa\nb,bb\n";
-    auto csv13 = "a,aa\nb,bb\nc,cc";
-    auto csv14 = "a,aa\nb,bb\nc,cc\n";
-
-    auto csv15 = "\"a\",\"aa\"";
-    auto csv16 = "\"a\",\"aa\"\n";
-    auto csv17 = "\"a\",\"aa\"\n\"b\",\"bb\"";
-    auto csv18 = "\"a\",\"aa\"\n\"b\",\"bb\"\n";
-    auto csv19 = "\"a\",\"aa\"\n\"b\",\"bb\"\n\"c\",\"cc\"";
-    auto csv20 = "\"a\",\"aa\"\n\"b\",\"bb\"\n\"c\",\"cc\"\n";
-
-    /* TSV with max 1 record. */
-    auto tsv1_max1 = "";
-    auto tsv2_max1 = "\t\n";
-    auto tsv3_max1 = "a\n";
-    auto tsv4_max1 = "a\n";
-    auto tsv5_max1 = "a\n";
-    auto tsv6_max1 = "a\n";
-    auto tsv7_max1 = "a\n";
-    auto tsv8_max1 = "a\n";
-    auto tsv9_max1 = "a\taa\n";
-    auto tsv10_max1 = "a\taa\n";
-    auto tsv11_max1 = "a\taa\n";
-    auto tsv12_max1 = "a\taa\n";
-    auto tsv13_max1 = "a\taa\n";
-    auto tsv14_max1 = "a\taa\n";
-
-    auto tsv15_max1 = "a\taa\n";
-    auto tsv16_max1 = "a\taa\n";
-    auto tsv17_max1 = "a\taa\n";
-    auto tsv18_max1 = "a\taa\n";
-    auto tsv19_max1 = "a\taa\n";
-    auto tsv20_max1 = "a\taa\n";
-
-    /* Remaining TSV converted after first call. */
-    auto tsv1_max1_rest = "";
-    auto tsv2_max1_rest = "";
-    auto tsv3_max1_rest = "";
-    auto tsv4_max1_rest = "";
-    auto tsv5_max1_rest = "b\n";
-    auto tsv6_max1_rest = "b\n";
-    auto tsv7_max1_rest = "b\nc\n";
-    auto tsv8_max1_rest = "b\nc\n";
-    auto tsv9_max1_rest = "";
-    auto tsv10_max1_rest = "";
-    auto tsv11_max1_rest = "b\tbb\n";
-    auto tsv12_max1_rest = "b\tbb\n";
-    auto tsv13_max1_rest = "b\tbb\nc\tcc\n";
-    auto tsv14_max1_rest = "b\tbb\nc\tcc\n";
-
-    auto tsv15_max1_rest = "";
-    auto tsv16_max1_rest = "";
-    auto tsv17_max1_rest = "b\tbb\n";
-    auto tsv18_max1_rest = "b\tbb\n";
-    auto tsv19_max1_rest = "b\tbb\nc\tcc\n";
-    auto tsv20_max1_rest = "b\tbb\nc\tcc\n";
-
-    /* TSV with max 2 records. */
-    auto tsv1_max2 = "";
-    auto tsv2_max2 = "\t\n";
-    auto tsv3_max2 = "a\n";
-    auto tsv4_max2 = "a\n";
-    auto tsv5_max2 = "a\nb\n";
-    auto tsv6_max2 = "a\nb\n";
-    auto tsv7_max2 = "a\nb\n";
-    auto tsv8_max2 = "a\nb\n";
-    auto tsv9_max2 = "a\taa\n";
-    auto tsv10_max2 = "a\taa\n";
-    auto tsv11_max2 = "a\taa\nb\tbb\n";
-    auto tsv12_max2 = "a\taa\nb\tbb\n";
-    auto tsv13_max2 = "a\taa\nb\tbb\n";
-    auto tsv14_max2 = "a\taa\nb\tbb\n";
-
-    auto tsv15_max2 = "a\taa\n";
-    auto tsv16_max2 = "a\taa\n";
-    auto tsv17_max2 = "a\taa\nb\tbb\n";
-    auto tsv18_max2 = "a\taa\nb\tbb\n";
-    auto tsv19_max2 = "a\taa\nb\tbb\n";
-    auto tsv20_max2 = "a\taa\nb\tbb\n";
-
-    /* Remaining TSV converted after first call. */
-    auto tsv1_max2_rest = "";
-    auto tsv2_max2_rest = "";
-    auto tsv3_max2_rest = "";
-    auto tsv4_max2_rest = "";
-    auto tsv5_max2_rest = "";
-    auto tsv6_max2_rest = "";
-    auto tsv7_max2_rest = "c\n";
-    auto tsv8_max2_rest = "c\n";
-    auto tsv9_max2_rest = "";
-    auto tsv10_max2_rest = "";
-    auto tsv11_max2_rest = "";
-    auto tsv12_max2_rest = "";
-    auto tsv13_max2_rest = "c\tcc\n";
-    auto tsv14_max2_rest = "c\tcc\n";
-
-    auto tsv15_max2_rest = "";
-    auto tsv16_max2_rest = "";
-    auto tsv17_max2_rest = "";
-    auto tsv18_max2_rest = "";
-    auto tsv19_max2_rest = "c\tcc\n";
-    auto tsv20_max2_rest = "c\tcc\n";
-
-    auto csvSet1 =
-        [csv1, csv2, csv3, csv4, csv5, csv6, csv7,
-         csv8, csv9, csv10, csv11, csv12, csv13, csv14,
-         csv15, csv16, csv17, csv18, csv19, csv20 ];
-
-    auto tsvMax1Set1 =
-        [tsv1_max1, tsv2_max1, tsv3_max1, tsv4_max1, tsv5_max1, tsv6_max1, tsv7_max1,
-         tsv8_max1, tsv9_max1, tsv10_max1, tsv11_max1, tsv12_max1, tsv13_max1, tsv14_max1,
-         tsv15_max1, tsv16_max1, tsv17_max1, tsv18_max1, tsv19_max1, tsv20_max1];
-
-    auto tsvMax1RestSet1 =
-        [tsv1_max1_rest, tsv2_max1_rest, tsv3_max1_rest, tsv4_max1_rest, tsv5_max1_rest, tsv6_max1_rest, tsv7_max1_rest,
-         tsv8_max1_rest, tsv9_max1_rest, tsv10_max1_rest, tsv11_max1_rest, tsv12_max1_rest, tsv13_max1_rest, tsv14_max1_rest,
-         tsv15_max1_rest, tsv16_max1_rest, tsv17_max1_rest, tsv18_max1_rest, tsv19_max1_rest, tsv20_max1_rest];
-
-    auto tsvMax2Set1 =
-        [tsv1_max2, tsv2_max2, tsv3_max2, tsv4_max2, tsv5_max2, tsv6_max2, tsv7_max2,
-         tsv8_max2, tsv9_max2, tsv10_max2, tsv11_max2, tsv12_max2, tsv13_max2, tsv14_max2,
-         tsv15_max2, tsv16_max2, tsv17_max2, tsv18_max2, tsv19_max2, tsv20_max2];
-
-    auto tsvMax2RestSet1 =
-        [tsv1_max2_rest, tsv2_max2_rest, tsv3_max2_rest, tsv4_max2_rest, tsv5_max2_rest, tsv6_max2_rest, tsv7_max2_rest,
-         tsv8_max2_rest, tsv9_max2_rest, tsv10_max2_rest, tsv11_max2_rest, tsv12_max2_rest, tsv13_max2_rest, tsv14_max2_rest,
-         tsv15_max2_rest, tsv16_max2_rest, tsv17_max2_rest, tsv18_max2_rest, tsv19_max2_rest, tsv20_max2_rest];
-
-    foreach (i, csv, tsv_max1, tsv_max1_rest, tsv_max2, tsv_max2_rest;
-             lockstep(csvSet1, tsvMax1Set1, tsvMax1RestSet1, tsvMax2Set1, tsvMax2RestSet1))
-    {
-        /* Byte stream for csv2tsv. Consumed by csv2tsv, so need to be reset when re-used. */
-        ubyte[] csvInput = cast(ubyte[])csv;
-
-        /* Call with maxRecords == 1. */
-        auto tsvMax1Result = appender!(char[])();
-        csv2tsv(csvInput, tsvMax1Result, "maxRecords-one", i, '"', ',', '\t', " ", NullableSizeT(1));
-        assert(tsv_max1 == tsvMax1Result.data,
-               format("Unittest failure. tsv_max1 != tsvMax1Result.data. Test: %d\ncsv: |%s|\ntsv: |%s|\nres: |%s|\n",
-                      i + 1, csv, tsv_max1, tsvMax1Result.data));
-
-        /* Follow-up call getting all records remaining after the maxRecords==1 call. */
-        auto tsvMax1RestResult = appender!(char[])();
-        csv2tsv(csvInput, tsvMax1RestResult, "maxRecords-one-followup", i);
-        assert(tsv_max1_rest == tsvMax1RestResult.data,
-               format("Unittest failure. tsv_max1_rest != tsvMax1RestResult.data. Test: %d\ncsv: |%s|\ntsv: |%s|\nres: |%s|\n",
-                      i + 1, csv, tsv_max1_rest, tsvMax1RestResult.data));
-
-        /* Reset the input stream for maxRecords == 2. */
-        csvInput = cast(ubyte[])csv;
-
-        /* Call with maxRecords == 2. */
-        auto tsvMax2Result = appender!(char[])();
-        csv2tsv(csvInput, tsvMax2Result, "maxRecords-two", i, '"', ',', '\t', " ", NullableSizeT(2));
-        assert(tsv_max2 == tsvMax2Result.data,
-               format("Unittest failure. tsv_max2 != tsvMax2Result.data. Test: %d\ncsv: |%s|\ntsv: |%s|\nres: |%s|\n",
-                      i + 1, csv, tsv_max2, tsvMax2Result.data));
-
-        /* Follow-up call getting all records remaining after the maxRecords==2 call. */
-        auto tsvMax2RestResult = appender!(char[])();
-        csv2tsv(csvInput, tsvMax2RestResult, "maxRecords-two-followup", i);
-        assert(tsv_max2_rest == tsvMax2RestResult.data,
-               format("Unittest failure. tsv_max2_rest != tsvMax2RestResult.data. Test: %d\ncsv: |%s|\ntsv: |%s|\nres: |%s|\n",
-                      i + 1, csv, tsv_max2_rest, tsvMax2RestResult.data));
+            /* CSV Set A and TSV with TAB replacement as <TAB> and newline replacement as <NL>. Same TSV as CSV Set A.*/
+            csvInputA = cast(ubyte[])csva;
+            auto tsvResult_ZA = appender!(char[])();
+            csv2tsv(csvInputA, tsvResult_ZA, readBuffer, "csvInputA_TSV_WithDifferentTABandNLReplacements", 0, '"', ',', '\t', "<TAB>", "<NL>");
+            assert(tsv_z == tsvResult_ZA.data,
+                   format("Unittest failure. tsv_z != tsvResult_ZA.data. Test: %d\ncsv: |%s|\ntsv: |%s|\nres: |%s|\n",
+                          i + 1, csva, tsv_z, tsvResult_ZA.data));
+        }
     }
 }
