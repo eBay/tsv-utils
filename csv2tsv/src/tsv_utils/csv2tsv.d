@@ -359,7 +359,6 @@ enum bool isBufferableInputSource(R) =
     static assert(is(Unqual!(ElementType!(typeof(x5))) == ubyte));
     static assert(is(Unqual!(ElementType!(typeof(x6))) == ubyte));
 
-
     struct S1
     {
         void popFront();
@@ -384,6 +383,10 @@ enum bool isBufferableInputSource(R) =
     static assert(is(ElementEncodingType!S2 == ubyte));
     static assert(hasSlicing!S2);
     static assert(isBufferableInputSource!S2);
+
+    /* For code coverage. */
+    S2 s2;
+    auto x = s2.save;
 }
 
 /** inputSourceByChunk returns a range that reads either a file handle (File) or a
@@ -882,6 +885,9 @@ unittest
     // Newlines inside a quoted field and terminating a line following a quoted field
     auto csv34a = "\"\r\",\"X\r\",\"X\rY\",\"\rY\"\r\"\r\n\",\"X\r\n\",\"X\r\nY\",\"\r\nY\"\r\n\"\n\",\"X\n\",\"X\nY\",\"\nY\"\n";
 
+    // CR at field end
+    auto csv35a = "abc,def\r\"ghi\",\"jkl\"\r\"mno\",pqr\r";
+
     /* Set B has the same data and TSV results as set A, but uses # for quote and ^ for comma. */
     auto csv1b = "a^b^c";
     auto csv2b = "a^bc^^^def";
@@ -917,6 +923,7 @@ unittest
     auto csv32b = "^1-2^#1-3#\n#2-1#^#2-2#^\n#3-1#^^#3-3#";
     auto csv33b = "\rX\r\nX\n\r\nX\r\n";
     auto csv34b = "#\r#^#X\r#^#X\rY#^#\rY#\r#\r\n#^#X\r\n#^#X\r\nY#^#\r\nY#\r\n#\n#^#X\n#^#X\nY#^#\nY#\n";
+    auto csv35b = "abc^def\r#ghi#^#jkl#\r#mno#^pqr\r";
 
     /* The expected results for csv sets A and B. This is for the default TSV delimiters.*/
     auto tsv1 = "a\tb\tc\n";
@@ -953,6 +960,7 @@ unittest
     auto tsv32 = "\t1-2\t1-3\n2-1\t2-2\t\n3-1\t\t3-3\n";
     auto tsv33 = "\nX\nX\n\nX\n";
     auto tsv34 = " \tX \tX Y\t Y\n \tX \tX Y\t Y\n \tX \tX Y\t Y\n";
+    auto tsv35 = "abc\tdef\nghi\tjkl\nmno\tpqr\n";
 
     /* The TSV results for CSV sets 1a and 1b, but with $ as the delimiter rather than tab.
      * This will also result in different replacements when TAB and $ appear in the CSV.
@@ -991,6 +999,7 @@ unittest
     auto tsv32_x = "$1-2$1-3\n2-1$2-2$\n3-1$$3-3\n";
     auto tsv33_x = "\nX\nX\n\nX\n";
     auto tsv34_x = " $X $X Y$ Y\n $X $X Y$ Y\n $X $X Y$ Y\n";
+    auto tsv35_x = "abc$def\nghi$jkl\nmno$pqr\n";
 
     /* The TSV results for CSV sets 1a and 1b, but with $ as the delimiter rather than tab,
      * and with the delimiter/newline replacement string being |--|. Basically, newlines
@@ -1030,6 +1039,7 @@ unittest
     auto tsv32_y = "$1-2$1-3\n2-1$2-2$\n3-1$$3-3\n";
     auto tsv33_y = "\nX\nX\n\nX\n";
     auto tsv34_y = "|--|$X|--|$X|--|Y$|--|Y\n|--|$X|--|$X|--|Y$|--|Y\n|--|$X|--|$X|--|Y$|--|Y\n";
+    auto tsv35_y = "abc$def\nghi$jkl\nmno$pqr\n";
 
     /* The TSV results for CSV sets 1a and 1b, but with the TAB replacement as |TAB|
      * and newline replacement |NL|.
@@ -1068,37 +1078,38 @@ unittest
     auto tsv32_z = "\t1-2\t1-3\n2-1\t2-2\t\n3-1\t\t3-3\n";
     auto tsv33_z = "\nX\nX\n\nX\n";
     auto tsv34_z = "<NL>\tX<NL>\tX<NL>Y\t<NL>Y\n<NL>\tX<NL>\tX<NL>Y\t<NL>Y\n<NL>\tX<NL>\tX<NL>Y\t<NL>Y\n";
+    auto tsv35_z = "abc\tdef\nghi\tjkl\nmno\tpqr\n";
 
     /* Aggregate the test data into parallel arrays. */
     auto csvSet1a = [csv1a, csv2a, csv3a, csv4a, csv5a, csv6a, csv7a, csv8a, csv9a, csv10a,
                      csv11a, csv12a, csv13a, csv14a, csv15a, csv16a, csv17a, csv18a, csv19a, csv20a,
                      csv21a, csv22a, csv23a, csv24a, csv25a, csv26a, csv27a, csv28a, csv29a, csv30a,
-                     csv31a, csv32a, csv33a, csv34a];
+                     csv31a, csv32a, csv33a, csv34a, csv35a];
 
     auto csvSet1b = [csv1b, csv2b, csv3b, csv4b, csv5b, csv6b, csv7b, csv8b, csv9b, csv10b,
                      csv11b, csv12b, csv13b, csv14b, csv15b, csv16b, csv17b, csv18b, csv19b, csv20b,
                      csv21b, csv22b, csv23b, csv24b, csv25b, csv26b, csv27b, csv28b, csv29b, csv30b,
-                     csv31b, csv32b, csv33b, csv34b];
+                     csv31b, csv32b, csv33b, csv34b, csv35b];
 
     auto tsvSet1  = [tsv1, tsv2, tsv3, tsv4, tsv5, tsv6, tsv7, tsv8, tsv9, tsv10,
                      tsv11, tsv12, tsv13, tsv14, tsv15, tsv16, tsv17, tsv18, tsv19, tsv20,
                      tsv21, tsv22, tsv23, tsv24, tsv25, tsv26, tsv27, tsv28, tsv29, tsv30,
-                     tsv31, tsv32];
+                     tsv31, tsv32, tsv33, tsv34, tsv35];
 
     auto tsvSet1_x  = [tsv1_x, tsv2_x, tsv3_x, tsv4_x, tsv5_x, tsv6_x, tsv7_x, tsv8_x, tsv9_x, tsv10_x,
                        tsv11_x, tsv12_x, tsv13_x, tsv14_x, tsv15_x, tsv16_x, tsv17_x, tsv18_x, tsv19_x, tsv20_x,
                        tsv21_x, tsv22_x, tsv23_x, tsv24_x, tsv25_x, tsv26_x, tsv27_x, tsv28_x, tsv29_x, tsv30_x,
-                       tsv31_x, tsv32_x, tsv33_x, tsv34_x];
+                       tsv31_x, tsv32_x, tsv33_x, tsv34_x, tsv35_x];
 
     auto tsvSet1_y  = [tsv1_y, tsv2_y, tsv3_y, tsv4_y, tsv5_y, tsv6_y, tsv7_y, tsv8_y, tsv9_y, tsv10_y,
                        tsv11_y, tsv12_y, tsv13_y, tsv14_y, tsv15_y, tsv16_y, tsv17_y, tsv18_y, tsv19_y, tsv20_y,
                        tsv21_y, tsv22_y, tsv23_y, tsv24_y, tsv25_y, tsv26_y, tsv27_y, tsv28_y, tsv29_y, tsv30_y,
-                       tsv31_y, tsv32_y, tsv33_y, tsv34_y];
+                       tsv31_y, tsv32_y, tsv33_y, tsv34_y, tsv35_y];
 
     auto tsvSet1_z  = [tsv1_z, tsv2_z, tsv3_z, tsv4_z, tsv5_z, tsv6_z, tsv7_z, tsv8_z, tsv9_z, tsv10_z,
                        tsv11_z, tsv12_z, tsv13_z, tsv14_z, tsv15_z, tsv16_z, tsv17_z, tsv18_z, tsv19_z, tsv20_z,
                        tsv21_z, tsv22_z, tsv23_z, tsv24_z, tsv25_z, tsv26_z, tsv27_z, tsv28_z, tsv29_z, tsv30_z,
-                       tsv31_z, tsv32_z, tsv33_z, tsv34_z];
+                       tsv31_z, tsv32_z, tsv33_z, tsv34_z, tsv35_z];
 
     /* The tests. */
     auto bufferSizeTests = [1, 2, 3, 8, 128];
