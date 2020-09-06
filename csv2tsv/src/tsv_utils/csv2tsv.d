@@ -16,7 +16,7 @@ import std.exception : enforce;
 import std.format : format;
 import std.range;
 import std.traits : isArray, Unqual;
-import std.typecons : Nullable, tuple;
+import std.typecons : tuple;
 
 immutable helpText = q"EOS
 Synopsis: csv2tsv [options] [file...]
