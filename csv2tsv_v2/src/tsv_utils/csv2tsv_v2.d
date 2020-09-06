@@ -193,7 +193,6 @@ void csv2tsvFiles(const ref Csv2tsvOptions cmdopt, const string[] inputFiles)
     import tsv_utils.common.utils : BufferedOutputRange;
 
     ubyte[1024 * 128] fileRawBuf;
-    //ubyte[] stdinRawBuf = fileRawBuf[0..1024];
     auto stdoutWriter = BufferedOutputRange!(typeof(stdout))(stdout);
     bool firstFile = true;
 
@@ -213,43 +212,98 @@ void csv2tsvFiles(const ref Csv2tsvOptions cmdopt, const string[] inputFiles)
     }
 }
 
-/* General buffered conversion strategy
+/* csv2tsv buffered conversion approach
 
-The basic idea is to convert a buffer at a time, writing larger blocks to the output
-stream rather than one character at a time. Along with this, the buffer will be
-modified in-place when the only change is to convert a single character. This should
-optimize the common case of converting a CSV file with no escape CSV escapes. In all
-cases it should allow writing longer blocks at a time.
+This version of csv2tsv uses a buffered approach to csv-to-tsv conversion. This is a
+change from the original version, which used a character-at-a-time approach, with
+characters coming from an infinite stream of characters. The character-at-a-time
+approach was nice from a simplicity perspective, but the approach didn't optimize well.
+Note that the original version read input in blocks and wrote to stdout in blocks, it
+was the conversion algorithm itself that was character oriented.
 
-Handling CSV escapes will often cause the character removals and additions. These
-will not be representable in a continuous stream of bytes without moving bytes
-around. Instead of moving bytes, these cases are handled by immediate writing to the
-output stream. This allows restarting a new block of contiguous characters.
+The idea is to convert a buffer at a time, writing larger blocks to the output stream
+rather than one character at a time. In addition, the read buffer is modified in-place
+when the only change is to convert a single character. The notable case is converting
+the field delimiter character, typically comma to TAB. The result is writing longer
+blocks to the output stream (BufferedOutputRange).
 
-Character growth and shrink for all replacement character lengths:
+Performance improvements from the new algorithm are notable. This is especially true
+versus the previous version 2.0.0. Note though that the more recent versions of
+csv2tsv were slower due to degradations coming from compiler and/or language version.
+Version 1.1.19 was quite a bit faster. Regardless of version, the performance
+improvement is especially good when run against "simple" CSV files, with limited
+amounts of CSV escape syntax. In these files the main change is converting the field
+delimiter character, typically comma to TAB.
+
+In some benchmarks on Mac OS, the new version was 40% faster than csv2tsv 2.0.0 on
+files with significant CSV escapes, and 60% faster on files with limited CSV escapes.
+Versus csv2tsv version 1.1.19, the new version is 10% and 40% faster on the same
+files. On the "simple CSV" file, where Unix 'tr' is an option, 'tr' was still faster,
+by about 20%. But getting into the 'tr' ballpark while retaining safety of correct
+csv2tsv conversion is a good result.
+
+Algorithm notes:
+
+The algorithm works by reading an input block, then examing each byte in-order to
+identify needed modifications. The region of consecutive characters without a change
+is tracked. Single character changes are done in-place, in the read buffer. This
+allows assembling longer blocks before write is needed. The region being tracked is
+written to the output stream when it can no longer be extended in a continuous
+fashion. At this point a new region is started. When the current read buffer has
+been processed the current region is written out and a new block of data read in.
+
+The read buffer uses fixed size blocks. This means the algorithm is actually
+operating on bytes (UTF-8 code units), and not characters. This works because all
+delimiters and CSV escape syntax characters are single byte UTF-8 characters. These
+are the only characters requiring interpretation. The main nuisance is the 2-byte
+CRLF newline sequence, as this might be split across two read buffers. This is
+handled by embedding 'CR' states in the finite state machine.
+
+Processing CSV escapes will often cause the character removals and additions. These
+will not be representable in a continuous stream of bytes without moving bytes around
+Instead of moving bytes, these cases are handled by immediately  writing to the output
+stream. This allows restarting a new block of contiguous characters. Handling by the
+new algorithm is described below. Note that the length of the replacement characters
+for TSV field and record delimiters (e.g. TAB, newline) affects the processing.
+
+All replacement character lengths:
+
 * Windows newline (CRLF) at the end of a line - Replace the CRLF with LF.
+
   Replace the CR with LF, add it to the current write region and terminate it. The
   next write region starts at the character after the LF.
 
 * Double quote starting or ending a field - Drop the double quote.
+
   Terminate the current write region, next write region starts at the next character.
 
 * Double quote pair inside a quoted field - Drop one of the double quotes.
-  Best algo is likely to drop the first double quote and keep the second. This avoids
-  lookahead and both field terminating double quote and double quote pair can handled
-  the same way. Terminate the current write region without adding the double quote.
-  The next write region starts at the next character.
 
-Cases of character growth and shrink with single byte replacement characters:
-* Windows newline (CRLF) in a quoted field - Replace the CR with the replacement char,
-  add it to the current write region and terminate it. The next write region starts at
-  the character after the LF.
+  The algorithm drops the first double quote and keep the second. This avoids
+  look-ahead and both field terminating double quote and double quote pair can
+  handled the same way. Terminate the current write region without adding the double
+  quote. The next write region starts at the next character.
 
-Cases of character growth with multi-byte replacement sequences:
-* TSV Delimiter (TAB by default) in a field - Terminate the current write region,
-  writes it and the replacement. The next write region starts at the next character.
-* LF, CR, or CRLF in a quoted field - Terminate the current write region, write it and
-  the replacement. The next write region starts at the next character.
+Single byte replacement characters:
+
+* Windows newline (CRLF) in a quoted field
+
+  Replace the CR with the replacement char, add it to the current write region and
+  terminate it. The next write region starts at the character after the LF.
+
+Multi-byte replacement sequences:
+
+* TSV Delimiter (TAB by default) in a field
+
+  Terminate the current write region, write it out and the replacement. The next
+  write region starts at the next character.
+
+* LF, CR, or CRLF in a quoted field
+
+  Terminate the current write region, write it and the replacement. The next write
+  region starts at the next character.
+
+csv2tsv API
 
 At the API level, it is desirable to handle at both open files and input streams.
 Open files are the key requirement, but handling input streams simplifies unit
@@ -257,6 +311,9 @@ testing, and in-memory conversion is likely to be useful anyway. Internally, it
 should be easy enough to encapsulate the differences between input streams and files.
 Reading files can be done using File.byChunk and reading from input streams can be
 done using std.range.chunks.
+
+This has been handled by creating a new range that can iterate either files or
+input streams chunk-by-chunk.
 */
 
 /** Defines the 'bufferable' input sources supported by inputSourceByChunk.
@@ -334,11 +391,17 @@ enum bool isBufferableInputSource(R) =
  *
  * This is a cover for File.byChunk that allows passing an in-memory array as well.
  * At present the motivation is primarily to enable unit testing of chunk-based
- * algorithms using in-memory strings.
+ * algorithms using in-memory strings. At present the in-memory input types are
+ * limited. In the future this may be changed to accept any type of character or
+ * ubyte array.
  *
  * inputSourceByChunk takes either a File open for reading or a ubyte[] array
- * containing input data. It reads a chunk at a time, either into a user provided
- * buffer or a buffer allocated based on a size provided.
+ * containing input data. Data is read a buffer at a time. The buffer can be
+ * user provided, or allocated by inputSourceByChunk based on a caller provided
+ * buffer size.
+ *
+ * A ubyte[] input source must satisfy isBufferableInputSource, which at present
+ * means that it is a dynamic, mutable ubyte[].
  *
  * The chunks are returned as an input range.
  */
@@ -476,21 +539,21 @@ unittest  // inputSourceByChunk
 /** Read CSV from an input source, covert to TSV and write to an output source.
  *
  * Params:
- *   inputSource           =  A "bufferable" input source, either a file open for read, or a
- *                            dynamic ubyte array.
- *   outputStream          =  An output range to write TSV text to.
+ *   inputSource           =  A "bufferable" input source, either a file open for
+ *                            read, or a dynamic, mutable ubyte array.
+ *   outputStream          =  An output range to write TSV bytes to.
  *   readBuffer            =  A buffer to use for reading.
  *   filename              =  Name of file to use when reporting errors. A descriptive
  *                            name can be used in lieu of a file name.
- *   skipLines             =  Number of lines to skip before outputting records. Used
- *                            for header line processing.
- *   csvQuote              =  The quoting character used in the input CSV file.
- *   csvDelim              =  The field delimiter character used in the input CSV file.
- *   tsvDelim              =  The field delimiter character to use in the generated TSV file.
- *   tsvDelimReplacement   =  A string to use when replacing newlines and TSV field delimiters
- *                            occurring in CSV fields.
- *   tsvNewlineReplacement =  A string to use when replacing newlines and TSV field delimiters
- *                            occurring in CSV fields.
+ *   skipLines             =  Number of lines to skip before outputting records.
+ *                            Typically used to skip writing header lines.
+ *   csvQuote              =  The quoting character used in the CSV input.
+ *   csvDelim              =  The field delimiter character used in the CSV input.
+ *   tsvDelim              =  The field delimiter character to use in the TSV output.
+ *   tsvDelimReplacement   =  String to use when replacing TSV field delimiters
+ *                            (e.g. TABs) found in the CSV data fields.
+ *   tsvNewlineReplacement =  String to use when replacing newlines found in the CSV
+ *                            data fields.
  *
  * Throws: Exception on finding inconsistent CSV. Exception text includes the filename and
  *         line number where the error was identified.
@@ -515,19 +578,23 @@ if (isBufferableInputSource!InputSource &&
     enum char LF = '\n';
     enum char CR = '\r';
 
-    /* State Information:
+    /* Process state information - These variables are defined either in the outer
+     * context or within one of the foreach loops.
      *
-     * Global processing state:
      *   * recordNum - The current CSV input line/record number. Starts at one.
-     *   * fieldNum - Field number in current line/record. Field numbers are one upped.
-     *     This is set to zero at the start of a new record, prior to processing the
-     *     first character of the first field on the record.
+     *   * fieldNum - Field number in the current line/record. Field numbers are
+     *     one-upped. The field number set to zero at the start of a new record,
+     *     prior to processing the first character of the first field on the record.
      *   * byteIndex - Read buffer index of the current byte being processed.
+     *   * csvState - The current state of CSV processing. In particular, the state
+     *     of the finite state machine.
      *   * writeRegionStart - Read buffer index where the next write starts from.
-     *   * currState - The current state of CSV processing.
+     *   * nextIndex - The index of the current input ubyte being processed. The
+     *     current write region extends from the writeRegionStart to nextIndex.
+     *   * nextChar - The current input ubyte. The ubyte/char at nextIndex.
      */
 
-    enum State
+    enum CSVState
     {
      FieldEnd,           // Start of input or after consuming a field or record delimiter.
      NonQuotedField,     // Processing a non-quoted field
@@ -537,7 +604,7 @@ if (isBufferableInputSource!InputSource &&
      CRInQuotedField,    // Last char was a CR in a quoted field
     }
 
-    State currState = State.FieldEnd;
+    CSVState csvState = CSVState.FieldEnd;
     size_t recordNum = 1;
     size_t fieldNum = 0;
 
@@ -545,9 +612,9 @@ if (isBufferableInputSource!InputSource &&
     {
         size_t writeRegionStart = 0;
 
-        /* This routine flushes the current write region and moves the start of the next
-         * write region one byte past the end of the current region. If appendChars are
-         * provided they are ouput as well.
+        /* flushCurrentRegion flushes the current write region and moves the start of
+         * the next write region one byte past the end of the current region. If
+         * appendChars are provided they are ouput as well.
          *
          * This routine is called when the current character (byte) terminates the
          * current write region and should not itself be output. That is why the next
@@ -574,9 +641,9 @@ if (isBufferableInputSource!InputSource &&
 
         foreach (size_t nextIndex, char nextChar; inputChunk)
         {
-        OuterSwitch: final switch (currState)
+        OuterSwitch: final switch (csvState)
             {
-            case State.FieldEnd:
+            case CSVState.FieldEnd:
                 /* Start of input or after consuming a field terminator. */
                 ++fieldNum;
 
@@ -584,37 +651,37 @@ if (isBufferableInputSource!InputSource &&
                 if (nextChar == csvQuote)
                 {
                     flushCurrentRegion(nextIndex);
-                    currState = State.QuotedField;
+                    csvState = CSVState.QuotedField;
                     break OuterSwitch;
                 }
                 else
                 {
                     /* Processing state change only. Don't consume the character. */
-                    currState = State.NonQuotedField;
-                    goto case State.NonQuotedField;
+                    csvState = CSVState.NonQuotedField;
+                    goto case CSVState.NonQuotedField;
                 }
 
-            case State.NonQuotedField:
+            case CSVState.NonQuotedField:
                 switch (nextChar)
                 {
                 default:
                     break OuterSwitch;
                 case csvDelim:
                     inputChunk[nextIndex] = tsvDelim;
-                    currState = State.FieldEnd;
+                    csvState = CSVState.FieldEnd;
                     break OuterSwitch;
                 case LF:
                     if (recordNum == skipLines) flushCurrentRegion(nextIndex);
                     ++recordNum;
                     fieldNum = 0;
-                    currState = State.FieldEnd;
+                    csvState = CSVState.FieldEnd;
                     break OuterSwitch;
                 case CR:
                     inputChunk[nextIndex] = LF;
                     if (recordNum == skipLines) flushCurrentRegion(nextIndex);
                     ++recordNum;
                     fieldNum = 0;
-                    currState = State.CRAtFieldEnd;
+                    csvState = CSVState.CRAtFieldEnd;
                     break OuterSwitch;
                 case tsvDelim:
                     if (tsvDelimReplacement.length == 1)
@@ -628,7 +695,7 @@ if (isBufferableInputSource!InputSource &&
                     break OuterSwitch;
                 }
 
-            case State.QuotedField:
+            case CSVState.QuotedField:
                 switch (nextChar)
                 {
                 default:
@@ -639,7 +706,7 @@ if (isBufferableInputSource!InputSource &&
                      * to QuoteInQuotedField, which determines whether to output a quote.
                      */
                     flushCurrentRegion(nextIndex);
-                    currState = State.QuoteInQuotedField;
+                    csvState = CSVState.QuoteInQuotedField;
                     break OuterSwitch;
 
                 case tsvDelim:
@@ -675,11 +742,11 @@ if (isBufferableInputSource!InputSource &&
                     {
                         flushCurrentRegion(nextIndex, tsvNewlineReplacement);
                     }
-                    currState = State.CRInQuotedField;
+                    csvState = CSVState.CRInQuotedField;
                     break OuterSwitch;
                 }
 
-            case State.QuoteInQuotedField:
+            case CSVState.QuoteInQuotedField:
                 /* Just processed a quote in a quoted field. The buffer, without the
                  * quote, was just flushed. Only legal characters here are quote,
                  * comma (field delimiter), newline (record delimiter).
@@ -687,24 +754,24 @@ if (isBufferableInputSource!InputSource &&
                 switch (nextChar)
                 {
                 case csvQuote:
-                    currState = State.QuotedField;
+                    csvState = CSVState.QuotedField;
                     break OuterSwitch;
                 case csvDelim:
                     inputChunk[nextIndex] = tsvDelim;
-                    currState = State.FieldEnd;
+                    csvState = CSVState.FieldEnd;
                     break OuterSwitch;
                 case LF:
                     if (recordNum == skipLines) flushCurrentRegion(nextIndex);
                     ++recordNum;
                     fieldNum = 0;
-                    currState = State.FieldEnd;
+                    csvState = CSVState.FieldEnd;
                     break OuterSwitch;
                 case CR:
                     inputChunk[nextIndex] = LF;
                     if (recordNum == skipLines) flushCurrentRegion(nextIndex);
                     ++recordNum;
                     fieldNum = 0;
-                    currState = State.CRAtFieldEnd;
+                    csvState = CSVState.CRAtFieldEnd;
                     break OuterSwitch;
                 default:
                     throw new Exception(
@@ -713,30 +780,30 @@ if (isBufferableInputSource!InputSource &&
                                recordNum));
                 }
 
-            case State.CRInQuotedField:
+            case CSVState.CRInQuotedField:
                 if (nextChar == LF)
                 {
                     flushCurrentRegion(nextIndex);
-                    currState = State.QuotedField;
+                    csvState = CSVState.QuotedField;
                     break OuterSwitch;
                 }
                 else {
                     /* Naked CR. State change only, don't consume current character. */
-                    currState = State.QuotedField;
-                    goto case State.QuotedField;
+                    csvState = CSVState.QuotedField;
+                    goto case CSVState.QuotedField;
                 }
 
-            case State.CRAtFieldEnd:
+            case CSVState.CRAtFieldEnd:
                 if (nextChar == LF)
                 {
                     flushCurrentRegion(nextIndex);
-                    currState = State.FieldEnd;
+                    csvState = CSVState.FieldEnd;
                     break OuterSwitch;
                 }
                 else {
                     /* Naked CR. State change only, don't consume current character. */
-                    currState = State.FieldEnd;
-                    goto case State.FieldEnd;
+                    csvState = CSVState.FieldEnd;
+                    goto case CSVState.FieldEnd;
                 }
             }
         }
@@ -750,7 +817,7 @@ if (isBufferableInputSource!InputSource &&
         writeRegionStart = 0;
     }
 
-    enforce(currState != State.QuotedField,
+    enforce(csvState != CSVState.QuotedField,
             format("Invalid CSV. Improperly terminated quoted field. File: %s, Line: %d",
                    (filename == "-") ? "Standard Input" : filename,
                    recordNum));
