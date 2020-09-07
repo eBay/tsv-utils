@@ -443,7 +443,7 @@ if (isBufferableInputSource!InputSource)
                     _buffer[0 .. len] = _chunks.front[];
                     _chunks.popFront;
 
-                    // Only the last chunk should be shorter than the buffer.
+                    /* Only the last chunk should be shorter than the buffer. */
                     assert(_buffer.length == len || _chunks.empty);
 
                     if (_buffer.length != len) _buffer.length = len;
@@ -754,7 +754,6 @@ if (isBufferableInputSource!InputSource &&
                     if (tsvNewlineReplacement.length == 1)
                     {
                         inputChunk[nextIndex] = tsvNewlineReplacement[0];
-                        // if (recordNum == skipLines) flushCurrentRegion(nextIndex);
                     }
                     else
                     {
@@ -766,7 +765,6 @@ if (isBufferableInputSource!InputSource &&
                     if (tsvNewlineReplacement.length == 1)
                     {
                         inputChunk[nextIndex] = tsvNewlineReplacement[0];
-                        // if (recordNum == skipLines) flushCurrentRegion(nextIndex);
                     }
                     else
                     {
@@ -852,7 +850,8 @@ if (isBufferableInputSource!InputSource &&
                    (filename == "-") ? "Standard Input" : filename,
                    recordNum));
 
-    if (fieldNum > 0 && recordNum > skipLines) put(outputStream, '\n');    // Last line w/o terminating newline.
+    /* Output a newline if the CSV input did not have a terminating newline. */
+    if (fieldNum > 0 && recordNum > skipLines) put(outputStream, '\n');
 }
 
 unittest
