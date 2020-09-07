@@ -136,6 +136,26 @@ deutsche	Farbe grün gelb blau weiß schwarz	grün	blau
 suomalainen	väri vihreä keltainen sininen valkoinen musta	vihreä	sininen
 中文	颜色绿色黄色蓝色白色黑色	绿色	蓝色
 
+====[csv2tsv input_bom.csv]====
+abc	def	ghi
+ABC	DEF	GHI
+12.3	45.6	78.9
+
+====[csv2tsv input_bom.csv input_bom.csv]====
+abc	def	ghi
+ABC	DEF	GHI
+12.3	45.6	78.9
+abc	def	ghi
+ABC	DEF	GHI
+12.3	45.6	78.9
+
+====[csv2tsv -H input_bom.csv input_bom.csv]====
+abc	def	ghi
+ABC	DEF	GHI
+12.3	45.6	78.9
+ABC	DEF	GHI
+12.3	45.6	78.9
+
 ====[cat header3.csv | csv2tsv --header -- header1.csv header2.csv - header4.csv header5.csv]====
 field1	field2	field3
 123	456	789

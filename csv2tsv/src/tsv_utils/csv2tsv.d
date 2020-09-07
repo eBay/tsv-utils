@@ -54,8 +54,10 @@ Behaviors of this program that often vary between CSV implementations:
   * Double quotes are permitted in a non-quoted field. However, a field starting
     with a quote must follow quoting rules.
   * Each record can have a different numbers of fields.
-  * The three common forms of newlines are supported: CR, CRLF, LF.
+  * The three common forms of newlines are supported: CR, CRLF, LF. Output is
+    written using Unix newlines (LF).
   * A newline will be added if the file does not end with one.
+  * A UTF-8 Byte Order Mark (BOM) at the start of a file will be removed.
   * No whitespace trimming is done.
 
 This program does not validate CSV correctness, but will terminate with an error
@@ -850,7 +852,7 @@ if (isBufferableInputSource!InputSource &&
                    (filename == "-") ? "Standard Input" : filename,
                    recordNum));
 
-    if (fieldNum > 0) put(outputStream, '\n');    // Last line w/o terminating newline.
+    if (fieldNum > 0 && recordNum > skipLines) put(outputStream, '\n');    // Last line w/o terminating newline.
 }
 
 unittest
@@ -1257,12 +1259,7 @@ unittest
 
     /* The Skip 1 expected results. */
     auto tsv1Skip1 = "";
-
-    /* tsv2Skip1 should be "". Ignoring the extra line added for now.
-     * It's an edge case. A file with a single line (a header), and no trailing
-     * newline.
-     */
-    auto tsv2Skip1 = "\n";
+    auto tsv2Skip1 = "";
 
     auto tsv3Skip1 = "";
     auto tsv4Skip1 = "\n";
@@ -1302,12 +1299,7 @@ unittest
 
     /* The Skip 2 expected results. */
     auto tsv1Skip2 = "";
-
-    /* tsv2Skip2 should be "". Ignoring the extra line added for now.
-     * It's an edge case. A file with a single line (a header), and no trailing
-     * newline.
-     */
-    auto tsv2Skip2 = "\n";
+    auto tsv2Skip2 = "";
 
     auto tsv3Skip2 = "";
     auto tsv4Skip2 = "";
