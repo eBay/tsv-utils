@@ -244,7 +244,7 @@ csv2tsv conversion is a good result.
 
 Algorithm notes:
 
-The algorithm works by reading an input block, then examing each byte in-order to
+The algorithm works by reading an input block, then examining each byte in-order to
 identify needed modifications. The region of consecutive characters without a change
 is tracked. Single character changes are done in-place, in the read buffer. This
 allows assembling longer blocks before write is needed. The region being tracked is
@@ -557,6 +557,8 @@ unittest  // inputSourceByChunk
  *                            (e.g. TABs) found in the CSV data fields.
  *   tsvNewlineReplacement =  String to use when replacing newlines found in the CSV
  *                            data fields.
+ *   discardBOM            =  If true (the default), a UTF-8 Byte Order Mark found at the
+ *                            start of the input stream will be dropped.
  *
  * Throws: Exception on finding inconsistent CSV. Exception text includes the filename and
  *         line number where the error was identified.
@@ -572,14 +574,19 @@ void csv2tsv(InputSource, OutputRange)(
     const char tsvDelim = '\t',
     const string tsvDelimReplacement = " ",
     const string tsvNewlineReplacement = " ",
+    bool discardBOM = true,
 )
 if (isBufferableInputSource!InputSource &&
     isOutputRange!(OutputRange, char))
 {
+    import std.conv: hexString;
+
     assert (readBuffer.length >= 1);
 
     enum char LF = '\n';
     enum char CR = '\r';
+
+    enum ubyte[3] UTF8_BOM = cast(ubyte[3])hexString!"efbbbf";
 
     /* Process state information - These variables are defined either in the outer
      * context or within one of the foreach loops.
@@ -611,9 +618,22 @@ if (isBufferableInputSource!InputSource &&
     size_t recordNum = 1;
     size_t fieldNum = 0;
 
-    foreach (inputChunk; inputSource.inputSourceByChunk(readBuffer))
+    foreach (chunkIndex, inputChunkComplete; inputSource.inputSourceByChunk(readBuffer).enumerate)
     {
         size_t writeRegionStart = 0;
+
+        /* Discard byte order marks at the start of input.
+         * Note: Slicing the chunk in this fashion generates very good code, better
+         * other approaches like manipulating indices.
+         */
+        auto inputChunk =
+            (discardBOM &&
+             chunkIndex == 0 &&
+             inputChunkComplete.length >= UTF8_BOM.length &&
+             inputChunkComplete[0 .. UTF8_BOM.length] == UTF8_BOM
+            )
+            ? inputChunkComplete[UTF8_BOM.length .. $]
+            : inputChunkComplete[];
 
         /* flushCurrentRegion flushes the current write region and moves the start of
          * the next write region one byte past the end of the current region. If
@@ -622,6 +642,11 @@ if (isBufferableInputSource!InputSource &&
          * This routine is called when the current character (byte) terminates the
          * current write region and should not itself be output. That is why the next
          * write region always starts one byte past the current region end.
+         *
+         * This routine is also called when the 'skiplines' region has been processed.
+         * This is done to flush the region without actually writing it. This is done
+         * by explicit checks in the finite state machine when newline characters
+         * that terminate a record are processed. It would be nice to refactor this.
          */
         void flushCurrentRegion(size_t regionEnd, const char[] appendChars = "")
         {
@@ -727,7 +752,7 @@ if (isBufferableInputSource!InputSource &&
                     if (tsvNewlineReplacement.length == 1)
                     {
                         inputChunk[nextIndex] = tsvNewlineReplacement[0];
-                        if (recordNum == skipLines) flushCurrentRegion(nextIndex);
+                        // if (recordNum == skipLines) flushCurrentRegion(nextIndex);
                     }
                     else
                     {
@@ -739,7 +764,7 @@ if (isBufferableInputSource!InputSource &&
                     if (tsvNewlineReplacement.length == 1)
                     {
                         inputChunk[nextIndex] = tsvNewlineReplacement[0];
-                        if (recordNum == skipLines) flushCurrentRegion(nextIndex);
+                        // if (recordNum == skipLines) flushCurrentRegion(nextIndex);
                     }
                     else
                     {
@@ -843,6 +868,9 @@ unittest
      *
      * This test set does not test main, file handling, or error messages. These are
      * handled by tests run against the executable.
+     *
+     * Note: unittest is non @safe due to the casts from string to ubyte[]. This can
+     * probably be rewritten to use std.string.representation instead, which is @safe.
      */
 
     /* Default CSV. */
@@ -1179,6 +1207,272 @@ unittest
             assert(tsv_z == tsvResult_ZA.data,
                    format("Unittest failure. tsv_z != tsvResult_ZA.data. Test: %d\ncsv: |%s|\ntsv: |%s|\nres: |%s|\n",
                           i + 1, csva, tsv_z, tsvResult_ZA.data));
+        }
+    }
+}
+
+// csv2tsv skiplines tests
+unittest
+{
+    import std.string : representation;
+
+    auto csv1 = "";
+    auto csv2 = "a";
+
+    auto csv3 = "\n";
+    auto csv4 = "\n\n";
+    auto csv5 = "\n\n\n";
+
+    auto csv6 = "a\n";
+    auto csv7 = "a\nb\n";
+    auto csv8 = "a\nb\nc\n";
+
+    auto csv9 = "\"\n\"\n";
+    auto csv10 = "\"\n\"\n\"\n\"\n";
+    auto csv11 = "\"\n\"\n\"\n\"\n\"\n\"\n";
+
+    auto csv12 = "\r";
+    auto csv13 = "\r\r";
+    auto csv14 = "\r\r\r";
+
+    auto csv15 = "a\r";
+    auto csv16 = "a\rb\r";
+    auto csv17 = "a\rb\rc\r";
+
+    auto csv18 = "\"\r\"\r";
+    auto csv19 = "\"\r\"\r\"\r\"\r";
+    auto csv20 = "\"\r\"\r\"\r\"\r\"\r\"\r";
+
+    auto csv21 = "\r\n";
+    auto csv22 = "\r\n\r\n";
+    auto csv23 = "\r\n\r\n\r\n";
+
+    auto csv24 = "a\r\n";
+    auto csv25 = "a\r\nb\r\n";
+    auto csv26 = "a\r\nb\r\nc\r\n";
+
+    auto csv27 = "\"\r\n\"\r\n";
+    auto csv28 = "\"\r\n\"\r\n\"\r\n\"\r\n";
+    auto csv29 = "\"\r\n\"\r\n\"\r\n\"\r\n\"\r\n\"\r\n";
+
+    /* The Skip 1 expected results. */
+    auto tsv1Skip1 = "";
+
+    /* tsv2Skip1 should be "". Ignoring the extra line added for now.
+     * It's an edge case. A file with a single line (a header), and no trailing
+     * newline.
+     */
+    auto tsv2Skip1 = "\n";
+
+    auto tsv3Skip1 = "";
+    auto tsv4Skip1 = "\n";
+    auto tsv5Skip1 = "\n\n";
+
+    auto tsv6Skip1 = "";
+    auto tsv7Skip1 = "b\n";
+    auto tsv8Skip1 = "b\nc\n";
+
+    auto tsv9Skip1 = "";
+    auto tsv10Skip1 = " \n";
+    auto tsv11Skip1 = " \n \n";
+
+    auto tsv12Skip1 = "";
+    auto tsv13Skip1 = "\n";
+    auto tsv14Skip1 = "\n\n";
+
+    auto tsv15Skip1 = "";
+    auto tsv16Skip1 = "b\n";
+    auto tsv17Skip1 = "b\nc\n";
+
+    auto tsv18Skip1 = "";
+    auto tsv19Skip1 = " \n";
+    auto tsv20Skip1 = " \n \n";
+
+    auto tsv21Skip1 = "";
+    auto tsv22Skip1 = "\n";
+    auto tsv23Skip1 = "\n\n";
+
+    auto tsv24Skip1 = "";
+    auto tsv25Skip1 = "b\n";
+    auto tsv26Skip1 = "b\nc\n";
+
+    auto tsv27Skip1 = "";
+    auto tsv28Skip1 = " \n";
+    auto tsv29Skip1 = " \n \n";
+
+    /* The Skip 2 expected results. */
+    auto tsv1Skip2 = "";
+
+    /* tsv2Skip2 should be "". Ignoring the extra line added for now.
+     * It's an edge case. A file with a single line (a header), and no trailing
+     * newline.
+     */
+    auto tsv2Skip2 = "\n";
+
+    auto tsv3Skip2 = "";
+    auto tsv4Skip2 = "";
+    auto tsv5Skip2 = "\n";
+
+    auto tsv6Skip2 = "";
+    auto tsv7Skip2 = "";
+    auto tsv8Skip2 = "c\n";
+
+    auto tsv9Skip2 = "";
+    auto tsv10Skip2 = "";
+    auto tsv11Skip2 = " \n";
+
+    auto tsv12Skip2 = "";
+    auto tsv13Skip2 = "";
+    auto tsv14Skip2 = "\n";
+
+    auto tsv15Skip2 = "";
+    auto tsv16Skip2 = "";
+    auto tsv17Skip2 = "c\n";
+
+    auto tsv18Skip2 = "";
+    auto tsv19Skip2 = "";
+    auto tsv20Skip2 = " \n";
+
+    auto tsv21Skip2 = "";
+    auto tsv22Skip2 = "";
+    auto tsv23Skip2 = "\n";
+
+    auto tsv24Skip2 = "";
+    auto tsv25Skip2 = "";
+    auto tsv26Skip2 = "c\n";
+
+    auto tsv27Skip2 = "";
+    auto tsv28Skip2 = "";
+    auto tsv29Skip2 = " \n";
+
+    auto csvSet =
+        [csv1, csv2, csv3, csv4, csv5, csv6, csv7, csv8, csv9, csv10,
+         csv11, csv12, csv13, csv14, csv15, csv16, csv17, csv18, csv19, csv20,
+         csv21, csv22, csv23, csv24, csv25, csv26, csv27, csv28, csv29];
+
+    auto tsvSkip1Set =
+        [tsv1Skip1, tsv2Skip1, tsv3Skip1, tsv4Skip1, tsv5Skip1, tsv6Skip1, tsv7Skip1, tsv8Skip1, tsv9Skip1, tsv10Skip1,
+         tsv11Skip1, tsv12Skip1, tsv13Skip1, tsv14Skip1, tsv15Skip1, tsv16Skip1, tsv17Skip1, tsv18Skip1, tsv19Skip1, tsv20Skip1,
+         tsv21Skip1, tsv22Skip1, tsv23Skip1, tsv24Skip1, tsv25Skip1, tsv26Skip1, tsv27Skip1, tsv28Skip1, tsv29Skip1];
+
+    auto tsvSkip2Set =
+        [tsv1Skip2, tsv2Skip2, tsv3Skip2, tsv4Skip2, tsv5Skip2, tsv6Skip2, tsv7Skip2, tsv8Skip2, tsv9Skip2, tsv10Skip2,
+         tsv11Skip2, tsv12Skip2, tsv13Skip2, tsv14Skip2, tsv15Skip2, tsv16Skip2, tsv17Skip2, tsv18Skip2, tsv19Skip2, tsv20Skip2,
+         tsv21Skip2, tsv22Skip2, tsv23Skip2, tsv24Skip2, tsv25Skip2, tsv26Skip2, tsv27Skip2, tsv28Skip2, tsv29Skip2];
+
+    auto bufferSizeTests = [1, 2, 3, 4, 8, 128];
+
+    foreach (bufferSize; bufferSizeTests)
+    {
+        ubyte[] readBuffer = new ubyte[](bufferSize);
+
+        foreach (i, csv, tsvSkip1, tsvSkip2; lockstep(csvSet, tsvSkip1Set, tsvSkip2Set))
+        {
+            ubyte[] csvInput = csv.dup.representation;
+            auto csvToTSVSkip1 = appender!(char[])();
+            auto csvToTSVSkip2 = appender!(char[])();
+
+            csv2tsv(csvInput, csvToTSVSkip1, readBuffer, "csvToTSVSkip1", 1);
+
+            assert(tsvSkip1 == csvToTSVSkip1.data,
+                   format("Unittest failure. tsv != csvToTSV.data. Test: %d; buffer size: %d\ncsv: |%s|\ntsv: |%s|\nres: |%s|\n",
+                          i + 1, bufferSize, csv, tsvSkip1, csvToTSVSkip1.data));
+
+            csv2tsv(csvInput, csvToTSVSkip2, readBuffer, "csvToTSVSkip2", 2);
+
+            assert(tsvSkip2 == csvToTSVSkip2.data,
+                   format("Unittest failure. tsv != csvToTSV.data. Test: %d; buffer size: %d\ncsv: |%s|\ntsv: |%s|\nres: |%s|\n",
+                          i + 1, bufferSize, csv, tsvSkip2, csvToTSVSkip2.data));
+        }
+    }
+}
+
+// csv2tsv BOM tests. Note: std.range.lockstep prevents use of @safe
+unittest
+{
+    import std.conv : hexString;
+    import std.string : representation;
+
+    enum utf8BOM = hexString!"efbbbf";
+
+    auto csv1 = "";
+    auto csv2 = "a";
+    auto csv3 = "ab";
+    auto csv4 = "a,b";
+    auto csv5 = "a,b\ncdef,ghi\njklmn,opqrs\ntuv,wxyz";
+
+    auto csv1BOM = utf8BOM ~ csv1;
+    auto csv2BOM = utf8BOM ~ csv2;
+    auto csv3BOM = utf8BOM ~ csv3;
+    auto csv4BOM = utf8BOM ~ csv4;
+    auto csv5BOM = utf8BOM ~ csv5;
+
+    auto tsv1 = "";
+    auto tsv2 = "a\n";
+    auto tsv3 = "ab\n";
+    auto tsv4 = "a\tb\n";
+    auto tsv5 = "a\tb\ncdef\tghi\njklmn\topqrs\ntuv\twxyz\n";
+
+    /* Note: csv1 is the empty string, so tsv1 does not have a trailing newline.
+     * However, with the BOM prepended the tsv gets a trailing newline.
+     */
+    auto tsv1BOM = utf8BOM ~ tsv1 ~ "\n";
+    auto tsv2BOM = utf8BOM ~ tsv2;
+    auto tsv3BOM = utf8BOM ~ tsv3;
+    auto tsv4BOM = utf8BOM ~ tsv4;
+    auto tsv5BOM = utf8BOM ~ tsv5;
+
+    auto csvSet = [csv1, csv2, csv3, csv4, csv5];
+    auto csvBOMSet = [csv1BOM, csv2BOM, csv3BOM, csv4BOM, csv5BOM];
+
+    auto tsvSet = [tsv1, tsv2, tsv3, tsv4, tsv5];
+    auto tsvBOMSet = [tsv1BOM, tsv2BOM, tsv3BOM, tsv4BOM, tsv5BOM];
+
+    auto bufferSizeTests = [1, 2, 3, 4, 8, 128];
+
+    foreach (bufferSize; bufferSizeTests)
+    {
+        ubyte[] readBuffer = new ubyte[](bufferSize);
+
+        foreach (i, csv, csvBOM, tsv, tsvBOM; lockstep(csvSet, csvBOMSet, tsvSet, tsvBOMSet))
+        {
+            ubyte[] csvInput = csv.dup.representation;
+            ubyte[] csvBOMInput = csvBOM.dup.representation;
+
+            auto csvToTSV = appender!(char[])();
+            auto csvToTSV_NoBOMRemoval = appender!(char[])();
+            auto csvBOMToTSV = appender!(char[])();
+            auto csvBOMToTSV_NoBOMRemoval = appender!(char[])();
+
+            csv2tsv(csvInput, csvToTSV, readBuffer, "csvToTSV", 0, '"', ',', '\t', " ", " ", true);
+            assert(tsv == csvToTSV.data,
+                   format("Unittest failure. tsv != csvToTSV.data. Test: %d; buffer size: %d\ncsv: |%s|\ntsv: |%s|\nres: |%s|\n",
+                          i + 1, bufferSize, csv, tsv, csvToTSV.data));
+
+            csv2tsv(csvInput, csvToTSV_NoBOMRemoval, readBuffer, "csvToTSV_NoBOMRemoval", 0, '"', ',', '\t', " ", " ", false);
+            assert(tsv == csvToTSV_NoBOMRemoval.data,
+                   format("Unittest failure. tsv != csvToTSV_NoBOMRemoval.data. Test: %d; buffer size: %d\ncsv: |%s|\ntsv: |%s|\nres: |%s|\n",
+                          i + 1, bufferSize, csv, tsv, csvToTSV_NoBOMRemoval.data));
+
+            csv2tsv(csvBOMInput, csvBOMToTSV, readBuffer, "csvBOMToTSV", 0, '"', ',', '\t', " ", " ", true);
+            if (readBuffer.length < utf8BOM.length)
+            {
+                /* Removing BOMs, but didn't provide enough buffer, so no removal. */
+                assert(tsvBOM == csvBOMToTSV.data,
+                       format("Unittest failure. tsvBOM != csvBOMToTSV.data. (Small buffer) Test: %d; buffer size: %d\ncsv: |%s|\ntsv: |%s|\nres: |%s|\n",
+                              i + 1, bufferSize, csv, tsv, csvBOMToTSV.data));
+            }
+            else
+            {
+                assert(tsv == csvBOMToTSV.data,
+                       format("Unittest failure. tsv != csvBOMToTSV.data. Test: Test: %d; buffer size: %d\ncsv: |%s|\ntsv: |%s|\nres: |%s|\n",
+                              i + 1, bufferSize, csv, tsv, csvBOMToTSV.data));
+            }
+
+            csv2tsv(csvBOMInput, csvBOMToTSV_NoBOMRemoval, readBuffer, "csvBOMToTSV_NoBOMRemoval", 0, '"', ',', '\t', " ", " ", false);
+            assert(tsvBOM == csvBOMToTSV_NoBOMRemoval.data,
+                   format("Unittest failure. tsvBOM != csvBOMToTSV_NoBOMRemoval.data. Test: Test: %d; buffer size: %d\ncsv: |%s|\ntsv: |%s|\nres: |%s|\n",
+                          i + 1, bufferSize, csv, tsv, csvBOMToTSV_NoBOMRemoval.data));
         }
     }
 }
