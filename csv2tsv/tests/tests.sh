@@ -4,7 +4,7 @@
 # These tests do some basic, plus file handling and error cases.
 
 if [ $# -le 1 ]; then
-    echo "Insufficient arguments. A program name and ouatput directory are required."
+    echo "Insufficient arguments. A program name and output directory are required."
     exit 1
 fi
 
