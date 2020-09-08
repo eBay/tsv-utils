@@ -79,7 +79,8 @@ struct Csv2tsvOptions
     char csvQuoteChar = '"';           // --q|quote
     char csvDelimChar = ',';           // --c|csv-delim
     char tsvDelimChar = '\t';          // --t|tsv-delim
-    string tsvDelimReplacement = " ";  // --r|replacement
+    string tsvDelimReplacement = " ";  // --r|tab-replacement
+    string newlineReplacement = " ";   // --n|newline-replacement
     bool versionWanted = false;        // --V|version
 
     auto processArgs (ref string[] cmdArgs)
@@ -94,16 +95,17 @@ struct Csv2tsvOptions
         {
             auto r = getopt(
                 cmdArgs,
-                "help-verbose",  "     Print full help.", &helpVerbose,
+                "help-verbose",          "     Print full help.", &helpVerbose,
                 std.getopt.config.caseSensitive,
-                "H|header",      "     Treat the first line of each file as a header. Only the header of the first file is output.", &hasHeader,
+                "H|header",              "     Treat the first line of each file as a header. Only the header of the first file is output.", &hasHeader,
                 std.getopt.config.caseSensitive,
-                "q|quote",       "CHR  Quoting character in CSV data. Default: double-quote (\")", &csvQuoteChar,
-                "c|csv-delim",   "CHR  Field delimiter in CSV data. Default: comma (,).", &csvDelimChar,
-                "t|tsv-delim",   "CHR  Field delimiter in TSV data. Default: TAB", &tsvDelimChar,
-                "r|replacement", "STR  Replacement for newline and TSV field delimiters found in CSV input. Default: Space.", &tsvDelimReplacement,
+                "q|quote",               "CHR  Quoting character in CSV data. Default: double-quote (\")", &csvQuoteChar,
+                "c|csv-delim",           "CHR  Field delimiter in CSV data. Default: comma (,).", &csvDelimChar,
+                "t|tsv-delim",           "CHR  Field delimiter in TSV data. Default: TAB", &tsvDelimChar,
+                "r|tab-replacement",     "STR  Replacement for TSV field delimiters (typically TABs) found in CSV input. Default: Space.", &tsvDelimReplacement,
+                "n|newline-replacement", "STR  Replacement for newlines found in CSV input. Default: Space.", &newlineReplacement,
                 std.getopt.config.caseSensitive,
-                "V|version",     "     Print version information and exit.", &versionWanted,
+                "V|version",             "     Print version information and exit.", &versionWanted,
                 std.getopt.config.caseInsensitive,
                 );
 
@@ -141,7 +143,10 @@ struct Csv2tsvOptions
                     "TSV field delimiter cannot be newline (--t|tsv-delim).");
 
             enforce(!canFind!(c => (c == '\n' || c == '\r' || c == tsvDelimChar))(tsvDelimReplacement),
-                    "Replacement character cannot contain newlines or TSV field delimiters (--r|replacement).");
+                    "Replacement character cannot contain newlines or TSV field delimiters (--r|tab-replacement).");
+
+            enforce(!canFind!(c => (c == '\n' || c == '\r' || c == tsvDelimChar))(newlineReplacement),
+                    "Replacement character cannot contain newlines or TSV field delimiters (--n|newline-replacement).");
         }
         catch (Exception exc)
         {
@@ -208,7 +213,7 @@ void csv2tsvFiles(const ref Csv2tsvOptions cmdopt, const string[] inputFiles)
         csv2tsv(inputStream, stdoutWriter, fileRawBuf, printFileName, skipLines,
                 cmdopt.csvQuoteChar, cmdopt.csvDelimChar,
                 cmdopt.tsvDelimChar, cmdopt.tsvDelimReplacement,
-                cmdopt.tsvDelimReplacement);
+                cmdopt.newlineReplacement);
 
         firstFile = false;
     }

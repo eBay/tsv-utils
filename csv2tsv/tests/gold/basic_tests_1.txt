@@ -82,19 +82,64 @@ QCQ	QNQ	CNQACAQ	_Q_NCCQCQ
 A	AA	AAA	AAAA
 a	ab	abc	abcd
 
-====[csv2tsv --quote # --csv-delim | --tsv-delim $ --replacement <==> input2.csv]====
+====[csv2tsv --quote # --csv-delim | --tsv-delim $ --delim-replacement <==> --newline-replacement <==> input2.csv]====
 field1$field2$field3
 123$456$789
 234$567$890
 |abc$#def#$gh><==>ijk><==>lmn<
 ABC$DEF$GHI
 
-====[csv2tsv -q # -c | -t @ -r <--> input2.csv]====
+====[csv2tsv -q # -c | -t @ -r <--> -n <--> input2.csv]====
 field1@field2@field3
 123@456@789
 234@567@890
 |abc@#def#@gh><-->ijk><-->lmn<
 ABC@DEF@GHI
+
+====[csv2tsv input3.csv]====
+Type	Value1	Value2
+Vanilla	ABC	123
+Quoted	ABC	123
+With Comma	abc,def	123,4
+With Quotes	Say "Hello World!"	10" high
+With Newline	Value 1 Line 1 Value 1 Line 2	Value 2 Line 1 Value 2 Line 2
+With TAB	ABC DEF	123 456
+
+====[csv2tsv --delim-replacement <TAB> input3.csv]====
+Type	Value1	Value2
+Vanilla	ABC	123
+Quoted	ABC	123
+With Comma	abc,def	123,4
+With Quotes	Say "Hello World!"	10" high
+With Newline	Value 1 Line 1 Value 1 Line 2	Value 2 Line 1 Value 2 Line 2
+With TAB	ABC<TAB>DEF	123<TAB>456
+
+====[csv2tsv --newline-replacement <NL> input3.csv]====
+Type	Value1	Value2
+Vanilla	ABC	123
+Quoted	ABC	123
+With Comma	abc,def	123,4
+With Quotes	Say "Hello World!"	10" high
+With Newline	Value 1 Line 1<NL>Value 1 Line 2	Value 2 Line 1<NL>Value 2 Line 2
+With TAB	ABC DEF	123 456
+
+====[csv2tsv -r <TAB> -n <NL> input3.csv]====
+Type	Value1	Value2
+Vanilla	ABC	123
+Quoted	ABC	123
+With Comma	abc,def	123,4
+With Quotes	Say "Hello World!"	10" high
+With Newline	Value 1 Line 1<NL>Value 1 Line 2	Value 2 Line 1<NL>Value 2 Line 2
+With TAB	ABC<TAB>DEF	123<TAB>456
+
+====[csv2tsv -r ␉ -n ␤ input3.csv]====
+Type	Value1	Value2
+Vanilla	ABC	123
+Quoted	ABC	123
+With Comma	abc,def	123,4
+With Quotes	Say "Hello World!"	10" high
+With Newline	Value 1 Line 1␤Value 1 Line 2	Value 2 Line 1␤Value 2 Line 2
+With TAB	ABC␉DEF	123␉456
 
 ====[csv2tsv header1.csv header2.csv header3.csv header4.csv header5.csv]====
 field1	field2	field3

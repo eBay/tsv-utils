@@ -4,7 +4,7 @@
 # These tests do some basic, plus file handling and error cases.
 
 if [ $# -le 1 ]; then
-    echo "Insufficient arguments. A program name and output directory are required."
+    echo "Insufficient arguments. A program name and ouatput directory are required."
     exit 1
 fi
 
@@ -29,8 +29,13 @@ echo "-----------------" >> ${basic_tests_1}
 runtest ${prog} "input1_format1.csv" ${basic_tests_1}
 runtest ${prog} "input1_format2.csv" ${basic_tests_1}
 runtest ${prog} "input1_format3.csv" ${basic_tests_1}
-runtest ${prog} "--quote # --csv-delim | --tsv-delim $ --replacement <==> input2.csv" ${basic_tests_1}
-runtest ${prog} "-q # -c | -t @ -r <--> input2.csv" ${basic_tests_1}
+runtest ${prog} "--quote # --csv-delim | --tsv-delim $ --tab-replacement <==> --newline-replacement <==> input2.csv" ${basic_tests_1}
+runtest ${prog} "-q # -c | -t @ -r <--> -n <--> input2.csv" ${basic_tests_1}
+runtest ${prog} "input3.csv" ${basic_tests_1}
+runtest ${prog} "--tab-replacement <TAB> input3.csv" ${basic_tests_1}
+runtest ${prog} "--newline-replacement <NL> input3.csv" ${basic_tests_1}
+runtest ${prog} "-r <TAB> -n <NL> input3.csv" ${basic_tests_1}
+runtest ${prog} "-r ␉ -n ␤ input3.csv" ${basic_tests_1}
 runtest ${prog} "header1.csv header2.csv header3.csv header4.csv header5.csv" ${basic_tests_1}
 runtest ${prog} "--header header1.csv header2.csv header3.csv header4.csv header5.csv" ${basic_tests_1}
 runtest ${prog} "-H header1.csv header2.csv header3.csv header4.csv header5.csv" ${basic_tests_1}
@@ -92,11 +97,11 @@ ${prog} --tsv-delim $'\n' input2.csv >> ${error_tests_1} 2>&1
 echo ""  >> ${error_tests_1}; echo "====[csv2tsv --tsv-delim $'\r' input2.csv]====" >> ${error_tests_1}
 ${prog} --tsv-delim $'\r' input2.csv >> ${error_tests_1} 2>&1
 
-echo ""  >> ${error_tests_1}; echo "====[csv2tsv --replacement $'\n' input2.csv]====" >> ${error_tests_1}
-${prog} --replacement $'\n' input2.csv >> ${error_tests_1} 2>&1
+echo ""  >> ${error_tests_1}; echo "====[csv2tsv --tab-replacement $'\n' input2.csv]====" >> ${error_tests_1}
+${prog} --tab-replacement $'\n' input2.csv >> ${error_tests_1} 2>&1
 
-echo ""  >> ${error_tests_1}; echo "====[csv2tsv --replacement $'\r' input2.csv]====" >> ${error_tests_1}
-${prog} --replacement $'\r' input2.csv >> ${error_tests_1} 2>&1
+echo ""  >> ${error_tests_1}; echo "====[csv2tsv --tab-replacement $'\r' input2.csv]====" >> ${error_tests_1}
+${prog} --tab-replacement $'\r' input2.csv >> ${error_tests_1} 2>&1
 
 echo ""  >> ${error_tests_1}; echo "====[csv2tsv -r $'__\n__' input2.csv]====" >> ${error_tests_1}
 ${prog} -r $'__\n__' input2.csv >> ${error_tests_1} 2>&1
@@ -104,6 +109,17 @@ ${prog} -r $'__\n__' input2.csv >> ${error_tests_1} 2>&1
 echo ""  >> ${error_tests_1}; echo "====[csv2tsv -r $'__\r__' input2.csv]====" >> ${error_tests_1}
 ${prog} -r $'__\r__' input2.csv >> ${error_tests_1} 2>&1
 
+echo ""  >> ${error_tests_1}; echo "====[csv2tsv --newline-replacement $'\n' input2.csv]====" >> ${error_tests_1}
+${prog} --newline-replacement $'\n' input2.csv >> ${error_tests_1} 2>&1
+
+echo ""  >> ${error_tests_1}; echo "====[csv2tsv --newline-replacement $'\r' input2.csv]====" >> ${error_tests_1}
+${prog} --newline-replacement $'\r' input2.csv >> ${error_tests_1} 2>&1
+
+echo ""  >> ${error_tests_1}; echo "====[csv2tsv -n $'__\n__' input2.csv]====" >> ${error_tests_1}
+${prog} -n $'__\n__' input2.csv >> ${error_tests_1} 2>&1
+
+echo ""  >> ${error_tests_1}; echo "====[csv2tsv -n $'__\r__' input2.csv]====" >> ${error_tests_1}
+${prog} -n $'__\r__' input2.csv >> ${error_tests_1} 2>&1
 
 runtest ${prog} "-q x -c x input2.csv" ${error_tests_1}
 runtest ${prog} "-q x -t x input2.csv" ${error_tests_1}
