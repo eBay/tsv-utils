@@ -37,7 +37,7 @@ File an [issue](https://github.com/eBay/tsv-utils/issues) if you have problems, 
 
 These tools perform data manipulation and statistical calculations on tab delimited data. They are intended for large files. Larger than ideal for loading entirely in memory in an application like R, but not so big as to necessitate moving to Hadoop or similar distributed compute environments. The features supported are useful both for standalone analysis and for preparing data for use in R, Pandas, and similar toolkits.
 
-The tools work like traditional Unix command line utilities such as `cut`, `sort`, `grep` and `awk`, and are intended to complement these tools. Each tool is a standalone executable. They follow common Unix conventions for pipeline programs. Data is read from files or standard input, results are written to standard output. Fields are identified either by field name or field number. The field separator defaults to TAB, but any character can be used. Input and output is UTF-8, and all operations are Unicode ready, including regular expression match (`tsv-filter`). Documentation is available for each tool by invoking it with the `--help` option. TSV format is similar to CSV, see [Comparing TSV and CSV formats](docs/comparing-tsv-and-csv.md) for the differences.
+The tools work like traditional Unix command line utilities such as `cut`, `sort`, `grep` and `awk`, and are intended to complement these tools. Each tool is a standalone executable. They follow common Unix conventions for pipeline programs. Data is read from files or standard input, results are written to standard output. Fields are identified either by field name or field number. The field separator defaults to TAB, but any character can be used. Input and output is UTF-8, and all operations are Unicode ready, including regular expression match (`tsv-filter`). Documentation is available for each tool by invoking it with the `--help` option. Most tools provide a `--help-verbose` option offering more extensive, reference style documentation. TSV format is similar to CSV, see [Comparing TSV and CSV formats](docs/comparing-tsv-and-csv.md) for the differences.
 
 The rest of this section contains descriptions of each tool. Click on the links below to jump directly to one of the tools. Full documentation is available in the [Tools Reference](docs/ToolReference.md). The first tool listed, [tsv-filter](#tsv-filter), provides a tutorial introduction to features found throughout the toolkit.
 
@@ -349,7 +349,7 @@ Note that many CSV files do not use escapes, and in-fact follow a strict delimit
 
 `csv2tsv` differs from many csv-to-tsv conversion tools in that it produces output free of CSV escapes. Many conversion tools produce data with CSV style escapes, but switching the field delimiter from comma to TAB. Such data cannot be reliably processed by Unix tools like `cut`, `awk`, `sort`, etc.
 
-`csv2tsv` avoids escapes by replacing TAB and newline characters in the data with a single space. These characters are rare in data mining scenarios, and space is usually a good substitute in cases where they do occur. The replacement string is customizable to enable alternate handling when needed.
+`csv2tsv` avoids escapes by replacing TAB and newline characters in the data with a single space. These characters are rare in data mining scenarios, and space is usually a good substitute in cases where they do occur. The replacement strings are customizable to enable alternate handling when needed.
 
 The `csv2tsv` converter often has a second benefit: regularizing newlines. CSV files are often exported using Windows newline conventions. `csv2tsv` converts all newlines to Unix format.
 
@@ -458,10 +458,10 @@ There are several ways to obtain the tools: [prebuilt binaries](#prebuilt-binari
 
 ### Prebuilt binaries
 
-Prebuilt binaries are available for Linux and Mac, these can be found on the [Github releases](https://github.com/eBay/tsv-utils/releases) page. Download and unpack the tar.gz file. Executables are in the `bin` directory. Add the `bin` directory or individual tools to the `PATH` environment variable. As an example, the 2.0.0 releases for Linux and MacOS can be downloaded and unpacked with these commands:
+Prebuilt binaries are available for Linux and Mac, these can be found on the [Github releases](https://github.com/eBay/tsv-utils/releases) page. Download and unpack the tar.gz file. Executables are in the `bin` directory. Add the `bin` directory or individual tools to the `PATH` environment variable. As an example, the 2.1.0 releases for Linux and MacOS can be downloaded and unpacked with these commands:
 ```
-$ curl -L https://github.com/eBay/tsv-utils/releases/download/v2.0.0/tsv-utils-v2.0.0_linux-x86_64_ldc2.tar.gz | tar xz
-$ curl -L https://github.com/eBay/tsv-utils/releases/download/v2.0.0/tsv-utils-v2.0.0_osx-x86_64_ldc2.tar.gz | tar xz
+$ curl -L https://github.com/eBay/tsv-utils/releases/download/v2.1.0/tsv-utils-v2.1.0_linux-x86_64_ldc2.tar.gz | tar xz
+$ curl -L https://github.com/eBay/tsv-utils/releases/download/v2.1.0/tsv-utils-v2.1.0_osx-x86_64_ldc2.tar.gz | tar xz
 ```
 
 See the [Github releases](https://github.com/eBay/tsv-utils/releases) page for the latest release.
@@ -502,10 +502,10 @@ The above requires LDC 1.9.0 or later. See [Building with Link Time Optimization
 
 ### Install using DUB
 
-If you are a D user you likely use DUB, the D package manager. DUB comes packaged with DMD starting with DMD 2.072. You can install and build using DUB as follows (replace `2.0.0` with the current version):
+If you are a D user you likely use DUB, the D package manager. DUB comes packaged with DMD starting with DMD 2.072. You can install and build using DUB as follows (replace `2.1.0` with the current version):
 ```
 $ dub fetch tsv-utils --cache=local
-$ cd tsv-utils-2.0.0/tsv-utils
+$ cd tsv-utils-2.1.0/tsv-utils
 $ dub run    # For LDC: dub run -- --compiler=ldc2
 ```
 
