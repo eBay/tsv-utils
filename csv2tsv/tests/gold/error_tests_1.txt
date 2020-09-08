@@ -26,17 +26,29 @@ Error [csv2tsv]: Cannot open file `nosuchfile.txt' in mode `rb' (No such file or
 ====[csv2tsv --tsv-delim $'\r' input2.csv]====
 [csv2tsv] Error processing command line arguments: TSV field delimiter cannot be newline (--t|tsv-delim).
 
-====[csv2tsv --replacement $'\n' input2.csv]====
-[csv2tsv] Error processing command line arguments: Replacement character cannot contain newlines or TSV field delimiters (--r|replacement).
+====[csv2tsv --tab-replacement $'\n' input2.csv]====
+[csv2tsv] Error processing command line arguments: Replacement character cannot contain newlines or TSV field delimiters (--r|tab-replacement).
 
-====[csv2tsv --replacement $'\r' input2.csv]====
-[csv2tsv] Error processing command line arguments: Replacement character cannot contain newlines or TSV field delimiters (--r|replacement).
+====[csv2tsv --tab-replacement $'\r' input2.csv]====
+[csv2tsv] Error processing command line arguments: Replacement character cannot contain newlines or TSV field delimiters (--r|tab-replacement).
 
 ====[csv2tsv -r $'__\n__' input2.csv]====
-[csv2tsv] Error processing command line arguments: Replacement character cannot contain newlines or TSV field delimiters (--r|replacement).
+[csv2tsv] Error processing command line arguments: Replacement character cannot contain newlines or TSV field delimiters (--r|tab-replacement).
 
 ====[csv2tsv -r $'__\r__' input2.csv]====
-[csv2tsv] Error processing command line arguments: Replacement character cannot contain newlines or TSV field delimiters (--r|replacement).
+[csv2tsv] Error processing command line arguments: Replacement character cannot contain newlines or TSV field delimiters (--r|tab-replacement).
+
+====[csv2tsv --newline-replacement $'\n' input2.csv]====
+[csv2tsv] Error processing command line arguments: Replacement character cannot contain newlines or TSV field delimiters (--n|newline-replacement).
+
+====[csv2tsv --newline-replacement $'\r' input2.csv]====
+[csv2tsv] Error processing command line arguments: Replacement character cannot contain newlines or TSV field delimiters (--n|newline-replacement).
+
+====[csv2tsv -n $'__\n__' input2.csv]====
+[csv2tsv] Error processing command line arguments: Replacement character cannot contain newlines or TSV field delimiters (--n|newline-replacement).
+
+====[csv2tsv -n $'__\r__' input2.csv]====
+[csv2tsv] Error processing command line arguments: Replacement character cannot contain newlines or TSV field delimiters (--n|newline-replacement).
 
 ====[csv2tsv -q x -c x input2.csv]====
 [csv2tsv] Error processing command line arguments: CSV quote and CSV field delimiter characters must be different (--q|quote, --c|csv-delim).
@@ -45,7 +57,7 @@ Error [csv2tsv]: Cannot open file `nosuchfile.txt' in mode `rb' (No such file or
 [csv2tsv] Error processing command line arguments: CSV quote and TSV field delimiter characters must be different (--q|quote, --t|tsv-delim).
 
 ====[csv2tsv -t x -r wxyz input2.csv]====
-[csv2tsv] Error processing command line arguments: Replacement character cannot contain newlines or TSV field delimiters (--r|replacement).
+[csv2tsv] Error processing command line arguments: Replacement character cannot contain newlines or TSV field delimiters (--r|tab-replacement).
 
 ====[csv2tsv invalid1.csv]====
 Error [csv2tsv]: Invalid CSV. Improperly terminated quoted field. File: invalid1.csv, Line: 3
