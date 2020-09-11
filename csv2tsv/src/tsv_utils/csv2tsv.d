@@ -200,7 +200,7 @@ void csv2tsvFiles(const ref Csv2tsvOptions cmdopt, const string[] inputFiles)
     import tsv_utils.common.utils : BufferedOutputRange;
 
     ubyte[1024 * 128] fileRawBuf;
-    auto stdoutWriter = BufferedOutputRange!(typeof(stdout))(stdout);
+    auto stdoutWriter = BufferedOutputRange!(typeof(stdout))(stdout, 1024 * 10, 1024 * 129, 1024 * 128);
     bool firstFile = true;
 
     foreach (filename; (inputFiles.length > 0) ? inputFiles : ["-"])
