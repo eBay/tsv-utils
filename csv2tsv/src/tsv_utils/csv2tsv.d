@@ -195,12 +195,50 @@ else
     }
 }
 
+/** csv2tsvFiles takes a list of input files and passes each to csv2tsv, which
+ * runs on a single file. csv2tsvFiles manages header lines and sets up the
+ * BufferedOutputRange passed to csv2tsv.
+ */
 void csv2tsvFiles(const ref Csv2tsvOptions cmdopt, const string[] inputFiles)
 {
     import tsv_utils.common.utils : BufferedOutputRange;
 
-    ubyte[1024 * 128] fileRawBuf;
-    auto stdoutWriter = BufferedOutputRange!(typeof(stdout))(stdout, 1024 * 10, 1024 * 129, 1024 * 128);
+    /* Buffer Sizes
+     *
+     * ReadBufferSize is the typical size used for buffered reads by most tsv-utils
+     * programs. Nothing unusal there. However, the default sizes used by
+     * BufferedOutputRange are overridden to allocate a larger initial buffer (the
+     * reserve size) and to ensure buffers are flushed to standard output more
+     * quickly (the max size).
+     *
+     * BufferedOutputRange is intended primarily for record oriented writes, where
+     * output ends in newlines. When given a string ending in a newline, the buffer
+     * is flushed if it is greater than 'flush size'. Otherwise buffers are flushed
+     * after exceeding 'max size'.
+     *
+     * For csv2tsv's buffered conversion algorithm there are two very different cases:
+     * 1) Extensive use of CSV escapes, where all fields are quoted.
+     * 2) Limited use of CSV escapes, where few fields are quoted.
+     *
+     * The first case will translate to record oriented writes. In particular, if the
+     * first field is quoted, the write to BufferedOutputRange will be on a newline
+     * boundary. (A quoted field pushes accumulated data to BufferedOutputRange.) For
+     * this case, the default flush behavior of BufferedOutputRange works well.
+     *
+     * In the second case, data gets pushed to BufferedOutputRange on arbitrary byte
+     * boundaries. BufferedOutputRange won't flush to standard output until max size
+     * bytes have been accumulated. The default max size is larger than optimal, so
+     * instead max size is set to a size similar to the read buffer size. Reserve
+     * is increased for the same reason.
+     */
+    enum ReadBufferSize = 1024L * 128L;
+    enum OutputBufferFlushSize = 1024L * 10L;
+    enum OutputBufferReserveSize = 1024L * 129L;
+    enum OutputBufferMaxSize = 1024L * 128L;
+
+    ubyte[ReadBufferSize] fileRawBuf;
+    auto stdoutWriter = BufferedOutputRange!(typeof(stdout))(
+        stdout, OutputBufferFlushSize, OutputBufferReserveSize, OutputBufferMaxSize);
     bool firstFile = true;
 
     foreach (filename; (inputFiles.length > 0) ? inputFiles : ["-"])
@@ -219,7 +257,7 @@ void csv2tsvFiles(const ref Csv2tsvOptions cmdopt, const string[] inputFiles)
     }
 }
 
-/* csv2tsv buffered conversion approach
+/* csv2tsv buffered conversion algorithm
 
 This version of csv2tsv uses a buffered approach to csv-to-tsv conversion. This is a
 change from the original version, which used a character-at-a-time approach, with
@@ -415,7 +453,6 @@ enum bool isBufferableInputSource(R) =
  *
  * The chunks are returned as an input range.
  */
-
 auto inputSourceByChunk(InputSource)(InputSource source, size_t size)
 {
     return inputSourceByChunk(source, new ubyte[](size));
