@@ -774,7 +774,7 @@ public:
      * printing the next field.
      */
     size_t writeFieldValue(OutputRange!char outputStream, size_t currPosition,
-                           const char[] fieldValue, in ref TsvPrettyOptions options)
+                           const char[] fieldValue, const ref TsvPrettyOptions options)
     in
     {
         assert(currPosition >= _startPosition);   // Caller resposible for advancing to field start position.
