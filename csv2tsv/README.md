@@ -13,7 +13,7 @@ The main issue when working with CSV data is the potential for CSV escapes in th
 
 Many csv-to-tsv conversion tools don't remove escapes. Instead they generate CSV-style escapes, producing data in CSV format except using TAB as the record delimiter rather than comma. Such data is not correctly interpreted by traditional Unix tools. 
 
-`csv2tsv` avoids escapes by replacing TAB and newline characters in the data with a single space. These characters are rare in data mining scenarios, and space is usually a good substitute in cases where they do occur. The replacement string is customizable to enable alternate handling when needed.
+`csv2tsv` avoids escapes by replacing TAB and newline characters in the data with a single space. These characters are rare in data mining scenarios, and space is usually a good substitute in cases where they do occur. The replacement strings are customizable to enable alternate handling when needed.
 
 Another useful benefit of the `csv2tsv` converter is that it normalizes newlines. Many programs generate Windows newlines when exporting in CSV format, even on Unix systems.
 
