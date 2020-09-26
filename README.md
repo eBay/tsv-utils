@@ -454,9 +454,9 @@ See the [keep-header reference](docs/tool_reference/keep-header.md) for more inf
 
 ## Obtaining and installation
 
-There are several ways to obtain the tools: [prebuilt binaries](#prebuilt-binaries); [building from source code](#build-from-source-files); and [installing using the DUB package manager](#install-using-dub). The tools are tested on Linux and MacOS.
+There are several ways to obtain the tools: [prebuilt binaries](#prebuilt-binaries); [building from source code](#build-from-source-files); and [installing using the DUB package manager](#install-using-dub).
 
-The tools are not tested on Windows. Windows users are encouraged to use either [Windows Subsystem for Linux (WSL)](https://docs.microsoft.com/en-us/windows/wsl/) or [Docker for Windows](https://docs.docker.com/docker-for-windows/). Linux builds of the tools can be used on these systems.
+The tools are tested on Linux and MacOS. Windows users are encouraged to use either [Windows Subsystem for Linux (WSL)](https://docs.microsoft.com/en-us/windows/wsl/) or [Docker for Windows](https://docs.docker.com/docker-for-windows/). Linux builds of the tools can be used on these systems.
 
 ### Prebuilt binaries
 
