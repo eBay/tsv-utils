@@ -665,29 +665,49 @@ unittest
  * RLIM_INFINITY and any value larger than 'uint.max' is translated to 'uint.max'.
  *
  * An exception is thrown if call to 'getrlimit' fails.
+ *
+ * Note about Windows: rlimit is a Posix construct, not available on Windows.
+ * Currently, tsv-split is written for Posix. To allow it compile on Windows, this
+ * routine returns 512 on Windows, which is the default for Windows stream I/O. This
+ * is a stop-gap solution. A more generalized 'systemCurrOpenFilesLimit' would make
+ * sense if Windows becomes primary platform. That would also require changing error
+ * messages, help, etc., to be platform specfic. At present, testing is done only on
+ * Posix platforms. For info on Windows stream I/O limits see:
+ *   https://docs.microsoft.com/en-us/cpp/c-runtime-library/reference/setmaxstdio
  */
 uint rlimitCurrOpenFilesLimit()
 {
-    import core.sys.posix.sys.resource :
-        rlim_t, rlimit, getrlimit, RLIMIT_NOFILE, RLIM_INFINITY, RLIM_SAVED_CUR;
-    import std.conv : to;
-
-    uint currOpenFileLimit = uint.max;
-
-    rlimit rlimitMaxOpenFiles;
-
-    enforce(getrlimit(RLIMIT_NOFILE, &rlimitMaxOpenFiles) == 0,
-            "Internal error: getrlimit call failed");
-
-    if (rlimitMaxOpenFiles.rlim_cur != RLIM_INFINITY &&
-        rlimitMaxOpenFiles.rlim_cur != RLIM_SAVED_CUR &&
-        rlimitMaxOpenFiles.rlim_cur >= 0 &&
-        rlimitMaxOpenFiles.rlim_cur <= uint.max)
+    version (Posix)
     {
-        currOpenFileLimit = rlimitMaxOpenFiles.rlim_cur.to!uint;
-    }
+        import core.sys.posix.sys.resource :
+            rlim_t, rlimit, getrlimit, RLIMIT_NOFILE, RLIM_INFINITY, RLIM_SAVED_CUR;
+        import std.conv : to;
 
-    return currOpenFileLimit;
+        uint currOpenFileLimit = uint.max;
+
+        rlimit rlimitMaxOpenFiles;
+
+        enforce(getrlimit(RLIMIT_NOFILE, &rlimitMaxOpenFiles) == 0,
+                "Internal error: getrlimit call failed");
+
+        if (rlimitMaxOpenFiles.rlim_cur != RLIM_INFINITY &&
+            rlimitMaxOpenFiles.rlim_cur != RLIM_SAVED_CUR &&
+            rlimitMaxOpenFiles.rlim_cur >= 0 &&
+            rlimitMaxOpenFiles.rlim_cur <= uint.max)
+        {
+            currOpenFileLimit = rlimitMaxOpenFiles.rlim_cur.to!uint;
+        }
+
+        return currOpenFileLimit;
+    }
+    else version (Windows)
+    {
+        return 512;
+    }
+    else
+    {
+        static assert(0, "Unsupported platform.");
+    }
 }
 
 /** Invokes the proper split routine based on the command line arguments.
