@@ -454,7 +454,9 @@ See the [keep-header reference](docs/tool_reference/keep-header.md) for more inf
 
 ## Obtaining and installation
 
-There are several ways to obtain the tools: [prebuilt binaries](#prebuilt-binaries); [building from source code](#build-from-source-files); and [installing using the DUB package manager](#install-using-dub). The tools have been tested on Linux and Mac OS X. They have not been tested on Windows, but there are no obvious impediments to running on Windows as well.
+There are several ways to obtain the tools: [prebuilt binaries](#prebuilt-binaries); [building from source code](#build-from-source-files); and [installing using the DUB package manager](#install-using-dub).
+
+The tools are tested on Linux and MacOS. Windows users are encouraged to use either [Windows Subsystem for Linux (WSL)](https://docs.microsoft.com/en-us/windows/wsl/) or [Docker for Windows](https://docs.docker.com/docker-for-windows/) and run Linux builds of the tools.
 
 ### Prebuilt binaries
 
@@ -476,7 +478,7 @@ For some distributions a package can directly be installed:
 
 ### Build from source files
 
-[Download a D compiler](https://dlang.org/download.html). These tools have been tested with the DMD and LDC compilers, on Mac OSX and Linux. Use DMD version 2.088.1 or later, LDC version 1.18.0 or later.
+[Download a D compiler](https://dlang.org/download.html). These tools have been tested with the DMD and LDC compilers on MacOS and Linux. Use DMD version 2.088.1 or later, LDC version 1.18.0 or later.
 
 Clone this repository, select a compiler, and run `make` from the top level directory:
 ```
