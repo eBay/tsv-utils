@@ -367,9 +367,11 @@ input streams chunk-by-chunk.
  * with slicing).
  *
  * Note: The mutable, dynamic arrays restriction is based on what is supported by
- * std.range.chunks. This could be extended to include any type of array with ubyte
- * elements, but it would require custom code in inputSourceByChunk. A test could be
- * added as '(isArray!(R) && is(Unqual!(typeof(R.init[0])) == ubyte))'.
+ * std.range.chunks.
+ *
+ * Static ubyte arrays can be sliced to turn them into input ranges. However, slicing
+ * won't suffice for const or immutable arrays, or arrays of const or immutable
+ * elements, as the result won't satisfy the hasSlicing requirement.
  */
 enum bool isBufferableInputSource(R) =
     isFileHandle!(Unqual!R) ||
@@ -383,26 +385,54 @@ enum bool isBufferableInputSource(R) =
     static assert(!isBufferableInputSource!(char[]));
     static assert(!isBufferableInputSource!(string));
 
-    ubyte[10] x1;
-    const ubyte[1] x2;
-    immutable ubyte[1] x3;
-    ubyte[] x4 = new ubyte[](10);
-    const ubyte[] x5 = new ubyte[](10);
-    immutable ubyte[] x6 = new ubyte[](10);
+    ubyte[10] staticArray;
+    const ubyte[1] staticArrayConstElts;
+    immutable ubyte[1] staticArrayImmutableElts;
+    const (ubyte[1]) staticConstArray;
+    immutable (ubyte[1]) staticImmutableArray;
 
-    static assert(!isBufferableInputSource!(typeof(x1)));
-    static assert(!isBufferableInputSource!(typeof(x2)));
-    static assert(!isBufferableInputSource!(typeof(x3)));
-    static assert(isBufferableInputSource!(typeof(x4)));
-    static assert(!isBufferableInputSource!(typeof(x5)));
-    static assert(!isBufferableInputSource!(typeof(x6)));
+    ubyte[] dynamicArray = new ubyte[](10);
+    const ubyte[] dynamicArrayConstElts = new ubyte[](10);
+    immutable ubyte[] dynamicArrayImmutableElts = new ubyte[](10);
+    const (ubyte[]) dynamicConstArray = new ubyte[](10);
+    immutable (ubyte[]) dynamicImmutableArray = new ubyte[](10);
 
-    static assert(is(Unqual!(ElementType!(typeof(x1))) == ubyte));
-    static assert(is(Unqual!(ElementType!(typeof(x2))) == ubyte));
-    static assert(is(Unqual!(ElementType!(typeof(x3))) == ubyte));
-    static assert(is(Unqual!(ElementType!(typeof(x4))) == ubyte));
-    static assert(is(Unqual!(ElementType!(typeof(x5))) == ubyte));
-    static assert(is(Unqual!(ElementType!(typeof(x6))) == ubyte));
+    static assert(!isBufferableInputSource!(typeof(staticArray)));
+    static assert(!isBufferableInputSource!(typeof(staticArrayConstElts)));
+    static assert(!isBufferableInputSource!(typeof(staticArrayImmutableElts)));
+    static assert(!isBufferableInputSource!(typeof(staticConstArray)));
+    static assert(!isBufferableInputSource!(typeof(staticImmutableArray)));
+
+    static assert(isBufferableInputSource!(typeof(dynamicArray)));
+    static assert(!isBufferableInputSource!(typeof(dynamicArrayConstElts)));
+    static assert(!isBufferableInputSource!(typeof(dynamicArrayImmutableElts)));
+    static assert(!isBufferableInputSource!(typeof(dynamicConstArray)));
+    static assert(!isBufferableInputSource!(typeof(dynamicImmutableArray)));
+
+    /* Slicing. Adds static array to the set, but not const/immutable versions. */
+    static assert(isBufferableInputSource!(typeof(staticArray[])));
+    static assert(!isBufferableInputSource!(typeof(staticArrayConstElts[])));
+    static assert(!isBufferableInputSource!(typeof(staticArrayImmutableElts[])));
+    static assert(!isBufferableInputSource!(typeof(staticConstArray[])));
+    static assert(!isBufferableInputSource!(typeof(staticImmutableArray[])));
+
+    static assert(isBufferableInputSource!(typeof(dynamicArray[])));
+    static assert(!isBufferableInputSource!(typeof(dynamicArrayConstElts[])));
+    static assert(!isBufferableInputSource!(typeof(dynamicArrayImmutableElts[])));
+    static assert(!isBufferableInputSource!(typeof(dynamicConstArray[])));
+    static assert(!isBufferableInputSource!(typeof(dynamicImmutableArray[])));
+
+    /* Element type tests. */
+    static assert(is(Unqual!(ElementType!(typeof(staticArray))) == ubyte));
+    static assert(is(Unqual!(ElementType!(typeof(staticArrayConstElts))) == ubyte));
+    static assert(is(Unqual!(ElementType!(typeof(staticArrayImmutableElts))) == ubyte));
+    static assert(is(Unqual!(ElementType!(typeof(staticConstArray))) == ubyte));
+    static assert(is(Unqual!(ElementType!(typeof(staticImmutableArray))) == ubyte));
+    static assert(is(Unqual!(ElementType!(typeof(dynamicArray))) == ubyte));
+    static assert(is(Unqual!(ElementType!(typeof(dynamicArrayConstElts))) == ubyte));
+    static assert(is(Unqual!(ElementType!(typeof(dynamicArrayImmutableElts))) == ubyte));
+    static assert(is(Unqual!(ElementType!(typeof(dynamicConstArray))) == ubyte));
+    static assert(is(Unqual!(ElementType!(typeof(dynamicImmutableArray))) == ubyte));
 
     struct S1
     {
