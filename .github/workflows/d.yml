@@ -1,0 +1,30 @@
+# Workflow to run a D compile on Windows. No tests, just the build step. 
+name: D
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    name: Build tsv-utils on Windows
+    strategy:
+      matrix:
+        os: [windows-latest]
+        dc: [dmd-latest, ldc-latest]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v2
+      
+      - name: Install D compiler
+        uses: dlang-community/setup-dlang@v1
+        with:
+          compiler: ${{ matrix.dc }}
+
+      - name: Build and Run
+        run: |
+          dub run
