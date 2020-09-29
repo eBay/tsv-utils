@@ -363,19 +363,14 @@ input streams chunk-by-chunk.
 
 /** Defines the 'bufferable' input sources supported by inputSourceByChunk.
  *
- * This includes std.stdio.File objects and mutable dynamic ubyte arrays (inputRange
- * with slicing).
+ * This includes std.stdio.File objects and mutable dynamic ubyte arrays (input range
+ * with ubyte elements).
  *
- * Note: The mutable, dynamic arrays restriction is based on what is supported by
- * std.range.chunks.
- *
- * Static ubyte arrays can be sliced to turn them into input ranges. However, slicing
- * won't suffice for const or immutable arrays, or arrays of const or immutable
- * elements, as the result won't satisfy the hasSlicing requirement.
+ * Static, const, and immutable arrays can be sliced to turn them into input ranges.
  */
 enum bool isBufferableInputSource(R) =
     isFileHandle!(Unqual!R) ||
-    (isInputRange!R && is(ElementEncodingType!R == ubyte) && hasSlicing!R);
+    (isInputRange!R && is(Unqual!(ElementEncodingType!R) == ubyte));
 
 @safe unittest
 {
@@ -386,17 +381,18 @@ enum bool isBufferableInputSource(R) =
     static assert(!isBufferableInputSource!(string));
 
     ubyte[10] staticArray;
-    const ubyte[1] staticArrayConstElts;
-    immutable ubyte[1] staticArrayImmutableElts;
-    const (ubyte[1]) staticConstArray;
-    immutable (ubyte[1]) staticImmutableArray;
+    const ubyte[1] staticConstArray;
+    immutable ubyte[1] staticImmutableArray;
+    const(ubyte)[1] staticArrayConstElts;
+    immutable(ubyte)[1] staticArrayImmutableElts;
 
     ubyte[] dynamicArray = new ubyte[](10);
-    const ubyte[] dynamicArrayConstElts = new ubyte[](10);
-    immutable ubyte[] dynamicArrayImmutableElts = new ubyte[](10);
-    const (ubyte[]) dynamicConstArray = new ubyte[](10);
-    immutable (ubyte[]) dynamicImmutableArray = new ubyte[](10);
+    const(ubyte)[] dynamicArrayConstElts = new ubyte[](10);
+    immutable(ubyte)[] dynamicArrayImmutableElts = new ubyte[](10);
+    const ubyte[] dynamicConstArray = new ubyte[](10);
+    immutable ubyte[] dynamicImmutableArray = new ubyte[](10);
 
+    /* Dynamic mutable arrays are bufferable. */
     static assert(!isBufferableInputSource!(typeof(staticArray)));
     static assert(!isBufferableInputSource!(typeof(staticArrayConstElts)));
     static assert(!isBufferableInputSource!(typeof(staticArrayImmutableElts)));
@@ -404,23 +400,23 @@ enum bool isBufferableInputSource(R) =
     static assert(!isBufferableInputSource!(typeof(staticImmutableArray)));
 
     static assert(isBufferableInputSource!(typeof(dynamicArray)));
-    static assert(!isBufferableInputSource!(typeof(dynamicArrayConstElts)));
-    static assert(!isBufferableInputSource!(typeof(dynamicArrayImmutableElts)));
+    static assert(isBufferableInputSource!(typeof(dynamicArrayConstElts)));
+    static assert(isBufferableInputSource!(typeof(dynamicArrayImmutableElts)));
     static assert(!isBufferableInputSource!(typeof(dynamicConstArray)));
     static assert(!isBufferableInputSource!(typeof(dynamicImmutableArray)));
 
-    /* Slicing. Adds static array to the set, but not const/immutable versions. */
+    /* Slicing turns all forms into bufferable arrays. */
     static assert(isBufferableInputSource!(typeof(staticArray[])));
-    static assert(!isBufferableInputSource!(typeof(staticArrayConstElts[])));
-    static assert(!isBufferableInputSource!(typeof(staticArrayImmutableElts[])));
-    static assert(!isBufferableInputSource!(typeof(staticConstArray[])));
-    static assert(!isBufferableInputSource!(typeof(staticImmutableArray[])));
+    static assert(isBufferableInputSource!(typeof(staticArrayConstElts[])));
+    static assert(isBufferableInputSource!(typeof(staticArrayImmutableElts[])));
+    static assert(isBufferableInputSource!(typeof(staticConstArray[])));
+    static assert(isBufferableInputSource!(typeof(staticImmutableArray[])));
 
+    static assert(isBufferableInputSource!(typeof(dynamicConstArray[])));
+    static assert(isBufferableInputSource!(typeof(dynamicImmutableArray[])));
     static assert(isBufferableInputSource!(typeof(dynamicArray[])));
-    static assert(!isBufferableInputSource!(typeof(dynamicArrayConstElts[])));
-    static assert(!isBufferableInputSource!(typeof(dynamicArrayImmutableElts[])));
-    static assert(!isBufferableInputSource!(typeof(dynamicConstArray[])));
-    static assert(!isBufferableInputSource!(typeof(dynamicImmutableArray[])));
+    static assert(isBufferableInputSource!(typeof(dynamicArrayConstElts[])));
+    static assert(isBufferableInputSource!(typeof(dynamicArrayImmutableElts[])));
 
     /* Element type tests. */
     static assert(is(Unqual!(ElementType!(typeof(staticArray))) == ubyte));
@@ -452,7 +448,7 @@ enum bool isBufferableInputSource(R) =
     }
 
     static assert(isInputRange!S1);
-    static assert(!isBufferableInputSource!S1);
+    static assert(isBufferableInputSource!S1);
 
     static assert(isInputRange!S2);
     static assert(is(ElementEncodingType!S2 == ubyte));
@@ -478,8 +474,9 @@ enum bool isBufferableInputSource(R) =
  * user provided, or allocated by inputSourceByChunk based on a caller provided
  * buffer size.
  *
- * A ubyte[] input source must satisfy isBufferableInputSource, which at present
- * means that it is a dynamic, mutable ubyte[].
+ * A ubyte[] input source must satisfy isBufferableInputSource, which means that it
+ * must be a dynamic, mutable ubyte[]. Using slicing to get a dynamic, mutable
+ * array from a static, const, or immutable array.
  *
  * The chunks are returned as an input range.
  */
@@ -611,6 +608,40 @@ unittest  // inputSourceByChunk
             }
         }
     }
+}
+
+@safe unittest // inputSourceByChunk array cases
+{
+    import std.algorithm : equal;
+
+    ubyte[5] staticArray = [5, 6, 7, 8, 9];
+    const(ubyte)[5] staticArrayConstElts = [5, 6, 7, 8, 9];
+    immutable(ubyte)[5] staticArrayImmutableElts = [5, 6, 7, 8, 9];
+    const ubyte[5] staticConstArray = [5, 6, 7, 8, 9];
+    immutable ubyte[5] staticImmutableArray = [5, 6, 7, 8, 9];
+
+    ubyte[] dynamicArray = [5, 6, 7, 8, 9];
+    const(ubyte)[] dynamicArrayConstElts = [5, 6, 7, 8, 9];
+    immutable(ubyte)[] dynamicArrayImmutableElts = [5, 6, 7, 8, 9];
+    const ubyte[] dynamicConstArray = [5, 6, 7, 8, 9];
+    immutable ubyte[] dynamicImmutableArray = [5, 6, 7, 8, 9];
+
+    /* The dynamic mutable arrays can be used directly. */
+    assert (dynamicArray.inputSourceByChunk(2).equal([[5, 6], [7, 8], [9]]));
+    assert (dynamicArrayConstElts.inputSourceByChunk(2).equal([[5, 6], [7, 8], [9]]));
+    assert (dynamicArrayImmutableElts.inputSourceByChunk(2).equal([[5, 6], [7, 8], [9]]));
+
+    /* All the arrays can be used with slicing. */
+    assert (staticArray[].inputSourceByChunk(2).equal([[5, 6], [7, 8], [9]]));
+    assert (staticArrayConstElts[].inputSourceByChunk(2).equal([[5, 6], [7, 8], [9]]));
+    assert (staticArrayImmutableElts[].inputSourceByChunk(2).equal([[5, 6], [7, 8], [9]]));
+    assert (staticConstArray[].inputSourceByChunk(2).equal([[5, 6], [7, 8], [9]]));
+    assert (staticImmutableArray[].inputSourceByChunk(2).equal([[5, 6], [7, 8], [9]]));
+    assert (dynamicArray[].inputSourceByChunk(2).equal([[5, 6], [7, 8], [9]]));
+    assert (dynamicArrayConstElts[].inputSourceByChunk(2).equal([[5, 6], [7, 8], [9]]));
+    assert (dynamicArrayImmutableElts[].inputSourceByChunk(2).equal([[5, 6], [7, 8], [9]]));
+    assert (dynamicConstArray[].inputSourceByChunk(2).equal([[5, 6], [7, 8], [9]]));
+    assert (dynamicImmutableArray[].inputSourceByChunk(2).equal([[5, 6], [7, 8], [9]]));
 }
 
 /** Read CSV from an input source, covert to TSV and write to an output source.
