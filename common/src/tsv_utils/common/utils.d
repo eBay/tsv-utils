@@ -483,7 +483,7 @@ if (isFileHandle!(Unqual!OutputTarget) || isOutputRange!(Unqual!OutputTarget, ch
 
     void flush()
     {
-        static if (isFileHandle!OutputTarget) _outputTarget.write(_outputBuffer.data);
+        static if (isFileHandle!OutputTarget) _outputTarget.rawWrite(_outputBuffer.data);
         else _outputTarget.put(_outputBuffer.data);
 
         _outputBuffer.clear;
