@@ -1978,6 +1978,7 @@ unittest
     {
         auto ofile1 = File(file1Path, "wb");
         ofile1.write(file1Data);
+        ofile1.close;
     }
     catch (Exception e) assert(false, format("Failed to write file: %s.\n  Error: %s", file1Path, e.msg));
 
@@ -1985,6 +1986,7 @@ unittest
     {
         auto ofile2 = File(file2Path, "wb");
         ofile2.write(file2Data);
+        ofile2.close;
     }
     catch (Exception e) assert(false, format("Failed to write file: %s.\n  Error: %s", file2Path, e.msg));
 
@@ -1992,6 +1994,7 @@ unittest
     {
         auto ofile3 = File(file3Path, "wb");
         ofile3.write(file3Data);
+        ofile3.close;
     }
     catch  (Exception e) assert(false, format("Failed to write file: %s.\n  Error: %s", file3Path, e.msg));
 
