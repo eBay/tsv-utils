@@ -125,7 +125,7 @@ void mergeCoverageFiles(string fromFile, string toFile)
     auto toBackup = toFile ~ ".backup";
     toFile.rename(toBackup);
 
-    size_t minDigits = max(7, (maxCounter <= 0) ? 1 : log10(maxCounter).to!long + 1);
+    size_t minDigits = max(7, (maxCounter <= 0) ? 1 : log10(maxCounter).to!long + 1).to!size_t;
     string blanks;
     string zeros;
     foreach (i; 0 .. minDigits)
