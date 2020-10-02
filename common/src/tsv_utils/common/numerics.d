@@ -611,7 +611,7 @@ do
     {
         if (method == QuantileInterpolation.R1)
         {
-            q = data[((data.length * prob).ceil - 1.0).to!long.max(0)].to!double;
+            q = data[((data.length * prob).ceil - 1.0).to!long.max(0).to!size_t].to!double;
         }
         else if (method == QuantileInterpolation.R2)
         {
