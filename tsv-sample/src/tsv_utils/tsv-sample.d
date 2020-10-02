@@ -2008,7 +2008,7 @@ unittest
 
     assert(expectedLines.length == expectedLinesUsingHeader.length + 2);
 
-    /* We need a pair of dummy files for creating command line arg structs.
+    /* We need real files for creating command line arg structs.
      */
     string file1Copy1Path = buildPath(rfdTestDir, "file1_copy1.txt");
     string file1Copy2Path = buildPath(rfdTestDir, "file1_copy2.txt");
@@ -2029,15 +2029,15 @@ unittest
     }
     catch (Exception e) assert(false, format("Failed to write file: %s.\n  Error: %s", file1Copy2Path, e.msg));
 
-    TsvSampleOptions cmdoptYesHeader;
-    auto yesHeaderCmdArgs = ["unittest", "--header", file1Copy2Path];
-    auto r2 = cmdoptYesHeader.processArgs(yesHeaderCmdArgs);
-    assert(r2[0], format("Invalid command lines arg: '%s'.", yesHeaderCmdArgs));
-
     TsvSampleOptions cmdoptNoHeader;
     auto noHeaderCmdArgs = ["unittest", file1Copy1Path];
     auto r1 = cmdoptNoHeader.processArgs(noHeaderCmdArgs);
     assert(r1[0], format("Invalid command lines arg: '%s'.", noHeaderCmdArgs));
+
+    TsvSampleOptions cmdoptYesHeader;
+    auto yesHeaderCmdArgs = ["unittest", "--header", file1Copy2Path];
+    auto r2 = cmdoptYesHeader.processArgs(yesHeaderCmdArgs);
+    assert(r2[0], format("Invalid command lines arg: '%s'.", yesHeaderCmdArgs));
 
     auto outputStream = appender!(char[])();
 
