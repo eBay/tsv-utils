@@ -136,7 +136,7 @@ struct DiffOptions
     string configFile = "test-config.json";    // --c|config-file
     string goldDir = "gold";                   // --g|gold-dir
     bool quiet = false;                        // --q|quiet
-    size_t maxDiffLines = 500;                  // --n|max-diff-lines
+    size_t maxDiffLines = 40;                  // --n|max-diff-lines
     string diffProg = "diff";                  // --diff-prog
 
     /* Returns a tuple. First value is true if command line arguments were successfully

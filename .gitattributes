@@ -1,0 +1,6 @@
+# Default behavior in this repository is Unix LF
+* text eol=lf
+
+# CSV files in this repository are used for testing and multiple types of line endings
+*.csv binary
+
