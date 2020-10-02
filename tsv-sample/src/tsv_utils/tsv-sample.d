@@ -1931,9 +1931,14 @@ unittest
     import std.file : rmdirRecurse;
     import std.path : buildPath;
     import std.range : repeat;
+    import core.memory : GC;
 
     auto rfdTestDir = makeUnittestTempDir("tsv_sample_readFileData");
-    scope(exit) rfdTestDir.rmdirRecurse;
+    scope(exit)
+    {
+        GC.collect;    // Close any open files
+        rfdTestDir.rmdirRecurse;
+    }
 
     char[] file1Data;
     char[] file2Data;
