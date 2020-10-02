@@ -602,7 +602,7 @@ unittest
     {
         import std.stdio : File;
 
-        auto ostream = BufferedOutputRange!File(filepath1.File("w"));
+        auto ostream = BufferedOutputRange!File(filepath1.File("wb"));
         ostream.append("file1: ");
         ostream.append("abc");
         ostream.append(["def", "ghi", "jkl"]);
@@ -617,7 +617,7 @@ unittest
     {
         import std.stdio : File;
 
-        auto ostream = BufferedOutputRange!File(filepath2.File("w"), 0, 0);
+        auto ostream = BufferedOutputRange!File(filepath2.File("wb"), 0, 0);
         ostream.append("file2: ");
         ostream.append("abc");
         ostream.append(["def", "ghi", "jkl"]);
@@ -636,7 +636,7 @@ unittest
         {
             import std.stdio : File;
 
-            auto ltw = filepath3.File("w").lockingTextWriter;
+            auto ltw = filepath3.File("wb").lockingTextWriter;
             {
                 auto ostream = BufferedOutputRange!(typeof(ltw))(ltw);
                 ostream.append("file3: ");
@@ -988,8 +988,8 @@ unittest
     string file1b = buildPath(testDir, "file1b.txt");
     {
 
-        file1a.File("w").write(data1.data);
-        file1b.File("w").write(data1.data);
+        file1a.File("wb").write(data1.data);
+        file1b.File("wb").write(data1.data);
     }
 
     /* Default parameters. */
@@ -1040,12 +1040,12 @@ unittest
     string file4a = buildPath(testDir, "file4a.txt");
     string file4b = buildPath(testDir, "file4b.txt");
     {
-        file1a.File("w").write("a");
-        file1b.File("w").write("a");
-        file2a.File("w").write("ab");
-        file2b.File("w").write("ab");
-        file3a.File("w").write("abc");
-        file3b.File("w").write("abc");
+        file1a.File("wb").write("a");
+        file1b.File("wb").write("a");
+        file2a.File("wb").write("ab");
+        file2b.File("wb").write("ab");
+        file3a.File("wb").write("abc");
+        file3b.File("wb").write("abc");
     }
 
     static foreach (readSize; [1, 2, 4])
@@ -1700,10 +1700,10 @@ unittest
     string file3Data = file3Header ~ file3Body;
 
     {
-        file0.File("w").write(file0Data);
-        file1.File("w").write(file1Data);
-        file2.File("w").write(file2Data);
-        file3.File("w").write(file3Data);
+        file0.File("wb").write(file0Data);
+        file1.File("wb").write(file1Data);
+        file2.File("wb").write(file2Data);
+        file3.File("wb").write(file3Data);
     }
 
     auto inputFiles = [file0, file1, file2, file3];
@@ -2064,10 +2064,10 @@ unittest
     string file3Data = file3Header ~ file3Body;
 
     {
-        file0.File("w").write(file0Data);
-        file1.File("w").write(file1Data);
-        file2.File("w").write(file2Data);
-        file3.File("w").write(file3Data);
+        file0.File("wb").write(file0Data);
+        file1.File("wb").write(file1Data);
+        file2.File("wb").write(file2Data);
+        file3.File("wb").write(file3Data);
     }
 
     auto inputFiles = [file0, file1, file2, file3];
