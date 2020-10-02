@@ -2028,10 +2028,11 @@ unittest
         blocksAppender.reserve(3);
         foreach (f; [ file1Path, file2Path, file3Path ])
         {
-            auto ifile = f.File;
+            auto ifile = f.File("rb");
             ulong filesize = ifile.size;
             if (filesize == ulong.max) filesize = 1000;
             readFileDataAsOneBlock(f, ifile, filesize, blocksAppender, rawReadBuffer);
+            ifile.close;
         }
         auto inputLines =
             identifyInputLines!(No.hasRandomValue, No.isWeighted)(
@@ -2054,9 +2055,10 @@ unittest
                     blocksAppender.reserve(3);
                     foreach (f; [ file1Path, file2Path, file3Path ])
                     {
-                        auto ifile = f.File;
+                        auto ifile = f.File("rb");
                         readFileDataAsMultipleBlocks(f, ifile, blocksAppender,
                                                      rawReadBuffer, blockSize, searchSize);
+                        ifile.close;
                     }
                     auto inputLines =
                         identifyInputLines!(No.hasRandomValue, No.isWeighted)(
@@ -2080,9 +2082,10 @@ unittest
         blocksAppender.reserve(3);
         foreach (f; [ file1Path, file2Path, file3Path ])
         {
-            auto ifile = f.File;
+            auto ifile = f.File("rb");
             readFileDataAsMultipleBlocks(f, ifile, blocksAppender,
                                          rawReadBuffer, blockSize, searchSize);
+            ifile.close;
         }
         auto inputLines =
             identifyInputLines!(No.hasRandomValue, No.isWeighted)(
