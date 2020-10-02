@@ -11,6 +11,7 @@ jobs:
   build:
     name: Build tsv-utils on Windows
     strategy:
+      fail-fast: false
       matrix:
         os: [windows-latest]
         dc: [dmd-latest, ldc-latest]
