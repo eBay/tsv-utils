@@ -1976,21 +1976,21 @@ unittest
 
     try
     {
-        auto ofile1 = File(file1Path, "w");
+        auto ofile1 = File(file1Path, "wb");
         ofile1.write(file1Data);
     }
     catch (Exception e) assert(false, format("Failed to write file: %s.\n  Error: %s", file1Path, e.msg));
 
     try
     {
-        auto ofile2 = File(file2Path, "w");
+        auto ofile2 = File(file2Path, "wb");
         ofile2.write(file2Data);
     }
     catch (Exception e) assert(false, format("Failed to write file: %s.\n  Error: %s", file2Path, e.msg));
 
     try
     {
-        auto ofile3 = File(file3Path, "w");
+        auto ofile3 = File(file3Path, "wb");
         ofile3.write(file3Data);
     }
     catch  (Exception e) assert(false, format("Failed to write file: %s.\n  Error: %s", file3Path, e.msg));
