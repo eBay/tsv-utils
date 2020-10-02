@@ -92,6 +92,7 @@ version(unittest)
             tsvData
                 .map!(row => row.joiner(delimiter.to!string))
                 .each!(str => file.writeln(str));
+            file.close;
         }
         catch (Exception exc)
         {
