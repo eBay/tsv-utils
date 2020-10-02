@@ -541,7 +541,7 @@ unittest
     scope(exit) testDir.rmdirRecurse;
 
     string somefile_txt = buildPath(testDir, "somefile.txt");
-    somefile_txt.File("w").writeln("Hello World!");
+    somefile_txt.File("wb").writeln("Hello World!");
 
     {
         auto args = ["unittest", "--lines-per-file", "10", somefile_txt];
@@ -891,7 +891,7 @@ struct SplitOutputFiles
             if (_numOpenFiles == _maxOpenFiles) closeSomeFile();
             assert(_numOpenFiles < _maxOpenFiles);
 
-            outputFile.ofile = outputFile.filename.File("a");
+            outputFile.ofile = outputFile.filename.File("ab");
             outputFile.isOpen = true;
             _numOpenFiles++;
 
@@ -1247,7 +1247,7 @@ unittest
             auto inputFile = buildInputFilePath(inputDir, inputLineLength, inputFileNumLines);
 
             {
-                auto ofile = inputFile.File("w");
+                auto ofile = inputFile.File("wb");
                 auto output = appender!(char[])();
                 foreach (m; 0 .. inputFileNumLines)
                 {
@@ -1274,7 +1274,7 @@ unittest
                 while (linesWritten < inputFileNumLines)
                 {
                     auto expectedFile = buildPath(expectedSubDir, format("part_%d.txt", filenum));
-                    auto f = expectedFile.File("w");
+                    auto f = expectedFile.File("wb");
                     auto linesToWrite = min(outputFileNumLines, inputFileNumLines - linesWritten);
                     foreach (line; outputRowData[linesWritten .. linesWritten + linesToWrite])
                     {
@@ -1350,8 +1350,8 @@ unittest
             auto expectedFileHeader = buildPath(expectedSubDirHeader, format("part_%d.txt", filenum));
             auto expectedFileHeaderInOnly = buildPath(expectedSubDirHeaderInOnly,
                                                       format("part_%d.txt", filenum));
-            auto fHeader = expectedFileHeader.File("w");
-            auto fHeaderInOnly = expectedFileHeaderInOnly.File("w");
+            auto fHeader = expectedFileHeader.File("wb");
+            auto fHeaderInOnly = expectedFileHeaderInOnly.File("wb");
             auto linesToWrite = min(outputFileNumLines, inputFileNumLines - linesWritten);
 
             fHeader.writeln(outputRowData[0][0 .. inputLineLength]);

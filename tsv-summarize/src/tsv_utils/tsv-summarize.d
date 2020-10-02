@@ -1151,7 +1151,7 @@ version(unittest)
         import std.algorithm;
         import std.stdio;
 
-        auto f = filepath.File("w");
+        auto f = filepath.File("wb");
         foreach (record; fileData) f.writeln(record.joiner(delimiter));
         f.close;
     }

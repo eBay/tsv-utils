@@ -254,6 +254,8 @@ if (isOutputRange!(OutputRange, char))
                 outputStream.put('\n');
             }
         }
+        /* Files don't always close quickly enough on thier own. */
+        if (filename != "-") inputStream.close;
     }
 }
 
