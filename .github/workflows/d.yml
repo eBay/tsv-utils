@@ -35,4 +35,4 @@ jobs:
       - name: make test
         shell: bash
         run: |
-          make test DCOMPILER=${DC}
+          make test DCOMPILER=${DC} DFLAGS=-m64
