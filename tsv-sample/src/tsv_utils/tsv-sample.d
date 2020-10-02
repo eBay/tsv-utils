@@ -1931,14 +1931,9 @@ unittest
     import std.file : rmdirRecurse;
     import std.path : buildPath;
     import std.range : repeat;
-    import core.memory : GC;
 
     auto rfdTestDir = makeUnittestTempDir("tsv_sample_readFileData");
-    scope(exit)
-    {
-        GC.collect;    // Close any open files
-        rfdTestDir.rmdirRecurse;
-    }
+    scope(exit) rfdTestDir.rmdirRecurse;
 
     char[] file1Data;
     char[] file2Data;
@@ -2043,6 +2038,13 @@ unittest
     auto yesHeaderCmdArgs = ["unittest", "--header", file1Copy2Path];
     auto r2 = cmdoptYesHeader.processArgs(yesHeaderCmdArgs);
     assert(r2[0], format("Invalid command lines arg: '%s'.", yesHeaderCmdArgs));
+
+    scope (exit)
+    {
+        /* Close the files being used by the cmdopt[yes|no]Header structs. */
+        while (!cmdoptNoHeader.inputSources.empty) cmdoptNoHeader.inputSources.popFront;
+        while (!cmdoptYesHeader.inputSources.empty) cmdoptYesHeader.inputSources.popFront;
+    }
 
     auto outputStream = appender!(char[])();
 
