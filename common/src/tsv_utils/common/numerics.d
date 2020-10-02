@@ -616,7 +616,7 @@ do
         else if (method == QuantileInterpolation.R2)
         {
             immutable double h1 = data.length * prob + 0.5;
-            immutable size_t lo = ((h1 - 0.5).ceil.to!long - 1).max(0);
+            immutable size_t lo = ((h1 - 0.5).ceil.to!long - 1).max(0).to!size_t;
             immutable size_t hi = ((h1 + 0.5).to!size_t - 1).min(data.length - 1);
             q = (data[lo].to!double + data[hi].to!double) / 2.0;
         }
@@ -629,7 +629,7 @@ do
              *   is done as a single step. The separate calculation of 'h1' avoids this.
              */
             immutable double h1 = data.length * prob;
-            q = data[h1.lrint.max(1) - 1].to!double;
+            q = data[h1.lrint.max(1).to!size_t - 1].to!double;
         }
         else if ((method == QuantileInterpolation.R4) ||
                  (method == QuantileInterpolation.R5) ||
@@ -655,11 +655,11 @@ do
 
             double h1IntegerPart;
             immutable double h1FractionPart = modf(h1, &h1IntegerPart);
-            immutable size_t lo = (h1IntegerPart - 1.0).to!long.max(0).min(data.length - 1);
+            immutable size_t lo = (h1IntegerPart - 1.0).to!long.max(0).min(data.length - 1).to!size_t;
             q = data[lo];
             if (h1FractionPart > 0.0)
             {
-                immutable size_t hi = h1IntegerPart.to!long.min(data.length - 1);
+                immutable size_t hi = h1IntegerPart.to!long.min(data.length - 1).to!size_t;
                 q += h1FractionPart * (data[hi].to!double - data[lo].to!double);
             }
         }
