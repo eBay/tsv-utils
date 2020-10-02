@@ -987,16 +987,8 @@ unittest
     string file1a = buildPath(testDir, "file1a.txt");
     string file1b = buildPath(testDir, "file1b.txt");
     {
-        {
-            auto file1aOut = file1a.File("wb");
-            file1aOut.write(data1.data);
-            file1aOut.close;
-        }
-        {
-            auto file1bOut = file1b.File("wb");
-            file1bOut.write(data1.data);
-            file1bOut.close;
-        }
+        file1a.File("wb").write(data1.data);
+        file1b.File("wb").write(data1.data);
     }
 
     /* Default parameters. */
@@ -1059,31 +1051,68 @@ unittest
     {
         static foreach (growSize; 1 .. readSize + 1)
         {{
-            auto f1aIn = file1a.File().bufferedByLine!(No.keepTerminator, char, '\n', readSize, growSize);
-            auto f1bIn = file1b.File().byLine(No.keepTerminator);
+            auto f1aFH = file1a.File();
+            auto f1bFH = file1b.File();
+            auto f1aIn = f1aFH.bufferedByLine!(No.keepTerminator, char, '\n', readSize, growSize);
+            auto f1bIn = f1bFH.byLine(No.keepTerminator);
+
             foreach (a, b; lockstep(f1aIn, f1bIn, StoppingPolicy.requireSameLength)) assert(a == b);
 
-            auto f2aIn = file2a.File().bufferedByLine!(No.keepTerminator, char, '\n', readSize, growSize);
-            auto f2bIn = file2b.File().byLine(No.keepTerminator);
+            f1aFH.close;
+            f1bFH.close;
+
+            auto f2aFH = file2a.File();
+            auto f2bFH = file2b.File();
+            auto f2aIn = f2aFH.bufferedByLine!(No.keepTerminator, char, '\n', readSize, growSize);
+            auto f2bIn = f2bFH.byLine(No.keepTerminator);
+
             foreach (a, b; lockstep(f2aIn, f2bIn, StoppingPolicy.requireSameLength)) assert(a == b);
 
-            auto f3aIn = file3a.File().bufferedByLine!(No.keepTerminator, char, '\n', readSize, growSize);
-            auto f3bIn = file3b.File().byLine(No.keepTerminator);
+            f2aFH.close;
+            f2bFH.close;
+
+            auto f3aFH = file3a.File();
+            auto f3bFH = file3b.File();
+            auto f3aIn = f3aFH.bufferedByLine!(No.keepTerminator, char, '\n', readSize, growSize);
+            auto f3bIn = f3bFH.byLine(No.keepTerminator);
+
             foreach (a, b; lockstep(f3aIn, f3bIn, StoppingPolicy.requireSameLength)) assert(a == b);
+
+            f3aFH.close;
+            f3bFH.close;
         }}
         static foreach (growSize; 1 .. readSize + 1)
         {{
-            auto f1aIn = file1a.File().bufferedByLine!(Yes.keepTerminator, char, '\n', readSize, growSize);
-            auto f1bIn = file1b.File().byLine(Yes.keepTerminator);
+
+            auto f1aFH = file1a.File();
+            auto f1bFH = file1b.File();
+            auto f1aIn = f1aFH.bufferedByLine!(Yes.keepTerminator, char, '\n', readSize, growSize);
+            auto f1bIn = f1bFH.byLine(Yes.keepTerminator);
+
             foreach (a, b; lockstep(f1aIn, f1bIn, StoppingPolicy.requireSameLength)) assert(a == b);
 
-            auto f2aIn = file2a.File().bufferedByLine!(Yes.keepTerminator, char, '\n', readSize, growSize);
-            auto f2bIn = file2b.File().byLine(Yes.keepTerminator);
+            f1aFH.close;
+            f1bFH.close;
+
+            auto f2aFH = file2a.File();
+            auto f2bFH = file2b.File();
+            auto f2aIn = f2aFH.bufferedByLine!(Yes.keepTerminator, char, '\n', readSize, growSize);
+            auto f2bIn = f2bFH.byLine(Yes.keepTerminator);
+
             foreach (a, b; lockstep(f2aIn, f2bIn, StoppingPolicy.requireSameLength)) assert(a == b);
 
-            auto f3aIn = file3a.File().bufferedByLine!(Yes.keepTerminator, char, '\n', readSize, growSize);
-            auto f3bIn = file3b.File().byLine(Yes.keepTerminator);
+            f2aFH.close;
+            f2bFH.close;
+
+            auto f3aFH = file3a.File();
+            auto f3bFH = file3b.File();
+            auto f3aIn = f3aFH.bufferedByLine!(Yes.keepTerminator, char, '\n', readSize, growSize);
+            auto f3bIn = f3bFH.byLine(Yes.keepTerminator);
+
             foreach (a, b; lockstep(f3aIn, f3bIn, StoppingPolicy.requireSameLength)) assert(a == b);
+
+            f3aFH.close;
+            f3bFH.close;
         }}
     }
 }
