@@ -33,7 +33,7 @@ jobs:
           dub clean
           make clean
 
-      - name: make test
+      - name: make unittest
         shell: bash
         run: |
-          make test DCOMPILER=${DC} DFLAGS=-m64
+          make unittest DCOMPILER=${DC} DFLAGS=-m64
