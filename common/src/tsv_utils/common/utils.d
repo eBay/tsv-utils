@@ -987,9 +987,16 @@ unittest
     string file1a = buildPath(testDir, "file1a.txt");
     string file1b = buildPath(testDir, "file1b.txt");
     {
-
-        file1a.File("wb").write(data1.data);
-        file1b.File("wb").write(data1.data);
+        {
+            auto file1aOut = file1a.File("wb");
+            file1aOut.write(data1.data);
+            file1aOut.close;
+        }
+        {
+            auto file1bOut = file1b.File("wb");
+            file1bOut.write(data1.data);
+            file1bOut.close;
+        }
     }
 
     /* Default parameters. */
