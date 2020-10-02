@@ -213,7 +213,16 @@ unittest  // formatNumber unit tests
     assert(formatNumber(0.6, 0) == "1");
     assert(formatNumber(0.6, 1) == "0.6");
     assert(formatNumber(0.06, 0) == "0");
-    assert(formatNumber(0.06, 1) == "0.1", formatNumber(0.06, 1));
+    import std.stdio;
+    writeln (format("===> %s; %s",
+                    formatNumber(0.06, 1),
+                    format("%.*f", 1, 0.06)
+                   ));
+    assert(formatNumber(0.06, 1) == "0.1",
+           format("%s; %s",
+                  formatNumber(0.06, 1),
+                  format("%.*f", 1, 0.06)
+                 ));
     assert(formatNumber(0.06, 2) == "0.06");
     assert(formatNumber(0.06, 3) == "0.06");
     assert(formatNumber(9.49999, 0) == "9");
