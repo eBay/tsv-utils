@@ -25,6 +25,14 @@ jobs:
         with:
           compiler: ${{ matrix.dc }}
 
-      - name: Build and Run
+      - name: Dub Build and Run
+        shell: bash
         run: |
           dub run
+          dub clean
+          make clean
+
+      - name: make test
+        shell: bash
+        run: |
+          make test
