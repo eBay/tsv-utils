@@ -1064,6 +1064,12 @@ version(unittest)
      * line argument processing. Eventually this unit test process will need to be
      * rewritten. For now, a file with the equivalent data is being added to the command
      * line.
+     *
+     * Update (Sept 2020): The physical file needs to be closed for unit tests on
+     * Windows. This is so the temporary file can be deleted without trouble. Since its
+     * a placeholder in these tests, it's getting iterated but not popped off the
+     * inputSources and closed. Normal collection is not closing it quick enought. So
+     * all inputSources are closed at the end of this function.
      */
     void testSummarizer(string[] cmdArgs, string[][] file, string[][] expected)
     {
@@ -1144,6 +1150,9 @@ version(unittest)
                formatAssertMessage(
                    "Result != expected:\n=====Expected=====\n%s=====Actual=======\n%s==================",
                    expectedOutput.to!string, summarizerOutput.data.to!string));
+
+        /* Ensure all files are closed by emptying the stack. */
+        while (!cmdopt.inputSources.empty) cmdopt.inputSources.popFront;
     }
 
     void writeDataFile(string filepath, string[][] fileData, string delimiter = "\t")
@@ -1151,7 +1160,7 @@ version(unittest)
         import std.algorithm;
         import std.stdio;
 
-        auto f = filepath.File("w");
+        auto f = filepath.File("wb");
         foreach (record; fileData) f.writeln(record.joiner(delimiter));
         f.close;
     }

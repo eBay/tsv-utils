@@ -88,10 +88,11 @@ version(unittest)
 
         try
         {
-            auto file = File(filepath, "w");
+            auto file = File(filepath, "wb");
             tsvData
                 .map!(row => row.joiner(delimiter.to!string))
                 .each!(str => file.writeln(str));
+            file.close;
         }
         catch (Exception exc)
         {

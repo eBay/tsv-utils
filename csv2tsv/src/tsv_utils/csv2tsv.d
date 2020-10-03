@@ -571,7 +571,7 @@ unittest  // inputSourceByChunk
     {
         import std.stdio;
 
-        auto f = filePath.File("w");
+        auto f = filePath.File("wb");
         f.rawWrite(data);
         f.close;
     }

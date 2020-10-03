@@ -1976,22 +1976,25 @@ unittest
 
     try
     {
-        auto ofile1 = File(file1Path, "w");
+        auto ofile1 = File(file1Path, "wb");
         ofile1.write(file1Data);
+        ofile1.close;
     }
     catch (Exception e) assert(false, format("Failed to write file: %s.\n  Error: %s", file1Path, e.msg));
 
     try
     {
-        auto ofile2 = File(file2Path, "w");
+        auto ofile2 = File(file2Path, "wb");
         ofile2.write(file2Data);
+        ofile2.close;
     }
     catch (Exception e) assert(false, format("Failed to write file: %s.\n  Error: %s", file2Path, e.msg));
 
     try
     {
-        auto ofile3 = File(file3Path, "w");
+        auto ofile3 = File(file3Path, "wb");
         ofile3.write(file3Data);
+        ofile3.close;
     }
     catch  (Exception e) assert(false, format("Failed to write file: %s.\n  Error: %s", file3Path, e.msg));
 
@@ -2005,15 +2008,43 @@ unittest
 
     assert(expectedLines.length == expectedLinesUsingHeader.length + 2);
 
+    /* We need real files for creating command line arg structs.
+     */
+    string file1Copy1Path = buildPath(rfdTestDir, "file1_copy1.txt");
+    string file1Copy2Path = buildPath(rfdTestDir, "file1_copy2.txt");
+
+    try
+    {
+        auto ofile = File(file1Copy1Path, "wb");
+        ofile.write(file1Data);
+        ofile.close;
+    }
+    catch (Exception e) assert(false, format("Failed to write file: %s.\n  Error: %s", file1Copy1Path, e.msg));
+
+    try
+    {
+        auto ofile = File(file1Copy2Path, "wb");
+        ofile.write(file1Data);
+        ofile.close;
+    }
+    catch (Exception e) assert(false, format("Failed to write file: %s.\n  Error: %s", file1Copy2Path, e.msg));
+
     TsvSampleOptions cmdoptNoHeader;
-    auto noHeaderCmdArgs = ["unittest", file1Path];
+    auto noHeaderCmdArgs = ["unittest", file1Copy1Path];
     auto r1 = cmdoptNoHeader.processArgs(noHeaderCmdArgs);
     assert(r1[0], format("Invalid command lines arg: '%s'.", noHeaderCmdArgs));
 
     TsvSampleOptions cmdoptYesHeader;
-    auto yesHeaderCmdArgs = ["unittest", "--header", file1Path];
+    auto yesHeaderCmdArgs = ["unittest", "--header", file1Copy2Path];
     auto r2 = cmdoptYesHeader.processArgs(yesHeaderCmdArgs);
     assert(r2[0], format("Invalid command lines arg: '%s'.", yesHeaderCmdArgs));
+
+    scope (exit)
+    {
+        /* Close the files being used by the cmdopt[yes|no]Header structs. */
+        while (!cmdoptNoHeader.inputSources.empty) cmdoptNoHeader.inputSources.popFront;
+        while (!cmdoptYesHeader.inputSources.empty) cmdoptYesHeader.inputSources.popFront;
+    }
 
     auto outputStream = appender!(char[])();
 
@@ -2025,10 +2056,11 @@ unittest
         blocksAppender.reserve(3);
         foreach (f; [ file1Path, file2Path, file3Path ])
         {
-            auto ifile = f.File;
+            auto ifile = f.File("rb");
             ulong filesize = ifile.size;
             if (filesize == ulong.max) filesize = 1000;
             readFileDataAsOneBlock(f, ifile, filesize, blocksAppender, rawReadBuffer);
+            ifile.close;
         }
         auto inputLines =
             identifyInputLines!(No.hasRandomValue, No.isWeighted)(
@@ -2051,9 +2083,10 @@ unittest
                     blocksAppender.reserve(3);
                     foreach (f; [ file1Path, file2Path, file3Path ])
                     {
-                        auto ifile = f.File;
+                        auto ifile = f.File("rb");
                         readFileDataAsMultipleBlocks(f, ifile, blocksAppender,
                                                      rawReadBuffer, blockSize, searchSize);
+                        ifile.close;
                     }
                     auto inputLines =
                         identifyInputLines!(No.hasRandomValue, No.isWeighted)(
@@ -2077,9 +2110,10 @@ unittest
         blocksAppender.reserve(3);
         foreach (f; [ file1Path, file2Path, file3Path ])
         {
-            auto ifile = f.File;
+            auto ifile = f.File("rb");
             readFileDataAsMultipleBlocks(f, ifile, blocksAppender,
                                          rawReadBuffer, blockSize, searchSize);
+            ifile.close;
         }
         auto inputLines =
             identifyInputLines!(No.hasRandomValue, No.isWeighted)(

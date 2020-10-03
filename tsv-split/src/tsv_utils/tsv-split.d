@@ -533,15 +533,32 @@ unittest
     import std.file : mkdir, rmdirRecurse;
     import std.path : buildPath;
 
-    /* A dummy file is used so we don't have to worry about the cases where command
-     * line processing might open a file. Don't want to use standard input for this,
-     * at least in cases where it might try to read to get the header line.
+    /* A pair of dummy files are used so we don't have to worry about the cases where
+     * command line processing might open a file. Don't want to use standard input for
+     * this, at least in cases where it might try to read to get the header line.
+     *
+     * Note: For Windows we need to ensure there are no references held to the dummy
+     * file (somefile.txt) by the time rmdirRecurse tries to remove it. So we take
+     * a step not necessary in normal code and explicitly empty the inputSources in
+     * TsvSplitOptions structs that are created during the tests. In normal code,
+     * this happens when the input sources are iterated, but the sources are not
+     * iterated in these tests.
      */
     auto testDir = makeUnittestTempDir("tsv_split_bylinecount");
     scope(exit) testDir.rmdirRecurse;
 
     string somefile_txt = buildPath(testDir, "somefile.txt");
-    somefile_txt.File("w").writeln("Hello World!");
+    string anotherfile_pqr = buildPath(testDir, "anotherfile.pqr");
+
+    {
+        auto f1 = somefile_txt.File("wb");
+        f1.writeln("Hello World!");
+        f1.close;
+
+        auto f2 = anotherfile_pqr.File("wb");
+        f2.writeln("Good Morning World!");
+        f2.close;
+    }
 
     {
         auto args = ["unittest", "--lines-per-file", "10", somefile_txt];
@@ -552,6 +569,8 @@ unittest
         assert(cmdopt.keyFields.empty);
         assert(cmdopt.numFiles == 0);
         assert(cmdopt.hasHeader == false);
+
+        while (!cmdopt.inputSources.empty) cmdopt.inputSources.popFront;
     }
     {
         auto args = ["unittest", "--num-files", "20", somefile_txt];
@@ -562,6 +581,8 @@ unittest
         assert(cmdopt.keyFields.empty);
         assert(cmdopt.numFiles == 20);
         assert(cmdopt.hasHeader == false);
+
+        while (!cmdopt.inputSources.empty) cmdopt.inputSources.popFront;
     }
     {
         auto args = ["unittest", "-n", "5", "--key-fields", "1-3", somefile_txt];
@@ -573,6 +594,8 @@ unittest
         assert(cmdopt.numFiles == 5);
         assert(cmdopt.hasHeader == false);
         assert(cmdopt.keyIsFullLine == false);
+
+        while (!cmdopt.inputSources.empty) cmdopt.inputSources.popFront;
     }
     {
         auto args = ["unittest", "-n", "5", "-k", "0", somefile_txt];
@@ -583,6 +606,8 @@ unittest
         assert(cmdopt.numFiles == 5);
         assert(cmdopt.hasHeader == false);
         assert(cmdopt.keyIsFullLine == true);
+
+        while (!cmdopt.inputSources.empty) cmdopt.inputSources.popFront;
     }
     {
         auto args = ["unittest", "-n", "2", "--header", somefile_txt];
@@ -592,6 +617,8 @@ unittest
         assert(cmdopt.headerInOut == true);
         assert(cmdopt.hasHeader == true);
         assert(cmdopt.headerIn == false);
+
+        while (!cmdopt.inputSources.empty) cmdopt.inputSources.popFront;
     }
     {
         auto args = ["unittest", "-n", "2", "--header-in-only", somefile_txt];
@@ -601,6 +628,8 @@ unittest
         assert(cmdopt.headerInOut == false);
         assert(cmdopt.hasHeader == true);
         assert(cmdopt.headerIn == true);
+
+        while (!cmdopt.inputSources.empty) cmdopt.inputSources.popFront;
     }
 
     static void testSuffix(string[] args, string expectedSuffix)
@@ -613,6 +642,8 @@ unittest
         assert(cmdopt.suffix == expectedSuffix,
                format("[testSuffix] Incorrect cmdopt.suffix. Expected: '%s', Actual: '%s'\n   cmdopt.processArgs(%s)",
                       expectedSuffix, cmdopt.suffix, savedArgs));
+
+        while (!cmdopt.inputSources.empty) cmdopt.inputSources.popFront;
     }
 
     /* In these tests, don't use headers and when files are listed, use 'somefile_txt' first.
@@ -623,8 +654,8 @@ unittest
     testSuffix(["unittest", "-n", "2", "--", "-"], "");
     testSuffix(["unittest", "-n", "2", "--suffix", "_123"], "_123");
     testSuffix(["unittest", "-n", "2", somefile_txt], ".txt");
-    testSuffix(["unittest", "-n", "2", somefile_txt, "anotherfile.pqr"], ".txt");
-    testSuffix(["unittest", "-n", "2", "--suffix", ".X", somefile_txt, "anotherfile.pqr"], ".X");
+    testSuffix(["unittest", "-n", "2", somefile_txt, anotherfile_pqr], ".txt");
+    testSuffix(["unittest", "-n", "2", "--suffix", ".X", somefile_txt, anotherfile_pqr], ".X");
     testSuffix(["unittest", "-n", "2", "--suffix", "", somefile_txt], "");
     testSuffix(["unittest", "-n", "2", "--", "-", somefile_txt], "");
     testSuffix(["unittest", "-n", "2", "--", somefile_txt, "-"], ".txt");
@@ -639,6 +670,8 @@ unittest
         assert(cmdopt.digitWidth == expected,
                format("[testDigitWidth] Incorrect cmdopt.digitWidth. Expected: %d, Actual: %d\n   cmdopt.processArgs(%s)",
                       expected, cmdopt.digitWidth, savedArgs));
+
+        while (!cmdopt.inputSources.empty) cmdopt.inputSources.popFront;
     }
 
     testDigitWidth(["unittest", "-n", "2", somefile_txt], 1);
@@ -891,7 +924,7 @@ struct SplitOutputFiles
             if (_numOpenFiles == _maxOpenFiles) closeSomeFile();
             assert(_numOpenFiles < _maxOpenFiles);
 
-            outputFile.ofile = outputFile.filename.File("a");
+            outputFile.ofile = outputFile.filename.File("ab");
             outputFile.isOpen = true;
             _numOpenFiles++;
 
@@ -1247,7 +1280,7 @@ unittest
             auto inputFile = buildInputFilePath(inputDir, inputLineLength, inputFileNumLines);
 
             {
-                auto ofile = inputFile.File("w");
+                auto ofile = inputFile.File("wb");
                 auto output = appender!(char[])();
                 foreach (m; 0 .. inputFileNumLines)
                 {
@@ -1274,7 +1307,7 @@ unittest
                 while (linesWritten < inputFileNumLines)
                 {
                     auto expectedFile = buildPath(expectedSubDir, format("part_%d.txt", filenum));
-                    auto f = expectedFile.File("w");
+                    auto f = expectedFile.File("wb");
                     auto linesToWrite = min(outputFileNumLines, inputFileNumLines - linesWritten);
                     foreach (line; outputRowData[linesWritten .. linesWritten + linesToWrite])
                     {
@@ -1350,8 +1383,8 @@ unittest
             auto expectedFileHeader = buildPath(expectedSubDirHeader, format("part_%d.txt", filenum));
             auto expectedFileHeaderInOnly = buildPath(expectedSubDirHeaderInOnly,
                                                       format("part_%d.txt", filenum));
-            auto fHeader = expectedFileHeader.File("w");
-            auto fHeaderInOnly = expectedFileHeaderInOnly.File("w");
+            auto fHeader = expectedFileHeader.File("wb");
+            auto fHeaderInOnly = expectedFileHeaderInOnly.File("wb");
             auto linesToWrite = min(outputFileNumLines, inputFileNumLines - linesWritten);
 
             fHeader.writeln(outputRowData[0][0 .. inputLineLength]);

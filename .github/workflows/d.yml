@@ -11,6 +11,7 @@ jobs:
   build:
     name: Build tsv-utils on Windows
     strategy:
+      fail-fast: false
       matrix:
         os: [windows-latest]
         dc: [dmd-latest, ldc-latest]
@@ -25,6 +26,16 @@ jobs:
         with:
           compiler: ${{ matrix.dc }}
 
-      - name: Build and Run
+      - name: Dub Build and Run
+        shell: bash
         run: |
           dub run
+          dub clean
+          make clean
+
+      - name: make unittest
+        # Currently, only run unit tests on DMD. LDC has failures due to numeric formatting.
+        if: ${{ startsWith(matrix.dc, 'dmd') }}
+        shell: bash
+        run: |
+          make unittest DCOMPILER=${DC} DFLAGS=-m64

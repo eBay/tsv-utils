@@ -132,7 +132,7 @@ struct DiffOptions
     string programName;
     string testDir;                            // Required argument
     bool helpVerbose = false;                  // --help-verbose
-    string rootDir = "";                       // --r|root-dir
+    string rootDir = "";                       // --d|root-dir
     string configFile = "test-config.json";    // --c|config-file
     string goldDir = "gold";                   // --g|gold-dir
     bool quiet = false;                        // --q|quiet
