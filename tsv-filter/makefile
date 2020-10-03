@@ -9,10 +9,47 @@ include ../makedefs.mk
 # works, but using LDC_LTO_RUNTIME=1 fails. Could be different linkers,
 # not clear. Fix by adding -disable-fp-elim to release_flags created by
 # makedefs.mk.
+#
+# Update - With LDC version 1.24 the -disable-fp-elim option was removed.
+# It is no longer supported by the default LLVM version 11. At present
+# there are no known cases of failure using LDC 1.24. Use of the flag is
+# now conditioned on the older compiler versions.
 
 ifeq ($(shell uname -s),Darwin)
 	ifeq ($(compiler_type),ldc)
-		override release_flags += -disable-fp-elim
+		ifeq ($(ldc_version_major_minor),1.8)
+			override release_flags += -disable-fp-elim
+		else ifeq ($(ldc_version_major_minor),1.9)
+			override release_flags += -disable-fp-elim
+		else ifeq ($(ldc_version_major_minor),1.10)
+			override release_flags += -disable-fp-elim
+		else ifeq ($(ldc_version_major_minor),1.11)
+			override release_flags += -disable-fp-elim
+		else ifeq ($(ldc_version_major_minor),1.12)
+			override release_flags += -disable-fp-elim
+		else ifeq ($(ldc_version_major_minor),1.13)
+			override release_flags += -disable-fp-elim
+		else ifeq ($(ldc_version_major_minor),1.14)
+			override release_flags += -disable-fp-elim
+		else ifeq ($(ldc_version_major_minor),1.15)
+			override release_flags += -disable-fp-elim
+		else ifeq ($(ldc_version_major_minor),1.16)
+			override release_flags += -disable-fp-elim
+		else ifeq ($(ldc_version_major_minor),1.17)
+			override release_flags += -disable-fp-elim
+		else ifeq ($(ldc_version_major_minor),1.18)
+			override release_flags += -disable-fp-elim
+		else ifeq ($(ldc_version_major_minor),1.19)
+			override release_flags += -disable-fp-elim
+		else ifeq ($(ldc_version_major_minor),1.20)
+			override release_flags += -disable-fp-elim
+		else ifeq ($(ldc_version_major_minor),1.21)
+			override release_flags += -disable-fp-elim
+		else ifeq ($(ldc_version_major_minor),1.22)
+			override release_flags += -disable-fp-elim
+		else ifeq ($(ldc_version_major_minor),1.23)
+			override release_flags += -disable-fp-elim
+		endif
 	endif
 endif
 

@@ -158,6 +158,12 @@ ifeq ($(compiler_type),ldc)
 		ldc_version = unknown
 	endif
 
+	# Get the major and minor form of the version number
+	ldc_version_major_minor = $(shell $(DCOMPILER) --version | head -n 1 | sed s'/^LDC.*( *//' | sed s'/\.[[:digit:]][-[:digit:][:alnum:]]*):* *$$//' )
+	ifeq ($(ldc_version_major_minor),)
+		ldc_version_major_minor = unknown
+	endif
+
 	# Update/validate the LDC_LTO parameter
 	ifeq ($(LDC_LTO),)
 		override LDC_LTO = default
