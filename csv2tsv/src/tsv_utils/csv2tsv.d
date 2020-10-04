@@ -17,6 +17,7 @@ import std.format : format;
 import std.range;
 import std.traits : isArray, Unqual;
 import std.typecons : tuple;
+import tsv_utils.common.utils : isBufferableInputSource, inputSourceByChunk;
 
 immutable helpText = q"EOS
 Synopsis: csv2tsv [options] [file...]
@@ -361,289 +362,6 @@ This has been handled by creating a new range that can iterate either files or
 input streams chunk-by-chunk.
 */
 
-/** Defines the 'bufferable' input sources supported by inputSourceByChunk.
- *
- * This includes std.stdio.File objects and mutable dynamic ubyte arrays (input range
- * with ubyte elements).
- *
- * Static, const, and immutable arrays can be sliced to turn them into input ranges.
- */
-enum bool isBufferableInputSource(R) =
-    isFileHandle!(Unqual!R) ||
-    (isInputRange!R && is(Unqual!(ElementEncodingType!R) == ubyte));
-
-@safe unittest
-{
-    static assert(isBufferableInputSource!(File));
-    static assert(isBufferableInputSource!(typeof(stdin)));
-    static assert(isBufferableInputSource!(ubyte[]));
-    static assert(!isBufferableInputSource!(char[]));
-    static assert(!isBufferableInputSource!(string));
-
-    ubyte[10] staticArray;
-    const ubyte[1] staticConstArray;
-    immutable ubyte[1] staticImmutableArray;
-    const(ubyte)[1] staticArrayConstElts;
-    immutable(ubyte)[1] staticArrayImmutableElts;
-
-    ubyte[] dynamicArray = new ubyte[](10);
-    const(ubyte)[] dynamicArrayConstElts = new ubyte[](10);
-    immutable(ubyte)[] dynamicArrayImmutableElts = new ubyte[](10);
-    const ubyte[] dynamicConstArray = new ubyte[](10);
-    immutable ubyte[] dynamicImmutableArray = new ubyte[](10);
-
-    /* Dynamic mutable arrays are bufferable. */
-    static assert(!isBufferableInputSource!(typeof(staticArray)));
-    static assert(!isBufferableInputSource!(typeof(staticArrayConstElts)));
-    static assert(!isBufferableInputSource!(typeof(staticArrayImmutableElts)));
-    static assert(!isBufferableInputSource!(typeof(staticConstArray)));
-    static assert(!isBufferableInputSource!(typeof(staticImmutableArray)));
-
-    static assert(isBufferableInputSource!(typeof(dynamicArray)));
-    static assert(isBufferableInputSource!(typeof(dynamicArrayConstElts)));
-    static assert(isBufferableInputSource!(typeof(dynamicArrayImmutableElts)));
-    static assert(!isBufferableInputSource!(typeof(dynamicConstArray)));
-    static assert(!isBufferableInputSource!(typeof(dynamicImmutableArray)));
-
-    /* Slicing turns all forms into bufferable arrays. */
-    static assert(isBufferableInputSource!(typeof(staticArray[])));
-    static assert(isBufferableInputSource!(typeof(staticArrayConstElts[])));
-    static assert(isBufferableInputSource!(typeof(staticArrayImmutableElts[])));
-    static assert(isBufferableInputSource!(typeof(staticConstArray[])));
-    static assert(isBufferableInputSource!(typeof(staticImmutableArray[])));
-
-    static assert(isBufferableInputSource!(typeof(dynamicConstArray[])));
-    static assert(isBufferableInputSource!(typeof(dynamicImmutableArray[])));
-    static assert(isBufferableInputSource!(typeof(dynamicArray[])));
-    static assert(isBufferableInputSource!(typeof(dynamicArrayConstElts[])));
-    static assert(isBufferableInputSource!(typeof(dynamicArrayImmutableElts[])));
-
-    /* Element type tests. */
-    static assert(is(Unqual!(ElementType!(typeof(staticArray))) == ubyte));
-    static assert(is(Unqual!(ElementType!(typeof(staticArrayConstElts))) == ubyte));
-    static assert(is(Unqual!(ElementType!(typeof(staticArrayImmutableElts))) == ubyte));
-    static assert(is(Unqual!(ElementType!(typeof(staticConstArray))) == ubyte));
-    static assert(is(Unqual!(ElementType!(typeof(staticImmutableArray))) == ubyte));
-    static assert(is(Unqual!(ElementType!(typeof(dynamicArray))) == ubyte));
-    static assert(is(Unqual!(ElementType!(typeof(dynamicArrayConstElts))) == ubyte));
-    static assert(is(Unqual!(ElementType!(typeof(dynamicArrayImmutableElts))) == ubyte));
-    static assert(is(Unqual!(ElementType!(typeof(dynamicConstArray))) == ubyte));
-    static assert(is(Unqual!(ElementType!(typeof(dynamicImmutableArray))) == ubyte));
-
-    struct S1
-    {
-        void popFront();
-        @property bool empty();
-        @property ubyte front();
-    }
-
-    struct S2
-    {
-        @property ubyte front();
-        void popFront();
-        @property bool empty();
-        @property auto save() { return this; }
-        @property size_t length();
-        S2 opSlice(size_t, size_t);
-    }
-
-    static assert(isInputRange!S1);
-    static assert(isBufferableInputSource!S1);
-
-    static assert(isInputRange!S2);
-    static assert(is(ElementEncodingType!S2 == ubyte));
-    static assert(hasSlicing!S2);
-    static assert(isBufferableInputSource!S2);
-
-    /* For code coverage. */
-    S2 s2;
-    auto x = s2.save;
-}
-
-/** inputSourceByChunk returns a range that reads either a file handle (File) or a
- * ubyte[] array a chunk at a time.
- *
- * This is a cover for File.byChunk that allows passing an in-memory array as well.
- * At present the motivation is primarily to enable unit testing of chunk-based
- * algorithms using in-memory strings. At present the in-memory input types are
- * limited. In the future this may be changed to accept any type of character or
- * ubyte array.
- *
- * inputSourceByChunk takes either a File open for reading or a ubyte[] array
- * containing input data. Data is read a buffer at a time. The buffer can be
- * user provided, or allocated by inputSourceByChunk based on a caller provided
- * buffer size.
- *
- * A ubyte[] input source must satisfy isBufferableInputSource, which means that it
- * must be a dynamic, mutable ubyte[]. Using slicing to get a dynamic, mutable
- * array from a static, const, or immutable array.
- *
- * The chunks are returned as an input range.
- */
-auto inputSourceByChunk(InputSource)(InputSource source, size_t size)
-{
-    return inputSourceByChunk(source, new ubyte[](size));
-}
-
-/// Ditto
-auto inputSourceByChunk(InputSource)(InputSource source, ubyte[] buffer)
-if (isBufferableInputSource!InputSource)
-{
-    static if (isFileHandle!(Unqual!InputSource))
-    {
-        return source.byChunk(buffer);
-    }
-    else
-    {
-        static struct BufferedChunk
-        {
-            private Chunks!InputSource _chunks;
-            private ubyte[] _buffer;
-
-            private void readNextChunk()
-            {
-                if (_chunks.empty)
-                {
-                    _buffer.length = 0;
-                }
-                else
-                {
-                    size_t len = _chunks.front.length;
-                    _buffer[0 .. len] = _chunks.front[];
-                    _chunks.popFront;
-
-                    /* Only the last chunk should be shorter than the buffer. */
-                    assert(_buffer.length == len || _chunks.empty);
-
-                    if (_buffer.length != len) _buffer.length = len;
-                }
-            }
-
-            this(InputSource source, ubyte[] buffer)
-            {
-                enforce(buffer.length > 0, "buffer size must be larger than 0");
-                _chunks = source.chunks(buffer.length);
-                _buffer = buffer;
-                readNextChunk();
-            }
-
-            @property bool empty()
-            {
-                return (_buffer.length == 0);
-            }
-
-            @property ubyte[] front()
-            {
-                assert(!empty, "Attempting to fetch the front of an empty inputSourceByChunks");
-                return _buffer;
-            }
-
-            void popFront()
-            {
-                assert(!empty, "Attempting to popFront an empty inputSourceByChunks");
-                readNextChunk();
-            }
-        }
-
-        return BufferedChunk(source, buffer);
-    }
-}
-
-unittest  // inputSourceByChunk
-{
-    import tsv_utils.common.unittest_utils;   // tsv-utils unit test helpers
-    import std.file : mkdir, rmdirRecurse;
-    import std.path : buildPath;
-
-    auto testDir = makeUnittestTempDir("csv2tsv_inputSourceByChunk");
-    scope(exit) testDir.rmdirRecurse;
-
-    import std.algorithm : equal, joiner;
-    import std.format;
-    import std.string : representation;
-
-    auto charData = "abcde,ßÀß,あめりか物語,012345";
-    ubyte[] ubyteData = charData.dup.representation;
-
-    ubyte[1024] rawBuffer;  // Must be larger than largest bufferSize in tests.
-
-    void writeFileData(string filePath, ubyte[] data)
-    {
-        import std.stdio;
-
-        auto f = filePath.File("wb");
-        f.rawWrite(data);
-        f.close;
-    }
-
-    foreach (size_t dataSize; 0 .. ubyteData.length)
-    {
-        auto data = ubyteData[0 .. dataSize];
-        auto filePath = buildPath(testDir, format("data_%d.txt", dataSize));
-        writeFileData(filePath, data);
-
-        foreach (size_t bufferSize; 1 .. dataSize + 2)
-        {
-            assert(data.inputSourceByChunk(bufferSize).joiner.equal(data),
-                   format("[Test-A] dataSize: %d, bufferSize: %d", dataSize, bufferSize));
-
-            assert (rawBuffer.length >= bufferSize);
-
-            ubyte[] buffer = rawBuffer[0 .. bufferSize];
-            assert(data.inputSourceByChunk(buffer).joiner.equal(data),
-                   format("[Test-B] dataSize: %d, bufferSize: %d", dataSize, bufferSize));
-
-            {
-                auto inputStream = filePath.File;
-                assert(inputStream.inputSourceByChunk(bufferSize).joiner.equal(data),
-                       format("[Test-C] dataSize: %d, bufferSize: %d", dataSize, bufferSize));
-                inputStream.close;
-            }
-
-            {
-                auto inputStream = filePath.File;
-                assert(inputStream.inputSourceByChunk(buffer).joiner.equal(data),
-                       format("[Test-D] dataSize: %d, bufferSize: %d", dataSize, bufferSize));
-                inputStream.close;
-            }
-        }
-    }
-}
-
-@safe unittest // inputSourceByChunk array cases
-{
-    import std.algorithm : equal;
-
-    ubyte[5] staticArray = [5, 6, 7, 8, 9];
-    const(ubyte)[5] staticArrayConstElts = [5, 6, 7, 8, 9];
-    immutable(ubyte)[5] staticArrayImmutableElts = [5, 6, 7, 8, 9];
-    const ubyte[5] staticConstArray = [5, 6, 7, 8, 9];
-    immutable ubyte[5] staticImmutableArray = [5, 6, 7, 8, 9];
-
-    ubyte[] dynamicArray = [5, 6, 7, 8, 9];
-    const(ubyte)[] dynamicArrayConstElts = [5, 6, 7, 8, 9];
-    immutable(ubyte)[] dynamicArrayImmutableElts = [5, 6, 7, 8, 9];
-    const ubyte[] dynamicConstArray = [5, 6, 7, 8, 9];
-    immutable ubyte[] dynamicImmutableArray = [5, 6, 7, 8, 9];
-
-    /* The dynamic mutable arrays can be used directly. */
-    assert (dynamicArray.inputSourceByChunk(2).equal([[5, 6], [7, 8], [9]]));
-    assert (dynamicArrayConstElts.inputSourceByChunk(2).equal([[5, 6], [7, 8], [9]]));
-    assert (dynamicArrayImmutableElts.inputSourceByChunk(2).equal([[5, 6], [7, 8], [9]]));
-
-    /* All the arrays can be used with slicing. */
-    assert (staticArray[].inputSourceByChunk(2).equal([[5, 6], [7, 8], [9]]));
-    assert (staticArrayConstElts[].inputSourceByChunk(2).equal([[5, 6], [7, 8], [9]]));
-    assert (staticArrayImmutableElts[].inputSourceByChunk(2).equal([[5, 6], [7, 8], [9]]));
-    assert (staticConstArray[].inputSourceByChunk(2).equal([[5, 6], [7, 8], [9]]));
-    assert (staticImmutableArray[].inputSourceByChunk(2).equal([[5, 6], [7, 8], [9]]));
-    assert (dynamicArray[].inputSourceByChunk(2).equal([[5, 6], [7, 8], [9]]));
-    assert (dynamicArrayConstElts[].inputSourceByChunk(2).equal([[5, 6], [7, 8], [9]]));
-    assert (dynamicArrayImmutableElts[].inputSourceByChunk(2).equal([[5, 6], [7, 8], [9]]));
-    assert (dynamicConstArray[].inputSourceByChunk(2).equal([[5, 6], [7, 8], [9]]));
-    assert (dynamicImmutableArray[].inputSourceByChunk(2).equal([[5, 6], [7, 8], [9]]));
-}
-
 /** Read CSV from an input source, covert to TSV and write to an output source.
  *
  * Params:
@@ -750,8 +468,7 @@ if (isBufferableInputSource!InputSource &&
          *
          * This routine is also called when the 'skiplines' region has been processed.
          * This is done to flush the region without actually writing it. This is done
-         * by explicit checks in the finite state machine when newline characters
-         * that terminate a record are processed. It would be nice to refactor this.
+         * by the 'nextRecord' routine defined in the foreach loop.
          */
         void flushCurrentRegion(size_t regionEnd, const char[] appendChars = "")
         {
@@ -774,6 +491,17 @@ if (isBufferableInputSource!InputSource &&
 
         foreach (size_t nextIndex, char nextChar; inputChunk)
         {
+            /* nextRecord is used when an end of record (end of line) is found. It
+             * does two things: bump the record number, and flush the current write
+             * region if it represents the last line being skipped at the start of
+             * input. Normally the header line.
+             */
+            void nextRecord()
+            {
+                if (recordNum == skipLines) flushCurrentRegion(nextIndex);
+                 ++recordNum;
+            }
+
         OuterSwitch: final switch (csvState)
             {
             case CSVState.FieldEnd:
@@ -804,15 +532,13 @@ if (isBufferableInputSource!InputSource &&
                     csvState = CSVState.FieldEnd;
                     break OuterSwitch;
                 case LF:
-                    if (recordNum == skipLines) flushCurrentRegion(nextIndex);
-                    ++recordNum;
+                    nextRecord();
                     fieldNum = 0;
                     csvState = CSVState.FieldEnd;
                     break OuterSwitch;
                 case CR:
                     inputChunk[nextIndex] = LF;
-                    if (recordNum == skipLines) flushCurrentRegion(nextIndex);
-                    ++recordNum;
+                    nextRecord();
                     fieldNum = 0;
                     csvState = CSVState.CRAtFieldEnd;
                     break OuterSwitch;
@@ -892,15 +618,13 @@ if (isBufferableInputSource!InputSource &&
                     csvState = CSVState.FieldEnd;
                     break OuterSwitch;
                 case LF:
-                    if (recordNum == skipLines) flushCurrentRegion(nextIndex);
-                    ++recordNum;
+                    nextRecord();
                     fieldNum = 0;
                     csvState = CSVState.FieldEnd;
                     break OuterSwitch;
                 case CR:
                     inputChunk[nextIndex] = LF;
-                    if (recordNum == skipLines) flushCurrentRegion(nextIndex);
-                    ++recordNum;
+                    nextRecord();
                     fieldNum = 0;
                     csvState = CSVState.CRAtFieldEnd;
                     break OuterSwitch;
