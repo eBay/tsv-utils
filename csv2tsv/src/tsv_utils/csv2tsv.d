@@ -366,7 +366,7 @@ input streams chunk-by-chunk.
  *
  * Params:
  *   inputSource           =  A "bufferable" input source, either a file open for
- *                            read, or a dynamic, mutable ubyte array.
+ *                            read or an input range with ubyte elements.
  *   outputStream          =  An output range to write TSV bytes to.
  *   readBuffer            =  A buffer to use for reading.
  *   filename              =  Name of file to use when reporting errors. A descriptive
@@ -418,7 +418,6 @@ if (isBufferableInputSource!InputSource &&
      *   * fieldNum - Field number in the current line/record. Field numbers are
      *     one-upped. The field number set to zero at the start of a new record,
      *     prior to processing the first character of the first field on the record.
-     *   * byteIndex - Read buffer index of the current byte being processed.
      *   * csvState - The current state of CSV processing. In particular, the state
      *     of the finite state machine.
      *   * writeRegionStart - Read buffer index where the next write starts from.
