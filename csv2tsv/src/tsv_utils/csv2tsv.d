@@ -492,14 +492,15 @@ if (isBufferableInputSource!InputSource &&
         foreach (size_t nextIndex, char nextChar; inputChunk)
         {
             /* nextRecord is used when an end of record (end of line) is found. It
-             * does two things: bump the record number, and flush the current write
-             * region if it represents the last line being skipped at the start of
-             * input. Normally the header line.
+             * bump the record number moves resets the field number. It also flushes
+             * the current write region if the line we were on was the last line
+             * being skipped at the start of input. Normally the header line.
              */
             void nextRecord()
             {
                 if (recordNum == skipLines) flushCurrentRegion(nextIndex);
-                 ++recordNum;
+                ++recordNum;
+                fieldNum = 0;
             }
 
         OuterSwitch: final switch (csvState)
@@ -533,13 +534,11 @@ if (isBufferableInputSource!InputSource &&
                     break OuterSwitch;
                 case LF:
                     nextRecord();
-                    fieldNum = 0;
                     csvState = CSVState.FieldEnd;
                     break OuterSwitch;
                 case CR:
                     inputChunk[nextIndex] = LF;
                     nextRecord();
-                    fieldNum = 0;
                     csvState = CSVState.CRAtFieldEnd;
                     break OuterSwitch;
                 case tsvDelim:
@@ -619,13 +618,11 @@ if (isBufferableInputSource!InputSource &&
                     break OuterSwitch;
                 case LF:
                     nextRecord();
-                    fieldNum = 0;
                     csvState = CSVState.FieldEnd;
                     break OuterSwitch;
                 case CR:
                     inputChunk[nextIndex] = LF;
                     nextRecord();
-                    fieldNum = 0;
                     csvState = CSVState.CRAtFieldEnd;
                     break OuterSwitch;
                 default:
