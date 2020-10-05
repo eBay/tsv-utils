@@ -335,7 +335,7 @@ unittest  // formatNumber unit tests
     {
         // Incorrect
         assert(format("%.*f", 0, -0.6) == "-0");
-        assert(formatNumber(-0.6, 0) == "0");
+        assert(formatNumber(-0.6, 0) == "-0");
     }
     else
     {
