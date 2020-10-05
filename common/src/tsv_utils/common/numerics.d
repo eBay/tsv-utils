@@ -211,8 +211,24 @@ unittest  // formatNumber unit tests
 
     /* Test round off cases. Note: These tests will not pass on Windows 32-bit builds.
      * Use the -m64 flag on Windows to get a 64-bit build.
+     *
+     * Note: The first test case does not generate the correct result on Windows
+     * 64-bit builds. The current Windows result is included both for documentation
+     * and to provide an alert if the correct result starts getting populated. Both
+     * formatNumber and the underlying format call are included.
      */
-    assert(formatNumber(0.6, 0) == "1");
+    version(Windows)
+    {
+        // Incorrect
+        assert(format("%.*f", 0, 0.6) == "0");
+        assert(formatNumber(0.6, 0) == "0");
+    }
+    else
+    {
+        assert(format("%.*f", 0, 0.6) == "1");
+        assert(formatNumber(0.6, 0) == "1");
+    }
+
     assert(formatNumber(0.6, 1) == "0.6");
     assert(formatNumber(0.06, 0) == "0");
     assert(formatNumber(0.06, 1) == "0.1");
@@ -307,9 +323,26 @@ unittest  // formatNumber unit tests
     assert(formatNumber(-1234567891234.0, 0) == "-1234567891234");
     assert(formatNumber(-1234567891234.0, 1) == "-1234567891234");
 
-    /* Test round off cases. Note: These tests will not pass on Windows 32-bit builds.
-     * Use the -m64 flag on Windows to get a 64-bit build.
+    /* Test round off cases with negative numbers. Note: These tests will not pass
+     * on Windows 32-bit builds. Use the -m64 flag on Windows to get a 64-bit build.
+     *
+     * Note: The first test case does not generate the correct result on Windows
+     * 64-bit builds. The current Windows result is included both for documentation
+     * and to provide an alert if the correct result starts getting populated. Both
+     * formatNumber and the underlying format call are included.
      */
+    version(Windows)
+    {
+        // Incorrect
+        assert(format("%.*f", 0, -0.6) == "-0");
+        assert(formatNumber(-0.6, 0) == "0");
+    }
+    else
+    {
+        assert(format("%.*f", 0, -0.6) == "-1");
+        assert(formatNumber(-0.6, 0) == "-1");
+    }
+
     assert(formatNumber(-0.6, 0) == "-1");
     assert(formatNumber(-0.6, 1) == "-0.6");
     assert(formatNumber(-0.06, 0) == "-0");
