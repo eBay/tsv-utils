@@ -34,7 +34,8 @@ jobs:
           make clean
 
       - name: make unittest
-        # Currently, only run unit tests on DMD. LDC has failures due to numeric formatting.
+        # Currently, only run unit tests on DMD. LDC has failures in tsv-sample due
+        # to minor descrepancies in printed random numbers.
         if: ${{ startsWith(matrix.dc, 'dmd') }}
         shell: bash
         run: |
