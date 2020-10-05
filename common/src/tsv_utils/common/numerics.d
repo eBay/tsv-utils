@@ -343,7 +343,6 @@ unittest  // formatNumber unit tests
         assert(formatNumber(-0.6, 0) == "-1");
     }
 
-    assert(formatNumber(-0.6, 0) == "-1");
     assert(formatNumber(-0.6, 1) == "-0.6");
     assert(formatNumber(-0.06, 0) == "-0");
     assert(formatNumber(-0.06, 1) == "-0.1");
