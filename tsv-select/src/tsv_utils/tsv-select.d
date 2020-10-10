@@ -183,7 +183,7 @@ struct TsvSelectOptions
         import std.path : baseName, stripExtension;
         import std.typecons : Yes, No;
         import tsv_utils.common.fieldlist;
-        import tsv_utils.common.utils : throwIfWindowsNewlineOnUnix;
+        import tsv_utils.common.utils : throwIfWindowsNewline;
 
         bool helpVerbose = false;           // --help-verbose
         bool helpFields = false;            // --help-fields
@@ -348,7 +348,7 @@ struct TsvSelectOptions
             {
                 if (!inputSources.front.byLine.empty)
                 {
-                    throwIfWindowsNewlineOnUnix(inputSources.front.byLine.front, inputSources.front.name, 1);
+                    throwIfWindowsNewline(inputSources.front.byLine.front, inputSources.front.name, 1);
                     headerFields = inputSources.front.byLine.front.split(delim).to!(string[]);
                 }
 
@@ -440,7 +440,7 @@ enum RestLocation { none, first, last };
 void tsvSelect(RestLocation rest)(ref TsvSelectOptions cmdopt)
 {
     import tsv_utils.common.utils: BufferedOutputRange, ByLineSourceRange,
-        InputFieldReordering, throwIfWindowsNewlineOnUnix;
+        InputFieldReordering, throwIfWindowsNewline;
     import std.algorithm: splitter;
     import std.array : appender, Appender;
     import std.format: format;
@@ -492,7 +492,7 @@ void tsvSelect(RestLocation rest)(ref TsvSelectOptions cmdopt)
     {
         foreach (lineNum, line; inputStream.byLine.enumerate(1))
         {
-            if (lineNum == 1) throwIfWindowsNewlineOnUnix(line, inputStream.name, lineNum);
+            if (lineNum == 1) throwIfWindowsNewline(line, inputStream.name, lineNum);
 
             if (lineNum == 1 && fileNum > 0 && cmdopt.hasHeader)
             {

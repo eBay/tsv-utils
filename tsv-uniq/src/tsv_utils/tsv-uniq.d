@@ -146,7 +146,7 @@ struct TsvUniqOptions
         import std.path : baseName, stripExtension;
         import std.typecons : Yes, No;
         import tsv_utils.common.fieldlist;
-        import tsv_utils.common.utils : throwIfWindowsNewlineOnUnix;
+        import tsv_utils.common.utils : throwIfWindowsNewline;
 
         bool helpVerbose = false;         // --h|help-verbose
         bool helpFields = false;          // --help-fields
@@ -271,7 +271,7 @@ struct TsvUniqOptions
 
             if (hasHeader)
             {
-                throwIfWindowsNewlineOnUnix(inputSources.front.header, inputSources.front.name, 1);
+                throwIfWindowsNewline(inputSources.front.header, inputSources.front.name, 1);
                 headerFields = inputSources.front.header.split(delim).to!(string[]);
                 fieldListArgProcessing();
             }
@@ -327,7 +327,7 @@ int main(string[] cmdArgs)
 void tsvUniq(ref TsvUniqOptions cmdopt)
 {
     import tsv_utils.common.utils : bufferedByLine, BufferedOutputRange,
-        InputFieldReordering, InputSourceRange, joinAppend, throwIfWindowsNewlineOnUnix;
+        InputFieldReordering, InputSourceRange, joinAppend, throwIfWindowsNewline;
     import std.algorithm : splitter;
     import std.array : appender;
     import std.conv : to;
@@ -387,11 +387,11 @@ void tsvUniq(ref TsvUniqOptions cmdopt)
 
     foreach (inputStream; cmdopt.inputSources)
     {
-        if (cmdopt.hasHeader) throwIfWindowsNewlineOnUnix(inputStream.header, inputStream.name, 1);
+        if (cmdopt.hasHeader) throwIfWindowsNewline(inputStream.header, inputStream.name, 1);
 
         foreach (lineNum, line; inputStream.file.bufferedByLine.enumerate(fileBodyStartLine))
         {
-            if (lineNum == 1) throwIfWindowsNewlineOnUnix(line, inputStream.name, lineNum);
+            if (lineNum == 1) throwIfWindowsNewline(line, inputStream.name, lineNum);
 
             /* Start by finding the key. */
             typeof(line) key;

@@ -978,7 +978,7 @@ void splitLinesByKey(ref TsvSplitOptions cmdopt, ref SplitOutputFiles outputFile
     import std.conv : to;
     import std.digest.murmurhash;
     import tsv_utils.common.utils : bufferedByLine, InputFieldReordering,
-        InputSourceRange, throwIfWindowsNewlineOnUnix;
+        InputSourceRange, throwIfWindowsNewline;
 
     assert(cmdopt.keyFields.length > 0);
 
@@ -995,11 +995,11 @@ void splitLinesByKey(ref TsvSplitOptions cmdopt, ref SplitOutputFiles outputFile
     immutable size_t fileBodyStartLine = cmdopt.hasHeader ? 2 : 1;
     foreach (inputStream; cmdopt.inputSources)
     {
-        if (cmdopt.hasHeader) throwIfWindowsNewlineOnUnix(inputStream.header, inputStream.name, 1);
+        if (cmdopt.hasHeader) throwIfWindowsNewline(inputStream.header, inputStream.name, 1);
 
         foreach (fileLineNum, line; inputStream.file.bufferedByLine.enumerate(fileBodyStartLine))
         {
-            if (fileLineNum == 1) throwIfWindowsNewlineOnUnix(line, inputStream.name, fileLineNum);
+            if (fileLineNum == 1) throwIfWindowsNewline(line, inputStream.name, fileLineNum);
 
             /* Murmurhash works by successively adding individual keys, then finalizing.
              * Adding individual keys is simpler if the full-line-as-key and individual

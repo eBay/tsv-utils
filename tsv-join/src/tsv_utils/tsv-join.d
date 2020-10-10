@@ -121,7 +121,7 @@ struct TsvJoinOptions
         import std.path : baseName, stripExtension;
         import std.typecons : Yes, No;
         import tsv_utils.common.fieldlist;
-        import tsv_utils.common.utils : throwIfWindowsNewlineOnUnix;
+        import tsv_utils.common.utils : throwIfWindowsNewline;
 
         bool helpVerbose = false;        // --help-verbose
         bool helpFields = false;         // --help-fields
@@ -356,10 +356,10 @@ struct TsvJoinOptions
             {
                 if (!filterSource.front.byLine.empty)
                 {
-                    throwIfWindowsNewlineOnUnix(filterSource.front.byLine.front, filterSource.front.name, 1);
+                    throwIfWindowsNewline(filterSource.front.byLine.front, filterSource.front.name, 1);
                     filterFileHeaderFields = filterSource.front.byLine.front.split(delim).to!(string[]);
                 }
-                throwIfWindowsNewlineOnUnix(inputSources.front.header, inputSources.front.name, 1);
+                throwIfWindowsNewline(inputSources.front.header, inputSources.front.name, 1);
                 inputSourceHeaderFields = inputSources.front.header.split(delim).to!(string[]);
                 fieldListArgProcessing();
             }
@@ -403,7 +403,7 @@ int main(string[] cmdArgs)
 void tsvJoin(ref TsvJoinOptions cmdopt)
 {
     import tsv_utils.common.utils : ByLineSourceRange, bufferedByLine, BufferedOutputRange,
-        isFlushableOutputRange, InputFieldReordering, InputSourceRange, throwIfWindowsNewlineOnUnix;
+        isFlushableOutputRange, InputFieldReordering, InputSourceRange, throwIfWindowsNewline;
     import std.algorithm : splitter;
     import std.array : join;
     import std.range;
@@ -511,7 +511,7 @@ void tsvJoin(ref TsvJoinOptions cmdopt)
 
             debug writeln("  --> [key]:[append] => [", key, "]:[", appendValues, "]");
 
-            if (lineNum == 1) throwIfWindowsNewlineOnUnix(line, filterStream.name, lineNum);
+            if (lineNum == 1) throwIfWindowsNewline(line, filterStream.name, lineNum);
 
             if (lineNum == 1 && cmdopt.hasHeader)
             {
@@ -576,13 +576,13 @@ void tsvJoin(ref TsvJoinOptions cmdopt)
 
     foreach (inputStream; cmdopt.inputSources)
     {
-        if (cmdopt.hasHeader) throwIfWindowsNewlineOnUnix(inputStream.header, inputStream.name, 1);
+        if (cmdopt.hasHeader) throwIfWindowsNewline(inputStream.header, inputStream.name, 1);
 
         foreach (lineNum, line; inputStream.file.bufferedByLine.enumerate(fileBodyStartLine))
         {
             debug writeln("[input line] |", line, "|");
 
-            if (lineNum == 1) throwIfWindowsNewlineOnUnix(line, inputStream.name, lineNum);
+            if (lineNum == 1) throwIfWindowsNewline(line, inputStream.name, lineNum);
 
             /*
              * Next block checks if the input line matches a hash entry. Two cases:
