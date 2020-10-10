@@ -202,7 +202,7 @@ struct TsvSummarizeOptions {
         import std.typecons : Yes, No;
         import tsv_utils.common.fieldlist : fieldListHelpText;
         import tsv_utils.common.getopt_inorder;
-        import tsv_utils.common.utils : throwIfWindowsNewlineOnUnix;
+        import tsv_utils.common.utils : throwIfWindowsNewline;
 
         bool helpVerbose = false;          // --help-verbose
         bool helpFields = false;           // --help-fields
@@ -336,7 +336,7 @@ struct TsvSummarizeOptions {
             {
                 if (!inputSources.front.byLine.empty)
                 {
-                    throwIfWindowsNewlineOnUnix(inputSources.front.byLine.front, inputSources.front.name, 1);
+                    throwIfWindowsNewline(inputSources.front.byLine.front, inputSources.front.name, 1);
                     headerFields = inputSources.front.byLine.front.split(inputFieldDelimiter).to!(string[]);
                 }
 
@@ -540,7 +540,7 @@ struct TsvSummarizeOptions {
 void tsvSummarize(ref TsvSummarizeOptions cmdopt)
 {
     import tsv_utils.common.utils : BufferedOutputRange, ByLineSourceRange,
-        bufferedByLine, throwIfWindowsNewlineOnUnix;
+        bufferedByLine, throwIfWindowsNewline;
 
     /* Check that the input files were setup as expected. Should at least have one
      * input, stdin if nothing else, and newlines removed from the byLine range.
@@ -589,7 +589,7 @@ void tsvSummarize(ref TsvSummarizeOptions cmdopt)
     {
         foreach (lineNum, line; inputStream.byLine.enumerate(1))
         {
-            if (lineNum == 1) throwIfWindowsNewlineOnUnix(line, inputStream.name, lineNum);
+            if (lineNum == 1) throwIfWindowsNewline(line, inputStream.name, lineNum);
 
             /* Copy the needed number of fields to the fields array.
              * Note: The number is zero if no operator needs fields. Notably, the count

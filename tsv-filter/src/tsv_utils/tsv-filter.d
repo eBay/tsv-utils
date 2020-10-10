@@ -753,7 +753,7 @@ struct TsvFilterOptions
         import std.getopt;
         import std.path : baseName, stripExtension;
         import tsv_utils.common.getopt_inorder;
-        import tsv_utils.common.utils : throwIfWindowsNewlineOnUnix;
+        import tsv_utils.common.utils : throwIfWindowsNewline;
 
         bool helpVerbose = false;        // --help-verbose
         bool helpOptions = false;        // --help-options
@@ -974,7 +974,7 @@ struct TsvFilterOptions
 
             if (hasHeader)
             {
-                throwIfWindowsNewlineOnUnix(inputSources.front.header, inputSources.front.name, 1);
+                throwIfWindowsNewline(inputSources.front.header, inputSources.front.name, 1);
                 headerFields = inputSources.front.header.split(delim).to!(string[]);
                 fieldListArgProcessing();
             }
@@ -995,7 +995,7 @@ void tsvFilter(ref TsvFilterOptions cmdopt)
     import std.algorithm : all, any, splitter;
     import std.range;
     import tsv_utils.common.utils : BufferedOutputRange, bufferedByLine, InputSourceRange,
-        throwIfWindowsNewlineOnUnix;
+        throwIfWindowsNewline;
 
     /* inputSources must be an InputSourceRange and include at least stdin. */
     assert(!cmdopt.inputSources.empty);
@@ -1028,11 +1028,11 @@ void tsvFilter(ref TsvFilterOptions cmdopt)
 
     foreach (inputStream; cmdopt.inputSources)
     {
-        if (cmdopt.hasHeader) throwIfWindowsNewlineOnUnix(inputStream.header, inputStream.name, 1);
+        if (cmdopt.hasHeader) throwIfWindowsNewline(inputStream.header, inputStream.name, 1);
 
         foreach (lineNum, line; inputStream.file.bufferedByLine.enumerate(fileBodyStartLine))
         {
-            if (lineNum == 1) throwIfWindowsNewlineOnUnix(line, inputStream.name, lineNum);
+            if (lineNum == 1) throwIfWindowsNewline(line, inputStream.name, lineNum);
 
             /* Copy the needed number of fields to the fields array. */
             int fieldIndex = -1;

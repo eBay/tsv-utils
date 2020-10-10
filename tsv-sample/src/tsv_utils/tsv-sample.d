@@ -261,7 +261,7 @@ struct TsvSampleOptions
         import std.math : isNaN;
         import std.path : baseName, stripExtension;
         import std.typecons : Yes, No;
-        import tsv_utils.common.utils : inputSourceRange, ReadHeader, throwIfWindowsNewlineOnUnix;
+        import tsv_utils.common.utils : inputSourceRange, ReadHeader, throwIfWindowsNewline;
         import tsv_utils.common.fieldlist;
 
         bool helpVerbose = false;                  // --help-verbose
@@ -511,7 +511,7 @@ struct TsvSampleOptions
 
             if (hasHeader)
             {
-                throwIfWindowsNewlineOnUnix(inputSources.front.header, inputSources.front.name, 1);
+                throwIfWindowsNewline(inputSources.front.header, inputSources.front.name, 1);
                 headerFields = inputSources.front.header.split(delim).to!(string[]);
                 fieldListArgProcessing();
             }
@@ -613,7 +613,7 @@ if (isOutputRange!(OutputRange, char))
 {
     import std.random : Random = Mt19937, uniform01;
     import tsv_utils.common.utils : bufferedByLine, isFlushableOutputRange,
-        InputSourceRange, throwIfWindowsNewlineOnUnix;
+        InputSourceRange, throwIfWindowsNewline;
 
     static if (generateRandomAll) assert(cmdopt.genRandomInorder);
     else assert(!cmdopt.genRandomInorder);
@@ -654,12 +654,12 @@ if (isOutputRange!(OutputRange, char))
 
     foreach (inputStream; cmdopt.inputSources)
     {
-        if (cmdopt.hasHeader) throwIfWindowsNewlineOnUnix(inputStream.header, inputStream.name, 1);
+        if (cmdopt.hasHeader) throwIfWindowsNewline(inputStream.header, inputStream.name, 1);
 
         foreach (ulong fileLineNum, line;
                  inputStream.file.bufferedByLine!(KeepTerminator.no).enumerate(fileBodyStartLine))
         {
-            if (fileLineNum == 1) throwIfWindowsNewlineOnUnix(line, inputStream.name, fileLineNum);
+            if (fileLineNum == 1) throwIfWindowsNewline(line, inputStream.name, fileLineNum);
 
             immutable double lineScore = uniform01(randomGenerator);
 
@@ -738,7 +738,7 @@ void bernoulliSkipSampling(OutputRange)(ref TsvSampleOptions cmdopt, OutputRange
     import std.math : log, trunc;
     import std.random : Random = Mt19937, uniform01;
     import tsv_utils.common.utils : bufferedByLine, isFlushableOutputRange,
-        InputSourceRange, throwIfWindowsNewlineOnUnix;
+        InputSourceRange, throwIfWindowsNewline;
 
     assert(cmdopt.inclusionProbability > 0.0 && cmdopt.inclusionProbability < 1.0);
     assert(!cmdopt.printRandom);
@@ -776,12 +776,12 @@ void bernoulliSkipSampling(OutputRange)(ref TsvSampleOptions cmdopt, OutputRange
     ulong numLinesWritten = 0;
     foreach (inputStream; cmdopt.inputSources)
     {
-        if (cmdopt.hasHeader) throwIfWindowsNewlineOnUnix(inputStream.header, inputStream.name, 1);
+        if (cmdopt.hasHeader) throwIfWindowsNewline(inputStream.header, inputStream.name, 1);
 
         foreach (ulong fileLineNum, line;
                  inputStream.file.bufferedByLine!(KeepTerminator.no).enumerate(fileBodyStartLine))
         {
-            if (fileLineNum == 1) throwIfWindowsNewlineOnUnix(line, inputStream.name, fileLineNum);
+            if (fileLineNum == 1) throwIfWindowsNewline(line, inputStream.name, fileLineNum);
 
             if (remainingSkips > 0)
             {
@@ -832,7 +832,7 @@ if (isOutputRange!(OutputRange, char))
     import std.digest.murmurhash;
     import std.math : lrint;
     import tsv_utils.common.utils : bufferedByLine, isFlushableOutputRange,
-        InputFieldReordering, InputSourceRange, throwIfWindowsNewlineOnUnix;
+        InputFieldReordering, InputSourceRange, throwIfWindowsNewline;
 
     static if (generateRandomAll) assert(cmdopt.genRandomInorder);
     else assert(!cmdopt.genRandomInorder);
@@ -887,12 +887,12 @@ if (isOutputRange!(OutputRange, char))
 
     foreach (inputStream; cmdopt.inputSources)
     {
-        if (cmdopt.hasHeader) throwIfWindowsNewlineOnUnix(inputStream.header, inputStream.name, 1);
+        if (cmdopt.hasHeader) throwIfWindowsNewline(inputStream.header, inputStream.name, 1);
 
         foreach (ulong fileLineNum, line;
                  inputStream.file.bufferedByLine!(KeepTerminator.no).enumerate(fileBodyStartLine))
         {
-            if (fileLineNum == 1) throwIfWindowsNewlineOnUnix(line, inputStream.name, fileLineNum);
+            if (fileLineNum == 1) throwIfWindowsNewline(line, inputStream.name, fileLineNum);
 
             /* Murmurhash works by successively adding individual keys, then finalizing.
              * Adding individual keys is simpler if the full-line-as-key and individual
@@ -1081,7 +1081,7 @@ if (isOutputRange!(OutputRange, char))
     import std.meta : AliasSeq;
     import std.random : Random = Mt19937, uniform01;
     import tsv_utils.common.utils : bufferedByLine, isFlushableOutputRange,
-        InputSourceRange, throwIfWindowsNewlineOnUnix;
+        InputSourceRange, throwIfWindowsNewline;
 
     static if (isWeighted) assert(cmdopt.hasWeightField);
     else assert(!cmdopt.hasWeightField);
@@ -1139,12 +1139,12 @@ if (isOutputRange!(OutputRange, char))
 
     foreach (inputStream; cmdopt.inputSources)
     {
-        if (cmdopt.hasHeader) throwIfWindowsNewlineOnUnix(inputStream.header, inputStream.name, 1);
+        if (cmdopt.hasHeader) throwIfWindowsNewline(inputStream.header, inputStream.name, 1);
 
         foreach (ulong fileLineNum, line;
                  inputStream.file.bufferedByLine!(KeepTerminator.no).enumerate(fileBodyStartLine))
         {
-            if (fileLineNum == 1) throwIfWindowsNewlineOnUnix(line, inputStream.name, fileLineNum);
+            if (fileLineNum == 1) throwIfWindowsNewline(line, inputStream.name, fileLineNum);
 
             static if (!isWeighted)
             {
@@ -1225,7 +1225,7 @@ if (isOutputRange!(OutputRange, char))
 {
     import std.random : Random = Mt19937, uniform01;
     import tsv_utils.common.utils : bufferedByLine, isFlushableOutputRange,
-        InputSourceRange, throwIfWindowsNewlineOnUnix;
+        InputSourceRange, throwIfWindowsNewline;
 
     assert(cmdopt.hasWeightField);
 
@@ -1256,12 +1256,12 @@ if (isOutputRange!(OutputRange, char))
 
     foreach (inputStream; cmdopt.inputSources)
     {
-        if (cmdopt.hasHeader) throwIfWindowsNewlineOnUnix(inputStream.header, inputStream.name, 1);
+        if (cmdopt.hasHeader) throwIfWindowsNewline(inputStream.header, inputStream.name, 1);
 
         foreach (ulong fileLineNum, line;
                  inputStream.file.bufferedByLine!(KeepTerminator.no).enumerate(fileBodyStartLine))
         {
-            if (fileLineNum == 1) throwIfWindowsNewlineOnUnix(line, inputStream.name, fileLineNum);
+            if (fileLineNum == 1) throwIfWindowsNewline(line, inputStream.name, fileLineNum);
 
             immutable double lineWeight =
                 getFieldValue!double(line, cmdopt.weightField, cmdopt.delim, inputStream.name, fileLineNum);
@@ -1322,7 +1322,7 @@ if (isOutputRange!(OutputRange, char))
     import std.random : Random = Mt19937, randomShuffle, uniform;
     import std.algorithm : sort;
     import tsv_utils.common.utils : bufferedByLine, isFlushableOutputRange,
-        InputSourceRange, throwIfWindowsNewlineOnUnix;
+        InputSourceRange, throwIfWindowsNewline;
 
     assert(cmdopt.sampleSize > 0);
     assert(!cmdopt.hasWeightField);
@@ -1365,12 +1365,12 @@ if (isOutputRange!(OutputRange, char))
 
     foreach (inputStream; cmdopt.inputSources)
     {
-        if (cmdopt.hasHeader) throwIfWindowsNewlineOnUnix(inputStream.header, inputStream.name, 1);
+        if (cmdopt.hasHeader) throwIfWindowsNewline(inputStream.header, inputStream.name, 1);
 
         foreach (ulong fileLineNum, line;
                  inputStream.file.bufferedByLine!(KeepTerminator.no).enumerate(fileBodyStartLine))
         {
-            if (fileLineNum == 1) throwIfWindowsNewlineOnUnix(line, inputStream.name, fileLineNum);
+            if (fileLineNum == 1) throwIfWindowsNewline(line, inputStream.name, fileLineNum);
 
             /* Add lines to the reservoir until the reservoir is filled.
              * After that lines are added with decreasing likelihood, based on
@@ -1625,7 +1625,7 @@ if (isOutputRange!(OutputRange, char))
     import std.algorithm : find, min;
     import std.range : retro;
     import tsv_utils.common.utils : InputSourceRange, isFlushableOutputRange,
-        throwIfWindowsNewlineOnUnix;
+        throwIfWindowsNewline;
 
     static if(!hasRandomValue) assert(!cmdopt.printRandom);
 
@@ -1663,7 +1663,7 @@ if (isOutputRange!(OutputRange, char))
 
     foreach (inputStream; cmdopt.inputSources)
     {
-        if (cmdopt.hasHeader) throwIfWindowsNewlineOnUnix(inputStream.header, inputStream.name, 1);
+        if (cmdopt.hasHeader) throwIfWindowsNewline(inputStream.header, inputStream.name, 1);
 
         /* If the file size can be determined then read it as a single block.
          * Otherwise read as multiple blocks. File.size() returns ulong.max
@@ -1862,7 +1862,7 @@ InputLine!hasRandomValue[] identifyInputLines(HasRandomValue hasRandomValue, Fla
     import std.algorithm : splitter;
     import std.array : appender;
     import std.random : Random = Mt19937, uniform01;
-    import tsv_utils.common.utils : throwIfWindowsNewlineOnUnix;
+    import tsv_utils.common.utils : throwIfWindowsNewline;
 
     static assert(hasRandomValue || !isWeighted);
     static if(!hasRandomValue) assert(!cmdopt.printRandom);
@@ -1888,7 +1888,7 @@ InputLine!hasRandomValue[] identifyInputLines(HasRandomValue hasRandomValue, Fla
         {
             fileLineNum++;
 
-            if (fileLineNum == 1) throwIfWindowsNewlineOnUnix(line, block.filename, fileLineNum);
+            if (fileLineNum == 1) throwIfWindowsNewline(line, block.filename, fileLineNum);
 
             static if (!hasRandomValue)
             {
