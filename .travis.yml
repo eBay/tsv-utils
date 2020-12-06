@@ -15,14 +15,12 @@
 #       build failures when there is a issue in a specific dmd or ldc version. Unfortunately, all
 #       the desired matching environment variables combos must be included in the 'allow_failures:'
 #       section. (A travis-ci thing.)
-matrix:
-  allow_failures:
-    - env: DUBTEST=1 MAKETEST=1 ALLOW_FAILURES=true
-  include:
-    - os: linux
-      dist: xenial
-      group: travis_latest
-      language: d
+#
+# Note: Dec 2020 - All macos builds are disabled except for tagged builds. This is to preserve
+#       macos build credits for releases until working with the new Travis-CI fee structure
+#       (non-free macos builds) can be addressed.
+#
+language: d
       d: dmd
       env: DUBTEST=1 MAKETEST=1 CODECOV=1
 #    - os: osx
@@ -55,15 +53,16 @@ matrix:
       env: LTOPGO_V2=default DEPLOY=1
       if: |
         fork = false AND \
-        type IN (push)
-    - os: osx
-      osx_image: xcode11.5
-      group: travis_latest
-      language: d
-      d: ldc
-      env: LTOPGO_V2=default
-      if: |
-         type IN (pull_request, cron)
+        type IN (push) AND \
+        tag IS present
+#    - os: osx
+#      osx_image: xcode11.5
+#      group: travis_latest
+#      language: d
+#      d: ldc
+#      env: LTOPGO_V2=default
+#      if: |
+#         type IN (pull_request, cron)
     - os: linux
       dist: xenial
       group: travis_latest
