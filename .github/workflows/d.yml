@@ -73,7 +73,7 @@ jobs:
           make test DCOMPILER=${DC}
           make clean
 
-      - name: make unittest-release ldc-lto-pgo
+      - name: make test-release ldc-lto-pgo
         if: ${{ startsWith(matrix.dc, 'ldc') }}
         shell: bash
         run: |
