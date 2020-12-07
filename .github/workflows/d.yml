@@ -8,7 +8,7 @@ on:
     branches: [ master ]
 
 jobs:
-  build:
+  windows-build:
     name: Build tsv-utils on Windows
     strategy:
       fail-fast: false
@@ -20,7 +20,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-      
+
       - name: Install D compiler
         uses: dlang-community/setup-dlang@v1
         with:
@@ -40,3 +40,42 @@ jobs:
         shell: bash
         run: |
           make unittest DCOMPILER=${DC} DFLAGS=-m64
+
+  macos-build:
+    name: Build tsv-utils on macOS
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macOS-latest]
+        dc: [dmd-latest, ldc-latest]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install D compiler
+        uses: dlang-community/setup-dlang@v1
+        with:
+          compiler: ${{ matrix.dc }}
+
+      - name: Dub Build and Run using DMD
+        if: ${{ startsWith(matrix.dc, 'dmd') }}
+        shell: bash
+        run: |
+          dub run
+          dub clean
+          make clean
+
+      - name: make test
+        shell: bash
+        run: |
+          make test DCOMPILER=${DC}
+          make clean
+
+      - name: make test-release ldc-lto-pgo
+        if: ${{ startsWith(matrix.dc, 'ldc') }}
+        shell: bash
+        run: |
+          make test-release DCOMPILER=${DC} LDC_LTO_RUNTIME=1 LDC_PGO=2
+          make clean
