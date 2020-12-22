@@ -152,12 +152,6 @@ matrix:
     - os: linux
       arch: arm64
       language: d
-      d: dmd
-      env: MAKE_BUILDONLY=1 MAKETEST=1 ALLOW_FAILURES=true
-      if: type IN (cron)
-    - os: linux
-      arch: arm64
-      language: d
       d: ldc
       env: MAKE_BUILDONLY=1 MAKETEST=1 ALLOW_FAILURES=true
       if: type IN (cron)
