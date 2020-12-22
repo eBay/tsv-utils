@@ -147,6 +147,12 @@ matrix:
       d: ldc-beta
       env: LTOPGO_V2=default
       if: type IN (cron)
+    - os: linux
+      arch: arm64
+      language: d
+      d: ldc
+      env: LTOPGO_V2=default
+      if: type IN (cron)
 #    - os: osx
 #      osx_image: xcode11.5
 #      group: travis_latest
