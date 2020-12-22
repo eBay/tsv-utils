@@ -1,5 +1,6 @@
 # Tests:
 #   DUBTEST - dub build and test
+#   MAKE_BUILDONLY - make build-only, no tests. For platforms where unit tests might not succeed.
 #   MAKETEST - make test, plus -static on LDC
 #   CODECOV - Runs code coverage
 #   APPLTO=[default|off|thin|full] - make test with the setting
@@ -23,6 +24,7 @@
 matrix:
   allow_failures:
     - env: DUBTEST=1 MAKETEST=1 ALLOW_FAILURES=true
+    - env: MAKE_BUILDONLY=1 MAKETEST=1 ALLOW_FAILURES=true
   include:
     - os: linux
       dist: xenial
@@ -150,8 +152,14 @@ matrix:
     - os: linux
       arch: arm64
       language: d
+      d: dmd
+      env: MAKE_BUILDONLY=1 MAKETEST=1 ALLOW_FAILURES=true
+      if: type IN (cron)
+    - os: linux
+      arch: arm64
+      language: d
       d: ldc
-      env: LTOPGO_V2=default
+      env: MAKE_BUILDONLY=1 MAKETEST=1 ALLOW_FAILURES=true
       if: type IN (cron)
 #    - os: osx
 #      osx_image: xcode11.5
@@ -205,6 +213,10 @@ before_install:
       export GID=$(id -g);
     fi
 script:
+- if [[ "$MAKE_BUILDONLY" == "1" ]]; then
+    make DCOMPILER=$DC
+    && make clean;
+  fi
 - if [[ "$DUBTEST" == "1" ]]; then
     dub run -- --compiler=$DC
     && make test-nobuild DCOMPILER=$DC
