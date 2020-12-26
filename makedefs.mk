@@ -291,7 +291,7 @@ ifeq ($(compiler_type),ldc)
 	endif
 
 	ifneq ($(LDC_LTO_RUNTIME),)
-		lto_link_flags = -defaultlib=phobos2-ldc-lto,druntime-ldc-lto
+		lto_link_flags = -defaultlib=phobos2-ldc-lto,druntime-ldc-lto -link-defaultlib-shared=false
 	else ifneq ($(LDC_BUILD_RUNTIME),)
 		ifeq ($(OS_NAME),Darwin)
 			lto_link_flags = -L-L$(ldc_build_runtime_dir)/lib
