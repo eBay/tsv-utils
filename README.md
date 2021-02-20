@@ -14,7 +14,7 @@ File an [issue](https://github.com/eBay/tsv-utils/issues) if you have problems, 
 * [Tools Reference](docs/ToolReference.md) - Detailed documentation.
 * [Releases](https://github.com/eBay/tsv-utils/releases) - Prebuilt binaries and release notes. Recent updates:
   * Current release: [version 2.1.2](https://github.com/eBay/tsv-utils/releases/tag/v2.1.2).
-  * `csv2tsv` performance and functionality improvements. See [version 2.1 release notes](https://github.com/eBay/tsv-utils/releases/tag/v2.1.0).
+  * Improved `csv2tsv` performance and functionality. See [version 2.1 release notes](https://github.com/eBay/tsv-utils/releases/tag/v2.1.0).
   * Named fields! See [version 2.0 release notes](https://github.com/eBay/tsv-utils/releases/tag/v2.0.0).
 * [Tips and tricks](docs/TipsAndTricks.md) - Simpler and faster command line tool use.
 * [Performance Studies](docs/Performance.md) - Benchmarks against similar tools and other performance studies.
