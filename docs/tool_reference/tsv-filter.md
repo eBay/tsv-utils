@@ -7,7 +7,7 @@ _Note: See the [tsv-filter](../../README.md#tsv-filter) description in the proje
 
 **Synopsis:** tsv-filter [options] [file...]
 
-Filter lines by comparison tests against fields. Multiple tests can be specified. By default, only lines satisfying all tests are output. This can be change using the `--or` option. A variety of tests are available.
+Filter lines by comparison tests against fields. Multiple tests can be specified. By default, only lines satisfying all tests are output. This can be changed using the `--or` option. A variety of tests are available.
 
 **General options:**
 * `--help` - Print help.
@@ -23,10 +23,10 @@ Filter lines by comparison tests against fields. Multiple tests can be specified
 **Tests:**
 
 Empty and blank field tests:
-* `--empty <field-list>` - True if field is empty (no characters)
-* `--not-empty <field-list>` - True if field is not empty.
-* `--blank <field-list>` - True if field is empty or all whitespace.
-* `--not-blank <field-list>` - True if field contains a non-whitespace character.
+* `--empty <field-list>` - True if the field is empty (no characters)
+* `--not-empty <field-list>` - True if the field is not empty.
+* `--blank <field-list>` - True if the field is empty or all whitespace.
+* `--not-blank <field-list>` - True if the field contains a non-whitespace character.
 
 Numeric type tests:
 * `--is-numeric <field-list>` - True if the field can be interpreted as a number.

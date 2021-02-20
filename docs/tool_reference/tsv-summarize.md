@@ -29,7 +29,7 @@ chevy  124      124
 bmw    118      122
 ```
 
-Using `--group-by Make,Color` will group by both 'Make' and 'Color'. Omitting the `--group-by` entirely summarizes fields for full file.
+Using `--group-by Make,Color` will group by both 'Make' and 'Color'. Omitting the `--group-by` entirely summarizes fields for the full file.
 
 The examples above specify fields by name. Fields can also be specified by field number, this works for files with and without header lines. For example:
 ```

@@ -7,6 +7,6 @@ A simpler version of the Unix `nl` program. It prepends a line number to each li
 $ number-lines myfile.txt
 ```
 
-Despite it's original purpose as a code sample, `number-lines` turns out to be quite convenient. It is often useful to add a unique row ID to a file, and this tool does this in a manner that maintains proper TSV formatting.
+Despite its original purpose as a code sample, `number-lines` turns out to be quite convenient. It is often useful to add a unique row ID to a file, and this tool does this in a manner that maintains proper TSV formatting.
 
 See the [number-lines reference](../docs/tool_reference/number-lines.md) for further details.
