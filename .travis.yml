@@ -34,7 +34,7 @@ matrix:
       group: travis_latest
       language: d
       d: dmd
-      env: DUBTEST=1 MAKETEST=1 CODECOV=1
+      env: CODECOV=1
 #    - os: osx
 #      osx_image: xcode11.5
 #      group: travis_latest

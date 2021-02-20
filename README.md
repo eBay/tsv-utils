@@ -29,7 +29,6 @@ File an [issue](https://github.com/eBay/tsv-utils/issues) if you have problems, 
 * [Exploring D via Benchmarking of eBay's TSV Utilities](http://dconf.org/2018/talks/degenhardt.html). May 2, 2018. A presentation at [DConf 2018](http://dconf.org/2018/) describing performance benchmark studies conducted using eBay's TSV Utilities (slides [here](docs/dconf2018.pdf)).
 
 ![GitHub Workflow Status](https://img.shields.io/github/workflow/status/eBay/tsv-utils/build-test)
-[![Travis](https://img.shields.io/travis/eBay/tsv-utils.svg)](https://travis-ci.org/eBay/tsv-utils)
 [![Codecov](https://img.shields.io/codecov/c/github/eBay/tsv-utils.svg)](https://codecov.io/gh/eBay/tsv-utils)
 [![GitHub release](https://img.shields.io/github/release/eBay/tsv-utils.svg)](https://github.com/eBay/tsv-utils/releases)
 [![Github commits (since latest release)](https://img.shields.io/github/commits-since/eBay/tsv-utils/latest.svg)](https://github.com/eBay/tsv-utils/commits/master)

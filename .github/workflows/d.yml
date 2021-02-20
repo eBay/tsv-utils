@@ -46,8 +46,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macOS-latest]
-        dc: [dmd-latest, ldc-latest]
+        os: [macOS-latest, ubuntu-latest]
+        dc: [ldc-latest, dmd-latest]
         include:
           - os: ubuntu-latest
             dc: dmd-2.088.1
