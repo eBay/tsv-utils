@@ -45,6 +45,6 @@ $ # Multiple files with header lines. Keep only one header.
 $ tsv-select data*.tsv -H --fields 1,2,4-7,14
 ```
 
-Named fields, dropping and reordering fields, and header line management are useful enhancements over traditional `cut`. However, much of the motivation for writing `tsv-select` was to explore the D programming language and provide a comparison point against other common approaches to this task. Code for `tsv-select` is bit more liberal with comments pointing out D programming constructs than code for the other tools. As an unexpected benefit, `tsv-select` is faster than other implementations of `cut` that are available.
+Named fields, dropping and reordering fields, and header line management are useful enhancements over traditional `cut`. However, much of the motivation for writing `tsv-select` was to explore the D programming language and provide a comparison point against other common approaches to this task. Code for `tsv-select` is a bit more liberal with comments pointing out D programming constructs than code for the other tools. As an unexpected benefit, `tsv-select` is faster than other implementations of `cut` that are available.
 
 See the [tsv-select reference](../docs/tool_reference/tsv-select.md) for more details on `tsv-select`. See [Field syntax](../docs/tool_reference/common-options-and-behavior.md#field-syntax) for more information on selecting fields by name.

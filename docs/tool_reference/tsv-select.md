@@ -7,7 +7,7 @@ _Visit the [TSV Utilities main page](../../README.md)_
 
 tsv-select reads files or standard input and writes selected fields to standard output. Fields are written in the order listed. This is similar to Unix `cut`, but with the ability to select fields by name, reorder fields, and drop fields.
 
-Fields can be specified by field number or, for files with header lines, by field name. Fields numbers start with one. They are comma separated, and ranges can be used. The `--H|header` option enables selection by field name. This also manages header lines from multiple files, retaining only the first header.
+Fields can be specified by field number or, for files with header lines, by field name. Field numbers start with one. They are comma separated, and ranges can be used. The `--H|header` option enables selection by field name. This also manages header lines from multiple files, retaining only the first header.
 
 Fields can be listed more than once, and fields not listed can be selected as a group using the `--rest` option. Fields can be dropped using `--e|exclude`. All fields not excluded are output. `--f|fields` and `--r|rest` can be used with `--e|exclude` to change the order of non-excluded fields.
 

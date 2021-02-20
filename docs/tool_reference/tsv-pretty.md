@@ -19,7 +19,7 @@ Features:
 
 * Missing values: A substitute value can be used for empty fields. This is often less confusing than spaces. See `--e|replace-empty` and `--E|empty-replacement`.
 
-* Exponential notion: As part of float formatting, `--f|format-floats` re-formats columns where exponential notation is found so all the values in the column are displayed using exponential notation and the same precision.
+* Exponential notation: As part of float formatting, `--f|format-floats` re-formats columns where exponential notation is found so all the values in the column are displayed using exponential notation and the same precision.
 
 * Preamble: A number of initial lines can be designated as a preamble and output unchanged. The preamble is before the header, if a header is present. Preamble lines can be auto-detected via the heuristic that they lack field delimiters. This works well when the field delimiter is a TAB.
 

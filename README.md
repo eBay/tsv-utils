@@ -1,6 +1,6 @@
 # Command line utilities for tabular data files
 
-This is a set of command line utilities for manipulating large tabular data files. Files of numeric and text data commonly found in machine learning, data mining, and similar environments. Filtering, sampling, statistics, joins, and more.
+This is a set of command line utilities for manipulating large tabular data files. Files of numeric and text data commonly found in machine learning and data mining environments. Filtering, sampling, statistics, joins, and more.
 
 These tools are especially useful when working with large data sets. They run faster than other tools providing similar functionality, often by significant margins. See [Performance Studies](docs/Performance.md) for comparisons with other tools.
 
@@ -235,7 +235,7 @@ See the [tsv-select reference](docs/tool_reference/tsv-select.md) for details on
 
 Similar in spirit to the Unix `uniq` tool, `tsv-uniq` filters a dataset so there is only one copy of each unique line. `tsv-uniq` goes beyond Unix `uniq` in a couple ways. First, data does not need to be sorted. Second, equivalence can be based on a subset of fields rather than the full line.
 
-`tsv-uniq` can also be run in 'equivalence class identification' mode, where lines with equivalent keys are marked with a unique id rather than filtered out. Another variant is 'number' mode, which generates lines numbers grouped by the key.
+`tsv-uniq` can also be run in 'equivalence class identification' mode, where lines with equivalent keys are marked with a unique id rather than filtered out. Another variant is 'number' mode, which generates line numbers grouped by the key.
 
 `tsv-uniq` operates on the entire line when no fields are specified. This is a useful alternative to the traditional `sort -u` or `sort | uniq` paradigms for identifying unique lines in unsorted files, as it is quite a bit faster, especially when there are many duplicate lines. As a bonus, order of the input lines is retained.
 
@@ -520,4 +520,4 @@ The applications can be built with LTO and PGO when source code is fetched by DU
 
 ### Setup customization
 
-There are a number of simple ways to ways to improve the utility of these tools, these are listed on the [Tips and tricks](docs/TipsAndTricks.md) page. [Bash aliases](docs/TipsAndTricks.md#useful-bash-aliases), [Unix sort command customization](docs/TipsAndTricks.md#customize-the-unix-sort-command), and [bash completion](docs/TipsAndTricks.md#enable-bash-completion) are especially useful.
+There are a number of simple ways to improve the utility of these tools, these are listed on the [Tips and tricks](docs/TipsAndTricks.md) page. [Bash aliases](docs/TipsAndTricks.md#useful-bash-aliases), [Unix sort command customization](docs/TipsAndTricks.md#customize-the-unix-sort-command), and [bash completion](docs/TipsAndTricks.md#enable-bash-completion) are especially useful.

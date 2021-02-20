@@ -18,7 +18,7 @@ Contents:
 
 ### Bash aliases
 
-A bash alias is a keystroke shortcut known by the shell. They are setup in the user's `~/.bashrc` or another shell init file. A convenient alias when working with TSV files is `tsv-header` which lists the field numbers for each field in a TSV file. To define it, put the following in `~/.bashrc` or other init file:
+A bash alias is a keystroke shortcut known by the shell. They are set up in the user's `~/.bashrc` or another shell init file. A convenient alias when working with TSV files is `tsv-header` which lists the field numbers for each field in a TSV file. To define it, put the following in `~/.bashrc` or other init file:
 ```
 tsv-header () { head -n 1 "$@" | tr $'\t' $'\n' | nl -ba ; }
 ```
@@ -85,7 +85,7 @@ The standard Unix `sort` utility works quite well on TSV files. The syntax for s
 
 ### Install an updated sort utility (especially on macOS)
 
-Installing an up-to-date utility is a worthwhile step on all platforms. This is especially so on macOS, as the the default `sort` program is a bit slow. The `sort` utility available as part of [GNU Core Utils](https://www.gnu.org/software/coreutils/coreutils.html) is typically quite a bit faster. As of late 2019, the current GNU `sort` (version 8.31) is often more than twice as fast as the `sort` utility shipped with OS X Mojave.
+Installing an up-to-date utility is a worthwhile step on all platforms. This is especially so on macOS, as the default `sort` program is a bit slow. The `sort` utility available as part of [GNU Core Utils](https://www.gnu.org/software/coreutils/coreutils.html) is typically quite a bit faster. As of late 2019, the current GNU `sort` (version 8.31) is often more than twice as fast as the `sort` utility shipped with OS X Mojave.
 
 Use your system's package manager to upgrade to the latest sort utility and consider installing GNU `sort` if it's not currently on your system. (Two popular package managers on the Mac are Homebrew and MacPorts.) Note that in some cases the GNU `sort` routine may be installed under a different name than the built-in `sort` utility, typically `gsort`.
 
@@ -187,9 +187,9 @@ The file can also be added to the bash completions system directory on your syst
 
 ## Convert newline format and character encoding with dos2unix and iconv
 
-The TSV Utilities expect input data to be utf-8 encoded and on Unix, to use Unix newlines. The `dos2unix` and `iconv` command line tools are useful when conversion is required.
+The TSV Utilities expect input data to be utf-8 encoded and use Unix newlines. The `dos2unix` and `iconv` command line tools are useful when conversion is required.
 
-Needing to convert newlines from DOS/Windows format to Unix is relatively common. Data files may have been prepared for Windows, and a number of spreadsheet programs generate Windows line feeds when exporting data. The `csv2tsv` tool converts Windows newlines as part of its operation. The other TSV Utilities detect Window newlines when running on a Unix platform, including macOS. The following `dos2unix` commands convert files to use Unix newlines:
+Needing to convert newlines from DOS/Windows format to Unix is relatively common. Data files may have been prepared for Windows, and a number of spreadsheet programs generate Windows line feeds when exporting data. The `csv2tsv` tool converts Windows newlines as part of its operation. The other TSV Utilities detect Windows newlines when running on a Unix platform, including macOS. The following `dos2unix` commands convert files to use Unix newlines:
 ```
 $ # In-place conversion.
 $ dos2unix file.tsv
@@ -266,7 +266,7 @@ Timing results, standard input test (Mac Mini; 6-cores; 64 GB RAM; SSD drive):
 
 The ripgrep version is materially faster on this test. A larger set of tests on different types of files would be needed to determine if this holds generally, but the result is certainly promising for ripgrep. In these tests, `tsv-filter` was able to keep up with `grep`, but not ripgrep, which on its own finishes in about 12 seconds. Of course, both `grep` and `ripgrep` as prefilters are material improvements over `tsv-filter` standalone.
 
-The next test runs against the 26 files directly, allowing ripgrep's parallel capabilities to be used. Runs with combining GNU `parallel` with `grep` and `tsv-filter` standalone are included for comparison. The commands:
+The next test runs against the 26 files directly, allowing ripgrep's parallel capabilities to be used. Runs combining GNU `parallel` with `grep` and `tsv-filter` standalone are included for comparison. The commands:
 ```
 $ tsv-filter ngram-*.tsv --str-in-fld 1:_VERB --ge 2:1850 --le 2:1950
 $ grep _VERB ngram-*.tsv | tsv-filter --ge 2:1850 --le 2:195
@@ -296,11 +296,11 @@ Version information for the timing tests:
 
 ## Faster processing using GNU parallel
 
-The TSV Utilities tools are singled threaded. Multiple cores available on today's processors are utilized primarily when the tools are run in a Unix command pipeline. The example shown using in [Using grep and tsv-filter together](#using-grep-and-tsv-filter-together) uses the Unix pipeline approach to some gain parallelism.
+The TSV Utilities tools are single threaded. Multiple cores available on today's processors are utilized primarily when the tools are run in a Unix command pipeline. The example shown using in [Using grep and tsv-filter together](#using-grep-and-tsv-filter-together) uses the Unix pipeline approach to gain parallelism.
 
 This often leaves processing power on the table, power that can be used to run commands considerably faster. This is especially true when reading from fast IO devices such as the newer generations of SSD drives. These fast devices often read much faster than a single CPU core can keep up with.
 
-[GNU parallel](https://www.gnu.org/software/parallel/) provides a convenient way to parallelize many Unix command line tools and take advantage of multiple CPU cores. TSV Utilities tools can use GNU parallel as well, several examples are given in this section. The techniques shown can applied to many other command line tools as well. If you are using a machine with multiple cores you may gain performance benefit from using GNU parallel.
+[GNU parallel](https://www.gnu.org/software/parallel/) provides a convenient way to parallelize many Unix command line tools and take advantage of multiple CPU cores. TSV Utilities tools can use GNU parallel as well, several examples are given in this section. The techniques shown can be applied to many other command line tools as well. If you are using a machine with multiple cores you may gain performance benefit from using GNU parallel.
 
 GNU `parallel` may need to be installed, use your system's package manager to do this. GNU `parallel` provides a large feature set, only a subset is shown in these examples. See the [GNU parallel documentation](https://www.gnu.org/software/parallel/) for more details.
 
@@ -437,13 +437,13 @@ Bernoulli sampling is a bit faster than simple random sampling, so there is some
 
 #### GNU parallel and tsv-summarize
 
-Many `tsv-summary` calculations require seeing all the data all at once and cannot be readily parallelized. Computations like `mean`, `median`, `stdev`, and `quantile` fall into this bucket. However, there are operations that can parallelized. Operations like `sum`, `min` and `max`. We'll use `max` to show an example of how this works. First, we'll `tsv-summarize` to find the largest occurrence count (3rd column) in the ngram files:
+Many `tsv-summary` calculations require seeing all the data all at once and cannot be readily parallelized. Computations like `mean`, `median`, `stdev`, and `quantile` fall into this bucket. However, there are operations that can be parallelized. Operations like `sum`, `min` and `max`. We'll use `max` to show an example of how this works. First, we'll `tsv-summarize` to find the largest occurrence count (3rd column) in the ngram files:
 ```
 $ tsv-summarize --max 3 ngram-*.tsv
 927838975
 ```
 
-That works, but took 85 seconds. Here's a version that parallelizes the invocations:
+That worked, but took 85 seconds. Here's a version that parallelizes the invocations:
 ```
 $ parallel tsv-summarize --max 3 ::: ngram-*.tsv
 11383300
@@ -462,7 +462,7 @@ $ parallel tsv-summarize --max 3 ::: ngram-*.tsv | tsv-summarize --max 1
 
 This produced the correct result and finished in 18 seconds, much more palatable than the 85 seconds in the single process version.
 
-We could find the maximim occurrence count for each year (column 2) in a similar fashion. This example sorts the results by year for good measure.
+We could find the maximum occurrence count for each year (column 2) in a similar fashion. This example sorts the results by year for good measure.
 ```
 $ tsv-summarize --group-by 2 --max 3 ngram-*.tsv | tsv-sort-fast -k1,1n
 1505	1267
@@ -484,15 +484,15 @@ Notice that in the "group-by year" example, the second `tsv-summarize` pass is n
 
 ### Using GNU Parallel on files with header lines
 
-All the examples shown so far involve multiple files without header lines. Correctly handling header lines is a more involved. The main issue is that results from multiple files get concatenated together when results are reassembled. One way to deal with this is to drop the headers from each file as they are processed, arranging to have the header from the first file preserved if necessary. Other methods are possible, but more involved than will be discussed here.
+All the examples shown so far involve multiple files without header lines. Correctly handling header lines is more involved. The main issue is that results from multiple files get concatenated together when results are reassembled. One way to deal with this is to drop the headers from each file as they are processed, arranging to have the header from the first file preserved if necessary. Other methods are possible, but more involved than will be discussed here.
 
 ### GNU Parallel on standard input or a single large file
 
 All the examples shown so far run against multiple files. This is a natural fit for `parallel`'s capabilities. `parallel` also has facilities for automatically splitting up individual files as well as standard input into smaller chunks and invoking commands on these smaller chunks in parallel.
 
-Unfortunately, performance when using these facilities is more variable than when running against multiple input files. This is because the work to split up the file or input stream is itself single threaded and can be a bottleneck. Performance gains are unlikely to match the gains seen on multiple files, and performance may actually get worse. Performance appears dependent on the specific task, the nature of the files or input stream, and the computation being performed. Some experimentation may needed to identify the best parameter tuning.
+Unfortunately, performance when using these facilities is more variable than when running against multiple input files. This is because the work to split up the file or input stream is itself single threaded and can be a bottleneck. Performance gains are unlikely to match the gains seen on multiple files, and performance may actually get worse. Performance appears dependent on the specific task, the nature of the files or input stream, and the computation being performed. Some experimentation may be needed to identify the best parameter tuning.
 
-For these reasons, paralellizing tasks on standard input or against single files may be most appropriate for repeated tasks. Tasks run on a regular basis against similar data sets, where time invested in performance tuning gets paid back over multiple runs.
+For these reasons, parallelizing tasks on standard input or against single files may be most appropriate for repeated tasks. Tasks run on a regular basis against similar data sets, where time invested in performance tuning gets paid back over multiple runs.
 
 Of the two cases, performance gains are more likely when running against a single file than when running against standard input. That is because the mechanism used to split a file (`--pipepart`) is much faster than the mechanism used to split up standard input (`--pipe`).
 
@@ -512,7 +512,7 @@ Consult the [GNU parallel documentation](https://www.gnu.org/software/parallel/)
 
 ## Reading data in R
 
-It's common to perform transformations on data prior to loading into applications like R or Pandas. This especially useful when data sets are large and loading entirely into memory is undesirable. One approach is to create modified files and load those. In R it can also be done as part of the different read routines, most of which allow reading from a shell command. This enables filtering rows, selecting, sampling, etc. This will work with any command line tool. Some examples below. These use `read.table` from the base R package, `read_tsv` from the `tidyverse/readr` package, and `fread` from the `data.table` package:
+It's common to perform transformations on data prior to loading into applications like R or Pandas. This is especially useful when data sets are large and loading entirely into memory is undesirable. One approach is to create modified files and load those. In R it can also be done as part of the different read routines, most of which allow reading from a shell command. This enables filtering rows, selecting, sampling, etc. This will work with any command line tool. Some examples below. These use `read.table` from the base R package, `read_tsv` from the `tidyverse/readr` package, and `fread` from the `data.table` package:
 ```
 > df1 = read.table(pipe("tsv-select -f 1,2,7 data.tsv | tsv-sample -H -n 50000"), sep="\t", header=TRUE, quote="")
 > df2 = read_tsv(pipe("tsv-select -f 1,2,7 data.tsv | tsv-sample -H -n 50000"))
@@ -527,11 +527,11 @@ The first two use the `pipe` function to create the shell command. `fread` does 
 
 Line order randomization, or "shuffling", is one of the operations supported by [tsv-sample](tool_reference/tsv-sample.md). Most `tsv-sample` operations can be performed with limited system memory. However, system memory becomes a limitation when shuffling very large data sets, as the entire data set must be loaded into memory. ([GNU shuf](https://www.gnu.org/software/coreutils/manual/html_node/shuf-invocation.html) has the same limitation.)
 
-In many cases the most effective solution is simply to get more memory, or find a machine with enough memory. However, when more memory is not an option, another solution to consider is disk-based shuffling. This is approach described here.
+In many cases the most effective solution is simply to get more memory, or find a machine with enough memory. However, when more memory is not an option, another solution to consider is disk-based shuffling. This approach described here.
 
-One option for disk-based shuffling is [GNU sort](https://www.gnu.org/software/coreutils/manual/html_node/sort-invocation.html)'s random sort feature (`sort --random-sort`). This can be used for unweighted randomization. However, there are couple of downsides. One is that it places duplicates lines next to each other, a problem for many shuffling use cases. Another is that it is rather slow.
+One option for disk-based shuffling is [GNU sort](https://www.gnu.org/software/coreutils/manual/html_node/sort-invocation.html)'s random sort feature (`sort --random-sort`). This can be used for unweighted randomization. However, there are a couple of downsides. One is that it places duplicates lines next to each other, a problem for many shuffling use cases. Another is that it is rather slow.
 
-An better approach is to combine `tsv-sample --gen-random-inorder` with disk-based sorting. [GNU sort](https://www.gnu.org/software/coreutils/manual/html_node/sort-invocation.html) serves the latter purpose well. A random value is generated for each input line, the lines are sorted, and the random values removed. GNU sort will use disk if necessary. This technique can be used for both weighted and unweighted line order randomization. There is a catch: GNU sort is dramatically faster when sorting numbers written in decimal notation, without exponents. However, random value generation may generate values with exponents in some cases. This is discussed in more detail at the end of this section.
+A better approach is to combine `tsv-sample --gen-random-inorder` with disk-based sorting. [GNU sort](https://www.gnu.org/software/coreutils/manual/html_node/sort-invocation.html) serves the latter purpose well. A random value is generated for each input line, the lines are sorted, and the random values removed. GNU sort will use disk if necessary. This technique can be used for both weighted and unweighted line order randomization. There is a catch: GNU sort is dramatically faster when sorting numbers written in decimal notation, without exponents. However, random value generation may generate values with exponents in some cases. This is discussed in more detail at the end of this section.
 
 Here's an example.
 ```

@@ -13,11 +13,11 @@ _Visit the [TSV Utilities main page](../README.md)_
 
 This is an update to the [March 2017 Comparative Benchmarks Study](comparative-benchmarks-2017.md). The 2017 study compared eBay's TSV Utilities to a number of other tools as a way to gauge the performance of the D programming language. This page contains updates to those benchmarks.
 
-The goal of the 2017 study was to evaluate performance of an application written in a straightforward fashion, without going to unusual lengths optimize performance. The 2018 version of eBay's TSV Utilities are still written in this style, but have had performance improvements since. The most notable is the use of Link Time Optimization (LTO) and Profile Guided Optimization (PGO). These are compiler technologies available via the LDC compiler.
+The goal of the 2017 study was to evaluate performance of an application written in a straightforward fashion, without going to unusual lengths to optimize performance. The 2018 version of eBay's TSV Utilities are still written in this style, but have had performance improvements since. The most notable is the use of Link Time Optimization (LTO) and Profile Guided Optimization (PGO). These are compiler technologies available via the LDC compiler.
 
 See the [main performance benchmarks page](Performance.md) for more information on the goals of the study and the approach used. See the [2017 study](comparative-benchmarks-2017.md) for details about the individual benchmarks. This page is primarily reporting the updated results. The 2017 study also includes several analyses not included in the 2018 study, for example, a comparison of DMD and LDC compilers.
 
-The 2018 study adds one additional benchmark to the 2017 set. Benchmarks were run on MacOS and Linux. Only the faster tools from the 2017 study were included the 2018 update, the slower tools were dropped.
+The 2018 study adds one additional benchmark to the 2017 set. Benchmarks were run on MacOS and Linux. Only the faster tools from the 2017 study were included in the 2018 update, the slower tools were dropped.
 
 ## Benchmark tests
 
@@ -66,7 +66,7 @@ A few specific considerations:
 
 ### Top four in each benchmark
 
-The tables below show fastest times for each benchmark. One table each for MacOS and Linux. Times are in seconds. A description of the individual tests can be found in the [March 2017 study](comparative-benchmarks-2017.md). eBay's TSV Utilities are shown in italics. Reference information for all tools is in the [Test Details](#test-details) section.
+The tables below show the fastest times for each benchmark. One table each for MacOS and Linux. Times are in seconds. A description of the individual tests can be found in the [March 2017 study](comparative-benchmarks-2017.md). eBay's TSV Utilities are shown in italics. Reference information for all tools is in the [Test Details](#test-details) section.
 
 #### MacOS: Top-4 in each benchmark
 
@@ -108,7 +108,7 @@ The tables below show fastest times for each benchmark. One table each for MacOS
 
 ## Test details
 
-Tests were run on April 14, 2018. The latest released version of each tool was used. Details needed to reproduce the tests are given below. The [March 2017 study](comparative-benchmarks-2017.md) has a more detailed description of the individual tests, however, everything need to reproduce the tests can be found here.
+Tests were run on April 14, 2018. The latest released version of each tool was used. Details needed to reproduce the tests are given below. The [March 2017 study](comparative-benchmarks-2017.md) has a more detailed description of the individual tests, however, everything needed to reproduce the tests can be found here.
 
 ### Machines
 

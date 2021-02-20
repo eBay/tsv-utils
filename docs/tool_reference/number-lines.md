@@ -5,7 +5,7 @@ _Visit the [TSV Utilities main page](../../README.md)_
 
 **Synopsis:** number-lines [options] [file...]
 
-number-lines reads from files or standard input and writes each line to standard output preceded by a line number. It is a simplified version of the Unix `nl` program. It supports one feature `nl` does not: the ability to treat the first line of files as a header. This is useful when working with tab-separated-value files. If header processing used, a header line is written for the first file, and the header lines are dropped from any subsequent files.
+number-lines reads from files or standard input and writes each line to standard output preceded by a line number. It is a simplified version of the Unix `nl` program. It supports one feature `nl` does not: the ability to treat the first line of files as a header. This is useful when working with tab-separated-value files. If header processing is used, a header line is written for the first file, and the header lines are dropped from any subsequent files.
 
 **Options:**
 * `--h|help` - Print help.

@@ -2,7 +2,7 @@
 Command line tool that reads TSV files and summarizes field values associated with
 equivalent keys.
 
-Copyright (c) 2016-2020, eBay Inc.
+Copyright (c) 2016-2021, eBay Inc.
 Initially written by Jon Degenhardt
 
 License: Boost License 1.0 (http://boost.org/LICENSE_1_0.txt)

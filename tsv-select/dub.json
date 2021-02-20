@@ -3,7 +3,7 @@
     "description": "Output select columns from TSV files.",
     "homepage": "https://github.com/eBay/tsv-utils",
     "authors": ["Jon Degenhardt"],
-    "copyright": "Copyright (c) 2015-2020, eBay Inc.",
+    "copyright": "Copyright (c) 2015-2021, eBay Inc.",
     "license": "BSL-1.0",
     "targetType": "executable",
     "configurations": [
