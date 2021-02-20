@@ -21,6 +21,9 @@
 #       macos build credits for releases until working with the new Travis-CI fee structure
 #       (non-free macos builds) can be addressed.
 #
+# Note: Feb 2021 - Drop all but essential builds in prep for moving to github actions. Keeping
+#       code coverage and release action builds.
+#
 matrix:
   allow_failures:
     - env: DUBTEST=1 MAKETEST=1 ALLOW_FAILURES=true
@@ -31,7 +34,7 @@ matrix:
       group: travis_latest
       language: d
       d: dmd
-      env: DUBTEST=1 MAKETEST=1 CODECOV=1
+      env: CODECOV=1
 #    - os: osx
 #      osx_image: xcode11.5
 #      group: travis_latest
@@ -41,19 +44,22 @@ matrix:
 #      if: |
 #        fork = false AND \
 #        type IN (push)
-    - os: linux
-      dist: xenial
-      group: travis_latest
-      language: d
-      d: ldc
-      env: LTOPGO_V2=default
+#    - os: linux
+#      dist: xenial
+#      group: travis_latest
+#      language: d
+#      d: ldc
+#      env: LTOPGO_V2=default
     - os: linux
       dist: xenial
       group: travis_latest
       language: d
       d: ldc-1.23.0
       env: LINUX_SPECIAL=1 DEPLOY=1
-      # if: type IN (pull_request, cron)
+      if:  |
+        fork = false AND \
+        type IN (push) AND \
+        tag IS present
     - os: osx
       osx_image: xcode11.5
       group: travis_latest
@@ -72,125 +78,39 @@ matrix:
 #      env: LTOPGO_V2=default
 #      if: |
 #         type IN (pull_request, cron)
-    - os: linux
-      dist: xenial
-      group: travis_latest
-      language: d
-      d: ldc-1.18.0
-      env: DUBTEST=0 MAKETEST=1
-      if: type IN (pull_request, cron)
-#    - os: linux
-#        W/PR #281 (InputSourceRange), require ldc-1.17.0/dmd-2.087.0
-#        (Phobos PR #7117)
-#        W/ fieldlist, ldc-1.18.0/dmd-2.088.1. @safe format
-#      dist: xenial
-#      group: travis_latest
-#      language: d
-#      d: ldc-1.6.0
-#      env: DUBTEST=0 MAKETEST=1
-#      if: type IN (pull_request, cron)
-    - os: linux
-      dist: xenial
-      group: travis_latest
-      language: d
-      d: ldc
-      env: DUBTEST=1 MAKETEST=1
-      if: type IN (pull_request)
-    - os: linux
-      dist: xenial
-      group: travis_latest
-      language: d
-      d: ldc
-      env: DUBTEST=1 MAKETEST=1 APPLTO=full
-      if: type IN (cron)
-    - os: linux
-      dist: xenial
-      group: travis_latest
-      language: d
-      d: ldc
-      env: APPLTO=thin ALLLTO=default
-      if: type IN (cron)
-    - os: linux
-      dist: xenial
-      group: travis_latest
-      language: d
-      d: ldc
-      env: LTOPGO=default
-      if: type IN (cron)
 #    - os: linux
 #      dist: xenial
-#      sudo: required
 #      group: travis_latest
 #      language: d
-#      d: ldc-1.7.0
-#      services: docker
-#      env: DOCKERSPECIAL=1
-#      if: type IN (cron)
-#    - os: linux
-#      dist: xenial
-#      sudo: required
-#      group: travis_latest
-#      language: d
-#      d: ldc-1.12.0
-#      services: docker
-#      env: DOCKERSPECIAL=2
-#      if: type IN (cron)
-    - os: linux
-      dist: xenial
-      group: travis_latest
-      language: d
-      d: ldc-beta
-      env: DUBTEST=1 MAKETEST=1 APPLTO=full
-      if: type IN (cron)
-    - os: linux
-      dist: xenial
-      group: travis_latest
-      language: d
-      d: ldc-beta
-      env: LTOPGO_V2=default
-      if: type IN (cron)
-    - os: linux
-      arch: arm64
-      language: d
-      d: ldc
-      env: MAKE_BUILDONLY=1 MAKETEST=1 ALLOW_FAILURES=true
-      if: type IN (cron)
-#    - os: osx
-#      osx_image: xcode11.5
-#      group: travis_latest
-#      language: d
-#      d: ldc-beta
-#      env: LTOPGO_V2=default
-#      if: type IN (cron)
-    - os: linux
-      dist: xenial
-      group: travis_latest
-      language: d
-      d: dmd-nightly
-      # Allow dmd-nightly (xenial) to fail until dub issue in 2.089 is fixed.
-      env: DUBTEST=1 MAKETEST=1 ALLOW_FAILURES=true
-      if: type IN (cron)
-#    - os: osx
-#      osx_image: xcode11.5
-#      group: travis_latest
-#      language: d
-#      d: dmd-nightly
+#      d: ldc
 #      env: DUBTEST=1 MAKETEST=1
-#      if: type IN (cron)
-    - os: linux
-      dist: xenial
-      group: travis_latest
-      language: d
-      d: dmd-beta
-      # Allow dmd-beta (xenial) to fail until dub issue in 2.089 is fixed.
-      env: DUBTEST=1 MAKETEST=1 ALLOW_FAILURES=true
-      if: type IN (cron)
-#    - os: osx
-#      osx_image: xcode11.5
+#      if: type IN (pull_request)
+#    - os: linux
+#      dist: xenial
 #      group: travis_latest
 #      language: d
-#      d: dmd-beta
-#      env: DUBTEST=1 MAKETEST=1
+#      d: ldc
+#      env: DUBTEST=1 MAKETEST=1 APPLTO=full
+#      if: type IN (cron)
+#    - os: linux
+#      dist: xenial
+#      group: travis_latest
+#      language: d
+#      d: ldc
+#      env: APPLTO=thin ALLLTO=default
+#      if: type IN (cron)
+#    - os: linux
+#      dist: xenial
+#      group: travis_latest
+#      language: d
+#      d: ldc
+#      env: LTOPGO=default
+#      if: type IN (cron)
+#    - os: linux
+#      arch: arm64
+#      language: d
+#      d: ldc
+#      env: MAKE_BUILDONLY=1 MAKETEST=1 ALLOW_FAILURES=true
 #      if: type IN (cron)
 before_install:
   - if [[ "$DOCKERSPECIAL" == "1" ]]; then

@@ -1,5 +1,5 @@
 # Workflow to run a D compile on Windows. No tests, just the build step. 
-name: D
+name: build-test
 
 on:
   push:
@@ -41,13 +41,16 @@ jobs:
         run: |
           make unittest DCOMPILER=${DC} DFLAGS=-m64
 
-  macos-build:
-    name: Build tsv-utils on macOS
+  linux-macos-build:
+    name: Build tsv-utils on Linux, macOS
     strategy:
       fail-fast: false
       matrix:
-        os: [macOS-latest]
-        dc: [dmd-latest, ldc-latest]
+        os: [macOS-latest, ubuntu-latest]
+        dc: [ldc-latest, dmd-latest]
+        include:
+          - os: ubuntu-latest
+            dc: dmd-2.088.1
 
     runs-on: ${{ matrix.os }}
 

@@ -13,8 +13,9 @@ File an [issue](https://github.com/eBay/tsv-utils/issues) if you have problems, 
 **Additional documents:**
 * [Tools Reference](docs/ToolReference.md) - Detailed documentation.
 * [Releases](https://github.com/eBay/tsv-utils/releases) - Prebuilt binaries and release notes. Recent updates:
-  * Named field support! See [version 2.0 release notes](https://github.com/eBay/tsv-utils/releases/tag/v2.0.0).
+  * Current release: [version 2.1.2](https://github.com/eBay/tsv-utils/releases/tag/v2.1.2).
   * Improved `csv2tsv` performance and functionality. See [version 2.1 release notes](https://github.com/eBay/tsv-utils/releases/tag/v2.1.0).
+  * Named fields! See [version 2.0 release notes](https://github.com/eBay/tsv-utils/releases/tag/v2.0.0).
 * [Tips and tricks](docs/TipsAndTricks.md) - Simpler and faster command line tool use.
 * [Performance Studies](docs/Performance.md) - Benchmarks against similar tools and other performance studies.
 * [Comparing TSV and CSV formats](docs/comparing-tsv-and-csv.md)
@@ -27,7 +28,7 @@ File an [issue](https://github.com/eBay/tsv-utils/issues) if you have problems, 
 * [Experimenting with Link Time Optimization](docs/dlang-meetup-14dec2017.pdf). Dec 14, 2017. A presentation at the [Silicon Valley D Meetup](https://www.meetup.com/D-Lang-Silicon-Valley/) describing experiments using LTO based on eBay's TSV Utilities.
 * [Exploring D via Benchmarking of eBay's TSV Utilities](http://dconf.org/2018/talks/degenhardt.html). May 2, 2018. A presentation at [DConf 2018](http://dconf.org/2018/) describing performance benchmark studies conducted using eBay's TSV Utilities (slides [here](docs/dconf2018.pdf)).
 
-[![Travis](https://img.shields.io/travis/eBay/tsv-utils.svg)](https://travis-ci.org/eBay/tsv-utils)
+![GitHub Workflow Status](https://img.shields.io/github/workflow/status/eBay/tsv-utils/build-test)
 [![Codecov](https://img.shields.io/codecov/c/github/eBay/tsv-utils.svg)](https://codecov.io/gh/eBay/tsv-utils)
 [![GitHub release](https://img.shields.io/github/release/eBay/tsv-utils.svg)](https://github.com/eBay/tsv-utils/releases)
 [![Github commits (since latest release)](https://img.shields.io/github/commits-since/eBay/tsv-utils/latest.svg)](https://github.com/eBay/tsv-utils/commits/master)
