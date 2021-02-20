@@ -3,7 +3,7 @@ Command line tool for shuffling or sampling lines from input streams. Several me
 are available, including weighted and unweighted shuffling, simple and weighted random
 sampling, sampling with replacement, Bernoulli sampling, and distinct sampling.
 
-Copyright (c) 2017-2020, eBay Inc.
+Copyright (c) 2017-2021, eBay Inc.
 Initially written by Jon Degenhardt
 
 License: Boost License 1.0 (http://boost.org/LICENSE_1_0.txt)

@@ -5,7 +5,7 @@ multiple output files. It is similar to 'tail -n +1 dir/*'. The main difference 
 that it assembles files in the same order on all platforms, a characteristic
 necessary for testing.
 
-Copyright (c) 2020, eBay Inc.
+Copyright (c) 2020-2021, eBay Inc.
 Initially written by Jon Degenhardt
 
 License: Boost License 1.0 (http://boost.org/LICENSE_1_0.txt)

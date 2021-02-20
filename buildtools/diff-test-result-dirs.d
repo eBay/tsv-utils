@@ -10,7 +10,7 @@ This tool runs a version of directory diff support multiple correct output versi
 This is to handle the case where different compiler/library versions have different
 valid outputs. The most common case is changes to error message text.
 
-Copyright (c) 2018-2020, eBay Inc.
+Copyright (c) 2018-2021, eBay Inc.
 Initially written by Jon Degenhardt
 
 License: Boost License 1.0 (http://boost.org/LICENSE_1_0.txt)
