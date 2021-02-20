@@ -48,9 +48,9 @@ jobs:
       matrix:
         os: [ubuntu-latest, macOS-latest]
         dc: [dmd-latest, ldc-latest]
-      include:
-        - os: ubuntu-latest
-          dc: dmd-2.088.1
+        include:
+          - os: ubuntu-latest
+            dc: dmd-2.088.1
 
     runs-on: ${{ matrix.os }}
 
