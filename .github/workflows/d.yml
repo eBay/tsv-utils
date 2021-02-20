@@ -41,13 +41,15 @@ jobs:
         run: |
           make unittest DCOMPILER=${DC} DFLAGS=-m64
 
-  macos-build:
-    name: Build tsv-utils on macOS
+  linux-macos-build:
+    name: Basic builds of tsv-utils on Linux and macOS
     strategy:
       fail-fast: false
       matrix:
-        os: [macOS-latest]
+        os: [ubuntu-latest, macOS-latest]
         dc: [dmd-latest, ldc-latest]
+      include:
+        - { os:ubuntu-latest, dc: dmd-2.088.1 }
 
     runs-on: ${{ matrix.os }}
 
