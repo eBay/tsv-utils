@@ -1,5 +1,5 @@
 # Workflow to run a D compile on Windows. No tests, just the build step. 
-name: D
+name: build-test
 
 on:
   push:
@@ -42,7 +42,7 @@ jobs:
           make unittest DCOMPILER=${DC} DFLAGS=-m64
 
   linux-macos-build:
-    name: Basic builds of tsv-utils on Linux and macOS
+    name: Build tsv-utils on Linux, macOS
     strategy:
       fail-fast: false
       matrix:
