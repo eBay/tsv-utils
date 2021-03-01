@@ -181,6 +181,32 @@ F1	F2	F3	F4
 100	102	abc	AbC
 100	103	abc	AbC
 
+====Count tests===
+
+====[tsv-filter --header --eq 2:1 input1.tsv --count]====
+1
+
+====[tsv-filter --header --le 2:101 input1.tsv -c]====
+13
+
+====[tsv-filter -H --count --empty F1 input1.tsv]====
+0
+
+====[tsv-filter -H -c --not-empty F1 input1.tsv ]====
+15
+
+====[tsv-filter --eq 2:1 input1_noheader.tsv --count]====
+1
+
+====[tsv-filter --le 2:101 input1_noheader.tsv -c]====
+13
+
+====[tsv-filter --count --empty 1 input1_noheader.tsv]====
+0
+
+====[tsv-filter -c --not-empty 1 input1_noheader.tsv ]====
+15
+
 ====Empty and blank field tests===
 
 ====[tsv-filter --header --empty 3 input1.tsv]====

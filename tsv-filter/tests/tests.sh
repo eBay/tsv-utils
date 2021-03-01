@@ -53,6 +53,18 @@ runtest ${prog} "-H --ge F2:101 input1.tsv" ${basic_tests_1}
 runtest ${prog} "-H --gt F2:101 input1.tsv" ${basic_tests_1}
 runtest ${prog} "-H --ne F2:101 input1.tsv" ${basic_tests_1}
 
+# Count tests
+echo "" >> ${basic_tests_1}; echo "====Count tests===" >> ${basic_tests_1}
+runtest ${prog} "--header --eq 2:1 input1.tsv --count" ${basic_tests_1}
+runtest ${prog} "--header --le 2:101 input1.tsv -c" ${basic_tests_1}
+runtest ${prog} "-H --count --empty F1 input1.tsv" ${basic_tests_1}
+runtest ${prog} "-H -c --not-empty F1 input1.tsv " ${basic_tests_1}
+
+runtest ${prog} "--eq 2:1 input1_noheader.tsv --count" ${basic_tests_1}
+runtest ${prog} "--le 2:101 input1_noheader.tsv -c" ${basic_tests_1}
+runtest ${prog} "--count --empty 1 input1_noheader.tsv" ${basic_tests_1}
+runtest ${prog} "-c --not-empty 1 input1_noheader.tsv " ${basic_tests_1}
+
 # Empty and blank field tests
 echo "" >> ${basic_tests_1}; echo "====Empty and blank field tests===" >> ${basic_tests_1}
 
