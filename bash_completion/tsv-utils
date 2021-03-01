@@ -98,7 +98,7 @@ _tsv_filter()
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
-    opts="--help --help-verbose --help-fields --help-options --version --header --or --invert --delimiter --empty --not-empty --blank --not-blank --is-numeric --is-finite --is-nan --is-infinity --le --lt --ge --gt --eq --ne --str-le --str-lt --str-ge --str-gt --str-eq --istr-eq --str-ne --istr-ne --str-in-fld --istr-in-fld --str-not-in-fld --istr-not-in-fld --regex --iregex --not-regex --not-iregex --char-len-le --char-len-lt --char-len-ge --char-len-gt --char-len-eq --char-len-ne --byte-len-le --byte-len-lt --byte-len-ge --byte-len-gt --byte-len-eq --byte-len-ne --ff-le --ff-lt --ff-ge --ff-gt --ff-eq --ff-ne --ff-str-eq --ff-istr-eq --ff-str-ne --ff-istr-ne --ff-absdiff-le --ff-absdiff-gt ff-reldiff-le --ff-reldiff-gt"
+    opts="--help --help-verbose --help-fields --help-options --version --header --or --invert --count --delimiter --empty --not-empty --blank --not-blank --is-numeric --is-finite --is-nan --is-infinity --le --lt --ge --gt --eq --ne --str-le --str-lt --str-ge --str-gt --str-eq --istr-eq --str-ne --istr-ne --str-in-fld --istr-in-fld --str-not-in-fld --istr-not-in-fld --regex --iregex --not-regex --not-iregex --char-len-le --char-len-lt --char-len-ge --char-len-gt --char-len-eq --char-len-ne --byte-len-le --byte-len-lt --byte-len-ge --byte-len-gt --byte-len-eq --byte-len-ne --ff-le --ff-lt --ff-ge --ff-gt --ff-eq --ff-ne --ff-str-eq --ff-istr-eq --ff-str-ne --ff-istr-ne --ff-absdiff-le --ff-absdiff-gt ff-reldiff-le --ff-reldiff-gt"
 
     # Options requiring an argument or precluding other options
     case $prev in
