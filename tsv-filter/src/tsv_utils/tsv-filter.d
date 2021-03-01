@@ -78,6 +78,7 @@ Global options:
   --H|header          Treat the first line of each file as a header.
   --or                Evaluate tests as an OR rather than an AND clause.
   --v|invert          Invert the filter, printing lines that do not match.
+  --c|count           Print only a count of the matched lines.
   --d|delimiter CHR   Field delimiter. Default: TAB.
 
 Operators:
@@ -736,6 +737,7 @@ struct TsvFilterOptions
     bool hasHeader = false;          /// --H|header
     bool invert = false;             /// --invert
     bool disjunct = false;           /// --or
+    bool countMatches = false;       /// --c|count
     char delim = '\t';               /// --delimiter
 
     /* Returns a tuple. First value is true if command line arguments were successfully
@@ -853,6 +855,7 @@ struct TsvFilterOptions
                 std.getopt.config.caseSensitive,
                 "v|invert",        "     Invert the filter, printing lines that do not match.", &invert,
                 std.getopt.config.caseInsensitive,
+                "c|count",         "     Print only a count of the matched lines, excluding the header.", &countMatches,
                 "d|delimiter",     "CHR  Field delimiter. Default: TAB. (Single byte UTF-8 characters only.)", &delim,
 
                 "empty",           "<field-list>       True if FIELD is empty.", &handlerFldEmpty,
@@ -916,9 +919,9 @@ struct TsvFilterOptions
                 "ff-istr-ne",      "FIELD1:FIELD2   FIELD1 != FIELD2 (string, case-insensitive).", &handlerFFIStrNE,
 
                 "ff-absdiff-le",   "FIELD1:FIELD2:NUM   abs(FIELD1 - FIELD2) <= NUM", &handlerFFAbsDiffLE,
-                "ff-absdiff-gt",   "FIELD1:FIELD2:NUM   abs(FIELD1 - FIELD2)  > NUM", &handlerFFAbsDiffGT,
+                "ff-absdiff-gt",   "FIELD1:FIELD2:NUM   abs(FIELD1 - FIELD2) >  NUM", &handlerFFAbsDiffGT,
                 "ff-reldiff-le",   "FIELD1:FIELD2:NUM   abs(FIELD1 - FIELD2) / min(abs(FIELD1), abs(FIELD2)) <= NUM", &handlerFFRelDiffLE,
-                "ff-reldiff-gt",   "FIELD1:FIELD2:NUM   abs(FIELD1 - FIELD2) / min(abs(FIELD1), abs(FIELD2))  > NUM", &handlerFFRelDiffGT,
+                "ff-reldiff-gt",   "FIELD1:FIELD2:NUM   abs(FIELD1 - FIELD2) / min(abs(FIELD1), abs(FIELD2)) >  NUM", &handlerFFRelDiffGT,
                 );
 
             /* Both help texts are a bit long. In this case, for "regular" help, don't
@@ -993,6 +996,7 @@ struct TsvFilterOptions
 void tsvFilter(ref TsvFilterOptions cmdopt)
 {
     import std.algorithm : all, any, splitter;
+    import std.format : formattedWrite;
     import std.range;
     import tsv_utils.common.utils : BufferedOutputRange, bufferedByLine, InputSourceRange,
         throwIfWindowsNewline;
@@ -1011,11 +1015,13 @@ void tsvFilter(ref TsvFilterOptions cmdopt)
 
     auto bufferedOutput = BufferedOutputRange!(typeof(stdout))(stdout);
 
+    size_t matchedLines = 0;
+
      /* First header is read during command line argument processing. Immediately
       * flush it so subsequent processes in a unix command pipeline see it early.
       * This helps provide timely error messages.
       */
-    if (cmdopt.hasHeader && !cmdopt.inputSources.front.isHeaderEmpty)
+    if (cmdopt.hasHeader && !cmdopt.inputSources.front.isHeaderEmpty && !cmdopt.countMatches)
     {
         auto inputStream = cmdopt.inputSources.front;
         bufferedOutput.appendln(inputStream.header);
@@ -1071,12 +1077,17 @@ void tsvFilter(ref TsvFilterOptions cmdopt)
                 if (cmdopt.invert) passed = !passed;
                 if (passed)
                 {
-                    const bool wasFlushed = bufferedOutput.appendln(line);
-                    if (wasFlushed) inputLinesWithoutBufferFlush = 0;
-                    else if (inputLinesWithoutBufferFlush > maxInputLinesWithoutBufferFlush)
+                    ++matchedLines;
+
+                    if (!cmdopt.countMatches)
                     {
-                        bufferedOutput.flush;
-                        inputLinesWithoutBufferFlush = 0;
+                        const bool wasFlushed = bufferedOutput.appendln(line);
+                        if (wasFlushed) inputLinesWithoutBufferFlush = 0;
+                        else if (inputLinesWithoutBufferFlush > maxInputLinesWithoutBufferFlush)
+                        {
+                            bufferedOutput.flush;
+                            inputLinesWithoutBufferFlush = 0;
+                        }
                     }
                 }
             }
@@ -1089,4 +1100,6 @@ void tsvFilter(ref TsvFilterOptions cmdopt)
             }
         }
     }
+
+    if (cmdopt.countMatches) bufferedOutput.formattedWrite("%d\n", matchedLines);
 }
