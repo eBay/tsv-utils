@@ -824,6 +824,9 @@ enum bool isFlushableOutputRange(R, E=char) = isOutputRange!(R, E)
     static assert(isFlushableOutputRange!(BufferedOutputRange!(Appender!(char[])), char));
 }
 
+/** Flag accepted by bufferedByLine to use line-buffering.
+ */
+alias LineBuffered = Flag!"lineBuffered";
 
 /**
 bufferedByLine is a performance enhancement over std.stdio.File.byLine. It works by
@@ -841,7 +844,7 @@ interactive input.
 
 auto bufferedByLine(KeepTerminator keepTerminator = No.keepTerminator, Char = char,
                     ubyte terminator = '\n', size_t readSize = 1024 * 128, size_t growSize = 1024 * 16)
-    (File file)
+    (File file, LineBuffered lineBuffered = Yes.lineBuffered)
 if (is(Char == char) || is(Char == ubyte))
 {
     static assert(0 < growSize && growSize <= readSize);
@@ -859,11 +862,13 @@ if (is(Char == char) || is(Char == ubyte))
         private size_t _lineStart = 0;
         private size_t _lineEnd = 0;
         private size_t _dataEnd = 0;
+        private bool _lineBuffered;
 
-        this (File f)
+        this (File f, LineBuffered lineBuffered)
         {
             _file = f;
             _buffer = new ubyte[readSize + growSize];
+            _lineBuffered = lineBuffered;
         }
 
         bool empty() const pure
@@ -887,11 +892,29 @@ if (is(Char == char) || is(Char == ubyte))
             }
         }
 
-        /* Note: Call popFront at initialization to do the initial read. */
         void popFront()
         {
-            import std.algorithm: copy, find;
             assert(!empty, "Attempt to popFront an empty bufferedByLine.");
+
+            if (!_lineBuffered) popFrontFullBuffered();
+            else popFrontLineBuffered();
+        }
+
+        private void popFrontLineBuffered()
+        {
+            char[] line = cast(char[]) _buffer;
+            _lineStart = 0;
+            _lineEnd = _dataEnd = _file.readln(line);
+            if (line.length > _buffer.length) _buffer = cast(ubyte[]) line;
+
+            assert(_lineEnd == line.length);
+            assert(_dataEnd == line.length);
+        }
+
+        /* Note: Call popFront at initialization to do the initial read. */
+        private void popFrontFullBuffered()
+        {
+            import std.algorithm: copy, find;
 
             /* Pop the current line. */
             _lineStart = _lineEnd;
@@ -950,7 +973,7 @@ if (is(Char == char) || is(Char == ubyte))
 
     assert(file.isOpen, "bufferedByLine passed a closed file.");
 
-    auto r = new BufferedByLineImpl(file);
+    auto r = new BufferedByLineImpl(file, lineBuffered);
     if (!r.empty) r.popFront;
     return r;
 }
