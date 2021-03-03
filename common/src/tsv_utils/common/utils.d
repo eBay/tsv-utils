@@ -855,7 +855,7 @@ is available.
 
 auto bufferedByLine(KeepTerminator keepTerminator = No.keepTerminator, Char = char,
                     ubyte terminator = '\n', size_t readSize = 1024 * 128, size_t growSize = 1024 * 16)
-    (File file, LineBuffered lineBuffered = Yes.lineBuffered)
+    (File file, LineBuffered lineBuffered = No.lineBuffered)
 if (is(Char == char) || is(Char == ubyte))
 {
     static assert(0 < growSize && growSize <= readSize);
@@ -873,7 +873,7 @@ if (is(Char == char) || is(Char == ubyte))
         private size_t _lineStart = 0;
         private size_t _lineEnd = 0;
         private size_t _dataEnd = 0;
-        private bool _lineBuffered;
+        private LineBuffered _lineBuffered;
 
         this (File f, LineBuffered lineBuffered)
         {
