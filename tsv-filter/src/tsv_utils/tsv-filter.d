@@ -1081,11 +1081,7 @@ void tsvFilter(ref TsvFilterOptions cmdopt)
                 if (passed)
                 {
                     ++matchedLines;
-
-                    if (!cmdopt.countMatches)
-                    {
-                        bufferedOutput.appendln(line);
-                    }
+                    if (!cmdopt.countMatches) bufferedOutput.appendln(line);
                 }
             }
             catch (Exception e)
