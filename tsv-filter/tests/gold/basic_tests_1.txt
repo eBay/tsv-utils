@@ -207,6 +207,92 @@ F1	F2	F3	F4
 ====[tsv-filter -c --not-empty 1 input1_noheader.tsv ]====
 15
 
+====Line buffered tests===
+
+====[tsv-filter --header --line-buffered --eq 2:1 input1.tsv]====
+F1	F2	F3	F4
+1	1.0	a	A
+
+====[tsv-filter --header --line-buffered --le 2:101 input1.tsv]====
+F1	F2	F3	F4
+1	1.0	a	A
+2	2.	b	B
+10	10.1	abc	ABC
+100	100	abc	AbC
+0	0.0	z	AzB
+-1	-0.1	abc def	abc def
+-2	-2.0	ß	ss
+0.	100.	àbc	ÀBC
+0.0	100.0	àßc	ÀssC
+-0.0	-100.0	àßc	ÀSSC
+100	100		AbC
+100	100	abc	
+100	101		
+
+====[tsv-filter -H --line-buffered --empty F1 input1.tsv]====
+F1	F2	F3	F4
+
+====[tsv-filter -H --line-buffered --not-empty F1 input1.tsv ]====
+F1	F2	F3	F4
+1	1.0	a	A
+2	2.	b	B
+10	10.1	abc	ABC
+100	100	abc	AbC
+0	0.0	z	AzB
+-1	-0.1	abc def	abc def
+-2	-2.0	ß	ss
+0.	100.	àbc	ÀBC
+0.0	100.0	àßc	ÀssC
+-0.0	-100.0	àßc	ÀSSC
+100	100		AbC
+100	100	abc	
+100	101		
+100	102	abc	AbC
+100	103	abc	AbC
+
+====[tsv-filter --header --count --line-buffered --le 2:101 input1.tsv]====
+13
+
+====[tsv-filter --line-buffered --eq 2:1 input1_noheader.tsv]====
+1	1.0	a	A
+
+====[tsv-filter --line-buffered --le 2:101 input1_noheader.tsv]====
+1	1.0	a	A
+2	2.	b	B
+10	10.1	abc	ABC
+100	100	abc	AbC
+0	0.0	z	AzB
+-1	-0.1	abc def	abc def
+-2	-2.0	ß	ss
+0.	100.	àbc	ÀBC
+0.0	100.0	àßc	ÀssC
+-0.0	-100.0	àßc	ÀSSC
+100	100		AbC
+100	100	abc	
+100	101		
+
+====[tsv-filter --line-buffered --empty 1 input1_noheader.tsv]====
+
+====[tsv-filter --line-buffered --not-empty 1 input1_noheader.tsv ]====
+1	1.0	a	A
+2	2.	b	B
+10	10.1	abc	ABC
+100	100	abc	AbC
+0	0.0	z	AzB
+-1	-0.1	abc def	abc def
+-2	-2.0	ß	ss
+0.	100.	àbc	ÀBC
+0.0	100.0	àßc	ÀssC
+-0.0	-100.0	àßc	ÀSSC
+100	100		AbC
+100	100	abc	
+100	101		
+100	102	abc	AbC
+100	103	abc	AbC
+
+====[tsv-filter --count --line-buffered --le 2:101 input1_noheader.tsv]====
+13
+
 ====Empty and blank field tests===
 
 ====[tsv-filter --header --empty 3 input1.tsv]====
