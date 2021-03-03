@@ -80,6 +80,7 @@ Global options:
   --v|invert          Invert the filter, printing lines that do not match.
   --c|count           Print only a count of the matched lines.
   --d|delimiter CHR   Field delimiter. Default: TAB.
+  --line-buffered     Immediately output every matched line.
 
 Operators:
 * Test if a field is empty (no characters) or blank (empty or whitespace only).
@@ -180,6 +181,8 @@ Details:
     ensures field 5 is numeric before running the --gt test.
   * Regular expression syntax is defined by the D programming language. They follow
     common conventions (perl, python, etc.). Most common forms work as expected.
+  * Output is buffered by default to improve performance. Use '--line-buffered' to
+    have each matched line immediately written out.
 
 Options:
 EOS";
@@ -739,6 +742,7 @@ struct TsvFilterOptions
     bool disjunct = false;           /// --or
     bool countMatches = false;       /// --c|count
     char delim = '\t';               /// --delimiter
+    bool lineBuffered = false;       /// --line-buffered
 
     /* Returns a tuple. First value is true if command line arguments were successfully
      * processed and execution should continue, or false if an error occurred or the user
@@ -857,6 +861,7 @@ struct TsvFilterOptions
                 std.getopt.config.caseInsensitive,
                 "c|count",         "     Print only a count of the matched lines, excluding the header.", &countMatches,
                 "d|delimiter",     "CHR  Field delimiter. Default: TAB. (Single byte UTF-8 characters only.)", &delim,
+                "line-buffered",   "     Immediately output every matched line.", &lineBuffered,
 
                 "empty",           "<field-list>       True if FIELD is empty.", &handlerFldEmpty,
                 "not-empty",       "<field-list>       True if FIELD is not empty.", &handlerFldNotEmpty,
@@ -998,23 +1003,19 @@ void tsvFilter(ref TsvFilterOptions cmdopt)
     import std.algorithm : all, any, splitter;
     import std.format : formattedWrite;
     import std.range;
-    import tsv_utils.common.utils : BufferedOutputRange, bufferedByLine, InputSourceRange,
-        throwIfWindowsNewline;
+    import tsv_utils.common.utils : BufferedOutputRange, BufferedOutputRangeDefaults,
+        bufferedByLine, InputSourceRange, LineBuffered, throwIfWindowsNewline;
 
     /* inputSources must be an InputSourceRange and include at least stdin. */
     assert(!cmdopt.inputSources.empty);
     static assert(is(typeof(cmdopt.inputSources) == InputSourceRange));
 
     /* BufferedOutputRange improves performance on narrow files with high percentages of
-     * writes. Want responsive output if output is rare, so ensure the first matched
-     * line is written, and that writes separated by long stretches of non-matched lines
-     * are written.
+     * writes.
      */
-    enum maxInputLinesWithoutBufferFlush = 1024;
-    size_t inputLinesWithoutBufferFlush = maxInputLinesWithoutBufferFlush + 1;
-
-    auto bufferedOutput = BufferedOutputRange!(typeof(stdout))(stdout);
-
+    immutable size_t flushSize =
+        cmdopt.lineBuffered ? 1 : BufferedOutputRangeDefaults.reserveSize;
+    auto bufferedOutput = BufferedOutputRange!(typeof(stdout))(stdout, flushSize);
     size_t matchedLines = 0;
 
      /* First header is read during command line argument processing. Immediately
@@ -1032,11 +1033,13 @@ void tsvFilter(ref TsvFilterOptions cmdopt)
     immutable size_t fileBodyStartLine = cmdopt.hasHeader ? 2 : 1;
     auto lineFields = new char[][](cmdopt.maxFieldIndex + 1);
 
+    immutable LineBuffered isLineBuffered = cmdopt.lineBuffered ? Yes.lineBuffered : No.lineBuffered;
+
     foreach (inputStream; cmdopt.inputSources)
     {
         if (cmdopt.hasHeader) throwIfWindowsNewline(inputStream.header, inputStream.name, 1);
 
-        foreach (lineNum, line; inputStream.file.bufferedByLine.enumerate(fileBodyStartLine))
+        foreach (lineNum, line; inputStream.file.bufferedByLine(isLineBuffered).enumerate(fileBodyStartLine))
         {
             if (lineNum == 1) throwIfWindowsNewline(line, inputStream.name, lineNum);
 
@@ -1070,25 +1073,15 @@ void tsvFilter(ref TsvFilterOptions cmdopt)
              */
             try
             {
-                inputLinesWithoutBufferFlush++;
                 bool passed = cmdopt.disjunct ?
                     cmdopt.tests.any!(x => x(lineFields)) :
                     cmdopt.tests.all!(x => x(lineFields));
                 if (cmdopt.invert) passed = !passed;
+
                 if (passed)
                 {
                     ++matchedLines;
-
-                    if (!cmdopt.countMatches)
-                    {
-                        const bool wasFlushed = bufferedOutput.appendln(line);
-                        if (wasFlushed) inputLinesWithoutBufferFlush = 0;
-                        else if (inputLinesWithoutBufferFlush > maxInputLinesWithoutBufferFlush)
-                        {
-                            bufferedOutput.flush;
-                            inputLinesWithoutBufferFlush = 0;
-                        }
-                    }
+                    if (!cmdopt.countMatches) bufferedOutput.appendln(line);
                 }
             }
             catch (Exception e)

@@ -65,6 +65,20 @@ runtest ${prog} "--le 2:101 input1_noheader.tsv -c" ${basic_tests_1}
 runtest ${prog} "--count --empty 1 input1_noheader.tsv" ${basic_tests_1}
 runtest ${prog} "-c --not-empty 1 input1_noheader.tsv " ${basic_tests_1}
 
+# Line buffered tests
+echo "" >> ${basic_tests_1}; echo "====Line buffered tests===" >> ${basic_tests_1}
+runtest ${prog} "--header --line-buffered --eq 2:1 input1.tsv" ${basic_tests_1}
+runtest ${prog} "--header --line-buffered --le 2:101 input1.tsv" ${basic_tests_1}
+runtest ${prog} "-H --line-buffered --empty F1 input1.tsv" ${basic_tests_1}
+runtest ${prog} "-H --line-buffered --not-empty F1 input1.tsv " ${basic_tests_1}
+runtest ${prog} "--header --count --line-buffered --le 2:101 input1.tsv" ${basic_tests_1}
+
+runtest ${prog} "--line-buffered --eq 2:1 input1_noheader.tsv" ${basic_tests_1}
+runtest ${prog} "--line-buffered --le 2:101 input1_noheader.tsv" ${basic_tests_1}
+runtest ${prog} "--line-buffered --empty 1 input1_noheader.tsv" ${basic_tests_1}
+runtest ${prog} "--line-buffered --not-empty 1 input1_noheader.tsv " ${basic_tests_1}
+runtest ${prog} "--count --line-buffered --le 2:101 input1_noheader.tsv" ${basic_tests_1}
+
 # Empty and blank field tests
 echo "" >> ${basic_tests_1}; echo "====Empty and blank field tests===" >> ${basic_tests_1}
 
