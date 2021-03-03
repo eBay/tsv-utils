@@ -1003,8 +1003,8 @@ void tsvFilter(ref TsvFilterOptions cmdopt)
     import std.algorithm : all, any, splitter;
     import std.format : formattedWrite;
     import std.range;
-    import tsv_utils.common.utils : BufferedOutputRange, bufferedByLine, InputSourceRange,
-        LineBuffered, throwIfWindowsNewline;
+    import tsv_utils.common.utils : BufferedOutputRange, BufferedOutputRangeDefaults,
+        bufferedByLine, InputSourceRange, LineBuffered, throwIfWindowsNewline;
 
     /* inputSources must be an InputSourceRange and include at least stdin. */
     assert(!cmdopt.inputSources.empty);
@@ -1013,7 +1013,9 @@ void tsvFilter(ref TsvFilterOptions cmdopt)
     /* BufferedOutputRange improves performance on narrow files with high percentages of
      * writes.
      */
-    auto bufferedOutput = BufferedOutputRange!(typeof(stdout))(stdout);
+    immutable size_t flushSize =
+        cmdopt.lineBuffered ? 1 : BufferedOutputRangeDefaults.reserveSize;
+    auto bufferedOutput = BufferedOutputRange!(typeof(stdout))(stdout, flushSize);
     size_t matchedLines = 0;
 
      /* First header is read during command line argument processing. Immediately
@@ -1083,7 +1085,6 @@ void tsvFilter(ref TsvFilterOptions cmdopt)
                     if (!cmdopt.countMatches)
                     {
                         bufferedOutput.appendln(line);
-                        if (cmdopt.lineBuffered) bufferedOutput.flush;
                     }
                 }
             }
