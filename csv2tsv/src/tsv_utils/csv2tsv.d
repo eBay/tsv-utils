@@ -187,7 +187,7 @@ else
         catch (Exception exc)
         {
             writeln();
-            stdin.flush();
+            stdout.flush();
             stderr.writefln("Error [%s]: %s", cmdopt.programName, exc.msg);
             return 1;
         }

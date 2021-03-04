@@ -52,8 +52,8 @@ Error [tsv-join]: Not enough fields in line. File: input1.tsv, Line: 1
 Error [tsv-join]: Not enough fields in line. File: input1.tsv, Line: 1
 
 ====[tsv-join --header -f input1.tsv -k 4 -d 6 input2.tsv]====
-Error [tsv-join]: Not enough fields in line. File: input2.tsv, Line: 2
 f1	f2	f3	f4	f5
+Error [tsv-join]: Not enough fields in line. File: input2.tsv, Line: 2
 
 ====[tsv-join -f input1_noheader.tsv -k 6 input2_noheader.tsv]====
 Error [tsv-join]: Not enough fields in line. File: input1_noheader.tsv, Line: 1

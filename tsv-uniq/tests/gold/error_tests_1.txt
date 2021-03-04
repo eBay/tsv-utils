@@ -74,9 +74,9 @@ Error [tsv-uniq]: Not enough fields in line. File: input1.tsv, Line: 1
 [tsv-uniq] Error processing command line arguments: --number-header requires --z|number
 
 ====[tsv-uniq -H -f 2,30 input1.tsv]====
-Error [tsv-uniq]: Not enough fields in line. File: input1.tsv, Line: 2
 f1	f2	f3	f4	f5
+Error [tsv-uniq]: Not enough fields in line. File: input1.tsv, Line: 2
 
 ====[tsv-uniq -H -f 2-30 input1.tsv]====
-Error [tsv-uniq]: Not enough fields in line. File: input1.tsv, Line: 2
 f1	f2	f3	f4	f5
+Error [tsv-uniq]: Not enough fields in line. File: input1.tsv, Line: 2

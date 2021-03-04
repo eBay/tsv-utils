@@ -141,6 +141,8 @@ Notes:
   with '--f|fields'. This is not necessary for '--e|exclude' fields.
 * Specifying names of fields containing special characters may require
   escaping the special characters. See '--help-fields' for details.
+* Output is buffered by default to improve performance. Use
+  '--line-buffered' to have each line immediately written out.
 
 Options:
 EOS";
@@ -149,7 +151,7 @@ EOS";
  */
 struct TsvSelectOptions
 {
-    import tsv_utils.common.utils : byLineSourceRange, ByLineSourceRange;
+    import tsv_utils.common.utils : byLineSourceRange, ByLineSourceRange, LineBuffered;
 
     // The allowed values for the --rest option.
     enum RestOption { none, first, last};
@@ -158,6 +160,7 @@ struct TsvSelectOptions
     ByLineSourceRange!() inputSources;  /// Input Files
     bool hasHeader = false;             /// --H|header
     char delim = '\t';                  /// --d|delimiter
+    bool lineBuffered = false;          /// --line-buffered
     RestOption restArg;                 /// --rest first|last (none is hidden default)
     size_t[] fields;                    /// Derived from --f|fields
     bool[] excludedFieldsTable;         /// Derived. Lookup table for excluded fields.
@@ -230,6 +233,10 @@ struct TsvSelectOptions
                 "d|delimiter",
                 "CHR           Character to use as field delimiter. Default: TAB. (Single byte UTF-8 characters only.)",
                 &delim,
+
+                "line-buffered",
+                "              Immediately output every line.",
+                &lineBuffered,
 
                 std.getopt.config.caseSensitive,
                 "V|version",
@@ -342,7 +349,8 @@ struct TsvSelectOptions
             /*
              * Create the byLineSourceRange and perform header line processing.
              */
-            inputSources = byLineSourceRange(filepaths);
+            immutable LineBuffered isLineBuffered = lineBuffered ? Yes.lineBuffered : No.lineBuffered;
+            inputSources = byLineSourceRange(filepaths, isLineBuffered);
 
             if (hasHeader)
             {
@@ -435,12 +443,17 @@ enum RestLocation { none, first, last };
  * instantiates this function three times, once for each of the --rest options. It results
  * in a larger program, but is faster. Run-time improvements of 25% were measured compared
  * to the non-templatized version. (Note: 'cte' stands for 'compile time evaluation'.)
+ *
+ * Note: tsv-select does not immediately flush the header line like most other tsv-utils
+ * tools. This is due to a limitation in ByLineSourceRange. It does not read the header
+ * separately, it waits until the first full buffer is read. For tsv-select this leaves no
+ * material advantage to flushing the header line early.
  */
 
 void tsvSelect(RestLocation rest)(ref TsvSelectOptions cmdopt)
 {
-    import tsv_utils.common.utils: BufferedOutputRange, ByLineSourceRange,
-        InputFieldReordering, throwIfWindowsNewline;
+    import tsv_utils.common.utils: BufferedOutputRange, BufferedOutputRangeDefaults,
+        ByLineSourceRange, InputFieldReordering, LineBuffered, throwIfWindowsNewline;
     import std.algorithm: splitter;
     import std.array : appender, Appender;
     import std.format: format;
@@ -484,7 +497,10 @@ void tsvSelect(RestLocation rest)(ref TsvSelectOptions cmdopt)
     /* BufferedOutputRange (from common/utils.d) is a performance improvement over
      * writing directly to stdout.
      */
-    auto bufferedOutput = BufferedOutputRange!(typeof(stdout))(stdout);
+    immutable size_t flushSize = cmdopt.lineBuffered ?
+        BufferedOutputRangeDefaults.lineBufferedFlushSize :
+        BufferedOutputRangeDefaults.flushSize;
+    auto bufferedOutput = BufferedOutputRange!(typeof(stdout))(stdout, flushSize);
 
     /* Read each input file (or stdin) and iterate over each line.
      */
@@ -585,12 +601,6 @@ void tsvSelect(RestLocation rest)(ref TsvSelectOptions cmdopt)
             }
 
             bufferedOutput.appendln;
-
-            /* Send the first line of the first file immediately. This helps detect
-             * errors quickly in multi-stage unix pipelines. Note that tsv-select may
-             * have been sent one line from an upstream process, usually a header line.
-             */
-            if (lineNum == 1 && fileNum == 0) bufferedOutput.flush;
         }
     }
 }

@@ -20,8 +20,8 @@ Error test set 1
    Expected: '--eq <field>:<val>' or '--eq <field-list>:<val> where <val> is a number.
 
 ====[tsv-filter --header --le 1000:10 input1.tsv]====
-Error [tsv-filter]: Not enough fields in line. File: input1.tsv, Line: 2
 F1	F2	F3	F4
+Error [tsv-filter]: Not enough fields in line. File: input1.tsv, Line: 2
 
 ====[tsv-filter --header --le 1: input1.tsv]====
 [tsv-filter] Error processing command line arguments: Invalid option: [--le 1:]. No value after field list.
@@ -296,12 +296,12 @@ Error [tsv-filter]: Windows/DOS line ending found. Convert file to Unix newlines
   File: input1_dos.tsv, Line: 1
 
 ====[tsv-filter --header --eq 2:1 input1.tsv input1_dos.tsv]====
-Error [tsv-filter]: Windows/DOS line ending found. Convert file to Unix newlines before processing (e.g. 'dos2unix').
-  File: input1_dos.tsv, Line: 1
 F1	F2	F3	F4
 1	1.0	a	A
-
-====[tsv-filter --str-eq 4:ABC input1.tsv input1_dos.tsv]====
 Error [tsv-filter]: Windows/DOS line ending found. Convert file to Unix newlines before processing (e.g. 'dos2unix').
   File: input1_dos.tsv, Line: 1
+
+====[tsv-filter --str-eq 4:ABC input1.tsv input1_dos.tsv]====
 10	10.1	abc	ABC
+Error [tsv-filter]: Windows/DOS line ending found. Convert file to Unix newlines before processing (e.g. 'dos2unix').
+  File: input1_dos.tsv, Line: 1
