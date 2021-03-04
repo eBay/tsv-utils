@@ -399,8 +399,9 @@ constructor when mixing specific setting with defaults.
  */
 enum BufferedOutputRangeDefaults
 {
-    reserveSize = 11264,
     flushSize = 10240,
+    lineBufferedFlushSize = 1,
+    reserveSize = 11264,
     maxSize = 4194304
 }
 
@@ -416,8 +417,12 @@ lines, as it blocks many writes together in a single write.
 The internal buffer is written to the output stream after flushSize has been reached.
 This is checked at newline boundaries, when appendln is called or when put is called
 with a single newline character. Other writes check maxSize, which is used to avoid
-runaway buffers. An implication is that line buffering can be achieved on by specifying
-flushsize as 1.
+runaway buffers.
+
+This scheme only flushes the internal buffer, it does not flush the output stream.
+Use flush() to flush both the internal buffer and the output stream. Specify flushSize
+as BufferedOutputRangeDefaults.lineBufferedFlushSize in the constructor to get line
+buffering with immediate flushes to the output stream.
 
 BufferedOutputRange has a put method allowing it to be used a range. It has a number
 of other methods providing additional control.
@@ -437,13 +442,12 @@ $(LIST
     * `joinAppend(inputRange, delim)` - An optimization of `append(inputRange.joiner(delim))`.
       For reasons that are not clear, joiner is quite slow.
 
-    * `flushIfFull()` - Flush the internal buffer to the output stream if flushSize has been
-      reached.
-
-    * `flush()` - Write the internal buffer to the output stream.
+    * `flush()` - Write the internal buffer to the output stream and flush the output stream.
 
     * `put(stuff)` - Appends to the internal buffer. Acts as `appendln()` if passed a single
       newline character, '\n' or "\n".
+
+    * `flushBuffer()` - This flushes both the internal buffers and the output stream.
 )
 
 The internal buffer is automatically flushed when the BufferedOutputRange goes out of
@@ -489,25 +493,40 @@ if (isFileHandle!(Unqual!OutputTarget) || isOutputRange!(Unqual!OutputTarget, ch
         flush();
     }
 
-    void flush()
+    private void flushBuffer()
     {
-        static if (isFileHandle!OutputTarget) _outputTarget.rawWrite(_outputBuffer.data);
+        static if (isFileHandle!OutputTarget)
+        {
+            _outputTarget.rawWrite(_outputBuffer.data);
+
+            if (_flushSize == BufferedOutputRangeDefaults.lineBufferedFlushSize)
+            {
+                _outputTarget.flush();
+            }
+        }
         else _outputTarget.put(_outputBuffer.data);
 
         _outputBuffer.clear;
     }
 
-    bool flushIfFull()
+    void flush()
+    {
+        flushBuffer();
+        static if (isFileHandle!OutputTarget) _outputTarget.flush();
+    }
+
+    /* flushIfFull flushes the internal buffer if flushSize has been reached. */
+    private bool flushIfFull()
     {
         bool isFull = _outputBuffer.data.length >= _flushSize;
-        if (isFull) flush();
+        if (isFull) flushBuffer();
         return isFull;
     }
 
     /* flushIfMaxSize is a safety check to avoid runaway buffer growth. */
-    void flushIfMaxSize()
+    private void flushIfMaxSize()
     {
-        if (_outputBuffer.data.length >= _maxSize) flush();
+        if (_outputBuffer.data.length >= _maxSize) flushBuffer();
     }
 
     /* maybeFlush is intended for the case where put is called with a trailing newline.
@@ -524,7 +543,6 @@ if (isFileHandle!(Unqual!OutputTarget) || isOutputRange!(Unqual!OutputTarget, ch
         if (doFlush) flush();
         return doFlush;
     }
-
 
     private void appendRaw(T)(T stuff) pure
     {
@@ -869,17 +887,17 @@ if (is(Char == char) || is(Char == ubyte))
          *   - _lineEnd - End of current line.
          */
         private File _file;
+        private immutable LineBuffered _lineBuffered;
         private ubyte[] _buffer;
         private size_t _lineStart = 0;
         private size_t _lineEnd = 0;
         private size_t _dataEnd = 0;
-        private LineBuffered _lineBuffered;
 
         this (File f, LineBuffered lineBuffered)
         {
             _file = f;
-            _buffer = new ubyte[readSize + growSize];
             _lineBuffered = lineBuffered;
+            _buffer = new ubyte[readSize + growSize];
         }
 
         bool empty() const pure
@@ -2036,10 +2054,10 @@ byLineSourceRange is a helper function for creating new byLineSourceRange object
 */
 auto byLineSourceRange(
     KeepTerminator keepTerminator = No.keepTerminator, Char = char, ubyte terminator = '\n')
-(string[] filepaths)
+(string[] filepaths, LineBuffered lineBuffered = No.lineBuffered)
 if (is(Char == char) || is(Char == ubyte))
 {
-    return new ByLineSourceRange!(keepTerminator, Char, terminator)(filepaths);
+    return new ByLineSourceRange!(keepTerminator, Char, terminator)(filepaths, lineBuffered);
 }
 
 /**
@@ -2077,16 +2095,18 @@ if (is(Char == char) || is(Char == ubyte))
     alias ByLineSourceType = ByLineSource!(keepTerminator, char, terminator);
 
     private string[] _filepaths;
+    private immutable LineBuffered _lineBuffered;
     private ByLineSourceType _front;
 
-    this(string[] filepaths)
+    this(string[] filepaths, LineBuffered lineBuffered = No.lineBuffered)
     {
         _filepaths = filepaths.dup;
+        _lineBuffered = lineBuffered;
         _front = null;
 
         if (!_filepaths.empty)
         {
-            _front = new ByLineSourceType(_filepaths.front);
+            _front = new ByLineSourceType(_filepaths.front, _lineBuffered);
             _front.open;
             _filepaths.popFront;
         }
@@ -2116,7 +2136,7 @@ if (is(Char == char) || is(Char == ubyte))
 
         if (!_filepaths.empty)
         {
-            _front = new ByLineSourceType(_filepaths.front);
+            _front = new ByLineSourceType(_filepaths.front, _lineBuffered);
             _front.open;
             _filepaths.popFront;
         }
@@ -2162,15 +2182,17 @@ if (is(Char == char) || is(Char == ubyte))
     alias ByLineType = ReturnType!newByLineFn;
 
     private immutable string _filepath;
+    private immutable LineBuffered _lineBuffered;
     private immutable bool _isStdin;
     private bool _isOpen;
     private bool _hasBeenOpened;
     private File _file;
     private ByLineType _byLineRange;
 
-    private this(string filepath) pure nothrow @safe
+    private this(string filepath, LineBuffered lineBuffered = No.lineBuffered) pure nothrow @safe
     {
         _filepath = filepath;
+        _lineBuffered = lineBuffered;
         _isStdin = filepath == "-";
         _isOpen = false;
         _hasBeenOpened = false;
@@ -2229,7 +2251,7 @@ if (is(Char == char) || is(Char == ubyte))
         assert(!_hasBeenOpened);
 
         _file = isStdin ? stdin : _filepath.File("rb");
-        _byLineRange = newByLineFn(_file);
+        _byLineRange = newByLineFn(_file, _lineBuffered);
         _isOpen = true;
         _hasBeenOpened = true;
     }
@@ -2363,6 +2385,37 @@ unittest
 
         /* The ByLineSourceRange is a reference range, consumed by the foreach. */
         assert(inputSourcesYesTerminator.empty);
+
+        /* Using Yes.keepTerminator, Yes.lineBuffered. */
+        readSourcesYesTerminator.clear;
+        auto inputSourcesYesTerminatorYesLineBuffered =
+            byLineSourceRange!(Yes.keepTerminator)(inputFiles[0 .. numFiles], Yes.lineBuffered);
+        assert(inputSourcesYesTerminatorYesLineBuffered.length == numFiles);
+
+        foreach(fileNum, source; inputSourcesYesTerminatorYesLineBuffered.enumerate)
+        {
+            readSourcesYesTerminator.put(source);
+            assert(source.isOpen);
+            assert(source._file.isOpen);
+            assert(readSourcesYesTerminator.data[0 .. fileNum].all!(s => !s.isOpen));
+            assert(readSourcesYesTerminator.data[fileNum].isOpen);
+
+            assert(source.byLine.empty || source.byLine.front == fileHeaders[fileNum]);
+
+            assert(source.name == inputFiles[fileNum]);
+            assert(!source.isStdin);
+
+            auto readFileData = appender!(char[]);
+            foreach(line; source.byLine)
+            {
+                readFileData.put(line);
+            }
+
+            assert(readFileData.data == fileData[fileNum]);
+        }
+
+        /* The ByLineSourceRange is a reference range, consumed by the foreach. */
+        assert(inputSourcesYesTerminatorYesLineBuffered.empty);
     }
 
     /* Empty filelist. */

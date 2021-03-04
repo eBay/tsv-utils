@@ -2,8 +2,8 @@ Error test set 1
 ----------------
 
 ====[csv2tsv nosuchfile.txt]====
-Error [csv2tsv]: Cannot open file `nosuchfile.txt' in mode `rb' (No such file or directory)
 
+Error [csv2tsv]: Cannot open file `nosuchfile.txt' in mode `rb' (No such file or directory)
 
 ====[csv2tsv --nosuchparam input1.txt]====
 [csv2tsv] Error processing command line arguments: Unrecognized option --nosuchparam
@@ -60,14 +60,14 @@ Error [csv2tsv]: Cannot open file `nosuchfile.txt' in mode `rb' (No such file or
 [csv2tsv] Error processing command line arguments: Replacement character cannot contain newlines or TSV field delimiters (--r|tab-replacement).
 
 ====[csv2tsv invalid1.csv]====
-Error [csv2tsv]: Invalid CSV. Improperly terminated quoted field. File: invalid1.csv, Line: 3
 field1	field2	field3
 100	ab c	de f
 200	gh i,
+Error [csv2tsv]: Invalid CSV. Improperly terminated quoted field. File: invalid1.csv, Line: 3
 
 ====[csv2tsv invalid2.csv]====
-Error [csv2tsv]: Invalid CSV. Improperly terminated quoted field. File: invalid2.csv, Line: 4
 field1	field2	field3
 100	ab c	de f
 200	gh i	jk l
 300	mn o	pq r 
+Error [csv2tsv]: Invalid CSV. Improperly terminated quoted field. File: invalid2.csv, Line: 4

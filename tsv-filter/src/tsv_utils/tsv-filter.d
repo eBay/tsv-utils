@@ -1013,8 +1013,9 @@ void tsvFilter(ref TsvFilterOptions cmdopt)
     /* BufferedOutputRange improves performance on narrow files with high percentages of
      * writes.
      */
-    immutable size_t flushSize =
-        cmdopt.lineBuffered ? 1 : BufferedOutputRangeDefaults.reserveSize;
+    immutable size_t flushSize = cmdopt.lineBuffered ?
+        BufferedOutputRangeDefaults.lineBufferedFlushSize :
+        BufferedOutputRangeDefaults.flushSize;
     auto bufferedOutput = BufferedOutputRange!(typeof(stdout))(stdout, flushSize);
     size_t matchedLines = 0;
 
@@ -1086,6 +1087,7 @@ void tsvFilter(ref TsvFilterOptions cmdopt)
             }
             catch (Exception e)
             {
+                bufferedOutput.flush;
                 throw new Exception(
                     format("Could not process line or field: %s\n  File: %s Line: %s%s",
                            e.msg, inputStream.name, lineNum,

@@ -20,14 +20,14 @@ Error test set 1
 [tsv-select] Error processing command line arguments: Cannot open file `nosuchfile.tsv' in mode `rb' (No such file or directory)
 
 ====[tsv-select -f 1 input_3x1.tsv nosuchfile.tsv]====
-Error [tsv-select]: Cannot open file `nosuchfile.tsv' in mode `rb' (No such file or directory)
 f1
 3x1-r1
+Error [tsv-select]: Cannot open file `nosuchfile.tsv' in mode `rb' (No such file or directory)
 
 ====[tsv-select -f 1,4 input_3plus_fields.tsv]====
-Error [tsv-select]: Not enough fields in line. File: input_3plus_fields.tsv,  Line: 3
 1	101
 2	5734
+Error [tsv-select]: Not enough fields in line. File: input_3plus_fields.tsv,  Line: 3
 
 ====[tsv-select -d ß -f 1 input1.tsv]====
 [tsv-select] Error processing command line arguments: Invalid UTF-8 sequence (at index 1)
@@ -135,8 +135,6 @@ Error [tsv-select]: Windows/DOS line ending found. Convert file to Unix newlines
   File: input1_dos.tsv, Line: 1
 
 ====[tsv-select -f 1 input1.tsv input1_dos.tsv]====
-Error [tsv-select]: Windows/DOS line ending found. Convert file to Unix newlines before processing (e.g. 'dos2unix').
-  File: input1_dos.tsv, Line: 1
 f1
 1
 
@@ -146,10 +144,10 @@ f1
 6
 7
 8
+Error [tsv-select]: Windows/DOS line ending found. Convert file to Unix newlines before processing (e.g. 'dos2unix').
+  File: input1_dos.tsv, Line: 1
 
 ====[tsv-select -H -f 1 input1.tsv input1_dos.tsv]====
-Error [tsv-select]: Windows/DOS line ending found. Convert file to Unix newlines before processing (e.g. 'dos2unix').
-  File: input1_dos.tsv, Line: 1
 f1
 1
 
@@ -159,3 +157,5 @@ f1
 6
 7
 8
+Error [tsv-select]: Windows/DOS line ending found. Convert file to Unix newlines before processing (e.g. 'dos2unix').
+  File: input1_dos.tsv, Line: 1

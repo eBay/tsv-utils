@@ -11,9 +11,9 @@ Error test set 1
 [tsv-sample] Error processing command line arguments: Invalid UTF-8 sequence (at index 1)
 
 ====[tsv-sample -H -w 11 input3x25.tsv]====
+line	title	weight
 Error [tsv-sample]: Could not process line: Not enough fields on line. Number required: 11; Number found: 3
   File: input3x25.tsv Line: 2
-line	title	weight
 
 ====[tsv-sample -H -w 0 input3x25.tsv]====
 [tsv-sample] Error processing command line arguments: [--w|weight-field] Field numbers must be greater than zero: '0'.
@@ -70,8 +70,8 @@ line	title	weight
 Error [tsv-sample]: Not enough fields in line. File: input4x50.tsv, Line: 1
 
 ====[tsv-sample -H -p 0.5 -k 5 input4x50.tsv input4x15.tsv]====
-Error [tsv-sample]: Not enough fields in line. File: input4x50.tsv, Line: 2
 c-1	c-2	c-3	c-4
+Error [tsv-sample]: Not enough fields in line. File: input4x50.tsv, Line: 2
 
 ====[tsv-sample -H -p 0.5 -k no_such_field input4x50.tsv input4x15.tsv]====
 [tsv-sample] Error processing command line arguments: [--k|key-fields] Field not found in file header: 'no_such_field'.
