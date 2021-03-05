@@ -39,11 +39,12 @@ struct NumberLinesOptions
     enum defaultHeaderString = "line";
 
     string programName;
-    bool hasHeader = false;       // --H|header
-    string headerString = "";     // --s|header-string
-    long startNum = 1;            // --n|start-num
-    char delim = '\t';            // --d|delimiter
-    bool versionWanted = false;   // --V|version
+    bool hasHeader = false;       /// --H|header
+    string headerString = "";     /// --s|header-string
+    long startNum = 1;            /// --n|start-num
+    char delim = '\t';            /// --d|delimiter
+    bool lineBuffered = false;    /// --line-buffered
+    bool versionWanted = false;   /// --V|version
 
     /* Returns a tuple. First value is true if command line arguments were successfully
      * processed and execution should continue, or false if an error occurred or the user
@@ -67,6 +68,7 @@ struct NumberLinesOptions
                 "s|header-string", "STR  String to use in the header row. Implies --header. Default: 'line'", &headerString,
                 "n|start-number",  "NUM  Number to use for the first line. Default: 1", &startNum,
                 "d|delimiter",     "CHR  Character appended to line number, preceding the rest of the line. Default: TAB (Single byte UTF-8 characters only.)", &delim,
+                "line-buffered",   "     Immediately output every line.", &lineBuffered,
                 std.getopt.config.caseSensitive,
                 "V|version",       "     Print version information and exit.", &versionWanted,
                 std.getopt.config.caseInsensitive,
@@ -126,21 +128,34 @@ int main(string[] cmdArgs)
  *
  * Reads lines lines from each file, outputing each with a line number prepended. The
  * header from the first file is written, the header from subsequent files is dropped.
+ *
+ * Note: number-lines does not immediately flush the header line like most other
+ * tsv-utils tools. This is because it directly uses bufferedByLine, which does not
+ * support reading the header line independently of the rest of the buffer.
  */
 void numberLines(const NumberLinesOptions cmdopt, const string[] inputFiles)
 {
     import std.conv : to;
     import std.range;
-    import tsv_utils.common.utils : bufferedByLine, BufferedOutputRange;
+    import tsv_utils.common.utils : BufferedOutputRange, BufferedOutputRangeDefaults,
+        bufferedByLine, LineBuffered;
 
-    auto bufferedOutput = BufferedOutputRange!(typeof(stdout))(stdout);
+    immutable size_t flushSize = cmdopt.lineBuffered ?
+        BufferedOutputRangeDefaults.lineBufferedFlushSize :
+        BufferedOutputRangeDefaults.flushSize;
+    auto bufferedOutput = BufferedOutputRange!(typeof(stdout))(stdout, flushSize);
 
     long lineNum = cmdopt.startNum;
     bool headerWritten = false;
+    immutable LineBuffered isLineBuffered = cmdopt.lineBuffered ? Yes.lineBuffered : No.lineBuffered;
+
     foreach (filename; (inputFiles.length > 0) ? inputFiles : ["-"])
     {
         auto inputStream = (filename == "-") ? stdin : filename.File();
-        foreach (fileLineNum, line; inputStream.bufferedByLine!(KeepTerminator.no).enumerate(1))
+        foreach (fileLineNum, line;
+                 inputStream
+                 .bufferedByLine!(KeepTerminator.no)(isLineBuffered)
+                 .enumerate(1))
         {
             if (cmdopt.hasHeader && fileLineNum == 1)
             {
@@ -150,14 +165,6 @@ void numberLines(const NumberLinesOptions cmdopt, const string[] inputFiles)
                     bufferedOutput.append(cmdopt.delim);
                     bufferedOutput.appendln(line);
                     headerWritten = true;
-
-                    /* Flush the header immediately. This helps tasks further on in a
-                     * unix pipeline detect errors quickly, without waiting for all
-                     * the data to flow through the pipeline. Note that an upstream
-                     * task may have flushed its header line, so the header may
-                     * arrive long before the main block of data.
-                     */
-                    bufferedOutput.flush;
                 }
             }
             else

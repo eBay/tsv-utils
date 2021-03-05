@@ -295,6 +295,49 @@ line	The first line
 8		
 9	Previous line a single tab
 
+====line buffered tests===
+
+====[number-lines --line-buffered input1.txt]====
+1	The first line - Is it a header?
+2	abc	def	ghi
+3	some random text
+4	Japanese: 私はガラスを食べられます。それは私を傷つけません。
+5	
+6	Previous line blank
+7		
+8	Previous line a single tab
+
+====[number-lines empty-file.txt]====
+
+====[number-lines -H empty-file.txt]====
+
+====[number-lines --line-buffered input1.txt input2.txt empty-file.txt one-line-file.txt]====
+1	The first line - Is it a header?
+2	abc	def	ghi
+3	some random text
+4	Japanese: 私はガラスを食べられます。それは私を傷つけません。
+5	
+6	Previous line blank
+7		
+8	Previous line a single tab
+9	The first line
+10	The second line
+11	The third line
+12	The one line
+
+====[cat input1.txt input2.txt | number-lines --header --line-buffered]====
+line	The first line - Is it a header?
+1	abc	def	ghi
+2	some random text
+3	Japanese: 私はガラスを食べられます。それは私を傷つけません。
+4	
+5	Previous line blank
+6		
+7	Previous line a single tab
+8	The first line
+9	The second line
+10	The third line
+
 Help and Version printing 1
 -----------------
 

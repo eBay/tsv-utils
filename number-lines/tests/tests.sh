@@ -67,6 +67,16 @@ cat input1.txt | ${prog} -- input2.txt - one-line-file.txt >> ${basic_tests_1} 2
 echo "" >> ${basic_tests_1}; echo "====[cat input1.txt | number-lines --header -- input2.txt - one-line-file.txt]====" >> ${basic_tests_1}
 cat input1.txt | ${prog} --header -- input2.txt - one-line-file.txt >> ${basic_tests_1} 2>&1
 
+## --line-buffered tests
+echo "" >> ${basic_tests_1}; echo "====line buffered tests===" >> ${basic_tests_1}
+runtest ${prog} "--line-buffered input1.txt" ${basic_tests_1}
+runtest ${prog} "empty-file.txt" ${basic_tests_1}
+runtest ${prog} "-H empty-file.txt" ${basic_tests_1}
+runtest ${prog} "--line-buffered input1.txt input2.txt empty-file.txt one-line-file.txt" ${basic_tests_1}
+
+echo "" >> ${basic_tests_1}; echo "====[cat input1.txt input2.txt | number-lines --header --line-buffered]====" >> ${basic_tests_1}
+cat input1.txt input2.txt | ${prog} --header --line-buffered >> ${basic_tests_1} 2>&1
+
 ## Help and Version printing
 
 echo "" >> ${basic_tests_1}
