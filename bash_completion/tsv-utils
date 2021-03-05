@@ -48,7 +48,7 @@ _number_lines()
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
-    opts="--help --version --header --header-string --start-number --delimiter"
+    opts="--help --version --header --header-string --start-number --delimiter --line-buffered"
 
     # Options requiring an argument or precluding other options
     case $prev in
