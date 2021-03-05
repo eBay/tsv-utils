@@ -203,6 +203,17 @@ ${prog} -H input_header_variants.tsv -f 'ab\-56-56\-7,ab\,c,ab\-c' >> ${basic_te
 echo "" >> ${basic_tests_1}; echo "====[tsv-select -H input_header_variants.tsv -f '濡れ羽色-ab\*56,ab.56-ab\,56,ab/56-ab\\56,ab\-56-ab\ 56,ab\:56-56\*7,56.7-56\,7,56/7-56\\7,56\-7-56\ 7,56\:7-\01,\1-ab\*c,ab\.c-ab\,c,ab/c-ab\\c,ab\-c-ab\ c,ab\:c']===" >> ${basic_tests_1}
 ${prog} -H input_header_variants.tsv -f '濡れ羽色-ab\*56,ab.56-ab\,56,ab/56-ab\\56,ab\-56-ab\ 56,ab\:56-56\*7,56.7-56\,7,56/7-56\\7,56\-7-56\ 7,56\:7-\01,\1-ab\*c,ab\.c-ab\,c,ab/c-ab\\c,ab\-c-ab\ c,ab\:c' >> ${basic_tests_1} 2>&1
 
+echo "" >> ${basic_tests_1}
+echo "line-buffered tests" >> ${basic_tests_1}
+echo "-------------------" >> ${basic_tests_1}
+runtest ${prog} "--line-buffered --fields 1 input1.tsv" ${basic_tests_1}
+runtest ${prog} "--line-buffered -e 2,3,5 -f 4,1 input1.tsv" ${basic_tests_1}
+runtest ${prog} "--line-buffered -f 1 --delimiter ^  input_2plus_hat_delim.tsv" ${basic_tests_1}
+runtest ${prog} "--line-buffered -f 1 input_emptyfile.tsv" ${basic_tests_1}
+runtest ${prog} "--line-buffered -H -f 1 input_emptyfile.tsv" ${basic_tests_1}
+runtest ${prog} "--line-buffered --header -f 1 input_header1.tsv" ${basic_tests_1}
+runtest ${prog} "--line-buffered -H -f field2 input_header1.tsv input_header2.tsv input_header3.tsv input_header4.tsv" ${basic_tests_1}
+
 ## Help and Version printing
 
 echo "" >> ${basic_tests_1}
