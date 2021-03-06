@@ -28,7 +28,8 @@ else
      */
     int main(string[] cmdArgs)
     {
-        import tsv_utils.common.utils : BufferedOutputRange;
+        import tsv_utils.common.utils : BufferedOutputRange, BufferedOutputRangeDefaults;
+
         /* When running in DMD code coverage mode, turn on report merging. */
         version(D_Coverage) version(DigitalMars)
         {
@@ -39,7 +40,12 @@ else
         TsvAppendOptions cmdopt;
         auto r = cmdopt.processArgs(cmdArgs);
         if (!r[0]) return r[1];
-        try tsvAppend(cmdopt, BufferedOutputRange!(typeof(stdout))(stdout));
+
+        immutable size_t flushSize = cmdopt.lineBuffered ?
+            BufferedOutputRangeDefaults.lineBufferedFlushSize :
+            BufferedOutputRangeDefaults.flushSize;
+
+        try tsvAppend(cmdopt, BufferedOutputRange!(typeof(stdout))(stdout, flushSize));
         catch (Exception exc)
         {
             stderr.writefln("Error [%s]: %s", cmdopt.programName, exc.msg);
@@ -107,6 +113,7 @@ struct TsvAppendOptions
     bool trackSource = false;          /// --t|track-source
     bool hasHeader = false;            /// --H|header
     char delim = '\t';                 /// --d|delimiter
+    bool lineBuffered = false;         /// --line-buffered
 
     /* fileOptionHandler processes the '--f|file source=file' option. */
     private void fileOptionHandler(string option, string optionVal) pure @safe
@@ -160,6 +167,7 @@ struct TsvAppendOptions
                 "s|source-header", "STR       Use STR as the header for the source column. Implies --H|header and --t|track-source. Default: 'file'", &sourceHeader,
                 "f|file",          "STR=FILE  Read file FILE, using STR as the 'source' value. Implies --t|track-source.", &fileOptionHandler,
                 "d|delimiter",     "CHR       Field delimiter. Default: TAB. (Single byte UTF-8 characters only.)", &delim,
+                "line-buffered",   "          Immediately output every line.", &lineBuffered,
                 std.getopt.config.caseSensitive,
                 "V|version",       "          Print version information and exit.", &versionWanted,
                 std.getopt.config.caseInsensitive,
@@ -212,14 +220,19 @@ struct TsvAppendOptions
 void tsvAppend(OutputRange)(TsvAppendOptions cmdopt, auto ref OutputRange outputStream)
 if (isOutputRange!(OutputRange, char))
 {
-    import tsv_utils.common.utils : bufferedByLine, isFlushableOutputRange;
+    import tsv_utils.common.utils : bufferedByLine, isFlushableOutputRange, LineBuffered;
+
+    immutable LineBuffered isLineBuffered = cmdopt.lineBuffered ? Yes.lineBuffered : No.lineBuffered;
 
     bool headerWritten = false;
     foreach (filename; (cmdopt.files.length > 0) ? cmdopt.files : ["-"])
     {
         auto inputStream = (filename == "-") ? stdin : filename.File();
         auto sourceName = cmdopt.fileSourceNames[filename];
-        foreach (fileLineNum, line; inputStream.bufferedByLine!(KeepTerminator.no).enumerate(1))
+        foreach (fileLineNum, line;
+                 inputStream
+                 .bufferedByLine!(KeepTerminator.no)(isLineBuffered)
+                 .enumerate(1))
         {
             if (cmdopt.hasHeader && fileLineNum == 1)
             {
@@ -398,6 +411,21 @@ unittest
                    ["1c", "yellow", "9", "κίτρινος"]]);
 
     testTsvAppend(["test-12", "-s", "id", "-f", format("1a=%s", filepath1),
+                   "-f", format("1b=%s", filepath2), filepath3],
+                  [["id", "field_a", "field_b", "field_c"],
+                   ["1a", "red", "17", "κόκκινος"],
+                   ["1a", "blue", "12", "άσπρο"],
+                   ["1b", "green", "13.5", "κόκκινος"],
+                   ["1b", "blue", "15", "πράσινος"],
+                   ["file3", "yellow", "9", "κίτρινος"]]);
+
+    testTsvAppend(["test-13", "--line-buffered", filepath1], data1);
+    testTsvAppend(["test-14", "--line-buffered", "--header", filepath1], data1);
+    testTsvAppend(["test-15", "--line-buffered", filepath1, filepath2], data1 ~ data2);
+    testTsvAppend(["test-16", "--line-buffered", filepath1, filepathEmpty, filepath2, filepathHeaderRowOnly, filepath3],
+                  data1 ~ dataEmpty ~ data2 ~ dataHeaderRowOnly ~ data3);
+
+    testTsvAppend(["test-17", "--line-buffered", "-s", "id", "-f", format("1a=%s", filepath1),
                    "-f", format("1b=%s", filepath2), filepath3],
                   [["id", "field_a", "field_b", "field_c"],
                    ["1a", "red", "17", "κόκκινος"],

@@ -921,6 +921,7 @@ if (is(Char == char) || is(Char == ubyte))
             }
         }
 
+        /* Note: Call popFront at initialization to do the initial read. */
         void popFront()
         {
             assert(!empty, "Attempt to popFront an empty bufferedByLine.");
@@ -940,7 +941,6 @@ if (is(Char == char) || is(Char == ubyte))
             assert(_dataEnd == line.length);
         }
 
-        /* Note: Call popFront at initialization to do the initial read. */
         private void popFrontFullBuffered()
         {
             import std.algorithm: copy, find;
