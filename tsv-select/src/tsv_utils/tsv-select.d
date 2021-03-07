@@ -151,7 +151,8 @@ EOS";
  */
 struct TsvSelectOptions
 {
-    import tsv_utils.common.utils : byLineSourceRange, ByLineSourceRange, LineBuffered;
+    import tsv_utils.common.utils : byLineSourceRange, ByLineSourceRange, LineBuffered,
+        ReadHeader;
 
     // The allowed values for the --rest option.
     enum RestOption { none, first, last};
@@ -350,7 +351,8 @@ struct TsvSelectOptions
              * Create the byLineSourceRange and perform header line processing.
              */
             immutable LineBuffered isLineBuffered = lineBuffered ? Yes.lineBuffered : No.lineBuffered;
-            inputSources = byLineSourceRange(filepaths, isLineBuffered);
+            immutable ReadHeader useReadHeader = hasHeader ? Yes.readHeader : No.readHeader;
+            inputSources = byLineSourceRange(filepaths, isLineBuffered, useReadHeader);
 
             if (hasHeader)
             {
@@ -443,11 +445,6 @@ enum RestLocation { none, first, last };
  * instantiates this function three times, once for each of the --rest options. It results
  * in a larger program, but is faster. Run-time improvements of 25% were measured compared
  * to the non-templatized version. (Note: 'cte' stands for 'compile time evaluation'.)
- *
- * Note: tsv-select does not immediately flush the header line like most other tsv-utils
- * tools. This is due to a limitation in ByLineSourceRange. It does not read the header
- * separately, it waits until the first full buffer is read. For tsv-select this leaves no
- * material advantage to flushing the header line early.
  */
 
 void tsvSelect(RestLocation rest)(ref TsvSelectOptions cmdopt)
@@ -601,6 +598,12 @@ void tsvSelect(RestLocation rest)(ref TsvSelectOptions cmdopt)
             }
 
             bufferedOutput.appendln;
+
+            /* Send the first line of the first file immediately. This helps detect
+             * errors quickly in multi-stage unix pipelines. Note that tsv-select may
+             * have been sent one line from an upstream process, usually a header line.
+             */
+            if (lineNum == 1 && fileNum == 0) bufferedOutput.flush;
         }
     }
 }

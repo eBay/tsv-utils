@@ -220,9 +220,11 @@ struct TsvAppendOptions
 void tsvAppend(OutputRange)(TsvAppendOptions cmdopt, auto ref OutputRange outputStream)
 if (isOutputRange!(OutputRange, char))
 {
-    import tsv_utils.common.utils : bufferedByLine, isFlushableOutputRange, LineBuffered;
+    import tsv_utils.common.utils : bufferedByLine, isFlushableOutputRange, LineBuffered,
+        ReadHeader;
 
     immutable LineBuffered isLineBuffered = cmdopt.lineBuffered ? Yes.lineBuffered : No.lineBuffered;
+    immutable ReadHeader useReadHeader = cmdopt.hasHeader ? Yes.readHeader : No.readHeader;
 
     bool headerWritten = false;
     foreach (filename; (cmdopt.files.length > 0) ? cmdopt.files : ["-"])
@@ -231,7 +233,7 @@ if (isOutputRange!(OutputRange, char))
         auto sourceName = cmdopt.fileSourceNames[filename];
         foreach (fileLineNum, line;
                  inputStream
-                 .bufferedByLine!(KeepTerminator.no)(isLineBuffered)
+                 .bufferedByLine!(KeepTerminator.no)(isLineBuffered, useReadHeader)
                  .enumerate(1))
         {
             if (cmdopt.hasHeader && fileLineNum == 1)
