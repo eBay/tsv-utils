@@ -283,6 +283,23 @@ runtest ${prog} "-H -f input_emptyfile.tsv input2.tsv"  ${basic_tests_1}
 runtest ${prog} "-f input1.tsv input_emptyfile.tsv"  ${basic_tests_1}
 runtest ${prog} "-H -f input1.tsv input_emptyfile.tsv"  ${basic_tests_1}
 
+echo "" >> ${basic_tests_1}; echo "====line-buffered tests===" >> ${basic_tests_1}
+runtest ${prog} "--line-buffered --header --filter-file input1.tsv input2.tsv" ${basic_tests_1}
+runtest ${prog} "--line-buffered --filter-file input1_noheader.tsv input2_noheader.tsv" ${basic_tests_1}
+runtest ${prog} "--line-buffered --header -f input1.tsv --key-fields 1 input2.tsv" ${basic_tests_1}
+runtest ${prog} "--line-buffered -f input1_noheader.tsv --key-fields 1 input2_noheader.tsv" ${basic_tests_1}
+runtest ${prog} "--line-buffered --header -f input1.tsv -k 2 --data-fields 2 input2.tsv" ${basic_tests_1}
+runtest ${prog} "--line-buffered --header -f input1.tsv -k 2 -a 5 --allow-duplicate-keys input2.tsv" ${basic_tests_1}
+runtest ${prog} "--line-buffered --header -f input1.tsv -k 3 -d 2 -a 0 --allow-duplicate-keys input2.tsv" ${basic_tests_1}
+
+echo "" >> ${basic_tests_1}; echo "====[tail -n 10 input1.tsv | tsv-join --line-buffered -f - -k 4 -a 1 input2.tsv]====" >> ${basic_tests_1}
+tail -n 10 input1.tsv | ${prog} --line-buffered -f - -k 4 -a 1 input2.tsv >> ${basic_tests_1} 2>&1
+
+runtest ${prog} "--line-buffered -f input_emptyfile.tsv input2.tsv"  ${basic_tests_1}
+runtest ${prog} "--line-buffered -H -f input_emptyfile.tsv input2.tsv"  ${basic_tests_1}
+runtest ${prog} "--line-buffered -f input1.tsv input_emptyfile.tsv"  ${basic_tests_1}
+runtest ${prog} "--line-buffered -H -f input1.tsv input_emptyfile.tsv"  ${basic_tests_1}
+
 ## Help and Version printing
 
 echo "" >> ${basic_tests_1}

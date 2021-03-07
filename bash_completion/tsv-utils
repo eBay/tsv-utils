@@ -124,7 +124,7 @@ _tsv_join()
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
-    opts="--help --help-verbose --help-fields --version --filter-file --key-fields --data-fields --append-fields --header --prefix --write-all --exclude --delimiter --allow-duplicate-keys"
+    opts="--help --help-verbose --help-fields --version --filter-file --key-fields --data-fields --append-fields --header --prefix --write-all --exclude --delimiter --allow-duplicate-keys --line-buffered"
 
     # Options requiring an argument or precluding other options
     # Options requiring a filename argument are handled in their own case match, ie. -f|--filter-file

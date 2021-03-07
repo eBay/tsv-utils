@@ -101,6 +101,7 @@ struct TsvJoinOptions
     bool exclude = false;              /// --exclude
     char delim = '\t';                 /// --delimiter
     bool allowDupliateKeys = false;    /// --allow-duplicate-keys
+    bool lineBuffered = false;         /// --line-buffered
     bool keyIsFullLine = false;        /// Derived: --key-fields 0
     bool dataIsFullLine = false;       /// Derived: --data-fields 0
     bool appendFullLine = false;       /// Derived: --append-fields 0
@@ -176,6 +177,7 @@ struct TsvJoinOptions
                 "delimiter",       "CHR           Field delimiter. Default: TAB. (Single byte UTF-8 characters only.)", &delim,
                 "z|allow-duplicate-keys",
                                    "              Allow duplicate keys with different append values (last entry wins).", &allowDupliateKeys,
+                "line-buffered",   "              Immediately output every line.", &lineBuffered,
                 std.getopt.config.caseSensitive,
                 "V|version",       "              Print version information and exit.", &versionWanted,
                 std.getopt.config.caseInsensitive,
@@ -403,7 +405,8 @@ int main(string[] cmdArgs)
 void tsvJoin(ref TsvJoinOptions cmdopt)
 {
     import tsv_utils.common.utils : ByLineSourceRange, bufferedByLine, BufferedOutputRange,
-        isFlushableOutputRange, InputFieldReordering, InputSourceRange, throwIfWindowsNewline;
+        BufferedOutputRangeDefaults, isFlushableOutputRange, InputFieldReordering,
+        InputSourceRange, LineBuffered, throwIfWindowsNewline;
     import std.algorithm : splitter;
     import std.array : join;
     import std.range;
@@ -473,7 +476,10 @@ void tsvJoin(ref TsvJoinOptions cmdopt)
     /* Buffered output range for the final output. Setup here because the header line
      * (if any) gets written while reading the filter file.
      */
-    auto bufferedOutput = BufferedOutputRange!(typeof(stdout))(stdout);
+    immutable size_t flushSize = cmdopt.lineBuffered ?
+        BufferedOutputRangeDefaults.lineBufferedFlushSize :
+        BufferedOutputRangeDefaults.flushSize;
+    auto bufferedOutput = BufferedOutputRange!(typeof(stdout))(stdout, flushSize);
 
     /* Read the filter file. */
     {
@@ -573,12 +579,17 @@ void tsvJoin(ref TsvJoinOptions cmdopt)
     /* Now process each input file, one line at a time. */
 
     immutable size_t fileBodyStartLine = cmdopt.hasHeader ? 2 : 1;
+    immutable LineBuffered isLineBuffered = cmdopt.lineBuffered ? Yes.lineBuffered : No.lineBuffered;
 
     foreach (inputStream; cmdopt.inputSources)
     {
         if (cmdopt.hasHeader) throwIfWindowsNewline(inputStream.header, inputStream.name, 1);
 
-        foreach (lineNum, line; inputStream.file.bufferedByLine.enumerate(fileBodyStartLine))
+        foreach (lineNum, line;
+                 inputStream
+                 .file
+                 .bufferedByLine(isLineBuffered)
+                 .enumerate(fileBodyStartLine))
         {
             debug writeln("[input line] |", line, "|");
 
