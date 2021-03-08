@@ -391,6 +391,24 @@ line	title	weight
 23	佛說四十二章經	81
 24	La Navidad en las Montañas	100
 
+====[tsv-sample --line-buffered -H -s --inorder -n 15 --weight-field weight input3x10.tsv input3x25.tsv]====
+line	title	weight
+4	Soitannollisia satuja ja jutelmia	44
+8	Door het land der Skipetaren	30
+1	Белые ночи	98
+6	Große und kleine Welt	91
+11	Il "Damo viennese"	23
+12	הצופה לבית ישראל	91
+14	Pasáček Ali: Pověst z východu	64
+16	Leabhráin an Irisleabhair—III	53
+17	Diné yázhí ba'áłchíní	88
+18	Right Half Hollins	67
+19	Annie Laurie and Azalea	85
+20	羅生門	87
+22	豆棚閒話	73
+23	佛說四十二章經	81
+24	La Navidad en las Montañas	100
+
 ====[tsv-sample -H -s --prob 1.0 --print-random input3x10.tsv input3x25.tsv]====
 random_value	line	title	weight
 0.010968807619065046	1	Álomvilág: Elbeszélések	41
@@ -461,7 +479,18 @@ púrpura	2088	Macuco	1
 暗紅色/暗赤色	2015	Malvasía Cabeciblanca	2
 blanc	2038	Голубь	0
 
+====[tsv-sample --line-buffered -H -s -p 0.02 --inorder input4x50.tsv input4x15.tsv]====
+c-1	c-2	c-3	c-4
+púrpura	2088	Macuco	1
+暗紅色/暗赤色	2015	Malvasía Cabeciblanca	2
+blanc	2038	Голубь	0
+
 ====[tsv-sample -s -p 0.02 input4x50.tsv input4x15.tsv]====
+c-1	c-2	c-3	c-4
+Orange-red	2089	Purpurreiher	1
+Grünspan	2053	Pipit de Godlewski	4
+
+====[tsv-sample --line-buffered -s -p 0.02 input4x50.tsv input4x15.tsv]====
 c-1	c-2	c-3	c-4
 Orange-red	2089	Purpurreiher	1
 Grünspan	2053	Pipit de Godlewski	4
@@ -627,6 +656,14 @@ blutrot	2118	Tüpfelsumpfhuhn	4
 Cerise	2076	Malvasía Cabeciblanca	4
 café	2088	Purpurreiher	2
 
+====[tsv-sample --line-buffered -H -s -p .25 -k 1 -n 5 input4x50.tsv input4x15.tsv]====
+c-1	c-2	c-3	c-4
+púrpura	2088	Macuco	1
+blutrot	2142	Tüpfelsumpfhuhn	1
+blutrot	2118	Tüpfelsumpfhuhn	4
+Cerise	2076	Malvasía Cabeciblanca	4
+café	2088	Purpurreiher	2
+
 ====[tsv-sample -s -p .25 -k 1,3 input4x50.tsv input4x15.tsv]====
 púrpura	2088	Macuco	1
 blutrot	2142	Tüpfelsumpfhuhn	1
@@ -645,6 +682,25 @@ jaune	2090	Weißwangengans	4
 marrón	2121	Marreca-cabocla	2
 
 ====[tsv-sample -s -p .25 -k 3,1 input4x50.tsv input4x15.tsv]====
+púrpura	2088	Macuco	1
+schneeweiß	2117	Porrón Islándico	4
+café	2088	Purpurreiher	2
+Orange-red	2089	Purpurreiher	1
+púrpura	2070	Macreuse à bec jaune	2
+púrpura	2092	Macreuse à bec jaune	4
+púrpura	2093	Macreuse à bec jaune	4
+schneeweiß	2121	Porrón Islándico	1
+café	2062	Purpurreiher	4
+café	2100	Purpurreiher	2
+красный	2049	Weißwangengans	3
+púrpura	2119	Macuco	4
+púrpura	2145	Macreuse à bec jaune	2
+café	2041	Purpurreiher	4
+café	2019	Marreca-cabocla	1
+blutrot	2093	Araqua-pintado	2
+jaune	2104	Tüpfelsumpfhuhn	1
+
+====[tsv-sample --line-buffered -s -p .25 -k 3,1 input4x50.tsv input4x15.tsv]====
 púrpura	2088	Macuco	1
 schneeweiß	2117	Porrón Islándico	4
 café	2088	Purpurreiher	2

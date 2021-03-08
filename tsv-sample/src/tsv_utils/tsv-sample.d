@@ -32,6 +32,8 @@ else
      */
     int main(string[] cmdArgs)
     {
+        import tsv_utils.common.utils : BufferedOutputRange, LineBuffered;
+
         /* When running in DMD code coverage mode, turn on report merging. */
         version(D_Coverage) version(DigitalMars)
         {
@@ -47,13 +49,10 @@ else
             import ldc.profile : resetAll;
             resetAll();
         }
-        try
-        {
-            import tsv_utils.common.utils : BufferedOutputRange;
-            auto bufferedOutput = BufferedOutputRange!(typeof(stdout))(stdout);
 
-            tsvSample(cmdopt, bufferedOutput);
-        }
+        immutable LineBuffered linebuffered = cmdopt.lineBuffered ? Yes.lineBuffered : No.lineBuffered;
+
+        try tsvSample(cmdopt, BufferedOutputRange!(typeof(stdout))(stdout, linebuffered));
         catch (Exception exc)
         {
             stderr.writefln("Error [%s]: %s", cmdopt.programName, exc.msg);
@@ -227,6 +226,7 @@ struct TsvSampleOptions
     string randomValueHeader = "random_value"; /// --random-value-header
     bool compatibilityMode = false;            /// --compatibility-mode
     char delim = '\t';                         /// --d|delimiter
+    bool lineBuffered = false;                 /// --line-buffered
     bool preferSkipSampling = false;           /// --prefer-skip-sampling
     bool preferAlgorithmR = false;             /// --prefer-algorithm-r
     bool hasWeightField = false;               /// Derived.
@@ -312,6 +312,7 @@ struct TsvSampleOptions
                 "compatibility-mode", "     Turns on 'compatibility-mode'. Use --help-verbose for information.", &compatibilityMode,
 
                 "d|delimiter",     "CHR  Field delimiter.", &delim,
+                "line-buffered",   "     Immediately output every sampled line. Applies to Bernoulli and distinct sampling. Ignored in modes where all input data must be read before generating output.", &lineBuffered,
 
                 std.getopt.config.caseSensitive,
                 "V|version",       "     Print version information and exit.", &versionWanted,
@@ -427,7 +428,6 @@ struct TsvSampleOptions
                     useDistinctSampling,
                     "Preserving input order (--i|inorder) is not compatible with full data set shuffling. Switch to random sampling with a sample size (--n|num) to use --i|inorder.");
 
-
             /* Compatibility mode checks:
              * - Random value printing implies compatibility-mode, otherwise user's
              *   selection is used.
@@ -441,6 +441,8 @@ struct TsvSampleOptions
 
             if (printRandom || genRandomInorder) compatibilityMode = true;
 
+            /* Ignore --line-buffered if not using Bernoulli or distinct sampling. */
+            if (!useBernoulliSampling && !useDistinctSampling) lineBuffered = false;
 
             /* Seed. */
             import std.random : unpredictableSeed;
@@ -613,7 +615,7 @@ if (isOutputRange!(OutputRange, char))
 {
     import std.random : Random = Mt19937, uniform01;
     import tsv_utils.common.utils : bufferedByLine, isFlushableOutputRange,
-        InputSourceRange, throwIfWindowsNewline;
+        InputSourceRange, LineBuffered, throwIfWindowsNewline;
 
     static if (generateRandomAll) assert(cmdopt.genRandomInorder);
     else assert(!cmdopt.genRandomInorder);
@@ -649,6 +651,7 @@ if (isOutputRange!(OutputRange, char))
     }
 
     /* Process each line. */
+    immutable LineBuffered isLineBuffered = cmdopt.lineBuffered ? Yes.lineBuffered : No.lineBuffered;
     immutable size_t fileBodyStartLine = cmdopt.hasHeader ? 2 : 1;
     ulong numLinesWritten = 0;
 
@@ -657,7 +660,10 @@ if (isOutputRange!(OutputRange, char))
         if (cmdopt.hasHeader) throwIfWindowsNewline(inputStream.header, inputStream.name, 1);
 
         foreach (ulong fileLineNum, line;
-                 inputStream.file.bufferedByLine!(KeepTerminator.no).enumerate(fileBodyStartLine))
+                 inputStream
+                 .file
+                 .bufferedByLine!(KeepTerminator.no)(isLineBuffered)
+                 .enumerate(fileBodyStartLine))
         {
             if (fileLineNum == 1) throwIfWindowsNewline(line, inputStream.name, fileLineNum);
 
@@ -738,7 +744,7 @@ void bernoulliSkipSampling(OutputRange)(ref TsvSampleOptions cmdopt, OutputRange
     import std.math : log, trunc;
     import std.random : Random = Mt19937, uniform01;
     import tsv_utils.common.utils : bufferedByLine, isFlushableOutputRange,
-        InputSourceRange, throwIfWindowsNewline;
+        InputSourceRange, LineBuffered, throwIfWindowsNewline;
 
     assert(cmdopt.inclusionProbability > 0.0 && cmdopt.inclusionProbability < 1.0);
     assert(!cmdopt.printRandom);
@@ -772,6 +778,7 @@ void bernoulliSkipSampling(OutputRange)(ref TsvSampleOptions cmdopt, OutputRange
     }
 
     /* Process each line. */
+    immutable LineBuffered isLineBuffered = cmdopt.lineBuffered ? Yes.lineBuffered : No.lineBuffered;
     immutable size_t fileBodyStartLine = cmdopt.hasHeader ? 2 : 1;
     ulong numLinesWritten = 0;
     foreach (inputStream; cmdopt.inputSources)
@@ -779,7 +786,10 @@ void bernoulliSkipSampling(OutputRange)(ref TsvSampleOptions cmdopt, OutputRange
         if (cmdopt.hasHeader) throwIfWindowsNewline(inputStream.header, inputStream.name, 1);
 
         foreach (ulong fileLineNum, line;
-                 inputStream.file.bufferedByLine!(KeepTerminator.no).enumerate(fileBodyStartLine))
+                 inputStream
+                 .file
+                 .bufferedByLine!(KeepTerminator.no)(isLineBuffered)
+                 .enumerate(fileBodyStartLine))
         {
             if (fileLineNum == 1) throwIfWindowsNewline(line, inputStream.name, fileLineNum);
 
@@ -832,7 +842,7 @@ if (isOutputRange!(OutputRange, char))
     import std.digest.murmurhash;
     import std.math : lrint;
     import tsv_utils.common.utils : bufferedByLine, isFlushableOutputRange,
-        InputFieldReordering, InputSourceRange, throwIfWindowsNewline;
+        InputFieldReordering, InputSourceRange, LineBuffered, throwIfWindowsNewline;
 
     static if (generateRandomAll) assert(cmdopt.genRandomInorder);
     else assert(!cmdopt.genRandomInorder);
@@ -882,6 +892,7 @@ if (isOutputRange!(OutputRange, char))
     }
 
     /* Process each line. */
+    immutable LineBuffered isLineBuffered = cmdopt.lineBuffered ? Yes.lineBuffered : No.lineBuffered;
     immutable size_t fileBodyStartLine = cmdopt.hasHeader ? 2 : 1;
     ulong numLinesWritten = 0;
 
@@ -890,7 +901,10 @@ if (isOutputRange!(OutputRange, char))
         if (cmdopt.hasHeader) throwIfWindowsNewline(inputStream.header, inputStream.name, 1);
 
         foreach (ulong fileLineNum, line;
-                 inputStream.file.bufferedByLine!(KeepTerminator.no).enumerate(fileBodyStartLine))
+                 inputStream
+                 .file
+                 .bufferedByLine!(KeepTerminator.no)(isLineBuffered)
+                 .enumerate(fileBodyStartLine))
         {
             if (fileLineNum == 1) throwIfWindowsNewline(line, inputStream.name, fileLineNum);
 
@@ -2225,7 +2239,6 @@ if (isOutputRange!(OutputRange, char))
     testFormatValue(12345678901234567e-29, "1.2345678901234566e-13");
 }
 
-
 /** Convenience function for extracting a single field from a line. See
  * [tsv_utils.common.utils.getTsvFieldValue] for details. This wrapper creates error
  * text tailored for this program.
@@ -3436,6 +3449,7 @@ unittest
     testTsvSample(["test-a12", "-H", "-s", "-v", "0", "--print-random", fpath_data3x6], data3x6ExpectedPermuteCompatProbs);
     testTsvSample(["test-a13", "-H", "-v", "41", "-w", "3", "--print-random", fpath_data3x6], data3x6ExpectedPermuteWt3V41Probs);
     testTsvSample(["test-a13b", "-H", "-v", "41", "-w", "field_c", "--print-random", fpath_data3x6], data3x6ExpectedPermuteWt3V41Probs);
+    testTsvSample(["test-a13c", "--line-buffered", "-H", "-v", "41", "-w", "field_c", "--print-random", fpath_data3x6], data3x6ExpectedPermuteWt3V41Probs);
 
     /* Shuffling, without compatibility mode, or with both compatibility and printing. */
     testTsvSample(["test-aa1", "--header", "--static-seed", fpath_dataEmpty], dataEmpty);
@@ -3465,6 +3479,7 @@ unittest
     testTsvSample(["test-aa20", "--prefer-algorithm-r", "-H", "-s", "--num", "3", fpath_data3x6], data3x6ExpectedSampleAlgoRNum3);
     testTsvSample(["test-aa21", "--prefer-algorithm-r", "-H", "-s", "--num", "2", fpath_data3x6], data3x6ExpectedSampleAlgoRNum2);
     testTsvSample(["test-aa22", "--prefer-algorithm-r", "-H", "-s", "--num", "1", fpath_data3x6], data3x6ExpectedSampleAlgoRNum1);
+    testTsvSample(["test-aa22b", "--line-buffered", "--prefer-algorithm-r", "-H", "-s", "--num", "1", fpath_data3x6], data3x6ExpectedSampleAlgoRNum1);
 
     /* Inorder versions of Algorithm R tests. */
     testTsvSample(["test-ai10", "--prefer-algorithm-r", "--header", "--static-seed", "--num", "1", "--inorder", fpath_dataEmpty], dataEmpty);
@@ -3491,6 +3506,7 @@ unittest
     testTsvSample(["test-a20", "-H", "-s", "--prob", "0.60", "--print-random", fpath_data3x6], data3x6ExpectedBernoulliCompatProbsP60);
     testTsvSample(["test-a21", "-H", "-s", "--prob", "0.60", fpath_data3x6], data3x6ExpectedBernoulliCompatP60);
     testTsvSample(["test-a22", "-H", "-v", "41", "--prob", "0.60", "--print-random", fpath_data3x6], data3x6ExpectedBernoulliCompatP60V41Probs);
+    testTsvSample(["test-a22b", "--line-buffered", "-H", "-v", "41", "--prob", "0.60", "--print-random", fpath_data3x6], data3x6ExpectedBernoulliCompatP60V41Probs);
 
     /* Bernoulli sampling with probabilities in skip sampling range or preferring skip sampling. */
     testTsvSample(["test-ab1", "-H", "--seed-value", "333", "--prob", "0.01", fpath_data1x200], data1x200ExpectedBernoulliSkipV333P01);
@@ -3500,6 +3516,7 @@ unittest
     testTsvSample(["test-ab5", "-H", "--seed-value", "333", "--prob", "0.02", "--compatibility-mode", fpath_data1x200], data1x200ExpectedBernoulliCompatV333P02);
     testTsvSample(["test-ab6", "-H", "--seed-value", "333", "--prob", "0.03", "--compatibility-mode", fpath_data1x200], data1x200ExpectedBernoulliCompatV333P03);
     testTsvSample(["test-ab7", "-H", "-s", "-p", "0.40", "--prefer-skip-sampling", fpath_data3x6], data3x6ExpectedBernoulliSkipP40);
+    testTsvSample(["test-ab7b", "--line-buffered", "-H", "-s", "-p", "0.40", "--prefer-skip-sampling", fpath_data3x6], data3x6ExpectedBernoulliSkipP40);
 
     /* Distinct sampling cases. */
     testTsvSample(["test-a23", "--header", "--static-seed", "--prob", "0.001", "--key-fields", "1", fpath_dataEmpty], dataEmpty);
@@ -3511,6 +3528,7 @@ unittest
     testTsvSample(["test-a26b", "-H", "-s", "-p", "1.0", "-k", "field_b", fpath_data3x6], data3x6);
     testTsvSample(["test-a27", "-H", "-s", "-p", "0.6", "-k", "1,3", fpath_data3x6], data3x6ExpectedDistinctK1K3P60);
     testTsvSample(["test-a27b", "-H", "-s", "-p", "0.6", "-k", "field_a,field_c", fpath_data3x6], data3x6ExpectedDistinctK1K3P60);
+    testTsvSample(["test-a27c", "--line-buffered", "-H", "-s", "-p", "0.6", "-k", "field_a,field_c", fpath_data3x6], data3x6ExpectedDistinctK1K3P60);
 
     /* Generating random weights. Use Bernoulli sampling test set at prob 100% for uniform sampling.
      * For weighted sampling, use the weighted cases, but with expected using the original ordering.
@@ -3531,6 +3549,8 @@ unittest
                    "custom_random_value_header", fpath_data3x6], data3x6ExpectedDistinctK1K3P60ProbsRVCustom);
     testTsvSample(["test-a34", "-H", "-s", "-p", "0.2", "-k", "2", "--gen-random-inorder", fpath_data3x6],
                   data3x6ExpectedDistinctK2P2ProbsInorder);
+    testTsvSample(["test-a34b", "--line-buffered", "-H", "-s", "-p", "0.2", "-k", "2", "--gen-random-inorder", fpath_data3x6],
+                  data3x6ExpectedDistinctK2P2ProbsInorder);
 
     /* Simple random sampling with replacement. */
     testTsvSample(["test-a35", "-H", "-s", "--replace", fpath_dataEmpty], dataEmpty);
@@ -3540,6 +3560,7 @@ unittest
     testTsvSample(["test-a39", "-H", "-s", "--replace", "--num", "3", fpath_data3x1], data3x1ExpectedReplaceNum3);
     testTsvSample(["test-a40", "-H", "-s", "--replace", "--num", "10", fpath_data3x6], data3x6ExpectedReplaceNum10);
     testTsvSample(["test-a41", "-H", "-s", "-v", "77", "--replace", "--num", "10", fpath_data3x6], data3x6ExpectedReplaceNum10V77);
+    testTsvSample(["test-a41b", "--line-buffered", "-H", "-s", "-v", "77", "--replace", "--num", "10", fpath_data3x6], data3x6ExpectedReplaceNum10V77);
 
     /* Shuffling, compatibility mode, without headers. */
     testTsvSample(["test-b1", "-s", "--compatibility-mode", fpath_data3x1_noheader], data3x1[1 .. $]);
@@ -3551,6 +3572,7 @@ unittest
     testTsvSample(["test-b7", "-s", "--print-random", "-w", "3", fpath_data3x6_noheader], data3x6ExpectedPermuteWt3Probs[1 .. $]);
     testTsvSample(["test-b8", "-v", "41", "--print-random", fpath_data3x6_noheader], data3x6ExpectedPermuteCompatV41Probs[1 .. $]);
     testTsvSample(["test-b9", "-v", "41", "-w", "3", "--print-random", fpath_data3x6_noheader], data3x6ExpectedPermuteWt3V41Probs[1 .. $]);
+    testTsvSample(["test-b9b", "--line-buffered", "-v", "41", "-w", "3", "--print-random", fpath_data3x6_noheader], data3x6ExpectedPermuteWt3V41Probs[1 .. $]);
 
     /* Shuffling, no headers, without compatibility mode, or with printing and compatibility mode. */
     testTsvSample(["test-bb1", "-s", fpath_data3x1_noheader], data3x1[1 .. $]);
@@ -3560,6 +3582,7 @@ unittest
     testTsvSample(["test-bb5", "-s", "--weight-field", "3", fpath_data3x6_noheader], data3x6ExpectedPermuteWt3[1 .. $]);
     testTsvSample(["test-bb6", "-s", "--print-random", "-w", "3", "--compatibility-mode", fpath_data3x6_noheader], data3x6ExpectedPermuteWt3Probs[1 .. $]);
     testTsvSample(["test-bb7", "-v", "41", "--print-random", "--compatibility-mode", fpath_data3x6_noheader], data3x6ExpectedPermuteCompatV41Probs[1 .. $]);
+    testTsvSample(["test-bb7b", "--line-buffered", "-v", "41", "--print-random", "--compatibility-mode", fpath_data3x6_noheader], data3x6ExpectedPermuteCompatV41Probs[1 .. $]);
 
     /* Reservoir sampling using Algorithm R, no headers. */
     testTsvSample(["test-ac10", "--prefer-algorithm-r", "--static-seed", "--num", "1", fpath_dataEmpty], dataEmpty);
@@ -3573,6 +3596,7 @@ unittest
     testTsvSample(["test-ac20", "--prefer-algorithm-r", "-s", "--num", "3", fpath_data3x6_noheader], data3x6ExpectedSampleAlgoRNum3[1 .. $]);
     testTsvSample(["test-ac21", "--prefer-algorithm-r", "-s", "--num", "2", fpath_data3x6_noheader], data3x6ExpectedSampleAlgoRNum2[1 .. $]);
     testTsvSample(["test-ac22", "--prefer-algorithm-r", "-s", "--num", "1", fpath_data3x6_noheader], data3x6ExpectedSampleAlgoRNum1[1 .. $]);
+    testTsvSample(["test-ac22b", "--line-buffered", "--prefer-algorithm-r", "-s", "--num", "1", fpath_data3x6_noheader], data3x6ExpectedSampleAlgoRNum1[1 .. $]);
 
     /* Reservoir sampling using Algorithm R, no headers, inorder output. */
     testTsvSample(["test-aj10", "--prefer-algorithm-r", "--static-seed", "--num", "1", "-i", fpath_dataEmpty], dataEmpty);
@@ -3586,6 +3610,7 @@ unittest
     testTsvSample(["test-aj20", "--prefer-algorithm-r", "-s", "--num", "3", "-i", fpath_data3x6_noheader], data3x6ExpectedSampleAlgoRNum3Inorder[1 .. $]);
     testTsvSample(["test-aj21", "--prefer-algorithm-r", "-s", "--num", "2", "-i", fpath_data3x6_noheader], data3x6ExpectedSampleAlgoRNum2Inorder[1 .. $]);
     testTsvSample(["test-aj22", "--prefer-algorithm-r", "-s", "--num", "1", "-i", fpath_data3x6_noheader], data3x6ExpectedSampleAlgoRNum1Inorder[1 .. $]);
+    testTsvSample(["test-aj22b", "--line-buffered", "--prefer-algorithm-r", "-s", "--num", "1", "-i", fpath_data3x6_noheader], data3x6ExpectedSampleAlgoRNum1Inorder[1 .. $]);
 
     /* Bernoulli sampling cases. */
     testTsvSample(["test-b10", "-s", "-p", "1.0", fpath_data3x1_noheader], data3x1[1 .. $]);
@@ -3594,6 +3619,7 @@ unittest
     testTsvSample(["test-b13", "-s", "--prob", "1.0", "--print-random", fpath_data3x6_noheader], data3x6ExpectedBernoulliProbsP100[1 .. $]);
     testTsvSample(["test-b14", "-s", "--prob", "0.60", "--print-random", fpath_data3x6_noheader], data3x6ExpectedBernoulliCompatProbsP60[1 .. $]);
     testTsvSample(["test-b15", "-v", "41", "--prob", "0.60", "--print-random", fpath_data3x6_noheader], data3x6ExpectedBernoulliCompatP60V41Probs[1 .. $]);
+    testTsvSample(["test-b15b", "--line-buffered", "-v", "41", "--prob", "0.60", "--print-random", fpath_data3x6_noheader], data3x6ExpectedBernoulliCompatP60V41Probs[1 .. $]);
 
     /* Bernoulli sampling with probabilities in skip sampling range. */
     testTsvSample(["test-bb1", "-v", "333", "-p", "0.01", fpath_data1x200_noheader], data1x200ExpectedBernoulliSkipV333P01[1 .. $]);
@@ -3603,12 +3629,14 @@ unittest
     testTsvSample(["test-bb5", "-v", "333", "-p", "0.02", "--compatibility-mode", fpath_data1x200_noheader], data1x200ExpectedBernoulliCompatV333P02[1 .. $]);
     testTsvSample(["test-bb6", "-v", "333", "-p", "0.03", "--compatibility-mode", fpath_data1x200_noheader], data1x200ExpectedBernoulliCompatV333P03[1 .. $]);
     testTsvSample(["test-bb7", "-s", "-p", "0.40", "--prefer-skip-sampling", fpath_data3x6_noheader], data3x6ExpectedBernoulliSkipP40[1 .. $]);
+    testTsvSample(["test-bb7b", "--line-buffered", "-s", "-p", "0.40", "--prefer-skip-sampling", fpath_data3x6_noheader], data3x6ExpectedBernoulliSkipP40[1 .. $]);
 
     /* Distinct sampling cases. */
     testTsvSample(["test-b16", "-s", "-p", "1.0", "-k", "2", fpath_data3x1_noheader], data3x1[1 .. $]);
     testTsvSample(["test-b17", "-s", "-p", "1.0", "-k", "2", fpath_data3x6_noheader], data3x6[1 .. $]);
     testTsvSample(["test-b18", "-p", "1.0", "-k", "2", fpath_data3x6_noheader], data3x6[1 .. $]);
     testTsvSample(["test-b19", "-v", "71563", "-p", "1.0", "-k", "2", fpath_data3x6_noheader], data3x6[1 .. $]);
+    testTsvSample(["test-b19b", "--line-buffered", "-v", "71563", "-p", "1.0", "-k", "2", fpath_data3x6_noheader], data3x6[1 .. $]);
 
     /* Generating random weights. Reuse Bernoulli sampling tests at prob 100%. */
     testTsvSample(["test-b20", "-s", "--gen-random-inorder", fpath_data3x6_noheader], data3x6ExpectedBernoulliProbsP100[1 .. $]);
@@ -3617,6 +3645,8 @@ unittest
                   data3x6ExpectedDistinctK1K3P60Probs[1 .. $]);
     testTsvSample(["test-b24", "-s", "-p", "0.2", "-k", "2", "--gen-random-inorder", fpath_data3x6_noheader],
                   data3x6ExpectedDistinctK2P2ProbsInorder[1 .. $]);
+    testTsvSample(["test-b24b", "--line-buffered", "-s", "-p", "0.2", "-k", "2", "--gen-random-inorder", fpath_data3x6_noheader],
+                  data3x6ExpectedDistinctK2P2ProbsInorder[1 .. $]);
 
     /* Simple random sampling with replacement. */
     testTsvSample(["test-b25", "-s", "--replace", fpath_dataEmpty], dataEmpty);
@@ -3624,6 +3654,7 @@ unittest
     testTsvSample(["test-b27", "-s", "-r", "-n", "3", fpath_data3x1_noheader], data3x1ExpectedReplaceNum3[1 .. $]);
     testTsvSample(["test-b28", "-s", "--replace", "-n", "10", fpath_data3x6_noheader], data3x6ExpectedReplaceNum10[1 .. $]);
     testTsvSample(["test-b29", "-s", "-v", "77", "--replace", "--num", "10", fpath_data3x6_noheader], data3x6ExpectedReplaceNum10V77[1 .. $]);
+    testTsvSample(["test-b29b", "--line-buffered", "-s", "-v", "77", "--replace", "--num", "10", fpath_data3x6_noheader], data3x6ExpectedReplaceNum10V77[1 .. $]);
 
     /* Multi-file tests. */
     testTsvSample(["test-c1", "--header", "--static-seed", "--compatibility-mode",
@@ -3689,42 +3720,56 @@ unittest
                    fpath_data3x3_noheader, fpath_data3x1_noheader, fpath_dataEmpty,
                    fpath_data3x6_noheader, fpath_data3x2_noheader],
                   combo1ExpectedBernoulliCompatP40[1 .. $]);
+    testTsvSample(["test-c14b", "--line-buffered", "--static-seed", "--prob", ".4",
+                   fpath_data3x3_noheader, fpath_data3x1_noheader, fpath_dataEmpty,
+                   fpath_data3x6_noheader, fpath_data3x2_noheader],
+                  combo1ExpectedBernoulliCompatP40[1 .. $]);
 
     /* Bernoulli sampling with probabilities in skip sampling range. */
     testTsvSample(["test-cc1", "-H", "-v", "333", "-p", "0.03",
                    fpath_data3x0, fpath_data3x1, fpath_data1x200, fpath_dataEmpty, fpath_data1x10],
                   combo2ExpectedBernoulliSkipV333P03);
-    testTsvSample(["test-cc1", "-v", "333", "-p", "0.03",
+    testTsvSample(["test-cc2", "-v", "333", "-p", "0.03",
+                   fpath_data3x1_noheader, fpath_data1x200_noheader, fpath_dataEmpty, fpath_data1x10_noheader],
+                  combo2ExpectedBernoulliSkipV333P03[1 .. $]);
+    testTsvSample(["test-cc3", "--line-buffered", "-v", "333", "-p", "0.03",
                    fpath_data3x1_noheader, fpath_data1x200_noheader, fpath_dataEmpty, fpath_data1x10_noheader],
                   combo2ExpectedBernoulliSkipV333P03[1 .. $]);
 
     /* Distinct sampling cases. */
-    testTsvSample(["test-c13", "--header", "--static-seed", "--key-fields", "1", "--prob", ".4",
+    testTsvSample(["test-c15", "--header", "--static-seed", "--key-fields", "1", "--prob", ".4",
                    fpath_data3x0, fpath_data3x3, fpath_data3x1, fpath_dataEmpty, fpath_data3x6, fpath_data3x2],
                   combo1ExpectedDistinctK1P40);
-    testTsvSample(["test-c13b", "--header", "--static-seed", "--key-fields", "field_a", "--prob", ".4",
+    testTsvSample(["test-c15b", "--header", "--static-seed", "--key-fields", "field_a", "--prob", ".4",
                    fpath_data3x0, fpath_data3x3, fpath_data3x1, fpath_dataEmpty, fpath_data3x6, fpath_data3x2],
                   combo1ExpectedDistinctK1P40);
-    testTsvSample(["test-c14", "--static-seed", "--key-fields", "1", "--prob", ".4",
+    testTsvSample(["test-c15c", "--line-buffered", "--header", "--static-seed", "--key-fields", "field_a", "--prob", ".4",
+                   fpath_data3x0, fpath_data3x3, fpath_data3x1, fpath_dataEmpty, fpath_data3x6, fpath_data3x2],
+                  combo1ExpectedDistinctK1P40);
+    testTsvSample(["test-c16", "--static-seed", "--key-fields", "1", "--prob", ".4",
+                   fpath_data3x3_noheader, fpath_data3x1_noheader, fpath_dataEmpty,
+                   fpath_data3x6_noheader, fpath_data3x2_noheader],
+                  combo1ExpectedDistinctK1P40[1 .. $]);
+    testTsvSample(["test-c16b", "--line-buffered", "--static-seed", "--key-fields", "1", "--prob", ".4",
                    fpath_data3x3_noheader, fpath_data3x1_noheader, fpath_dataEmpty,
                    fpath_data3x6_noheader, fpath_data3x2_noheader],
                   combo1ExpectedDistinctK1P40[1 .. $]);
 
     /* Generating random weights. */
-    testTsvSample(["test-c15", "--header", "--static-seed", "--gen-random-inorder",
+    testTsvSample(["test-c17", "--header", "--static-seed", "--gen-random-inorder",
                    fpath_data3x0, fpath_data3x3, fpath_data3x1, fpath_dataEmpty, fpath_data3x6, fpath_data3x2],
                   combo1ExpectedProbsInorder);
-    testTsvSample(["test-c16", "--static-seed", "--gen-random-inorder",
+    testTsvSample(["test-c18", "--static-seed", "--gen-random-inorder",
                    fpath_data3x3_noheader, fpath_data3x1_noheader,
                    fpath_dataEmpty, fpath_data3x6_noheader, fpath_data3x2_noheader],
                   combo1ExpectedProbsInorder[1 .. $]);
 
     /* Simple random sampling with replacement. */
-    testTsvSample(["test-c17", "--header", "--static-seed", "--replace", "--num", "10",
+    testTsvSample(["test-c19", "--header", "--static-seed", "--replace", "--num", "10",
                    fpath_data3x0, fpath_data3x3, fpath_data3x1, fpath_dataEmpty, fpath_data3x6, fpath_data3x2],
                   combo1ExpectedReplaceNum10);
 
-    testTsvSample(["test-c18", "--static-seed", "--replace", "--num", "10",
+    testTsvSample(["test-c20", "--static-seed", "--replace", "--num", "10",
                    fpath_data3x3_noheader, fpath_data3x1_noheader, fpath_dataEmpty,
                    fpath_data3x6_noheader, fpath_data3x2_noheader],
                   combo1ExpectedReplaceNum10[1 .. $]);
