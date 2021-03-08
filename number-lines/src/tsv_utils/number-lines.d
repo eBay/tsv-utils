@@ -128,33 +128,27 @@ int main(string[] cmdArgs)
  *
  * Reads lines lines from each file, outputing each with a line number prepended. The
  * header from the first file is written, the header from subsequent files is dropped.
- *
- * Note: number-lines does not immediately flush the header line like most other
- * tsv-utils tools. This is because it directly uses bufferedByLine, which does not
- * support reading the header line independently of the rest of the buffer.
  */
 void numberLines(const NumberLinesOptions cmdopt, const string[] inputFiles)
 {
     import std.conv : to;
     import std.range;
-    import tsv_utils.common.utils : BufferedOutputRange, BufferedOutputRangeDefaults,
-        bufferedByLine, LineBuffered;
+    import tsv_utils.common.utils : bufferedByLine, BufferedOutputRange, LineBuffered, ReadHeader;
 
-    immutable size_t flushSize = cmdopt.lineBuffered ?
-        BufferedOutputRangeDefaults.lineBufferedFlushSize :
-        BufferedOutputRangeDefaults.flushSize;
-    auto bufferedOutput = BufferedOutputRange!(typeof(stdout))(stdout, flushSize);
+    immutable LineBuffered isLineBuffered = cmdopt.lineBuffered ? Yes.lineBuffered : No.lineBuffered;
+    immutable ReadHeader useReadHeader = cmdopt.hasHeader ? Yes.readHeader : No.readHeader;
+
+    auto bufferedOutput = BufferedOutputRange!(typeof(stdout))(stdout, isLineBuffered);
 
     long lineNum = cmdopt.startNum;
     bool headerWritten = false;
-    immutable LineBuffered isLineBuffered = cmdopt.lineBuffered ? Yes.lineBuffered : No.lineBuffered;
 
     foreach (filename; (inputFiles.length > 0) ? inputFiles : ["-"])
     {
         auto inputStream = (filename == "-") ? stdin : filename.File();
         foreach (fileLineNum, line;
                  inputStream
-                 .bufferedByLine!(KeepTerminator.no)(isLineBuffered)
+                 .bufferedByLine!(KeepTerminator.no)(isLineBuffered, useReadHeader)
                  .enumerate(1))
         {
             if (cmdopt.hasHeader && fileLineNum == 1)
@@ -165,6 +159,14 @@ void numberLines(const NumberLinesOptions cmdopt, const string[] inputFiles)
                     bufferedOutput.append(cmdopt.delim);
                     bufferedOutput.appendln(line);
                     headerWritten = true;
+
+                    /* Flush the header immediately. This helps tasks further on in a
+                     * unix pipeline detect errors quickly, without waiting for all
+                     * the data to flow through the pipeline. Note that an upstream
+                     * task may have flushed its header line, so the header may
+                     * arrive long before the main block of data.
+                     */
+                    bufferedOutput.flush;
                 }
             }
             else

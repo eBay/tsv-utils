@@ -392,6 +392,17 @@ if (isSomeChar!C)
     }
 }
 
+/** Flag accepted by input buffering ranges to indicate if data should be read using
+line buffering. Input is read as soon as lines are available when line buffered mode
+is used.
+ */
+alias LineBuffered = Flag!"lineBuffered";
+
+/** Flag accepted by input buffering ranges to indicate if the header line should be
+read when opening a file.
+*/
+alias ReadHeader = Flag!"readHeader";
+
 /**
 BufferedOutputRangeDefaults defines the parameter defaults used by
 BufferedOutputRange. These can be passed to the BufferedOutputRange
@@ -424,12 +435,22 @@ Use flush() to flush both the internal buffer and the output stream. Specify flu
 as BufferedOutputRangeDefaults.lineBufferedFlushSize in the constructor to get line
 buffering with immediate flushes to the output stream.
 
-BufferedOutputRange has a put method allowing it to be used a range. It has a number
-of other methods providing additional control.
+The output stream type must be provided as a template argument during construction. E.g.
+```
+    auto bufferedOutput = BufferedOutputRange!(typeof(stdout))(stdout)
+```
+
+BufferedOutputRange has a put method allowing it to be used an output range. It has a
+number of other methods providing additional control.
+
+Methods:
 
 $(LIST
     * `this(outputStream [, flushSize, reserveSize, maxSize])` - Constructor. Takes the
       output stream, e.g. stdout. Other arguments are optional, defaults normally suffice.
+
+    * `this(outputStream, LineBuffered)` - Alternate constructor for turning line-buffered
+      mode on.
 
     * `append(stuff)` - Append to the internal buffer.
 
@@ -442,7 +463,7 @@ $(LIST
     * `joinAppend(inputRange, delim)` - An optimization of `append(inputRange.joiner(delim))`.
       For reasons that are not clear, joiner is quite slow.
 
-    * `flush()` - Write the internal buffer to the output stream and flush the output stream.
+    * `flush()` - Writes the internal buffer to the output stream and flush the output stream.
 
     * `put(stuff)` - Appends to the internal buffer. Acts as `appendln()` if passed a single
       newline character, '\n' or "\n".
@@ -475,6 +496,10 @@ if (isFileHandle!(Unqual!OutputTarget) || isOutputRange!(Unqual!OutputTarget, ch
     private immutable size_t _flushSize;
     private immutable size_t _maxSize;
 
+    /** Constructor. Takes the output stream, e.g. stdout. Optional arguments control
+     *  buffering behavior, defaults normally suffice. The defaults are available from
+     *  the `BufferedOutputRangeDefault` enum.
+     */
     this(OutputTarget outputTarget,
          size_t flushSize = BufferedOutputRangeDefaults.flushSize,
          size_t reserveSize = BufferedOutputRangeDefaults.reserveSize,
@@ -486,6 +511,18 @@ if (isFileHandle!(Unqual!OutputTarget) || isOutputRange!(Unqual!OutputTarget, ch
         _flushSize = flushSize;
         _maxSize = (flushSize <= maxSize) ? maxSize : flushSize;
         _outputBuffer.reserve(reserveSize);
+    }
+
+    /** Alternate constuctor used to turn line-buffered mode on. Use Yes.lineBuffered
+     *  to enable. Lines are flushed at newline boundaries when in line-buffered mode.
+     */
+    this(OutputTarget outputTarget, LineBuffered lineBuffered)
+    {
+        immutable size_t flushSize = lineBuffered ?
+            BufferedOutputRangeDefaults.lineBufferedFlushSize :
+            BufferedOutputRangeDefaults.flushSize;
+
+        this(outputTarget, flushSize);
     }
 
     ~this()
@@ -509,6 +546,8 @@ if (isFileHandle!(Unqual!OutputTarget) || isOutputRange!(Unqual!OutputTarget, ch
         _outputBuffer.clear;
     }
 
+    /**  Writes the internal buffer to the output stream and flush the output stream.
+     */
     void flush()
     {
         flushBuffer();
@@ -550,25 +589,34 @@ if (isFileHandle!(Unqual!OutputTarget) || isOutputRange!(Unqual!OutputTarget, ch
         rangePut(_outputBuffer, stuff);
     }
 
+    /** Appends data to the output buffer. The output buffer is flushed if the appended
+     *  data ends in a newline if the output buffer has reached `flushSize`.
+     */
     void append(T)(T stuff)
     {
         appendRaw(stuff);
         maybeFlush();
     }
 
+    /** Appends a newline to the output buffer. The output buffer is flushed if it has
+     *  reached `flushSize`.
+     */
     bool appendln()
     {
         appendRaw('\n');
         return flushIfFull();
     }
 
+    /** Appends data plus a newline to the output buffer. The output buffer is flushed
+     *  if it has reached `flushSize`.
+     */
     bool appendln(T)(T stuff)
     {
         appendRaw(stuff);
         return appendln();
     }
 
-    /* joinAppend is an optimization of append(inputRange.joiner(delimiter).
+    /** joinAppend is an optimization of append(inputRange.joiner(delimiter).
      * This form is quite a bit faster, 40%+ on some benchmarks.
      */
     void joinAppend(InputRange, E)(InputRange inputRange, E delimiter)
@@ -589,7 +637,9 @@ if (isFileHandle!(Unqual!OutputTarget) || isOutputRange!(Unqual!OutputTarget, ch
         flushIfMaxSize();
     }
 
-    /* Make this an output range. */
+    /** The `put` method makes BufferOutputRange an OutputRange. It operates similarly
+     *  to `append`.
+     */
     void put(T)(T stuff)
     {
         import std.traits;
@@ -638,7 +688,7 @@ unittest
     }
     assert(filepath1.readText == "file1: abcdefghijkl100\n0 1 2 3 4 5 6 7 8 9\n");
 
-    /* Test with no reserve and no flush at every line. */
+    /* Test with no reserve and flush at every line. */
     string filepath2 = buildPath(testDir, "file2.txt");
     {
         import std.stdio : File;
@@ -650,8 +700,45 @@ unittest
         ostream.appendln("100");
         ostream.append(iota(0, 10).map!(x => x.to!string).joiner(" "));
         ostream.appendln();
+        ostream.appendln("X");
     }
-    assert(filepath2.readText == "file2: abcdefghijkl100\n0 1 2 3 4 5 6 7 8 9\n");
+    assert(filepath2.readText == "file2: abcdefghijkl100\n0 1 2 3 4 5 6 7 8 9\nX\n");
+
+    /* Test default line-buffered mode (flush at every line). */
+    string filepath2a = buildPath(testDir, "file2a.txt");
+    {
+        import std.stdio : File;
+
+        auto ostream = BufferedOutputRange!File(
+            filepath2a.File("wb"), BufferedOutputRangeDefaults.lineBufferedFlushSize);
+        ostream.append("file2a: ");
+        ostream.append("abc");
+        ostream.append(["def", "ghi", "jkl"]);
+        ostream.appendln("100");
+        ostream.append(iota(0, 10).map!(x => x.to!string).joiner(" "));
+        ostream.appendln();
+        ostream.appendln("X");
+    }
+    assert(filepath2a.readText == "file2a: abcdefghijkl100\n0 1 2 3 4 5 6 7 8 9\nX\n");
+
+    /* Test the alternate constructor. */
+    static foreach (isLineBuffered; [Yes.lineBuffered, No.lineBuffered])
+    {{
+        string filepath2b = buildPath(testDir, "file2b.txt");
+        {
+            import std.stdio : File;
+
+            auto ostream = BufferedOutputRange!File(filepath2b.File("wb"), isLineBuffered);
+            ostream.append("file2b: ");
+            ostream.append("abc");
+            ostream.append(["def", "ghi", "jkl"]);
+            ostream.appendln("100");
+            ostream.append(iota(0, 10).map!(x => x.to!string).joiner(" "));
+            ostream.appendln();
+            ostream.appendln("X");
+        }
+        assert(filepath2b.readText == "file2b: abcdefghijkl100\n0 1 2 3 4 5 6 7 8 9\nX\n");
+    }}
 
     /* With a locking text writer. Requires version 2.078.0
        See: https://issues.dlang.org/show_bug.cgi?id=9661
@@ -851,10 +938,6 @@ enum bool isFlushableOutputRange(R, E=char) = isOutputRange!(R, E)
     static assert(isFlushableOutputRange!(BufferedOutputRange!(Appender!(char[])), char));
 }
 
-/** Flag accepted by bufferedByLine to use line-buffering.
- */
-alias LineBuffered = Flag!"lineBuffered";
-
 /**
 bufferedByLine is a performance enhancement over std.stdio.File.byLine. It works by
 reading a large buffer from the input stream rather than just a single line.
@@ -865,15 +948,19 @@ newline. This is similar to stdio.File.byLine, except specified as a template pa
 rather than a runtime parameter.
 
 Reading in blocks does mean that input is not read until a full buffer is available or
-end-of-file is reached. For this reason, bufferedByLine is not appropriate for
-interactive input. Note though that line-buffering can be achieved by specifying via
-the lineBuffered parameter. In this mode bufferedByLine reads each line as soon as it
-is available.
+end-of-file is reached. Reading each line as it is available can be enabled by setting
+the lineBuffered parameter to Yes.lineBuffered. In this case bufferedByLine behaves
+like stdio.File.byLine.
+
+As a separate option, the first line of the file can be read as soon as it is available,
+without waiting for a complete buffer. This is useful for reading the header line before
+the rest of the data is available. Set the readHeader parameter to Yes.readHeader to get
+this behavior.
 */
 
 auto bufferedByLine(KeepTerminator keepTerminator = No.keepTerminator, Char = char,
                     ubyte terminator = '\n', size_t readSize = 1024 * 128, size_t growSize = 1024 * 16)
-    (File file, LineBuffered lineBuffered = No.lineBuffered)
+(File file, LineBuffered lineBuffered = No.lineBuffered, ReadHeader readHeader = No.readHeader)
 if (is(Char == char) || is(Char == ubyte))
 {
     static assert(0 < growSize && growSize <= readSize);
@@ -893,11 +980,17 @@ if (is(Char == char) || is(Char == ubyte))
         private size_t _lineEnd = 0;
         private size_t _dataEnd = 0;
 
-        this (File f, LineBuffered lineBuffered)
+        this (File f, LineBuffered lineBuffered, ReadHeader readHeader)
         {
             _file = f;
             _lineBuffered = lineBuffered;
             _buffer = new ubyte[readSize + growSize];
+
+            if (!_file.eof)
+            {
+                if (readHeader) popFrontLineBuffered();
+                else popFront();
+            }
         }
 
         bool empty() const pure
@@ -929,8 +1022,15 @@ if (is(Char == char) || is(Char == ubyte))
             else popFrontLineBuffered();
         }
 
+        /* Discards the current line and reads the next line with File.readln.
+         * Intended for use when reading in line-buffered mode. However, it is
+         * also used to read in the header line when in full-buffered mode.
+         */
         private void popFrontLineBuffered()
         {
+            assert(_lineEnd == _dataEnd);
+            assert(!empty, "Attempt to popFront (LineBuffered) an empty bufferedByLine.");
+
             char[] line = cast(char[]) _buffer;
             _lineStart = 0;
             _lineEnd = _dataEnd = _file.readln(line);
@@ -940,10 +1040,11 @@ if (is(Char == char) || is(Char == ubyte))
             assert(_dataEnd == line.length);
         }
 
-        /* Note: Call popFront at initialization to do the initial read. */
         private void popFrontFullBuffered()
         {
             import std.algorithm: copy, find;
+
+            assert(!empty, "Attempt to popFront (Full Buffered) an empty bufferedByLine.");
 
             /* Pop the current line. */
             _lineStart = _lineEnd;
@@ -1002,9 +1103,7 @@ if (is(Char == char) || is(Char == ubyte))
 
     assert(file.isOpen, "bufferedByLine passed a closed file.");
 
-    auto r = new BufferedByLineImpl(file, lineBuffered);
-    if (!r.empty) r.popFront;
-    return r;
+    return new BufferedByLineImpl(file, lineBuffered, readHeader);
 }
 
 // BufferedByLine.
@@ -1039,287 +1138,231 @@ unittest
     string file1a = buildPath(testDir, "file1a.txt");
     string file1b = buildPath(testDir, "file1b.txt");
     string file1c = buildPath(testDir, "file1c.txt");
+    string file1d = buildPath(testDir, "file1d.txt");
+    string file1e = buildPath(testDir, "file1e.txt");
+
+    foreach (f; [file1a, file1b, file1c, file1d, file1e])
     {
-        auto f1aFH = file1a.File("wb");
-        f1aFH.write(data1.data);
-        f1aFH.close;
-
-        auto f1bFH = file1b.File("wb");
-        f1bFH.write(data1.data);
-        f1bFH.close;
-
-        auto f1cFH = file1c.File("wb");
-        f1cFH.write(data1.data);
-        f1cFH.close;
+        auto fh = f.File("wb");
+        fh.write(data1.data);
+        fh.close;
     }
 
-    /* Default template parameters. */
-    {
+    /* Default buffer sizes */
+    static foreach (keepTerm; [No.keepTerminator, Yes.keepTerminator])
+    {{
         auto f1aFH = file1a.File();
         auto f1bFH = file1b.File();
         auto f1cFH = file1c.File();
-        auto f1aIn = f1aFH.byLine(No.keepTerminator);
-        auto f1bIn = f1bFH.bufferedByLine!(No.keepTerminator);
-        auto f1cIn = f1cFH.bufferedByLine!(No.keepTerminator)(Yes.lineBuffered);
+        auto f1dFH = file1d.File();
+        auto f1eFH = file1e.File();
 
-        foreach (a, b, c; lockstep(f1aIn, f1bIn, f1cIn, StoppingPolicy.requireSameLength))
+        auto f1aIn = f1aFH.byLine(keepTerm);
+        auto f1bIn = f1bFH.bufferedByLine!(keepTerm);
+        auto f1cIn = f1cFH.bufferedByLine!(keepTerm)(Yes.lineBuffered);
+        auto f1dIn = f1dFH.bufferedByLine!(keepTerm)(No.lineBuffered, Yes.readHeader);
+        auto f1eIn = f1eFH.bufferedByLine!(keepTerm)(Yes.lineBuffered, Yes.readHeader);
+
+        foreach (a, b, c, d, e; lockstep(f1aIn, f1bIn, f1cIn, f1dIn, f1eIn, StoppingPolicy.requireSameLength))
         {
             assert(a == b);
             assert(a == c);
+            assert(a == d);
+            assert(a == e);
         }
 
         f1aFH.close;
         f1bFH.close;
         f1cFH.close;
-    }
-    {
-        auto f1aFH = file1a.File();
-        auto f1bFH = file1b.File();
-        auto f1cFH = file1c.File();
-        auto f1aIn = f1aFH.byLine(Yes.keepTerminator);
-        auto f1bIn = f1bFH.bufferedByLine!(Yes.keepTerminator)(No.lineBuffered);
-        auto f1cIn = f1cFH.bufferedByLine!(Yes.keepTerminator)(Yes.lineBuffered);
-
-        foreach (a, b, c; lockstep(f1aIn, f1bIn, f1cIn, StoppingPolicy.requireSameLength))
-        {
-            assert(a == b);
-            assert(a == c);
-        }
-
-        f1aFH.close;
-        f1bFH.close;
-        f1cFH.close;
-    }
+        f1dFH.close;
+        f1eFH.close;
+    }}
 
     /* Smaller read size. This will trigger buffer growth. */
-    {
+    static foreach (keepTerm; [No.keepTerminator, Yes.keepTerminator])
+    {{
         auto f1aFH = file1a.File();
         auto f1bFH = file1b.File();
         auto f1cFH = file1c.File();
-        auto f1aIn = f1aFH.byLine(No.keepTerminator);
-        auto f1bIn = f1bFH.bufferedByLine!(No.keepTerminator, char, '\n', 512, 256);
-        auto f1cIn = f1cFH.bufferedByLine!(No.keepTerminator, char, '\n', 512, 256)(Yes.lineBuffered);
+        auto f1dFH = file1d.File();
+        auto f1eFH = file1e.File();
 
-        foreach (a, b, c; lockstep(f1aIn, f1bIn, f1cIn, StoppingPolicy.requireSameLength))
+        auto f1aIn = f1aFH.byLine(keepTerm);
+        auto f1bIn = f1bFH.bufferedByLine!(keepTerm, char, '\n', 512, 256);
+        auto f1cIn = f1cFH.bufferedByLine!(keepTerm, char, '\n', 512, 256)(Yes.lineBuffered);
+        auto f1dIn = f1dFH.bufferedByLine!(keepTerm, char, '\n', 512, 256)(No.lineBuffered, Yes.readHeader);
+        auto f1eIn = f1eFH.bufferedByLine!(keepTerm, char, '\n', 512, 256)(Yes.lineBuffered, Yes.readHeader);
+
+        foreach (a, b, c, d, e; lockstep(f1aIn, f1bIn, f1cIn, f1dIn, f1eIn, StoppingPolicy.requireSameLength))
         {
             assert(a == b);
             assert(a == c);
+            assert(a == d);
+            assert(a == e);
         }
 
         f1aFH.close;
         f1bFH.close;
         f1cFH.close;
-    }
+        f1dFH.close;
+        f1eFH.close;
+    }}
 
-    /* Exercise boundary cases in buffer growth.
-     * Note: static-foreach requires DMD 2.076 / LDC 1.6
-     */
-    static foreach (readSize; [1, 2, 4])
+    /* Exercise boundary cases in buffer growth. */
+    static foreach (keepTerm; [No.keepTerminator, Yes.keepTerminator])
     {
-        static foreach (growSize; 1 .. readSize + 1)
-        {{
-            auto f1aFH = file1a.File();
-            auto f1bFH = file1b.File();
-            auto f1cFH = file1c.File();
-            auto f1aIn = f1aFH.byLine(No.keepTerminator);
-            auto f1bIn = f1bFH.bufferedByLine!(No.keepTerminator, char, '\n', readSize, growSize)(No.lineBuffered);
-            auto f1cIn = f1cFH.bufferedByLine!(No.keepTerminator, char, '\n', readSize, growSize)(Yes.lineBuffered);
+        static foreach (readSize; [1, 2, 4])
+        {
+            static foreach (growSize; 1 .. readSize + 1)
+            {{
+                auto f1aFH = file1a.File();
+                auto f1bFH = file1b.File();
+                auto f1cFH = file1c.File();
+                auto f1dFH = file1d.File();
+                auto f1eFH = file1e.File();
 
-            foreach (a, b, c; lockstep(f1aIn, f1bIn, f1cIn, StoppingPolicy.requireSameLength))
-            {
-                assert(a == b);
-                assert(a == c);
-            }
+                auto f1aIn = f1aFH.byLine(keepTerm);
+                auto f1bIn = f1bFH.bufferedByLine!(keepTerm, char, '\n', readSize, growSize);
+                auto f1cIn = f1cFH.bufferedByLine!(keepTerm, char, '\n', readSize, growSize)(Yes.lineBuffered);
+                auto f1dIn = f1dFH.bufferedByLine!(keepTerm, char, '\n', readSize, growSize)(No.lineBuffered, Yes.readHeader);
+                auto f1eIn = f1eFH.bufferedByLine!(keepTerm, char, '\n', readSize, growSize)(Yes.lineBuffered, Yes.readHeader);
 
-            f1aFH.close;
-            f1bFH.close;
-            f1cFH.close;
-        }}
-        static foreach (growSize; 1 .. readSize + 1)
-        {{
-            auto f1aFH = file1a.File();
-            auto f1bFH = file1b.File();
-            auto f1cFH = file1c.File();
-            auto f1aIn = f1aFH.byLine(Yes.keepTerminator);
-            auto f1bIn = f1bFH.bufferedByLine!(Yes.keepTerminator, char, '\n', readSize, growSize);
-            auto f1cIn = f1cFH.bufferedByLine!(Yes.keepTerminator, char, '\n', readSize, growSize)(Yes.lineBuffered);
+                foreach (a, b, c, d, e; lockstep(f1aIn, f1bIn, f1cIn, f1dIn, f1eIn, StoppingPolicy.requireSameLength))
+                {
+                    assert(a == b);
+                    assert(a == c);
+                    assert(a == d);
+                    assert(a == e);
+                }
 
-            foreach (a, b, c; lockstep(f1aIn, f1bIn, f1cIn, StoppingPolicy.requireSameLength))
-            {
-                assert(a == b);
-                assert(a == c);
-            }
-
-            f1aFH.close;
-            f1bFH.close;
-            f1cFH.close;
-        }}
+                f1aFH.close;
+                f1bFH.close;
+                f1cFH.close;
+                f1dFH.close;
+                f1eFH.close;
+            }}
+        }
     }
-
 
     /* Files that do not end in a newline. */
 
     string file2a = buildPath(testDir, "file2a.txt");
     string file2b = buildPath(testDir, "file2b.txt");
     string file2c = buildPath(testDir, "file2c.txt");
+    string file2d = buildPath(testDir, "file2d.txt");
+    string file2e = buildPath(testDir, "file2e.txt");
     string file3a = buildPath(testDir, "file3a.txt");
     string file3b = buildPath(testDir, "file3b.txt");
     string file3c = buildPath(testDir, "file3c.txt");
+    string file3d = buildPath(testDir, "file3d.txt");
+    string file3e = buildPath(testDir, "file3e.txt");
 
+    foreach (f; [file1a, file1b, file1c, file1d, file1e])
     {
-        auto f1aFH = file1a.File("wb");
-        f1aFH.write("a");
-        f1aFH.close;
-    }
-    {
-        auto f1bFH = file1b.File("wb");
-        f1bFH.write("a");
-        f1bFH.close;
-    }
-    {
-        auto f1cFH = file1c.File("wb");
-        f1cFH.write("a");
-        f1cFH.close;
-    }
-    {
-        auto f2aFH = file2a.File("wb");
-        f2aFH.write("ab");
-        f2aFH.close;
-    }
-    {
-        auto f2bFH = file2b.File("wb");
-        f2bFH.write("ab");
-        f2bFH.close;
-    }
-    {
-        auto f2cFH = file2c.File("wb");
-        f2cFH.write("ab");
-        f2cFH.close;
-    }
-    {
-        auto f3aFH = file3a.File("wb");
-        f3aFH.write("abc");
-        f3aFH.close;
-    }
-    {
-        auto f3bFH = file3b.File("wb");
-        f3bFH.write("abc");
-        f3bFH.close;
-    }
-    {
-        auto f3cFH = file3c.File("wb");
-        f3cFH.write("abc");
-        f3cFH.close;
+        auto fh = f.File("wb");
+        fh.write("a");
+        fh.close;
     }
 
-    static foreach (readSize; [1, 2, 4])
+    foreach (f; [file2a, file2b, file2c, file2d, file2e])
     {
-        static foreach (growSize; 1 .. readSize + 1)
-        {{
-            auto f1aFH = file1a.File();
-            auto f1bFH = file1b.File();
-            auto f1cFH = file1c.File();
-            auto f1aIn = f1aFH.byLine(No.keepTerminator);
-            auto f1bIn = f1bFH.bufferedByLine!(No.keepTerminator, char, '\n', readSize, growSize)(No.lineBuffered);
-            auto f1cIn = f1cFH.bufferedByLine!(No.keepTerminator, char, '\n', readSize, growSize)(Yes.lineBuffered);
+        auto fh = f.File("wb");
+        fh.write("ab");
+        fh.close;
+    }
 
-            foreach (a, b, c; lockstep(f1aIn, f1bIn, f1cIn, StoppingPolicy.requireSameLength))
-            {
-                assert(a == b);
-                assert(a == c);
-            }
+    foreach (f; [file3a, file3b, file3c, file3d, file3e])
+    {
+        auto fh = f.File("wb");
+        fh.write("abc");
+        fh.close;
+    }
 
-            f1aFH.close;
-            f1bFH.close;
-            f1cFH.close;
+    static foreach (keepTerm; [No.keepTerminator, Yes.keepTerminator])
+    {
+        static foreach (readSize; [1, 2, 4])
+        {
+            static foreach (growSize; 1 .. readSize + 1)
+            {{
+                auto f1aFH = file1a.File();
+                auto f1bFH = file1b.File();
+                auto f1cFH = file1c.File();
+                auto f1dFH = file1d.File();
+                auto f1eFH = file1e.File();
 
-            auto f2aFH = file2a.File();
-            auto f2bFH = file2b.File();
-            auto f2cFH = file2c.File();
-            auto f2aIn = f2aFH.byLine(No.keepTerminator);
-            auto f2bIn = f2bFH.bufferedByLine!(No.keepTerminator, char, '\n', readSize, growSize)(No.lineBuffered);
-            auto f2cIn = f2cFH.bufferedByLine!(No.keepTerminator, char, '\n', readSize, growSize)(Yes.lineBuffered);
+                auto f1aIn = f1aFH.byLine(keepTerm);
+                auto f1bIn = f1bFH.bufferedByLine!(keepTerm, char, '\n', readSize, growSize)(No.lineBuffered);
+                auto f1cIn = f1cFH.bufferedByLine!(keepTerm, char, '\n', readSize, growSize)(Yes.lineBuffered);
+                auto f1dIn = f1dFH.bufferedByLine!(keepTerm, char, '\n', readSize, growSize)(No.lineBuffered, Yes.readHeader);
+                auto f1eIn = f1eFH.bufferedByLine!(keepTerm, char, '\n', readSize, growSize)(Yes.lineBuffered, Yes.readHeader);
 
-            foreach (a, b, c; lockstep(f2aIn, f2bIn, f2cIn, StoppingPolicy.requireSameLength))
-            {
-                assert(a == b);
-                assert(a == c);
-            }
+                foreach (a, b, c, d, e; lockstep(f1aIn, f1bIn, f1cIn, f1dIn, f1eIn, StoppingPolicy.requireSameLength))
+                {
+                    assert(a == b);
+                    assert(a == c);
+                    assert(a == d);
+                    assert(a == e);
+                }
 
-            f2aFH.close;
-            f2bFH.close;
-            f2cFH.close;
+                f1aFH.close;
+                f1bFH.close;
+                f1cFH.close;
+                f1dFH.close;
+                f1eFH.close;
 
-            auto f3aFH = file3a.File();
-            auto f3bFH = file3b.File();
-            auto f3cFH = file3c.File();
-            auto f3aIn = f3aFH.byLine(No.keepTerminator);
-            auto f3bIn = f3bFH.bufferedByLine!(No.keepTerminator, char, '\n', readSize, growSize)(No.lineBuffered);
-            auto f3cIn = f3cFH.bufferedByLine!(No.keepTerminator, char, '\n', readSize, growSize)(Yes.lineBuffered);
+                auto f2aFH = file2a.File();
+                auto f2bFH = file2b.File();
+                auto f2cFH = file2c.File();
+                auto f2dFH = file2d.File();
+                auto f2eFH = file2e.File();
 
-            foreach (a, b, c; lockstep(f3aIn, f3bIn, f3cIn, StoppingPolicy.requireSameLength))
-            {
-                assert(a == b);
-                assert(a == c);
-            }
+                auto f2aIn = f2aFH.byLine(keepTerm);
+                auto f2bIn = f2bFH.bufferedByLine!(keepTerm, char, '\n', readSize, growSize)(No.lineBuffered);
+                auto f2cIn = f2cFH.bufferedByLine!(keepTerm, char, '\n', readSize, growSize)(Yes.lineBuffered);
+                auto f2dIn = f2dFH.bufferedByLine!(keepTerm, char, '\n', readSize, growSize)(No.lineBuffered, Yes.readHeader);
+                auto f2eIn = f2eFH.bufferedByLine!(keepTerm, char, '\n', readSize, growSize)(Yes.lineBuffered, Yes.readHeader);
 
-            f3aFH.close;
-            f3bFH.close;
-            f3cFH.close;
-        }}
-        static foreach (growSize; 1 .. readSize + 1)
-        {{
-            auto f1aFH = file1a.File();
-            auto f1bFH = file1b.File();
-            auto f1cFH = file1c.File();
-            auto f1aIn = f1aFH.byLine(Yes.keepTerminator);
-            auto f1bIn = f1bFH.bufferedByLine!(Yes.keepTerminator, char, '\n', readSize, growSize)(No.lineBuffered);
-            auto f1cIn = f1cFH.bufferedByLine!(Yes.keepTerminator, char, '\n', readSize, growSize)(Yes.lineBuffered);
+                foreach (a, b, c, d, e; lockstep(f2aIn, f2bIn, f2cIn, f2dIn, f2eIn, StoppingPolicy.requireSameLength))
+                {
+                    assert(a == b);
+                    assert(a == c);
+                    assert(a == d);
+                    assert(a == e);
+                }
 
-            foreach (a, b, c; lockstep(f1aIn, f1bIn, f1cIn, StoppingPolicy.requireSameLength))
-            {
-                assert(a == b);
-                assert(a == c);
-            }
+                f2aFH.close;
+                f2bFH.close;
+                f2cFH.close;
+                f2dFH.close;
+                f2eFH.close;
 
-            f1aFH.close;
-            f1bFH.close;
-            f1cFH.close;
+                auto f3aFH = file3a.File();
+                auto f3bFH = file3b.File();
+                auto f3cFH = file3c.File();
+                auto f3dFH = file3d.File();
+                auto f3eFH = file3e.File();
 
-            auto f2aFH = file2a.File();
-            auto f2bFH = file2b.File();
-            auto f2cFH = file2c.File();
-            auto f2aIn = f2aFH.byLine(Yes.keepTerminator);
-            auto f2bIn = f2bFH.bufferedByLine!(Yes.keepTerminator, char, '\n', readSize, growSize)(No.lineBuffered);
-            auto f2cIn = f2cFH.bufferedByLine!(Yes.keepTerminator, char, '\n', readSize, growSize)(Yes.lineBuffered);
+                auto f3aIn = f3aFH.byLine(keepTerm);
+                auto f3bIn = f3bFH.bufferedByLine!(keepTerm, char, '\n', readSize, growSize)(No.lineBuffered);
+                auto f3cIn = f3cFH.bufferedByLine!(keepTerm, char, '\n', readSize, growSize)(Yes.lineBuffered);
+                auto f3dIn = f3dFH.bufferedByLine!(keepTerm, char, '\n', readSize, growSize)(No.lineBuffered, Yes.readHeader);
+                auto f3eIn = f3eFH.bufferedByLine!(keepTerm, char, '\n', readSize, growSize)(Yes.lineBuffered, Yes.readHeader);
 
-            foreach (a, b, c; lockstep(f2aIn, f2bIn, f2cIn, StoppingPolicy.requireSameLength))
-            {
-                assert(a == b);
-                assert(a == c);
-            }
+                foreach (a, b, c, d, e; lockstep(f3aIn, f3bIn, f3cIn, f3dIn, f3eIn, StoppingPolicy.requireSameLength))
+                {
+                    assert(a == b);
+                    assert(a == c);
+                    assert(a == d);
+                    assert(a == e);
+                }
 
-            f2aFH.close;
-            f2bFH.close;
-            f2cFH.close;
-
-            auto f3aFH = file3a.File();
-            auto f3bFH = file3b.File();
-            auto f3cFH = file3c.File();
-            auto f3aIn = f3aFH.byLine(Yes.keepTerminator);
-            auto f3bIn = f3bFH.bufferedByLine!(Yes.keepTerminator, char, '\n', readSize, growSize)(No.lineBuffered);
-            auto f3cIn = f3cFH.bufferedByLine!(Yes.keepTerminator, char, '\n', readSize, growSize)(Yes.lineBuffered);
-
-            foreach (a, b, c; lockstep(f3aIn, f3bIn, f3cIn, StoppingPolicy.requireSameLength))
-            {
-                assert(a == b);
-                assert(a == c);
-            }
-
-            f3aFH.close;
-            f3bFH.close;
-            f3cFH.close;
-        }}
+                f3aFH.close;
+                f3bFH.close;
+                f3cFH.close;
+                f3dFH.close;
+                f3eFH.close;
+            }}
+        }
     }
 }
 
@@ -1670,11 +1713,6 @@ void throwIfWindowsNewline
     }
 }
 
-/** Flag used by InputSourceRange to determine if the header line should be when
-opening a file.
-*/
-alias ReadHeader = Flag!"readHeader";
-
 /**
 inputSourceRange is a helper function for creating new InputSourceRange objects.
 */
@@ -1709,7 +1747,7 @@ types of input sources will be added in the future.
 final class InputSourceRange
 {
     private string[] _filepaths;
-    private ReadHeader _readHeader;
+    private immutable ReadHeader _readHeader;
     private InputSource _front;
 
     this(string[] filepaths, ReadHeader readHeader)
@@ -2054,10 +2092,12 @@ byLineSourceRange is a helper function for creating new byLineSourceRange object
 */
 auto byLineSourceRange(
     KeepTerminator keepTerminator = No.keepTerminator, Char = char, ubyte terminator = '\n')
-(string[] filepaths, LineBuffered lineBuffered = No.lineBuffered)
+(string[] filepaths, LineBuffered lineBuffered = No.lineBuffered,
+ ReadHeader readHeader = No.readHeader)
 if (is(Char == char) || is(Char == ubyte))
 {
-    return new ByLineSourceRange!(keepTerminator, Char, terminator)(filepaths, lineBuffered);
+    return new ByLineSourceRange!(keepTerminator, Char, terminator)
+        (filepaths, lineBuffered, readHeader);
 }
 
 /**
@@ -2081,6 +2121,11 @@ Access to the first line of the first file is available after creating the
 ByLineSourceRange instance. The first file is opened and a bufferedByLine created.
 The first line of the first file is via byLine.front (after checking !byLine.empty).
 
+Buffering is handled by bufferedByLine. Full buffering is used by default, this can be
+changed to line buffering by Yes.lineBuffered. When using full buffering, the header
+line (first line) of the first file can read as soon as available using Yes.readHeader.
+This is only done for the first file, as that is when immediate processing is useful.
+
 Both ByLineSourceRange and ByLineSource are reference objects. This keeps their use
 limited to a single iteration over the set of files. The files can be iterated again
 by creating a new InputSourceRange against the same filepaths.
@@ -2098,7 +2143,8 @@ if (is(Char == char) || is(Char == ubyte))
     private immutable LineBuffered _lineBuffered;
     private ByLineSourceType _front;
 
-    this(string[] filepaths, LineBuffered lineBuffered = No.lineBuffered)
+    this(string[] filepaths, LineBuffered lineBuffered = No.lineBuffered,
+         ReadHeader readHeader = No.readHeader)
     {
         _filepaths = filepaths.dup;
         _lineBuffered = lineBuffered;
@@ -2106,7 +2152,7 @@ if (is(Char == char) || is(Char == ubyte))
 
         if (!_filepaths.empty)
         {
-            _front = new ByLineSourceType(_filepaths.front, _lineBuffered);
+            _front = new ByLineSourceType(_filepaths.front, _lineBuffered, readHeader);
             _front.open;
             _filepaths.popFront;
         }
@@ -2183,16 +2229,19 @@ if (is(Char == char) || is(Char == ubyte))
 
     private immutable string _filepath;
     private immutable LineBuffered _lineBuffered;
+    private immutable ReadHeader _readHeader;
     private immutable bool _isStdin;
     private bool _isOpen;
     private bool _hasBeenOpened;
     private File _file;
     private ByLineType _byLineRange;
 
-    private this(string filepath, LineBuffered lineBuffered = No.lineBuffered) pure nothrow @safe
+    private this(string filepath, LineBuffered lineBuffered = No.lineBuffered,
+                ReadHeader readHeader = No.readHeader) pure nothrow @safe
     {
         _filepath = filepath;
         _lineBuffered = lineBuffered;
+        _readHeader = readHeader;
         _isStdin = filepath == "-";
         _isOpen = false;
         _hasBeenOpened = false;
@@ -2251,7 +2300,7 @@ if (is(Char == char) || is(Char == ubyte))
         assert(!_hasBeenOpened);
 
         _file = isStdin ? stdin : _filepath.File("rb");
-        _byLineRange = newByLineFn(_file, _lineBuffered);
+        _byLineRange = newByLineFn(_file, _lineBuffered, _readHeader);
         _isOpen = true;
         _hasBeenOpened = true;
     }
@@ -2312,110 +2361,57 @@ unittest
 
     auto buffer = new char[1024];    // Must be large enough to hold the test files.
 
-    /* Tests without standard input. Don't want to count on state of standard
+    /* Test without standard input. Don't want to count on state of standard
      * input or modifying it when doing unit tests, so avoid reading from it.
      */
 
-    auto readSourcesNoTerminator = appender!(ByLineSource!(No.keepTerminator)[]);
-    auto readSourcesYesTerminator = appender!(ByLineSource!(Yes.keepTerminator)[]);
-
-    foreach(numFiles; 1 .. inputFiles.length + 1)
+    static foreach (keepTerm; [No.keepTerminator, Yes.keepTerminator])
     {
-        /* Using No.keepTerminator. */
-        readSourcesNoTerminator.clear;
-        auto inputSourcesNoTerminator = byLineSourceRange!(No.keepTerminator)(inputFiles[0 .. numFiles]);
-        assert(inputSourcesNoTerminator.length == numFiles);
-
-        foreach(fileNum, source; inputSourcesNoTerminator.enumerate)
+        foreach (lineBuf; [No.lineBuffered, Yes.lineBuffered])
         {
-            readSourcesNoTerminator.put(source);
-            assert(source.isOpen);
-            assert(source._file.isOpen);
-            assert(readSourcesNoTerminator.data[0 .. fileNum].all!(s => !s.isOpen));
-            assert(readSourcesNoTerminator.data[fileNum].isOpen);
-
-            auto headerNoTerminatorLength = fileHeaders[fileNum].length;
-            if (headerNoTerminatorLength > 0) --headerNoTerminatorLength;
-
-            assert(source.byLine.empty ||
-                   source.byLine.front == fileHeaders[fileNum][0 .. headerNoTerminatorLength]);
-
-            assert(source.name == inputFiles[fileNum]);
-            assert(!source.isStdin);
-
-            auto readFileData = appender!(char[]);
-            foreach(line; source.byLine)
+            foreach (readHdr; [No.readHeader, Yes.readHeader])
             {
-                readFileData.put(line);
-                readFileData.put('\n');
+                foreach(numFiles; 1 .. inputFiles.length + 1)
+                {
+                    auto readSources = appender!(ByLineSource!(keepTerm)[]);
+                    auto inputSources = byLineSourceRange!(keepTerm)(inputFiles[0 .. numFiles], lineBuf, readHdr);
+                    assert(inputSources.length == numFiles);
+
+                    foreach(fileNum, source; inputSources.enumerate)
+                    {
+                        readSources.put(source);
+                        assert(source.isOpen);
+                        assert(source._file.isOpen);
+                        assert(readSources.data[0 .. fileNum].all!(s => !s.isOpen));
+                        assert(readSources.data[fileNum].isOpen);
+
+                        auto headerLength = fileHeaders[fileNum].length;
+                        static if (!keepTerm)
+                        {
+                            if (headerLength > 0) --headerLength;
+                        }
+
+                        assert(source.byLine.empty ||
+                               source.byLine.front == fileHeaders[fileNum][0 .. headerLength]);
+
+                        assert(source.name == inputFiles[fileNum]);
+                        assert(!source.isStdin);
+
+                        auto readFileData = appender!(char[]);
+                        foreach(line; source.byLine)
+                        {
+                            readFileData.put(line);
+                            static if (!keepTerm) readFileData.put('\n');
+                        }
+
+                        assert(readFileData.data == fileData[fileNum]);
+                    }
+
+                    /* The ByLineSourceRange is a reference range, consumed by the foreach. */
+                    assert(inputSources.empty);
+                }
             }
-
-            assert(readFileData.data == fileData[fileNum]);
         }
-
-        /* The ByLineSourceRange is a reference range, consumed by the foreach. */
-        assert(inputSourcesNoTerminator.empty);
-
-        /* Using Yes.keepTerminator. */
-        readSourcesYesTerminator.clear;
-        auto inputSourcesYesTerminator = byLineSourceRange!(Yes.keepTerminator)(inputFiles[0 .. numFiles]);
-        assert(inputSourcesYesTerminator.length == numFiles);
-
-        foreach(fileNum, source; inputSourcesYesTerminator.enumerate)
-        {
-            readSourcesYesTerminator.put(source);
-            assert(source.isOpen);
-            assert(source._file.isOpen);
-            assert(readSourcesYesTerminator.data[0 .. fileNum].all!(s => !s.isOpen));
-            assert(readSourcesYesTerminator.data[fileNum].isOpen);
-
-            assert(source.byLine.empty || source.byLine.front == fileHeaders[fileNum]);
-
-            assert(source.name == inputFiles[fileNum]);
-            assert(!source.isStdin);
-
-            auto readFileData = appender!(char[]);
-            foreach(line; source.byLine)
-            {
-                readFileData.put(line);
-            }
-
-            assert(readFileData.data == fileData[fileNum]);
-        }
-
-        /* The ByLineSourceRange is a reference range, consumed by the foreach. */
-        assert(inputSourcesYesTerminator.empty);
-
-        /* Using Yes.keepTerminator, Yes.lineBuffered. */
-        readSourcesYesTerminator.clear;
-        auto inputSourcesYesTerminatorYesLineBuffered =
-            byLineSourceRange!(Yes.keepTerminator)(inputFiles[0 .. numFiles], Yes.lineBuffered);
-        assert(inputSourcesYesTerminatorYesLineBuffered.length == numFiles);
-
-        foreach(fileNum, source; inputSourcesYesTerminatorYesLineBuffered.enumerate)
-        {
-            readSourcesYesTerminator.put(source);
-            assert(source.isOpen);
-            assert(source._file.isOpen);
-            assert(readSourcesYesTerminator.data[0 .. fileNum].all!(s => !s.isOpen));
-            assert(readSourcesYesTerminator.data[fileNum].isOpen);
-
-            assert(source.byLine.empty || source.byLine.front == fileHeaders[fileNum]);
-
-            assert(source.name == inputFiles[fileNum]);
-            assert(!source.isStdin);
-
-            auto readFileData = appender!(char[]);
-            foreach(line; source.byLine)
-            {
-                readFileData.put(line);
-            }
-
-            assert(readFileData.data == fileData[fileNum]);
-        }
-
-        /* The ByLineSourceRange is a reference range, consumed by the foreach. */
-        assert(inputSourcesYesTerminatorYesLineBuffered.empty);
     }
 
     /* Empty filelist. */

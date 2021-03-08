@@ -63,6 +63,7 @@ runtest ${prog} "-H -s --inorder -n 15 --compatibility-mode input3x10.tsv input3
 runtest ${prog} "-H -s --inorder -n 15 --prefer-algorithm-r input3x10.tsv input3x25.tsv" ${basic_tests_1}
 runtest ${prog} "-H -s --inorder -n 15 --weight-field 3 input3x10.tsv input3x25.tsv" ${basic_tests_1}
 runtest ${prog} "-H -s --inorder -n 15 --weight-field weight input3x10.tsv input3x25.tsv" ${basic_tests_1}
+runtest ${prog} "--line-buffered -H -s --inorder -n 15 --weight-field weight input3x10.tsv input3x25.tsv" ${basic_tests_1}
 
 # Bernoulli sampling
 runtest ${prog} "-H -s --prob 1.0 --print-random input3x10.tsv input3x25.tsv" ${basic_tests_1}
@@ -70,7 +71,9 @@ runtest ${prog} "-H -s -p 0.25 --compatibility-mode input3x10.tsv input3x25.tsv"
 runtest ${prog} "-H -s -p 0.75 -n 5 --compatibility-mode input3x10.tsv input3x25.tsv" ${basic_tests_1}
 runtest ${prog} "-H -s -p 0.02 input4x50.tsv input4x15.tsv" ${basic_tests_1}
 runtest ${prog} "-H -s -p 0.02 --inorder input4x50.tsv input4x15.tsv" ${basic_tests_1}
+runtest ${prog} "--line-buffered -H -s -p 0.02 --inorder input4x50.tsv input4x15.tsv" ${basic_tests_1}
 runtest ${prog} "-s -p 0.02 input4x50.tsv input4x15.tsv" ${basic_tests_1}
+runtest ${prog} "--line-buffered -s -p 0.02 input4x50.tsv input4x15.tsv" ${basic_tests_1}
 
 # Simple random sampling with replacement
 runtest ${prog} "-H -s --replace --compatibility-mode input3x3.tsv --num 5" ${basic_tests_1}
@@ -85,8 +88,10 @@ runtest ${prog} "-H -s -p .25 -k 1,3 input4x50.tsv input4x15.tsv" ${basic_tests_
 runtest ${prog} "-H -s -p .25 -k 1,1 input4x50.tsv input4x15.tsv" ${basic_tests_1}
 runtest ${prog} "-H -s -p .25 --key-fields 1 input4x50.tsv input4x15.tsv" ${basic_tests_1}
 runtest ${prog} "-H -s -p .25 -k 1 -n 5 input4x50.tsv input4x15.tsv" ${basic_tests_1}
+runtest ${prog} "--line-buffered -H -s -p .25 -k 1 -n 5 input4x50.tsv input4x15.tsv" ${basic_tests_1}
 runtest ${prog} "-s -p .25 -k 1,3 input4x50.tsv input4x15.tsv" ${basic_tests_1}
 runtest ${prog} "-s -p .25 -k 3,1 input4x50.tsv input4x15.tsv" ${basic_tests_1}
+runtest ${prog} "--line-buffered -s -p .25 -k 3,1 input4x50.tsv input4x15.tsv" ${basic_tests_1}
 runtest ${prog} "-s -p 1 -k 3,1 input4x50.tsv input4x15.tsv" ${basic_tests_1}
 runtest ${prog} "-H -s -p .2 -k 3 --print-random input4x50.tsv input4x15.tsv" ${basic_tests_1}
 runtest ${prog} "-H -s -p .2 -k 3 --print-random -n 5 input4x50.tsv input4x15.tsv" ${basic_tests_1}

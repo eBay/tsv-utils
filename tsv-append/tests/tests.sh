@@ -2,7 +2,7 @@
 
 ## Most tsv-append testing is done as unit tests. Tests executed by this script are
 ## run against the final executable. This provides a sanity check that the
-## final executable is good. Tests are easy to run in the format, so there is
+## final executable is good. Tests are easy to run in this format, so there is
 ## overlap. However, these tests do not test edge cases as rigorously as unit tests.
 ## Instead, these tests focus on areas that are hard to test in unit tests.
 
@@ -78,6 +78,14 @@ cat input3x2.tsv | ${prog} -H input3x5.tsv -- - >> ${basic_tests_1} 2>&1
 
 echo "" >> ${basic_tests_1}; echo "====[cat input3x2.tsv | tsv-append -H -f standard-input=- -f 3x5=input3x5.tsv ]====" >> ${basic_tests_1}
 cat input3x2.tsv | ${prog} -H -f standard-input=- -f 3x5=input3x5.tsv >> ${basic_tests_1} 2>&1
+
+## line-buffered tests
+runtest ${prog} "--line-buffered input3x2.tsv input3x5.tsv" ${basic_tests_1}
+runtest ${prog} "--line-buffered --header input3x2.tsv input3x5.tsv" ${basic_tests_1}
+runtest ${prog} "--line-buffered -t input3x2.tsv input1x3.tsv input3x5.tsv input1x4.tsv" ${basic_tests_1}
+
+echo "" >> ${basic_tests_1}; echo "====[cat input3x2.tsv | tsv-append --line-buffered -- - input3x5.tsv]====" >> ${basic_tests_1}
+cat input3x2.tsv | ${prog} --line-buffered -- - input3x5.tsv >> ${basic_tests_1} 2>&1
 
 ## Help and Version printing
 

@@ -1704,6 +1704,179 @@ f1	f2	f3	f4	f5
 5	ßßß	SSS	 76	771
 15	7	xyz	9999	8888
 
+==== line-buffered tests===
+
+====[tsv-uniq --line-buffered input1.tsv]====
+f1	f2	f3	f4	f5
+1	ggg	UUU	101	15
+2	bbb	ZZZ	21	28
+3	ggg	CCC	5734	52
+4	ddd	ZZZ	65	602
+5	ßßß	SSS	 7	771
+6	sss	sss	17	15
+7	ssssss	sss	18	16
+8	àbc	P	1209	1234
+9	ÀBC		1367	1331
+10			e-e	1602
+11	0	X	1721	1703
+12	 	 	sp-sp	2020
+13	0.0	Z	1931	1956
+8	ÀBC	p	1209	1234
+14	 	 	sp-sp	2022
+17	0	Z	5734	602
+
+====[tsv-uniq --line-buffered --header input1.tsv]====
+f1	f2	f3	f4	f5
+1	ggg	UUU	101	15
+2	bbb	ZZZ	21	28
+3	ggg	CCC	5734	52
+4	ddd	ZZZ	65	602
+5	ßßß	SSS	 7	771
+6	sss	sss	17	15
+7	ssssss	sss	18	16
+8	àbc	P	1209	1234
+9	ÀBC		1367	1331
+10			e-e	1602
+11	0	X	1721	1703
+12	 	 	sp-sp	2020
+13	0.0	Z	1931	1956
+8	ÀBC	p	1209	1234
+14	 	 	sp-sp	2022
+17	0	Z	5734	602
+
+====[tsv-uniq --line-buffered input1.tsv --fields 1]====
+f1	f2	f3	f4	f5
+1	ggg	UUU	101	15
+2	bbb	ZZZ	21	28
+3	ggg	CCC	5734	52
+4	ddd	ZZZ	65	602
+5	ßßß	SSS	 7	771
+6	sss	sss	17	15
+7	ssssss	sss	18	16
+8	àbc	P	1209	1234
+9	ÀBC		1367	1331
+10			e-e	1602
+11	0	X	1721	1703
+12	 	 	sp-sp	2020
+13	0.0	Z	1931	1956
+14	 	 	sp-sp	2022
+17	0	Z	5734	602
+
+====[tsv-uniq --line-buffered input1.tsv --header -f 2]====
+f1	f2	f3	f4	f5
+1	ggg	UUU	101	15
+2	bbb	ZZZ	21	28
+4	ddd	ZZZ	65	602
+5	ßßß	SSS	 7	771
+6	sss	sss	17	15
+7	ssssss	sss	18	16
+8	àbc	P	1209	1234
+9	ÀBC		1367	1331
+10			e-e	1602
+11	0	X	1721	1703
+12	 	 	sp-sp	2020
+13	0.0	Z	1931	1956
+
+====[tsv-uniq --line-buffered empty-file.txt]====
+
+====[tsv-uniq --line-buffered -H empty-file.txt]====
+
+====[tsv-uniq --line-buffered input1.tsv input2.tsv]====
+f1	f2	f3	f4	f5
+1	ggg	UUU	101	15
+2	bbb	ZZZ	21	28
+3	ggg	CCC	5734	52
+4	ddd	ZZZ	65	602
+5	ßßß	SSS	 7	771
+6	sss	sss	17	15
+7	ssssss	sss	18	16
+8	àbc	P	1209	1234
+9	ÀBC		1367	1331
+10			e-e	1602
+11	0	X	1721	1703
+12	 	 	sp-sp	2020
+13	0.0	Z	1931	1956
+8	ÀBC	p	1209	1234
+14	 	 	sp-sp	2022
+17	0	Z	5734	602
+5	ßßß	SSSa	 7	771
+17	8	str	9997	8886
+5	ßßßz	SSS	 7	771
+16	pqr	uvw	9998	8887
+5	ßßß	SSS	 76	771
+15	7	xyz	9999	8888
+
+====[tsv-uniq --line-buffered --header -f 3,4 input1.tsv input2.tsv]====
+f1	f2	f3	f4	f5
+1	ggg	UUU	101	15
+2	bbb	ZZZ	21	28
+3	ggg	CCC	5734	52
+4	ddd	ZZZ	65	602
+5	ßßß	SSS	 7	771
+6	sss	sss	17	15
+7	ssssss	sss	18	16
+8	àbc	P	1209	1234
+9	ÀBC		1367	1331
+10			e-e	1602
+11	0	X	1721	1703
+12	 	 	sp-sp	2020
+13	0.0	Z	1931	1956
+8	ÀBC	p	1209	1234
+17	0	Z	5734	602
+5	ßßß	SSSa	 7	771
+17	8	str	9997	8886
+16	pqr	uvw	9998	8887
+5	ßßß	SSS	 76	771
+15	7	xyz	9999	8888
+
+====[cat input1.tsv input2.tsv | tsv-uniq --line-buffered]====
+f1	f2	f3	f4	f5
+1	ggg	UUU	101	15
+2	bbb	ZZZ	21	28
+3	ggg	CCC	5734	52
+4	ddd	ZZZ	65	602
+5	ßßß	SSS	 7	771
+6	sss	sss	17	15
+7	ssssss	sss	18	16
+8	àbc	P	1209	1234
+9	ÀBC		1367	1331
+10			e-e	1602
+11	0	X	1721	1703
+12	 	 	sp-sp	2020
+13	0.0	Z	1931	1956
+8	ÀBC	p	1209	1234
+14	 	 	sp-sp	2022
+17	0	Z	5734	602
+5	ßßß	SSSa	 7	771
+17	8	str	9997	8886
+5	ßßßz	SSS	 7	771
+16	pqr	uvw	9998	8887
+5	ßßß	SSS	 76	771
+15	7	xyz	9999	8888
+
+====[cat input1.tsv | tsv-uniq --line-buffered --header -f 3,4 -- - input2.tsv]====
+f1	f2	f3	f4	f5
+1	ggg	UUU	101	15
+2	bbb	ZZZ	21	28
+3	ggg	CCC	5734	52
+4	ddd	ZZZ	65	602
+5	ßßß	SSS	 7	771
+6	sss	sss	17	15
+7	ssssss	sss	18	16
+8	àbc	P	1209	1234
+9	ÀBC		1367	1331
+10			e-e	1602
+11	0	X	1721	1703
+12	 	 	sp-sp	2020
+13	0.0	Z	1931	1956
+8	ÀBC	p	1209	1234
+17	0	Z	5734	602
+5	ßßß	SSSa	 7	771
+17	8	str	9997	8886
+16	pqr	uvw	9998	8887
+5	ßßß	SSS	 76	771
+15	7	xyz	9999	8888
+
 Help and Version printing 1
 -----------------
 

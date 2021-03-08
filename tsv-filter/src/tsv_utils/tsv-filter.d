@@ -1003,8 +1003,8 @@ void tsvFilter(ref TsvFilterOptions cmdopt)
     import std.algorithm : all, any, splitter;
     import std.format : formattedWrite;
     import std.range;
-    import tsv_utils.common.utils : BufferedOutputRange, BufferedOutputRangeDefaults,
-        bufferedByLine, InputSourceRange, LineBuffered, throwIfWindowsNewline;
+    import tsv_utils.common.utils : bufferedByLine, BufferedOutputRange, InputSourceRange,
+        LineBuffered, throwIfWindowsNewline;
 
     /* inputSources must be an InputSourceRange and include at least stdin. */
     assert(!cmdopt.inputSources.empty);
@@ -1013,10 +1013,8 @@ void tsvFilter(ref TsvFilterOptions cmdopt)
     /* BufferedOutputRange improves performance on narrow files with high percentages of
      * writes.
      */
-    immutable size_t flushSize = cmdopt.lineBuffered ?
-        BufferedOutputRangeDefaults.lineBufferedFlushSize :
-        BufferedOutputRangeDefaults.flushSize;
-    auto bufferedOutput = BufferedOutputRange!(typeof(stdout))(stdout, flushSize);
+    immutable LineBuffered isLineBuffered = cmdopt.lineBuffered ? Yes.lineBuffered : No.lineBuffered;
+    auto bufferedOutput = BufferedOutputRange!(typeof(stdout))(stdout, isLineBuffered);
     size_t matchedLines = 0;
 
      /* First header is read during command line argument processing. Immediately
@@ -1033,8 +1031,6 @@ void tsvFilter(ref TsvFilterOptions cmdopt)
     /* Process each input file, one line at a time. */
     immutable size_t fileBodyStartLine = cmdopt.hasHeader ? 2 : 1;
     auto lineFields = new char[][](cmdopt.maxFieldIndex + 1);
-
-    immutable LineBuffered isLineBuffered = cmdopt.lineBuffered ? Yes.lineBuffered : No.lineBuffered;
 
     foreach (inputStream; cmdopt.inputSources)
     {

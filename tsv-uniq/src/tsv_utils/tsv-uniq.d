@@ -116,6 +116,7 @@ struct TsvUniqOptions
     long equivStartID = defaultEquivStartID;  /// --equiv-start
     bool ignoreCase = false;                  /// --i|ignore-case
     char delim = '\t';                        /// --d|delimiter
+    bool lineBuffered = false;                /// --line-buffered
     bool keyIsFullLine = false;               /// Derived. True if no fields specified or '--f|fields 0'
 
     /* Returns a tuple. First value is true if command line arguments were successfully
@@ -181,6 +182,7 @@ struct TsvUniqOptions
                 "z|number",      "              Output equivalence class occurrence counts rather than uniq'ing entries.", &numberMode,
                 "number-header", "STR           Use STR as the '--number' field header (when using '-H --number)'. Default: 'equiv_line'.", &numberHeader,
                 "d|delimiter",   "CHR           Field delimiter. Default: TAB. (Single byte UTF-8 characters only.)", &delim,
+                "line-buffered", "              Immediately output every line.", &lineBuffered,
             );
 
             if (r.helpWanted)
@@ -326,8 +328,8 @@ int main(string[] cmdArgs)
  */
 void tsvUniq(ref TsvUniqOptions cmdopt)
 {
-    import tsv_utils.common.utils : bufferedByLine, BufferedOutputRange,
-        InputFieldReordering, InputSourceRange, joinAppend, throwIfWindowsNewline;
+    import tsv_utils.common.utils : bufferedByLine, BufferedOutputRange, InputFieldReordering,
+        InputSourceRange, joinAppend, LineBuffered, throwIfWindowsNewline;
     import std.algorithm : splitter;
     import std.array : appender;
     import std.conv : to;
@@ -341,8 +343,11 @@ void tsvUniq(ref TsvUniqOptions cmdopt)
     /* InputFieldReordering maps the key fields from an input line to a separate buffer. */
     auto keyFieldsReordering = cmdopt.keyIsFullLine ? null : new InputFieldReordering!char(cmdopt.fields);
 
+    /* Both input and output are read one line at a time when in line-buffered mode. */
+    immutable LineBuffered isLineBuffered = cmdopt.lineBuffered ? Yes.lineBuffered : No.lineBuffered;
+
     /* BufferedOutputRange is a performance enhancement for writing to stdout. */
-    auto bufferedOutput = BufferedOutputRange!(typeof(stdout))(stdout);
+    auto bufferedOutput = BufferedOutputRange!(typeof(stdout))(stdout, isLineBuffered);
 
     /* The master hash. The key is the specified fields concatenated together (including
      * separators). The value is a struct with the equiv-id and occurrence count.
@@ -389,7 +394,11 @@ void tsvUniq(ref TsvUniqOptions cmdopt)
     {
         if (cmdopt.hasHeader) throwIfWindowsNewline(inputStream.header, inputStream.name, 1);
 
-        foreach (lineNum, line; inputStream.file.bufferedByLine.enumerate(fileBodyStartLine))
+        foreach (lineNum, line;
+                 inputStream
+                 .file
+                 .bufferedByLine(isLineBuffered)
+                 .enumerate(fileBodyStartLine))
         {
             if (lineNum == 1) throwIfWindowsNewline(line, inputStream.name, lineNum);
 

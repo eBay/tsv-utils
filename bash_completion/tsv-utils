@@ -73,7 +73,7 @@ _tsv_append()
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
-    opts="--help --help-verbose --version --header --track-source --source-header --file --delimiter"
+    opts="--help --help-verbose --version --header --track-source --source-header --file --delimiter --line-buffered"
 
     # Options requiring an argument or precluding other options
     case $prev in
@@ -124,7 +124,7 @@ _tsv_join()
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
-    opts="--help --help-verbose --help-fields --version --filter-file --key-fields --data-fields --append-fields --header --prefix --write-all --exclude --delimiter --allow-duplicate-keys"
+    opts="--help --help-verbose --help-fields --version --filter-file --key-fields --data-fields --append-fields --header --prefix --write-all --exclude --delimiter --allow-duplicate-keys --line-buffered"
 
     # Options requiring an argument or precluding other options
     # Options requiring a filename argument are handled in their own case match, ie. -f|--filter-file
@@ -181,7 +181,7 @@ _tsv_sample()
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
-    opts="--help --help-verbose --help-fields --version --header --num --prob --weight-field --key-fields --replace --inorder --print-random --gen-random-inorder --compatibility-mode --static-seed --seed-value --delimiter --prefer-skip-sampling --prefer-algorithm-r"
+    opts="--help --help-verbose --help-fields --version --header --num --prob --weight-field --key-fields --replace --inorder --print-random --gen-random-inorder --compatibility-mode --static-seed --seed-value --delimiter --line-buffered --prefer-skip-sampling --prefer-algorithm-r"
 
     # Options requiring an argument or precluding other options
     case $prev in
@@ -286,7 +286,7 @@ _tsv_uniq()
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
-    opts="--help --help-verbose --help-fields --version --header --fields --ignore-case --repeated --at-least --max --number --equiv --equiv-header --equiv-start --delimiter"
+    opts="--help --help-verbose --help-fields --version --header --fields --ignore-case --repeated --at-least --max --number --equiv --equiv-header --equiv-start --delimiter --line-buffered"
 
     # Options requiring an argument or precluding other options
     case $prev in
