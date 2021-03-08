@@ -286,7 +286,7 @@ _tsv_uniq()
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
-    opts="--help --help-verbose --help-fields --version --header --fields --ignore-case --repeated --at-least --max --number --equiv --equiv-header --equiv-start --delimiter"
+    opts="--help --help-verbose --help-fields --version --header --fields --ignore-case --repeated --at-least --max --number --equiv --equiv-header --equiv-start --delimiter --line-buffered"
 
     # Options requiring an argument or precluding other options
     case $prev in

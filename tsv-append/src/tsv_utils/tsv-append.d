@@ -28,7 +28,7 @@ else
      */
     int main(string[] cmdArgs)
     {
-        import tsv_utils.common.utils : BufferedOutputRange, BufferedOutputRangeDefaults;
+        import tsv_utils.common.utils : BufferedOutputRange, LineBuffered;
 
         /* When running in DMD code coverage mode, turn on report merging. */
         version(D_Coverage) version(DigitalMars)
@@ -41,11 +41,9 @@ else
         auto r = cmdopt.processArgs(cmdArgs);
         if (!r[0]) return r[1];
 
-        immutable size_t flushSize = cmdopt.lineBuffered ?
-            BufferedOutputRangeDefaults.lineBufferedFlushSize :
-            BufferedOutputRangeDefaults.flushSize;
+        immutable LineBuffered linebuffered = cmdopt.lineBuffered ? Yes.lineBuffered : No.lineBuffered;
 
-        try tsvAppend(cmdopt, BufferedOutputRange!(typeof(stdout))(stdout, flushSize));
+        try tsvAppend(cmdopt, BufferedOutputRange!(typeof(stdout))(stdout, linebuffered));
         catch (Exception exc)
         {
             stderr.writefln("Error [%s]: %s", cmdopt.programName, exc.msg);

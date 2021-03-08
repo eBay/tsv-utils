@@ -449,7 +449,7 @@ enum RestLocation { none, first, last };
 
 void tsvSelect(RestLocation rest)(ref TsvSelectOptions cmdopt)
 {
-    import tsv_utils.common.utils: BufferedOutputRange, BufferedOutputRangeDefaults,
+    import tsv_utils.common.utils: BufferedOutputRange,
         ByLineSourceRange, InputFieldReordering, LineBuffered, throwIfWindowsNewline;
     import std.algorithm: splitter;
     import std.array : appender, Appender;
@@ -494,10 +494,8 @@ void tsvSelect(RestLocation rest)(ref TsvSelectOptions cmdopt)
     /* BufferedOutputRange (from common/utils.d) is a performance improvement over
      * writing directly to stdout.
      */
-    immutable size_t flushSize = cmdopt.lineBuffered ?
-        BufferedOutputRangeDefaults.lineBufferedFlushSize :
-        BufferedOutputRangeDefaults.flushSize;
-    auto bufferedOutput = BufferedOutputRange!(typeof(stdout))(stdout, flushSize);
+    immutable LineBuffered isLineBuffered = cmdopt.lineBuffered ? Yes.lineBuffered : No.lineBuffered;
+    auto bufferedOutput = BufferedOutputRange!(typeof(stdout))(stdout, isLineBuffered);
 
     /* Read each input file (or stdin) and iterate over each line.
      */

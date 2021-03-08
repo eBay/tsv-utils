@@ -133,18 +133,15 @@ void numberLines(const NumberLinesOptions cmdopt, const string[] inputFiles)
 {
     import std.conv : to;
     import std.range;
-    import tsv_utils.common.utils : BufferedOutputRange, BufferedOutputRangeDefaults,
-        bufferedByLine, LineBuffered, ReadHeader;
+    import tsv_utils.common.utils : bufferedByLine, BufferedOutputRange, LineBuffered, ReadHeader;
 
-    immutable size_t flushSize = cmdopt.lineBuffered ?
-        BufferedOutputRangeDefaults.lineBufferedFlushSize :
-        BufferedOutputRangeDefaults.flushSize;
-    auto bufferedOutput = BufferedOutputRange!(typeof(stdout))(stdout, flushSize);
+    immutable LineBuffered isLineBuffered = cmdopt.lineBuffered ? Yes.lineBuffered : No.lineBuffered;
+    immutable ReadHeader useReadHeader = cmdopt.hasHeader ? Yes.readHeader : No.readHeader;
+
+    auto bufferedOutput = BufferedOutputRange!(typeof(stdout))(stdout, isLineBuffered);
 
     long lineNum = cmdopt.startNum;
     bool headerWritten = false;
-    immutable LineBuffered isLineBuffered = cmdopt.lineBuffered ? Yes.lineBuffered : No.lineBuffered;
-    immutable ReadHeader useReadHeader = cmdopt.hasHeader ? Yes.readHeader : No.readHeader;
 
     foreach (filename; (inputFiles.length > 0) ? inputFiles : ["-"])
     {

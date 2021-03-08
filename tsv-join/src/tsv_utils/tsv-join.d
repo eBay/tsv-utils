@@ -404,9 +404,9 @@ int main(string[] cmdArgs)
  */
 void tsvJoin(ref TsvJoinOptions cmdopt)
 {
-    import tsv_utils.common.utils : ByLineSourceRange, bufferedByLine, BufferedOutputRange,
-        BufferedOutputRangeDefaults, isFlushableOutputRange, InputFieldReordering,
-        InputSourceRange, LineBuffered, throwIfWindowsNewline;
+    import tsv_utils.common.utils : bufferedByLine, BufferedOutputRange, ByLineSourceRange,
+        InputFieldReordering, InputSourceRange, isFlushableOutputRange, LineBuffered,
+        throwIfWindowsNewline;
     import std.algorithm : splitter;
     import std.array : join;
     import std.range;
@@ -476,10 +476,8 @@ void tsvJoin(ref TsvJoinOptions cmdopt)
     /* Buffered output range for the final output. Setup here because the header line
      * (if any) gets written while reading the filter file.
      */
-    immutable size_t flushSize = cmdopt.lineBuffered ?
-        BufferedOutputRangeDefaults.lineBufferedFlushSize :
-        BufferedOutputRangeDefaults.flushSize;
-    auto bufferedOutput = BufferedOutputRange!(typeof(stdout))(stdout, flushSize);
+    immutable LineBuffered isLineBuffered = cmdopt.lineBuffered ? Yes.lineBuffered : No.lineBuffered;
+    auto bufferedOutput = BufferedOutputRange!(typeof(stdout))(stdout, isLineBuffered);
 
     /* Read the filter file. */
     {
@@ -579,7 +577,6 @@ void tsvJoin(ref TsvJoinOptions cmdopt)
     /* Now process each input file, one line at a time. */
 
     immutable size_t fileBodyStartLine = cmdopt.hasHeader ? 2 : 1;
-    immutable LineBuffered isLineBuffered = cmdopt.lineBuffered ? Yes.lineBuffered : No.lineBuffered;
 
     foreach (inputStream; cmdopt.inputSources)
     {

@@ -392,6 +392,17 @@ if (isSomeChar!C)
     }
 }
 
+/** Flag accepted by input buffering ranges to indicate if data should be read using
+line buffering. Input is read as soon as lines are available when line buffered mode
+is used.
+ */
+alias LineBuffered = Flag!"lineBuffered";
+
+/** Flag accepted by input buffering ranges to indicate if the header line should be
+read when opening a file.
+*/
+alias ReadHeader = Flag!"readHeader";
+
 /**
 BufferedOutputRangeDefaults defines the parameter defaults used by
 BufferedOutputRange. These can be passed to the BufferedOutputRange
@@ -424,12 +435,22 @@ Use flush() to flush both the internal buffer and the output stream. Specify flu
 as BufferedOutputRangeDefaults.lineBufferedFlushSize in the constructor to get line
 buffering with immediate flushes to the output stream.
 
-BufferedOutputRange has a put method allowing it to be used a range. It has a number
-of other methods providing additional control.
+The output stream type must be provided as a template argument during construction. E.g.
+```
+    auto bufferedOutput = BufferedOutputRange!(typeof(stdout))(stdout)
+```
+
+BufferedOutputRange has a put method allowing it to be used an output range. It has a
+number of other methods providing additional control.
+
+Methods:
 
 $(LIST
     * `this(outputStream [, flushSize, reserveSize, maxSize])` - Constructor. Takes the
       output stream, e.g. stdout. Other arguments are optional, defaults normally suffice.
+
+    * `this(outputStream, LineBuffered)` - Alternate constructor for turning line-buffered
+      mode on.
 
     * `append(stuff)` - Append to the internal buffer.
 
@@ -442,7 +463,7 @@ $(LIST
     * `joinAppend(inputRange, delim)` - An optimization of `append(inputRange.joiner(delim))`.
       For reasons that are not clear, joiner is quite slow.
 
-    * `flush()` - Write the internal buffer to the output stream and flush the output stream.
+    * `flush()` - Writes the internal buffer to the output stream and flush the output stream.
 
     * `put(stuff)` - Appends to the internal buffer. Acts as `appendln()` if passed a single
       newline character, '\n' or "\n".
@@ -475,6 +496,10 @@ if (isFileHandle!(Unqual!OutputTarget) || isOutputRange!(Unqual!OutputTarget, ch
     private immutable size_t _flushSize;
     private immutable size_t _maxSize;
 
+    /** Constructor. Takes the output stream, e.g. stdout. Optional arguments control
+     *  buffering behavior, defaults normally suffice. The defaults are available from
+     *  the `BufferedOutputRangeDefault` enum.
+     */
     this(OutputTarget outputTarget,
          size_t flushSize = BufferedOutputRangeDefaults.flushSize,
          size_t reserveSize = BufferedOutputRangeDefaults.reserveSize,
@@ -486,6 +511,18 @@ if (isFileHandle!(Unqual!OutputTarget) || isOutputRange!(Unqual!OutputTarget, ch
         _flushSize = flushSize;
         _maxSize = (flushSize <= maxSize) ? maxSize : flushSize;
         _outputBuffer.reserve(reserveSize);
+    }
+
+    /** Alternate constuctor used to turn line-buffered mode on. Use Yes.lineBuffered
+     *  to enable. Lines are flushed at newline boundaries when in line-buffered mode.
+     */
+    this(OutputTarget outputTarget, LineBuffered lineBuffered)
+    {
+        immutable size_t flushSize = lineBuffered ?
+            BufferedOutputRangeDefaults.lineBufferedFlushSize :
+            BufferedOutputRangeDefaults.flushSize;
+
+        this(outputTarget, flushSize);
     }
 
     ~this()
@@ -509,6 +546,8 @@ if (isFileHandle!(Unqual!OutputTarget) || isOutputRange!(Unqual!OutputTarget, ch
         _outputBuffer.clear;
     }
 
+    /**  Writes the internal buffer to the output stream and flush the output stream.
+     */
     void flush()
     {
         flushBuffer();
@@ -550,25 +589,34 @@ if (isFileHandle!(Unqual!OutputTarget) || isOutputRange!(Unqual!OutputTarget, ch
         rangePut(_outputBuffer, stuff);
     }
 
+    /** Appends data to the output buffer. The output buffer is flushed if the appended
+     *  data ends in a newline if the output buffer has reached `flushSize`.
+     */
     void append(T)(T stuff)
     {
         appendRaw(stuff);
         maybeFlush();
     }
 
+    /** Appends a newline to the output buffer. The output buffer is flushed if it has
+     *  reached `flushSize`.
+     */
     bool appendln()
     {
         appendRaw('\n');
         return flushIfFull();
     }
 
+    /** Appends data plus a newline to the output buffer. The output buffer is flushed
+     *  if it has reached `flushSize`.
+     */
     bool appendln(T)(T stuff)
     {
         appendRaw(stuff);
         return appendln();
     }
 
-    /* joinAppend is an optimization of append(inputRange.joiner(delimiter).
+    /** joinAppend is an optimization of append(inputRange.joiner(delimiter).
      * This form is quite a bit faster, 40%+ on some benchmarks.
      */
     void joinAppend(InputRange, E)(InputRange inputRange, E delimiter)
@@ -589,7 +637,9 @@ if (isFileHandle!(Unqual!OutputTarget) || isOutputRange!(Unqual!OutputTarget, ch
         flushIfMaxSize();
     }
 
-    /* Make this an output range. */
+    /** The `put` method makes BufferOutputRange an OutputRange. It operates similarly
+     *  to `append`.
+     */
     void put(T)(T stuff)
     {
         import std.traits;
@@ -638,7 +688,7 @@ unittest
     }
     assert(filepath1.readText == "file1: abcdefghijkl100\n0 1 2 3 4 5 6 7 8 9\n");
 
-    /* Test with no reserve and no flush at every line. */
+    /* Test with no reserve and flush at every line. */
     string filepath2 = buildPath(testDir, "file2.txt");
     {
         import std.stdio : File;
@@ -650,8 +700,45 @@ unittest
         ostream.appendln("100");
         ostream.append(iota(0, 10).map!(x => x.to!string).joiner(" "));
         ostream.appendln();
+        ostream.appendln("X");
     }
-    assert(filepath2.readText == "file2: abcdefghijkl100\n0 1 2 3 4 5 6 7 8 9\n");
+    assert(filepath2.readText == "file2: abcdefghijkl100\n0 1 2 3 4 5 6 7 8 9\nX\n");
+
+    /* Test default line-buffered mode (flush at every line). */
+    string filepath2a = buildPath(testDir, "file2a.txt");
+    {
+        import std.stdio : File;
+
+        auto ostream = BufferedOutputRange!File(
+            filepath2a.File("wb"), BufferedOutputRangeDefaults.lineBufferedFlushSize);
+        ostream.append("file2a: ");
+        ostream.append("abc");
+        ostream.append(["def", "ghi", "jkl"]);
+        ostream.appendln("100");
+        ostream.append(iota(0, 10).map!(x => x.to!string).joiner(" "));
+        ostream.appendln();
+        ostream.appendln("X");
+    }
+    assert(filepath2a.readText == "file2a: abcdefghijkl100\n0 1 2 3 4 5 6 7 8 9\nX\n");
+
+    /* Test the alternate constructor. */
+    static foreach (isLineBuffered; [Yes.lineBuffered, No.lineBuffered])
+    {{
+        string filepath2b = buildPath(testDir, "file2b.txt");
+        {
+            import std.stdio : File;
+
+            auto ostream = BufferedOutputRange!File(filepath2b.File("wb"), isLineBuffered);
+            ostream.append("file2b: ");
+            ostream.append("abc");
+            ostream.append(["def", "ghi", "jkl"]);
+            ostream.appendln("100");
+            ostream.append(iota(0, 10).map!(x => x.to!string).joiner(" "));
+            ostream.appendln();
+            ostream.appendln("X");
+        }
+        assert(filepath2b.readText == "file2b: abcdefghijkl100\n0 1 2 3 4 5 6 7 8 9\nX\n");
+    }}
 
     /* With a locking text writer. Requires version 2.078.0
        See: https://issues.dlang.org/show_bug.cgi?id=9661
@@ -850,17 +937,6 @@ enum bool isFlushableOutputRange(R, E=char) = isOutputRange!(R, E)
     static assert(isFlushableOutputRange!(BufferedOutputRange!(Appender!(char[]))));
     static assert(isFlushableOutputRange!(BufferedOutputRange!(Appender!(char[])), char));
 }
-
-/** Flag accepted by input buffering ranges to indicate if data should be read using
-line buffering. Input is read as soon as lines are available when line buffered mode
-is used.
- */
-alias LineBuffered = Flag!"lineBuffered";
-
-/** Flag accepted by input buffering ranges to indicate if the header line should be
-read when opening a file.
-*/
-alias ReadHeader = Flag!"readHeader";
 
 /**
 bufferedByLine is a performance enhancement over std.stdio.File.byLine. It works by

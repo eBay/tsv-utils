@@ -168,6 +168,23 @@ cat input1.tsv | ${prog} --header -f 3,4 -- - input2.tsv >> ${basic_tests_1} 2>&
 echo "" >> ${basic_tests_1}; echo "====[cat input1.tsv | tsv-uniq --header -f 3,f4 -- - input2.tsv]====" >> ${basic_tests_1}
 cat input1.tsv | ${prog} --header -f 3,f4 -- - input2.tsv >> ${basic_tests_1} 2>&1
 
+## line-buffered tests
+echo "" >> ${basic_tests_1}; echo "==== line-buffered tests===" >> ${basic_tests_1}
+runtest ${prog} "--line-buffered input1.tsv" ${basic_tests_1}
+runtest ${prog} "--line-buffered --header input1.tsv" ${basic_tests_1}
+runtest ${prog} "--line-buffered input1.tsv --fields 1" ${basic_tests_1}
+runtest ${prog} "--line-buffered input1.tsv --header -f 2" ${basic_tests_1}
+runtest ${prog} "--line-buffered empty-file.txt" ${basic_tests_1}
+runtest ${prog} "--line-buffered -H empty-file.txt" ${basic_tests_1}
+runtest ${prog} "--line-buffered input1.tsv input2.tsv" ${basic_tests_1}
+runtest ${prog} "--line-buffered --header -f 3,4 input1.tsv input2.tsv" ${basic_tests_1}
+
+echo "" >> ${basic_tests_1}; echo "====[cat input1.tsv input2.tsv | tsv-uniq --line-buffered]====" >> ${basic_tests_1}
+cat input1.tsv input2.tsv | ${prog} --line-buffered >> ${basic_tests_1} 2>&1
+
+echo "" >> ${basic_tests_1}; echo "====[cat input1.tsv | tsv-uniq --line-buffered --header -f 3,4 -- - input2.tsv]====" >> ${basic_tests_1}
+cat input1.tsv | ${prog} --line-buffered --header -f 3,4 -- - input2.tsv >> ${basic_tests_1} 2>&1
+
 ## Help and Version printing
 
 echo "" >> ${basic_tests_1}
