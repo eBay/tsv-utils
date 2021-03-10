@@ -583,7 +583,11 @@ if (isFileHandle!(Unqual!OutputTarget) || isOutputRange!(Unqual!OutputTarget, ch
         return doFlush;
     }
 
-    private void appendRaw(T)(T stuff) pure
+    /** Appends data to the output buffer without checking for flush conditions. This
+     * is intended for cases where an `appendln` or `append` ending in newline will
+     * shortly follow.
+     */
+    void appendRaw(T)(T stuff) pure
     {
         import std.range : rangePut = put;
         rangePut(_outputBuffer, stuff);
