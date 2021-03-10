@@ -587,7 +587,7 @@ if (isFileHandle!(Unqual!OutputTarget) || isOutputRange!(Unqual!OutputTarget, ch
      * is intended for cases where an `appendln` or `append` ending in newline will
      * shortly follow.
      */
-    void appendRaw(T)(T stuff) pure
+    private void appendRaw(T)(T stuff) pure
     {
         import std.range : rangePut = put;
         rangePut(_outputBuffer, stuff);
@@ -614,9 +614,9 @@ if (isFileHandle!(Unqual!OutputTarget) || isOutputRange!(Unqual!OutputTarget, ch
     /** Appends data plus a newline to the output buffer. The output buffer is flushed
      *  if it has reached `flushSize`.
      */
-    bool appendln(T)(T stuff)
+    bool appendln(T)(T[] stuff...)
     {
-        appendRaw(stuff);
+        foreach (x; stuff) appendRaw(x);
         return appendln();
     }
 
@@ -689,8 +689,10 @@ unittest
         ostream.appendln(100.to!string);
         ostream.append(iota(0, 10).map!(x => x.to!string).joiner(" "));
         ostream.appendln();
+        ostream.appendln("P", "QR");
+        ostream.appendln('S', 'T', 'U');
     }
-    assert(filepath1.readText == "file1: abcdefghijkl100\n0 1 2 3 4 5 6 7 8 9\n");
+    assert(filepath1.readText == "file1: abcdefghijkl100\n0 1 2 3 4 5 6 7 8 9\nPQR\nSTU\n");
 
     /* Test with no reserve and flush at every line. */
     string filepath2 = buildPath(testDir, "file2.txt");

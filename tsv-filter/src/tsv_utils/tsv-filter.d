@@ -881,7 +881,7 @@ struct TsvFilterOptions
 
             labelValuesOptionUsed = true;
             trueLabel = valSplit[0];
-            falseLabel = valSplit[1];
+            falseLabel = valSplit[2];
         }
 
         try
@@ -1072,6 +1072,8 @@ void tsvFilter(ref TsvFilterOptions cmdopt)
     assert(!cmdopt.inputSources.empty);
     static assert(is(typeof(cmdopt.inputSources) == InputSourceRange));
 
+    immutable string delimString = cmdopt.delim.to!string;
+
     /* BufferedOutputRange improves performance on narrow files with high percentages of
      * writes.
      */
@@ -1086,17 +1088,10 @@ void tsvFilter(ref TsvFilterOptions cmdopt)
     if (cmdopt.hasHeader && !cmdopt.inputSources.front.isHeaderEmpty && !cmdopt.countMatches)
     {
         auto inputStream = cmdopt.inputSources.front;
-        if (cmdopt.isLabeling)
-        {
-            bufferedOutput.appendRaw(inputStream.header);
-            bufferedOutput.appendRaw(cmdopt.delim);
-            bufferedOutput.appendRaw(cmdopt.label);
-            bufferedOutput.appendln;
-        }
-        else
-        {
-            bufferedOutput.appendln(inputStream.header);
-        }
+
+        if (cmdopt.isLabeling) bufferedOutput.appendln(inputStream.header, delimString, cmdopt.label);
+        else bufferedOutput.appendln(inputStream.header);
+
         bufferedOutput.flush;
     }
 
@@ -1153,10 +1148,8 @@ void tsvFilter(ref TsvFilterOptions cmdopt)
                 }
                 else if (cmdopt.isLabeling)
                 {
-                    bufferedOutput.appendRaw(line);
-                    bufferedOutput.appendRaw(cmdopt.delim);
-                    bufferedOutput.appendRaw(passed ? cmdopt.trueLabel : cmdopt.falseLabel);
-                    bufferedOutput.appendln;
+                    immutable label = passed ? cmdopt.trueLabel : cmdopt.falseLabel;
+                    bufferedOutput.appendln(line, delimString, label);
                 }
                 else if (passed)
                 {

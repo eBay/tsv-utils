@@ -101,4 +101,15 @@ $prog profile_data_4.tsv -H --is-numeric 3 > /dev/null
 $prog profile_data_4.tsv -H --is-nan 3 > /dev/null
 $prog profile_data_4.tsv -H --is-finite 3 --le 3:30 > /dev/null
 
+## Include some cases of counting and labeling
+$prog profile_data_1.tsv --count -H --ge rRr:0 > /dev/null
+$prog profile_data_1.tsv --count -H --le cccc:0 > /dev/null
+$prog profile_data_1.tsv --label jjj_abs_gt2 -H --or --lt jjj:-2 --gt jjj:2 > /dev/null
+$prog profile_data_2.tsv --label any --ne 2:647 --ne 2:646 --str-not-in-fld 3:5 > /dev/null
+$prog profile_data_3.tsv --count -H --regex 3:'[^ ]+ [^ ]+ [^ ]' > /dev/null
+$prog profile_data_3.tsv --count -H --or --str-eq 1:rouge --str-in-fld 5:Lion > /dev/null
+$prog profile_data_3.tsv --count -H > /dev/null
+$prog profile_data_3.tsv --label f6_le_f7 --label-values Yes:No -H --ff-le 6:7 > /dev/null
+
+
 ${ldc_profdata_tool} merge -o app.profdata profile.*.raw
