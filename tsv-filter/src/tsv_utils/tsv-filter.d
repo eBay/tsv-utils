@@ -1084,11 +1084,6 @@ void tsvFilter(FilterMode mode)(ref TsvFilterOptions cmdopt)
     assert(!cmdopt.inputSources.empty);
     static assert(is(typeof(cmdopt.inputSources) == InputSourceRange));
 
-    static if (mode == FilterMode.label)
-    {
-        immutable string delimString = cmdopt.delim.to!string;
-    }
-
     /* BufferedOutputRange improves performance on narrow files with high percentages of
      * writes.
      */
@@ -1118,7 +1113,7 @@ void tsvFilter(FilterMode mode)(ref TsvFilterOptions cmdopt)
 
             static if (mode == FilterMode.label)
             {
-                bufferedOutput.appendln(inputStream.header, delimString, cmdopt.label);
+                bufferedOutput.appendln(inputStream.header, cmdopt.delim, cmdopt.label);
             }
             else
             {
@@ -1129,9 +1124,12 @@ void tsvFilter(FilterMode mode)(ref TsvFilterOptions cmdopt)
         }
     }
 
+    immutable size_t fieldIndexEnd = cmdopt.tests.empty ? 0 : cmdopt.maxFieldIndex + 1;
+
     /* Process each input file, one line at a time. */
+    immutable size_t numTests = cmdopt.tests.length;
     immutable size_t fileBodyStartLine = cmdopt.hasHeader ? 2 : 1;
-    auto lineFields = new char[][](cmdopt.maxFieldIndex + 1);
+    auto lineFields = new char[][](fieldIndexEnd);
 
     foreach (inputStream; cmdopt.inputSources)
     {
@@ -1142,15 +1140,15 @@ void tsvFilter(FilterMode mode)(ref TsvFilterOptions cmdopt)
             if (lineNum == 1) throwIfWindowsNewline(line, inputStream.name, lineNum);
 
             /* Copy the needed number of fields to the fields array. */
-            long fieldIndex = -1;
-            foreach (fieldValue; line.splitter(cmdopt.delim))
+            size_t fieldIndex = 0;
+
+            foreach (fieldValue; line.splitter(cmdopt.delim).take(fieldIndexEnd))
             {
-                if (fieldIndex == cast(long) cmdopt.maxFieldIndex) break;
-                fieldIndex++;
                 lineFields[fieldIndex] = fieldValue;
+                fieldIndex++;
             }
 
-            if (fieldIndex == -1)
+            if (fieldIndex == 0 && fieldIndexEnd != 0)
             {
                 assert(line.length == 0);
                 /* Bug work-around. Currently empty lines are not handled properly by splitter.
@@ -1158,11 +1156,11 @@ void tsvFilter(FilterMode mode)(ref TsvFilterOptions cmdopt)
                  *   Pull Request: https://github.com/D-Programming-Language/phobos/pull/4030
                  * Work-around: Point to the line. It's an empty string.
                  */
-                fieldIndex++;
                 lineFields[fieldIndex] = line;
+                fieldIndex++;
             }
 
-            enforce(fieldIndex >= cast(long) cmdopt.maxFieldIndex,
+            enforce(fieldIndex == cast(long) fieldIndexEnd,
                     format("Not enough fields in line. File: %s, Line: %s",
                            inputStream.name, lineNum));
 
@@ -1182,7 +1180,7 @@ void tsvFilter(FilterMode mode)(ref TsvFilterOptions cmdopt)
                 }
                 else static if (mode == FilterMode.label)
                 {
-                    bufferedOutput.appendln(line, delimString,
+                    bufferedOutput.appendln(line, cmdopt.delim,
                                             passed ? cmdopt.trueLabel : cmdopt.falseLabel);
                 }
                 else

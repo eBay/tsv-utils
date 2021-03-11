@@ -372,17 +372,8 @@ void tsvUniq(ref TsvUniqOptions cmdopt)
 
         bufferedOutput.append(inputStream.header);
 
-        if (cmdopt.equivMode)
-        {
-            bufferedOutput.append(cmdopt.delim);
-            bufferedOutput.append(cmdopt.equivHeader);
-        }
-
-        if (cmdopt.numberMode)
-        {
-            bufferedOutput.append(cmdopt.delim);
-            bufferedOutput.append(cmdopt.numberHeader);
-        }
+        if (cmdopt.equivMode) bufferedOutput.append(cmdopt.delim, cmdopt.equivHeader);
+        if (cmdopt.numberMode) bufferedOutput.append(cmdopt.delim, cmdopt.numberHeader);
 
         bufferedOutput.appendln();
         bufferedOutput.flush();
@@ -474,14 +465,12 @@ void tsvUniq(ref TsvUniqOptions cmdopt)
 
                 if (cmdopt.equivMode)
                 {
-                    bufferedOutput.append(cmdopt.delim);
-                    bufferedOutput.append(currEntry.equivID.to!string);
+                    bufferedOutput.append(cmdopt.delim, currEntry.equivID.to!string);
                 }
 
                 if (cmdopt.numberMode)
                 {
-                    bufferedOutput.append(cmdopt.delim);
-                    bufferedOutput.append(currEntry.count.to!string);
+                    bufferedOutput.append(cmdopt.delim, currEntry.count.to!string);
                 }
 
                 bufferedOutput.appendln();

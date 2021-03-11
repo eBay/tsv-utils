@@ -587,37 +587,29 @@ if (isFileHandle!(Unqual!OutputTarget) || isOutputRange!(Unqual!OutputTarget, ch
      * is intended for cases where an `appendln` or `append` ending in newline will
      * shortly follow.
      */
-    private void appendRaw(T)(const T stuff) pure
+    private void appendRaw(T)(T stuff) pure
     {
         import std.range : rangePut = put;
         rangePut(_outputBuffer, stuff);
     }
 
     /** Appends data to the output buffer. The output buffer is flushed if the appended
-     *  data ends in a newline if the output buffer has reached `flushSize`.
+     *  data ends in a newline and the output buffer has reached `flushSize`.
      */
-    void append(T)(const T stuff)
+    void append(T...)(T stuff)
     {
-        appendRaw(stuff);
+        foreach (x; stuff) appendRaw(x);
         maybeFlush();
-    }
-
-    /** Appends a newline to the output buffer. The output buffer is flushed if it has
-     *  reached `flushSize`.
-     */
-    bool appendln()
-    {
-        appendRaw('\n');
-        return flushIfFull();
     }
 
     /** Appends data plus a newline to the output buffer. The output buffer is flushed
      *  if it has reached `flushSize`.
      */
-    bool appendln(T)(const T[] stuff...)
+    bool appendln(T...)(T stuff)
     {
-        foreach (const x; stuff) appendRaw(x);
-        return appendln();
+        foreach (x; stuff) appendRaw(x);
+        appendRaw('\n');
+        return flushIfFull();
     }
 
     /** joinAppend is an optimization of append(inputRange.joiner(delimiter).
@@ -644,7 +636,7 @@ if (isFileHandle!(Unqual!OutputTarget) || isOutputRange!(Unqual!OutputTarget, ch
     /** The `put` method makes BufferOutputRange an OutputRange. It operates similarly
      *  to `append`.
      */
-    void put(T)(const T stuff)
+    void put(T)(T stuff)
     {
         import std.traits;
         import std.stdio;
@@ -689,10 +681,14 @@ unittest
         ostream.appendln(100.to!string);
         ostream.append(iota(0, 10).map!(x => x.to!string).joiner(" "));
         ostream.appendln();
-        ostream.appendln("P", "QR");
-        ostream.appendln('S', 'T', 'U');
+        ostream.appendln('A');
+        ostream.appendln("B", "CD");
+        ostream.appendln('E', "FG", 'H');
+        ostream.appendln('I', "JK", 'L', "M");
+        ostream.append('N', "O");
+        ostream.append('P', "QR", "STU\n");
     }
-    assert(filepath1.readText == "file1: abcdefghijkl100\n0 1 2 3 4 5 6 7 8 9\nPQR\nSTU\n");
+    assert(filepath1.readText == "file1: abcdefghijkl100\n0 1 2 3 4 5 6 7 8 9\nA\nBCD\nEFGH\nIJKLM\nNOPQRSTU\n");
 
     /* Test with no reserve and flush at every line. */
     string filepath2 = buildPath(testDir, "file2.txt");

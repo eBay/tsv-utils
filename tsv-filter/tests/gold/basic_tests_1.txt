@@ -207,6 +207,251 @@ F1	F2	F3	F4
 ====[tsv-filter -c --not-empty 1 input1_noheader.tsv ]====
 15
 
+====Label tests===
+
+====[tsv-filter --label Pass --header --eq 2:1 input1.tsv]====
+F1	F2	F3	F4	Pass
+1	1.0	a	A	1
+2	2.	b	B	0
+10	10.1	abc	ABC	0
+100	100	abc	AbC	0
+0	0.0	z	AzB	0
+-1	-0.1	abc def	abc def	0
+-2	-2.0	ß	ss	0
+0.	100.	àbc	ÀBC	0
+0.0	100.0	àßc	ÀssC	0
+-0.0	-100.0	àßc	ÀSSC	0
+100	100		AbC	0
+100	100	abc		0
+100	101			0
+100	102	abc	AbC	0
+100	103	abc	AbC	0
+
+====[tsv-filter --label PASS --header --le 2:101 input1.tsv]====
+F1	F2	F3	F4	PASS
+1	1.0	a	A	1
+2	2.	b	B	1
+10	10.1	abc	ABC	1
+100	100	abc	AbC	1
+0	0.0	z	AzB	1
+-1	-0.1	abc def	abc def	1
+-2	-2.0	ß	ss	1
+0.	100.	àbc	ÀBC	1
+0.0	100.0	àßc	ÀssC	1
+-0.0	-100.0	àßc	ÀSSC	1
+100	100		AbC	1
+100	100	abc		1
+100	101			1
+100	102	abc	AbC	0
+100	103	abc	AbC	0
+
+====[tsv-filter --label X -H --empty F1 input1.tsv]====
+F1	F2	F3	F4	X
+1	1.0	a	A	0
+2	2.	b	B	0
+10	10.1	abc	ABC	0
+100	100	abc	AbC	0
+0	0.0	z	AzB	0
+-1	-0.1	abc def	abc def	0
+-2	-2.0	ß	ss	0
+0.	100.	àbc	ÀBC	0
+0.0	100.0	àßc	ÀssC	0
+-0.0	-100.0	àßc	ÀSSC	0
+100	100		AbC	0
+100	100	abc		0
+100	101			0
+100	102	abc	AbC	0
+100	103	abc	AbC	0
+
+====[tsv-filter --label Pass --eq 2:1 input1_noheader.tsv]====
+1	1.0	a	A	1
+2	2.	b	B	0
+10	10.1	abc	ABC	0
+100	100	abc	AbC	0
+0	0.0	z	AzB	0
+-1	-0.1	abc def	abc def	0
+-2	-2.0	ß	ss	0
+0.	100.	àbc	ÀBC	0
+0.0	100.0	àßc	ÀssC	0
+-0.0	-100.0	àßc	ÀSSC	0
+100	100		AbC	0
+100	100	abc		0
+100	101			0
+100	102	abc	AbC	0
+100	103	abc	AbC	0
+
+====[tsv-filter --label PASS --le 2:101 input1_noheader.tsv]====
+1	1.0	a	A	1
+2	2.	b	B	1
+10	10.1	abc	ABC	1
+100	100	abc	AbC	1
+0	0.0	z	AzB	1
+-1	-0.1	abc def	abc def	1
+-2	-2.0	ß	ss	1
+0.	100.	àbc	ÀBC	1
+0.0	100.0	àßc	ÀssC	1
+-0.0	-100.0	àßc	ÀSSC	1
+100	100		AbC	1
+100	100	abc		1
+100	101			1
+100	102	abc	AbC	0
+100	103	abc	AbC	0
+
+====[tsv-filter --label X --empty 1 input1_noheader.tsv]====
+1	1.0	a	A	0
+2	2.	b	B	0
+10	10.1	abc	ABC	0
+100	100	abc	AbC	0
+0	0.0	z	AzB	0
+-1	-0.1	abc def	abc def	0
+-2	-2.0	ß	ss	0
+0.	100.	àbc	ÀBC	0
+0.0	100.0	àßc	ÀssC	0
+-0.0	-100.0	àßc	ÀSSC	0
+100	100		AbC	0
+100	100	abc		0
+100	101			0
+100	102	abc	AbC	0
+100	103	abc	AbC	0
+
+====[tsv-filter --label Pass --label-values Y:N --header --eq 2:1 input1.tsv]====
+F1	F2	F3	F4	Pass
+1	1.0	a	A	Y
+2	2.	b	B	N
+10	10.1	abc	ABC	N
+100	100	abc	AbC	N
+0	0.0	z	AzB	N
+-1	-0.1	abc def	abc def	N
+-2	-2.0	ß	ss	N
+0.	100.	àbc	ÀBC	N
+0.0	100.0	àßc	ÀssC	N
+-0.0	-100.0	àßc	ÀSSC	N
+100	100		AbC	N
+100	100	abc		N
+100	101			N
+100	102	abc	AbC	N
+100	103	abc	AbC	N
+
+====[tsv-filter --label Pass --label-values Yes:No --header --eq 2:1 input1.tsv]====
+F1	F2	F3	F4	Pass
+1	1.0	a	A	Yes
+2	2.	b	B	No
+10	10.1	abc	ABC	No
+100	100	abc	AbC	No
+0	0.0	z	AzB	No
+-1	-0.1	abc def	abc def	No
+-2	-2.0	ß	ss	No
+0.	100.	àbc	ÀBC	No
+0.0	100.0	àßc	ÀssC	No
+-0.0	-100.0	àßc	ÀSSC	No
+100	100		AbC	No
+100	100	abc		No
+100	101			No
+100	102	abc	AbC	No
+100	103	abc	AbC	No
+
+====[tsv-filter --label Pass --label-values Yes: --header --eq 2:1 input1.tsv]====
+F1	F2	F3	F4	Pass
+1	1.0	a	A	Yes
+2	2.	b	B	
+10	10.1	abc	ABC	
+100	100	abc	AbC	
+0	0.0	z	AzB	
+-1	-0.1	abc def	abc def	
+-2	-2.0	ß	ss	
+0.	100.	àbc	ÀBC	
+0.0	100.0	àßc	ÀssC	
+-0.0	-100.0	àßc	ÀSSC	
+100	100		AbC	
+100	100	abc		
+100	101			
+100	102	abc	AbC	
+100	103	abc	AbC	
+
+====[tsv-filter --label P --label-values :No --header --eq 2:1 input1.tsv]====
+F1	F2	F3	F4	P
+1	1.0	a	A	
+2	2.	b	B	No
+10	10.1	abc	ABC	No
+100	100	abc	AbC	No
+0	0.0	z	AzB	No
+-1	-0.1	abc def	abc def	No
+-2	-2.0	ß	ss	No
+0.	100.	àbc	ÀBC	No
+0.0	100.0	àßc	ÀssC	No
+-0.0	-100.0	àßc	ÀSSC	No
+100	100		AbC	No
+100	100	abc		No
+100	101			No
+100	102	abc	AbC	No
+100	103	abc	AbC	No
+
+====[tsv-filter --label Pass --label-values Y:N --eq 2:1 input1_noheader.tsv]====
+1	1.0	a	A	Y
+2	2.	b	B	N
+10	10.1	abc	ABC	N
+100	100	abc	AbC	N
+0	0.0	z	AzB	N
+-1	-0.1	abc def	abc def	N
+-2	-2.0	ß	ss	N
+0.	100.	àbc	ÀBC	N
+0.0	100.0	àßc	ÀssC	N
+-0.0	-100.0	àßc	ÀSSC	N
+100	100		AbC	N
+100	100	abc		N
+100	101			N
+100	102	abc	AbC	N
+100	103	abc	AbC	N
+
+====[tsv-filter --label-values Y:N --eq 2:1 input1_noheader.tsv]====
+1	1.0	a	A	Y
+2	2.	b	B	N
+10	10.1	abc	ABC	N
+100	100	abc	AbC	N
+0	0.0	z	AzB	N
+-1	-0.1	abc def	abc def	N
+-2	-2.0	ß	ss	N
+0.	100.	àbc	ÀBC	N
+0.0	100.0	àßc	ÀssC	N
+-0.0	-100.0	àßc	ÀSSC	N
+100	100		AbC	N
+100	100	abc		N
+100	101			N
+100	102	abc	AbC	N
+100	103	abc	AbC	N
+
+====[tsv-filter --label PASS -H --or --ge 2:1000 --lt 1:100 input1.tsv input2.tsv]====
+F1	F2	F3	F4	PASS
+1	1.0	a	A	1
+2	2.	b	B	1
+10	10.1	abc	ABC	1
+100	100	abc	AbC	0
+0	0.0	z	AzB	1
+-1	-0.1	abc def	abc def	1
+-2	-2.0	ß	ss	1
+0.	100.	àbc	ÀBC	1
+0.0	100.0	àßc	ÀssC	1
+-0.0	-100.0	àßc	ÀSSC	1
+100	100		AbC	0
+100	100	abc		0
+100	101			0
+100	102	abc	AbC	0
+100	103	abc	AbC	0
+1000	1000.0		3 empty	1
+1000	1000.0	 	3 1-space	1
+1000	1000.001	  	3 2-spaces	1
+1000	1001	abc	3 no space	1
+1000	999.999	 abc	3 space prefix	0
+1000	999	abc 	3 space suffix 	0
+1000	999.9999	 a 	3 space prefix&suffix 	0
+999.999	1000	x	x	1
+999.999	1000.999	x	x	1
+1000	1001.1	x	x	1
+-999.99	-1000	x	x	1
+-999.98	-1000	x	x	1
+-999.99	1000	x	x	1
+999.99	-1000	x	x	0
+
 ====Line buffered tests===
 
 ====[tsv-filter --header --line-buffered --eq 2:1 input1.tsv]====

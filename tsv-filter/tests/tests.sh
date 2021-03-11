@@ -65,6 +65,26 @@ runtest ${prog} "--le 2:101 input1_noheader.tsv -c" ${basic_tests_1}
 runtest ${prog} "--count --empty 1 input1_noheader.tsv" ${basic_tests_1}
 runtest ${prog} "-c --not-empty 1 input1_noheader.tsv " ${basic_tests_1}
 
+# label tests
+echo "" >> ${basic_tests_1}; echo "====Label tests===" >> ${basic_tests_1}
+runtest ${prog} "--label Pass --header --eq 2:1 input1.tsv" ${basic_tests_1}
+runtest ${prog} "--label PASS --header --le 2:101 input1.tsv" ${basic_tests_1}
+runtest ${prog} "--label X -H --empty F1 input1.tsv" ${basic_tests_1}
+
+runtest ${prog} "--label Pass --eq 2:1 input1_noheader.tsv" ${basic_tests_1}
+runtest ${prog} "--label PASS --le 2:101 input1_noheader.tsv" ${basic_tests_1}
+runtest ${prog} "--label X --empty 1 input1_noheader.tsv" ${basic_tests_1}
+
+runtest ${prog} "--label Pass --label-values Y:N --header --eq 2:1 input1.tsv" ${basic_tests_1}
+runtest ${prog} "--label Pass --label-values Yes:No --header --eq 2:1 input1.tsv" ${basic_tests_1}
+runtest ${prog} "--label Pass --label-values Yes: --header --eq 2:1 input1.tsv" ${basic_tests_1}
+runtest ${prog} "--label P --label-values :No --header --eq 2:1 input1.tsv" ${basic_tests_1}
+
+runtest ${prog} "--label Pass --label-values Y:N --eq 2:1 input1_noheader.tsv" ${basic_tests_1}
+runtest ${prog} "--label-values Y:N --eq 2:1 input1_noheader.tsv" ${basic_tests_1}
+runtest ${prog} "--label PASS -H --or --ge 2:1000 --lt 1:100 input1.tsv input2.tsv" ${basic_tests_1}
+
+
 # Line buffered tests
 echo "" >> ${basic_tests_1}; echo "====Line buffered tests===" >> ${basic_tests_1}
 runtest ${prog} "--header --line-buffered --eq 2:1 input1.tsv" ${basic_tests_1}
@@ -576,6 +596,17 @@ runtest ${prog} "--str-gt 0:abc input1_noheader.tsv" ${error_tests_1}
 runtest ${prog} "--str-eq :def input1_noheader.tsv" ${error_tests_1}
 runtest ${prog} "--regex :^A[b|B]C$ input1_noheader.tsv" ${error_tests_1}
 runtest ${prog} "--ff-le 2:3.1 input1.tsv" ${error_tests_1}
+
+# Count and Label error tests
+runtest ${prog} "--label --ne 1:5 input1_noheader.tsv" ${error_tests_1}
+runtest ${prog} "-H --label --ne 1:5 input1_noheader.tsv" ${error_tests_1}
+runtest ${prog} "-H --label-values Yes:No --ne 1:5 input1_noheader.tsv" ${error_tests_1}
+runtest ${prog} "-H --label any --label-values --ne 1:5 input1_noheader.tsv" ${error_tests_1}
+runtest ${prog} "-H --label any --label-values Yes --ne 1:5 input1_noheader.tsv" ${error_tests_1}
+runtest ${prog} "-H --count --label any --label-values Yes:No --ne 1:5 input1_noheader.tsv" ${error_tests_1}
+runtest ${prog} "-H --count --label any --ne 1:5 input1_noheader.tsv" ${error_tests_1}
+runtest ${prog} "--count --label any --ne 1:5 input1_noheader.tsv" ${error_tests_1}
+runtest ${prog} "--count --label-values Y:N --ne 1:5 input1_noheader.tsv" ${error_tests_1}
 
 # Standard input tests
 echo "" >> ${error_tests_1}; echo "====[cat input_3x2.tsv | tsv-filter --ge 2:23]====" >> ${error_tests_1}
