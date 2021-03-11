@@ -110,6 +110,11 @@ $prog profile_data_3.tsv --count -H --or --str-eq 1:rouge --str-in-fld 5:Lion > 
 $prog profile_data_3.tsv --count -H > /dev/null
 $prog profile_data_3.tsv --label f6_le_f7 --label-values Yes:No -H --ff-le 6:7 > /dev/null
 $prog profile_data_5.tsv --count --or --str-eq 1:red --eq 3:2 > /dev/null
+$prog profile_data_4.tsv --count -H --regex 4:'^a.*b$' > /dev/null
+$prog profile_data_4.tsv --label Pass -H --iregex 4:'^a.*b$' > /dev/null
+$prog profile_data_4.tsv --label Pass -H --invert --or --str-in-fld 4:abc --le 1:20 --gt 2:95 > /dev/null
+$prog profile_data_5.tsv --label Pass --istr-in-fld 1:e --le 2:9 --gt 4:2 > /dev/null
+$prog profile_data_5.tsv --count --invert --le 2:9 --gt 4:10 > /dev/null
 
 
 ${ldc_profdata_tool} merge -o app.profdata profile.*.raw
