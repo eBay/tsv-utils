@@ -52,7 +52,7 @@ int main(string[] cmdArgs)
         import ldc.profile : resetAll;
         resetAll();
     }
-    try tsvFilter(cmdopt);
+    try tsvFilterCommand(cmdopt);
     catch (Exception e)
     {
         stderr.writefln("Error [%s]: %s", cmdopt.programName, e.msg);
@@ -752,7 +752,7 @@ struct TsvFilterOptions
     string programName;
     InputSourceRange inputSources;      /// Input files
     FieldsPredicate[] tests;            /// Derived from tests
-    size_t maxFieldIndex;               /// Derived from tests
+    size_t maxFieldIndex = 0;           /// Derived from tests
     bool hasHeader = false;             /// --H|header
     bool invert = false;                /// --invert
     bool disjunct = false;              /// --or
@@ -1058,9 +1058,18 @@ struct TsvFilterOptions
     }
 }
 
+enum FilterMode { filter, count, label };
+
+void tsvFilterCommand(ref TsvFilterOptions cmdopt)
+{
+    if (cmdopt.countMatches) tsvFilter!(FilterMode.count)(cmdopt);
+    else if (cmdopt.isLabeling) tsvFilter!(FilterMode.label)(cmdopt);
+    else tsvFilter!(FilterMode.filter)(cmdopt);
+}
+
 /** tsvFilter processes the input files and runs the tests.
  */
-void tsvFilter(ref TsvFilterOptions cmdopt)
+void tsvFilter(FilterMode mode)(ref TsvFilterOptions cmdopt)
 {
     import std.algorithm : all, any, splitter;
     import std.format : formattedWrite;
@@ -1068,31 +1077,56 @@ void tsvFilter(ref TsvFilterOptions cmdopt)
     import tsv_utils.common.utils : bufferedByLine, BufferedOutputRange, InputSourceRange,
         LineBuffered, throwIfWindowsNewline;
 
+    static if (mode != FilterMode.count) assert(!cmdopt.countMatches);
+    static if (mode != FilterMode.label) assert(!cmdopt.isLabeling);
+
     /* inputSources must be an InputSourceRange and include at least stdin. */
     assert(!cmdopt.inputSources.empty);
     static assert(is(typeof(cmdopt.inputSources) == InputSourceRange));
 
-    immutable string delimString = cmdopt.delim.to!string;
+    static if (mode == FilterMode.label)
+    {
+        immutable string delimString = cmdopt.delim.to!string;
+    }
 
     /* BufferedOutputRange improves performance on narrow files with high percentages of
      * writes.
      */
-    immutable LineBuffered isLineBuffered = cmdopt.lineBuffered ? Yes.lineBuffered : No.lineBuffered;
-    auto bufferedOutput = BufferedOutputRange!(typeof(stdout))(stdout, isLineBuffered);
-    size_t matchedLines = 0;
+    static if (mode == FilterMode.count)
+    {
+        immutable LineBuffered isLineBuffered = No.lineBuffered;
+    }
+    else
+    {
+        immutable LineBuffered isLineBuffered =
+            cmdopt.lineBuffered ? Yes.lineBuffered : No.lineBuffered;
+
+        auto bufferedOutput = BufferedOutputRange!(typeof(stdout))(stdout, isLineBuffered);
+    }
+
+    static if (mode == FilterMode.count) size_t matchedLines = 0;
 
      /* First header is read during command line argument processing. Immediately
       * flush it so subsequent processes in a unix command pipeline see it early.
       * This helps provide timely error messages.
       */
-    if (cmdopt.hasHeader && !cmdopt.inputSources.front.isHeaderEmpty && !cmdopt.countMatches)
+    static if (mode != FilterMode.count)
     {
-        auto inputStream = cmdopt.inputSources.front;
+        if (cmdopt.hasHeader && !cmdopt.inputSources.front.isHeaderEmpty)
+        {
+            auto inputStream = cmdopt.inputSources.front;
 
-        if (cmdopt.isLabeling) bufferedOutput.appendln(inputStream.header, delimString, cmdopt.label);
-        else bufferedOutput.appendln(inputStream.header);
+            static if (mode == FilterMode.label)
+            {
+                bufferedOutput.appendln(inputStream.header, delimString, cmdopt.label);
+            }
+            else
+            {
+                bufferedOutput.appendln(inputStream.header);
+            }
 
-        bufferedOutput.flush;
+            bufferedOutput.flush;
+        }
     }
 
     /* Process each input file, one line at a time. */
@@ -1108,7 +1142,7 @@ void tsvFilter(ref TsvFilterOptions cmdopt)
             if (lineNum == 1) throwIfWindowsNewline(line, inputStream.name, lineNum);
 
             /* Copy the needed number of fields to the fields array. */
-            int fieldIndex = -1;
+            long fieldIndex = -1;
             foreach (fieldValue; line.splitter(cmdopt.delim))
             {
                 if (fieldIndex == cast(long) cmdopt.maxFieldIndex) break;
@@ -1142,23 +1176,23 @@ void tsvFilter(ref TsvFilterOptions cmdopt)
                     cmdopt.tests.all!(x => x(lineFields));
                 if (cmdopt.invert) passed = !passed;
 
-                if (cmdopt.countMatches)
+                static if (mode == FilterMode.count)
                 {
                     if (passed) ++matchedLines;
                 }
-                else if (cmdopt.isLabeling)
+                else static if (mode == FilterMode.label)
                 {
-                    immutable label = passed ? cmdopt.trueLabel : cmdopt.falseLabel;
-                    bufferedOutput.appendln(line, delimString, label);
+                    bufferedOutput.appendln(line, delimString,
+                                            passed ? cmdopt.trueLabel : cmdopt.falseLabel);
                 }
-                else if (passed)
+                else
                 {
-                    if (!cmdopt.countMatches) bufferedOutput.appendln(line);
+                    if (passed) bufferedOutput.appendln(line);
                 }
             }
             catch (Exception e)
             {
-                bufferedOutput.flush;
+                static if (mode != FilterMode.count) bufferedOutput.flush;
                 throw new Exception(
                     format("Could not process line or field: %s\n  File: %s Line: %s%s",
                            e.msg, inputStream.name, lineNum,
@@ -1167,5 +1201,5 @@ void tsvFilter(ref TsvFilterOptions cmdopt)
         }
     }
 
-    if (cmdopt.countMatches) bufferedOutput.formattedWrite("%d\n", matchedLines);
+    static if (mode == FilterMode.count) writeln(matchedLines);
 }

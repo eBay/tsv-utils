@@ -79,7 +79,6 @@ $prog profile_data_1.tsv -H --ff-absdiff-gt 9:10:2.5 > /dev/null
 $prog profile_data_1.tsv -H --ff-reldiff-le 1:17:2.0 > /dev/null
 $prog profile_data_1.tsv -H --ff-reldiff-gt 1:17:2.0 > /dev/null
 $prog profile_data_5.tsv -H --str-eq 1:weiß --str-ne 3:2 > /dev/null
-$prog profile.data_5.tsv --count --or --str-eq 1:red --eq 3:2 > /dev/null
 $prog profile_data_5.tsv -H --or --istr-eq 1:Grün --str-eq 1:日本語 --istr-ne 1:YELLOW > /dev/null
 $prog profile_data_4.tsv -H --str-le 4:cab --str-gt 5:RR > /dev/null
 $prog profile_data_4.tsv -H --invert --str-lt 4:cab --str-ge 5:RR > /dev/null
@@ -110,6 +109,7 @@ $prog profile_data_3.tsv --count -H --regex 3:'[^ ]+ [^ ]+ [^ ]' > /dev/null
 $prog profile_data_3.tsv --count -H --or --str-eq 1:rouge --str-in-fld 5:Lion > /dev/null
 $prog profile_data_3.tsv --count -H > /dev/null
 $prog profile_data_3.tsv --label f6_le_f7 --label-values Yes:No -H --ff-le 6:7 > /dev/null
+$prog profile_data_5.tsv --count --or --str-eq 1:red --eq 3:2 > /dev/null
 
 
 ${ldc_profdata_tool} merge -o app.profdata profile.*.raw

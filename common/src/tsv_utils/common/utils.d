@@ -587,7 +587,7 @@ if (isFileHandle!(Unqual!OutputTarget) || isOutputRange!(Unqual!OutputTarget, ch
      * is intended for cases where an `appendln` or `append` ending in newline will
      * shortly follow.
      */
-    private void appendRaw(T)(T stuff) pure
+    private void appendRaw(T)(const T stuff) pure
     {
         import std.range : rangePut = put;
         rangePut(_outputBuffer, stuff);
@@ -596,7 +596,7 @@ if (isFileHandle!(Unqual!OutputTarget) || isOutputRange!(Unqual!OutputTarget, ch
     /** Appends data to the output buffer. The output buffer is flushed if the appended
      *  data ends in a newline if the output buffer has reached `flushSize`.
      */
-    void append(T)(T stuff)
+    void append(T)(const T stuff)
     {
         appendRaw(stuff);
         maybeFlush();
@@ -614,9 +614,9 @@ if (isFileHandle!(Unqual!OutputTarget) || isOutputRange!(Unqual!OutputTarget, ch
     /** Appends data plus a newline to the output buffer. The output buffer is flushed
      *  if it has reached `flushSize`.
      */
-    bool appendln(T)(T[] stuff...)
+    bool appendln(T)(const T[] stuff...)
     {
-        foreach (x; stuff) appendRaw(x);
+        foreach (const x; stuff) appendRaw(x);
         return appendln();
     }
 
@@ -644,7 +644,7 @@ if (isFileHandle!(Unqual!OutputTarget) || isOutputRange!(Unqual!OutputTarget, ch
     /** The `put` method makes BufferOutputRange an OutputRange. It operates similarly
      *  to `append`.
      */
-    void put(T)(T stuff)
+    void put(T)(const T stuff)
     {
         import std.traits;
         import std.stdio;
