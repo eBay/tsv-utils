@@ -547,11 +547,7 @@ void tsvJoin(ref TsvJoinOptions cmdopt)
                     }
 
                     bufferedOutput.append(inputStream.header);
-                    if (isAppending)
-                    {
-                        bufferedOutput.append(cmdopt.delim);
-                        bufferedOutput.append(appendFieldsHeader);
-                    }
+                    if (isAppending) bufferedOutput.append(cmdopt.delim, appendFieldsHeader);
                     bufferedOutput.appendln;
                     bufferedOutput.flush;
                 }
@@ -627,8 +623,8 @@ void tsvJoin(ref TsvJoinOptions cmdopt)
                 bufferedOutput.append(line);
                 if (isAppending)
                 {
-                    bufferedOutput.append(cmdopt.delim);
-                    bufferedOutput.append(matched ? *appendFields : appendFieldsUnmatchedValue);
+                    bufferedOutput.append(
+                        cmdopt.delim, matched ? *appendFields : appendFieldsUnmatchedValue);
                 }
                 bufferedOutput.appendln();
             }

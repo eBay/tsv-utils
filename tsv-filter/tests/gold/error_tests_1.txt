@@ -282,6 +282,35 @@ Error [tsv-filter]: Could not process line or field: no digits seen for input "F
 [tsv-filter] Error processing command line arguments: [--ff-le 2:3.1]. Non-numeric field group: '3.1'. Use '--H|header' when using named field groups.
    Expected: '--ff-le <field1>:<field2>' where <field1> and <field2> are individual fields.
 
+====[tsv-filter --label --ne 1:5 input1_noheader.tsv]====
+[tsv-filter] Error processing command line arguments: Missing value for argument --label.
+
+====[tsv-filter -H --label --ne 1:5 input1_noheader.tsv]====
+[tsv-filter] Error processing command line arguments: Missing value for argument --label.
+
+====[tsv-filter -H --label-values Yes:No --ne 1:5 input1_noheader.tsv]====
+[tsv-filter] Error processing command line arguments: --label is required when using --label-values and --H|header.
+
+====[tsv-filter -H --label any --label-values --ne 1:5 input1_noheader.tsv]====
+[tsv-filter] Error processing command line arguments: Missing value for argument --label-values.
+
+====[tsv-filter -H --label any --label-values Yes --ne 1:5 input1_noheader.tsv]====
+[tsv-filter] Error processing command line arguments: Invalid option: '--label-values Yes'.
+  Expected: '--label-values STR1:STR2'. STR1 and STR2 must be different strings.
+  The colon (':') is required, niether string can contain a colon.
+
+====[tsv-filter -H --count --label any --label-values Yes:No --ne 1:5 input1_noheader.tsv]====
+[tsv-filter] Error processing command line arguments: --c|count cannot be used with --label or --label-values.
+
+====[tsv-filter -H --count --label any --ne 1:5 input1_noheader.tsv]====
+[tsv-filter] Error processing command line arguments: --c|count cannot be used with --label or --label-values.
+
+====[tsv-filter --count --label any --ne 1:5 input1_noheader.tsv]====
+[tsv-filter] Error processing command line arguments: --c|count cannot be used with --label or --label-values.
+
+====[tsv-filter --count --label-values Y:N --ne 1:5 input1_noheader.tsv]====
+[tsv-filter] Error processing command line arguments: --c|count cannot be used with --label or --label-values.
+
 ====[cat input_3x2.tsv | tsv-filter --ge 2:23]====
 Error [tsv-filter]: Could not process line or field: no digits seen for input "f2".
   File: Standard Input Line: 1

@@ -155,9 +155,7 @@ void numberLines(const NumberLinesOptions cmdopt, const string[] inputFiles)
             {
                 if (!headerWritten)
                 {
-                    bufferedOutput.append(cmdopt.headerString);
-                    bufferedOutput.append(cmdopt.delim);
-                    bufferedOutput.appendln(line);
+                    bufferedOutput.appendln(cmdopt.headerString, cmdopt.delim, line);
                     headerWritten = true;
 
                     /* Flush the header immediately. This helps tasks further on in a
@@ -171,9 +169,7 @@ void numberLines(const NumberLinesOptions cmdopt, const string[] inputFiles)
             }
             else
             {
-                bufferedOutput.append(lineNum.to!string);
-                bufferedOutput.append(cmdopt.delim);
-                bufferedOutput.appendln(line);
+                bufferedOutput.appendln(lineNum.to!string, cmdopt.delim, line);
                 lineNum++;
             }
         }

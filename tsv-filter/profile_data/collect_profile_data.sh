@@ -79,7 +79,6 @@ $prog profile_data_1.tsv -H --ff-absdiff-gt 9:10:2.5 > /dev/null
 $prog profile_data_1.tsv -H --ff-reldiff-le 1:17:2.0 > /dev/null
 $prog profile_data_1.tsv -H --ff-reldiff-gt 1:17:2.0 > /dev/null
 $prog profile_data_5.tsv -H --str-eq 1:weiß --str-ne 3:2 > /dev/null
-$prog profile.data_5.tsv --count --or --str-eq 1:red --eq 3:2 > /dev/null
 $prog profile_data_5.tsv -H --or --istr-eq 1:Grün --str-eq 1:日本語 --istr-ne 1:YELLOW > /dev/null
 $prog profile_data_4.tsv -H --str-le 4:cab --str-gt 5:RR > /dev/null
 $prog profile_data_4.tsv -H --invert --str-lt 4:cab --str-ge 5:RR > /dev/null
@@ -100,5 +99,22 @@ $prog profile_data_4.tsv -H --is-finite 2 > /dev/null
 $prog profile_data_4.tsv -H --is-numeric 3 > /dev/null
 $prog profile_data_4.tsv -H --is-nan 3 > /dev/null
 $prog profile_data_4.tsv -H --is-finite 3 --le 3:30 > /dev/null
+
+## Include some cases of counting and labeling
+$prog profile_data_1.tsv --count -H --ge rRr:0 > /dev/null
+$prog profile_data_1.tsv --count -H --le cccc:0 > /dev/null
+$prog profile_data_1.tsv --label jjj_abs_gt2 -H --or --lt jjj:-2 --gt jjj:2 > /dev/null
+$prog profile_data_2.tsv --label any --ne 2:647 --ne 2:646 --str-not-in-fld 3:5 > /dev/null
+$prog profile_data_3.tsv --count -H --regex 3:'[^ ]+ [^ ]+ [^ ]' > /dev/null
+$prog profile_data_3.tsv --count -H --or --str-eq 1:rouge --str-in-fld 5:Lion > /dev/null
+$prog profile_data_3.tsv --count -H > /dev/null
+$prog profile_data_3.tsv --label f6_le_f7 --label-values Yes:No -H --ff-le 6:7 > /dev/null
+$prog profile_data_5.tsv --count --or --str-eq 1:red --eq 3:2 > /dev/null
+$prog profile_data_4.tsv --count -H --regex 4:'^a.*b$' > /dev/null
+$prog profile_data_4.tsv --label Pass -H --iregex 4:'^a.*b$' > /dev/null
+$prog profile_data_4.tsv --label Pass -H --invert --or --str-in-fld 4:abc --le 1:20 --gt 2:95 > /dev/null
+$prog profile_data_5.tsv --label Pass --istr-in-fld 1:e --le 2:9 --gt 4:2 > /dev/null
+$prog profile_data_5.tsv --count --invert --le 2:9 --gt 4:10 > /dev/null
+
 
 ${ldc_profdata_tool} merge -o app.profdata profile.*.raw

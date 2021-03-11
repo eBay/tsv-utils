@@ -583,6 +583,10 @@ if (isFileHandle!(Unqual!OutputTarget) || isOutputRange!(Unqual!OutputTarget, ch
         return doFlush;
     }
 
+    /** Appends data to the output buffer without checking for flush conditions. This
+     * is intended for cases where an `appendln` or `append` ending in newline will
+     * shortly follow.
+     */
     private void appendRaw(T)(T stuff) pure
     {
         import std.range : rangePut = put;
@@ -590,30 +594,22 @@ if (isFileHandle!(Unqual!OutputTarget) || isOutputRange!(Unqual!OutputTarget, ch
     }
 
     /** Appends data to the output buffer. The output buffer is flushed if the appended
-     *  data ends in a newline if the output buffer has reached `flushSize`.
+     *  data ends in a newline and the output buffer has reached `flushSize`.
      */
-    void append(T)(T stuff)
+    void append(T...)(T stuff)
     {
-        appendRaw(stuff);
+        foreach (x; stuff) appendRaw(x);
         maybeFlush();
-    }
-
-    /** Appends a newline to the output buffer. The output buffer is flushed if it has
-     *  reached `flushSize`.
-     */
-    bool appendln()
-    {
-        appendRaw('\n');
-        return flushIfFull();
     }
 
     /** Appends data plus a newline to the output buffer. The output buffer is flushed
      *  if it has reached `flushSize`.
      */
-    bool appendln(T)(T stuff)
+    bool appendln(T...)(T stuff)
     {
-        appendRaw(stuff);
-        return appendln();
+        foreach (x; stuff) appendRaw(x);
+        appendRaw('\n');
+        return flushIfFull();
     }
 
     /** joinAppend is an optimization of append(inputRange.joiner(delimiter).
@@ -685,8 +681,14 @@ unittest
         ostream.appendln(100.to!string);
         ostream.append(iota(0, 10).map!(x => x.to!string).joiner(" "));
         ostream.appendln();
+        ostream.appendln('A');
+        ostream.appendln("B", "CD");
+        ostream.appendln('E', "FG", 'H');
+        ostream.appendln('I', "JK", 'L', "M");
+        ostream.append('N', "O");
+        ostream.append('P', "QR", "STU\n");
     }
-    assert(filepath1.readText == "file1: abcdefghijkl100\n0 1 2 3 4 5 6 7 8 9\n");
+    assert(filepath1.readText == "file1: abcdefghijkl100\n0 1 2 3 4 5 6 7 8 9\nA\nBCD\nEFGH\nIJKLM\nNOPQRSTU\n");
 
     /* Test with no reserve and flush at every line. */
     string filepath2 = buildPath(testDir, "file2.txt");

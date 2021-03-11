@@ -52,7 +52,7 @@ int main(string[] cmdArgs)
         import ldc.profile : resetAll;
         resetAll();
     }
-    try tsvFilter(cmdopt);
+    try tsvFilterCommand(cmdopt);
     catch (Exception e)
     {
         stderr.writefln("Error [%s]: %s", cmdopt.programName, e.msg);
@@ -80,6 +80,12 @@ Global options:
   --v|invert          Invert the filter, printing lines that do not match.
   --c|count           Print only a count of the matched lines.
   --d|delimiter CHR   Field delimiter. Default: TAB.
+  --label STR         Rather than filter, mark each record as passing the
+                         filter or not. STR is the header, ignored if there
+                         is no header line.
+  --label-values STR1:STR2
+                      The pass/no-pass values used by '--label'. Defaults
+                         to '1' and '0'.
   --line-buffered     Immediately output every matched line.
 
 Operators:
@@ -172,6 +178,16 @@ Tests available include:
   * Test a field's character or byte length.
   * Field to field comparisons - Similar to the other tests, except comparing
     one field to another in the same line.
+
+As an alternative to filtering, records can be marked to indicate if they meet
+the filter criteria or not. For example, the following will add a field to each
+record indicating if the 'Color' field is a primary color.
+
+  tsv-filter -H --or --str-eq Color:Red --str-eq Color:Yellow str-eq Color:Blue \
+  --label IsPrimaryColor data.tsv
+
+Values default to '1' and '0' and can be changed using '--label-values'. The
+header name pass to '--label' is ignored if headers are not being used.
 
 Details:
   * The run is aborted if there are not enough fields in an input line.
@@ -734,15 +750,20 @@ struct TsvFilterOptions
     import tsv_utils.common.utils : inputSourceRange, InputSourceRange, ReadHeader;
 
     string programName;
-    InputSourceRange inputSources;   /// Input files
-    FieldsPredicate[] tests;         /// Derived from tests
-    size_t maxFieldIndex;            /// Derived from tests
-    bool hasHeader = false;          /// --H|header
-    bool invert = false;             /// --invert
-    bool disjunct = false;           /// --or
-    bool countMatches = false;       /// --c|count
-    char delim = '\t';               /// --delimiter
-    bool lineBuffered = false;       /// --line-buffered
+    InputSourceRange inputSources;      /// Input files
+    FieldsPredicate[] tests;            /// Derived from tests
+    size_t maxFieldIndex = 0;           /// Derived from tests
+    bool hasHeader = false;             /// --H|header
+    bool invert = false;                /// --invert
+    bool disjunct = false;              /// --or
+    bool countMatches = false;          /// --c|count
+    char delim = '\t';                  /// --delimiter
+    string label;                       /// --label
+    bool labelValuesOptionUsed = false; /// --label-values
+    bool lineBuffered = false;          /// --line-buffered
+    bool isLabeling = false;            /// Derived
+    string trueLabel = "1";             /// Derived
+    string falseLabel = "0";            /// Derived
 
     /* Returns a tuple. First value is true if command line arguments were successfully
      * processed and execution should continue, or false if an error occurred or the user
@@ -843,6 +864,26 @@ struct TsvFilterOptions
         void handlerFFRelDiffLE(string option, string value) { cmdLineTestOptions ~= makeFieldFieldNumOptionHandler(&ffRelDiffLE, option, value); }
         void handlerFFRelDiffGT(string option, string value) { cmdLineTestOptions ~= makeFieldFieldNumOptionHandler(&ffRelDiffGT, option, value); }
 
+        /* The handleLabelValuesOption is different from the other handlers in that it is
+         * not generic. Instead it simply parses and validates the argument passed to the
+         * --label-values option. If the option is valid, it populates the `trueLabel`
+         * and `falseLabel` member variables. Otherwise an exception is thrown.
+         */
+        void handleLabelValuesOption(string option, string optionVal)
+        {
+            immutable valSplit = optionVal.findSplit(":");
+
+            enforce(valSplit && !valSplit[2].canFind(":") && valSplit[0] != valSplit[2],
+                    format("Invalid option: '--%s %s'.\n" ~
+                           "  Expected: '--%s STR1:STR2'. STR1 and STR2 must be different strings.\n" ~
+                           "  The colon (':') is required, niether string can contain a colon.",
+                           option, optionVal, option));
+
+            labelValuesOptionUsed = true;
+            trueLabel = valSplit[0];
+            falseLabel = valSplit[2];
+        }
+
         try
         {
             arraySep = ",";    // Use comma to separate values in command line options
@@ -861,6 +902,15 @@ struct TsvFilterOptions
                 std.getopt.config.caseInsensitive,
                 "c|count",         "     Print only a count of the matched lines, excluding the header.", &countMatches,
                 "d|delimiter",     "CHR  Field delimiter. Default: TAB. (Single byte UTF-8 characters only.)", &delim,
+
+                "label",
+                "STR  Do not filter. Instead, mark each record as passing the filter or not. STR is the header, ignored if there is no header line.",
+                &label,
+
+                "label-values",
+                                   "STR1:STR2   The pass/no-pass values used by '--label'. Defaults to '1' and '0'.",
+                &handleLabelValuesOption,
+
                 "line-buffered",   "     Immediately output every matched line.", &lineBuffered,
 
                 "empty",           "<field-list>       True if FIELD is empty.", &handlerFldEmpty,
@@ -964,6 +1014,18 @@ struct TsvFilterOptions
             string[] filepaths = (cmdArgs.length > 1) ? cmdArgs[1 .. $] : ["-"];
             cmdArgs.length = 1;
 
+            /* Validations and derivations. Currently all are related to label mode. */
+            if (!label.empty || labelValuesOptionUsed)
+            {
+                enforce(!label.empty || !hasHeader,
+                        "--label is required when using --label-values and --H|header.");
+
+                isLabeling = true;
+            }
+
+            enforce (!isLabeling || !countMatches,
+                     format("--c|count cannot be used with --label or --label-values."));
+
             string[] headerFields;
 
             /* FieldListArgProcessing encapsulates the field list processing. It is
@@ -996,15 +1058,27 @@ struct TsvFilterOptions
     }
 }
 
+enum FilterMode { filter, count, label };
+
+void tsvFilterCommand(ref TsvFilterOptions cmdopt)
+{
+    if (cmdopt.countMatches) tsvFilter!(FilterMode.count)(cmdopt);
+    else if (cmdopt.isLabeling) tsvFilter!(FilterMode.label)(cmdopt);
+    else tsvFilter!(FilterMode.filter)(cmdopt);
+}
+
 /** tsvFilter processes the input files and runs the tests.
  */
-void tsvFilter(ref TsvFilterOptions cmdopt)
+void tsvFilter(FilterMode mode)(ref TsvFilterOptions cmdopt)
 {
     import std.algorithm : all, any, splitter;
     import std.format : formattedWrite;
     import std.range;
     import tsv_utils.common.utils : bufferedByLine, BufferedOutputRange, InputSourceRange,
         LineBuffered, throwIfWindowsNewline;
+
+    static if (mode != FilterMode.count) assert(!cmdopt.countMatches);
+    static if (mode != FilterMode.label) assert(!cmdopt.isLabeling);
 
     /* inputSources must be an InputSourceRange and include at least stdin. */
     assert(!cmdopt.inputSources.empty);
@@ -1013,24 +1087,49 @@ void tsvFilter(ref TsvFilterOptions cmdopt)
     /* BufferedOutputRange improves performance on narrow files with high percentages of
      * writes.
      */
-    immutable LineBuffered isLineBuffered = cmdopt.lineBuffered ? Yes.lineBuffered : No.lineBuffered;
-    auto bufferedOutput = BufferedOutputRange!(typeof(stdout))(stdout, isLineBuffered);
-    size_t matchedLines = 0;
+    static if (mode == FilterMode.count)
+    {
+        immutable LineBuffered isLineBuffered = No.lineBuffered;
+    }
+    else
+    {
+        immutable LineBuffered isLineBuffered =
+            cmdopt.lineBuffered ? Yes.lineBuffered : No.lineBuffered;
+
+        auto bufferedOutput = BufferedOutputRange!(typeof(stdout))(stdout, isLineBuffered);
+    }
+
+    static if (mode == FilterMode.count) size_t matchedLines = 0;
 
      /* First header is read during command line argument processing. Immediately
       * flush it so subsequent processes in a unix command pipeline see it early.
       * This helps provide timely error messages.
       */
-    if (cmdopt.hasHeader && !cmdopt.inputSources.front.isHeaderEmpty && !cmdopt.countMatches)
+    static if (mode != FilterMode.count)
     {
-        auto inputStream = cmdopt.inputSources.front;
-        bufferedOutput.appendln(inputStream.header);
-        bufferedOutput.flush;
+        if (cmdopt.hasHeader && !cmdopt.inputSources.front.isHeaderEmpty)
+        {
+            auto inputStream = cmdopt.inputSources.front;
+
+            static if (mode == FilterMode.label)
+            {
+                bufferedOutput.appendln(inputStream.header, cmdopt.delim, cmdopt.label);
+            }
+            else
+            {
+                bufferedOutput.appendln(inputStream.header);
+            }
+
+            bufferedOutput.flush;
+        }
     }
 
+    immutable size_t fieldIndexEnd = cmdopt.tests.empty ? 0 : cmdopt.maxFieldIndex + 1;
+
     /* Process each input file, one line at a time. */
+    immutable size_t numTests = cmdopt.tests.length;
     immutable size_t fileBodyStartLine = cmdopt.hasHeader ? 2 : 1;
-    auto lineFields = new char[][](cmdopt.maxFieldIndex + 1);
+    auto lineFields = new char[][](fieldIndexEnd);
 
     foreach (inputStream; cmdopt.inputSources)
     {
@@ -1041,15 +1140,15 @@ void tsvFilter(ref TsvFilterOptions cmdopt)
             if (lineNum == 1) throwIfWindowsNewline(line, inputStream.name, lineNum);
 
             /* Copy the needed number of fields to the fields array. */
-            int fieldIndex = -1;
-            foreach (fieldValue; line.splitter(cmdopt.delim))
+            size_t fieldIndex = 0;
+
+            foreach (fieldValue; line.splitter(cmdopt.delim).take(fieldIndexEnd))
             {
-                if (fieldIndex == cast(long) cmdopt.maxFieldIndex) break;
-                fieldIndex++;
                 lineFields[fieldIndex] = fieldValue;
+                fieldIndex++;
             }
 
-            if (fieldIndex == -1)
+            if (fieldIndex == 0 && fieldIndexEnd != 0)
             {
                 assert(line.length == 0);
                 /* Bug work-around. Currently empty lines are not handled properly by splitter.
@@ -1057,11 +1156,11 @@ void tsvFilter(ref TsvFilterOptions cmdopt)
                  *   Pull Request: https://github.com/D-Programming-Language/phobos/pull/4030
                  * Work-around: Point to the line. It's an empty string.
                  */
-                fieldIndex++;
                 lineFields[fieldIndex] = line;
+                fieldIndex++;
             }
 
-            enforce(fieldIndex >= cast(long) cmdopt.maxFieldIndex,
+            enforce(fieldIndex == cast(long) fieldIndexEnd,
                     format("Not enough fields in line. File: %s, Line: %s",
                            inputStream.name, lineNum));
 
@@ -1075,15 +1174,23 @@ void tsvFilter(ref TsvFilterOptions cmdopt)
                     cmdopt.tests.all!(x => x(lineFields));
                 if (cmdopt.invert) passed = !passed;
 
-                if (passed)
+                static if (mode == FilterMode.count)
                 {
-                    ++matchedLines;
-                    if (!cmdopt.countMatches) bufferedOutput.appendln(line);
+                    if (passed) ++matchedLines;
+                }
+                else static if (mode == FilterMode.label)
+                {
+                    bufferedOutput.appendln(line, cmdopt.delim,
+                                            passed ? cmdopt.trueLabel : cmdopt.falseLabel);
+                }
+                else
+                {
+                    if (passed) bufferedOutput.appendln(line);
                 }
             }
             catch (Exception e)
             {
-                bufferedOutput.flush;
+                static if (mode != FilterMode.count) bufferedOutput.flush;
                 throw new Exception(
                     format("Could not process line or field: %s\n  File: %s Line: %s%s",
                            e.msg, inputStream.name, lineNum,
@@ -1092,5 +1199,5 @@ void tsvFilter(ref TsvFilterOptions cmdopt)
         }
     }
 
-    if (cmdopt.countMatches) bufferedOutput.formattedWrite("%d\n", matchedLines);
+    static if (mode == FilterMode.count) writeln(matchedLines);
 }
