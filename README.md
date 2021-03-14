@@ -13,7 +13,7 @@ File an [issue](https://github.com/eBay/tsv-utils/issues) if you have problems, 
 **Additional documents:**
 * [Tools Reference](docs/ToolReference.md) - Detailed documentation.
 * [Releases](https://github.com/eBay/tsv-utils/releases) - Prebuilt binaries and release notes. Recent updates:
-  * Current release: [version 2.1.2](https://github.com/eBay/tsv-utils/releases/tag/v2.1.2).
+  * Current release: [version 2.2.0](https://github.com/eBay/tsv-utils/releases/tag/v2.2.0).
   * Improved `csv2tsv` performance and functionality. See [version 2.1 release notes](https://github.com/eBay/tsv-utils/releases/tag/v2.1.0).
   * Named fields! See [version 2.0 release notes](https://github.com/eBay/tsv-utils/releases/tag/v2.0.0).
 * [Tips and tricks](docs/TipsAndTricks.md) - Simpler and faster command line tool use.
@@ -477,10 +477,10 @@ The tools are tested on Linux and MacOS. Windows users are encouraged to use eit
 
 ### Prebuilt binaries
 
-Prebuilt binaries are available for Linux and Mac, these can be found on the [Github releases](https://github.com/eBay/tsv-utils/releases) page. Download and unpack the tar.gz file. Executables are in the `bin` directory. Add the `bin` directory or individual tools to the `PATH` environment variable. As an example, the 2.1.2 releases for Linux and MacOS can be downloaded and unpacked with these commands:
+Prebuilt binaries are available for Linux and Mac, these can be found on the [Github releases](https://github.com/eBay/tsv-utils/releases) page. Download and unpack the tar.gz file. Executables are in the `bin` directory. Add the `bin` directory or individual tools to the `PATH` environment variable. As an example, the 2.2.0 releases for Linux and MacOS can be downloaded and unpacked with these commands:
 ```
-$ curl -L https://github.com/eBay/tsv-utils/releases/download/v2.1.2/tsv-utils-v2.1.2_linux-x86_64_ldc2.tar.gz | tar xz
-$ curl -L https://github.com/eBay/tsv-utils/releases/download/v2.1.2/tsv-utils-v2.1.2_osx-x86_64_ldc2.tar.gz | tar xz
+$ curl -L https://github.com/eBay/tsv-utils/releases/download/v2.2.0/tsv-utils-v2.2.0_linux-x86_64_ldc2.tar.gz | tar xz
+$ curl -L https://github.com/eBay/tsv-utils/releases/download/v2.2.0/tsv-utils-v2.2.0_osx-x86_64_ldc2.tar.gz | tar xz
 ```
 
 See the [Github releases](https://github.com/eBay/tsv-utils/releases) page for the latest release.
@@ -521,10 +521,10 @@ The above requires LDC 1.9.0 or later. See [Building with Link Time Optimization
 
 ### Install using DUB
 
-If you are a D user you likely use DUB, the D package manager. DUB comes packaged with DMD starting with DMD 2.072. You can install and build using DUB as follows (replace `2.1.2` with the current version):
+If you are a D user you likely use DUB, the D package manager. DUB comes packaged with DMD starting with DMD 2.072. You can install and build using DUB as follows (replace `2.2.0` with the current version):
 ```
 $ dub fetch tsv-utils --cache=local
-$ cd tsv-utils-2.1.2/tsv-utils
+$ cd tsv-utils-2.2.0/tsv-utils
 $ dub run    # For LDC: dub run -- --compiler=ldc2
 ```
 
