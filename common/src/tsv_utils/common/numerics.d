@@ -212,16 +212,24 @@ unittest  // formatNumber unit tests
     /* Test round off cases. Note: These tests will not pass on Windows 32-bit builds.
      * Use the -m64 flag on Windows to get a 64-bit build.
      *
-     * Note: The first test case does not generate the correct result on Windows
-     * 64-bit builds. The current Windows result is included both for documentation
-     * and to provide an alert if the correct result starts getting populated. Both
-     * formatNumber and the underlying format call are included.
+     * Note: The first test case does not generate correct results on Windows 64-bit
+     * builds prior to DMD 2.096. In DMD 2.096 the code was moved into Phobos rather
+     * than being forwared to the C library. Both formatNumber and the underlying
+     * format call are included. See: https://github.com/dlang/phobos/pull/7757.
      */
     version(Windows)
     {
-        // Incorrect
-        assert(format("%.*f", 0, 0.6) == "0");
-        assert(formatNumber(0.6, 0) == "0");
+        static if (__VERSION__ <= 2095)
+        {
+            // Incorrect
+            assert(format("%.*f", 0, 0.6) == "0");
+            assert(formatNumber(0.6, 0) == "0");
+        }
+        else
+        {
+            assert(format("%.*f", 0, 0.6) == "1");
+            assert(formatNumber(0.6, 0) == "1");
+        }
     }
     else
     {
@@ -326,16 +334,19 @@ unittest  // formatNumber unit tests
     /* Test round off cases with negative numbers. Note: These tests will not pass
      * on Windows 32-bit builds. Use the -m64 flag on Windows to get a 64-bit build.
      *
-     * Note: The first test case does not generate the correct result on Windows
-     * 64-bit builds. The current Windows result is included both for documentation
-     * and to provide an alert if the correct result starts getting populated. Both
-     * formatNumber and the underlying format call are included.
+     * Note: The first test case does not generate correct results on Windows 64-bit
+     * builds prior to DMD 2.096. In DMD 2.096 the code was moved into Phobos rather
+     * than being forwared to the C library. Both formatNumber and the underlying
+     * format call are included. See: https://github.com/dlang/phobos/pull/7757.
      */
     version(Windows)
     {
-        // Incorrect
-        assert(format("%.*f", 0, -0.6) == "-0");
-        assert(formatNumber(-0.6, 0) == "-0");
+        static if (__VERSION__ <= 2095)
+        {
+            // Incorrect
+            assert(format("%.*f", 0, -0.6) == "-0");
+            assert(formatNumber(-0.6, 0) == "-0");
+        }
     }
     else
     {
