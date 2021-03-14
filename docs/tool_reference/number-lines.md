@@ -14,6 +14,7 @@ number-lines reads from files or standard input and writes each line to standard
 * `--s|header-string STR` - String to use as the header for the line number field. Implies `--header`. Default: 'line'.
 * `--n|start-number NUM` - Number to use for the first line. Default: 1.
 * `--d|delimiter CHR` - Character appended to line number, preceding the rest of the line. Default: TAB (Single byte UTF-8 characters only.)
+* `--line-buffered` - Immediately output every line.
 
 **Examples:**
 ```

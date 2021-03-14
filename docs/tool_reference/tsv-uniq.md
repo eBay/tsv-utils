@@ -38,6 +38,7 @@ See [Field syntax](common-options-and-behavior.md#field-syntax) for more informa
 * `--a|at-least INT` - Output only lines that are repeated INT times (based on the key). Zero and one are ignored.
 * `--m|max INT` - Max number of each unique key to output (zero is ignored).
 * `--d|delimiter CHR` - Field delimiter. Default: TAB. (Single byte UTF-8 characters only.)
+* `--line-buffered` - Immediately output every line.
 
 **Examples:**
 ```

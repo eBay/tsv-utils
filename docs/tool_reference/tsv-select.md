@@ -21,6 +21,7 @@ Fields can be listed more than once, and fields not listed can be selected as a 
 * `--e|--exclude <field-list>` - Fields to exclude.
 * `--r|rest first|last` - Output location for fields not included in the `--f|fields` field-list.
 * `--d|delimiter CHR` - Character to use as field delimiter. Default: TAB. (Single byte UTF-8 characters only.)
+* `--line-buffered` - Immediately output every line.
 
 **Notes:**
 * See [Field syntax](common-options-and-behavior.md#field-syntax) for information about specifying fields.
@@ -29,6 +30,7 @@ Fields can be listed more than once, and fields not listed can be selected as a 
 * When `--f|fields` and `--e|exclude` are used together, the effect is to specify `--rest last`. This can be overridden by specifying `--rest first`.
 * Each input line must be long enough to contain all fields specified with `--f|fields`. This is not necessary for `--e|exclude` fields.
 * Specifying field names containing special characters may require escaping the special characters. See [Field syntax](common-options-and-behavior.md#field-syntax) for details.
+* Input and output are buffered by default to improve performance. Use `--line-buffered` to have each line read and written as soon as available.
 
 **Examples:**
 ```

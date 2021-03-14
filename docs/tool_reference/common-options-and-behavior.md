@@ -13,6 +13,7 @@ Information in this section applies to all the tools. Topics:
 * [Header line processing](#header-line-processing--h---header)
 * [Multiple files and standard input](#Multiple-files-and-standard-input)
 * [Field syntax](#field-syntax)
+* [Line buffering](#line-buffering)
 
 ## Specifying options
 
@@ -136,3 +137,10 @@ $ tsv-select file.tsv -H -f '\001,\100'    # Fields 4,5
 ```
 
 Note the use of single quotes to prevent the shell from interpreting these characters.
+
+## Line buffering
+
+Most tsv-utils tools buffer input and output, reading and writing multiple lines at a time. This is usually the preferred behavior, as it is a significant performance improvement over reading and writing line individually. However, reading and writing one line at a time may be preferred when reading from a slow input stream.
+
+For the latter case, many of the tools support a `--line-buffered` option. When this option is selected, each line is read and written individually, as soon as it is available. Tools supporting `--line-buffered` include: `number-lines`, `tsv-append`, `tsv-filter`, `tsv-join`, `tsv-sample`, `tsv-select`, and `tsv-uniq`.
+

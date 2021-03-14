@@ -101,6 +101,24 @@ $ tsv-filter -H --str-eq color:red --ge year:1850 --lt year:1950 data.tsv | tsv-
 114  red    1931   1412
 ```
 
+The `--count` option switches from filtering to counting matched records. Header lines are excluded from the count. The following command prints the number of `red` entries in `data.tsv` (there are nine):
+```
+$ tsv-filter -H --count --str-eq color:red data.tsv
+9
+```
+
+The `--label` option is another alternative to filtering. In this mode, a new field is added to every record indicating if it satisfies the criteria. The next command marks records to indicate if `year` is in the 1900s:
+```
+$  tsv-filter -H --label 1900s --ge year:1900 --lt year:2000 data.tsv | tsv-pretty | head -n 5
+ id  color   year  count  1900s
+100  green   1982    173      1
+101  red     1935    756      1
+102  red     2008   1303      0
+103  yellow  1873    180      0
+```
+
+The `--label-values` option can be used to customize the values used to mark records.
+
 Files can be placed anywhere on the command line. Data will be read from standard input if a file is not specified. The following commands are equivalent:
 ```
 $ tsv-filter -H --str-eq color:red --ge year:1850 --lt year:1950 data.tsv
@@ -178,10 +196,7 @@ Bash completion is especially helpful with `tsv-filter`. It allows quickly seein
 
 `tsv-filter` is perhaps the most broadly applicable of the TSV Utilities tools, as dataset pruning is such a common task. It is stream oriented, so it can handle arbitrarily large files. It is fast, quite a bit faster than other tools the author has tried. (See the "Numeric row filter" and "Regular expression row filter" tests in the [2018 Benchmark Summary](docs/Performance.md#2018-benchmark-summary).)
 
-This makes `tsv-filter` ideal for preparing data for applications like R and Pandas. It is also convenient for quickly answering simple questions about a dataset. For example, to count the number of records with a non-zero value in field 4, use the command:
-```
-$ tsv-filter --ne 4:0 file.tsv | wc -l
-```
+This makes `tsv-filter` ideal for preparing data for applications like R and Pandas. It is also convenient for quickly answering simple questions about a dataset.
 
 See the [tsv-filter reference](docs/tool_reference/tsv-filter.md) for more details and the full list of operators.
 
@@ -404,7 +419,7 @@ A simpler version of the Unix `nl` program. It prepends a line number to each li
 $ number-lines myfile.txt
 ```
 
-Despite it's original purpose as a code sample, `number-lines` turns out to be quite convenient. It is often useful to add a unique row ID to a file, and this tool does this in a manner that maintains proper TSV formatting.
+Despite its original purpose as a code sample, `number-lines` turns out to be quite convenient. It is often useful to add a unique row ID to a file, and this tool does this in a manner that maintains proper TSV formatting.
 
 See the [number-lines reference](docs/tool_reference/number-lines.md) for details.
 
