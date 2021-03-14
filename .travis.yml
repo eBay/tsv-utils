@@ -55,7 +55,7 @@ matrix:
       dist: xenial
       group: travis_latest
       language: d
-      d: ldc-1.23.0
+      d: ldc-1.24.0
       env: LINUX_SPECIAL=1 DEPLOY=1
       if:  |
         fork = false AND \
@@ -65,7 +65,7 @@ matrix:
       osx_image: xcode11.5
       group: travis_latest
       language: d
-      d: ldc-1.23.0
+      d: ldc-1.24.0
       env: LTOPGO_V2=default DEPLOY=1
       if: |
         fork = false AND \
