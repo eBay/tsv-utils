@@ -61,7 +61,7 @@ $  tsv-filter -H --label 1900s --ge year:1900 --lt year:2000 data.tsv | tsv-pret
 103  yellow  1873    180      0
 ```
 
-The `--label-values` option can be used to customize the values used to mark the records.
+The `--label-values` option can be used to customize the values used to mark records.
 
 Files can be placed anywhere on the command line. Data will be read from standard input if a file is not specified. The following commands are equivalent:
 ```
