@@ -35,6 +35,7 @@ matrix:
       language: d
       d: dmd
       env: CODECOV=1
+      if: fork = false
 #    - os: osx
 #      osx_image: xcode11.5
 #      group: travis_latest
