@@ -37,3 +37,4 @@ $ tsv-append -H -s test_id -f test1=file1.tsv -f test2=file2.tsv
 * `--s|source-header STR` - Use STR as the header for the source column. Implies `--H|header` and `--t|track-source`. Default: 'file'
 * `--f|file STR=FILE` - Read file FILE, using STR as the 'source' value. Implies `--t|track-source`.
 * `--d|delimiter CHR` - Field delimiter. Default: TAB. (Single byte UTF-8 characters only.)
+* `--line-buffered` - Immediately output every line.

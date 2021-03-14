@@ -26,6 +26,7 @@ The filter file needs to fit into available memory (the join key and append fiel
 * `--e|exclude` - Exclude matching records. This is an anti-join.
 * `--delimiter CHR` - Field delimiter. Default: TAB. (Single byte UTF-8 characters only.)
 * `--z|allow-duplicate-keys` - Allow duplicate keys with different append values (last entry wins). Default behavior is that this is an error.
+* `--line-buffered` - Immediately output every line.
 
 **Examples:**
 
