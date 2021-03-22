@@ -9,6 +9,7 @@ Contents:
 * [Customize the sort command](#customize-the-sort-command)
 * [Enable bash-completion](#enable-bash-completion)
 * [Convert newline format and character encoding with dos2unix and iconv](#convert-newline-format-and-character-encoding-with-dos2unix-and-iconv)
+* [Add a column to a TSV file](#add-a-column-to-a-tsv-file)
 * [Using grep and tsv-filter together](#using-grep-and-tsv-filter-together)
 * [Faster processing using GNU parallel](#faster-processing-using-gnu-parallel)
 * [Reading data in R](#reading-data-in-r)
@@ -212,6 +213,39 @@ $ iconv -f CP1252 -t UTF-8 file_window.tsv | dos2unix > file_unix.tsv
 ```
 
 See the `dos2unix` and `iconv` man pages for more details.
+
+## Add a column to a TSV file
+
+An occasional task: Add a column to a TSV data stream. Same value for all records, but a custom header. There are any number of ways to do this, the best is the one you can remember. Here's a trick for doing this with [tsv-filter](tool_reference/tsv-filter.md).:
+```
+$ # The file
+$ tsv-pretty data.tsv
+ id  color   count
+100  green     173
+101  red       756
+102  red      1303
+103  yellow    180
+
+$ # Add a year field with value 2021
+$ tsv-filter data.tsv -H --label year --label-values 2021:any | tsv-pretty
+ id  color   count  year
+100  green     173  2021
+101  red       756  2021
+102  red      1303  2021
+103  yellow    180  2021
+```
+
+This works because there was no test specified and `tsv-filter` defaults to passing all records through the filter. The `--label` option marks all records as passing the filter test or not. Of course, the `--label` option can be used for more sophisticated tests.
+
+For comparison, here's the `awk` equivalent:
+```
+$ awk -v OFS="\t" '{ print $0, (NR == 0) ? "year" : "2021" }' data.tsv | tsv-pretty
+ id  color   count  2021
+100  green     173  2021
+101  red       756  2021
+102  red      1303  2021
+103  yellow    180  2021
+```
 
 ## Using grep and tsv-filter together
 
