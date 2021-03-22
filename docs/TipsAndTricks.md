@@ -235,7 +235,7 @@ $ tsv-filter data.tsv -H --label year --label-values 2021:any | tsv-pretty
 103  yellow    180  2021
 ```
 
-This works because there was no test specified and `tsv-filter` defaults to passing all records through the filter. The `--label` option marks all records as passing the filter test or not. Of course, the `--label` option can be used with more sophisticated tests.
+This works because there was no test specified and `tsv-filter` defaults to passing all records through the filter. The `--label` option marks all records as passing the filter test or not. Of course, the `--label` option can be used with more sophisticated tests too.
 
 For comparison, here's the `awk` equivalent:
 ```
