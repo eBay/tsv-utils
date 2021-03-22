@@ -216,7 +216,7 @@ See the `dos2unix` and `iconv` man pages for more details.
 
 ## Add a column to a TSV file
 
-An occasional task: Add a column to a TSV data stream. Same value for all records, but a custom header. There are any number of ways to do this, the best is the one you can remember. Here's a trick for doing this with [tsv-filter](tool_reference/tsv-filter.md).:
+An occasional task: Add a column to a TSV data stream. Same value for all records, but a custom header. There are any number of ways to do this, the best is the one you can remember. Here's a trick for doing this with [tsv-filter](tool_reference/tsv-filter.md):
 ```
 $ # The file
 $ tsv-pretty data.tsv
@@ -226,7 +226,7 @@ $ tsv-pretty data.tsv
 102  red      1303
 103  yellow    180
 
-$ # Add a year field with value 2021
+$ # Add a 'year' field with value 2021
 $ tsv-filter data.tsv -H --label year --label-values 2021:any | tsv-pretty
  id  color   count  year
 100  green     173  2021
