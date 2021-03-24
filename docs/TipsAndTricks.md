@@ -245,7 +245,7 @@ $ awk -v OFS="\t" '{ print $0, (NR == 0) ? "year" : "2021" }' data.tsv | tsv-pre
 100  green     173  2021
 101  red       756  2021
 102  red      1303  2021
-    103  yellow    180  2021
+103  yellow    180  2021
 ```
 
 ## Use line buffering when processing slow input streams
