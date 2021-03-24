@@ -227,7 +227,7 @@ $ tsv-pretty data.tsv
 102  red      1303
 103  yellow    180
 
-$ # Add a 'year' field with value 2021
+$ # Add a 'year' field with value '2021'
 $ tsv-filter data.tsv -H --label year --label-values 2021:any | tsv-pretty
  id  color   count  year
 100  green     173  2021
