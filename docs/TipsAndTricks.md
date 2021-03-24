@@ -217,7 +217,7 @@ See the `dos2unix` and `iconv` man pages for more details.
 
 ## Add a column to a TSV file
 
-An occasional task: Add a column to a TSV data stream. Same value for all records, but a custom header. There are any number of ways to do this, the best is the one you can remember. Here's a trick for doing this with [tsv-filter](tool_reference/tsv-filter.md):
+An occasional task: Add a column to a TSV data stream. Same value for all records, but a custom header. There are any number of ways to do this, the best is the one you can remember. Here's a trick for doing this with the [tsv-filter](tool_reference/tsv-filter.md) `--label` option:
 ```
 $ # The file
 $ tsv-pretty data.tsv
