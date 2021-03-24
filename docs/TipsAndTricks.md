@@ -10,6 +10,7 @@ Contents:
 * [Enable bash-completion](#enable-bash-completion)
 * [Convert newline format and character encoding with dos2unix and iconv](#convert-newline-format-and-character-encoding-with-dos2unix-and-iconv)
 * [Add a column to a TSV file](#add-a-column-to-a-tsv-file)
+* [Use line buffering when processing slow input streams](#use-line-buffering-when-processing-slow-input-streams)
 * [Using grep and tsv-filter together](#using-grep-and-tsv-filter-together)
 * [Faster processing using GNU parallel](#faster-processing-using-gnu-parallel)
 * [Reading data in R](#reading-data-in-r)
@@ -188,7 +189,7 @@ The file can also be added to the bash completions system directory on your syst
 
 ## Convert newline format and character encoding with dos2unix and iconv
 
-The TSV Utilities expect input data to be utf-8 encoded and use Unix newlines. The `dos2unix` and `iconv` command line tools are useful when conversion is required.
+TSV Utilities tools expect input data to be utf-8 encoded and use Unix newlines. The `dos2unix` and `iconv` command line tools are useful when conversion is required.
 
 Needing to convert newlines from DOS/Windows format to Unix is relatively common. Data files may have been prepared for Windows, and a number of spreadsheet programs generate Windows line feeds when exporting data. The `csv2tsv` tool converts Windows newlines as part of its operation. The other TSV Utilities detect Windows newlines when running on a Unix platform, including macOS. The following `dos2unix` commands convert files to use Unix newlines:
 ```
@@ -244,8 +245,46 @@ $ awk -v OFS="\t" '{ print $0, (NR == 0) ? "year" : "2021" }' data.tsv | tsv-pre
 100  green     173  2021
 101  red       756  2021
 102  red      1303  2021
-103  yellow    180  2021
+    103  yellow    180  2021
 ```
+
+## Use line buffering when processing slow input streams
+
+TSV Utilities and most Unix tools buffer input and output, reading and writing data in large blocks. This is much faster than reading lines one at a time. However, reading and writing line by line may be preferable when reading from slow input streams. For example, reading and filtering a large compressed file with a small number of matching records. With default buffering it may take a while before any output is produced.
+
+Most tsv-utils tools have a `--line-buffered` option that switches to line by line I/O. Reading and filtering a compressed file in this mode is done with commands like:
+```
+$ zcat data.tsv.gz | tsv-filter -H --gt score:95 --line-buffered
+```
+
+The above command will print each line as it is found. Use `--line-buffered` on each command in a pipeline to keep the lines flowing:
+```
+$ zcat data.tsv.gz | tsv-filter -H --gt score:95 --line-buffered | tsv-select -H -f title,score --line-buffered
+```
+
+With `tsv-pretty`, the `--lookahead` option should be used. `tsv-pretty` uses line buffered I/O, but it starts by buffering a large number of lines to get data for aligning columns. The `--lookahead` option controls the number of lines in the initial buffer, using a small value will get data output more quickly. For example:
+```
+$ zcat data.tsv.gz | tsv-filter -H --gt score:95 --line-buffered | tsv-pretty --lookahead 10
+```
+
+Many Unix command line tools support line buffering, the specific method depends on the tool. `grep` has a `--line-buffered` option, `sed` has an `--unbuffered` option. `awk` programs can use the `fflush()` function. Other tools like `cut`, `head`, and `tail`, use line buffering when reading from standard and when writing to a terminal. However, most implementations use full buffering when to another process in a command pipeline. In the example below, the `cut` command in the first pipeline uses line buffering because it is writing directly to the terminal. However, the `cut` command in the second pipeline uses full buffering. It doesn't matter that `grep` is using line buffering.
+```
+$ # 'cut' in this command uses line buffering
+$ zcat data.tsv.gz | cut -f 1
+
+$ # 'cut' in this command uses full buffering
+$ zcat data.tsv.gz | cut -f 1 | grep abc --line-buffered
+```
+
+The workaround for many Unix programs is to use the Unix `stdbuf` tool. It sets the buffering mode for the command it invokes. The previous command can be adjusted using `stdbuf` so that `cut` uses line buffering:
+```
+$ # 'cut' in this command uses line buffering via 'stdbuf`
+$ zcat data.tsv.gz | stdbuf -oL cut -f 1 | grep --abc --line-buffered
+```
+
+See the `stdbuf` documentation for more details about `stdbuf`.
+
+The techniques shown above can be for more than reading compressed files. They may be applicable anytime a slow or expensive process is part of a command pipeline.
 
 ## Using grep and tsv-filter together
 
@@ -330,7 +369,7 @@ Version information for the timing tests:
 
 ## Faster processing using GNU parallel
 
-The TSV Utilities tools are single threaded. Multiple cores available on today's processors are utilized primarily when the tools are run in a Unix command pipeline. The example shown using in [Using grep and tsv-filter together](#using-grep-and-tsv-filter-together) uses the Unix pipeline approach to gain parallelism.
+TSV Utilities tools are single threaded. Multiple cores available on today's processors are utilized primarily when the tools are run in a Unix command pipeline. The example shown using in [Using grep and tsv-filter together](#using-grep-and-tsv-filter-together) uses the Unix pipeline approach to gain parallelism.
 
 This often leaves processing power on the table, power that can be used to run commands considerably faster. This is especially true when reading from fast IO devices such as the newer generations of SSD drives. These fast devices often read much faster than a single CPU core can keep up with.
 
