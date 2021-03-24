@@ -262,12 +262,12 @@ The above command will print each line as it is found. Use `--line-buffered` on 
 $ zcat data.tsv.gz | tsv-filter -H --gt score:95 --line-buffered | tsv-select -H -f title,score --line-buffered
 ```
 
-With `tsv-pretty`, the `--lookahead` option should be used. `tsv-pretty` uses line buffered I/O, but it starts by buffering a large number of lines to get data for aligning columns. The `--lookahead` option controls the number of lines in the initial buffer, using a small value will get data output more quickly. For example:
+When using `tsv-pretty`, the `--lookahead` option should be used. `tsv-pretty` uses line buffered I/O, but it starts by buffering a large number of lines to get data for aligning columns. The `--lookahead` option controls the number of lines in the initial buffer, using a small value will get data output more quickly. For example:
 ```
 $ zcat data.tsv.gz | tsv-filter -H --gt score:95 --line-buffered | tsv-pretty --lookahead 10
 ```
 
-Many Unix command line tools support line buffering, the specific method depends on the tool. `grep` has a `--line-buffered` option, `sed` has an `--unbuffered` option. `awk` programs can use the `fflush()` function. Other tools like `cut`, `head`, and `tail`, use line buffering when reading from standard and when writing to a terminal. However, most implementations use full buffering when to another process in a command pipeline. In the example below, the `cut` command in the first pipeline uses line buffering because it is writing directly to the terminal. However, the `cut` command in the second pipeline uses full buffering. It doesn't matter that `grep` is using line buffering.
+Many Unix command line tools support line buffering, the specific method depends on the tool. `grep` has a `--line-buffered` option, `sed` has an `--unbuffered` option. `awk` programs can use the `fflush()` function. Other tools like `cut`, `head`, and `tail`, use line buffering when reading from standard and when writing to a terminal. However, most implementations use full buffering when writing to another process in a command pipeline. In the example below, the `cut` command in the first pipeline uses line buffering because it is writing directly to the terminal. However, the `cut` command in the second pipeline uses full buffering. It doesn't matter that `grep` is using line buffering.
 ```
 $ # 'cut' in this command uses line buffering
 $ zcat data.tsv.gz | cut -f 1
