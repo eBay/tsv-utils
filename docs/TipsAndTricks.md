@@ -240,8 +240,8 @@ This works because there was no test specified and `tsv-filter` defaults to pass
 
 For comparison, here's the `awk` equivalent:
 ```
-$ awk -v OFS="\t" '{ print $0, (NR == 0) ? "year" : "2021" }' data.tsv | tsv-pretty
- id  color   count  2021
+$ awk -v OFS="\t" '{ print $0, (NR == 1) ? "year" : "2021" }' data.tsv | tsv-pretty
+ id  color   count  year
 100  green     173  2021
 101  red       756  2021
 102  red      1303  2021
@@ -262,7 +262,7 @@ The above command will print each line as it is found. Use `--line-buffered` on 
 $ zcat data.tsv.gz | tsv-filter -H --gt score:95 --line-buffered | tsv-select -H -f title,score --line-buffered
 ```
 
-When using `tsv-pretty`, the `--lookahead` option should be used. `tsv-pretty` uses line buffered I/O, but it starts by buffering a large number of lines to get data for aligning columns. The `--lookahead` option controls the number of lines in the initial buffer, using a small value will get data output more quickly. For example:
+`tsv-pretty` does not have a `--linebuffered` option, the `--lookahead` option should be used instead. `tsv-pretty` uses line buffered I/O, but it starts by buffering a large number of lines to get data for aligning columns. The `--lookahead` option controls the number of lines in the initial buffer, using a small value will get data output more quickly. For example:
 ```
 $ zcat data.tsv.gz | tsv-filter -H --gt score:95 --line-buffered | tsv-pretty --lookahead 10
 ```
