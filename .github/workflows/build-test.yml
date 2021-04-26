@@ -1,4 +1,4 @@
-# Workflow to run a D compile on Windows. No tests, just the build step. 
+# Workflow to build and test tsv-utils on Linux, MacOS, and Windows.
 name: build-test
 
 on:
