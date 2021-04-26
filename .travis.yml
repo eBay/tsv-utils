@@ -24,6 +24,8 @@
 # Note: Feb 2021 - Drop all but essential builds in prep for moving to github actions. Keeping
 #       code coverage and release action builds.
 #
+# Note: April 2021 - Move codecov to github actions
+#
 matrix:
   allow_failures:
     - env: DUBTEST=1 MAKETEST=1 ALLOW_FAILURES=true
@@ -34,7 +36,7 @@ matrix:
       group: travis_latest
       language: d
       d: dmd
-      env: CODECOV=1
+      env: CODECOV=0
       if: |
         type = pull_request OR \
         ( type = push AND fork = false)
