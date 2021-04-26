@@ -120,7 +120,7 @@ jobs:
           make clean
 
   dub-build:
-    name: Dub build/test tsv-utils on Linux
+    name: Dub build/test tsv-utils
     strategy:
       fail-fast: false
       matrix:
@@ -137,7 +137,7 @@ jobs:
         with:
           compiler: ${{ matrix.dc }}
 
-      - name: Dub build/test using DMD
+      - name: Dub build/test
         shell: bash
         run: |
           dub run
