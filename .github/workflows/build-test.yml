@@ -1,0 +1,144 @@
+# Workflow to build and test tsv-utils on Linux, MacOS, and Windows.
+name: build-test
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+  schedule:
+    - cron: '36 10 * * 2'
+
+jobs:
+  code-cov-build:
+    name: Code Coverage build. Linux/DMD
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        dc: [dmd-latest]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install D compiler
+        uses: dlang-community/setup-dlang@v1
+        with:
+          compiler: ${{ matrix.dc }}
+
+      - name: make test-codecov
+        shell: bash
+        run: |
+          make test-codecov DCOMPILER=${DC}
+
+      - uses: codecov/codecov-action@v1
+
+  windows-build:
+    name: Build/test tsv-utils on Windows
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest]
+        dc: [dmd-latest, ldc-latest]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install D compiler
+        uses: dlang-community/setup-dlang@v1
+        with:
+          compiler: ${{ matrix.dc }}
+
+      - name: Dub Build and Run
+        shell: bash
+        run: |
+          dub run
+          dub clean
+          make clean
+
+      - name: make unittest
+        # Currently, only run unit tests on DMD. LDC has failures in tsv-sample due
+        # to minor descrepancies in printed random numbers.
+        if: ${{ startsWith(matrix.dc, 'dmd') }}
+        shell: bash
+        run: |
+          make unittest DCOMPILER=${DC} DFLAGS=-m64
+
+  linux-macos-build:
+    name: Build/test tsv-utils on Linux, macOS
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macOS-latest, ubuntu-latest]
+        dc: [ldc-latest, dmd-latest]
+        include:
+          - os: ubuntu-latest
+            dc: dmd-2.088.1
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install D compiler
+        uses: dlang-community/setup-dlang@v1
+        with:
+          compiler: ${{ matrix.dc }}
+
+      - name: make test
+        shell: bash
+        run: |
+          make test DCOMPILER=${DC}
+          make clean
+
+  linux-macos-release-build:
+    name: Release build/test tsv-utils on Linux, macOS
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macOS-latest, ubuntu-latest]
+        dc: [ldc-latest]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install D compiler
+        uses: dlang-community/setup-dlang@v1
+        with:
+          compiler: ${{ matrix.dc }}
+
+      - name: make test-release ldc-lto-pgo
+        if: ${{ startsWith(matrix.dc, 'ldc') }}
+        shell: bash
+        run: |
+          make test-release DCOMPILER=${DC} LDC_LTO_RUNTIME=1 LDC_PGO=2
+          make clean
+
+  dub-build:
+    name: Dub build/test tsv-utils
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        dc: [ldc-latest, dmd-latest]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install D compiler
+        uses: dlang-community/setup-dlang@v1
+        with:
+          compiler: ${{ matrix.dc }}
+
+      - name: Dub build/test
+        shell: bash
+        run: |
+          dub run
+          make test-nobuild DCOMPILER=$DC
