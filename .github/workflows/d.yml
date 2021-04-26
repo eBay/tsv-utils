@@ -61,7 +61,7 @@ jobs:
       - name: make test-codecov
         shell: bash
         run: |
-          make test DCOMPILER=${DC}
+          make test-codecov DCOMPILER=${DC}
 
       - uses: codecov/codecov-action@v1
 
