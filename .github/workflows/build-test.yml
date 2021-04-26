@@ -125,7 +125,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest]
-        dc: [dmd-latest]
+        dc: [ldc-latest, dmd-latest]
 
     runs-on: ${{ matrix.os }}
 
