@@ -141,4 +141,4 @@ jobs:
         shell: bash
         run: |
           dub run
-          make test-nobuild
+          make test-nobuild DCOMPILER=$DC
