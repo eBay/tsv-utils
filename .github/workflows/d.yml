@@ -41,6 +41,29 @@ jobs:
         run: |
           make unittest DCOMPILER=${DC} DFLAGS=-m64
 
+  code-cov-build:
+    name: Code Coverage build. Linux/DMD
+    matrix:
+      os: [ubuntu-latest]
+      dc: [dmd-latest]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install D compiler
+        uses: dlang-community/setup-dlang@v1
+        with:
+          compiler: ${{ matrix.dc }}
+
+      - name: make test-codecov
+        shell: bash
+        run: |
+          make test DCOMPILER=${DC}
+
+      - uses: codecov/codecov-action@v1
+
   linux-macos-build:
     name: Build tsv-utils on Linux, macOS
     strategy:
@@ -67,6 +90,7 @@ jobs:
         shell: bash
         run: |
           dub run
+          make test-nobuild
           dub clean
           make clean
 
