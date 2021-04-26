@@ -6,10 +6,36 @@ on:
     branches: [ master ]
   pull_request:
     branches: [ master ]
+  schedule:
+    - cron '36 10 * * 2'
 
 jobs:
+  code-cov-build:
+    name: Code Coverage build. Linux/DMD
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        dc: [dmd-latest]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install D compiler
+        uses: dlang-community/setup-dlang@v1
+        with:
+          compiler: ${{ matrix.dc }}
+
+      - name: make test-codecov
+        shell: bash
+        run: |
+          make test-codecov DCOMPILER=${DC}
+
+      - uses: codecov/codecov-action@v1
+
   windows-build:
-    name: Build tsv-utils on Windows
+    name: Build/test tsv-utils on Windows
     strategy:
       fail-fast: false
       matrix:
@@ -41,32 +67,8 @@ jobs:
         run: |
           make unittest DCOMPILER=${DC} DFLAGS=-m64
 
-  code-cov-build:
-    name: Code Coverage build. Linux/DMD
-    strategy:
-      matrix:
-        os: [ubuntu-latest]
-        dc: [dmd-latest]
-
-    runs-on: ${{ matrix.os }}
-
-    steps:
-      - uses: actions/checkout@v2
-
-      - name: Install D compiler
-        uses: dlang-community/setup-dlang@v1
-        with:
-          compiler: ${{ matrix.dc }}
-
-      - name: make test-codecov
-        shell: bash
-        run: |
-          make test-codecov DCOMPILER=${DC}
-
-      - uses: codecov/codecov-action@v1
-
   linux-macos-build:
-    name: Build tsv-utils on Linux, macOS
+    name: Build/test tsv-utils on Linux, macOS
     strategy:
       fail-fast: false
       matrix:
@@ -86,20 +88,29 @@ jobs:
         with:
           compiler: ${{ matrix.dc }}
 
-      - name: Dub Build and Run using DMD
-        if: ${{ startsWith(matrix.dc, 'dmd') }}
-        shell: bash
-        run: |
-          dub run
-          make test-nobuild
-          dub clean
-          make clean
-
       - name: make test
         shell: bash
         run: |
           make test DCOMPILER=${DC}
           make clean
+
+  linux-macos-release-build:
+    name: Release build/test tsv-utils on Linux, macOS
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macOS-latest, ubuntu-latest]
+        dc: [ldc-latest]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install D compiler
+        uses: dlang-community/setup-dlang@v1
+        with:
+          compiler: ${{ matrix.dc }}
 
       - name: make test-release ldc-lto-pgo
         if: ${{ startsWith(matrix.dc, 'ldc') }}
@@ -107,3 +118,27 @@ jobs:
         run: |
           make test-release DCOMPILER=${DC} LDC_LTO_RUNTIME=1 LDC_PGO=2
           make clean
+
+  dub-build:
+    name: Dub build/test tsv-utils on Linux
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        dc: [dmd-latest]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install D compiler
+        uses: dlang-community/setup-dlang@v1
+        with:
+          compiler: ${{ matrix.dc }}
+
+      - name: Dub build/test using DMD
+        shell: bash
+        run: |
+          dub run
+          make test-nobuild
