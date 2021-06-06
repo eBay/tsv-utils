@@ -257,46 +257,46 @@ runtest ${prog} "--inorder -n 0 input3x25.tsv" ${error_tests}
 header_line_3x0='line[[:blank:]]title[[:blank:]]weight'
 line1_2x1='0.157876295	Jacques le fataliste et son maître'
 
-runtest ${prog} "-H input3x25_dos.tsv" ${error_tests}
-runtest_filter ${prog} "-H input3x0.tsv input3x25_dos.tsv" ${error_tests} ${header_line_3x0}
-runtest ${prog} "input3x25_dos.tsv" ${error_tests}
-runtest_filter ${prog} "input3x0.tsv input3x25_dos.tsv" ${error_tests} ${header_line_3x0}
+runtest ${prog} "-H input3x25.dos_tsv" ${error_tests}
+runtest_filter ${prog} "-H input3x0.tsv input3x25.dos_tsv" ${error_tests} ${header_line_3x0}
+runtest ${prog} "input3x25.dos_tsv" ${error_tests}
+runtest_filter ${prog} "input3x0.tsv input3x25.dos_tsv" ${error_tests} ${header_line_3x0}
 
-runtest ${prog} "-n 2 -H input3x25_dos.tsv" ${error_tests}
-runtest_filter ${prog} "-n 2 -H input3x0.tsv input3x25_dos.tsv" ${error_tests} ${header_line_3x0}
-runtest ${prog} "-n 2 input3x25_dos.tsv" ${error_tests}
-runtest_filter ${prog} "-n 2 input3x0.tsv input3x25_dos.tsv" ${error_tests} ${header_line_3x0}
+runtest ${prog} "-n 2 -H input3x25.dos_tsv" ${error_tests}
+runtest_filter ${prog} "-n 2 -H input3x0.tsv input3x25.dos_tsv" ${error_tests} ${header_line_3x0}
+runtest ${prog} "-n 2 input3x25.dos_tsv" ${error_tests}
+runtest_filter ${prog} "-n 2 input3x0.tsv input3x25.dos_tsv" ${error_tests} ${header_line_3x0}
 
-runtest ${prog} "-H -w 3 input3x25_dos.tsv" ${error_tests}
-runtest_filter ${prog} "-H -w 3 input3x0.tsv input3x25_dos.tsv" ${error_tests} ${header_line_3x0}
-runtest ${prog} "-H -w weight input3x25_dos.tsv" ${error_tests}
-runtest_filter ${prog} "-H -w weight input3x0.tsv input3x25_dos.tsv" ${error_tests} ${header_line_3x0}
-runtest ${prog} "-w 1 input2x5_noheader_dos.tsv" ${error_tests}
-runtest_filter ${prog} "-w 1 input2x1_noheader.tsv input2x5_noheader_dos.tsv" ${error_tests} ${line1_2x1}
+runtest ${prog} "-H -w 3 input3x25.dos_tsv" ${error_tests}
+runtest_filter ${prog} "-H -w 3 input3x0.tsv input3x25.dos_tsv" ${error_tests} ${header_line_3x0}
+runtest ${prog} "-H -w weight input3x25.dos_tsv" ${error_tests}
+runtest_filter ${prog} "-H -w weight input3x0.tsv input3x25.dos_tsv" ${error_tests} ${header_line_3x0}
+runtest ${prog} "-w 1 input2x5_noheader.dos_tsv" ${error_tests}
+runtest_filter ${prog} "-w 1 input2x1_noheader.tsv input2x5_noheader.dos_tsv" ${error_tests} ${line1_2x1}
 
-runtest ${prog} "-n 2 -H -w 3 input3x25_dos.tsv" ${error_tests}
-runtest_filter ${prog} "-n 2 -H -w 3 input3x0.tsv input3x25_dos.tsv" ${error_tests} ${header_line_3x0}
-runtest ${prog} "-n 2 -H -w weight input3x25_dos.tsv" ${error_tests}
-runtest_filter ${prog} "-n 2 -H -w weight input3x0.tsv input3x25_dos.tsv" ${error_tests} ${header_line_3x0}
-runtest ${prog} "-n 2 -w 1 input2x5_noheader_dos.tsv" ${error_tests}
-runtest_filter ${prog} "-n 2 -w 1 input2x1_noheader.tsv input2x5_noheader_dos.tsv" ${error_tests} ${line1_2x1}
+runtest ${prog} "-n 2 -H -w 3 input3x25.dos_tsv" ${error_tests}
+runtest_filter ${prog} "-n 2 -H -w 3 input3x0.tsv input3x25.dos_tsv" ${error_tests} ${header_line_3x0}
+runtest ${prog} "-n 2 -H -w weight input3x25.dos_tsv" ${error_tests}
+runtest_filter ${prog} "-n 2 -H -w weight input3x0.tsv input3x25.dos_tsv" ${error_tests} ${header_line_3x0}
+runtest ${prog} "-n 2 -w 1 input2x5_noheader.dos_tsv" ${error_tests}
+runtest_filter ${prog} "-n 2 -w 1 input2x1_noheader.tsv input2x5_noheader.dos_tsv" ${error_tests} ${line1_2x1}
 
-runtest ${prog} "-r -n 2 -H input3x25_dos.tsv" ${error_tests}
-runtest_filter ${prog} "-r -n 2 -H input3x0.tsv input3x25_dos.tsv" ${error_tests} ${header_line_3x0}
-runtest ${prog} "-r -n 2 input3x25_dos.tsv" ${error_tests}
-runtest_filter ${prog} "-r -n 2 input3x0.tsv input3x25_dos.tsv" ${error_tests} ${header_line_3x0}
+runtest ${prog} "-r -n 2 -H input3x25.dos_tsv" ${error_tests}
+runtest_filter ${prog} "-r -n 2 -H input3x0.tsv input3x25.dos_tsv" ${error_tests} ${header_line_3x0}
+runtest ${prog} "-r -n 2 input3x25.dos_tsv" ${error_tests}
+runtest_filter ${prog} "-r -n 2 input3x0.tsv input3x25.dos_tsv" ${error_tests} ${header_line_3x0}
 
-runtest ${prog} "-p .2 -H input3x25_dos.tsv" ${error_tests}
-runtest_filter ${prog} "-p .2 -H input3x0.tsv input3x25_dos.tsv" ${error_tests} ${header_line_3x0}
-runtest ${prog} "-p .2 input3x25_dos.tsv" ${error_tests}
-runtest_filter ${prog} "-p .2 input3x0.tsv input3x25_dos.tsv" ${error_tests} ${header_line_3x0}
+runtest ${prog} "-p .2 -H input3x25.dos_tsv" ${error_tests}
+runtest_filter ${prog} "-p .2 -H input3x0.tsv input3x25.dos_tsv" ${error_tests} ${header_line_3x0}
+runtest ${prog} "-p .2 input3x25.dos_tsv" ${error_tests}
+runtest_filter ${prog} "-p .2 input3x0.tsv input3x25.dos_tsv" ${error_tests} ${header_line_3x0}
 
-runtest ${prog} "-H -p .2 -k 2 input3x25_dos.tsv" ${error_tests}
-runtest_filter ${prog} "-H -p .2 -k 2 input3x0.tsv input3x25_dos.tsv" ${error_tests} ${header_line_3x0}
-runtest ${prog} "-H -p .2 -k title input3x25_dos.tsv" ${error_tests}
-runtest_filter ${prog} "-H -p .2 -k title input3x0.tsv input3x25_dos.tsv" ${error_tests} ${header_line_3x0}
-runtest ${prog} "-p .2 -k 2 input2x5_noheader_dos.tsv" ${error_tests}
-runtest_filter ${prog} "-p .2 -k 2 input2x1_noheader.tsv input2x5_noheader_dos.tsv" ${error_tests} ${line1_2x1}
+runtest ${prog} "-H -p .2 -k 2 input3x25.dos_tsv" ${error_tests}
+runtest_filter ${prog} "-H -p .2 -k 2 input3x0.tsv input3x25.dos_tsv" ${error_tests} ${header_line_3x0}
+runtest ${prog} "-H -p .2 -k title input3x25.dos_tsv" ${error_tests}
+runtest_filter ${prog} "-H -p .2 -k title input3x0.tsv input3x25.dos_tsv" ${error_tests} ${header_line_3x0}
+runtest ${prog} "-p .2 -k 2 input2x5_noheader.dos_tsv" ${error_tests}
+runtest_filter ${prog} "-p .2 -k 2 input2x1_noheader.tsv input2x5_noheader.dos_tsv" ${error_tests} ${line1_2x1}
 
 # Error tests 2 are tests that are compiler version dependent. There are multiple
 # version files in test-config.json.

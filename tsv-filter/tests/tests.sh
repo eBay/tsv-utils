@@ -613,8 +613,8 @@ echo "" >> ${error_tests_1}; echo "====[cat input_3x2.tsv | tsv-filter --ge 2:23
 cat input_3x2.tsv | ${prog} --ge 2:23 >> ${error_tests_1} 2>&1
 
 ## Windows line endings
-runtest ${prog} "--header --eq 2:1 input1_dos.tsv" ${error_tests_1}
-runtest ${prog} "--str-eq 4:ABC input1_dos.tsv" ${error_tests_1}
-runtest ${prog} "--header --eq 2:1 input1.tsv input1_dos.tsv" ${error_tests_1}
-runtest ${prog} "--str-eq 4:ABC input1.tsv input1_dos.tsv" ${error_tests_1}
+runtest ${prog} "--header --eq 2:1 input1.dos_tsv" ${error_tests_1}
+runtest ${prog} "--str-eq 4:ABC input1.dos_tsv" ${error_tests_1}
+runtest ${prog} "--header --eq 2:1 input1.tsv input1.dos_tsv" ${error_tests_1}
+runtest ${prog} "--str-eq 4:ABC input1.tsv input1.dos_tsv" ${error_tests_1}
 exit $?

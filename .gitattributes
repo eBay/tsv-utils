@@ -1,6 +1,10 @@
 # Default behavior in this repository is Unix LF
 * text eol=lf
 
-# CSV files in this repository are used for testing and multiple types of line endings
+# CSV files and .dos_tsv in this repository are used for testing and multiple types of line endings
 *.csv binary
+*.dos_tsv eol=crlf
 
+# Binary types should remain binary
+*.pdf binary
+*.jpg binary

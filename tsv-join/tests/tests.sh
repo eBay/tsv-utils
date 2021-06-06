@@ -447,10 +447,10 @@ runtest ${prog} "--header -f input1.tsv -k f2,,f4 input2.tsv" ${error_tests_1}
 runtest ${prog} "--header -f input1.tsv -k input2.tsv input_emptyfile.tsv" ${error_tests_1}
 
 echo "" >> ${error_tests_1}; echo "===Windows Newline detection===" >> ${error_tests_1}
-runtest ${prog} "--header -f input1_dos.tsv -k 2,3 input2.tsv" ${error_tests_1}
-runtest ${prog} "--header -f input1.tsv -k 2,3 input2_dos.tsv" ${error_tests_1}
-runtest ${prog} "-f input1_dos.tsv -k 2,3 input2.tsv" ${error_tests_1}
-runtest ${prog} "-f input1.tsv -k 2,3 input2_dos.tsv" ${error_tests_1}
+runtest ${prog} "--header -f input1.dos_tsv -k 2,3 input2.tsv" ${error_tests_1}
+runtest ${prog} "--header -f input1.tsv -k 2,3 input2.dos_tsv" ${error_tests_1}
+runtest ${prog} "-f input1.dos_tsv -k 2,3 input2.tsv" ${error_tests_1}
+runtest ${prog} "-f input1.tsv -k 2,3 input2.dos_tsv" ${error_tests_1}
 
 echo "" >> ${error_tests_1}; echo "===No such file===" >> ${error_tests_1}
 runtest ${prog} "--header -f input1.tsv -k 2 -d 2,3 no_such-file.tsv" ${error_tests_1}

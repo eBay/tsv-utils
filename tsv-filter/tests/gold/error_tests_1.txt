@@ -316,21 +316,21 @@ Error [tsv-filter]: Could not process line or field: no digits seen for input "f
   File: Standard Input Line: 1
   Is this a header line? Use --header to skip.
 
-====[tsv-filter --header --eq 2:1 input1_dos.tsv]====
+====[tsv-filter --header --eq 2:1 input1.dos_tsv]====
 [tsv-filter] Error processing command line arguments: Windows/DOS line ending found. Convert file to Unix newlines before processing (e.g. 'dos2unix').
-  File: input1_dos.tsv, Line: 1
+  File: input1.dos_tsv, Line: 1
 
-====[tsv-filter --str-eq 4:ABC input1_dos.tsv]====
+====[tsv-filter --str-eq 4:ABC input1.dos_tsv]====
 Error [tsv-filter]: Windows/DOS line ending found. Convert file to Unix newlines before processing (e.g. 'dos2unix').
-  File: input1_dos.tsv, Line: 1
+  File: input1.dos_tsv, Line: 1
 
-====[tsv-filter --header --eq 2:1 input1.tsv input1_dos.tsv]====
+====[tsv-filter --header --eq 2:1 input1.tsv input1.dos_tsv]====
 F1	F2	F3	F4
 1	1.0	a	A
 Error [tsv-filter]: Windows/DOS line ending found. Convert file to Unix newlines before processing (e.g. 'dos2unix').
-  File: input1_dos.tsv, Line: 1
+  File: input1.dos_tsv, Line: 1
 
-====[tsv-filter --str-eq 4:ABC input1.tsv input1_dos.tsv]====
+====[tsv-filter --str-eq 4:ABC input1.tsv input1.dos_tsv]====
 10	10.1	abc	ABC
 Error [tsv-filter]: Windows/DOS line ending found. Convert file to Unix newlines before processing (e.g. 'dos2unix').
-  File: input1_dos.tsv, Line: 1
+  File: input1.dos_tsv, Line: 1

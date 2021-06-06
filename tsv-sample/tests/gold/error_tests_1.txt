@@ -111,138 +111,138 @@ Use --p|prob and --print-random to print probabilities for lines satisfying the 
 ====[tsv-sample --inorder -n 0 input3x25.tsv]====
 [tsv-sample] Error processing command line arguments: Preserving input order (--i|inorder) is not compatible with full data set shuffling. Switch to random sampling with a sample size (--n|num) to use --i|inorder.
 
-====[tsv-sample -H input3x25_dos.tsv]====
+====[tsv-sample -H input3x25.dos_tsv]====
 [tsv-sample] Error processing command line arguments: Windows/DOS line ending found. Convert file to Unix newlines before processing (e.g. 'dos2unix').
-  File: input3x25_dos.tsv, Line: 1
+  File: input3x25.dos_tsv, Line: 1
 
-====[tsv-sample -H input3x0.tsv input3x25_dos.tsv]====
+====[tsv-sample -H input3x0.tsv input3x25.dos_tsv]====
 Error [tsv-sample]: Windows/DOS line ending found. Convert file to Unix newlines before processing (e.g. 'dos2unix').
-  File: input3x25_dos.tsv, Line: 1
+  File: input3x25.dos_tsv, Line: 1
 
-====[tsv-sample input3x25_dos.tsv]====
+====[tsv-sample input3x25.dos_tsv]====
 Error [tsv-sample]: Windows/DOS line ending found. Convert file to Unix newlines before processing (e.g. 'dos2unix').
-  File: input3x25_dos.tsv, Line: 1
+  File: input3x25.dos_tsv, Line: 1
 
-====[tsv-sample input3x0.tsv input3x25_dos.tsv]====
+====[tsv-sample input3x0.tsv input3x25.dos_tsv]====
 Error [tsv-sample]: Windows/DOS line ending found. Convert file to Unix newlines before processing (e.g. 'dos2unix').
-  File: input3x25_dos.tsv, Line: 1
+  File: input3x25.dos_tsv, Line: 1
 
-====[tsv-sample -n 2 -H input3x25_dos.tsv]====
+====[tsv-sample -n 2 -H input3x25.dos_tsv]====
 [tsv-sample] Error processing command line arguments: Windows/DOS line ending found. Convert file to Unix newlines before processing (e.g. 'dos2unix').
-  File: input3x25_dos.tsv, Line: 1
+  File: input3x25.dos_tsv, Line: 1
 
-====[tsv-sample -n 2 -H input3x0.tsv input3x25_dos.tsv]====
+====[tsv-sample -n 2 -H input3x0.tsv input3x25.dos_tsv]====
 Error [tsv-sample]: Windows/DOS line ending found. Convert file to Unix newlines before processing (e.g. 'dos2unix').
-  File: input3x25_dos.tsv, Line: 1
+  File: input3x25.dos_tsv, Line: 1
 
-====[tsv-sample -n 2 input3x25_dos.tsv]====
+====[tsv-sample -n 2 input3x25.dos_tsv]====
 Error [tsv-sample]: Windows/DOS line ending found. Convert file to Unix newlines before processing (e.g. 'dos2unix').
-  File: input3x25_dos.tsv, Line: 1
+  File: input3x25.dos_tsv, Line: 1
 
-====[tsv-sample -n 2 input3x0.tsv input3x25_dos.tsv]====
+====[tsv-sample -n 2 input3x0.tsv input3x25.dos_tsv]====
 Error [tsv-sample]: Windows/DOS line ending found. Convert file to Unix newlines before processing (e.g. 'dos2unix').
-  File: input3x25_dos.tsv, Line: 1
+  File: input3x25.dos_tsv, Line: 1
 
-====[tsv-sample -H -w 3 input3x25_dos.tsv]====
+====[tsv-sample -H -w 3 input3x25.dos_tsv]====
 [tsv-sample] Error processing command line arguments: Windows/DOS line ending found. Convert file to Unix newlines before processing (e.g. 'dos2unix').
-  File: input3x25_dos.tsv, Line: 1
+  File: input3x25.dos_tsv, Line: 1
 
-====[tsv-sample -H -w 3 input3x0.tsv input3x25_dos.tsv]====
+====[tsv-sample -H -w 3 input3x0.tsv input3x25.dos_tsv]====
 Error [tsv-sample]: Windows/DOS line ending found. Convert file to Unix newlines before processing (e.g. 'dos2unix').
-  File: input3x25_dos.tsv, Line: 1
+  File: input3x25.dos_tsv, Line: 1
 
-====[tsv-sample -H -w weight input3x25_dos.tsv]====
+====[tsv-sample -H -w weight input3x25.dos_tsv]====
 [tsv-sample] Error processing command line arguments: Windows/DOS line ending found. Convert file to Unix newlines before processing (e.g. 'dos2unix').
-  File: input3x25_dos.tsv, Line: 1
+  File: input3x25.dos_tsv, Line: 1
 
-====[tsv-sample -H -w weight input3x0.tsv input3x25_dos.tsv]====
+====[tsv-sample -H -w weight input3x0.tsv input3x25.dos_tsv]====
 Error [tsv-sample]: Windows/DOS line ending found. Convert file to Unix newlines before processing (e.g. 'dos2unix').
-  File: input3x25_dos.tsv, Line: 1
+  File: input3x25.dos_tsv, Line: 1
 
-====[tsv-sample -w 1 input2x5_noheader_dos.tsv]====
+====[tsv-sample -w 1 input2x5_noheader.dos_tsv]====
 Error [tsv-sample]: Windows/DOS line ending found. Convert file to Unix newlines before processing (e.g. 'dos2unix').
-  File: input2x5_noheader_dos.tsv, Line: 1
+  File: input2x5_noheader.dos_tsv, Line: 1
 
-====[tsv-sample -w 1 input2x1_noheader.tsv input2x5_noheader_dos.tsv]====
+====[tsv-sample -w 1 input2x1_noheader.tsv input2x5_noheader.dos_tsv]====
 Error [tsv-sample]: Windows/DOS line ending found. Convert file to Unix newlines before processing (e.g. 'dos2unix').
-  File: input2x5_noheader_dos.tsv, Line: 1
+  File: input2x5_noheader.dos_tsv, Line: 1
 
-====[tsv-sample -n 2 -H -w 3 input3x25_dos.tsv]====
+====[tsv-sample -n 2 -H -w 3 input3x25.dos_tsv]====
 [tsv-sample] Error processing command line arguments: Windows/DOS line ending found. Convert file to Unix newlines before processing (e.g. 'dos2unix').
-  File: input3x25_dos.tsv, Line: 1
+  File: input3x25.dos_tsv, Line: 1
 
-====[tsv-sample -n 2 -H -w 3 input3x0.tsv input3x25_dos.tsv]====
+====[tsv-sample -n 2 -H -w 3 input3x0.tsv input3x25.dos_tsv]====
 Error [tsv-sample]: Windows/DOS line ending found. Convert file to Unix newlines before processing (e.g. 'dos2unix').
-  File: input3x25_dos.tsv, Line: 1
+  File: input3x25.dos_tsv, Line: 1
 
-====[tsv-sample -n 2 -H -w weight input3x25_dos.tsv]====
+====[tsv-sample -n 2 -H -w weight input3x25.dos_tsv]====
 [tsv-sample] Error processing command line arguments: Windows/DOS line ending found. Convert file to Unix newlines before processing (e.g. 'dos2unix').
-  File: input3x25_dos.tsv, Line: 1
+  File: input3x25.dos_tsv, Line: 1
 
-====[tsv-sample -n 2 -H -w weight input3x0.tsv input3x25_dos.tsv]====
+====[tsv-sample -n 2 -H -w weight input3x0.tsv input3x25.dos_tsv]====
 Error [tsv-sample]: Windows/DOS line ending found. Convert file to Unix newlines before processing (e.g. 'dos2unix').
-  File: input3x25_dos.tsv, Line: 1
+  File: input3x25.dos_tsv, Line: 1
 
-====[tsv-sample -n 2 -w 1 input2x5_noheader_dos.tsv]====
+====[tsv-sample -n 2 -w 1 input2x5_noheader.dos_tsv]====
 Error [tsv-sample]: Windows/DOS line ending found. Convert file to Unix newlines before processing (e.g. 'dos2unix').
-  File: input2x5_noheader_dos.tsv, Line: 1
+  File: input2x5_noheader.dos_tsv, Line: 1
 
-====[tsv-sample -n 2 -w 1 input2x1_noheader.tsv input2x5_noheader_dos.tsv]====
+====[tsv-sample -n 2 -w 1 input2x1_noheader.tsv input2x5_noheader.dos_tsv]====
 Error [tsv-sample]: Windows/DOS line ending found. Convert file to Unix newlines before processing (e.g. 'dos2unix').
-  File: input2x5_noheader_dos.tsv, Line: 1
+  File: input2x5_noheader.dos_tsv, Line: 1
 
-====[tsv-sample -r -n 2 -H input3x25_dos.tsv]====
+====[tsv-sample -r -n 2 -H input3x25.dos_tsv]====
 [tsv-sample] Error processing command line arguments: Windows/DOS line ending found. Convert file to Unix newlines before processing (e.g. 'dos2unix').
-  File: input3x25_dos.tsv, Line: 1
+  File: input3x25.dos_tsv, Line: 1
 
-====[tsv-sample -r -n 2 -H input3x0.tsv input3x25_dos.tsv]====
+====[tsv-sample -r -n 2 -H input3x0.tsv input3x25.dos_tsv]====
 Error [tsv-sample]: Windows/DOS line ending found. Convert file to Unix newlines before processing (e.g. 'dos2unix').
-  File: input3x25_dos.tsv, Line: 1
+  File: input3x25.dos_tsv, Line: 1
 
-====[tsv-sample -r -n 2 input3x25_dos.tsv]====
+====[tsv-sample -r -n 2 input3x25.dos_tsv]====
 Error [tsv-sample]: Windows/DOS line ending found. Convert file to Unix newlines before processing (e.g. 'dos2unix').
-  File: input3x25_dos.tsv, Line: 1
+  File: input3x25.dos_tsv, Line: 1
 
-====[tsv-sample -r -n 2 input3x0.tsv input3x25_dos.tsv]====
+====[tsv-sample -r -n 2 input3x0.tsv input3x25.dos_tsv]====
 Error [tsv-sample]: Windows/DOS line ending found. Convert file to Unix newlines before processing (e.g. 'dos2unix').
-  File: input3x25_dos.tsv, Line: 1
+  File: input3x25.dos_tsv, Line: 1
 
-====[tsv-sample -p .2 -H input3x25_dos.tsv]====
+====[tsv-sample -p .2 -H input3x25.dos_tsv]====
 [tsv-sample] Error processing command line arguments: Windows/DOS line ending found. Convert file to Unix newlines before processing (e.g. 'dos2unix').
-  File: input3x25_dos.tsv, Line: 1
+  File: input3x25.dos_tsv, Line: 1
 
-====[tsv-sample -p .2 -H input3x0.tsv input3x25_dos.tsv]====
+====[tsv-sample -p .2 -H input3x0.tsv input3x25.dos_tsv]====
 Error [tsv-sample]: Windows/DOS line ending found. Convert file to Unix newlines before processing (e.g. 'dos2unix').
-  File: input3x25_dos.tsv, Line: 1
+  File: input3x25.dos_tsv, Line: 1
 
-====[tsv-sample -p .2 input3x25_dos.tsv]====
+====[tsv-sample -p .2 input3x25.dos_tsv]====
 Error [tsv-sample]: Windows/DOS line ending found. Convert file to Unix newlines before processing (e.g. 'dos2unix').
-  File: input3x25_dos.tsv, Line: 1
+  File: input3x25.dos_tsv, Line: 1
 
-====[tsv-sample -p .2 input3x0.tsv input3x25_dos.tsv]====
+====[tsv-sample -p .2 input3x0.tsv input3x25.dos_tsv]====
 Error [tsv-sample]: Windows/DOS line ending found. Convert file to Unix newlines before processing (e.g. 'dos2unix').
-  File: input3x25_dos.tsv, Line: 1
+  File: input3x25.dos_tsv, Line: 1
 
-====[tsv-sample -H -p .2 -k 2 input3x25_dos.tsv]====
+====[tsv-sample -H -p .2 -k 2 input3x25.dos_tsv]====
 [tsv-sample] Error processing command line arguments: Windows/DOS line ending found. Convert file to Unix newlines before processing (e.g. 'dos2unix').
-  File: input3x25_dos.tsv, Line: 1
+  File: input3x25.dos_tsv, Line: 1
 
-====[tsv-sample -H -p .2 -k 2 input3x0.tsv input3x25_dos.tsv]====
+====[tsv-sample -H -p .2 -k 2 input3x0.tsv input3x25.dos_tsv]====
 Error [tsv-sample]: Windows/DOS line ending found. Convert file to Unix newlines before processing (e.g. 'dos2unix').
-  File: input3x25_dos.tsv, Line: 1
+  File: input3x25.dos_tsv, Line: 1
 
-====[tsv-sample -H -p .2 -k title input3x25_dos.tsv]====
+====[tsv-sample -H -p .2 -k title input3x25.dos_tsv]====
 [tsv-sample] Error processing command line arguments: Windows/DOS line ending found. Convert file to Unix newlines before processing (e.g. 'dos2unix').
-  File: input3x25_dos.tsv, Line: 1
+  File: input3x25.dos_tsv, Line: 1
 
-====[tsv-sample -H -p .2 -k title input3x0.tsv input3x25_dos.tsv]====
+====[tsv-sample -H -p .2 -k title input3x0.tsv input3x25.dos_tsv]====
 Error [tsv-sample]: Windows/DOS line ending found. Convert file to Unix newlines before processing (e.g. 'dos2unix').
-  File: input3x25_dos.tsv, Line: 1
+  File: input3x25.dos_tsv, Line: 1
 
-====[tsv-sample -p .2 -k 2 input2x5_noheader_dos.tsv]====
+====[tsv-sample -p .2 -k 2 input2x5_noheader.dos_tsv]====
 Error [tsv-sample]: Windows/DOS line ending found. Convert file to Unix newlines before processing (e.g. 'dos2unix').
-  File: input2x5_noheader_dos.tsv, Line: 1
+  File: input2x5_noheader.dos_tsv, Line: 1
 
-====[tsv-sample -p .2 -k 2 input2x1_noheader.tsv input2x5_noheader_dos.tsv]====
+====[tsv-sample -p .2 -k 2 input2x1_noheader.tsv input2x5_noheader.dos_tsv]====
 Error [tsv-sample]: Windows/DOS line ending found. Convert file to Unix newlines before processing (e.g. 'dos2unix').
-  File: input2x5_noheader_dos.tsv, Line: 1
+  File: input2x5_noheader.dos_tsv, Line: 1
