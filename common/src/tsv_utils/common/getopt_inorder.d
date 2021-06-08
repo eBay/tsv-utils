@@ -443,6 +443,12 @@ unittest // Dashes
     import std.conv;
     import std.math;
 
+    bool closeEnough(T)(T x, T y)
+    {
+        static if (__VERSION__ >= 2096) return isClose(x, y);
+        else return approxEqual(x, y);
+    }
+
     uint paranoid = 2;
     string[] args = ["program.name", "--paranoid", "--paranoid", "--paranoid"];
     getoptInorder(args, "paranoid+", &paranoid);
@@ -498,8 +504,8 @@ unittest // Dashes
         getoptInorder(testArgs, "tune", &tuningParms);
         assert(testArgs.length == 1);
         assert(tuningParms.length == 2);
-        assert(approxEqual(tuningParms["alpha"], 0.5));
-        assert(approxEqual(tuningParms["beta"], 0.6));
+        assert(closeEnough(tuningParms["alpha"], 0.5));
+        assert(closeEnough(tuningParms["beta"], 0.6));
         arraySep = "";
     }
 

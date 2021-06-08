@@ -896,13 +896,21 @@ unittest
     {
         import std.conv : to;
         import std.format : format;
-        import std.math : approxEqual, isNaN;
+        import std.math : isNaN;
         import std.range : lockstep;
+
+        // Expected results are from printed representations (from R and Octave) and
+        // are not at double precision accuracy. Use a relaxed equality test at more
+        // expected float precision. Eventually need more precise expected values.
+        // Some tests make double-float-double round-trips. These need float precision.
+
+        double maxRelDiff = 4.0 * float.epsilon.to!double;
+        double maxAbsDiff = 2.0 * double.epsilon;
 
         foreach (i, actualValue, expectedValue; lockstep(actual, expected))
         {
-            assert(actualValue.approxEqual(expectedValue) || (actualValue.isNaN && expectedValue.isNaN),
-                   format("Quantile unit test failure, dataset %s, method: %s, index: %d, expected: %g, actual: %g",
+            assert(nearEqual!(double, Yes.areNaNsEqual)(actualValue, expectedValue, maxRelDiff, maxAbsDiff),
+                   format("Quantile unit test failure, dataset %s, method: %s, index: %d, expected: %.32g, actual: %.32g",
                           dataset, method.to!string, i, expectedValue, actualValue));
         }
     }
@@ -930,5 +938,178 @@ unittest
         compareResults(probs.map!(p => p.quantile(d11, method)).array, d11_expected[methodIndex], "d11", method);
         compareResults(probs.map!(p => p.quantile(d12, method)).array, d12_expected[methodIndex], "d12", method);
         compareResults(probs.map!(p => p.quantile(d13, method)).array, d13_expected[methodIndex], "d13", method);
+    }
+}
+/** Flag use by the nearEqual template. */
+alias AreNaNsEqual = Flag!"areNaNsEqual";
+
+/**
+nearEqual checks two floating point numbers are "near equal".
+
+nearEqual is an alternative to the approxEqual and isClose functions in the Phobos
+standard library. It should be regarded as experimental. Currently it is only used in
+unit tests.
+
+Default relative diff tolerance is small. Absolute diff tolerance is also small, but
+non-zero. This means comparing number near zero to zero will considered near equal by
+defaults.
+
+Default tolerances will not survive float-to-double conversion. Use tolerances based
+on float in these cases.
+*/
+bool nearEqual(T, AreNaNsEqual naNsAreEqual = No.areNaNsEqual)
+     (T x, T y, T maxRelDiff = 4.0 * T.epsilon, T maxAbsDiff = T.epsilon)
+     if (isFloatingPoint!T)
+{
+    import std.algorithm : max;
+    import std.math : abs, isNaN;
+
+    if (x == y) return true;
+
+    static if (naNsAreEqual) if (x.isNaN && y.isNaN) return true;
+
+    if (x.isNaN || y.isNaN) return false;
+
+    immutable absDiff = abs(x - y);
+
+    if (absDiff <= maxAbsDiff) return true;
+
+    immutable relDiff = absDiff / max(abs(x), abs(y));
+
+    return (relDiff <= maxRelDiff);
+}
+
+@safe unittest
+{
+    enum float defaultMaxRelDiffFloat = 4 * float.epsilon;
+    enum double defaultMaxRelDiffDouble = 4 * double.epsilon;
+
+    // +0.0 and -0.0 are always equal, even with zero relative and absolute diffs.
+    assert(nearEqual(0.0f, 0.0f, 0.0f, 0.0f));
+    assert(nearEqual(-0.0f, +0.0f, 0.0f, 0.0f));
+    assert(nearEqual(0.0, 0.0, 0.0, 0.0));
+    assert(nearEqual(-0.0, +0.0, 0.0, 0.0));
+
+    // NaNs are equal or not depending on template parameters
+    assert(!nearEqual(float.nan, float.nan, 0.0, 0.0));
+    assert(!nearEqual(double.nan, double.nan, 0.0, 0.0));
+    assert(nearEqual!(float, Yes.areNaNsEqual)(float.nan, float.nan, 0.0, 0.0));
+    assert(nearEqual!(double, Yes.areNaNsEqual)(double.nan, double.nan, 0.0, 0.0));
+
+    // Infinity tests
+    assert(nearEqual(float.infinity, float.infinity, 0.0f, 0.0f));
+    assert(nearEqual(-float.infinity, -float.infinity, 0.0f, 0.0f));
+    assert(!nearEqual(-float.infinity, float.infinity, 0.0f, 0.0f));
+
+    assert(nearEqual(double.infinity, double.infinity, 0.0f, 0.0f));
+    assert(nearEqual(-double.infinity, -double.infinity, 0.0f, 0.0f));
+    assert(!nearEqual(-double.infinity, double.infinity, 0.0f, 0.0f));
+
+    assert(!nearEqual(float.infinity, float.max, 0.0f, 0.0f));
+    assert(!nearEqual(-float.infinity, -float.max, 0.0f, 0.0f));
+    assert(!nearEqual(double.infinity, double.max, 0.0f, 0.0f));
+    assert(!nearEqual(-double.infinity, -double.max, 0.0f, 0.0f));
+
+    // Near Zero tests
+    assert(nearEqual(0.0f, float.min_normal));
+    assert(nearEqual(0.0f, -float.min_normal));
+    assert(nearEqual(0.0, double.min_normal));
+    assert(nearEqual(0.0, -double.min_normal));
+
+    assert(!nearEqual(0.0f, float.min_normal, defaultMaxRelDiffFloat, 0.0f));
+    assert(!nearEqual(0.0f, -float.min_normal, defaultMaxRelDiffFloat, 0.0f));
+    assert(!nearEqual(0.0, double.min_normal, defaultMaxRelDiffDouble, 0.0));
+    assert(!nearEqual(0.0, -double.min_normal, defaultMaxRelDiffDouble, 0.0));
+
+    // Tests with some different sizes
+    assert(!nearEqual(1.11f, 1.110001f));
+    assert( nearEqual(1.11f, 1.1100001f));
+
+    assert(!nearEqual(1.11, 1.11000000000001));
+    assert( nearEqual(1.11, 1.110000000000001));
+
+    assert(!nearEqual(-1.11f, -1.110001f));
+    assert( nearEqual(-1.11f, -1.1100001f));
+
+    assert(!nearEqual(-1.11, -1.11000000000001));
+    assert( nearEqual(-1.11, -1.110000000000001));
+
+    assert(!nearEqual(3739.7f, 3739.69f));
+    assert( nearEqual(3739.7f, 3739.699f));
+
+    assert(!nearEqual(3739.7, 3739.69999999999));
+    assert( nearEqual(3739.7, 3739.699999999999));
+
+    assert(!nearEqual(732156983.0f, 732157367.0f));  // Delta 384
+    assert( nearEqual(732156983.0f, 732157303.0f));  // Delta 320
+
+    assert(!nearEqual(732156983.0, 732156983.000001));
+    assert( nearEqual(732156983.0, 732156983.0000001));
+
+    assert(!nearEqual(-0.0007370567f, -0.0007372567f));
+    assert( nearEqual(-0.0007370567f, -0.0007371567f));
+
+    assert(!nearEqual(-0.0000007370567, -0.000000737056701));
+    assert( nearEqual(-0.0000007370567, -0.0000007370567001));
+
+    // More near zero tests
+    {
+        float a = 1.0f;
+        float b = 2.0f;
+        float c = 3.0f;
+        float x = (a + b) - c;
+
+        assert(nearEqual(x, 0.0f));
+
+        foreach (i; 0 .. 3)
+        {
+            // Divide by ten and repeat the comparisons.
+            a /= 10.0f;
+            b /= 10.0f;
+            c /= 10.0f;
+            x /= 10.0f;
+
+            float y = (a + b) - c;
+
+            assert(nearEqual(x, 0.0f));
+            assert(nearEqual(y, 0.0f));
+            assert(nearEqual(x, y));
+        }
+    }
+    {
+        double a = 1.0;
+        double b = 2.0;
+        double c = 3.0;
+        double x = (a + b) - c;
+
+        assert(nearEqual(x, 0.0));
+
+        foreach (i; 0 .. 3)
+        {
+            // Divide by ten and repeat the comparisons.
+            a /= 10.0;
+            b /= 10.0;
+            c /= 10.0;
+            x /= 10.0;
+
+            double y = (a + b) - c;
+
+            assert(nearEqual(x, 0.0));
+            assert(nearEqual(y, 0.0));
+            assert(nearEqual(x, y));
+        }
+    }
+
+    // Double to double to float round trip. Use float tolerances.
+    // Note: Don't use immutables. Compiler will preserve doubles.
+    {
+        import std.conv : to;
+
+        double q = 31.79;
+        float rf = q;
+        double r = rf;
+
+        assert(!nearEqual(q, r));
+        assert(nearEqual(q, r, defaultMaxRelDiffFloat.to!double));
     }
 }
