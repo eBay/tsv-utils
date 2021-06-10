@@ -54,7 +54,7 @@ Behaviors of this program that often vary between CSV implementations:
   * Newlines are supported in quoted fields.
   * Double quotes are permitted in a non-quoted field. However, a field starting
     with a quote must follow quoting rules.
-  * Each record can have a different numbers of fields.
+  * Each record can have a different number of fields.
   * The three common forms of newlines are supported: CR, CRLF, LF. Output is
     written using Unix newlines (LF).
   * A newline will be added if the file does not end with one.

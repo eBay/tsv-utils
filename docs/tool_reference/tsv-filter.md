@@ -244,7 +244,7 @@ The `--line-buffered` option changes input and output buffering so each line is 
 $ complex_operation | tsv-filter -H --gt score:50 --line-buffered
 ```
 
-The above command will output lines satisfying the filter as soon they are received from the `complex_operation` command. Without the `--line-buffered` option output would wait until enough data is available to fill the buffers used by `tsv-filter`.
+The above command will output lines satisfying the filter as soon as they are received from the `complex_operation` command. Without the `--line-buffered` option output would wait until enough data is available to fill the buffers used by `tsv-filter`.
 
 The effect can be seen using the `sleep` command when printing a series of lines:
 

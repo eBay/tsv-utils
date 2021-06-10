@@ -12,23 +12,23 @@ Contents:
 
 ## Code structure
 
-There is directory for each tool, plus one directory for shared code (`common`). The tools all have a similar structure. Code is typically in one file, e.g. `tsv-uniq.d`. Functionality is broken into three pieces:
+There is a directory for each tool, plus one directory for shared code (`common`). The tools all have a similar structure. Code is typically in one file, e.g. `tsv-uniq.d`. Functionality is broken into three pieces:
 
 * A class managing command line options. e.g. `TsvUniqOptions`.
-* A function reading reading input and processing each line. e.g. `tsvUniq`.
+* A function reading input and processing each line. e.g. `tsvUniq`.
 * A `main` routine putting it all together.
 
 Documentation for each tool is found near the top of the main file, both in the help text and the option documentation. The [tsv-utils code documentation](https://tsv-utils.dpldocs.info/) is also useful for understanding the code.
 
-The simplest tool is `number-lines`. It is useful as an illustration of the code outline followed by the other tools. `tsv-select` and `tsv-uniq` also have straightforward functionality, but employ a few more D programming concepts. `tsv-select` uses templates and compile-time programming in a somewhat less common way, it may be clearer after gaining some familiarity with D templates. A non-templatized version of the source code is included for comparison.
+The simplest tool is `number-lines`. It is useful as an illustration of the code outline followed by the other tools. `tsv-select` and `tsv-uniq` also have straightforward functionality, but employ a few more D programming concepts. `tsv-select` uses templates and compile-time programming in a somewhat less common way; it may be clearer after gaining some familiarity with D templates. A non-templatized version of the source code is included for comparison.
 
-`tsv-append` has a simple code structure. It's one of the newer tools. It's only additional complexity is that writes to an 'output range' rather than directly to standard output. This enables better encapsulation for unit testing. `tsv-sample`, another new tool, is written in a similar fashion. The code is only a bit more complicated, but the algorithm is much more interesting.
+`tsv-append` has a simple code structure. It's one of the newer tools. It's only additional complexity is that it writes to an 'output range' rather than directly to standard output. This enables better encapsulation for unit testing. `tsv-sample`, another new tool, is written in a similar fashion. The code is only a bit more complicated, but the algorithm is much more interesting.
 
 `tsv-sample` is one of the newest tools and one of the better code examples. Sampling is algorithmically interesting and the code includes implementations of a number of sampling methods.
 
 `tsv-join` and `tsv-filter` also have relatively straightforward functionality, but support more use cases resulting in more code. `tsv-filter` in particular has more elaborate setup steps that take a bit more time to understand. `tsv-filter` uses several features like delegates (closures) and regular expressions not used in the other tools.
 
-`tsv-summarize` is one or the more recent tools. It uses a more object oriented style than the other tools, this makes it relatively easy to add new operations. It also makes quite extensive use of built-in unit tests.
+`tsv-summarize` is one of the more recent tools. It uses a more object oriented style than the other tools, this makes it relatively easy to add new operations. It also makes quite extensive use of built-in unit tests.
 
 The `common` directory has code shared by the tools. See the [tsv-utils.common code documentation](https://tsv-utils.dpldocs.info/tsv_utils.common.html) for a description of the classes.
 
@@ -36,7 +36,7 @@ New tools can be added by creating a new directory and a source tree following t
 
 ## Coding philosophy
 
-The tools were written in part to explore D for use in a data science environment. Data mining environments have custom data and application needs. This leads to custom tools, which in turn raises the productivity vs execution speed question. This trade-off is exemplified by interpreted languages like Python on the one hand and system languages like C/C++ on the other. The D programming language occupies an interesting point on this spectrum. D's programmer experience is somewhere in the middle ground between interpreted languages and C/C++, but run-time performance is closer to C/C++. Execution speed is a very practical consideration in data mining environments: it increases dataset sizes that can handled on a single machine, perhaps the researcher's own machine, without needing to switch to a distributed compute environment. There is additional value in having data science practitioners program these tools quickly, themselves, without needing to invest time in low-level programming.
+The tools were written in part to explore D for use in a data science environment. Data mining environments have custom data and application needs. This leads to custom tools, which in turn raises the productivity vs execution speed question. This trade-off is exemplified by interpreted languages like Python on the one hand and system languages like C/C++ on the other. The D programming language occupies an interesting point on this spectrum. D's programmer experience is somewhere in the middle ground between interpreted languages and C/C++, but run-time performance is closer to C/C++. Execution speed is a very practical consideration in data mining environments: it increases dataset sizes that can be handled on a single machine, perhaps the researcher's own machine, without needing to switch to a distributed compute environment. There is additional value in having data science practitioners program these tools quickly, themselves, without needing to invest time in low-level programming.
 
 These tools were implemented with these trade-offs in mind. The code was deliberately kept at a reasonably high level. The obvious built-in facilities were used, notably the standard library. A certain amount of performance optimization was done to explore this dimension of D programming, but low-level optimizations were generally avoided. Indeed, there are options likely to improve performance, notably:
 
@@ -44,7 +44,7 @@ These tools were implemented with these trade-offs in mind. The code was deliber
 * Custom hash tables rather than built-in associative arrays.
 * Avoiding garbage collection.
 
-A useful aspect of D is that is additional optimization can be made as the need arises. Coding of these tools did utilize a several optimizations that might not have been done in an initial effort. These include:
+A useful aspect of D is that additional optimizations can be made as the need arises. Coding of these tools did utilize several optimizations that might not have been done in an initial effort. These include:
 
 * The `InputFieldReordering` class in the `common` directory. This is an optimization for processing only the first N fields needed for the individual command invocation. This is used by several tools.
 * The template expansion done in `tsv-select`. This reduces the number of if-tests in the inner loop.
@@ -65,7 +65,7 @@ The makefile setup is very simplistic. It works reasonably in this case because 
 * `make test-codecov` - Runs unit tests and debug app tests with code coverage reports turned on.
 * `make help` - Shows all the make commands.
 
-Builds can be customized by changing the settings in `makedefs.mk`. The most basic customization is the compiler choice, this controlled by the `DCOMPILER` variable.
+Builds can be customized by changing the settings in `makedefs.mk`. The most basic customization is the compiler choice, this is controlled by the `DCOMPILER` variable.
 
 ### DUB package setup
 
@@ -79,9 +79,9 @@ $ make test-nobuild
 
 ## Unit tests and code coverage reports
 
-D has an excellent facility for adding unit tests right with the code. The `common` utility functions and the more recent tools take advantage of built-in unit tests. However, the earlier tools do not, and instead use more traditional invocation of the command line executables and diffs the output against a "gold" result set. The more recent tools use both built-in unit tests ad tests against the executable. This includes `csv2tsv`, `tsv-summarize`, `tsv-append`, and `tsv-sample`. The built-in unit tests are much nicer, and also the advantage of being naturally cross-platform. The command line executable tests assume a Unix shell.
+D has an excellent facility for adding unit tests right with the code. The `common` utility functions and the more recent tools take advantage of built-in unit tests. However, the earlier tools do not, and instead use more traditional invocation of the command line executables and diffs the output against a "gold" result set. The more recent tools use both built-in unit tests and tests against the executable. This includes `csv2tsv`, `tsv-summarize`, `tsv-append`, and `tsv-sample`. The built-in unit tests are much nicer, and also the advantage of being naturally cross-platform. The command line executable tests assume a Unix shell.
 
-Tests for the command line executables are in the `tests` directory of each tool. Overall the tests cover a fair number of cases and are quite useful checks when modifying the code. They may also be helpful as an examples of command line tool invocations. See the `tests.sh` file in each `test` directory, and the `test` makefile target in `makeapp.mk`.
+Tests for the command line executables are in the `tests` directory of each tool. Overall the tests cover a fair number of cases and are quite useful checks when modifying the code. They may also be helpful as examples of command line tool invocations. See the `tests.sh` file in each `test` directory, and the `test` makefile target in `makeapp.mk`.
 
 The unit test built into the common code (`common/src/tsvutil.d`) illustrates a useful interaction with templates: it is quite easy and natural to unit test template instantiations that might not occur naturally in the application being written along with the template.
 

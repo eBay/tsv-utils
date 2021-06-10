@@ -37,7 +37,7 @@ $ tsv-header worldcitiespop.tsv
      7	Longitude
 ```
 
-A similar alias can be setup for CSV files. Here are two. The first uses [csv2tsv](tool_reference/csv2tsv.md) to interpret the CSV header line, including CSV escape characters. The second uses only standard Unix tools. It won't interpret CSV escapes, but many header lines don't use escapes. (Define only one):
+A similar alias can be set up for CSV files. Here are two. The first uses [csv2tsv](tool_reference/csv2tsv.md) to interpret the CSV header line, including CSV escape characters. The second uses only standard Unix tools. It won't interpret CSV escapes, but many header lines don't use escapes. (Define only one):
 ```
 csv-header () { csv2tsv "$@" | head -n 1 | tr $'\t' $'\n' | nl -ba ; }
 csv-header () { head -n 1 "$@" | tr $',' $'\n' | nl -ba ; }
@@ -600,7 +600,7 @@ The first two use the `pipe` function to create the shell command. `fread` does 
 
 Line order randomization, or "shuffling", is one of the operations supported by [tsv-sample](tool_reference/tsv-sample.md). Most `tsv-sample` operations can be performed with limited system memory. However, system memory becomes a limitation when shuffling very large data sets, as the entire data set must be loaded into memory. ([GNU shuf](https://www.gnu.org/software/coreutils/manual/html_node/shuf-invocation.html) has the same limitation.)
 
-In many cases the most effective solution is simply to get more memory, or find a machine with enough memory. However, when more memory is not an option, another solution to consider is disk-based shuffling. This approach described here.
+In many cases the most effective solution is simply to get more memory, or find a machine with enough memory. However, when more memory is not an option, another solution to consider is disk-based shuffling. This approach is described here.
 
 One option for disk-based shuffling is [GNU sort](https://www.gnu.org/software/coreutils/manual/html_node/sort-invocation.html)'s random sort feature (`sort --random-sort`). This can be used for unweighted randomization. However, there are a couple of downsides. One is that it places duplicates lines next to each other, a problem for many shuffling use cases. Another is that it is rather slow.
 
@@ -612,7 +612,7 @@ $ # In-memory version
 $ tsv-sample file.txt > randomized-file.txt
 
 $ # Using disk-based sorting
-$ tsv-sample --gen-random-inorder file.txt | tsv-sort-fast -k1,1nr | cut -f 2- > randomized-file.txt
+$ tsv-sample --gen-random-inorder file.txt | tsv-sort-fast -k1,1nr | tsv-select --exclude 1 > randomized-file.txt
 ```
 
 (*Note: These examples uses the `tsv-sort-fast` shell script described earlier, under [Customize the Unix sort command](#customize-the-unix-sort-command). Substitute `tsv-sort-fast -k1,1nr` with `(LC_ALL=C sort -t $'\t' --buffer-size=2G -k1,1nr)` to use the `sort` command directly.*)
@@ -625,31 +625,31 @@ $ # In-memory version
 $ tsv-sample -w 3 file.tsv > randomized-file.tsv
 
 $ # Using disk-based sampling, with integer weights
-$ tsv-sample -w 3 --gen-random-inorder file.tsv | tsv-sort-fast -k1,1nr | cut -f 2- > randomized-file.tsv
+$ tsv-sample -w 3 --gen-random-inorder file.tsv | tsv-sort-fast -k1,1nr | tsv-select --exclude 1 > randomized-file.tsv
 ```
 
 The examples so far use "numeric" sorting. When values contain exponents "general numeric" sorting should be used. This is specified using `-k1,1gr` rather than `-k1,1nr`. Here's an example:
 ```
 $ # Using disk-based sampling, with floating point weights
-$ tsv-sample -w 3 --gen-random-inorder file.tsv | tsv-sort-fast -k1,1gr | cut -f 2- > randomized-file.tsv
+$ tsv-sample -w 3 --gen-random-inorder file.tsv | tsv-sort-fast -k1,1gr | tsv-select --exclude 1 > randomized-file.tsv
 ```
 
 Performance of the approaches described will vary considerably based on the hardware and data sets. As one comparison point the author ran both `sort --random-sort` and the unweighted, disk based approach shown above on a 294 million line, 5.8 GB data set. A 16 GB macOS box with SSD disk storage was used. This data set fits in memory on this machine, so the in-memory approach was tested as well. Both `tsv-sample` and GNU `shuf` were used. The `sort --random-sort` metric was run with [locale sensitive sorting](#turn-off-locale-sensitive-sort-when-not-needed) both on and off to show the difference.
 
 The in-memory versions are of course faster. But if disk is necessary, combining `tsv-sample --gen-random-inorder` with `sort` is about twice as fast as `sort --random-sort` and doesn't have the undesirable behavior of grouping duplicate lines.
 
-| Command/Method                                           | Disk? |           Time |
-| -------------------------------------------------------- | ------| -------------: |
-| `tsv-sample file.txt > out.txt`                          | No    |  1 min, 52 sec |
-| `shuf file.txt > out.txt`                                | No    |  3 min,  9 sec |
-| Method: _tsv-sample --gen-random-inorder_, _cut_, _sort_ | Yes   | 13 min, 24 sec |
-| `tsv-sort-fast --random-sort file.txt > out.txt`         | Yes   | 27 min, 44 sec |
-| `tsv-sort --random-sort file.txt > out.txt`              | Yes   |  4 hrs, 55 min |
+| Command/Method                                                  | Disk? |           Time |
+| --------------------------------------------------------------- | ------| -------------: |
+| `tsv-sample file.txt > out.txt`                                 | No    |  1 min, 52 sec |
+| `shuf file.txt > out.txt`                                       | No    |  3 min,  9 sec |
+| Method: _tsv-sample --gen-random-inorder_, _sort_, _tsv-select_ | Yes   | 13 min, 24 sec |
+| `tsv-sort-fast --random-sort file.txt > out.txt`                | Yes   | 27 min, 44 sec |
+| `tsv-sort --random-sort file.txt > out.txt`                     | Yes   |  4 hrs, 55 min |
 
 Notes:
-* The "_tsv-sample --gen-random-inorder_, _cut_, _sort_" command:
+* The "_tsv-sample --gen-random-inorder_, _sort_, _tsv-select_" command:
   ```
-  tsv-sample --gen-random-inorder file.txt | tsv-sort-fast -k1,1nr | cut -f 2- > out.txt
+  tsv-sample --gen-random-inorder file.txt | tsv-sort-fast -k1,1nr | tsv-select --exclude 1 > out.txt
   ```
 * `tsv-sort` and `tsv-sort-fast` are described in [Customize the Unix sort command](#customize-the-unix-sort-command). They are covers for `sort`. `tsv-sort-fast` turns locale sensitivity off, `tsv-sort` leaves it on. `tsv-sort` was run with `LANG="en_US.UTF-8`.
 * Program versions: `tsv-sample` version 1.4.4; GNU `sort` version 8.31; GNU `shuf` version 8.31.

@@ -17,8 +17,8 @@ The filter file needs to fit into available memory (the join key and append fiel
 * `--help-fields ` - Print help on specifying fields.
 * `--V|version` - Print version information and exit.
 * `--f|filter-file FILE` - (Required) File with records to use as a filter.
-* `--k|key-fields <field-list>` - Fields to use as join key. Default: 0 (entire line).
-* `--d|data-fields <field-list>` - Data stream fields to use as join key, if different than `--key-fields`.
+* `--k|key-fields <field-list>` - Fields to use as the join key. Default: 0 (entire line).
+* `--d|data-fields <field-list>` - Data stream fields to use as the join key, if different than `--key-fields`.
 * `--a|append-fields <field-list>` - Filter file fields to append to matched records.
 * `--H|header` - Treat the first line of each file as a header.
 * `--p|prefix STR` - String to use as a prefix for `--append-fields` when writing a header line.

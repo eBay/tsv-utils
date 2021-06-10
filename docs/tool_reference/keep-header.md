@@ -13,7 +13,7 @@ $ keep-header file1.txt -- sort
 $ keep-header file1.txt file2.txt -- sort -k1,1nr
 ```
 
-Data can also be read from from standard input. For example:
+Data can also be read from standard input. For example:
 ```
 $ cat file1.txt | keep-header -- sort
 $ keep-header file1.txt -- sort -r | keep-header -- grep red

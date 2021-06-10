@@ -157,11 +157,11 @@ struct TsvJoinOptions
                 "f|filter-file",   "FILE          (Required) File with records to use as a filter.", &filterFile,
 
                 keyFieldsOptionString,
-                "<field-list>  Fields to use as join key. Default: 0 (entire line).",
+                "<field-list>  Fields to use as the join key. Default: 0 (entire line).",
                 &keyFieldsArg,
 
                 dataFieldsOptionString,
-                "<field-list>  Data stream fields to use as join key, if different than --key-fields.",
+                "<field-list>  Data stream fields to use as the join key, if different than --key-fields.",
                 &dataFieldsArg,
 
                 appendFieldsOptionString,

@@ -9,7 +9,7 @@ Example:
 $ tsv-join -H --filter-file filter.tsv --key-fields Country,City --append-fields Population,Elevation data.tsv
 ```
 
-This reads `filter.tsv`, creating a lookup table keyed on the fields `Country` and `City` fields. `data.tsv` is read, lines with a matching key are written to standard output with the `Population` and `Elevation` fields from `filter.tsv` appended. This is an inner join. Left outer joins and anti-joins are also supported.
+This reads `filter.tsv`, creating a lookup table keyed on the `Country` and `City` fields. `data.tsv` is read, lines with a matching key are written to standard output with the `Population` and `Elevation` fields from `filter.tsv` appended. This is an inner join. Left outer joins and anti-joins are also supported.
 
 Common uses for `tsv-join` are to join related datasets or to filter one dataset based on another. Filter file entries are kept in memory, this limits the ultimate size that can be handled effectively. The author has found that filter files up to about 10 million lines are processed effectively, but performance starts to degrade after that.
 

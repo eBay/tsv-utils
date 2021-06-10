@@ -54,8 +54,8 @@ The specifics behind these random values are subject to change in future release
 * `--help-fields ` - Print help on specifying fields.
 * `--V|version` - Print version information and exit.
 * `--H|header` - Treat the first line of each file as a header.
-* `--n|num NUM` - Maximum number of lines to output. All selected lines are output if not provided or zero.
-* `--p|prob NUM` - Inclusion probability (0.0 < NUM <= 1.0). For Bernoulli sampling, the probability each line is selected output. For distinct sampling, the probability each unique key is selected for output.
+  * `--n|num NUM` - Maximum number of lines to output. All selected lines are output if not provided or zero.
+* `--p|prob NUM` - Inclusion probability (0.0 < NUM <= 1.0). For Bernoulli sampling, the probability of each line being selected. For distinct sampling, the probability of each unique key being selected.
 * `--k|key-fields <field-list>` - Fields to use as key for distinct sampling. Use with `--p|prob`. Specify `--k|key-fields 0` to use the entire line as the key.
 * `--w|weight-field NUM` - Field containing weights. All lines get equal weight if not provided or zero.
 * `--r|replace` - Simple random sampling with replacement. Use `--n|num` to specify the sample size.

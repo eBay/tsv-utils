@@ -2,7 +2,7 @@ _Visit the [TSV Utilities main page](../README.md)_
 
 # Tools Reference
 
-The TSV Utilities Tools Reference provides detailed documentation about each tool. Each tool has it's own page, available through the links below. The [Common options and behavior](tool_reference/common-options-and-behavior.md) page provides information about features and options common to all the tools.
+The TSV Utilities Tools Reference provides detailed documentation about each tool. Each tool has itXSs own page, available through the links below. The [Common options and behavior](tool_reference/common-options-and-behavior.md) page provides information about features and options common to all the tools.
 
 Documentation for individual tools is also available via the `--help` option available on every tool. Most tools provide a `--help-verbose` option offering more extensive documentation similar to what is available in the Tool Reference.
 

@@ -13,7 +13,7 @@ By default, only the alignment is changed, the actual values are not modified. S
 
 Features:
 
-* Floating point numbers: Floats can be printed in fixed-width precision, using the same precision for all floats in a column. This makes then line up nicely. Precision is determined by values seen during look-ahead processing. The max precision defaults to 9, this can be changed when smaller or larger values are desired. See the `--f|format-floats` and `--p|precision` options.
+* Floating point numbers: Floats can be printed in fixed-width precision, using the same precision for all floats in a column. This makes them line up nicely. Precision is determined by values seen during look-ahead processing. The max precision defaults to 9, this can be changed when smaller or larger values are desired. See the `--f|format-floats` and `--p|precision` options.
 
 * Header lines: Headers are detected automatically when possible. This can be overridden when automatic detection doesn't work as desired. Headers can be underlined and repeated at regular intervals.
 
@@ -89,4 +89,3 @@ Chartreuse           1139    77.0  6.2
 Fluorescent Orange    422  1141.7  7.9
 Grey                   19   140.3  1.0
 ```
-
