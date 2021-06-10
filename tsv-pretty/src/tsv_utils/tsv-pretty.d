@@ -65,7 +65,7 @@ Several of the formatting options do modify the values.
 Features:
 
 * Floating point numbers: Floats can be printed in fixed-width precision, using
-  the same precision for all floats in a column. This makes then line up nicely.
+  the same precision for all floats in a column. This makes them line up nicely.
   Precision is determined by values seen during look-ahead processing. The max
   precision defaults to 9, this can be changed when smaller or larger values are
   desired. See the '--f|format-floats' and '--p|precision' options.

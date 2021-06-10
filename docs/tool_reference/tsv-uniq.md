@@ -9,7 +9,7 @@ _Visit the [TSV Utilities main page](../../README.md)_
 
 The alternatives to the default 'uniq' mode are 'number' mode and 'equiv-class' mode. In 'equiv-class' mode (`--e|equiv`), all lines are written to standard output, but with a field appended marking equivalent entries with an ID. The ID is a one-upped counter.
 
-'Number' mode (`--z|number`) also writes all lines to standard output, but with a field appended numbering the occurrence count for the line's key. The first line with a specific key is assigned the number '1', the second with the key is assigned number '2', etc. 'Number' and 'equiv-class' modes can be used together.
+'Number' mode (`--z|number`) also writes all lines to standard output, but with a field appended numbering the occurrence count for the line's key. The first line with a specific key is assigned the number '1', the second with the key is assigned the number '2', etc. 'Number' and 'equiv-class' modes can be used together.
 
 The `--r|repeated` option can be used to print only lines occurring more than once. Specifically, the second occurrence of a key is printed. The `--a|at-least N` option is similar, printing lines occurring at least N times. (Like repeated, the Nth line with the key is printed.)
 

@@ -2,7 +2,7 @@ _Visit the [main page](../README.md)_
 
 # Building with Link Time Optimization and Profile Guided Optimization
 
-This page provides instruction for building the TSV Utilities from source code using Link Time Optimization (LTO) and Profile Guided Optimization (PGO). LTO is enabled for all the tools, PGO is enabled for a select few. Both improve run-time performance, LTO has the additional effect of reducing binary sizes. Normally PGO and LTO can be used independently, however, the TSV Utilities build system only supports PGO when already using LTO.
+This page provides instructions for building the TSV Utilities from source code using Link Time Optimization (LTO) and Profile Guided Optimization (PGO). LTO is enabled for all the tools, PGO is enabled for a select few. Both improve run-time performance, LTO has the additional effect of reducing binary sizes. Normally PGO and LTO can be used independently, however, the TSV Utilities build system only supports PGO when already using LTO.
 
 Contents:
 

@@ -944,18 +944,18 @@ unittest
 alias AreNaNsEqual = Flag!"areNaNsEqual";
 
 /**
-nearEqual checks two floating point numbers are "near equal".
+nearEqual checks if two floating point numbers are "near equal".
 
 nearEqual is an alternative to the approxEqual and isClose functions in the Phobos
-standard library. It should be regarded as experimental. Currently it is only used in
+standard library. It should be regarded as experimental. Currently it is used only in
 unit tests.
 
 Default relative diff tolerance is small. Absolute diff tolerance is also small, but
 non-zero. This means comparing number near zero to zero will considered near equal by
 defaults.
 
-Default tolerances will not survive float-to-double conversion. Use tolerances based
-on float in these cases.
+Default tolerances will not suffice for float-to-double conversion. Use tolerances
+based on float in these cases.
 */
 bool nearEqual(T, AreNaNsEqual naNsAreEqual = No.areNaNsEqual)
      (T x, T y, T maxRelDiff = 4.0 * T.epsilon, T maxAbsDiff = T.epsilon)

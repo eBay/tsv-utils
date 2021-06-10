@@ -28,7 +28,7 @@ File an [issue](https://github.com/eBay/tsv-utils/issues) if you have problems, 
 * [Experimenting with Link Time Optimization](docs/dlang-meetup-14dec2017.pdf). Dec 14, 2017. A presentation at the [Silicon Valley D Meetup](https://www.meetup.com/D-Lang-Silicon-Valley/) describing experiments using LTO based on eBay's TSV Utilities.
 * [Exploring D via Benchmarking of eBay's TSV Utilities](http://dconf.org/2018/talks/degenhardt.html). May 2, 2018. A presentation at [DConf 2018](http://dconf.org/2018/) describing performance benchmark studies conducted using eBay's TSV Utilities (slides [here](docs/dconf2018.pdf)).
 
-![GitHub Workflow Status](https://img.shields.io/github/workflow/status/eBay/tsv-utils/build-test)
+[![GitHub Workflow Status](https://img.shields.io/github/workflow/status/eBay/tsv-utils/build-test)](https://github.com/eBay/tsv-utils/actions/workflows/build-test.yml)
 [![Codecov](https://img.shields.io/codecov/c/github/eBay/tsv-utils.svg)](https://codecov.io/gh/eBay/tsv-utils)
 [![GitHub release](https://img.shields.io/github/release/eBay/tsv-utils.svg)](https://github.com/eBay/tsv-utils/releases)
 [![Github commits (since latest release)](https://img.shields.io/github/commits-since/eBay/tsv-utils/latest.svg)](https://github.com/eBay/tsv-utils/commits/master)
@@ -309,7 +309,7 @@ See the [tsv-summarize reference](docs/tool_reference/tsv-summarize.md) for the 
 * Bernoulli sampling (`--p|prob P`) - A streaming form of sampling. Lines are read one at a time and selected for output using probability `P`. e.g. `-p 0.1` specifies that 10% of lines should be included in the sample.
 * Distinct sampling (`--k|key-fields F`, `--p|prob P`) - Another streaming form of sampling. However, instead of each line being subject to an independent selection choice, lines are selected based on a key contained in each line. A portion of keys are randomly selected for output, with probability P. Every line containing a selected key is included in the output. Consider a query log with records consisting of <user, query, clicked-url> triples. It may be desirable to sample records for one percent of the users, but include all records for the selected users.
 
-`tsv-sample` is designed for large data sets. Streaming algorithms make immediate decisions on each line. They do not accumulate memory and can run on infinite length input streams. Both shuffling and sampling with replacement read in the entire dataset and are limited by available memory. Simple and weighted random sampling use reservoir sampling and only need to hold the specified sample size (`--n|num`) in memory. By default, a new random order is generated every run, but options are available for using the same randomization order over multiple runs. The random values assigned to each line can be printed, either to observe the behavior or to run custom algorithms on the results.
+`tsv-sample` is designed for large data sets. Streaming algorithms make immediate decisions on each line. They do not accumulate memory and can run on infinite length input streams. Both shuffling and sampling with replacement read the entire dataset all at once and are limited by available memory. Simple and weighted random sampling use reservoir sampling and only need to hold the specified sample size (`--n|num`) in memory. By default, a new random order is generated every run, but options are available for using the same randomization order over multiple runs. The random values assigned to each line can be printed, either to observe the behavior or to run custom algorithms on the results.
 
 See the [tsv-sample reference](docs/tool_reference/tsv-sample.md) for further details.
 
@@ -322,7 +322,7 @@ Example:
 $ tsv-join -H --filter-file filter.tsv --key-fields Country,City --append-fields Population,Elevation data.tsv
 ```
 
-This reads `filter.tsv`, creating a lookup table keyed on the fields `Country` and `City` fields. `data.tsv` is read, lines with a matching key are written to standard output with the `Population` and `Elevation` fields from `filter.tsv` appended. This is an inner join. Left outer joins and anti-joins are also supported.
+This reads `filter.tsv`, creating a lookup table keyed on the `Country` and `City` fields. `data.tsv` is read, lines with a matching key are written to standard output with the `Population` and `Elevation` fields from `filter.tsv` appended. This is an inner join. Left outer joins and anti-joins are also supported.
 
 Common uses for `tsv-join` are to join related datasets or to filter one dataset based on another. Filter file entries are kept in memory, this limits the ultimate size that can be handled effectively. The author has found that filter files up to about 10 million lines are processed effectively, but performance starts to degrade after that.
 

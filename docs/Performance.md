@@ -10,7 +10,7 @@ Jump to the [2018 Benchmark Summary](#2018-benchmark-summary) for an overview of
 
 ## Comparative Benchmark Study
 
-Performance is a key motivation for using D rather an interpreted language like Python or Perl. It is also a consideration in choosing between D and C/C++. To gauge D's performance, benchmarks were run comparing eBay's TSV Utilities to a number of similar tools written in other native compiled programming languages. Included were traditional Unix tools as well as several specialized toolkits. Programming languages involved were C, Go, and Rust.
+Performance is a key motivation for using D rather than an interpreted language like Python or Perl. It is also a consideration in choosing between D and C/C++. To gauge D's performance, benchmarks were run comparing eBay's TSV Utilities to a number of similar tools written in other native compiled programming languages. Included were traditional Unix tools as well as several specialized toolkits. Programming languages involved were C, Go, and Rust.
 
 The larger goal was to see how D programs would compare when written in a straightforward style, as if by a team of well qualified programmers in the course of normal development. Attention was given to choosing good algorithms and identifying poorly performing code constructs, but no heroic measures were used to gain performance. D's standard library was used extensively, without writing custom versions of core algorithms or containers. Unnecessary GC allocation was avoided, but GC was used rather than manual memory management. Higher-level I/O primitives were used rather than custom buffer management.
 
@@ -25,11 +25,11 @@ The D programs performed extremely well, exceeding the author's expectations. Si
 
 As with most benchmarks, there are caveats. The tools used for comparison are not exact equivalents, and in many cases have different design goals and capabilities likely to impact performance. Tasks performed are highly I/O dependent and follow similar computational patterns, so the results may not transfer to other applications.
 
-Despite limitations of the benchmarks, this is certainly a good result. The benchmarks engage a fair range of programming constructs, and the comparison basis includes nine distinct implementations and several long tenured Unix tools. As a practical matter, performance of the tools has changed the author's personal work habits, as calculations that used to take 15-20 seconds are now instantaneous, and calculations that took minutes often finish in 10 seconds or so.
+Despite the limitations of the benchmarks, this is certainly a good result. The benchmarks engage a fair range of programming constructs, and the comparison basis includes nine distinct implementations and several long tenured Unix tools. As a practical matter, performance of the tools has changed the author's personal work habits, as calculations that used to take 15-20 seconds are now instantaneous, and calculations that took minutes often finish in 10 seconds or so.
 
 ## 2018 Benchmark Summary
 
-The graphs below summarize the results of the 2018 benchmark study. Each graph shows the times of the top-4 tools on that test. Times are in seconds. Times for TSV Utilities tools are show with a green bar.
+The graphs below summarize the results of the 2018 benchmark study. Each graph shows the times of the top-4 tools on that test. Times are in seconds. Times for TSV Utilities tools are shown with a green bar.
 
 The benchmarks are described in detail in the [Comparative Benchmark Study](#comparative-benchmark-study) section (above) and the [2017](comparative-benchmarks-2017.md) and [2018](comparative-benchmarks-2018.md) comparative benchmark reports. These reports include goals, methodology, test details, caveats, conclusions, etc.
 
