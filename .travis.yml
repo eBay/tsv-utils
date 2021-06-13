@@ -32,7 +32,7 @@ matrix:
     - env: MAKE_BUILDONLY=1 MAKETEST=1 ALLOW_FAILURES=true
   include:
     - os: linux
-      dist: focal
+      dist: bionic
       group: travis_latest
       language: d
       d: ldc-1.27.0-beta1
