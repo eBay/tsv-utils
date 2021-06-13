@@ -94,12 +94,12 @@ jobs:
           make test DCOMPILER=${DC}
           make clean
 
-  linux-macos-release-build:
-    name: Release build/test tsv-utils on Linux, macOS
+  macos-release-build:
+    name: Release build/test tsv-utils on macOS
     strategy:
       fail-fast: false
       matrix:
-        os: [macOS-latest, ubuntu-latest]
+        os: [macOS-latest]
         dc: [ldc-latest]
 
     runs-on: ${{ matrix.os }}
@@ -117,6 +117,31 @@ jobs:
         shell: bash
         run: |
           make test-release DCOMPILER=${DC} LDC_LTO_RUNTIME=1 LDC_PGO=2
+          make clean
+
+  linux-release-build:
+    name: Release build/test tsv-utils on Linux
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        dc: [ldc-latest, ldc-beta]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install D compiler
+        uses: dlang-community/setup-dlang@v1
+        with:
+          compiler: ${{ matrix.dc }}
+
+      - name: make test-release ldc-lto-pgo
+        if: ${{ startsWith(matrix.dc, 'ldc') }}
+        shell: bash
+        run: |
+          make test-release DCOMPILER=${DC} LDC_LTO_RUNTIME=1 LDC_PGO=2 DFLAGS=-static
           make clean
 
   dub-build:
