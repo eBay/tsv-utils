@@ -56,7 +56,7 @@ matrix:
 #      d: ldc
 #      env: LTOPGO_V2=default
     - os: linux
-      dist: xenial
+      dist: focal
       group: travis_latest
       language: d
       d: ldc-1.27.0-beta1
