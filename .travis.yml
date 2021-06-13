@@ -31,30 +31,6 @@ matrix:
     - env: DUBTEST=1 MAKETEST=1 ALLOW_FAILURES=true
     - env: MAKE_BUILDONLY=1 MAKETEST=1 ALLOW_FAILURES=true
   include:
-#    - os: linux
-#      dist: xenial
-#      group: travis_latest
-#      language: d
-#      d: dmd
-#      env: CODECOV=0
-#      if: |
-#        type = pull_request OR \
-#        ( type = push AND fork = false)
-#    - os: osx
-#      osx_image: xcode11.5
-#      group: travis_latest
-#      language: d
-#      d: dmd
-#      env: DUBTEST=1 MAKETEST=1
-#      if: |
-#        fork = false AND \
-#        type IN (push)
-#    - os: linux
-#      dist: xenial
-#      group: travis_latest
-#      language: d
-#      d: ldc
-#      env: LTOPGO_V2=default
     - os: linux
       dist: focal
       group: travis_latest
