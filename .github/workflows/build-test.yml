@@ -116,7 +116,7 @@ jobs:
         if: ${{ startsWith(matrix.dc, 'ldc') }}
         shell: bash
         run: |
-          make test-release DCOMPILER=${DC} LDC_LTO_RUNTIME=1 LDC_PGO=2
+          make test-release DCOMPILER=${DC} LDC_LTO_RUNTIME=1 LDC_PGO=2 DFLAGS='--lowmem'
           make clean
 
   linux-release-build:
@@ -141,7 +141,7 @@ jobs:
         if: ${{ startsWith(matrix.dc, 'ldc') }}
         shell: bash
         run: |
-          make test-release DCOMPILER=${DC} LDC_LTO_RUNTIME=1 LDC_PGO=2 DFLAGS=-static
+          make test-release DCOMPILER=${DC} LDC_LTO_RUNTIME=1 LDC_PGO=2 DFLAGS='-static --lowmem'
           make clean
 
   dub-build:
