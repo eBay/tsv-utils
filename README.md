@@ -490,6 +490,7 @@ For some distributions a package can directly be installed:
 | Distribution | Command               |
 | ------------ | --------------------- |
 | Arch Linux   | `pacaur -S tsv-utils` (see [`tsv-utils`](https://aur.archlinux.org/packages/tsv-utils/))
+| bioconda     | `conda install -c bioconda tsv-utils` (see [`tsv-utils`](http://bioconda.github.io/recipes/tsv-utils/README.html))
 
 *Note: The distributions above are not updated as frequently as the [Github releases](https://github.com/eBay/tsv-utils/releases) page.*
 
