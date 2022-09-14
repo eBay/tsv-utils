@@ -333,11 +333,11 @@ See the [tsv-join reference](docs/tool_reference/tsv-join.md) for details.
 tsv-pretty prints TSV data in an aligned format for better readability when working on the command-line. Text columns are left aligned, numeric columns are right aligned. Floats are aligned on the decimal point and precision can be specified. Header lines are detected automatically. If desired, the header line can be repeated at regular intervals. An example, first printed without formatting:
 ```
 $ cat sample.tsv
-Color   Count   Ht      Wt
-Brown   106     202.2   1.5
-Canary Yellow   7       106     0.761
-Chartreuse	1139	77.02   6.22
-Fluorescent Orange	422     1141.7  7.921
+Color	Count	Ht	Wt
+Brown	106	202.2	1.5
+Canary Yellow	7	106	0.761
+Chartreuse	1139	77.02	6.22
+Fluorescent Orange	422	1141.7	7.921
 Grey	19	140.3	1.03
 ```
 Now with `tsv-pretty`, using header underlining and float formatting:
